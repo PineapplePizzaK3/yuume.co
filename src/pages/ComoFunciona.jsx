@@ -47,7 +47,7 @@ function ComoFunciona() {
   return (
     <>
       <Helmet>
-        <title>Como funciona? | Delivery</title>
+        <title>Como funciona? | Serviços e Preços</title>
         <meta
           name="description"
           content="Como funciona - Entenda o fluxo de cada serviço: redirecionamento, personal shopping e curadoria."

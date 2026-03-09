@@ -9,7 +9,7 @@ function Home() {
   return (
     <>
       <Helmet>
-        <title>Delivery - Início | Levando o Japão até você</title>
+        <title>Home | Levando o Japão até você</title>
         <meta
           name="description"
           content="Delivery - Levando o Japão até o conforto da sua casa. Rápido, seguro e confiável."

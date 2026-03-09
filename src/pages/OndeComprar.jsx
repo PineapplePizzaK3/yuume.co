@@ -85,7 +85,7 @@ function OndeComprar() {
   return (
     <>
       <Helmet>
-        <title>Aonde comprar | Delivery</title>
+        <title>Aonde comprar | As melhores lojas para comprar no Japão</title>
         <meta
           name="description"
           content="Aonde comprar - Encontre lojas parceiras por categoria: Amazon, AmiAmi, Pokemon Center, Mercari e mais."

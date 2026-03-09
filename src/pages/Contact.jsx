@@ -81,7 +81,7 @@ function Contact() {
   return (
     <>
       <Helmet>
-        <title>Contato | Delivery - Entre em contato conosco</title>
+        <title>Contato | Entre em contato conosco</title>
         <meta
           name="description"
           content="Entre em contato com a Delivery. Tire suas dúvidas ou solicite nossos serviços de entrega."

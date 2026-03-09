@@ -47,7 +47,7 @@ function Faq() {
   return (
     <>
       <Helmet>
-        <title>Perguntas frequentes | FAQ | Delivery</title>
+        <title>Perguntas frequentes | FAQ </title>
         <meta
           name="description"
           content="Perguntas frequentes sobre envio, prazos, pagamento, itens proibidos e mais."
