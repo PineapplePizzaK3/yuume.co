@@ -94,7 +94,7 @@ function ItensProibidos() {
         </div>
 
         {/* Recomendações */}
-        <div className="rounded-lg border border-earth-200 bg-earth-50 p-6">
+        <div className="rounded-lg border border-earth-200 bg-earth-100 p-6">
           <h3 className="text-lg font-semibold text-earth-900">
             Dica importante
           </h3>

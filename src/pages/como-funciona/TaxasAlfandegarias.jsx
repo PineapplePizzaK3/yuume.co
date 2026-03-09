@@ -51,13 +51,13 @@ function TaxasAlfandegarias() {
           </p>
           <div className="mt-6 overflow-hidden rounded-lg border border-earth-200">
             <table className="min-w-full divide-y divide-earth-200">
-              <thead className="bg-earth-50">
+              <thead className="bg-earth-100">
                 <tr>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-earth-900">Situação</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-earth-900">Alíquota do II</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-earth-200 bg-earth-50">
+              <tbody className="divide-y divide-earth-200 bg-earth-100">
                 <tr>
                   <td className="px-4 py-3 text-sm text-earth-700">Compra até US$ 50* em site certificado (pessoa física)</td>
                   <td className="px-4 py-3 text-sm font-medium text-earth-900">20%</td>
@@ -72,7 +72,7 @@ function TaxasAlfandegarias() {
                 </tr>
               </tbody>
             </table>
-            <p className="px-4 py-2 text-xs text-earth-500 bg-earth-50">
+            <p className="px-4 py-2 text-xs text-earth-500 bg-earth-100">
               * Com desconto de US$ 20 sobre o valor da remessa. ICMS é cobrado em todos os casos.
             </p>
           </div>
@@ -89,7 +89,7 @@ function TaxasAlfandegarias() {
         </div>
 
         {/* Responsabilidade */}
-        <div className="rounded-lg border border-earth-200 bg-earth-50 p-6">
+        <div className="rounded-lg border border-earth-200 bg-earth-100 p-6">
           <h3 className="text-lg font-semibold text-earth-900">
             Quem paga os impostos?
           </h3>

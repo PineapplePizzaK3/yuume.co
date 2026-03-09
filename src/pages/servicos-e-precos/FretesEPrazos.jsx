@@ -16,7 +16,7 @@ function TabelaFrete({ titulo, tabela, colunaPeso, unidade }) {
   return (
     <div className="overflow-x-auto rounded-lg border border-earth-200">
       <table className="min-w-full divide-y divide-earth-200">
-        <thead className="bg-earth-50">
+        <thead className="bg-earth-100">
           <tr>
             <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-earth-600">
               {colunaPeso}
@@ -26,9 +26,9 @@ function TabelaFrete({ titulo, tabela, colunaPeso, unidade }) {
             </th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-earth-200 bg-earth-50">
+        <tbody className="divide-y divide-earth-200 bg-earth-100">
           {tabela.map((faixa, i) => (
-            <tr key={i} className="hover:bg-earth-50">
+            <tr key={i} className="hover:bg-earth-200">
               <td className="whitespace-nowrap px-4 py-3 text-sm text-earth-900">
                 até {faixa.pesoMax}{unidade}
               </td>
@@ -115,7 +115,7 @@ function FretesEPrazos() {
 
         {/* Conteúdo EMS */}
         {tabAtivo === 'ems' && (
-          <div className="rounded-lg border border-earth-200 bg-earth-50 p-6 shadow-sm">
+          <div className="rounded-lg border border-earth-200 bg-earth-100 p-6 shadow-sm">
             <h2 className="text-xl font-semibold text-earth-900 sm:text-2xl">
               EMS (Express Mail Service)
             </h2>
@@ -143,7 +143,7 @@ function FretesEPrazos() {
 
         {/* Conteúdo Parcel Post */}
         {tabAtivo === 'parcel' && (
-          <div className="rounded-lg border border-earth-200 bg-earth-50 p-6 shadow-sm">
+          <div className="rounded-lg border border-earth-200 bg-earth-100 p-6 shadow-sm">
             <h2 className="text-xl font-semibold text-earth-900 sm:text-2xl">
               International Parcel Post (Pacote Internacional)
             </h2>
@@ -178,7 +178,7 @@ function FretesEPrazos() {
 
         {/* Conteúdo ePacket Light */}
         {tabAtivo === 'epacket' && (
-          <div className="rounded-lg border border-earth-200 bg-earth-50 p-6 shadow-sm">
+          <div className="rounded-lg border border-earth-200 bg-earth-100 p-6 shadow-sm">
             <h2 className="text-xl font-semibold text-earth-900 sm:text-2xl">
               International ePacket Light
             </h2>
@@ -208,7 +208,7 @@ function FretesEPrazos() {
           </div>
         )}
 
-        <div className="rounded-lg border border-earth-200 bg-earth-50 p-4">
+        <div className="rounded-lg border border-earth-200 bg-earth-100 p-4">
           <p className="text-sm text-earth-700">
             Tarifas sujeitas a alteração. Use o{' '}
             <Link

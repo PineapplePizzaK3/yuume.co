@@ -62,7 +62,7 @@ function Faq() {
           Tire suas dúvidas sobre nossos serviços, envios e prazos.
         </p>
 
-        <div className="mt-10 divide-y divide-earth-200 rounded-lg border border-earth-200 bg-earth-50 shadow-sm">
+        <div className="mt-10 divide-y divide-earth-200 rounded-lg border border-earth-200 bg-earth-100 shadow-sm">
             {FAQ_ITEMS.map((item) => (
               <FaqItem
                 key={item.id}

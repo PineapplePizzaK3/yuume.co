@@ -50,7 +50,7 @@ function Home() {
       </section>
 
       {/* Seção 2: Apresentação dos serviços */}
-      <section className="border-t border-earth-200 bg-earth-50 px-4 py-16">
+      <section className="border-t border-earth-200 bg-earth-100 px-4 py-16">
         <div className="mx-auto max-w-6xl">
           <h2 className="text-center text-2xl font-bold text-earth-900 sm:text-3xl">
             Nossos serviços
@@ -61,7 +61,7 @@ function Home() {
 
           <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {/* Redirecionamento */}
-            <div className="rounded-lg border border-earth-200 bg-earth-50 p-6 shadow-sm transition hover:shadow-md">
+            <div className="rounded-lg border border-earth-200 bg-earth-100 p-6 shadow-sm transition hover:shadow-md">
               <h3 className="text-lg font-semibold text-earth-900">
                 Redirecionamento
               </h3>
@@ -78,7 +78,7 @@ function Home() {
             </div>
 
             {/* Personal shopping */}
-            <div className="rounded-lg border border-earth-200 bg-earth-50 p-6 shadow-sm transition hover:shadow-md">
+            <div className="rounded-lg border border-earth-200 bg-earth-100 p-6 shadow-sm transition hover:shadow-md">
               <h3 className="text-lg font-semibold text-earth-900">
                 Personal shopping
               </h3>
@@ -95,7 +95,7 @@ function Home() {
             </div>
 
             {/* Curadoria */}
-            <div className="rounded-lg border border-earth-200 bg-earth-50 p-6 shadow-sm transition hover:shadow-md sm:col-span-2 lg:col-span-1">
+            <div className="rounded-lg border border-earth-200 bg-earth-100 p-6 shadow-sm transition hover:shadow-md sm:col-span-2 lg:col-span-1">
               <h3 className="text-lg font-semibold text-earth-900">
                 Curadoria
               </h3>
@@ -127,7 +127,7 @@ function Home() {
           <div className="mt-10 grid gap-6 sm:grid-cols-3">
             <Link
               to="/servicos-e-precos"
-              className="group flex flex-col rounded-lg border border-earth-200 bg-earth-50 p-6 shadow-sm transition hover:border-earth-300 hover:shadow-md"
+              className="group flex flex-col rounded-lg border border-earth-200 bg-earth-100 p-6 shadow-sm transition hover:border-earth-300 hover:shadow-md"
             >
               <span className="text-2xl font-semibold text-earth-900 group-hover:text-earth-700">
                 1.
@@ -146,7 +146,7 @@ function Home() {
 
             <Link
               to="/servicos-e-precos"
-              className="group flex flex-col rounded-lg border border-earth-200 bg-earth-50 p-6 shadow-sm transition hover:border-earth-300 hover:shadow-md"
+              className="group flex flex-col rounded-lg border border-earth-200 bg-earth-100 p-6 shadow-sm transition hover:border-earth-300 hover:shadow-md"
             >
               <span className="text-2xl font-semibold text-earth-900 group-hover:text-earth-700">
                 2.
@@ -165,7 +165,7 @@ function Home() {
 
             <Link
               to="/onde-comprar"
-              className="group flex flex-col rounded-lg border border-earth-200 bg-earth-50 p-6 shadow-sm transition hover:border-earth-300 hover:shadow-md"
+              className="group flex flex-col rounded-lg border border-earth-200 bg-earth-100 p-6 shadow-sm transition hover:border-earth-300 hover:shadow-md"
             >
               <span className="text-2xl font-semibold text-earth-900 group-hover:text-earth-700">
                 3.

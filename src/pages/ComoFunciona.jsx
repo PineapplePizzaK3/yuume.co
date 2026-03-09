@@ -64,7 +64,7 @@ function ComoFunciona() {
         {FLUXOS.map((servico) => (
           <div
             key={servico.id}
-            className="rounded-lg border border-earth-200 bg-earth-50 p-6 shadow-sm"
+            className="rounded-lg border border-earth-200 bg-earth-100 p-6 shadow-sm"
           >
             <h2 className="text-xl font-semibold text-earth-900 sm:text-2xl">
               {servico.titulo}

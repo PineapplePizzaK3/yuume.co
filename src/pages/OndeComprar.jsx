@@ -14,9 +14,9 @@ function LojaCard({ loja }) {
       href={loja.url}
       target="_blank"
       rel="noopener noreferrer"
-      className="flex flex-col items-center rounded-lg border border-earth-200 bg-earth-50 p-4 shadow-sm transition hover:border-earth-300 hover:shadow-md"
+      className="flex flex-col items-center rounded-lg border border-earth-200 bg-earth-100 p-4 shadow-sm transition hover:border-earth-300 hover:shadow-md"
     >
-      <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-earth-50 sm:h-28 sm:w-28">
+      <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-earth-100 sm:h-28 sm:w-28">
         {imgErro ? (
           <span className="text-2xl font-bold text-earth-400">
             {loja.nome.charAt(0)}
@@ -130,7 +130,7 @@ function OndeComprar() {
           <div className="mt-10 flex flex-col gap-8 lg:flex-row">
             {/* Sidebar: categorias */}
             <aside className="shrink-0 lg:w-56">
-              <div className="rounded-lg border border-earth-200 bg-earth-50 p-4">
+              <div className="rounded-lg border border-earth-200 bg-earth-100 p-4">
                 <h2 className="text-sm font-semibold uppercase tracking-wide text-earth-500">
                   Categorias
                 </h2>
@@ -176,7 +176,7 @@ function OndeComprar() {
                   ))}
                 </div>
               ) : (
-                <p className="rounded-lg border border-earth-200 bg-earth-50 p-8 text-center text-earth-500">
+                <p className="rounded-lg border border-earth-200 bg-earth-100 p-8 text-center text-earth-500">
                   Nenhuma loja encontrada
                   {busca && <> para &quot;{busca}&quot;</>}
                   {categoriaFiltro && <> na categoria selecionada</>}.

@@ -117,7 +117,7 @@ function Simulador() {
         {/* Formulário para adicionar produto */}
         <form
           onSubmit={adicionarProduto}
-          className="mt-8 rounded-lg border border-earth-200 bg-earth-50 p-4 sm:p-6"
+          className="mt-8 rounded-lg border border-earth-200 bg-earth-100 p-4 sm:p-6"
         >
           <h3 className="mb-4 text-lg font-semibold text-earth-900">
             Adicionar produto
@@ -210,7 +210,7 @@ function Simulador() {
             </h3>
             <div className="overflow-x-auto rounded-lg border border-earth-200">
               <table className="min-w-full divide-y divide-earth-200">
-                <thead className="bg-earth-50">
+                <thead className="bg-earth-100">
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-medium uppercase text-earth-600">
                       Produto
@@ -230,9 +230,9 @@ function Simulador() {
                     <th className="w-10 px-2 py-3" />
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-earth-200 bg-earth-50">
+                <tbody className="divide-y divide-earth-200 bg-earth-100">
                   {produtos.map((p) => (
-                    <tr key={p.id} className="hover:bg-earth-50">
+                    <tr key={p.id} className="hover:bg-earth-200">
                       <td className="px-4 py-3 text-sm text-earth-900">
                         {p.nome}
                       </td>
@@ -277,7 +277,7 @@ function Simulador() {
             </div>
 
             {/* Resumo do pedido - com escolha de serviço e frete */}
-            <div className="mt-8 rounded-lg border border-earth-200 bg-earth-50 p-6 shadow-sm">
+            <div className="mt-8 rounded-lg border border-earth-200 bg-earth-100 p-6 shadow-sm">
               <h3 className="mb-4 text-lg font-semibold text-earth-900">
                 Valores finais
               </h3>
@@ -352,7 +352,7 @@ function Simulador() {
         )}
 
         {produtos.length === 0 && (
-          <p className="mt-8 rounded-lg border border-dashed border-earth-300 bg-earth-50 p-8 text-center text-earth-600">
+          <p className="mt-8 rounded-lg border border-dashed border-earth-300 bg-earth-100 p-8 text-center text-earth-600">
             Nenhum produto adicionado. Preencha o formulário acima para
             começar a simular.
           </p>

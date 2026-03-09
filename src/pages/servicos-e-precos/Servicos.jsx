@@ -5,47 +5,54 @@ function formatarIene(valor) {
   return `¥ ${Number(valor).toLocaleString('pt-BR')}`
 }
 
+const LINHAS_VALORES = (percentual, porItem, freteTexto, formatarIene) => [
+  { label: 'Percentual sobre o valor da compra', valor: percentual === null ? 'Sob consulta' : `${percentual}%` },
+  { label: 'Taxa por item', valor: porItem === null ? 'Sob consulta' : `${formatarIene(porItem)}/item` },
+  { label: 'Frete internacional', valor: freteTexto },
+]
+
 function TabelaValores({ percentual, porItem, freteTexto }) {
+  const linhas = LINHAS_VALORES(percentual, porItem, freteTexto, formatarIene)
+
   return (
-    <div className="mt-6 overflow-x-auto rounded-lg border border-earth-200">
-      <table className="min-w-full divide-y divide-earth-200">
-        <thead className="bg-earth-50">
-          <tr>
-            <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-earth-600">
-              Componente
-            </th>
-            <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-earth-600">
-              Valor
-            </th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-earth-200 bg-earth-50">
-          <tr>
-            <td className="whitespace-nowrap px-4 py-3 text-sm text-earth-900">
-              Percentual sobre o valor da compra
-            </td>
-            <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-earth-900">
-              {percentual === null ? 'Sob consulta' : `${percentual}%`}
-            </td>
-          </tr>
-          <tr>
-            <td className="whitespace-nowrap px-4 py-3 text-sm text-earth-900">
-              Taxa por item
-            </td>
-            <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-earth-900">
-              {porItem === null ? 'Sob consulta' : `${formatarIene(porItem)}/item`}
-            </td>
-          </tr>
-          <tr>
-            <td className="whitespace-nowrap px-4 py-3 text-sm text-earth-900">
-              Frete internacional
-            </td>
-            <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-earth-900">
-              {freteTexto}
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <div className="mt-6 rounded-lg border border-earth-200 overflow-hidden">
+      {/* Desktop: tabela */}
+      <div className="hidden sm:block">
+        <table className="w-full divide-y divide-earth-200">
+          <thead className="bg-earth-100">
+            <tr>
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-earth-600">
+                Componente
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-earth-600">
+                Valor
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-earth-200 bg-earth-100">
+            {linhas.map((linha, i) => (
+              <tr key={i}>
+                <td className="px-4 py-3 text-sm text-earth-900">
+                  {linha.label}
+                </td>
+                <td className="px-4 py-3 text-sm font-medium text-earth-900">
+                  {linha.valor}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Mobile: cards empilhados (label + valor por linha) */}
+      <div className="sm:hidden divide-y divide-earth-200 bg-earth-100">
+        {linhas.map((linha, i) => (
+          <div key={i} className="flex flex-col gap-0.5 px-4 py-3">
+            <span className="text-sm text-earth-600">{linha.label}</span>
+            <span className="text-sm font-medium text-earth-900">{linha.valor}</span>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
@@ -127,7 +134,7 @@ function Servicos() {
         {FLUXOS.map((servico) => (
           <div
             key={servico.id}
-            className="rounded-lg border border-earth-200 bg-earth-50 p-6 shadow-sm"
+            className="rounded-lg border border-earth-200 bg-earth-100 p-6 shadow-sm"
           >
             <h2 className="text-xl font-semibold text-earth-900 sm:text-2xl">
               {servico.titulo}
