@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Garantir que html e body ocupem toda a tela e o conteúdo seja visível */
+/* overflow-x: hidden evita scroll horizontal em mobile */
+html {
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+html,
+body {
+  min-height: 100%;
+}
+body {
+  overflow-x: hidden;
+  background-color: #FCF9F5;
+}
+#root {
+  min-height: 100%;
+}
+
+/* Animação de voar - sobe e desce suavemente */
+@keyframes voar {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
+}
+.animate-voar {
+  animation: voar 3s ease-in-out infinite;
+}
