@@ -13,6 +13,7 @@ import FretesEPrazos from './pages/servicos-e-precos/FretesEPrazos'
 import Simulador from './pages/servicos-e-precos/Simulador'
 import FaqLayout from './pages/faq/FaqLayout'
 import Faq from './pages/Faq'
+import UnderConstruction from './pages/UnderConstruction'
 
 /**
  * Componente principal da aplicação.
@@ -27,6 +28,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/como-funciona" element={<Navigate to="/servicos-e-precos" replace />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/login" element={<UnderConstruction />} />
           <Route path="/faq" element={<FaqLayout />}>
             <Route index element={<Faq />} />
             <Route path="itens-proibidos" element={<ItensProibidos />} />

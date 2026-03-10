@@ -2,9 +2,6 @@ import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { REDES_SOCIAIS } from '../data/redesSociais'
 
-/** URL da plataforma (login/registro). Substitua pelo endereço real. */
-const PLATAFORMA_URL = 'https://plataforma.exemplo.com'
-
 /**
  * Navbar fixa no topo com links de navegação, botão Login/Registro e ícones de redes sociais.
  * Responsiva: menu hamburger no mobile, links completos no desktop.
@@ -73,14 +70,12 @@ function Navbar() {
             </Link>
 
             {/* Login/Registro */}
-            <a
-              href={PLATAFORMA_URL}
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              to="/login"
               className="rounded-lg bg-earth-900 px-4 py-2 text-sm font-medium text-earth-50 transition hover:bg-earth-800"
             >
               Login / Registro
-            </a>
+            </Link>
 
             {/* Redes sociais */}
             <div className="flex items-center gap-3 border-l border-earth-200 pl-4">
@@ -158,15 +153,13 @@ function Navbar() {
               >
                 Contato
               </Link>
-              <a
-                href={PLATAFORMA_URL}
-                target="_blank"
-                rel="noopener noreferrer"
+              <Link
+                to="/login"
                 onClick={fecharMenu}
                 className="mx-4 mt-2 inline-flex justify-center rounded-lg bg-earth-900 px-4 py-3 font-medium text-earth-50 transition hover:bg-earth-800"
               >
                 Login / Registro
-              </a>
+              </Link>
               <div className="mt-4 flex justify-center gap-4 border-t border-earth-200 pt-4">
                 {REDES_SOCIAIS.map((rede) => (
                   <a
