@@ -156,11 +156,11 @@ function Servicos() {
             {servico.id === 'redirecionamento' && (
               <>
                 <p className="mt-6 text-sm text-earth-600">
-                  <strong>Como cobramos:</strong> 20% do valor da compra + {formatarIene(150)}/item + frete.
+                  <strong>Como cobramos:</strong> {formatarIene(500)}/item + frete.
                 </p>
                 <TabelaValores
-                  percentual={20}
-                  porItem={150}
+                  percentual={0}
+                  porItem={500}
                   freteTexto="Conforme o método de envio (Japan Post)"
                 />
               </>
@@ -169,10 +169,10 @@ function Servicos() {
             {servico.id === 'personal-shopping' && (
               <>
                 <p className="mt-6 text-sm text-earth-600">
-                  <strong>Como cobramos:</strong> 25% do valor da compra + {formatarIene(150)}/item + frete.
+                  <strong>Como cobramos:</strong> 20% do valor da compra + {formatarIene(150)}/item + frete.
                 </p>
                 <TabelaValores
-                  percentual={25}
+                  percentual={20}
                   porItem={150}
                   freteTexto="Conforme o método de envio (Japan Post)"
                 />

@@ -3,10 +3,9 @@ import { Helmet } from 'react-helmet-async'
 import { calcularFreteEMS } from '../../data/tabelaFreteEMS'
 import { calcularFreteParcel, calcularFreteEPacket } from '../../data/fretesJPPost'
 
-const TAXA_POR_ITEM = 150
 const SERVICOS = [
-  { id: 'redirecionamento', label: 'Redirecionamento', percentual: 20 },
-  { id: 'personal-shopping', label: 'Personal shopping', percentual: 25 },
+  { id: 'redirecionamento', label: 'Redirecionamento', percentual: 0, porItem: 500 },
+  { id: 'personal-shopping', label: 'Personal shopping', percentual: 20, porItem: 150 },
 ]
 const TIPOS_FRETE = [
   { id: 'ems', label: 'EMS', prazo: '5–10 dias úteis' },
@@ -88,11 +87,12 @@ function Simulador() {
   const freteLabel = tipoFreteSelecionado?.label ?? 'EMS'
   const prazoEntrega = tipoFreteSelecionado?.prazo ?? ''
   const totalItens = produtos.reduce((acc, p) => acc + p.quantidade, 0)
-  const percentualServico =
-    SERVICOS.find((s) => s.id === servicoId)?.percentual ?? 20
+  const servicoSelecionado = SERVICOS.find((s) => s.id === servicoId)
+  const percentualServico = servicoSelecionado?.percentual ?? 0
+  const taxaPorItem = servicoSelecionado?.porItem ?? 500
   const taxaServico =
     totalProdutos * (percentualServico / 100) +
-    totalItens * TAXA_POR_ITEM
+    totalItens * taxaPorItem
   const totalFinal = totalProdutos + frete + taxaServico
 
   return (
@@ -295,7 +295,7 @@ function Simulador() {
                   >
                     {SERVICOS.map((s) => (
                       <option key={s.id} value={s.id}>
-                        {s.label} ({s.percentual}%)
+                        {s.label} ({s.percentual > 0 ? `${s.percentual}% + ` : ''}¥{s.porItem}/item)
                       </option>
                     ))}
                   </select>
@@ -332,7 +332,7 @@ function Simulador() {
                 </div>
                 <div className="flex justify-between text-earth-700">
                   <span>
-                    Taxa de serviço ({percentualServico}% + ¥{TAXA_POR_ITEM}/item)
+                    Taxa de serviço ({percentualServico > 0 ? `${percentualServico}% + ` : ''}¥{taxaPorItem}/item)
                   </span>
                   <span>{formatarValor(taxaServico)}</span>
                 </div>
