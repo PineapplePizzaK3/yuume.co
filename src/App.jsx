@@ -17,7 +17,17 @@ import LegalLayout from './layouts/LegalLayout'
 import CommercialDisclosure from './pages/legal/CommercialDisclosure'
 import PrivacyPolicy from './pages/legal/PrivacyPolicy'
 import TermsOfService from './pages/legal/TermsOfService'
-import UnderConstruction from './pages/UnderConstruction'
+import { ProtectedRoute } from './components/ProtectedRoute'
+import { AdminRoute } from './components/AdminRoute'
+import { PlatformLayout } from './layouts/PlatformLayout'
+import Login from './pages/platform/Login'
+import Register from './pages/platform/Register'
+import Dashboard from './pages/platform/Dashboard'
+import Services from './pages/platform/Services'
+import Orders from './pages/platform/Orders'
+import Payments from './pages/platform/Payments'
+import Profile from './pages/platform/Profile'
+import Admin from './pages/platform/Admin'
 
 /**
  * Componente principal da aplicação.
@@ -32,8 +42,25 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/como-funciona" element={<Navigate to="/servicos-e-precos" replace />} />
           <Route path="/contact" element={<Contact />} />
-          <Route path="/login" element={<UnderConstruction />} />
-          <Route path="/register" element={<UnderConstruction />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/app" element={
+            <ProtectedRoute>
+              <PlatformLayout />
+            </ProtectedRoute>
+          }>
+            <Route index element={<Navigate to="/app/dashboard" replace />} />
+            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="services" element={<Services />} />
+            <Route path="orders" element={<Orders />} />
+            <Route path="payments" element={<Payments />} />
+            <Route path="profile" element={<Profile />} />
+            <Route path="admin" element={
+              <AdminRoute>
+                <Admin />
+              </AdminRoute>
+            } />
+          </Route>
           <Route path="/faq" element={<FaqLayout />}>
             <Route index element={<Faq />} />
             <Route path="itens-proibidos" element={<ItensProibidos />} />
