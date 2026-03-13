@@ -3,9 +3,19 @@ import { Helmet } from 'react-helmet-async'
 import { calcularFreteEMS } from '../../data/tabelaFreteEMS'
 import { calcularFreteParcel, calcularFreteEPacket } from '../../data/fretesJPPost'
 
+/** Taxa por item para redirecionamento conforme quantidade: 1→900, 2→750, 3–4→600, 5+→500. */
+function calcularTaxaRedirecionamento(totalItens) {
+  if (totalItens <= 0) return 0
+  if (totalItens === 1) return 900
+  if (totalItens === 2) return 750 * 2
+  if (totalItens <= 4) return 600 * totalItens
+  return 500 * totalItens
+}
+
+const TAXA_POR_ITEM_PERSONAL = 150
 const SERVICOS = [
-  { id: 'redirecionamento', label: 'Redirecionamento', percentual: 0, porItem: 500 },
-  { id: 'personal-shopping', label: 'Personal shopping', percentual: 20, porItem: 150 },
+  { id: 'redirecionamento', label: 'Redirecionamento', tipo: 'por-itens' },
+  { id: 'personal-shopping', label: 'Personal shopping', percentual: 20 },
 ]
 const TIPOS_FRETE = [
   { id: 'ems', label: 'EMS', prazo: '5–10 dias úteis' },
@@ -87,13 +97,17 @@ function Simulador() {
   const freteLabel = tipoFreteSelecionado?.label ?? 'EMS'
   const prazoEntrega = tipoFreteSelecionado?.prazo ?? ''
   const totalItens = produtos.reduce((acc, p) => acc + p.quantidade, 0)
-  const servicoSelecionado = SERVICOS.find((s) => s.id === servicoId)
-  const percentualServico = servicoSelecionado?.percentual ?? 0
-  const taxaPorItem = servicoSelecionado?.porItem ?? 500
+  const servico = SERVICOS.find((s) => s.id === servicoId)
   const taxaServico =
-    totalProdutos * (percentualServico / 100) +
-    totalItens * taxaPorItem
+    servico?.tipo === 'por-itens'
+      ? calcularTaxaRedirecionamento(totalItens)
+      : totalProdutos * ((servico?.percentual ?? 20) / 100) +
+        totalItens * TAXA_POR_ITEM_PERSONAL
   const totalFinal = totalProdutos + frete + taxaServico
+  const labelTaxaServico =
+    servico?.tipo === 'por-itens'
+      ? 'Taxa de serviço (por itens)'
+      : `Taxa de serviço (${servico?.percentual ?? 20}% + ¥${TAXA_POR_ITEM_PERSONAL}/item)`
 
   return (
     <>
@@ -295,7 +309,8 @@ function Simulador() {
                   >
                     {SERVICOS.map((s) => (
                       <option key={s.id} value={s.id}>
-                        {s.label} ({s.percentual > 0 ? `${s.percentual}% + ` : ''}¥{s.porItem}/item)
+                        {s.label}
+                        {s.percentual != null ? ` (${s.percentual}%)` : ''}
                       </option>
                     ))}
                   </select>
@@ -331,9 +346,7 @@ function Simulador() {
                   <span>{formatarValor(frete)}</span>
                 </div>
                 <div className="flex justify-between text-earth-700">
-                  <span>
-                    Taxa de serviço ({percentualServico > 0 ? `${percentualServico}% + ` : ''}¥{taxaPorItem}/item)
-                  </span>
+                  <span>{labelTaxaServico}</span>
                   <span>{formatarValor(taxaServico)}</span>
                 </div>
                 {prazoEntrega && (

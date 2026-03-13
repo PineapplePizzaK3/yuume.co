@@ -11,8 +11,19 @@ const LINHAS_VALORES = (percentual, porItem, freteTexto, formatarIene) => [
   { label: 'Frete internacional', valor: freteTexto },
 ]
 
-function TabelaValores({ percentual, porItem, freteTexto }) {
-  const linhas = LINHAS_VALORES(percentual, porItem, freteTexto, formatarIene)
+/** Tabela de taxas para redirecionamento (apenas valores, sem percentual). */
+const LINHAS_REDIRECIONAMENTO = (formatarIene) => [
+  { label: '1 item', valor: formatarIene(900) },
+  { label: '2 itens', valor: `${formatarIene(750)}/item` },
+  { label: '3–4 itens', valor: `${formatarIene(600)}/item` },
+  { label: '5+ itens', valor: `${formatarIene(500)}/item` },
+  { label: 'Frete internacional', valor: 'Conforme o método de envio (Japan Post)' },
+]
+
+function TabelaValores({ percentual, porItem, freteTexto, modoRedirecionamento }) {
+  const linhas = modoRedirecionamento
+    ? LINHAS_REDIRECIONAMENTO(formatarIene)
+    : LINHAS_VALORES(percentual, porItem, freteTexto, formatarIene)
 
   return (
     <div className="mt-6 rounded-lg border border-earth-200 overflow-hidden">
@@ -156,13 +167,9 @@ function Servicos() {
             {servico.id === 'redirecionamento' && (
               <>
                 <p className="mt-6 text-sm text-earth-600">
-                  <strong>Como cobramos:</strong> {formatarIene(500)}/item + frete.
+                  <strong>Como cobramos:</strong> taxa por quantidade de itens (ver tabela) + frete.
                 </p>
-                <TabelaValores
-                  percentual={0}
-                  porItem={500}
-                  freteTexto="Conforme o método de envio (Japan Post)"
-                />
+                <TabelaValores modoRedirecionamento />
               </>
             )}
 
