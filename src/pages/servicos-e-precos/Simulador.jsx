@@ -3,7 +3,7 @@ import { Helmet } from 'react-helmet-async'
 import { calcularFreteEMS } from '../../data/tabelaFreteEMS'
 import { calcularFreteParcel, calcularFreteEPacket } from '../../data/fretesJPPost'
 
-/** Taxa por item para redirecionamento conforme quantidade: 1→900, 2→750, 3–4→600, 5+→500. */
+/** Taxa por item para redirecionamento: 1→900, 2→750, 3–4→600, 5+→500. */
 function calcularTaxaRedirecionamento(totalItens) {
   if (totalItens <= 0) return 0
   if (totalItens === 1) return 900
@@ -39,27 +39,28 @@ function Simulador() {
   const [servicoId, setServicoId] = useState('redirecionamento')
   const [tipoFrete, setTipoFrete] = useState('ems')
   const [nome, setNome] = useState('')
-  const [quantidade, setQuantidade] = useState(1)
+  const [quantidade, setQuantidade] = useState('1')
   const [peso, setPeso] = useState('')
   const [valor, setValor] = useState('')
 
   const adicionarProduto = (e) => {
     e.preventDefault()
+    const qty = Math.max(1, parseInt(quantidade, 10) || 1)
     const pesoNum = parseFloat(peso?.replace(',', '.')) || 0
     const valorNum = parseFloat(valor?.replace(',', '.')) || 0
-    if (!nome.trim() || quantidade < 1 || pesoNum <= 0 || valorNum <= 0) return
+    if (!nome.trim() || qty < 1 || pesoNum <= 0 || valorNum <= 0) return
     setProdutos([
       ...produtos,
       {
         id: crypto.randomUUID(),
         nome: nome.trim(),
-        quantidade,
+        quantidade: qty,
         peso: pesoNum,
         valor: valorNum,
       },
     ])
     setNome('')
-    setQuantidade(1)
+    setQuantidade('1')
     setPeso('')
     setValor('')
   }
@@ -165,9 +166,11 @@ function Simulador() {
                 id="quantidade"
                 min="1"
                 value={quantidade}
-                onChange={(e) =>
-                  setQuantidade(Math.max(1, parseInt(e.target.value) || 1))
-                }
+                onChange={(e) => setQuantidade(e.target.value)}
+                onBlur={(e) => {
+                  const parsed = parseInt(e.target.value, 10)
+                  if (Number.isNaN(parsed) || parsed < 1) setQuantidade('1')
+                }}
                 className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 shadow-sm focus:border-earth-900 focus:outline-none focus:ring-1 focus:ring-earth-900"
               />
             </div>

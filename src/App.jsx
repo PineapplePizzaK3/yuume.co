@@ -13,6 +13,10 @@ import FretesEPrazos from './pages/servicos-e-precos/FretesEPrazos'
 import Simulador from './pages/servicos-e-precos/Simulador'
 import FaqLayout from './pages/faq/FaqLayout'
 import Faq from './pages/Faq'
+import LegalLayout from './layouts/LegalLayout'
+import CommercialDisclosure from './pages/legal/CommercialDisclosure'
+import PrivacyPolicy from './pages/legal/PrivacyPolicy'
+import TermsOfService from './pages/legal/TermsOfService'
 import UnderConstruction from './pages/UnderConstruction'
 
 /**
@@ -29,12 +33,19 @@ function App() {
           <Route path="/como-funciona" element={<Navigate to="/servicos-e-precos" replace />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/login" element={<UnderConstruction />} />
+          <Route path="/register" element={<UnderConstruction />} />
           <Route path="/faq" element={<FaqLayout />}>
             <Route index element={<Faq />} />
             <Route path="itens-proibidos" element={<ItensProibidos />} />
             <Route path="taxas-alfandegarias" element={<TaxasAlfandegarias />} />
           </Route>
           <Route path="/onde-comprar" element={<OndeComprar />} />
+          <Route path="/legal" element={<LegalLayout />}>
+            <Route index element={<Navigate to="/legal/privacy" replace />} />
+            <Route path="commercial-disclosure" element={<CommercialDisclosure />} />
+            <Route path="privacy" element={<PrivacyPolicy />} />
+            <Route path="terms" element={<TermsOfService />} />
+          </Route>
           <Route path="/servicos-e-precos" element={<ServicosEPrecosLayout />}>
             <Route index element={<Servicos />} />
             <Route path="fretes-prazos" element={<FretesEPrazos />} />

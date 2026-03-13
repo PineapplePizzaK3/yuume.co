@@ -74,7 +74,7 @@ function Navbar() {
               to="/login"
               className="rounded-lg bg-earth-900 px-4 py-2 text-sm font-medium text-earth-50 transition hover:bg-earth-800"
             >
-              Login / Registro
+              Login / Cadastro
             </Link>
 
             {/* Redes sociais */}
@@ -158,7 +158,7 @@ function Navbar() {
                 onClick={fecharMenu}
                 className="mx-4 mt-2 inline-flex justify-center rounded-lg bg-earth-900 px-4 py-3 font-medium text-earth-50 transition hover:bg-earth-800"
               >
-                Login / Registro
+                Login / Cadastro
               </Link>
               <div className="mt-4 flex justify-center gap-4 border-t border-earth-200 pt-4">
                 {REDES_SOCIAIS.map((rede) => (
