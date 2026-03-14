@@ -3,9 +3,9 @@ import { Helmet } from 'react-helmet-async'
 import { CATEGORIAS_LOJAS } from '../data/lojasOndeComprar'
 
 /**
- * Card de loja com logo e nome. Link para o site da loja.
+ * Card de loja simples (uma URL).
  */
-function LojaCard({ loja }) {
+function LojaCardSimple({ loja }) {
   const [imgErro, setImgErro] = useState(false)
   const logoPath = `/logos/${loja.id}.png`
 
@@ -16,15 +16,17 @@ function LojaCard({ loja }) {
       rel="noopener noreferrer"
       className="flex flex-col items-center rounded-lg border border-earth-200 bg-earth-100 p-4 shadow-sm transition hover:border-earth-300 hover:shadow-md"
     >
-      <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-earth-100 sm:h-28 sm:w-28">
+      <div className="flex h-[120px] w-[120px] shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white shadow-sm">
         {imgErro ? (
-          <span className="text-2xl font-bold text-earth-400">
+          <span className="text-3xl font-bold text-earth-400">
             {loja.nome.charAt(0)}
           </span>
         ) : (
           <img
             src={logoPath}
             alt={`Logo ${loja.nome}`}
+            width={120}
+            height={120}
             className="h-full w-full object-contain p-2"
             onError={() => setImgErro(true)}
           />
@@ -33,8 +35,70 @@ function LojaCard({ loja }) {
       <p className="mt-3 text-center text-sm font-medium text-earth-900">
         {loja.nome}
       </p>
+      {loja.descricao && (
+        <p className="mt-1 text-center text-xs text-earth-600 line-clamp-2">
+          {loja.descricao}
+        </p>
+      )}
     </a>
   )
+}
+
+/**
+ * Card de loja agrupada (vários sites sob uma marca). Compacto para evitar overload.
+ */
+function LojaCardAgrupada({ loja }) {
+  const [imgErro, setImgErro] = useState(false)
+  const logoPath = `/logos/${loja.id}.png`
+
+  return (
+    <div className="flex flex-col items-center rounded-lg border border-earth-200 bg-earth-100 p-4 shadow-sm transition hover:border-earth-300">
+      <div className="flex h-[120px] w-[120px] shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white shadow-sm">
+        {imgErro ? (
+          <span className="text-3xl font-bold text-earth-400">
+            {loja.nome.charAt(0)}
+          </span>
+        ) : (
+          <img
+            src={logoPath}
+            alt={`Logo ${loja.nome}`}
+            width={120}
+            height={120}
+            className="h-full w-full object-contain p-2"
+            onError={() => setImgErro(true)}
+          />
+        )}
+      </div>
+      <p className="mt-3 text-center text-sm font-medium text-earth-900">
+        {loja.nome}
+      </p>
+      {loja.descricao && (
+        <p className="mt-1 text-center text-xs text-earth-600">
+          {loja.descricao}
+        </p>
+      )}
+      <div className="mt-3 flex flex-col gap-1.5 w-full">
+        {loja.sites.map((site) => (
+          <a
+            key={site.url}
+            href={site.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block rounded bg-earth-200 px-3 py-1.5 text-center text-xs font-medium text-earth-800 transition hover:bg-earth-300 hover:text-earth-900"
+          >
+            {site.nome}
+          </a>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function LojaCard({ loja }) {
+  if (loja.sites?.length) {
+    return <LojaCardAgrupada loja={loja} />
+  }
+  return <LojaCardSimple loja={loja} />
 }
 
 /**
@@ -60,7 +124,9 @@ function OndeComprar() {
           const lojasMatch = cat.lojas.some(
             (loja) =>
               loja.nome.toLowerCase().includes(termo) ||
-              loja.id.toLowerCase().includes(termo)
+              loja.id.toLowerCase().includes(termo) ||
+              (loja.descricao && loja.descricao.toLowerCase().includes(termo)) ||
+              (loja.sites && loja.sites.some((s) => s.nome.toLowerCase().includes(termo)))
           )
           return categoriaMatch || lojasMatch
         })
@@ -73,7 +139,9 @@ function OndeComprar() {
               : cat.lojas.filter(
                   (loja) =>
                     loja.nome.toLowerCase().includes(termo) ||
-                    loja.id.toLowerCase().includes(termo)
+                    loja.id.toLowerCase().includes(termo) ||
+                    (loja.descricao && loja.descricao.toLowerCase().includes(termo)) ||
+                    (loja.sites && loja.sites.some((s) => s.nome.toLowerCase().includes(termo)))
                 ),
           }
         })

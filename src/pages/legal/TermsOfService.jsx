@@ -1,5 +1,5 @@
 /**
- * Terms of Service - Content in JA (default), PT-BR and EN.
+ * Terms of Service - 利用規約. Content in JA (default), PT-BR and EN.
  */
 import { Helmet } from 'react-helmet-async'
 import { useLegalLanguage } from '../../contexts/LegalLanguageContext'
@@ -9,89 +9,351 @@ function LegalSection({ title, children }) {
   return (
     <div>
       <h3 className="text-lg font-semibold text-earth-900">{title}</h3>
-      <div className="mt-2 space-y-2 text-earth-700">{children}</div>
+      <div className="mt-2 space-y-2 text-earth-700 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:space-y-1">
+        {children}
+      </div>
     </div>
+  )
+}
+
+function P({ children }) {
+  return <p>{children}</p>
+}
+
+function Ul({ items }) {
+  return (
+    <ul>
+      {items.map((item, i) => (
+        <li key={i}>{item}</li>
+      ))}
+    </ul>
   )
 }
 
 const CONTENT = {
   ja: {
     title: '利用規約',
-    intro: '本規約は、当サービスをご利用いただく際に適用されます。ご利用により、本規約に同意いただいたものとみなします。',
-    usage: ['サービスの利用', '当サービスは、日本からのリダイレクト購入、パーソナルショッピング、およびオンラインショップの運営を行うプラットフォームです。お客様は本規約に従い、適法な目的でサービスをご利用ください。'],
-    account: ['アカウントの責任', 'アカウントの管理はお客様の責任です。パスワードの漏洩や不正利用を防ぐため適切に管理し、不審なアクセスがあった場合は速やかに当社へご連絡ください。'],
-    prohibited: ['禁止事項', '以下の行為を禁止します：不正アクセス、法令違反、他者への迷惑行為、当社システムへの攻撃、虚偽の情報の登録、その他当社が不適切と判断する行為。'],
-    payment: ['決済（Stripe）', '料金のお支払いはStripeを経由して行われます。お支払いが完了した時点で契約が成立します。返金については各サービスのポリシーに従います。'],
-    liability: ['責任の制限', '当社は、法令で認められる範囲を超えて、サービスの中断、データの損失、または損害について責任を負いません。サービスの利用は「現状のまま」提供されます。'],
-    changes: ['規約の変更', '当社は、必要に応じて本規約を変更することがあります。重要な変更については、当サイト上での掲示、またはメール等でお知らせします。変更後の規約は掲示後に適用されます。'],
-    contactLabel: 'お問い合わせ',
-    contact: (email) => `本規約に関するお問い合わせは ${email} までご連絡ください。`,
+    subtitle: 'Eiko\'s Delivery Service 利用規約',
+    content: (c) => (
+      <>
+        <P>本利用規約（以下「本規約」）は、{c.BUSINESS_NAME}（以下「当サービス」）が提供するサービスの利用条件を定めるものです。ユーザーは本サービスを利用することにより、本規約に同意したものとみなされます。</P>
+
+        <LegalSection title="第1条（サービス内容）">
+          <P>当サービスは以下のサービスを提供します。</P>
+          <Ul items={[
+            '日本の商品購入代行',
+            'パーソナルショッピングサービス',
+            '商品の受取および海外発送サポート',
+          ]} />
+          <P>当サービスは、ユーザーが指定した商品を購入または発送するためのサポートを行います。</P>
+        </LegalSection>
+
+        <LegalSection title="第2条（アカウント登録）">
+          <P>ユーザーは、本サービスの利用にあたりアカウント登録を行う場合があります。</P>
+          <P>ユーザーは登録情報を正確に提供する責任を負います。</P>
+          <P>虚偽の情報が登録された場合、当サービスはアカウントを停止または削除する権利を有します。</P>
+        </LegalSection>
+
+        <LegalSection title="第3条（アカウント管理）">
+          <P>ユーザーはアカウントのIDおよびパスワードを自己責任で管理するものとします。</P>
+          <P>第三者による不正利用が発生した場合、速やかに当サービスへ連絡してください。</P>
+        </LegalSection>
+
+        <LegalSection title="第4条（決済）">
+          <P>サービス料金は Stripe を通じて支払われます。</P>
+          <P>支払いが完了した時点で注文が確定します。</P>
+          <P>決済処理はStripeのセキュリティ基準に従って行われ、クレジットカード情報は当サービスのサーバーには保存されません。</P>
+        </LegalSection>
+
+        <LegalSection title="第5条（料金）">
+          <P>ユーザーは以下の費用を負担する場合があります。</P>
+          <Ul items={[
+            '商品代金',
+            '日本国内送料',
+            '国際送料',
+            'サービス手数料',
+            'その他オプションサービス費用',
+          ]} />
+          <P>料金の詳細は各サービスページに表示されます。</P>
+        </LegalSection>
+
+        <LegalSection title="第6条（禁止商品）">
+          <P>以下の商品は取り扱うことができません。</P>
+          <Ul items={[
+            '違法な商品',
+            '武器、爆発物、危険物',
+            '麻薬および違法薬物',
+            '配送業者が輸送できない商品',
+            '輸出入が禁止されている商品',
+          ]} />
+          <P>その他、当サービスが不適切と判断した商品についても取り扱いを拒否する場合があります。</P>
+        </LegalSection>
+
+        <LegalSection title="第7条（配送）">
+          <P>商品はユーザーの指定した住所へ発送されます。</P>
+          <P>配送中の遅延、通関、輸入税などについては配送業者および各国の規制に依存します。</P>
+          <P>ユーザーは輸入税および関税を負担する責任があります。</P>
+        </LegalSection>
+
+        <LegalSection title="第8条（返品およびキャンセル）">
+          <P>商品の性質上、注文確定後のキャンセルは原則として受け付けていません。</P>
+          <P>返品および返金は、販売元のポリシーおよび状況に応じて対応します。</P>
+        </LegalSection>
+
+        <LegalSection title="第9条（責任の制限）">
+          <P>当サービスは以下について責任を負いません。</P>
+          <Ul items={[
+            '販売者が提供する商品情報の正確性',
+            '商品の品質や真贋',
+            '配送遅延または配送中の損傷',
+            '税関による商品の没収または遅延',
+          ]} />
+          <P>当サービスの責任は、法律で認められる範囲内に限定されます。</P>
+        </LegalSection>
+
+        <LegalSection title="第10条（サービスの変更）">
+          <P>当サービスは、事前通知なくサービス内容を変更または停止する場合があります。</P>
+        </LegalSection>
+
+        <LegalSection title="第11条（規約の変更）">
+          <P>当サービスは必要に応じて本規約を変更することがあります。</P>
+          <P>変更後の規約はサイトに掲載された時点で効力を持ちます。</P>
+        </LegalSection>
+
+        <LegalSection title="第12条（準拠法）">
+          <P>本規約は日本法に基づいて解釈されます。</P>
+          <P>本サービスに関する紛争は、日本の裁判所を専属的合意管轄とします。</P>
+        </LegalSection>
+
+        <LegalSection title="お問い合わせ">
+          <P><strong>{c.BUSINESS_NAME}</strong><br />Email: {c.SUPPORT_EMAIL}</P>
+        </LegalSection>
+      </>
+    ),
   },
   'pt-BR': {
     title: 'Termos de Uso',
-    intro: 'Ao utilizar o serviço, você concorda com estes termos.',
-    usage: ['Uso do serviço', 'Oferecemos redirecionamento de compras, personal shopping e loja virtual. Use o serviço de forma legal e em conformidade com estes termos.'],
-    account: ['Responsabilidade da conta', 'Você é responsável por gerenciar sua conta. Proteja sua senha e avise-nos em caso de uso indevido.'],
-    prohibited: ['Condutas proibidas', 'É proibido: acesso não autorizado, atos ilegais, perturbação a terceiros, ataques aos sistemas, informações falsas ou outras condutas que considerarmos inadequadas.'],
-    payment: ['Pagamentos (Stripe)', 'O pagamento é feito via Stripe. O contrato é firmado na conclusão do pagamento. Reembolsos seguem a política de cada serviço.'],
-    liability: ['Limitação de responsabilidade', 'Nosso compromisso se limita ao que a lei permitir. Não nos responsabilizamos por interrupções, perda de dados ou danos indiretos além do permitido.'],
-    changes: ['Alteração dos termos', 'Podemos alterar estes termos quando necessário. Mudanças relevantes serão comunicadas no site ou por e-mail.'],
-    contactLabel: 'Contato',
-    contact: (email) => `Dúvidas sobre os termos: ${email}`,
+    subtitle: 'Eiko\'s Delivery Service - Termos de Uso',
+    content: (c) => (
+      <>
+        <P>Estes Termos de Uso (&quot;Termos&quot;) estabelecem as condições de uso dos serviços prestados pelo {c.BUSINESS_NAME} (&quot;o Serviço&quot;). Ao utilizar o serviço, o usuário é considerado como tendo concordado com estes Termos.</P>
+
+        <LegalSection title="Art. 1º (Conteúdo do serviço)">
+          <P>O Serviço oferece o seguinte:</P>
+          <Ul items={[
+            'Compra por procuração de produtos japoneses',
+            'Serviço de personal shopping',
+            'Recebimento de produtos e suporte ao envio internacional',
+          ]} />
+          <P>O Serviço presta suporte para a compra ou envio dos produtos indicados pelo usuário.</P>
+        </LegalSection>
+
+        <LegalSection title="Art. 2º (Cadastro de conta)">
+          <P>O usuário poderá realizar cadastro de conta para utilizar o Serviço.</P>
+          <P>O usuário é responsável por fornecer informações precisas no cadastro.</P>
+          <P>Caso sejam registradas informações falsas, o Serviço terá o direito de suspender ou excluir a conta.</P>
+        </LegalSection>
+
+        <LegalSection title="Art. 3º (Gestão da conta)">
+          <P>O usuário deve gerenciar o ID e a senha da conta por sua própria responsabilidade.</P>
+          <P>Em caso de uso indevido por terceiros, entre em contato com o Serviço imediatamente.</P>
+        </LegalSection>
+
+        <LegalSection title="Art. 4º (Pagamento)">
+          <P>As taxas do serviço são pagas através do Stripe.</P>
+          <P>O pedido é confirmado quando o pagamento for concluído.</P>
+          <P>O processamento de pagamentos segue os padrões de segurança do Stripe; informações de cartão de crédito não são armazenadas em nossos servidores.</P>
+        </LegalSection>
+
+        <LegalSection title="Art. 5º (Taxas)">
+          <P>O usuário poderá arcar com os seguintes custos:</P>
+          <Ul items={[
+            'Valor das mercadorias',
+            'Frete doméstico (Japão)',
+            'Frete internacional',
+            'Taxa de serviço',
+            'Outras taxas de serviços opcionais',
+          ]} />
+          <P>Os detalhes das taxas são exibidos na página de cada serviço.</P>
+        </LegalSection>
+
+        <LegalSection title="Art. 6º (Produtos proibidos)">
+          <P>Os seguintes produtos não podem ser tratados:</P>
+          <Ul items={[
+            'Produtos ilegais',
+            'Armas, explosivos e materiais perigosos',
+            'Drogas e medicamentos ilegais',
+            'Produtos que as transportadoras não podem enviar',
+            'Produtos cuja importação ou exportação é proibida',
+          ]} />
+          <P>O Serviço pode recusar outros produtos que considerar inadequados.</P>
+        </LegalSection>
+
+        <LegalSection title="Art. 7º (Envio)">
+          <P>Os produtos são enviados para o endereço indicado pelo usuário.</P>
+          <P>Atrasos no envio, desembaraço aduaneiro e impostos de importação dependem da transportadora e das regulamentações de cada país.</P>
+          <P>O usuário é responsável por arcar com impostos de importação e tarifas.</P>
+        </LegalSection>
+
+        <LegalSection title="Art. 8º (Devolução e cancelamento)">
+          <P>Devido à natureza dos produtos, o cancelamento após a confirmação do pedido não é aceito em princípio.</P>
+          <P>Devoluções e reembolsos são tratados conforme a política do vendedor e as circunstâncias.</P>
+        </LegalSection>
+
+        <LegalSection title="Art. 9º (Limitação de responsabilidade)">
+          <P>O Serviço não se responsabiliza por:</P>
+          <Ul items={[
+            'A precisão das informações sobre produtos fornecidas pelo vendedor',
+            'A qualidade ou autenticidade dos produtos',
+            'Atrasos na entrega ou danos durante o transporte',
+            'Apreensão ou atraso de produtos pela alfândega',
+          ]} />
+          <P>A responsabilidade do Serviço limita-se ao permitido por lei.</P>
+        </LegalSection>
+
+        <LegalSection title="Art. 10º (Alterações no serviço)">
+          <P>O Serviço pode alterar ou interromper o conteúdo do serviço sem aviso prévio.</P>
+        </LegalSection>
+
+        <LegalSection title="Art. 11º (Alterações nos Termos)">
+          <P>O Serviço pode alterar estes Termos quando necessário.</P>
+          <P>Os Termos alterados entram em vigor a partir da publicação no site.</P>
+        </LegalSection>
+
+        <LegalSection title="Art. 12º (Lei aplicável)">
+          <P>Estes Termos são interpretados conforme a lei japonesa.</P>
+          <P>Disputas relacionadas ao Serviço serão submetidas exclusivamente aos tribunais do Japão.</P>
+        </LegalSection>
+
+        <LegalSection title="Contato">
+          <P><strong>{c.BUSINESS_NAME}</strong><br />Email: {c.SUPPORT_EMAIL}</P>
+        </LegalSection>
+      </>
+    ),
   },
   en: {
-    title: 'Terms of Service',
-    intro: 'By using the service, you agree to these terms.',
-    usage: ['Service usage', 'We offer purchase redirection, personal shopping, and virtual store. Use the service legally and in accordance with these terms.'],
-    account: ['Account responsibility', 'You are responsible for managing your account. Protect your password and notify us of any misuse.'],
-    prohibited: ['Prohibited conduct', 'Prohibited: unauthorized access, illegal acts, disturbance to others, attacks on systems, false information, or other conduct we deem inappropriate.'],
-    payment: ['Payments (Stripe)', 'Payment is made via Stripe. The contract is formed upon payment completion. Refunds follow each service\'s policy.'],
-    liability: ['Limitation of liability', 'We are liable only to the extent permitted by law. We are not liable for interruptions, data loss, or indirect damages beyond what is permitted.'],
-    changes: ['Terms modification', 'We may modify these terms when necessary. Significant changes will be communicated on the site or by email.'],
-    contactLabel: 'Contact',
-    contact: (email) => `Questions about the terms: ${email}`,
+    title: 'Terms of Use',
+    subtitle: 'Eiko\'s Delivery Service - Terms of Use',
+    content: (c) => (
+      <>
+        <P>These Terms of Use (&quot;Terms&quot;) establish the conditions for use of the services provided by {c.BUSINESS_NAME} (&quot;the Service&quot;). By using the Service, the user is deemed to have agreed to these Terms.</P>
+
+        <LegalSection title="Article 1 (Service content)">
+          <P>The Service provides the following:</P>
+          <Ul items={[
+            'Japanese product purchasing agency',
+            'Personal shopping service',
+            'Product reception and international shipping support',
+          ]} />
+          <P>The Service provides support for purchasing or shipping products specified by the user.</P>
+        </LegalSection>
+
+        <LegalSection title="Article 2 (Account registration)">
+          <P>Users may register an account to use the Service.</P>
+          <P>Users are responsible for providing accurate registration information.</P>
+          <P>If false information is registered, the Service has the right to suspend or delete the account.</P>
+        </LegalSection>
+
+        <LegalSection title="Article 3 (Account management)">
+          <P>Users shall manage their account ID and password at their own responsibility.</P>
+          <P>In case of unauthorized use by third parties, please contact the Service immediately.</P>
+        </LegalSection>
+
+        <LegalSection title="Article 4 (Payment)">
+          <P>Service fees are paid through Stripe.</P>
+          <P>Orders are confirmed when payment is completed.</P>
+          <P>Payment processing follows Stripe&apos;s security standards; credit card information is not stored on our servers.</P>
+        </LegalSection>
+
+        <LegalSection title="Article 5 (Fees)">
+          <P>Users may be responsible for the following costs:</P>
+          <Ul items={[
+            'Product price',
+            'Domestic shipping (Japan)',
+            'International shipping',
+            'Service fee',
+            'Other optional service costs',
+          ]} />
+          <P>Fee details are displayed on each service page.</P>
+        </LegalSection>
+
+        <LegalSection title="Article 6 (Prohibited products)">
+          <P>The following products cannot be handled:</P>
+          <Ul items={[
+            'Illegal products',
+            'Weapons, explosives, hazardous materials',
+            'Narcotics and illegal drugs',
+            'Products that carriers cannot transport',
+            'Products whose import or export is prohibited',
+          ]} />
+          <P>The Service may refuse other products it deems inappropriate.</P>
+        </LegalSection>
+
+        <LegalSection title="Article 7 (Shipping)">
+          <P>Products are shipped to the address specified by the user.</P>
+          <P>Delivery delays, customs clearance, and import taxes depend on the carrier and each country&apos;s regulations.</P>
+          <P>Users are responsible for import taxes and duties.</P>
+        </LegalSection>
+
+        <LegalSection title="Article 8 (Returns and cancellation)">
+          <P>Due to the nature of the products, cancellations after order confirmation are generally not accepted.</P>
+          <P>Returns and refunds are handled according to the seller&apos;s policy and circumstances.</P>
+        </LegalSection>
+
+        <LegalSection title="Article 9 (Limitation of liability)">
+          <P>The Service is not responsible for:</P>
+          <Ul items={[
+            'Accuracy of product information provided by the seller',
+            'Product quality or authenticity',
+            'Delivery delays or damage during shipping',
+            'Product seizure or delays by customs',
+          ]} />
+          <P>The Service&apos;s liability is limited to the extent permitted by law.</P>
+        </LegalSection>
+
+        <LegalSection title="Article 10 (Service changes)">
+          <P>The Service may change or discontinue service content without prior notice.</P>
+        </LegalSection>
+
+        <LegalSection title="Article 11 (Terms changes)">
+          <P>The Service may change these Terms when necessary.</P>
+          <P>Revised Terms take effect upon publication on the site.</P>
+        </LegalSection>
+
+        <LegalSection title="Article 12 (Governing law)">
+          <P>These Terms are interpreted in accordance with Japanese law.</P>
+          <P>Disputes related to the Service shall be subject to the exclusive jurisdiction of the courts of Japan.</P>
+        </LegalSection>
+
+        <LegalSection title="Contact">
+          <P><strong>{c.BUSINESS_NAME}</strong><br />Email: {c.SUPPORT_EMAIL}</P>
+        </LegalSection>
+      </>
+    ),
   },
 }
 
 export default function TermsOfService() {
   const { lang } = useLegalLanguage()
-  const { SUPPORT_EMAIL } = LEGAL_CONFIG
-  const c = CONTENT[lang]
+  const { BUSINESS_NAME, SUPPORT_EMAIL } = LEGAL_CONFIG
+  const cfg = { BUSINESS_NAME, SUPPORT_EMAIL }
+  const content = CONTENT[lang] ?? CONTENT.en
 
   return (
     <>
       <Helmet>
-        <title>{c.title} | Legal | Delivery</title>
+        <title>{content.title} | Legal | Delivery</title>
       </Helmet>
 
       <h2 className="text-2xl font-bold tracking-tight text-earth-900 sm:text-3xl">
-        {c.title}
+        {content.title}
       </h2>
+      {content.subtitle && (
+        <p className="mt-1 text-earth-600">{content.subtitle}</p>
+      )}
 
-      <p className="mt-4 text-earth-600">{c.intro}</p>
-
-      <div className="mt-8 space-y-6">
-        <LegalSection title={c.usage[0]}>
-          <p>{c.usage[1]}</p>
-        </LegalSection>
-        <LegalSection title={c.account[0]}>
-          <p>{c.account[1]}</p>
-        </LegalSection>
-        <LegalSection title={c.prohibited[0]}>
-          <p>{c.prohibited[1]}</p>
-        </LegalSection>
-        <LegalSection title={c.payment[0]}>
-          <p>{c.payment[1]}</p>
-        </LegalSection>
-        <LegalSection title={c.liability[0]}>
-          <p>{c.liability[1]}</p>
-        </LegalSection>
-        <LegalSection title={c.changes[0]}>
-          <p>{c.changes[1]}</p>
-        </LegalSection>
-        <LegalSection title={c.contactLabel}>
-          <p>{c.contact(SUPPORT_EMAIL)}</p>
-        </LegalSection>
+      <div className="mt-8 space-y-8">
+        {content.content(cfg)}
       </div>
     </>
   )
