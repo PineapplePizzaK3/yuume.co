@@ -49,6 +49,8 @@ $domains = @{
   closetchild = 'closetchildonlineshop.com'
   voi = '0101.co.jp'
   palcloset = 'palcloset.jp'
+  cosme = 'cosme.net'
+  surugaya = 'suruga-ya.jp'
 }
 
 foreach ($id in $domains.Keys) {

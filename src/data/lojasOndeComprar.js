@@ -11,6 +11,7 @@ export const CATEGORIAS_LOJAS = [
       { id: 'rakuten', nome: 'Rakuten', url: 'https://www.rakuten.co.jp', descricao: 'Um dos maiores marketplaces do Japão com diversos vendedores.' },
       { id: 'qoo10', nome: 'Qoo10', url: 'https://www.qoo10.jp', descricao: 'E-commerce com descontos e cupons frequentes.' },
       { id: 'daiso', nome: 'Daiso', url: 'https://jp.daisonet.com', descricao: 'Loja 100 ienes — itens de utilidade, decoração e presentes.' },
+      { id: 'cosme', nome: '@cosme', url: 'https://www.cosme.net', descricao: 'Maior site de cosméticos e beleza do Japão — reviews, ranking e compras.' },
     ],
   },
   {
@@ -67,6 +68,7 @@ export const CATEGORIAS_LOJAS = [
     nome: 'Usados e Leilões',
     lojas: [
       { id: 'mandarake', nome: 'Mandarake', url: 'https://order.mandarake.co.jp', descricao: 'Itens usados de anime, manga e hobby.' },
+      { id: 'surugaya', nome: 'Suruga-ya', url: 'https://www.suruga-ya.jp', descricao: 'Manga, anime, figures e itens usados de colecionáveis.' },
       { id: 'rakuma', nome: 'Rakuma', url: 'https://fril.jp', descricao: 'Marketplace de usados do Japão.' },
       { id: 'mercari', nome: 'Mercari', url: 'https://jp.mercari.com', descricao: 'Compra e venda de usados entre pessoas.' },
       { id: 'yahoofleamarket', nome: 'Yahoo Fleamarket', url: 'https://auctions.yahoo.co.jp', descricao: 'Leilões e itens usados Yahoo Japan.' },
