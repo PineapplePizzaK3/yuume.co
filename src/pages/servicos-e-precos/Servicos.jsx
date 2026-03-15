@@ -17,7 +17,7 @@ const LINHAS_REDIRECIONAMENTO = (formatarIene) => [
   { label: '2 itens', valor: `${formatarIene(750)}/item` },
   { label: '3–4 itens', valor: `${formatarIene(600)}/item` },
   { label: '5+ itens', valor: `${formatarIene(500)}/item` },
-  { label: 'Frete internacional', valor: 'Conforme o método de envio (Japan Post)' },
+  { label: 'Frete internacional', valor: 'Informado após consolidação (Japan Post)' },
 ]
 
 function TabelaValores({ percentual, porItem, freteTexto, modoRedirecionamento }) {
@@ -70,6 +70,7 @@ function TabelaValores({ percentual, porItem, freteTexto, modoRedirecionamento }
 
 /**
  * Fluxo de cada serviço.
+ * Frete real só é conhecido após consolidação; o cliente paga e então enviamos.
  */
 const FLUXOS = [
   {
@@ -78,9 +79,10 @@ const FLUXOS = [
     descricao: 'Compre em lojas japonesas e envie para nosso endereço.',
     passos: [
       'Cadastre-se e receba nosso endereço no Japão',
-      'Faça suas compras nas lojas parceiras',
-      'Envie os pacotes para nosso endereço',
-      'Consolidamos e enviamos até você',
+      'Faça suas compras e envie os pacotes para nosso endereço',
+      'Recebemos e consolidamos os produtos',
+      'Informamos o valor real do frete — você paga',
+      'Enviamos até você',
     ],
   },
   {
@@ -91,7 +93,9 @@ const FLUXOS = [
       'Envie sua lista de compras',
       'Recebemos e analisamos seu pedido',
       'Realizamos as compras nas lojas',
-      'Enviamos tudo consolidado',
+      'Consolidamos os produtos',
+      'Informamos o valor real do frete — você paga',
+      'Enviamos até você',
     ],
   },
   {
@@ -181,7 +185,7 @@ function Servicos() {
                 <TabelaValores
                   percentual={20}
                   porItem={150}
-                  freteTexto="Conforme o método de envio (Japan Post)"
+                  freteTexto="Informado após consolidação (Japan Post)"
                 />
               </>
             )}
@@ -194,7 +198,7 @@ function Servicos() {
                 <TabelaValores
                   percentual={null}
                   porItem={null}
-                  freteTexto="Conforme o método de envio (Japan Post)"
+                  freteTexto="Informado após consolidação (Japan Post)"
                 />
               </>
             )}
