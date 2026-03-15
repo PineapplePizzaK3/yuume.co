@@ -49,9 +49,11 @@ const TABS = [
   { id: 'epacket', label: 'ePacket Light', badge: '2 kg' },
 ]
 
+// Via marítima temporariamente indisponível
+const PARCEL_MARITIMO_DISPONIVEL = false
 const PARCEL_SUBTABS = [
   { id: 'aereo', label: 'Via aérea', prazo: '7–15 dias' },
-  { id: 'maritimo', label: 'Via marítima', prazo: '45–90 dias' },
+  ...(PARCEL_MARITIMO_DISPONIVEL ? [{ id: 'maritimo', label: 'Via marítima', prazo: '45–90 dias' }] : []),
 ]
 
 /**
@@ -79,7 +81,8 @@ function FretesEPrazos() {
       <div className="space-y-6">
         <p className="text-earth-600">
           Utilizamos os serviços do Japan Post para envio ao Brasil. Selecione o
-          tipo de envio para ver preços e prazos. A{' '}
+          tipo de envio para ver preços e prazos. O valor real do frete é informado
+          após recebermos e consolidarmos os produtos. A{' '}
           <Link
             to="/servicos-e-precos"
             className="font-medium text-earth-900 underline hover:no-underline"
@@ -210,7 +213,7 @@ function FretesEPrazos() {
 
         <div className="rounded-lg border border-earth-200 bg-earth-100 p-4">
           <p className="text-sm text-earth-700">
-            Tarifas sujeitas a alteração. Use o{' '}
+            Tarifas sujeitas a alteração. O frete real é informado após a consolidação. Use o{' '}
             <Link
               to="/servicos-e-precos/simulador"
               className="font-medium text-earth-900 underline hover:no-underline"

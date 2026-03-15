@@ -17,10 +17,12 @@ const SERVICOS = [
   { id: 'redirecionamento', label: 'Redirecionamento', tipo: 'por-itens' },
   { id: 'personal-shopping', label: 'Personal shopping', percentual: 20 },
 ]
+// Via marítima temporariamente indisponível
+const PARCEL_MARITIMO_DISPONIVEL = false
 const TIPOS_FRETE = [
   { id: 'ems', label: 'EMS', prazo: '5–10 dias úteis' },
   { id: 'parcel-aereo', label: 'Parcel Post (via aérea)', prazo: '7–15 dias' },
-  { id: 'parcel-maritimo', label: 'Parcel Post (via marítima)', prazo: '45–90 dias' },
+  ...(PARCEL_MARITIMO_DISPONIVEL ? [{ id: 'parcel-maritimo', label: 'Parcel Post (via marítima)', prazo: '45–90 dias' }] : []),
   { id: 'epacket', label: 'ePacket Light (até 2 kg)', prazo: '5–21 dias úteis' },
 ]
 
@@ -126,7 +128,7 @@ function Simulador() {
         </h2>
         <p className="mt-2 text-earth-600">
           Adicione produtos para calcular o valor total. Escolha o serviço e o
-          tipo de frete na seção de valores finais.
+          tipo de frete nas seções abaixo.
         </p>
 
         {/* Formulário para adicionar produto */}
@@ -293,48 +295,72 @@ function Simulador() {
               </table>
             </div>
 
-            {/* Resumo do pedido - com escolha de serviço e frete */}
-            <div className="mt-8 rounded-lg border border-earth-200 bg-earth-100 p-6 shadow-sm">
+            {/* Área separada: Frete (estimativa) */}
+            <div className="mt-8 rounded-lg border border-earth-200 bg-earth-50 p-6 shadow-sm">
+              <h3 className="mb-4 text-lg font-semibold text-earth-900">
+                Frete
+              </h3>
+
+              <div>
+                <label htmlFor="tipoFrete" className="block text-sm font-medium text-earth-700">
+                  Tipo de frete
+                </label>
+                <select
+                  id="tipoFrete"
+                  value={tipoFreteEfetivo}
+                  onChange={(e) => setTipoFrete(e.target.value)}
+                  className="mt-1 block w-full max-w-xs rounded-lg border border-earth-300 px-3 py-2 shadow-sm focus:border-earth-900 focus:outline-none focus:ring-1 focus:ring-earth-900"
+                >
+                  {tiposFreteDisponiveis.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="mt-4 flex flex-wrap items-baseline gap-2">
+                <span className="text-2xl font-bold text-earth-900">
+                  {formatarValor(frete)}
+                </span>
+                <span className="text-sm text-earth-600">
+                  ({freteLabel} • {pesoTotalGramas.toLocaleString('pt-BR')}g)
+                </span>
+                {prazoEntrega && (
+                  <span className="text-sm text-earth-600">• {prazoEntrega}</span>
+                )}
+              </div>
+
+              <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4">
+                <p className="text-sm text-amber-900">
+                  <strong>Estimativa.</strong> Este valor é apenas uma estimativa. O valor real do frete só poderá ser descoberto após a consolidação do pedido, pois varia de acordo com o peso real e o peso volumétrico da caixa utilizada no envio.
+                </p>
+              </div>
+            </div>
+
+            {/* Valores finais */}
+            <div className="mt-6 rounded-lg border border-earth-200 bg-earth-100 p-6 shadow-sm">
               <h3 className="mb-4 text-lg font-semibold text-earth-900">
                 Valores finais
               </h3>
 
-              <div className="mb-6 grid gap-4 sm:grid-cols-2">
-                <div>
-                  <label htmlFor="servico" className="block text-sm font-medium text-earth-700">
-                    Serviço
-                  </label>
-                  <select
-                    id="servico"
-                    value={servicoId}
-                    onChange={(e) => setServicoId(e.target.value)}
-                    className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 shadow-sm focus:border-earth-900 focus:outline-none focus:ring-1 focus:ring-earth-900"
-                  >
-                    {SERVICOS.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.label}
-                        {s.percentual != null ? ` (${s.percentual}%)` : ''}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label htmlFor="tipoFrete" className="block text-sm font-medium text-earth-700">
-                    Tipo de frete
-                  </label>
-                  <select
-                    id="tipoFrete"
-                    value={tipoFreteEfetivo}
-                    onChange={(e) => setTipoFrete(e.target.value)}
-                    className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 shadow-sm focus:border-earth-900 focus:outline-none focus:ring-1 focus:ring-earth-900"
-                  >
-                    {tiposFreteDisponiveis.map((t) => (
-                      <option key={t.id} value={t.id}>
-                        {t.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+              <div className="mb-6">
+                <label htmlFor="servico" className="block text-sm font-medium text-earth-700">
+                  Serviço
+                </label>
+                <select
+                  id="servico"
+                  value={servicoId}
+                  onChange={(e) => setServicoId(e.target.value)}
+                  className="mt-1 block w-full max-w-xs rounded-lg border border-earth-300 px-3 py-2 shadow-sm focus:border-earth-900 focus:outline-none focus:ring-1 focus:ring-earth-900"
+                >
+                  {SERVICOS.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.label}
+                      {s.percentual != null ? ` (${s.percentual}%)` : ''}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="space-y-3">
@@ -343,21 +369,13 @@ function Simulador() {
                   <span>{formatarValor(totalProdutos)}</span>
                 </div>
                 <div className="flex justify-between text-earth-700">
-                  <span>
-                    Frete {freteLabel} ({pesoTotalGramas.toLocaleString('pt-BR')}g)
-                  </span>
+                  <span>Frete (estimativa — ver seção acima)</span>
                   <span>{formatarValor(frete)}</span>
                 </div>
                 <div className="flex justify-between text-earth-700">
                   <span>{labelTaxaServico}</span>
                   <span>{formatarValor(taxaServico)}</span>
                 </div>
-                {prazoEntrega && (
-                  <div className="text-earth-600 text-sm">
-                    <span>Prazo médio de entrega: </span>
-                    <span>{prazoEntrega}</span>
-                  </div>
-                )}
                 <div className="flex justify-between border-t border-earth-200 pt-4 text-lg font-bold text-earth-900">
                   <span>Total</span>
                   <span>{formatarValor(totalFinal)}</span>
