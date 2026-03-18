@@ -11,6 +11,7 @@ import { createCheckoutSession, createKomojuSession } from '../../services/payme
 import { getWallet } from '../../services/walletService'
 import { brlToJpy, formatBRL, formatJPY, jpyToBrl } from '../../lib/fx'
 import { calcularFreteEMS } from '../../data/tabelaFreteEMS'
+import { calcularFreteParcel, calcularFreteEPacket } from '../../data/fretesJPPost'
 
 function formatPriceBrlAsJpy(brl) {
   const jpy = Math.round(brlToJpy(brl))
@@ -25,10 +26,8 @@ export default function Cart() {
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [shipImmediately, setShipImmediately] = useState(null)
-  const [freightModalOpen, setFreightModalOpen] = useState(false)
   const [freightConfirmed, setFreightConfirmed] = useState(false)
-  const [freightCostJpy, setFreightCostJpy] = useState(null)
-  const [freightWeightG, setFreightWeightG] = useState(0)
+  const [tipoFrete, setTipoFrete] = useState('ems')
   const [wallet, setWallet] = useState(null)
   const [payModal, setPayModal] = useState({ open: false, order: null, useWallet: true })
   const [feedback, setFeedback] = useState('')
@@ -75,38 +74,46 @@ export default function Cart() {
     const qty = Math.max(1, Math.min(99, Number(quantity) || 1))
     const { error } = await updateCartItem(user.id, productId, qty)
     if (error) setFeedback(error.message)
-    else loadCart()
+    else {
+      if (shipImmediately === true) setFreightConfirmed(false)
+      loadCart()
+    }
   }
 
   const handleRemove = async (productId) => {
     const { error } = await removeFromCart(user.id, productId)
     if (error) setFeedback(error.message)
-    else loadCart()
-  }
-
-  const computeFreight = () => {
-    const totalWeightG = items.reduce((acc, i) => {
-      const p = i.products
-      const weightKg = Number(p?.weight_kg ?? 0)
-      const qty = Number(i.quantity || 1)
-      return acc + weightKg * 1000 * qty
-    }, 0)
-
-    if (!totalWeightG || totalWeightG <= 0) {
-      return { ok: false, error: 'Para calcular o frete, informe o peso (kg) de todos os produtos.' }
-    }
-
-    const costJpy = calcularFreteEMS(totalWeightG)
-    if (!costJpy || costJpy <= 0) {
-      return { ok: false, error: 'Não foi possível calcular o frete com base no peso informado.' }
-    }
-
-    return {
-      ok: true,
-      totalWeightG,
-      costJpy,
+    else {
+      if (shipImmediately === true) setFreightConfirmed(false)
+      loadCart()
     }
   }
+
+  const TIPOS_FRETE = [
+    { id: 'ems', label: 'EMS', prazo: '5–10 dias úteis' },
+    { id: 'parcel-aereo', label: 'Parcel Post (via aérea)', prazo: '7–15 dias' },
+    { id: 'epacket', label: 'ePacket Light (até 2 kg)', prazo: '5–21 dias úteis' },
+  ]
+
+  const totalWeightG = items.reduce((acc, i) => {
+    const p = i.products
+    const weightKg = Number(p?.weight_kg ?? 0)
+    const qty = Number(i.quantity || 1)
+    return acc + weightKg * 1000 * qty
+  }, 0)
+
+  const tiposFreteDisponiveis =
+    totalWeightG > 2000 ? TIPOS_FRETE.filter((t) => t.id !== 'epacket') : TIPOS_FRETE
+
+  const tipoFreteEfetivo = tiposFreteDisponiveis.some((t) => t.id === tipoFrete) ? tipoFrete : 'ems'
+
+  const freightCostJpyComputed = (() => {
+    if (!totalWeightG || totalWeightG <= 0) return null
+    if (tipoFreteEfetivo === 'ems') return calcularFreteEMS(totalWeightG)
+    if (tipoFreteEfetivo === 'parcel-aereo') return calcularFreteParcel(totalWeightG, 'aereo')
+    if (tipoFreteEfetivo === 'epacket') return calcularFreteEPacket(totalWeightG)
+    return calcularFreteEMS(totalWeightG)
+  })()
 
   const handleCheckout = async () => {
     if (shipImmediately === null) {
@@ -117,10 +124,16 @@ export default function Cart() {
       setFeedback('Carrinho vazio.')
       return
     }
-    if (shipImmediately === true && !freightConfirmed) {
-      // Mostra o painel de frete caso ainda não tenha confirmado.
-      setFreightModalOpen(true)
-      return
+    if (shipImmediately === true) {
+      if (!freightCostJpyComputed || freightCostJpyComputed <= 0) {
+        setFeedback('Para calcular o frete, informe o peso (kg) de todos os produtos.')
+        setFreightConfirmed(false)
+        return
+      }
+      if (!freightConfirmed) {
+        setFeedback('Confirme o frete estimado antes de finalizar a compra.')
+        return
+      }
     }
     setSubmitting(true)
     setFeedback('')
@@ -128,7 +141,7 @@ export default function Cart() {
       const { data: order, error } = await createStoreOrder(
         user.id,
         shipImmediately,
-        shipImmediately === true ? freightCostJpy : null
+        shipImmediately === true ? freightCostJpyComputed : null
       )
       if (error) {
         setFeedback(error.message || 'Erro ao criar pedido')
@@ -303,10 +316,7 @@ export default function Cart() {
                     checked={shipImmediately === false}
                     onChange={() => {
                       setShipImmediately(false)
-                      setFreightModalOpen(false)
                       setFreightConfirmed(false)
-                      setFreightCostJpy(null)
-                      setFreightWeightG(0)
                     }}
                     className="mt-1 border-earth-300"
                   />
@@ -321,32 +331,106 @@ export default function Cart() {
                     name="ship"
                     checked={shipImmediately === true}
                     onChange={() => {
-                      const res = computeFreight()
-                      if (!res.ok) {
-                        setFeedback(res.error)
+                      if (!totalWeightG || totalWeightG <= 0) {
+                        setFeedback('Para calcular o frete, informe o peso (kg) de todos os produtos.')
                         setShipImmediately(false)
-                        setFreightModalOpen(false)
                         setFreightConfirmed(false)
-                        setFreightCostJpy(null)
-                        setFreightWeightG(0)
+                        return
+                      }
+                      if (!freightCostJpyComputed || freightCostJpyComputed <= 0) {
+                        setFeedback('Não foi possível calcular o frete com base no peso informado.')
+                        setShipImmediately(false)
+                        setFreightConfirmed(false)
                         return
                       }
                       setShipImmediately(true)
-                      setFreightCostJpy(res.costJpy)
-                      setFreightWeightG(res.totalWeightG)
-                      setFreightConfirmed(false)
-                      setFreightModalOpen(true)
+                      setFreightConfirmed(false) // usuário precisa confirmar o frete estimado
                     }}
                     className="mt-1 border-earth-300"
                   />
                   <div>
                     <span className="block font-medium text-earth-900">Envio imediato</span>
                     <span className="text-sm text-earth-600">
-                      Frete estimado calculado por peso (EMS). Você paga o frete depois, após os produtos serem pagos.
+                      Frete estimado calculado pelo peso. Você paga o frete depois, após os produtos serem pagos.
                     </span>
                   </div>
                 </label>
               </div>
+
+              {shipImmediately === true && (
+                <div className="mt-5 rounded-xl border border-earth-200 bg-earth-50 p-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <h4 className="font-semibold text-earth-900">Frete (na própria página)</h4>
+                      <p className="mt-1 text-sm text-earth-600">
+                        Peso total: <span className="font-medium text-earth-900">{Math.round(totalWeightG)}g</span>
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-earth-600">Estimativa</p>
+                      <p className="text-lg font-semibold text-earth-900">
+                        {freightCostJpyComputed != null ? formatJPY(freightCostJpyComputed) : '—'}
+                      </p>
+                      {freightCostJpyComputed != null && (
+                        <p className="text-xs text-earth-600">
+                          Aprox. em BRL: {formatBRL(jpyToBrl(freightCostJpyComputed))}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                    {TIPOS_FRETE.map((t) => {
+                      const isAvailable = tiposFreteDisponiveis.some((x) => x.id === t.id)
+                      const isSelected = tipoFreteEfetivo === t.id
+                      return (
+                        <label
+                          key={t.id}
+                          className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition ${
+                            isAvailable
+                              ? isSelected
+                                ? 'border-earth-900 bg-white'
+                                : 'border-earth-300 bg-earth-50 hover:border-earth-900'
+                              : 'border-earth-200 bg-earth-100 opacity-60 cursor-not-allowed'
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="frete_tipo"
+                            disabled={!isAvailable}
+                            checked={isSelected}
+                            onChange={() => {
+                              if (!isAvailable) return
+                              setTipoFrete(t.id)
+                              setFreightConfirmed(false)
+                            }}
+                            className="mt-1 border-earth-300"
+                          />
+                          <div>
+                            <span className="block font-medium text-earth-900">{t.label}</span>
+                            <span className="text-sm text-earth-600">{t.prazo}</span>
+                          </div>
+                        </label>
+                      )
+                    })}
+                  </div>
+
+                  <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <p className="text-xs text-earth-500">
+                      Este valor é uma estimativa. Para enviar, o administrador consolida o pedido e pode ajustar o valor final.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setFreightConfirmed(true)}
+                      className={`rounded-lg px-4 py-2 font-medium transition ${
+                        freightConfirmed ? 'bg-earth-800 text-earth-50 hover:bg-earth-700' : 'bg-earth-900 text-earth-50 hover:bg-earth-800'
+                      }`}
+                    >
+                      {freightConfirmed ? 'Frete confirmado' : 'Confirmar frete'}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="flex items-center justify-between rounded-xl border border-earth-200 bg-earth-50 p-6">
@@ -367,59 +451,7 @@ export default function Cart() {
         )}
       </div>
 
-      {freightModalOpen && shipImmediately === true && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-lg">
-            <h3 className="font-semibold text-earth-900">Frete (estimativa)</h3>
-            <p className="mt-1 text-sm text-earth-600">
-              Calculado pelo peso total dos itens (tabela EMS).
-            </p>
-
-            <div className="mt-4 rounded-lg border border-earth-200 bg-earth-50 p-4">
-              <p className="text-sm text-earth-700">
-                Peso total: <span className="font-medium text-earth-900">{Math.round(freightWeightG)}g</span>
-              </p>
-              <p className="mt-2 text-lg font-semibold text-earth-900">
-                Frete estimado: {freightCostJpy != null ? formatJPY(freightCostJpy) : '—'}
-              </p>
-              {freightCostJpy != null && (
-                <p className="mt-1 text-xs text-earth-600">
-                  Aproximado em BRL: {formatBRL(jpyToBrl(freightCostJpy))}
-                </p>
-              )}
-              <p className="mt-2 text-xs text-earth-500">
-                Este valor é uma estimativa. O valor real pode variar após consolidação do pedido.
-              </p>
-            </div>
-
-            <div className="mt-6 flex gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setFreightModalOpen(false)
-                  setFreightConfirmed(true)
-                }}
-                className="rounded-lg bg-earth-900 px-4 py-2 font-medium text-earth-50 hover:bg-earth-800"
-              >
-                Confirmar e continuar
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setFreightModalOpen(false)
-                  setFreightConfirmed(false)
-                  setShipImmediately(false)
-                  setFreightCostJpy(null)
-                  setFreightWeightG(0)
-                }}
-                className="rounded-lg border border-earth-300 px-4 py-2 font-medium text-earth-700 hover:bg-earth-100"
-              >
-                Trocar para Armazenar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      
 
       {payModal.open && payModal.order && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
