@@ -34,6 +34,25 @@ function toChargeAmountJpy(amount, currency) {
   return n
 }
 
+function getBaseUrl(req) {
+  const envUrl = process.env.VITE_SITE_URL || process.env.SITE_URL
+  const fromEnv = typeof envUrl === 'string' && envUrl.trim()
+    ? envUrl.trim().replace(/\/$/, '')
+    : null
+  const isHttp = (u) => /^https?:\/\//i.test(u)
+  if (fromEnv && isHttp(fromEnv)) return fromEnv
+
+  const origin = req?.headers?.origin
+  if (typeof origin === 'string' && isHttp(origin)) return origin.replace(/\/$/, '')
+
+  const protoHeader = req?.headers?.['x-forwarded-proto']
+  const proto = typeof protoHeader === 'string' && protoHeader ? protoHeader.split(',')[0].trim() : 'https'
+  const host = req?.headers?.['x-forwarded-host'] || req?.headers?.host
+  if (typeof host === 'string' && host) return `${proto}://${host}`.replace(/\/$/, '')
+
+  return null
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
@@ -87,7 +106,8 @@ export default async function handler(req, res) {
     const amountJpy = Math.round(toChargeAmountJpy(amount, currency))
     if (!amountJpy || amountJpy <= 0) return res.status(400).json({ error: 'Valor inválido para cobrança' })
 
-    const baseUrl = process.env.VITE_SITE_URL || req.headers.origin
+    const baseUrl = getBaseUrl(req)
+    if (!baseUrl) return res.status(500).json({ error: 'Configuração de URL inválida (VITE_SITE_URL/origin ausente)' })
     const returnUrl = `${baseUrl}/api/komoju-return?orderId=${encodeURIComponent(orderId)}`
 
     const paymentTypes =

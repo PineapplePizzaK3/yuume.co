@@ -40,6 +40,25 @@ function toChargeAmountJpy(amount, currency) {
   return n
 }
 
+function getBaseUrl(req) {
+  const envUrl = process.env.VITE_SITE_URL || process.env.SITE_URL
+  const fromEnv = typeof envUrl === 'string' && envUrl.trim()
+    ? envUrl.trim().replace(/\/$/, '')
+    : null
+  const isHttp = (u) => /^https?:\/\//i.test(u)
+  if (fromEnv && isHttp(fromEnv)) return fromEnv
+
+  const origin = req?.headers?.origin
+  if (typeof origin === 'string' && isHttp(origin)) return origin.replace(/\/$/, '')
+
+  const protoHeader = req?.headers?.['x-forwarded-proto']
+  const proto = typeof protoHeader === 'string' && protoHeader ? protoHeader.split(',')[0].trim() : 'https'
+  const host = req?.headers?.['x-forwarded-host'] || req?.headers?.host
+  if (typeof host === 'string' && host) return `${proto}://${host}`.replace(/\/$/, '')
+
+  return null
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
@@ -68,7 +87,10 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: 'Sessão inválida. Faça login novamente.' })
     }
 
-    const baseUrl = process.env.VITE_SITE_URL || req.headers.origin
+    const baseUrl = getBaseUrl(req)
+    if (!baseUrl) {
+      return res.status(500).json({ error: 'Configuração de URL inválida (VITE_SITE_URL/origin ausente)' })
+    }
 
     // Carrinho (produtos da loja)
     if (body.type === 'cart') {
