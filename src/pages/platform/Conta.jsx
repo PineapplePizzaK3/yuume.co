@@ -260,92 +260,118 @@ export default function Conta() {
 
               {showForm && (
                 <form onSubmit={handleSaveAddress} className="mt-4 space-y-3 rounded-lg border border-earth-200 bg-white p-4">
-                  <input
-                    type="text"
-                    value={addressForm.label}
-                    onChange={(e) => setAddressForm((f) => ({ ...f, label: e.target.value }))}
-                    placeholder="Nome do endereço (ex: Casa, Trabalho)"
-                    className="block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
-                  />
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <input
-                      required
-                      type="text"
-                      value={addressForm.recipient_name}
-                      onChange={(e) => setAddressForm((f) => ({ ...f, recipient_name: e.target.value }))}
-                      placeholder="Nome do destinatário *"
-                      className="rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
-                    />
-                    <input
-                      required
-                      type="text"
-                      value={addressForm.postal_code}
-                      onChange={(e) => setAddressForm((f) => ({ ...f, postal_code: e.target.value }))}
-                      placeholder="CEP *"
-                      className="rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
-                    />
+                  <div className="grid gap-3">
+                    <div className="grid gap-2 sm:grid-cols-[180px_1fr] sm:items-center">
+                      <label className="text-sm font-medium text-earth-700">Nome do endereço</label>
+                      <input
+                        type="text"
+                        value={addressForm.label}
+                        onChange={(e) => setAddressForm((f) => ({ ...f, label: e.target.value }))}
+                        className="block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                      />
+                    </div>
+
+                    <div className="grid gap-2 sm:grid-cols-[180px_1fr] sm:items-center">
+                      <label className="text-sm font-medium text-earth-700">Destinatário *</label>
+                      <input
+                        required
+                        type="text"
+                        value={addressForm.recipient_name}
+                        onChange={(e) => setAddressForm((f) => ({ ...f, recipient_name: e.target.value }))}
+                        className="block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                      />
+                    </div>
+
+                    <div className="grid gap-2 sm:grid-cols-[180px_1fr] sm:items-center">
+                      <label className="text-sm font-medium text-earth-700">CEP *</label>
+                      <input
+                        required
+                        type="text"
+                        value={addressForm.postal_code}
+                        onChange={(e) => setAddressForm((f) => ({ ...f, postal_code: e.target.value }))}
+                        className="block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                      />
+                    </div>
+
+                    <div className="grid gap-2 sm:grid-cols-[180px_1fr] sm:items-center">
+                      <label className="text-sm font-medium text-earth-700">Rua/Avenida *</label>
+                      <input
+                        required
+                        type="text"
+                        value={addressForm.street}
+                        onChange={(e) => setAddressForm((f) => ({ ...f, street: e.target.value }))}
+                        className="block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                      />
+                    </div>
+
+                    <div className="grid gap-2 sm:grid-cols-[180px_1fr] sm:items-center">
+                      <label className="text-sm font-medium text-earth-700">Número *</label>
+                      <input
+                        required
+                        type="text"
+                        value={addressForm.number}
+                        onChange={(e) => setAddressForm((f) => ({ ...f, number: e.target.value }))}
+                        className="block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                      />
+                    </div>
+
+                    <div className="grid gap-2 sm:grid-cols-[180px_1fr] sm:items-center">
+                      <label className="text-sm font-medium text-earth-700">Complemento</label>
+                      <input
+                        type="text"
+                        value={addressForm.complement}
+                        onChange={(e) => setAddressForm((f) => ({ ...f, complement: e.target.value }))}
+                        className="block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                      />
+                    </div>
+
+                    <div className="grid gap-2 sm:grid-cols-[180px_1fr] sm:items-center">
+                      <label className="text-sm font-medium text-earth-700">Bairro *</label>
+                      <input
+                        required
+                        type="text"
+                        value={addressForm.neighborhood}
+                        onChange={(e) => setAddressForm((f) => ({ ...f, neighborhood: e.target.value }))}
+                        className="block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                      />
+                    </div>
+
+                    <div className="grid gap-2 sm:grid-cols-[180px_1fr] sm:items-center">
+                      <label className="text-sm font-medium text-earth-700">Cidade *</label>
+                      <input
+                        required
+                        type="text"
+                        value={addressForm.city}
+                        onChange={(e) => setAddressForm((f) => ({ ...f, city: e.target.value }))}
+                        className="block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                      />
+                    </div>
+
+                    <div className="grid gap-2 sm:grid-cols-[180px_1fr] sm:items-center">
+                      <label className="text-sm font-medium text-earth-700">UF *</label>
+                      <select
+                        required
+                        value={addressForm.state}
+                        onChange={(e) => setAddressForm((f) => ({ ...f, state: e.target.value }))}
+                        className="block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                      >
+                        <option value="">Selecione</option>
+                        {ESTADOS.map((uf) => (
+                          <option key={uf} value={uf}>{uf}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="grid gap-2 sm:grid-cols-[180px_1fr] sm:items-center">
+                      <label className="text-sm font-medium text-earth-700">País</label>
+                      <input
+                        type="text"
+                        value={addressForm.country}
+                        onChange={(e) => setAddressForm((f) => ({ ...f, country: e.target.value }))}
+                        className="block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                      />
+                    </div>
                   </div>
-                  <input
-                    required
-                    type="text"
-                    value={addressForm.street}
-                    onChange={(e) => setAddressForm((f) => ({ ...f, street: e.target.value }))}
-                    placeholder="Rua/Avenida *"
-                    className="block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
-                  />
-                  <div className="grid gap-3 sm:grid-cols-3">
-                    <input
-                      required
-                      type="text"
-                      value={addressForm.number}
-                      onChange={(e) => setAddressForm((f) => ({ ...f, number: e.target.value }))}
-                      placeholder="Número *"
-                      className="rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
-                    />
-                    <input
-                      type="text"
-                      value={addressForm.complement}
-                      onChange={(e) => setAddressForm((f) => ({ ...f, complement: e.target.value }))}
-                      placeholder="Complemento"
-                      className="rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
-                    />
-                    <input
-                      required
-                      type="text"
-                      value={addressForm.neighborhood}
-                      onChange={(e) => setAddressForm((f) => ({ ...f, neighborhood: e.target.value }))}
-                      placeholder="Bairro *"
-                      className="rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
-                    />
-                  </div>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <input
-                      required
-                      type="text"
-                      value={addressForm.city}
-                      onChange={(e) => setAddressForm((f) => ({ ...f, city: e.target.value }))}
-                      placeholder="Cidade *"
-                      className="rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
-                    />
-                    <select
-                      required
-                      value={addressForm.state}
-                      onChange={(e) => setAddressForm((f) => ({ ...f, state: e.target.value }))}
-                      className="rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
-                    >
-                      <option value="">UF *</option>
-                      {ESTADOS.map((uf) => (
-                        <option key={uf} value={uf}>{uf}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <input
-                    type="text"
-                    value={addressForm.country}
-                    onChange={(e) => setAddressForm((f) => ({ ...f, country: e.target.value }))}
-                    placeholder="País"
-                    className="block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
-                  />
                   <div className="flex gap-2">
                     <button
                       type="submit"
