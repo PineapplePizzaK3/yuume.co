@@ -65,6 +65,10 @@ export function PlatformLayout() {
       </aside>
       <main className="flex-1 p-4 pt-24">
         <div className="mx-auto max-w-4xl">
+          <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            <span className="font-semibold">Plataforma em testes.</span>{' '}
+            Ainda estamos em fase de testes e podem haver problemas. Pedimos a compreensão.
+          </div>
           <Outlet />
         </div>
       </main>
