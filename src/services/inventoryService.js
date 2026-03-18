@@ -54,6 +54,22 @@ export async function createShipment(userId, inventoryIds) {
       await supabase.from('shipments').delete().eq('id', shipment.id)
       return { data: null, error: itemsError }
     }
+
+    // Faz o "request" aparecer no painel do admin.
+    // O admin só consegue definir frete quando o order.status está em ready_for_shipment/products_paid.
+    // Aqui sincronizamos orders + user_inventory com base nos inventoryIds selecionados.
+    const { error: quoteErr } = await withDbTimeout(
+      supabase.rpc('user_request_shipment_quote_to_admin', {
+        p_user_id: userId,
+        p_inventory_ids: inventoryIds,
+      }),
+      60000
+    )
+    if (quoteErr) {
+      // Mantém o shipment criado, mas registra o erro no retorno para o UI reagir.
+      return { data: shipment, error: quoteErr }
+    }
+
     return { data: shipment, error: null }
   } catch (e) {
     return { data: null, error: toServiceError(e) }
