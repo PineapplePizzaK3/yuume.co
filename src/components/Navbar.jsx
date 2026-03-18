@@ -107,6 +107,28 @@ function Navbar() {
             </div>
           </div>
 
+          {/* Ação do usuário no mobile (sempre visível no header) */}
+          <div className="flex items-center gap-2 lg:hidden">
+            {isAuthenticated ? (
+              <Link
+                to="/app/dashboard"
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-earth-800 px-3 py-2 text-sm font-medium text-earth-50 transition hover:bg-earth-700"
+              >
+                <span className="h-2 w-2 rounded-full bg-green-400" aria-hidden />
+                <span className="max-w-[10rem] truncate">
+                  {profile?.name || user?.email?.split('@')[0] || 'Conta'}
+                </span>
+              </Link>
+            ) : (
+              <Link
+                to="/login"
+                className="inline-flex items-center justify-center rounded-lg bg-earth-900 px-3 py-2 text-sm font-medium text-earth-50 transition hover:bg-earth-800"
+              >
+                Login / Cadastro
+              </Link>
+            )}
+          </div>
+
           {/* Botão hamburger - apenas mobile */}
           <button
             type="button"
@@ -166,24 +188,6 @@ function Navbar() {
               >
                 Contato
               </Link>
-              {isAuthenticated ? (
-                <Link
-                  to="/app/dashboard"
-                  onClick={fecharMenu}
-                  className="mx-4 mt-2 inline-flex items-center justify-center gap-2 rounded-lg bg-earth-800 px-4 py-3 font-medium text-earth-50 transition hover:bg-earth-700"
-                >
-                  <span className="h-2 w-2 rounded-full bg-green-400" aria-hidden />
-                  {profile?.name || user?.email?.split('@')[0] || 'Minha conta'}
-                </Link>
-              ) : (
-                <Link
-                  to="/login"
-                  onClick={fecharMenu}
-                  className="mx-4 mt-2 inline-flex justify-center rounded-lg bg-earth-900 px-4 py-3 font-medium text-earth-50 transition hover:bg-earth-800"
-                >
-                  Login / Cadastro
-                </Link>
-              )}
               <div className="mt-4 flex justify-center gap-4 border-t border-earth-200 pt-4">
                 {REDES_SOCIAIS.map((rede) => (
                   <a
