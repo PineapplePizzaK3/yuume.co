@@ -38,7 +38,19 @@ if (!supabaseUrl || !supabaseAnonKey) {
   )
 }
 
+const storage =
+  typeof window !== 'undefined' && window.localStorage
+    ? window.localStorage
+    : undefined
+
 export const supabase = createClient(url, key, {
+  auth: {
+    // Mantém o usuário logado entre recarregamentos/sessões
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+    storage,
+  },
   global: {
     fetch: fetchWithTimeout,
   },

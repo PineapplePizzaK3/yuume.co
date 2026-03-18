@@ -42,18 +42,15 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     let cancelled = false
-    const MAX_WAIT = 2500
     const safetyTimeout = setTimeout(() => {
       if (!cancelled) setLoading(false)
     }, 3000)
 
     const init = async () => {
       try {
-        const sessionPromise = supabase.auth.getSession().then((r) => r.data.session)
-        const timeoutPromise = new Promise((resolve) =>
-          setTimeout(() => resolve(null), MAX_WAIT)
-        )
-        const session = await Promise.race([sessionPromise, timeoutPromise])
+        // Não force timeout curto aqui: se a rede/Supabase estiver “acordando”,
+        // um timeout falso derruba a sessão e parece que o usuário foi deslogado.
+        const session = (await supabase.auth.getSession()).data.session
         if (cancelled) return
         setSession(session ?? null)
         setUser(session?.user ?? null)
@@ -77,11 +74,7 @@ export function AuthProvider({ children }) {
         }
       } catch (e) {
         console.warn('Auth init:', e?.message ?? e)
-        if (!cancelled) {
-          setSession(null)
-          setUser(null)
-          setProfile(null)
-        }
+        // Não zere a sessão por erro transitório (offline/timeout). Mantém estado atual.
       } finally {
         clearTimeout(safetyTimeout)
         if (!cancelled) setLoading(false)
