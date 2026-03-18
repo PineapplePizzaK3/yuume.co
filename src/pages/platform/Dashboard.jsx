@@ -150,6 +150,68 @@ export default function Dashboard() {
 
         {!loading && (
           <div className="mt-6 space-y-8">
+            {/* Notificações */}
+            <section className="rounded-xl border border-earth-200 bg-white p-4 sm:p-5">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-earth-900">Notificações</h2>
+                {unreadCount > 0 && (
+                  <span className="inline-flex items-center gap-2 text-sm font-medium text-earth-700">
+                    <span className="inline-block h-2 w-2 rounded-full bg-red-600" aria-hidden />
+                    {unreadCount} nova(s)
+                  </span>
+                )}
+              </div>
+              <p className="mt-1 text-sm text-earth-600">
+                Você receberá uma notificação quando seu pedido mudar de status.
+              </p>
+
+              {notifsLoading && (
+                <p className="mt-4 text-sm text-earth-600">Carregando notificações...</p>
+              )}
+
+              {!notifsLoading && notifications.length === 0 && (
+                <p className="mt-4 text-sm text-earth-600">Nenhuma notificação ainda.</p>
+              )}
+
+              {!notifsLoading && notifications.length > 0 && (
+                <div className="mt-4 space-y-2">
+                  {notifications.map((n) => {
+                    const isUnread = !n.read_at
+                    return (
+                      <button
+                        key={n.id}
+                        type="button"
+                        onClick={async () => {
+                          if (isUnread) {
+                            await markNotificationRead(n.id)
+                            setNotifications((prev) =>
+                              prev.map((x) => (x.id === n.id ? { ...x, read_at: new Date().toISOString() } : x))
+                            )
+                          }
+                          const orderId = n.meta?.order_id
+                          if (orderId) window.location.href = '/app/orders'
+                        }}
+                        className="w-full rounded-lg border border-earth-200 bg-earth-50 p-3 text-left hover:bg-earth-100"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="flex items-center gap-2 font-medium text-earth-900">
+                              {isUnread && <span className="inline-block h-2 w-2 rounded-full bg-red-600" aria-hidden />}
+                              <span className="truncate">{n.title}</span>
+                            </p>
+                            {n.body && <p className="mt-1 text-sm text-earth-600">{n.body}</p>}
+                          </div>
+                          <span className="shrink-0 text-xs text-earth-500">
+                            {n.created_at ? new Date(n.created_at).toLocaleString('pt-BR') : ''}
+                          </span>
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+            </section>
+
             {/* Informações da conta – ícones pequenos */}
             <section className="flex flex-wrap gap-3">
               <Link
@@ -262,68 +324,6 @@ export default function Dashboard() {
                 </p>
               </address>
               <CopyAddressButton address={addressForUser} />
-            </section>
-
-            {/* Notificações */}
-            <section className="rounded-xl border border-earth-200 bg-white p-4 sm:p-5">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-earth-900">Notificações</h2>
-                {unreadCount > 0 && (
-                  <span className="inline-flex items-center gap-2 text-sm font-medium text-earth-700">
-                    <span className="inline-block h-2 w-2 rounded-full bg-red-600" aria-hidden />
-                    {unreadCount} nova(s)
-                  </span>
-                )}
-              </div>
-              <p className="mt-1 text-sm text-earth-600">
-                Você receberá uma notificação quando seu pedido mudar de status.
-              </p>
-
-              {notifsLoading && (
-                <p className="mt-4 text-sm text-earth-600">Carregando notificações...</p>
-              )}
-
-              {!notifsLoading && notifications.length === 0 && (
-                <p className="mt-4 text-sm text-earth-600">Nenhuma notificação ainda.</p>
-              )}
-
-              {!notifsLoading && notifications.length > 0 && (
-                <div className="mt-4 space-y-2">
-                  {notifications.map((n) => {
-                    const isUnread = !n.read_at
-                    return (
-                      <button
-                        key={n.id}
-                        type="button"
-                        onClick={async () => {
-                          if (isUnread) {
-                            await markNotificationRead(n.id)
-                            setNotifications((prev) =>
-                              prev.map((x) => (x.id === n.id ? { ...x, read_at: new Date().toISOString() } : x))
-                            )
-                          }
-                          const orderId = n.meta?.order_id
-                          if (orderId) window.location.href = '/app/orders'
-                        }}
-                        className="w-full rounded-lg border border-earth-200 bg-earth-50 p-3 text-left hover:bg-earth-100"
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <p className="flex items-center gap-2 font-medium text-earth-900">
-                              {isUnread && <span className="inline-block h-2 w-2 rounded-full bg-red-600" aria-hidden />}
-                              <span className="truncate">{n.title}</span>
-                            </p>
-                            {n.body && <p className="mt-1 text-sm text-earth-600">{n.body}</p>}
-                          </div>
-                          <span className="shrink-0 text-xs text-earth-500">
-                            {n.created_at ? new Date(n.created_at).toLocaleString('pt-BR') : ''}
-                          </span>
-                        </div>
-                      </button>
-                    )
-                  })}
-                </div>
-              )}
             </section>
           </div>
         )}
