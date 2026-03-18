@@ -13,7 +13,8 @@ export async function getMyInventory(userId) {
     const { data, error } = await withDbTimeout(
       supabase
         .from('user_inventory')
-        .select('*')
+        // Embeds do pedido para classificar a origem do item (loja vs redirecionamento vs personal shopping)
+        .select('*, orders(order_source, order_module)')
         .eq('user_id', userId)
         .in('status', ['stored', 'ready_for_shipment'])
         .order('created_at', { ascending: false })
