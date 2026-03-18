@@ -1,0 +1,307 @@
+/**
+ * Order service - Pedidos e fluxo:
+ * Pedido → Pagamento do pedido → Recebimento (serviços extras) → Cliente pede envio →
+ * Consolidamos e definimos frete → Cliente paga frete → Enviamos.
+ */
+import { supabase } from '../lib/supabase'
+import { withDbTimeout, toServiceError } from '../lib/dbGuard'
+
+/** Statuses do pedido */
+export const ORDER_STATUS = {
+  PENDING_APPROVAL: 'pending_approval',
+  APPROVED: 'approved',
+  REJECTED: 'rejected',
+  AWAITING_QUOTE: 'awaiting_quote',
+  QUOTED: 'quoted',
+  AWAITING_ARRIVAL: 'awaiting_arrival',
+  ITEM_RECEIVED: 'item_received',
+  STORED: 'stored',
+  READY_FOR_SHIPMENT: 'ready_for_shipment',
+  AWAITING_PAYMENT: 'awaiting_payment',
+  PAID: 'paid',
+  PRODUCTS_PAID: 'products_paid',
+  SHIPPED: 'shipped',
+  COMPLETED: 'completed',
+}
+
+export const ORDER_STATUS_LABELS = {
+  pending_approval: 'Aguardando aprovação',
+  approved: 'Aprovado (aguardando pacotes)',
+  rejected: 'Rejeitado',
+  awaiting_quote: 'Aguardando orçamento',
+  quoted: 'Orçamento enviado',
+  awaiting_arrival: 'Aguardando pacotes',
+  item_received: 'Pacotes recebidos',
+  stored: 'Armazenado',
+  ready_for_shipment: 'Pronto para envio',
+  awaiting_payment: 'Aguardando pagamento',
+  paid: 'Pago',
+  products_paid: 'Produtos pagos (aguardando frete)',
+  shipped: 'Enviado',
+  completed: 'Finalizado',
+}
+
+/**
+ * Busca serviços disponíveis (Redirecionamento, Personal Shopping).
+ */
+export async function getServices() {
+  try {
+    const { data, error } = await withDbTimeout(
+      supabase
+        .from('services')
+        .select('*')
+        .order('created_at', { ascending: true })
+    )
+    return { data: data ?? [], error }
+  } catch (e) {
+    return { data: [], error: toServiceError(e) }
+  }
+}
+
+/**
+ * Cria pedido - usuário solicita.
+ * Redirecionamento: status pending_approval. Personal Shopping: status awaiting_quote.
+ */
+export async function createOrder(userId, { service_id, message, attachment_urls, service_name }) {
+  const isPersonalShopping = service_name === 'Personal Shopping'
+  const status = isPersonalShopping ? ORDER_STATUS.AWAITING_QUOTE : ORDER_STATUS.PENDING_APPROVAL
+  const urls = Array.isArray(attachment_urls) ? attachment_urls.filter(Boolean) : []
+  try {
+    const { data, error } = await withDbTimeout(
+      supabase
+        .from('orders')
+        .insert({
+          user_id: userId,
+          created_by: userId,
+          service_id: service_id ?? null,
+          message: message || null,
+          attachment_urls: urls,
+          status,
+        })
+        .select()
+        .single()
+    )
+    return { data, error }
+  } catch (e) {
+    return { data: null, error: toServiceError(e) }
+  }
+}
+
+/**
+ * Lista pedidos do usuário logado.
+ */
+export async function getMyOrders(userId) {
+  try {
+    const { data, error } = await withDbTimeout(
+      supabase
+        .from('orders')
+        .select(`
+      *,
+      service:services(name)
+    `)
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+    )
+    return { data: data ?? [], error }
+  } catch (e) {
+    return { data: [], error: toServiceError(e) }
+  }
+}
+
+/**
+ * Busca um pedido por ID (para o dono do pedido).
+ */
+export async function getOrderById(orderId, userId) {
+  try {
+    const { data, error } = await withDbTimeout(
+      supabase
+        .from('orders')
+        .select(`
+      *,
+      service:services(name)
+    `)
+        .eq('id', orderId)
+        .eq('user_id', userId)
+        .single()
+    )
+    return { data, error }
+  } catch (e) {
+    return { data: null, error: toServiceError(e) }
+  }
+}
+
+/**
+ * Admin: lista todos os pedidos com dados do usuário.
+ */
+export async function getAllOrdersAdmin() {
+  try {
+    const { data, error } = await withDbTimeout(supabase.rpc('admin_orders_with_users'))
+    const orders = Array.isArray(data) ? data : []
+    return { data: orders, error }
+  } catch (e) {
+    return { data: [], error: toServiceError(e) }
+  }
+}
+
+/**
+ * Admin: atualiza status do pedido.
+ */
+export async function updateOrderStatusAdmin(orderId, status) {
+  const valid = Object.values(ORDER_STATUS).includes(status)
+  if (!valid) {
+    return { data: null, error: { message: 'Status inválido' } }
+  }
+
+  try {
+    const { data, error } = await withDbTimeout(
+      supabase.rpc('admin_update_order_status', {
+        p_order_id: orderId,
+        p_status: status,
+      })
+    )
+    return { data: data ?? null, error }
+  } catch (e) {
+    return { data: null, error: toServiceError(e) }
+  }
+}
+
+/**
+ * Admin: define o custo do frete e marca como aguardando pagamento.
+ */
+export async function setShippingAndAwaitPaymentAdmin(orderId, shippingCost, currency = 'JPY') {
+  const cost = parseFloat(shippingCost)
+  if (isNaN(cost) || cost < 0) {
+    return { data: null, error: { message: 'Valor do frete inválido' } }
+  }
+
+  try {
+    const { data, error } = await withDbTimeout(
+      supabase.rpc('admin_set_shipping_await_payment', {
+        p_order_id: orderId,
+        p_shipping_cost: cost,
+        p_currency: currency || 'JPY',
+      })
+    )
+    return { data: data ?? null, error }
+  } catch (e) {
+    return { data: null, error: toServiceError(e) }
+  }
+}
+
+/**
+ * Admin: edita dados do pedido.
+ */
+export async function updateOrderAdmin(orderId, updates) {
+  try {
+    const { data, error } = await withDbTimeout(
+      supabase.rpc('admin_update_order', {
+        p_order_id: orderId,
+        p_payload: updates,
+      })
+    )
+    return { data: data ?? null, error }
+  } catch (e) {
+    return { data: null, error: toServiceError(e) }
+  }
+}
+
+/**
+ * Admin: aprova pedido.
+ */
+export async function approveOrderAdmin(orderId) {
+  try {
+    const { data, error } = await withDbTimeout(
+      supabase.rpc('admin_approve_order', { p_order_id: orderId })
+    )
+    return { data: data ?? null, error }
+  } catch (e) {
+    return { data: null, error: toServiceError(e) }
+  }
+}
+
+/**
+ * Admin: define orçamento (Personal Shopping) e marca como aguardando pagamento.
+ */
+export async function setQuoteAdmin(orderId, quoteAmount, currency = 'BRL') {
+  const amount = parseFloat(quoteAmount)
+  if (isNaN(amount) || amount < 0) {
+    return { data: null, error: { message: 'Valor do orçamento inválido' } }
+  }
+  try {
+    const { data, error } = await withDbTimeout(
+      supabase.rpc('admin_set_quote', {
+        p_order_id: orderId,
+        p_quote_amount: amount,
+        p_currency: currency || 'BRL',
+      })
+    )
+    return { data: data ?? null, error }
+  } catch (e) {
+    return { data: null, error: toServiceError(e) }
+  }
+}
+
+/**
+ * Admin: rejeita pedido.
+ */
+export async function rejectOrderAdmin(orderId, reason = null) {
+  try {
+    const { data, error } = await withDbTimeout(
+      supabase.rpc('admin_reject_order', { p_order_id: orderId, p_reason: reason })
+    )
+    return { data: data ?? null, error }
+  } catch (e) {
+    return { data: null, error: toServiceError(e) }
+  }
+}
+
+/**
+ * Admin: cria pedido na conta do usuário.
+ */
+export async function createOrderForUserAdmin(userId, { service_id, message } = {}) {
+  try {
+    const { data, error } = await withDbTimeout(
+      supabase.rpc('admin_create_order_for_user', {
+        p_user_id: userId,
+        p_service_id: service_id ?? null,
+        p_message: message ?? null,
+      })
+    )
+    return { data: data ?? null, error }
+  } catch (e) {
+    return { data: null, error: toServiceError(e) }
+  }
+}
+
+/**
+ * Admin: remove pedido.
+ */
+export async function deleteOrderAdmin(orderId) {
+  try {
+    const { error } = await withDbTimeout(
+      supabase.rpc('admin_delete_order', {
+        p_order_id: orderId,
+      })
+    )
+    return { error }
+  } catch (e) {
+    return { error: toServiceError(e) }
+  }
+}
+
+/**
+ * Usuário solicita serviços extras (fotos, vídeo) para pedido em status item_received.
+ */
+export async function requestOrderExtraServices(orderId, extraServices) {
+  try {
+    const { data, error } = await withDbTimeout(
+      supabase.rpc('request_order_extra_services', {
+        p_order_id: orderId,
+        p_extra_services: extraServices || {},
+      })
+    )
+    return { data: data ?? null, error }
+  } catch (e) {
+    return { data: null, error: toServiceError(e) }
+  }
+}

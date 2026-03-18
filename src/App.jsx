@@ -22,11 +22,19 @@ import { AdminRoute } from './components/AdminRoute'
 import { PlatformLayout } from './layouts/PlatformLayout'
 import Login from './pages/platform/Login'
 import Register from './pages/platform/Register'
+import ForgotPassword from './pages/platform/ForgotPassword'
+import ResetPassword from './pages/platform/ResetPassword'
 import Dashboard from './pages/platform/Dashboard'
 import Services from './pages/platform/Services'
 import Orders from './pages/platform/Orders'
+import Wallet from './pages/platform/Wallet'
 import Payments from './pages/platform/Payments'
 import Profile from './pages/platform/Profile'
+import Conta from './pages/platform/Conta'
+import Loja from './pages/platform/Loja'
+import Cart from './pages/platform/Cart'
+import ListaDesejos from './pages/platform/ListaDesejos'
+import MeusProdutos from './pages/platform/MeusProdutos'
 import Admin from './pages/platform/Admin'
 
 /**
@@ -44,6 +52,8 @@ function App() {
           <Route path="/contact" element={<Contact />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/app" element={
             <ProtectedRoute>
               <PlatformLayout />
@@ -53,8 +63,14 @@ function App() {
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="services" element={<Services />} />
             <Route path="orders" element={<Orders />} />
+            <Route path="wallet" element={<Wallet />} />
             <Route path="payments" element={<Payments />} />
             <Route path="profile" element={<Profile />} />
+            <Route path="conta" element={<Conta />} />
+            <Route path="meus-produtos" element={<MeusProdutos />} />
+            <Route path="loja" element={<Loja />} />
+            <Route path="cart" element={<Cart />} />
+            <Route path="lista-desejos" element={<ListaDesejos />} />
             <Route path="admin" element={
               <AdminRoute>
                 <Admin />
