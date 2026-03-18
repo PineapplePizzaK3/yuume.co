@@ -38,7 +38,7 @@ export const ORDER_STATUS_LABELS = {
   paid: 'Pago',
   products_paid: 'Produtos pagos (aguardando frete)',
   shipped: 'Enviado',
-  completed: 'Finalizado',
+  completed: 'Registrado e finalizado',
 }
 
 /**
@@ -60,11 +60,17 @@ export async function getServices() {
 
 /**
  * Cria pedido - usuário solicita.
- * Redirecionamento: status pending_approval. Personal Shopping: status awaiting_quote.
+ * Redirecionamento:
+ * - self_buy: status pending_approval
+ * - assisted_buy (pré-pagamento): status awaiting_quote (admin define orçamento)
+ * Personal Shopping: status awaiting_quote.
  */
-export async function createOrder(userId, { service_id, message, attachment_urls, service_name }) {
+export async function createOrder(userId, { service_id, message, attachment_urls, service_name, order_module }) {
   const isPersonalShopping = service_name === 'Personal Shopping'
-  const status = isPersonalShopping ? ORDER_STATUS.AWAITING_QUOTE : ORDER_STATUS.PENDING_APPROVAL
+  const isRedirecionamento = service_name === 'Redirecionamento'
+  const module = order_module || null
+  const isAssistedBuy = isRedirecionamento && module === 'assisted_buy'
+  const status = (isPersonalShopping || isAssistedBuy) ? ORDER_STATUS.AWAITING_QUOTE : ORDER_STATUS.PENDING_APPROVAL
   const urls = Array.isArray(attachment_urls) ? attachment_urls.filter(Boolean) : []
   try {
     const { data, error } = await withDbTimeout(
@@ -76,6 +82,7 @@ export async function createOrder(userId, { service_id, message, attachment_urls
           service_id: service_id ?? null,
           message: message || null,
           attachment_urls: urls,
+          order_module: module,
           status,
         })
         .select()
@@ -105,6 +112,48 @@ export async function getMyOrders(userId) {
     return { data: data ?? [], error }
   } catch (e) {
     return { data: [], error: toServiceError(e) }
+  }
+}
+
+/**
+ * Usuário: editar pedido (por enquanto, apenas message).
+ */
+export async function updateMyOrder(userId, orderId, updates) {
+  try {
+    const payload = {}
+    if (typeof updates?.message === 'string') payload.message = updates.message.trim() || null
+    if (typeof updates?.attachment_urls !== 'undefined') payload.attachment_urls = updates.attachment_urls
+
+    const { data, error } = await withDbTimeout(
+      supabase
+        .from('orders')
+        .update(payload)
+        .eq('id', orderId)
+        .eq('user_id', userId)
+        .select()
+        .single()
+    )
+    return { data: data ?? null, error }
+  } catch (e) {
+    return { data: null, error: toServiceError(e) }
+  }
+}
+
+/**
+ * Usuário: remover pedido.
+ */
+export async function deleteMyOrder(userId, orderId) {
+  try {
+    const { error } = await withDbTimeout(
+      supabase
+        .from('orders')
+        .delete()
+        .eq('id', orderId)
+        .eq('user_id', userId)
+    )
+    return { error }
+  } catch (e) {
+    return { error: toServiceError(e) }
   }
 }
 
@@ -222,7 +271,7 @@ export async function approveOrderAdmin(orderId) {
 /**
  * Admin: define orçamento (Personal Shopping) e marca como aguardando pagamento.
  */
-export async function setQuoteAdmin(orderId, quoteAmount, currency = 'BRL') {
+export async function setQuoteAdmin(orderId, quoteAmount, currency = 'BRL', message = null) {
   const amount = parseFloat(quoteAmount)
   if (isNaN(amount) || amount < 0) {
     return { data: null, error: { message: 'Valor do orçamento inválido' } }
@@ -233,6 +282,7 @@ export async function setQuoteAdmin(orderId, quoteAmount, currency = 'BRL') {
         p_order_id: orderId,
         p_quote_amount: amount,
         p_currency: currency || 'BRL',
+        p_message: message ?? null,
       })
     )
     return { data: data ?? null, error }

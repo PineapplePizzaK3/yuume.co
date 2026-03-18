@@ -76,5 +76,5 @@ CREATE POLICY "Users can view own payments" ON payments
 -- Insert default services
 INSERT INTO services (name, description, price) VALUES
   ('Redirecionamento', '¥500/item + frete', 0),
-  ('Personal Shopping', '20% + ¥150/item + frete', 0),
+  ('Personal Shopping', '25% do valor da compra + frete', 0),
   ('Curadoria', 'Sob consulta', 0);

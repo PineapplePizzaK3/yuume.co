@@ -8,9 +8,12 @@ import { Link } from 'react-router-dom'
 import { getProducts } from '../../services/productService'
 import { addToCart } from '../../services/cartService'
 import { useAuth } from '../../hooks/useAuth'
+import { brlToJpy, formatBRL, formatJPY, jpyToBrl } from '../../lib/fx'
 
-function formatMoney(v) {
-  return Number(v)?.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) ?? '—'
+function formatPriceBrlAsJpy(brl) {
+  const jpy = Math.round(brlToJpy(brl))
+  const approxBrl = jpyToBrl(jpy)
+  return { jpy, approxBrl }
 }
 
 /** Retorna array de URLs de imagens do produto (image_urls ou image_url) */
@@ -129,7 +132,15 @@ export default function Loja() {
                       {p.description && (
                         <p className="mt-1 line-clamp-2 text-sm text-earth-600">{p.description}</p>
                       )}
-                      <span className="mt-2 block text-lg font-bold text-earth-900">{formatMoney(p.price)}</span>
+                      {(() => {
+                        const v = formatPriceBrlAsJpy(p.price)
+                        return (
+                          <div className="mt-2">
+                            <span className="block text-lg font-bold text-earth-900">{formatJPY(v.jpy)}</span>
+                            <span className="block text-xs text-earth-600">Aprox.: {formatBRL(v.approxBrl)}</span>
+                          </div>
+                        )
+                      })()}
                     </div>
                   </button>
                   <div className="flex gap-2 px-4 pb-4" onClick={(e) => e.stopPropagation()}>
@@ -227,9 +238,15 @@ export default function Loja() {
                 {detailProduct.description && (
                   <p className="mt-2 text-earth-600">{detailProduct.description}</p>
                 )}
-                <p className="mt-4 text-2xl font-bold text-earth-900">
-                  {formatMoney(detailProduct.price)}
-                </p>
+                {(() => {
+                  const v = formatPriceBrlAsJpy(detailProduct.price)
+                  return (
+                    <div className="mt-4">
+                      <p className="text-2xl font-bold text-earth-900">{formatJPY(v.jpy)}</p>
+                      <p className="text-sm text-earth-600">Aprox.: {formatBRL(v.approxBrl)}</p>
+                    </div>
+                  )
+                })()}
                 <div className="mt-6 flex flex-wrap gap-3">
                   <button
                     type="button"

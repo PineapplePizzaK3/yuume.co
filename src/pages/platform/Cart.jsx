@@ -8,9 +8,12 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import { getCart, updateCartItem, removeFromCart, createStoreOrder } from '../../services/cartService'
 import { createCheckoutSession } from '../../services/paymentService'
+import { brlToJpy, formatBRL, formatJPY, jpyToBrl } from '../../lib/fx'
 
-function formatMoney(v) {
-  return Number(v)?.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) ?? '—'
+function formatPriceBrlAsJpy(brl) {
+  const jpy = Math.round(brlToJpy(brl))
+  const approxBrl = jpyToBrl(jpy)
+  return { jpy, approxBrl }
 }
 
 export default function Cart() {
@@ -43,7 +46,8 @@ export default function Cart() {
     if (canceled) setFeedback('Pagamento cancelado.')
   }, [success, canceled])
 
-  const total = items.reduce((sum, i) => sum + (Number(i.products?.price ?? 0) * (i.quantity || 1)), 0)
+  const totalBrl = items.reduce((sum, i) => sum + (Number(i.products?.price ?? 0) * (i.quantity || 1)), 0)
+  const totalJpy = Math.round(brlToJpy(totalBrl))
 
   const handleUpdateQty = async (productId, quantity) => {
     const qty = Math.max(1, Math.min(99, Number(quantity) || 1))
@@ -138,6 +142,8 @@ export default function Cart() {
                 const p = item.products
                 if (!p) return null
                 const subtotal = Number(p.price) * (item.quantity || 1)
+                const unit = formatPriceBrlAsJpy(p.price)
+                const sub = formatPriceBrlAsJpy(subtotal)
                 return (
                   <div
                     key={item.id}
@@ -152,7 +158,9 @@ export default function Cart() {
                     )}
                     <div className="min-w-0 flex-1">
                       <h3 className="font-semibold text-earth-900">{p.name}</h3>
-                      <p className="text-sm text-earth-600">{formatMoney(p.price)} cada</p>
+                      <p className="text-sm text-earth-600">
+                        {formatJPY(unit.jpy)} cada <span className="text-xs">({formatBRL(unit.approxBrl)} aprox.)</span>
+                      </p>
                     </div>
                     <div className="flex items-center gap-2">
                       <input
@@ -164,7 +172,7 @@ export default function Cart() {
                         onBlur={(e) => handleUpdateQty(item.product_id, e.target.value)}
                         className="w-16 rounded border border-earth-300 px-2 py-1 text-center text-earth-900"
                       />
-                      <span className="font-semibold text-earth-900">{formatMoney(subtotal)}</span>
+                      <span className="font-semibold text-earth-900">{formatJPY(sub.jpy)}</span>
                       <button
                         type="button"
                         onClick={() => handleRemove(item.product_id)}
@@ -214,7 +222,10 @@ export default function Cart() {
             </div>
 
             <div className="flex items-center justify-between rounded-xl border border-earth-200 bg-earth-50 p-6">
-              <p className="text-xl font-bold text-earth-900">Total: {formatMoney(total)}</p>
+              <div>
+                <p className="text-xl font-bold text-earth-900">Total: {formatJPY(totalJpy)}</p>
+                <p className="text-sm text-earth-600">Aprox.: {formatBRL(jpyToBrl(totalJpy))}</p>
+              </div>
               <button
                 type="button"
                 onClick={handleCheckout}

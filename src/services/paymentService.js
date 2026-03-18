@@ -43,6 +43,7 @@ export async function getMyPayments() {
  * Requer accessToken da sessão Supabase para autenticar.
  */
 export async function createCheckoutSession(orderId, accessToken) {
+  const options = arguments.length > 2 ? arguments[2] : null
   const headers = { 'Content-Type': 'application/json' }
   if (accessToken) {
     headers['Authorization'] = `Bearer ${accessToken}`
@@ -51,7 +52,7 @@ export async function createCheckoutSession(orderId, accessToken) {
   const res = await fetch(`${API_BASE}/create-checkout-session`, {
     method: 'POST',
     headers,
-    body: JSON.stringify({ orderId }),
+    body: JSON.stringify({ orderId, useWallet: !!options?.useWallet }),
     credentials: 'include',
   })
 
@@ -61,6 +62,30 @@ export async function createCheckoutSession(orderId, accessToken) {
     throw new Error(data.error || 'Erro ao criar sessão de pagamento')
   }
 
+  return data
+}
+
+/**
+ * Create KOMOJU Hosted Page session for an order.
+ * paymentType: 'credit_card' | 'pix' | 'bank_transfer'
+ */
+export async function createKomojuSession(orderId, paymentType, accessToken) {
+  const headers = { 'Content-Type': 'application/json' }
+  if (accessToken) {
+    headers['Authorization'] = `Bearer ${accessToken}`
+  }
+
+  const res = await fetch(`${API_BASE}/create-komoju-session`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ orderId, paymentType }),
+    credentials: 'include',
+  })
+
+  const data = await res.json()
+  if (!res.ok) {
+    throw new Error(data.error || 'Erro ao criar sessão de pagamento (KOMOJU)')
+  }
   return data
 }
 

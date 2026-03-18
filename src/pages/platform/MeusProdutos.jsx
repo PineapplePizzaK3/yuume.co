@@ -8,6 +8,15 @@ import { useAuth } from '../../hooks/useAuth'
 import { getMyInventory, createShipment } from '../../services/inventoryService'
 import { cacheKey, readCache, writeCache } from '../../lib/cache'
 
+function daysSince(dateValue) {
+  if (!dateValue) return null
+  const ts = new Date(dateValue).getTime()
+  if (!Number.isFinite(ts)) return null
+  const diff = Date.now() - ts
+  if (diff < 0) return 0
+  return Math.floor(diff / (1000 * 60 * 60 * 24))
+}
+
 export default function MeusProdutos() {
   const { user } = useAuth()
   const [items, setItems] = useState([])
@@ -150,8 +159,18 @@ export default function MeusProdutos() {
                         />
                         <div className="min-w-0">
                           <p className="font-medium text-earth-900">{item.name}</p>
+                          {item.products_description && (
+                            <p className="mt-1 text-sm text-earth-700">{item.products_description}</p>
+                          )}
                           {item.notes && (
                             <p className="mt-1 text-sm text-earth-600">{item.notes}</p>
+                          )}
+                          {(item.items_count != null || item.received_at) && (
+                            <p className="mt-1 text-xs text-earth-500">
+                              {item.items_count != null ? `Itens: ${item.items_count}` : ''}
+                              {item.items_count != null && item.received_at ? ' • ' : ''}
+                              {item.received_at ? `Armazenado há ${daysSince(item.received_at) ?? 0} dia(s)` : ''}
+                            </p>
                           )}
                           {item.weight_kg != null && (
                             <p className="mt-1 text-xs text-earth-500">Peso: {item.weight_kg} kg</p>

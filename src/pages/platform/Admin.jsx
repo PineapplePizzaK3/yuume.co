@@ -33,6 +33,13 @@ function formatMoney(v, currency = 'BRL') {
   return Number(v)?.toLocaleString('pt-BR', { style: 'currency', currency }) ?? '—'
 }
 
+function formatOrderModuleLabel(order) {
+  if (!order) return null
+  if (order.order_module === 'self_buy') return 'Redirecionamento: eu compro'
+  if (order.order_module === 'assisted_buy') return 'Redirecionamento: pré-pagamento'
+  return null
+}
+
 export default function Admin() {
   const { user, profile } = useAuth()
   const [products, setProducts] = useState([])
@@ -55,7 +62,7 @@ export default function Admin() {
   const [imageUploadError, setImageUploadError] = useState('')
   const [newImageUrl, setNewImageUrl] = useState('')
   const [shippingModal, setShippingModal] = useState({ open: false, orderId: null, cost: '', currency: 'JPY' })
-  const [quoteModal, setQuoteModal] = useState({ open: false, orderId: null, amount: '', currency: 'BRL' })
+  const [quoteModal, setQuoteModal] = useState({ open: false, orderId: null, amount: '', currency: 'JPY', message: '' })
   const [orderEditModal, setOrderEditModal] = useState({
     open: false,
     orderId: null,
@@ -87,7 +94,7 @@ export default function Admin() {
     open: false,
     user_id: '',
     products_description: '',
-    storage_days: '',
+    items_count: '',
     weight_kg: '',
     order_id: '',
     photo_url: '',
@@ -289,11 +296,11 @@ export default function Admin() {
     }
     setSubmitting(true)
     setMessage('')
-    const { error } = await setQuoteAdmin(quoteModal.orderId, amount, quoteModal.currency)
+    const { error } = await setQuoteAdmin(quoteModal.orderId, amount, 'JPY', quoteModal.message)
     setSubmitting(false)
     setMessage(error ? error.message : 'Orçamento definido. Cliente pode pagar em Pedidos.')
     if (!error) {
-      setQuoteModal({ open: false, orderId: null, amount: '', currency: 'BRL' })
+      setQuoteModal({ open: false, orderId: null, amount: '', currency: 'JPY', message: '' })
       loadOrders()
     }
   }
@@ -442,8 +449,7 @@ export default function Admin() {
     try {
       const { error } = await registerPackageAdmin(uid, {
         products_description: desc,
-        storage_days: registerPackageModal.storage_days ? parseInt(registerPackageModal.storage_days, 10) : null,
-        received_at: new Date().toISOString(),
+        items_count: registerPackageModal.items_count ? parseInt(registerPackageModal.items_count, 10) : null,
         weight_kg: registerPackageModal.weight_kg ? parseFloat(registerPackageModal.weight_kg) : null,
         order_id: registerPackageModal.order_id?.trim() || null,
         photo_url: registerPackageModal.photo_url?.trim() || null,
@@ -451,7 +457,7 @@ export default function Admin() {
       })
       setMessage(error ? error.message : 'Pacote registrado na conta do usuário.')
       if (!error) {
-        setRegisterPackageModal({ open: false, user_id: '', products_description: '', storage_days: '', weight_kg: '', order_id: '', photo_url: '', video_url: '' })
+        setRegisterPackageModal({ open: false, user_id: '', products_description: '', items_count: '', weight_kg: '', order_id: '', photo_url: '', video_url: '' })
       }
     } finally {
       setSubmitting(false)
@@ -529,7 +535,7 @@ export default function Admin() {
               onClick={async () => {
                 const { data } = await getUsersAdmin()
                 setUsers(data ?? [])
-                setRegisterPackageModal({ open: true, user_id: '', products_description: '', storage_days: '', weight_kg: '', order_id: '', photo_url: '', video_url: '' })
+                setRegisterPackageModal({ open: true, user_id: '', products_description: '', items_count: '', weight_kg: '', order_id: '', photo_url: '', video_url: '' })
               }}
               className="rounded-lg bg-amber-700 px-3 py-2 text-sm font-medium text-white hover:bg-amber-800"
             >
@@ -558,6 +564,13 @@ export default function Admin() {
                       <p className="mt-1 text-sm text-earth-600">
                         {o.user_name || o.user_email || o.user_id} • {o.service_name || o.order_source === 'store' ? 'Loja' : '—'}
                       </p>
+                      {formatOrderModuleLabel(o) && (
+                        <p className="mt-1">
+                          <span className="inline-flex items-center rounded bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900">
+                            {formatOrderModuleLabel(o)}
+                          </span>
+                        </p>
+                      )}
                       {o.message && (
                         <p className="mt-1 text-sm text-earth-500 italic">{o.message}</p>
                       )}
@@ -590,7 +603,7 @@ export default function Admin() {
                       {o.status === ORDER_STATUS.AWAITING_QUOTE && (
                         <button
                           type="button"
-                          onClick={() => setQuoteModal({ open: true, orderId: o.id, amount: '', currency: 'BRL' })}
+                          onClick={() => setQuoteModal({ open: true, orderId: o.id, amount: '', currency: 'JPY', message: o.message ?? '' })}
                           className="rounded bg-amber-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-amber-700"
                         >
                           Definir orçamento
@@ -615,7 +628,7 @@ export default function Admin() {
                               open: true,
                               user_id: o.user_id ?? '',
                               products_description: o.message ?? '',
-                              storage_days: '',
+                              items_count: '',
                               weight_kg: '',
                               order_id: o.id ?? '',
                               photo_url: '',
@@ -742,7 +755,6 @@ export default function Admin() {
             <form
               onSubmit={handleSetShipping}
               className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-              onClick={() => setShippingModal((m) => ({ ...m, open: false }))}
             >
               <div
                 className="w-full max-w-sm rounded-xl bg-white p-6 shadow-lg"
@@ -769,16 +781,11 @@ export default function Admin() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-earth-700">Moeda</label>
-                    <select
-                      value={shippingModal.currency}
-                      onChange={(e) =>
-                        setShippingModal((m) => ({ ...m, currency: e.target.value }))
-                      }
-                      className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
-                    >
-                      <option value="JPY">JPY (¥)</option>
-                      <option value="BRL">BRL (R$)</option>
-                    </select>
+                    <input
+                      value="JPY (¥)"
+                      disabled
+                      className="mt-1 block w-full rounded-lg border border-earth-300 bg-earth-50 px-3 py-2 text-earth-900"
+                    />
                   </div>
                 </div>
                 <div className="mt-6 flex gap-2">
@@ -804,7 +811,6 @@ export default function Admin() {
             <form
               onSubmit={handleSetQuote}
               className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-              onClick={() => setQuoteModal((m) => ({ ...m, open: false }))}
             >
               <div
                 className="w-full max-w-sm rounded-xl bg-white p-6 shadow-lg"
@@ -816,7 +822,7 @@ export default function Admin() {
                 </p>
                 <div className="mt-4 space-y-3">
                   <div>
-                    <label className="block text-sm font-medium text-earth-700">Valor</label>
+                    <label className="block text-sm font-medium text-earth-700">Valor (¥)</label>
                     <input
                       type="number"
                       step="0.01"
@@ -832,16 +838,23 @@ export default function Admin() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-earth-700">Moeda</label>
-                    <select
-                      value={quoteModal.currency}
+                    <input
+                      value="JPY (¥)"
+                      disabled
+                      className="mt-1 block w-full rounded-lg border border-earth-300 bg-earth-50 px-3 py-2 text-earth-900"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-earth-700">Mensagem / descrição do pedido</label>
+                    <textarea
+                      value={quoteModal.message}
                       onChange={(e) =>
-                        setQuoteModal((m) => ({ ...m, currency: e.target.value }))
+                        setQuoteModal((m) => ({ ...m, message: e.target.value }))
                       }
+                      rows={4}
+                      placeholder="Descreva o orçamento (itens, quantidades, links, observações...)"
                       className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
-                    >
-                      <option value="BRL">BRL (R$)</option>
-                      <option value="JPY">JPY (¥)</option>
-                    </select>
+                    />
                   </div>
                 </div>
                 <div className="mt-6 flex gap-2">
@@ -854,7 +867,7 @@ export default function Admin() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setQuoteModal({ open: false, orderId: null, amount: '', currency: 'BRL' })}
+                    onClick={() => setQuoteModal({ open: false, orderId: null, amount: '', currency: 'JPY', message: '' })}
                     className="rounded-lg border border-earth-300 px-4 py-2 font-medium text-earth-700 hover:bg-earth-100"
                   >
                     Cancelar
@@ -868,7 +881,6 @@ export default function Admin() {
             <form
               onSubmit={handleSaveOrderEdit}
               className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-              onClick={closeOrderEditModal}
             >
               <div
                 className="w-full max-w-lg rounded-xl bg-white p-6 shadow-lg"
@@ -975,16 +987,11 @@ export default function Admin() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-earth-700">Moeda</label>
-                    <select
-                      value={orderEditModal.shipping_currency}
-                      onChange={(e) =>
-                        setOrderEditModal((m) => ({ ...m, shipping_currency: e.target.value }))
-                      }
-                      className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
-                    >
-                      <option value="JPY">JPY (¥)</option>
-                      <option value="BRL">BRL (R$)</option>
-                    </select>
+                    <input
+                      value="JPY (¥)"
+                      disabled
+                      className="mt-1 block w-full rounded-lg border border-earth-300 bg-earth-50 px-3 py-2 text-earth-900"
+                    />
                   </div>
                 </div>
                 <div className="mt-6 flex gap-2">
@@ -1010,7 +1017,6 @@ export default function Admin() {
             <form
               onSubmit={handleAddToInventory}
               className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-              onClick={() => setInventoryModal((m) => ({ ...m, open: false }))}
             >
               <div
                 className="w-full max-w-md rounded-xl bg-white p-6 shadow-lg"
@@ -1094,7 +1100,6 @@ export default function Admin() {
             <form
               onSubmit={handleCreateOrderForUser}
               className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-              onClick={() => setCreateOrderModal((m) => ({ ...m, open: false }))}
             >
               <div
                 className="w-full max-w-md rounded-xl bg-white p-6 shadow-lg"
@@ -1174,7 +1179,6 @@ export default function Admin() {
             <form
               onSubmit={handleRegisterPackage}
               className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-              onClick={() => setRegisterPackageModal((m) => ({ ...m, open: false }))}
             >
               <div
                 className="w-full max-w-md rounded-xl bg-white p-6 shadow-lg max-h-[90vh] overflow-y-auto"
@@ -1182,7 +1186,7 @@ export default function Admin() {
               >
                 <h3 className="font-semibold text-earth-900">Registrar pacote na conta do usuário</h3>
                 <p className="mt-1 text-sm text-earth-600">
-                  Dados do pacote: descrição, tempo de armazenamento, peso. Opcional: vincular a um pedido.
+                  Dados do pacote: descrição, quantidade de itens e peso. O tempo de armazenamento é contado automaticamente a partir do registro.
                 </p>
                 <div className="mt-4 space-y-3">
                   <div>
@@ -1218,13 +1222,13 @@ export default function Admin() {
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-sm font-medium text-earth-700">Tempo armazenamento (dias)</label>
+                      <label className="block text-sm font-medium text-earth-700">Quantidade de itens</label>
                       <input
                         type="number"
                         min="0"
-                        value={registerPackageModal.storage_days}
+                        value={registerPackageModal.items_count}
                         onChange={(e) =>
-                          setRegisterPackageModal((m) => ({ ...m, storage_days: e.target.value }))
+                          setRegisterPackageModal((m) => ({ ...m, items_count: e.target.value }))
                         }
                         className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
                       />

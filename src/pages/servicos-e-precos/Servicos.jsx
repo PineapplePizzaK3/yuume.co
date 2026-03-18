@@ -7,7 +7,7 @@ function formatarIene(valor) {
 
 const LINHAS_VALORES = (percentual, porItem, freteTexto, formatarIene) => [
   { label: 'Percentual sobre o valor da compra', valor: percentual === null ? 'Sob consulta' : `${percentual}%` },
-  { label: 'Taxa por item', valor: porItem === null ? 'Sob consulta' : `${formatarIene(porItem)}/item` },
+  { label: 'Taxa por item', valor: porItem === null ? 'Não se aplica' : `${formatarIene(porItem)}/item` },
   { label: 'Frete internacional', valor: freteTexto },
 ]
 
@@ -88,11 +88,11 @@ const FLUXOS = [
   {
     id: 'personal-shopping',
     titulo: 'Personal shopping',
-    descricao: 'Nossa equipe compra para você.',
+    descricao: 'Serviço ideal para quem não sabe exatamente o que comprar e precisa da nossa ajuda.',
     passos: [
-      'Envie sua lista de compras',
-      'Recebemos e analisamos seu pedido',
-      'Realizamos as compras nas lojas',
+      'Conte o que você procura (estilo, orçamento, tamanho, referências)',
+      'Sugerimos opções e ajudamos a definir a compra',
+      'Após sua confirmação, realizamos as compras nas lojas',
       'Consolidamos os produtos',
       'Informamos o valor real do frete — você paga',
       'Enviamos até você',
@@ -180,11 +180,11 @@ function Servicos() {
             {servico.id === 'personal-shopping' && (
               <>
                 <p className="mt-6 text-sm text-earth-600">
-                  <strong>Como cobramos:</strong> 20% do valor da compra + {formatarIene(150)}/item + frete.
+                  <strong>Como cobramos:</strong> 25% do valor da compra + frete. Este serviço inclui ajuda para decidir o que comprar.
                 </p>
                 <TabelaValores
-                  percentual={20}
-                  porItem={150}
+                  percentual={25}
+                  porItem={null}
                   freteTexto="Informado após consolidação (Japan Post)"
                 />
               </>

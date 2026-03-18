@@ -14,6 +14,32 @@ function getSupabaseAdmin() {
   return createClient(url, key)
 }
 
+function getSupabaseUser(accessToken) {
+  const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
+  const anon = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY
+  if (!url || !anon || !accessToken) return null
+  return createClient(url, anon, {
+    global: { headers: { Authorization: `Bearer ${accessToken}` } },
+  })
+}
+
+function getFxBrlPerJpy() {
+  const v = Number(process.env.FX_BRL_PER_JPY || process.env.VITE_FX_BRL_PER_JPY)
+  return v && v > 0 ? v : 0.033
+}
+
+function toChargeAmountJpy(amount, currency) {
+  const c = (currency || 'jpy').toLowerCase()
+  const n = Number(amount) || 0
+  if (n <= 0) return 0
+  if (c === 'jpy') return n
+  if (c === 'brl') {
+    const fx = getFxBrlPerJpy()
+    return n / fx
+  }
+  return n
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
@@ -155,31 +181,61 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Valor não definido para este pedido' })
     }
 
-    const stripeCurrency = currency === 'brl' ? 'brl' : 'jpy'
-    const unitAmount = stripeCurrency === 'brl' ? Math.round(amount * 100) : Math.round(amount)
+    // Cobrança sempre em JPY
+    // (carteira BRL não é aplicada quando a cobrança é em JPY)
+    const chargeJpy = toChargeAmountJpy(amount, currency)
+    const unitAmount = Math.round(chargeJpy) // JPY sem casas decimais
+    if (!unitAmount || unitAmount <= 0) return res.status(400).json({ error: 'Valor inválido para cobrança' })
 
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      line_items: [
-        {
-          price_data: {
-            currency: stripeCurrency,
-            product_data: {
-              name: productName,
-              description: productDesc,
+    try {
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        line_items: [
+          {
+            price_data: {
+              currency: 'jpy',
+              product_data: {
+                name: productName,
+                description: productDesc,
+              },
+              unit_amount: unitAmount,
             },
-            unit_amount: unitAmount,
+            quantity: 1,
           },
-          quantity: 1,
+        ],
+        mode: 'payment',
+        success_url: `${baseUrl}/app/orders?success=true`,
+        cancel_url: `${baseUrl}/app/orders?canceled=true`,
+        metadata: { orderId, orderSource: order.order_source || 'service' },
+      })
+      return res.status(200).json({ url: session.url, provider: 'stripe' })
+    } catch (e) {
+      // Fallback para KOMOJU (cartão) quando Stripe falhar
+      const komojuKey = process.env.KOMOJU_SECRET_KEY
+      if (!komojuKey) throw e
+      const token = Buffer.from(`${komojuKey}:`, 'utf8').toString('base64')
+      const returnUrl = `${baseUrl}/api/komoju-return?orderId=${encodeURIComponent(orderId)}`
+      const komoju = await fetch('https://komoju.com/api/v1/sessions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Basic ${token}`,
         },
-      ],
-      mode: 'payment',
-      success_url: `${baseUrl}/app/orders?success=true`,
-      cancel_url: `${baseUrl}/app/orders?canceled=true`,
-      metadata: { orderId, orderSource: order.order_source || 'service' },
-    })
-
-    return res.status(200).json({ url: session.url })
+        body: JSON.stringify({
+          amount: unitAmount,
+          currency: 'JPY',
+          return_url: returnUrl,
+          external_order_num: orderId,
+          payment_types: ['credit_card'],
+          description: `Pedido ${orderId.slice(0, 8)} - pagamento`,
+        }),
+      }).then(async (r) => {
+        const json = await r.json().catch(() => ({}))
+        if (!r.ok) throw new Error(json?.error || json?.message || 'Erro ao criar sessão na KOMOJU')
+        return json
+      })
+      return res.status(200).json({ url: komoju.session_url, provider: 'komoju', fallback: true })
+    }
   } catch (err) {
     console.error(err)
     return res.status(500).json({ error: err.message || 'Internal server error' })

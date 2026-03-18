@@ -15,8 +15,8 @@ const REDIRECIONAMENTO = 'Redirecionamento'
 const PERSONAL_SHOPPING = 'Personal Shopping'
 
 const DESCRICOES_FIXAS = {
-  Redirecionamento: '1 item ¥900 | 2 itens ¥750/item | 3-4 itens ¥600/item | 5+ itens ¥500/item + frete',
-  'Personal Shopping': '20% + ¥150/item + frete',
+  Redirecionamento: 'Módulos: eu compro e envio | pré-pagamento (nós compramos) + frete',
+  'Personal Shopping': '25% do valor da compra + frete — ideal para quem precisa de ajuda para decidir o que comprar',
 }
 
 export default function Services() {
@@ -25,6 +25,7 @@ export default function Services() {
   const [selectedId, setSelectedId] = useState(null)
   const [message, setMessage] = useState('')
   const [agreeProhibited, setAgreeProhibited] = useState(false)
+  const [redirModule, setRedirModule] = useState('self_buy')
   const [attachmentUrls, setAttachmentUrls] = useState([])
   const [uploading, setUploading] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -34,6 +35,7 @@ export default function Services() {
   const selectedService = selectedId ? services.find((s) => s.id === selectedId) : null
   const isRedirecionamento = selectedService?.name === REDIRECIONAMENTO
   const isPersonalShopping = selectedService?.name === PERSONAL_SHOPPING
+  const isRedirAssisted = isRedirecionamento && redirModule === 'assisted_buy'
   const canSubmit = !isRedirecionamento || agreeProhibited
 
   useEffect(() => {
@@ -86,14 +88,15 @@ export default function Services() {
       message: message.trim() || null,
       attachment_urls: attachmentUrls,
       service_name: selectedService?.name,
+      order_module: isRedirecionamento ? redirModule : null,
     })
     setSubmitting(false)
     if (error) {
       setFeedback(error.message)
       return
     }
-    const msg = isPersonalShopping
-      ? 'Pedido enviado! Em breve você receberá o orçamento. Acompanhe em Pedidos.'
+    const msg = (isPersonalShopping || isRedirAssisted)
+      ? 'Pedido enviado! Em breve você receberá o orçamento para pré-pagamento. Acompanhe em Pedidos.'
       : 'Pedido enviado! O admin irá aprovar em breve. Acompanhe em Pedidos.'
     setFeedback(msg)
     setSelectedId(null)
@@ -127,7 +130,14 @@ export default function Services() {
                   <button
                     key={s.id}
                     type="button"
-                    onClick={() => setSelectedId(s.id)}
+                    onClick={() => {
+                      setSelectedId(s.id)
+                      setFeedback('')
+                      setMessage('')
+                      setAttachmentUrls([])
+                      setAgreeProhibited(false)
+                      setRedirModule('self_buy')
+                    }}
                     className={`rounded-xl border-2 p-5 text-left transition ${
                       selectedId === s.id
                         ? 'border-earth-900 bg-earth-100'
@@ -149,31 +159,71 @@ export default function Services() {
             </div>
 
             {isRedirecionamento && (
-              <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
-                <label className="flex cursor-pointer items-start gap-3">
-                  <input
-                    type="checkbox"
-                    checked={agreeProhibited}
-                    onChange={(e) => setAgreeProhibited(e.target.checked)}
-                    className="mt-1 rounded border-earth-300"
-                  />
-                  <span className="text-sm text-earth-800">
-                    Li a lista de{' '}
-                    <Link to="/faq/itens-proibidos" target="_blank" rel="noopener noreferrer" className="font-medium text-earth-900 underline hover:no-underline">
-                      itens proibidos
-                    </Link>
-                    {' '}e confirmo que não enviarei nenhum item proibido na importação. O envio de itens proibidos pode resultar em apreensão, sem reembolso.
-                  </span>
-                </label>
+              <div className="space-y-4">
+                <div className="rounded-lg border border-earth-200 bg-white p-4">
+                  <p className="text-sm font-medium text-earth-800">Módulo do Redirecionamento</p>
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                    <label className={`flex cursor-pointer items-start gap-3 rounded-lg border p-4 ${redirModule === 'self_buy' ? 'border-earth-900 bg-earth-50' : 'border-earth-200 bg-white hover:bg-earth-50'}`}>
+                      <input
+                        type="radio"
+                        name="redirModule"
+                        checked={redirModule === 'self_buy'}
+                        onChange={() => setRedirModule('self_buy')}
+                        className="mt-1"
+                      />
+                      <div>
+                        <span className="block font-semibold text-earth-900">Eu compro e envio</span>
+                        <span className="block text-sm text-earth-600">
+                          Taxa por quantidade de itens: 1 item ¥900 | 2 itens ¥750/item | 3–4 itens ¥600/item | 5+ itens ¥500/item + frete. Você compra nas lojas japonesas e envia para nosso endereço.
+                        </span>
+                      </div>
+                    </label>
+                    <label className={`flex cursor-pointer items-start gap-3 rounded-lg border p-4 ${redirModule === 'assisted_buy' ? 'border-earth-900 bg-earth-50' : 'border-earth-200 bg-white hover:bg-earth-50'}`}>
+                      <input
+                        type="radio"
+                        name="redirModule"
+                        checked={redirModule === 'assisted_buy'}
+                        onChange={() => setRedirModule('assisted_buy')}
+                        className="mt-1"
+                      />
+                      <div>
+                        <span className="block font-semibold text-earth-900">Você compra pra mim (pré-pagamento)</span>
+                        <span className="block text-sm text-earth-600">
+                          Nós compramos para você. Cobramos 15% do valor da compra + taxa por item (1–2: ¥400 | 3–5: ¥250 | 6+: ¥150) + frete. Você envia a lista e retornamos o orçamento para pré-pagamento.
+                        </span>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+
+                <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+                  <label className="flex cursor-pointer items-start gap-3">
+                    <input
+                      type="checkbox"
+                      checked={agreeProhibited}
+                      onChange={(e) => setAgreeProhibited(e.target.checked)}
+                      className="mt-1 rounded border-earth-300"
+                    />
+                    <span className="text-sm text-earth-800">
+                      Li a lista de{' '}
+                      <Link to="/faq/itens-proibidos" target="_blank" rel="noopener noreferrer" className="font-medium text-earth-900 underline hover:no-underline">
+                        itens proibidos
+                      </Link>
+                      {' '}e confirmo que não enviarei nenhum item proibido na importação. O envio de itens proibidos pode resultar em apreensão, sem reembolso.
+                    </span>
+                  </label>
+                </div>
               </div>
             )}
 
             <div>
               <label htmlFor="message" className="block text-sm font-medium text-earth-700">
-                {isPersonalShopping ? 'Descreva o que deseja comprar (links, lojas, quantidade)' : 'O que você irá pedir para enviar ao nosso endereço? (recomendado)'}
+                {isPersonalShopping || isRedirAssisted
+                  ? 'Descreva o que deseja comprar (links, lojas, quantidade)'
+                  : 'O que você irá pedir para enviar ao nosso endereço? (recomendado)'}
               </label>
               <p className="mt-1 text-xs text-earth-500">
-                {isPersonalShopping
+                {isPersonalShopping || isRedirAssisted
                   ? 'Envie a lista de produtos, links e referências. Você pode anexar imagens abaixo.'
                   : 'Informe loja, quantidade e descrição dos itens para facilitar o recebimento.'}
               </p>
@@ -181,7 +231,7 @@ export default function Services() {
                 id="message"
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                placeholder={isPersonalShopping
+                placeholder={isPersonalShopping || isRedirAssisted
                   ? 'Ex: Loja X – link do produto, tamanho M, cor azul. Ou: quero este modelo (anexe imagem).'
                   : 'Ex: Amazon JP – 2 livros; Rakuten – 1 figura.'}
                 rows={4}
@@ -189,7 +239,7 @@ export default function Services() {
               />
             </div>
 
-            {isPersonalShopping && (
+            {(isPersonalShopping || isRedirAssisted) && (
               <div>
                 <label className="block text-sm font-medium text-earth-700">
                   Imagens de referência (opcional)

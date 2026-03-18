@@ -62,14 +62,13 @@ export async function createShipment(userId, inventoryIds) {
 /**
  * Admin: registra pacote na conta do usuário (com dados completos).
  */
-export async function registerPackageAdmin(userId, { products_description, storage_days, received_at, weight_kg, order_id, photo_url, video_url }) {
+export async function registerPackageAdmin(userId, { products_description, items_count, weight_kg, order_id, photo_url, video_url }) {
   try {
     const { data, error } = await withDbTimeout(
       supabase.rpc('admin_register_package', {
         p_user_id: userId,
         p_products_description: products_description || '',
-        p_storage_days: storage_days ?? null,
-        p_received_at: received_at || null,
+        p_items_count: items_count ?? null,
         p_weight_kg: weight_kg ?? null,
         p_order_id: order_id || null,
         p_photo_url: photo_url || null,
