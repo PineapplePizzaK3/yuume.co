@@ -28,6 +28,7 @@ import {
 } from '../../services/orderService'
 import { addInventoryFromOrderAdmin, registerPackageAdmin } from '../../services/inventoryService'
 import { getUsersAdmin } from '../../services/profileService'
+import { createPurchaseGroup, getPurchaseGroupsAdmin } from '../../services/groupService'
 import { brlToJpy, jpyToBrl, formatJPY } from '../../lib/fx'
 
 function formatMoney(v, currency = 'BRL') {
@@ -104,9 +105,25 @@ export default function Admin() {
   })
   const [activeTab, setActiveTab] = useState('pedidos')
 
+  // Grupo de Compras (admin)
+  const [purchaseGroups, setPurchaseGroups] = useState([])
+  const [groupsLoading, setGroupsLoading] = useState(false)
+  const [groupSubmitting, setGroupSubmitting] = useState(false)
+  const [groupForm, setGroupForm] = useState({
+    name: '',
+    description: '',
+    image_url: '',
+    image_urls: [],
+    is_active: true,
+  })
+  const [groupImageUploading, setGroupImageUploading] = useState(false)
+  const [groupImageUploadError, setGroupImageUploadError] = useState('')
+  const [newGroupImageUrl, setNewGroupImageUrl] = useState('')
+
   const TABS = [
     { id: 'pedidos', label: 'Pedidos', icon: '📦' },
     { id: 'produtos', label: 'Loja / Produtos', icon: '🛒' },
+    { id: 'grupos', label: 'Grupo de Compras', icon: '👥' },
   ]
 
   const loadProducts = async (active = () => true) => {
@@ -172,6 +189,14 @@ export default function Admin() {
     }
   }, [])
 
+  useEffect(() => {
+    let isActive = true
+    loadGroups(() => isActive)
+    return () => {
+      isActive = false
+    }
+  }, [])
+
   const resetForm = () => {
     setForm({
       name: '',
@@ -185,6 +210,72 @@ export default function Admin() {
     setEditingId(null)
     setImageUploadError('')
     setNewImageUrl('')
+  }
+
+  const resetGroupForm = () => {
+    setGroupForm({
+      name: '',
+      description: '',
+      image_url: '',
+      image_urls: [],
+      is_active: true,
+    })
+    setGroupImageUploadError('')
+    setNewGroupImageUrl('')
+  }
+
+  const loadGroups = async (active = () => true) => {
+    if (active()) setGroupsLoading(true)
+    try {
+      const { data, error } = await getPurchaseGroupsAdmin()
+      if (!active()) return
+      setPurchaseGroups(data ?? [])
+      if (error) setMessage(error.message)
+    } catch (e) {
+      if (active()) setMessage(e?.message || 'Erro ao carregar grupos de compra')
+    } finally {
+      if (active()) setGroupsLoading(false)
+    }
+  }
+
+  const handleSaveGroup = async (e) => {
+    e.preventDefault()
+    setMessage('')
+
+    const name = groupForm.name?.trim()
+    if (!name) {
+      setMessage('Nome do grupo é obrigatório')
+      return
+    }
+
+    const imageUrls = Array.isArray(groupForm.image_urls) ? groupForm.image_urls.filter(Boolean) : []
+    if (!imageUrls.length) {
+      setMessage('Fotos do grupo são obrigatórias')
+      return
+    }
+
+    setGroupSubmitting(true)
+    try {
+      const payload = {
+        name,
+        description: groupForm.description || '',
+        image_urls: imageUrls,
+        image_url: groupForm.image_url || imageUrls[0] || '',
+        is_active: groupForm.is_active ?? true,
+      }
+
+      const { error } = await createPurchaseGroup(payload)
+      if (error) {
+        setMessage(error.message || 'Erro ao criar grupo')
+        return
+      }
+
+      setMessage('Grupo criado com sucesso')
+      resetGroupForm()
+      loadGroups()
+    } finally {
+      setGroupSubmitting(false)
+    }
   }
 
   const getProductImageUrls = (p) => {
@@ -1315,6 +1406,195 @@ export default function Admin() {
             </form>
           )}
         </section>
+        )}
+
+        {/* Grupo de Compras */}
+        {activeTab === 'grupos' && (
+          <section className="mt-0 rounded-b-xl border border-t-0 border-earth-200 bg-earth-50 p-6">
+            <h2 className="text-lg font-semibold text-earth-900">Grupo de Compras</h2>
+            <p className="mt-1 text-sm text-earth-600">Crie grupos exibidos na página de Grupo de Compras</p>
+
+            <form onSubmit={handleSaveGroup} className="mt-4 space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-earth-700">Nome *</label>
+                <input
+                  required
+                  type="text"
+                  value={groupForm.name}
+                  onChange={(e) => setGroupForm((f) => ({ ...f, name: e.target.value }))}
+                  className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-earth-700">Descrição</label>
+                <textarea
+                  value={groupForm.description}
+                  onChange={(e) => setGroupForm((f) => ({ ...f, description: e.target.value }))}
+                  rows={3}
+                  className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-earth-700">Fotos do grupo (obrigatório)</label>
+                <div className="mt-2 flex flex-wrap items-center gap-3">
+                  <label className="cursor-pointer rounded-lg border border-earth-300 bg-white px-3 py-2 text-sm font-medium text-earth-700 hover:bg-earth-50">
+                    {groupImageUploading ? 'Enviando...' : 'Enviar arquivo'}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="sr-only"
+                      disabled={groupImageUploading}
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0]
+                        if (!file) return
+                        setGroupImageUploadError('')
+                        setGroupImageUploading(true)
+                        try {
+                          const { data, error } = await uploadProductImage(file)
+                          if (error) {
+                            setGroupImageUploadError(error.message || 'Falha no upload')
+                            return
+                          }
+                          if (data) {
+                            setGroupForm((f) => ({
+                              ...f,
+                              image_urls: [...(f.image_urls || []), data],
+                              image_url: f.image_url || data,
+                            }))
+                          }
+                        } finally {
+                          setGroupImageUploading(false)
+                          e.target.value = ''
+                        }
+                      }}
+                    />
+                  </label>
+
+                  <input
+                    type="url"
+                    value={newGroupImageUrl}
+                    onChange={(e) => {
+                      setNewGroupImageUrl(e.target.value)
+                      setGroupImageUploadError('')
+                    }}
+                    placeholder="Cole a URL e pressione Enter"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        const url = newGroupImageUrl?.trim()
+                        if (!url) return
+                        setGroupForm((f) => ({
+                          ...f,
+                          image_urls: [...(f.image_urls || []), url],
+                          image_url: f.image_url || url,
+                        }))
+                        setNewGroupImageUrl('')
+                      }
+                    }}
+                    className="min-w-[200px] flex-1 rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const url = newGroupImageUrl?.trim()
+                      if (!url) return
+                      setGroupForm((f) => ({
+                        ...f,
+                        image_urls: [...(f.image_urls || []), url],
+                        image_url: f.image_url || url,
+                      }))
+                      setNewGroupImageUrl('')
+                    }}
+                    className="rounded-lg border border-earth-300 bg-white px-3 py-2 text-sm font-medium text-earth-700 hover:bg-earth-50"
+                  >
+                    Adicionar URL
+                  </button>
+                </div>
+
+                {groupImageUploadError && <p className="mt-2 text-sm text-red-600">{groupImageUploadError}</p>}
+
+                {groupForm.image_urls?.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {(groupForm.image_urls || []).filter(Boolean).map((url, i) => (
+                      <div key={i} className="relative inline-block">
+                        <img src={url} alt="" className="h-20 w-20 rounded border border-earth-200 object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const list = [...(groupForm.image_urls || [])]
+                            list.splice(i, 1)
+                            setGroupForm((f) => ({
+                              ...f,
+                              image_urls: list,
+                              image_url: list[0] || '',
+                            }))
+                          }}
+                          className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white hover:bg-red-600"
+                          aria-label="Remover foto"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  type="submit"
+                  disabled={groupSubmitting}
+                  className="rounded-lg bg-earth-900 px-4 py-2 font-medium text-earth-50 hover:bg-earth-800 disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {groupSubmitting ? 'Criando...' : 'Criar grupo de compra'}
+                </button>
+                <button
+                  type="button"
+                  onClick={resetGroupForm}
+                  disabled={groupSubmitting}
+                  className="rounded-lg border border-earth-300 px-4 py-2 font-medium text-earth-700 hover:bg-earth-100"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </form>
+
+            <div className="mt-6">
+              <h3 className="font-medium text-earth-900">Grupos cadastrados</h3>
+              {groupsLoading && <p className="mt-2 text-sm text-earth-600">Carregando...</p>}
+              {!groupsLoading && purchaseGroups.length === 0 && (
+                <p className="mt-2 text-sm text-earth-600">Nenhum grupo ainda.</p>
+              )}
+              {!groupsLoading && purchaseGroups.length > 0 && (
+                <ul className="mt-4 space-y-2">
+                  {purchaseGroups.map((g) => (
+                    <li
+                      key={g.id}
+                      className="flex items-start justify-between gap-4 rounded-lg border border-earth-200 bg-white p-4"
+                    >
+                      <div className="flex items-start gap-4">
+                        {g.image_url ? (
+                          <img src={g.image_url} alt="" className="h-12 w-12 rounded object-cover" />
+                        ) : (
+                          <div className="h-12 w-12 rounded bg-earth-200" />
+                        )}
+                        <div>
+                          <p className="font-medium text-earth-900">{g.name}</p>
+                          {g.description && <p className="mt-1 text-sm text-earth-600 line-clamp-2">{g.description}</p>}
+                        </div>
+                      </div>
+                      {!g.is_active && (
+                        <span className="rounded bg-amber-200 px-2 py-0.5 text-xs text-amber-900">Inativo</span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </section>
         )}
 
         {/* Loja - Produtos */}

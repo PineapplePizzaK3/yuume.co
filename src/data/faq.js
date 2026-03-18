@@ -12,7 +12,7 @@ export const FAQ_ITEMS = [
     id: 'prazos',
     pergunta: 'Qual o prazo de entrega até o Brasil?',
     resposta:
-      'Os prazos variam conforme o tipo de envio e a região. O frete aéreo costuma levar de 7 a 15 dias úteis. O marítimo pode levar de 45 a 90 dias. Consulte nossa tabela de preços para mais detalhes.',
+      'Os prazos variam conforme o tipo de envio e a região. O frete EMS costuma levar de 5 a 10 dias úteis e o Parcel Post via aérea de 7 a 15 dias úteis. Consulte nossa tabela de preços para mais detalhes.',
   },
   {
     id: 'pagamento',

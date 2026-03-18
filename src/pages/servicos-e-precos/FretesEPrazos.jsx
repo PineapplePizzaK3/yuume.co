@@ -4,7 +4,6 @@ import { Link } from 'react-router-dom'
 import { TABELA_FRETE_EMS } from '../../data/tabelaFreteEMS'
 import {
   TABELA_PARCEL_AEREO,
-  TABELA_PARCEL_MARITIMO,
   TABELA_EPACKET,
 } from '../../data/fretesJPPost'
 
@@ -49,12 +48,8 @@ const TABS = [
   { id: 'epacket', label: 'ePacket Light', badge: '2 kg' },
 ]
 
-// Via marítima temporariamente indisponível
-const PARCEL_MARITIMO_DISPONIVEL = false
-const PARCEL_SUBTABS = [
-  { id: 'aereo', label: 'Via aérea', prazo: '7–15 dias' },
-  ...(PARCEL_MARITIMO_DISPONIVEL ? [{ id: 'maritimo', label: 'Via marítima', prazo: '45–90 dias' }] : []),
-]
+// Surface Mail (via marítima) foi removido do catálogo de opções.
+const PARCEL_SUBTABS = [{ id: 'aereo', label: 'Via aérea', prazo: '7–15 dias' }]
 
 /**
  * Sub-página Fretes e Prazos - tipos de envio Japan Post com abas.
@@ -65,7 +60,6 @@ function FretesEPrazos() {
 
   const parcelTabelas = {
     aereo: TABELA_PARCEL_AEREO,
-    maritimo: TABELA_PARCEL_MARITIMO,
   }
 
   return (

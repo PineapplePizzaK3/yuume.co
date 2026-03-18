@@ -35,6 +35,7 @@ import Loja from './pages/platform/Loja'
 import Cart from './pages/platform/Cart'
 import ListaDesejos from './pages/platform/ListaDesejos'
 import MeusProdutos from './pages/platform/MeusProdutos'
+import GrupoDeCompras from './pages/platform/GrupoDeCompras'
 import Admin from './pages/platform/Admin'
 
 /**
@@ -70,6 +71,7 @@ function App() {
             <Route path="meus-produtos" element={<MeusProdutos />} />
             <Route path="loja" element={<Loja />} />
             <Route path="cart" element={<Cart />} />
+            <Route path="grupo-de-compras" element={<GrupoDeCompras />} />
             <Route path="lista-desejos" element={<ListaDesejos />} />
             <Route path="admin" element={
               <AdminRoute>

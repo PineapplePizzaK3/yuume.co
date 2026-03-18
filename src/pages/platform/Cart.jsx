@@ -9,7 +9,9 @@ import { useAuth } from '../../hooks/useAuth'
 import { getCart, updateCartItem, removeFromCart, createStoreOrder } from '../../services/cartService'
 import { createCheckoutSession, createKomojuSession } from '../../services/paymentService'
 import { getWallet } from '../../services/walletService'
+import { createAddress, getAddresses } from '../../services/addressService'
 import { brlToJpy, formatBRL, formatJPY, jpyToBrl } from '../../lib/fx'
+import { cacheKey, readCache, writeCache } from '../../lib/cache'
 import { calcularFreteEMS } from '../../data/tabelaFreteEMS'
 import { calcularFreteParcel, calcularFreteEPacket } from '../../data/fretesJPPost'
 
@@ -27,6 +29,23 @@ export default function Cart() {
   const [submitting, setSubmitting] = useState(false)
   const [shipImmediately, setShipImmediately] = useState(null)
   const [tipoFrete, setTipoFrete] = useState('ems')
+  const [addresses, setAddresses] = useState([])
+  const [addressesLoading, setAddressesLoading] = useState(false)
+  const [selectedAddressId, setSelectedAddressId] = useState(null)
+  const [showAddressForm, setShowAddressForm] = useState(false)
+  const [addressSaving, setAddressSaving] = useState(false)
+  const [addressForm, setAddressForm] = useState({
+    label: '',
+    recipient_name: '',
+    street: '',
+    number: '',
+    complement: '',
+    neighborhood: '',
+    city: '',
+    state: '',
+    postal_code: '',
+    country: 'Brasil',
+  })
   const [wallet, setWallet] = useState(null)
   const [payModal, setPayModal] = useState({ open: false, order: null, useWallet: true })
   const [feedback, setFeedback] = useState('')
@@ -60,6 +79,45 @@ export default function Cart() {
       isActive = false
     }
   }, [user?.id])
+
+  useEffect(() => {
+    let isActive = true
+    const run = async () => {
+      if (!user?.id) return
+      setAddressesLoading(true)
+      try {
+        const k = cacheKey(user.id, 'cart_addresses_v1')
+        const cached = readCache(k, 1000 * 60 * 30)
+        if (cached && isActive) {
+          setAddresses(Array.isArray(cached) ? cached : [])
+        }
+        const { data, error } = await getAddresses(user.id)
+        if (!isActive) return
+        setAddresses(data ?? [])
+        writeCache(k, data ?? [])
+        if (error) setFeedback(error.message)
+      } catch (e) {
+        if (isActive) setFeedback(e?.message || 'Erro ao carregar endereços.')
+      } finally {
+        if (isActive) setAddressesLoading(false)
+      }
+    }
+    run()
+    return () => {
+      isActive = false
+    }
+  }, [user?.id])
+
+  useEffect(() => {
+    if (!addresses || addresses.length === 0) {
+      setSelectedAddressId(null)
+      return
+    }
+    // Default para o primeiro endereço cadastrado.
+    if (!selectedAddressId || !addresses.some((a) => a.id === selectedAddressId)) {
+      setSelectedAddressId(addresses[0].id)
+    }
+  }, [addresses, selectedAddressId])
 
   useEffect(() => {
     if (success) setFeedback('Compra realizada com sucesso! Os produtos estão em Meus Produtos.')
@@ -121,6 +179,12 @@ export default function Cart() {
       setFeedback('Carrinho vazio.')
       return
     }
+
+    if (!selectedAddressId) {
+      setFeedback('Escolha ou registre um endereço de envio.')
+      return
+    }
+
     if (shipImmediately === true) {
       if (!freightCostJpyComputed || freightCostJpyComputed <= 0) {
         setFeedback('Para calcular o frete, informe o peso (kg) de todos os produtos.')
@@ -133,7 +197,8 @@ export default function Cart() {
       const { data: order, error } = await createStoreOrder(
         user.id,
         shipImmediately,
-        shipImmediately === true ? freightCostJpyComputed : null
+        shipImmediately === true ? freightCostJpyComputed : null,
+        selectedAddressId
       )
       if (error) {
         setFeedback(error.message || 'Erro ao criar pedido')
@@ -344,6 +409,281 @@ export default function Cart() {
                   </div>
                 </label>
               </div>
+
+              {shipImmediately !== null && (
+                <div className="mt-5 rounded-xl border border-earth-200 bg-white p-4">
+                  <h4 className="font-semibold text-earth-900">Endereço de envio</h4>
+                  <p className="mt-1 text-sm text-earth-600">
+                    Selecione um endereço cadastrado. Caso não exista, você poderá registrar um novo.
+                  </p>
+
+                  {addressesLoading ? (
+                    <p className="mt-4 text-sm text-earth-600">Carregando endereços...</p>
+                  ) : addresses.length === 0 && !showAddressForm ? (
+                    <div className="mt-4 rounded-lg border border-earth-200 bg-earth-50 p-4">
+                      <p className="text-sm text-earth-600">
+                        Nenhum endereço cadastrado.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowAddressForm(true)
+                          setAddressForm({
+                            label: '',
+                            recipient_name: '',
+                            street: '',
+                            number: '',
+                            complement: '',
+                            neighborhood: '',
+                            city: '',
+                            state: '',
+                            postal_code: '',
+                            country: 'Brasil',
+                          })
+                        }}
+                        className="mt-3 rounded-lg bg-earth-900 px-4 py-2 font-medium text-earth-50 hover:bg-earth-800"
+                      >
+                        Registrar endereço
+                      </button>
+                    </div>
+                  ) : showAddressForm ? (
+                    <form
+                      onSubmit={async (e) => {
+                        e.preventDefault()
+                        setAddressSaving(true)
+                        setFeedback('')
+                        try {
+                          const { data, error } = await createAddress(user.id, addressForm)
+                          if (error) {
+                            setFeedback(error.message || 'Erro ao salvar endereço.')
+                            return
+                          }
+                          // Atualiza lista e seleciona o endereço recém-criado.
+                          const { data: addrList, error: addrErr } = await getAddresses(user.id)
+                          if (addrErr) {
+                            setFeedback(addrErr.message || 'Erro ao recarregar endereços.')
+                            setSelectedAddressId(data?.id ?? null)
+                            setShowAddressForm(false)
+                            return
+                          }
+                          setAddresses(addrList ?? [])
+                          const k = cacheKey(user.id, 'cart_addresses_v1')
+                          writeCache(k, addrList ?? [])
+                          setSelectedAddressId(data?.id ?? (addrList?.[0]?.id ?? null))
+                          setShowAddressForm(false)
+                          setAddressForm({
+                            label: '',
+                            recipient_name: '',
+                            street: '',
+                            number: '',
+                            complement: '',
+                            neighborhood: '',
+                            city: '',
+                            state: '',
+                            postal_code: '',
+                            country: 'Brasil',
+                          })
+                        } catch (err) {
+                          setFeedback(err?.message || 'Erro ao salvar endereço.')
+                        } finally {
+                          setAddressSaving(false)
+                        }
+                      }}
+                      className="mt-4 grid gap-4 sm:grid-cols-2"
+                    >
+                      <div className="sm:col-span-2">
+                        <label className="block text-sm font-medium text-earth-700">Nome do endereço</label>
+                        <input
+                          type="text"
+                          value={addressForm.label}
+                          onChange={(e) => setAddressForm((f) => ({ ...f, label: e.target.value }))}
+                          className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                          placeholder="Ex: Casa"
+                        />
+                      </div>
+
+                      <div className="sm:col-span-2">
+                        <label className="block text-sm font-medium text-earth-700">Nome do destinatário *</label>
+                        <input
+                          type="text"
+                          value={addressForm.recipient_name}
+                          onChange={(e) => setAddressForm((f) => ({ ...f, recipient_name: e.target.value }))}
+                          className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                          required
+                        />
+                      </div>
+
+                      <div className="sm:col-span-2">
+                        <label className="block text-sm font-medium text-earth-700">Rua *</label>
+                        <input
+                          type="text"
+                          value={addressForm.street}
+                          onChange={(e) => setAddressForm((f) => ({ ...f, street: e.target.value }))}
+                          className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-earth-700">Número *</label>
+                        <input
+                          type="text"
+                          value={addressForm.number}
+                          onChange={(e) => setAddressForm((f) => ({ ...f, number: e.target.value }))}
+                          className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-earth-700">Complemento</label>
+                        <input
+                          type="text"
+                          value={addressForm.complement}
+                          onChange={(e) => setAddressForm((f) => ({ ...f, complement: e.target.value }))}
+                          className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                        />
+                      </div>
+
+                      <div className="sm:col-span-2">
+                        <label className="block text-sm font-medium text-earth-700">Bairro *</label>
+                        <input
+                          type="text"
+                          value={addressForm.neighborhood}
+                          onChange={(e) => setAddressForm((f) => ({ ...f, neighborhood: e.target.value }))}
+                          className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-earth-700">Cidade *</label>
+                        <input
+                          type="text"
+                          value={addressForm.city}
+                          onChange={(e) => setAddressForm((f) => ({ ...f, city: e.target.value }))}
+                          className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-earth-700">Estado *</label>
+                        <input
+                          type="text"
+                          value={addressForm.state}
+                          onChange={(e) => setAddressForm((f) => ({ ...f, state: e.target.value }))}
+                          className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                          required
+                        />
+                      </div>
+
+                      <div className="sm:col-span-2">
+                        <label className="block text-sm font-medium text-earth-700">CEP *</label>
+                        <input
+                          type="text"
+                          value={addressForm.postal_code}
+                          onChange={(e) => setAddressForm((f) => ({ ...f, postal_code: e.target.value }))}
+                          className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                          required
+                        />
+                      </div>
+
+                      <div className="sm:col-span-2 flex gap-2">
+                        <button
+                          type="submit"
+                          disabled={addressSaving}
+                          className="flex-1 rounded-lg bg-earth-900 px-4 py-2.5 font-medium text-earth-50 hover:bg-earth-800 disabled:opacity-60"
+                        >
+                          {addressSaving ? 'Salvando...' : 'Salvar endereço'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowAddressForm(false)
+                            setAddressForm({
+                              label: '',
+                              recipient_name: '',
+                              street: '',
+                              number: '',
+                              complement: '',
+                              neighborhood: '',
+                              city: '',
+                              state: '',
+                              postal_code: '',
+                              country: 'Brasil',
+                            })
+                          }}
+                          disabled={addressSaving}
+                          className="rounded-lg border border-earth-300 bg-white px-4 py-2.5 font-medium text-earth-700 hover:bg-earth-100 disabled:opacity-60"
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    </form>
+                  ) : (
+                    <div className="mt-4 space-y-3">
+                      <div className="space-y-3">
+                        {addresses.map((addr) => (
+                          <label
+                            key={addr.id}
+                            className={`flex cursor-pointer items-start gap-3 rounded-lg border p-4 transition ${
+                              selectedAddressId === addr.id
+                                ? 'border-earth-900 bg-earth-50'
+                                : 'border-earth-200 bg-white hover:border-earth-900'
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name="shipping_address"
+                              checked={selectedAddressId === addr.id}
+                              onChange={() => setSelectedAddressId(addr.id)}
+                              className="mt-1 border-earth-300"
+                            />
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-medium text-earth-900">
+                                {addr.label || 'Endereço'}
+                              </p>
+                              <p className="truncate text-xs text-earth-600 mt-0.5">
+                                {addr.recipient_name}
+                              </p>
+                              <p className="mt-1 text-xs text-earth-500">
+                                {addr.street}, {addr.number}
+                                {addr.complement ? `, ${addr.complement}` : ''} - {addr.neighborhood}
+                              </p>
+                              <p className="text-xs text-earth-500">
+                                {addr.city}/{addr.state} • CEP {addr.postal_code}
+                              </p>
+                            </div>
+                          </label>
+                        ))}
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowAddressForm(true)
+                          setAddressForm({
+                            label: '',
+                            recipient_name: '',
+                            street: '',
+                            number: '',
+                            complement: '',
+                            neighborhood: '',
+                            city: '',
+                            state: '',
+                            postal_code: '',
+                            country: 'Brasil',
+                          })
+                        }}
+                        className="w-full rounded-lg border border-earth-300 bg-white px-4 py-2.5 text-sm font-medium text-earth-700 hover:bg-earth-100"
+                      >
+                        + Novo endereço
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {shipImmediately === true && (
                 <div className="mt-5 rounded-xl border border-earth-200 bg-earth-50 p-4">

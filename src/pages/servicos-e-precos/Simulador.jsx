@@ -17,12 +17,9 @@ const SERVICOS = [
   { id: 'redirecionamento', label: 'Redirecionamento', tipo: 'por-itens' },
   { id: 'personal-shopping', label: 'Personal shopping', percentual: 20 },
 ]
-// Via marítima temporariamente indisponível
-const PARCEL_MARITIMO_DISPONIVEL = false
 const TIPOS_FRETE = [
   { id: 'ems', label: 'EMS', prazo: '5–10 dias úteis' },
   { id: 'parcel-aereo', label: 'Parcel Post (via aérea)', prazo: '7–15 dias' },
-  ...(PARCEL_MARITIMO_DISPONIVEL ? [{ id: 'parcel-maritimo', label: 'Parcel Post (via marítima)', prazo: '45–90 dias' }] : []),
   { id: 'epacket', label: 'ePacket Light (até 2 kg)', prazo: '5–21 dias úteis' },
 ]
 
@@ -91,7 +88,6 @@ function Simulador() {
   const obterFrete = () => {
     if (tipoFreteEfetivo === 'ems') return calcularFreteEMS(pesoTotalGramas)
     if (tipoFreteEfetivo === 'parcel-aereo') return calcularFreteParcel(pesoTotalGramas, 'aereo')
-    if (tipoFreteEfetivo === 'parcel-maritimo') return calcularFreteParcel(pesoTotalGramas, 'maritimo')
     if (tipoFreteEfetivo === 'epacket') return calcularFreteEPacket(pesoTotalGramas)
     return calcularFreteEMS(pesoTotalGramas)
   }

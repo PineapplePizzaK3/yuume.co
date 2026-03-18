@@ -16,6 +16,7 @@ const NAV_ITEMS = [
   { to: '/app/conta', label: 'Minha Conta' },
   { to: '/app/loja', label: 'Loja Virtual' },
   { to: '/app/cart', label: 'Carrinho' },
+  { to: '/app/grupo-de-compras', label: 'Grupo de Compras' },
   { to: '/app/lista-desejos', label: 'Lista de Desejos' },
 ]
 
