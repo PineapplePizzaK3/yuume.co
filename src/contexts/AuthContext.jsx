@@ -166,7 +166,8 @@ export function AuthProvider({ children }) {
   }
 
   const signInWithOAuth = async (provider) => {
-    const siteUrl = import.meta.env.VITE_SITE_URL || window.location.origin
+    // Para OAuth, use sempre o origin atual (evita redirects errados tipo localhost em produção).
+    const siteUrl = window.location.origin
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
