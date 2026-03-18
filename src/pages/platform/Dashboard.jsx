@@ -9,6 +9,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { getMyOrders } from '../../services/orderService'
 import { getWallet } from '../../services/walletService'
 import { getWishlistLinks } from '../../services/wishlistLinkService'
+import { getMyNotifications, markNotificationRead } from '../../services/notificationService'
 import { SHIPPING_ADDRESS_JAPAN } from '../../data/legalConfig'
 
 function formatMoney(value, currency = 'BRL') {
@@ -56,7 +57,9 @@ export default function Dashboard() {
   const [orders, setOrders] = useState([])
   const [wallet, setWallet] = useState(null)
   const [wishlist, setWishlist] = useState([])
+  const [notifications, setNotifications] = useState([])
   const [loading, setLoading] = useState(true)
+  const [notifsLoading, setNotifsLoading] = useState(true)
 
   useEffect(() => {
     let isActive = true
@@ -89,11 +92,36 @@ export default function Dashboard() {
     return () => { isActive = false }
   }, [user?.id])
 
+  useEffect(() => {
+    let isActive = true
+    const run = async () => {
+      if (!user?.id) {
+        if (isActive) setNotifsLoading(false)
+        return
+      }
+      if (isActive) setNotifsLoading(true)
+      try {
+        const { data } = await getMyNotifications(user.id, 20)
+        if (!isActive) return
+        setNotifications(data ?? [])
+      } finally {
+        if (isActive) setNotifsLoading(false)
+      }
+    }
+    run()
+    const interval = setInterval(run, 15000)
+    return () => {
+      isActive = false
+      clearInterval(interval)
+    }
+  }, [user?.id])
+
   const name = profile?.name?.trim() || user?.email?.split('@')[0] || 'usuário'
   const accountCode = profile?.account_code ?? ''
   const recipientLine = accountCode ? `${name} - ${accountCode}` : name
   const balance = wallet?.balance ?? 0
   const currency = wallet?.currency ?? 'BRL'
+  const unreadCount = notifications.filter((n) => !n.read_at).length
   const addressForUser = {
     recipient: recipientLine,
     company: SHIPPING_ADDRESS_JAPAN.company,
@@ -234,6 +262,68 @@ export default function Dashboard() {
                 </p>
               </address>
               <CopyAddressButton address={addressForUser} />
+            </section>
+
+            {/* Notificações */}
+            <section className="rounded-xl border border-earth-200 bg-white p-4 sm:p-5">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-earth-900">Notificações</h2>
+                {unreadCount > 0 && (
+                  <span className="inline-flex items-center gap-2 text-sm font-medium text-earth-700">
+                    <span className="inline-block h-2 w-2 rounded-full bg-red-600" aria-hidden />
+                    {unreadCount} nova(s)
+                  </span>
+                )}
+              </div>
+              <p className="mt-1 text-sm text-earth-600">
+                Você receberá uma notificação quando seu pedido mudar de status.
+              </p>
+
+              {notifsLoading && (
+                <p className="mt-4 text-sm text-earth-600">Carregando notificações...</p>
+              )}
+
+              {!notifsLoading && notifications.length === 0 && (
+                <p className="mt-4 text-sm text-earth-600">Nenhuma notificação ainda.</p>
+              )}
+
+              {!notifsLoading && notifications.length > 0 && (
+                <div className="mt-4 space-y-2">
+                  {notifications.map((n) => {
+                    const isUnread = !n.read_at
+                    return (
+                      <button
+                        key={n.id}
+                        type="button"
+                        onClick={async () => {
+                          if (isUnread) {
+                            await markNotificationRead(n.id)
+                            setNotifications((prev) =>
+                              prev.map((x) => (x.id === n.id ? { ...x, read_at: new Date().toISOString() } : x))
+                            )
+                          }
+                          const orderId = n.meta?.order_id
+                          if (orderId) window.location.href = '/app/orders'
+                        }}
+                        className="w-full rounded-lg border border-earth-200 bg-earth-50 p-3 text-left hover:bg-earth-100"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="flex items-center gap-2 font-medium text-earth-900">
+                              {isUnread && <span className="inline-block h-2 w-2 rounded-full bg-red-600" aria-hidden />}
+                              <span className="truncate">{n.title}</span>
+                            </p>
+                            {n.body && <p className="mt-1 text-sm text-earth-600">{n.body}</p>}
+                          </div>
+                          <span className="shrink-0 text-xs text-earth-500">
+                            {n.created_at ? new Date(n.created_at).toLocaleString('pt-BR') : ''}
+                          </span>
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
             </section>
           </div>
         )}
