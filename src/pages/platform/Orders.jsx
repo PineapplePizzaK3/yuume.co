@@ -518,14 +518,6 @@ export default function Orders() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => handlePayWithKomoju(payModal.order, 'bank_transfer')}
-                        disabled={payingId === payModal.order.id}
-                        className="rounded-lg border border-earth-300 bg-white px-4 py-2.5 font-medium text-earth-800 hover:bg-earth-50 disabled:opacity-60"
-                      >
-                        Transferência
-                      </button>
-                      <button
-                        type="button"
                         onClick={() => setPayModal({ open: false, order: null, useWallet: true })}
                         className="rounded-lg border border-earth-300 px-4 py-2.5 font-medium text-earth-700 hover:bg-earth-100"
                       >
