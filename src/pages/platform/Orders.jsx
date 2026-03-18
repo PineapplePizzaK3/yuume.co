@@ -9,6 +9,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { getMyOrders, requestOrderExtraServices, ORDER_STATUS_LABELS } from '../../services/orderService'
 import { createCheckoutSession } from '../../services/paymentService'
 import { getWallet, payOrderWithWallet } from '../../services/walletService'
+import { cacheKey, readCache, writeCache } from '../../lib/cache'
 
 function formatMoney(v, currency = 'JPY') {
   return Number(v)?.toLocaleString('pt-BR', { style: 'currency', currency }) ?? '—'
@@ -43,6 +44,13 @@ export default function Orders() {
         if (isActive) setLoading(false)
         return
       }
+      const k = cacheKey(user.id, 'orders_page_v1')
+      const cached = readCache(k, 1000 * 60 * 30)
+      if (cached && isActive) {
+        setOrders(cached.orders ?? [])
+        setWallet(cached.wallet ?? null)
+        setLoading(false)
+      }
       try {
         const [ordersRes, walletRes] = await Promise.all([
           getMyOrders(user.id),
@@ -52,6 +60,7 @@ export default function Orders() {
         setOrders(ordersRes.data ?? [])
         setWallet(walletRes.data ?? null)
         if (ordersRes.error) setFeedback(ordersRes.error.message)
+        writeCache(k, { orders: ordersRes.data ?? [], wallet: walletRes.data ?? null })
       } catch (e) {
         if (isActive) setFeedback(e?.message || 'Erro ao carregar pedidos')
       } finally {

@@ -11,6 +11,7 @@ import { getWallet } from '../../services/walletService'
 import { getWishlistLinks } from '../../services/wishlistLinkService'
 import { getMyNotifications, markNotificationRead } from '../../services/notificationService'
 import { SHIPPING_ADDRESS_JAPAN } from '../../data/legalConfig'
+import { cacheKey, readCache, writeCache } from '../../lib/cache'
 
 function formatMoney(value, currency = 'BRL') {
   return Number(value)?.toLocaleString('pt-BR', { style: 'currency', currency }) ?? '—'
@@ -68,6 +69,15 @@ export default function Dashboard() {
         if (isActive) setLoading(false)
         return
       }
+      // Cache: mostra dados instantaneamente e atualiza em background.
+      const k = cacheKey(user.id, 'dashboard_v1')
+      const cached = readCache(k, 1000 * 60 * 30) // 30 min
+      if (cached && isActive) {
+        setOrders(cached.orders ?? [])
+        setWallet(cached.wallet ?? null)
+        setWishlist(cached.wishlist ?? [])
+        setLoading(false)
+      }
       try {
         const [ordersRes, walletRes, wishlistLinksRes] = await Promise.all([
           getMyOrders(user.id),
@@ -78,6 +88,11 @@ export default function Dashboard() {
         setOrders(ordersRes.data ?? [])
         setWallet(walletRes.data ?? null)
         setWishlist(wishlistLinksRes.data ?? [])
+        writeCache(k, {
+          orders: ordersRes.data ?? [],
+          wallet: walletRes.data ?? null,
+          wishlist: wishlistLinksRes.data ?? [],
+        })
       } catch {
         if (isActive) {
           setOrders([])
@@ -99,11 +114,18 @@ export default function Dashboard() {
         if (isActive) setNotifsLoading(false)
         return
       }
+      const k = cacheKey(user.id, 'notifications_v1')
+      const cached = readCache(k, 1000 * 60 * 30)
+      if (cached && isActive) {
+        setNotifications(Array.isArray(cached) ? cached : [])
+        setNotifsLoading(false)
+      }
       if (isActive) setNotifsLoading(true)
       try {
         const { data } = await getMyNotifications(user.id, 20)
         if (!isActive) return
         setNotifications(data ?? [])
+        writeCache(k, data ?? [])
       } finally {
         if (isActive) setNotifsLoading(false)
       }

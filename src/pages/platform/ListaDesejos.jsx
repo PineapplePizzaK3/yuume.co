@@ -13,6 +13,7 @@ import {
   scrapeProductUrl,
 } from '../../services/wishlistLinkService'
 import { useAuth } from '../../hooks/useAuth'
+import { cacheKey, readCache, writeCache } from '../../lib/cache'
 
 function formatMoney(v, currency = 'JPY') {
   if (v == null) return '—'
@@ -91,9 +92,16 @@ export default function ListaDesejos() {
     }
     if (active()) setLoading(true)
     try {
+      const k = cacheKey(user.id, 'wishlist_links_v1')
+      const cached = readCache(k, 1000 * 60 * 30)
+      if (cached && active()) {
+        setLinkItems(Array.isArray(cached) ? cached : [])
+        setLoading(false)
+      }
       const { data, error } = await getWishlistLinks(user.id)
       if (!active()) return
       setLinkItems(data ?? [])
+      writeCache(k, data ?? [])
       if (error) setMessage(error.message || 'Erro ao carregar lista')
     } catch (e) {
       if (active()) setMessage(e?.message || 'Erro ao carregar lista')

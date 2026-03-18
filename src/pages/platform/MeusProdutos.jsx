@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { useAuth } from '../../hooks/useAuth'
 import { getMyInventory, createShipment } from '../../services/inventoryService'
+import { cacheKey, readCache, writeCache } from '../../lib/cache'
 
 export default function MeusProdutos() {
   const { user } = useAuth()
@@ -22,10 +23,17 @@ export default function MeusProdutos() {
         if (isActive) setLoading(false)
         return
       }
+      const k = cacheKey(user.id, 'inventory_v1')
+      const cached = readCache(k, 1000 * 60 * 30)
+      if (cached && isActive) {
+        setItems(Array.isArray(cached) ? cached : [])
+        setLoading(false)
+      }
       try {
         const { data, error } = await getMyInventory(user.id)
         if (!isActive) return
         setItems(data ?? [])
+        writeCache(k, data ?? [])
         if (error) setFeedback(error.message)
       } catch (e) {
         if (isActive) setFeedback(e?.message || 'Erro ao carregar itens')

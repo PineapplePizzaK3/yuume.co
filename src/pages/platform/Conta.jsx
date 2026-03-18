@@ -11,6 +11,7 @@ import {
   updateAddress,
   deleteAddress,
 } from '../../services/addressService'
+import { cacheKey, readCache, writeCache } from '../../lib/cache'
 
 const ESTADOS = [
   'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS',
@@ -47,6 +48,13 @@ export default function Conta() {
     }
     if (active()) setLoading(true)
     try {
+      const k = cacheKey(user.id, 'conta_v1')
+      const cached = readCache(k, 1000 * 60 * 30)
+      if (cached && active()) {
+        setProfile(cached.profile ?? null)
+        setAddresses(cached.addresses ?? [])
+        setLoading(false)
+      }
       const [prof, addr] = await Promise.all([
         getProfile(user.id),
         getAddresses(user.id),
@@ -54,6 +62,7 @@ export default function Conta() {
       if (!active()) return
       setProfile(prof.data ?? null)
       setAddresses(addr.data ?? [])
+      writeCache(k, { profile: prof.data ?? null, addresses: addr.data ?? [] })
       if (prof.error || addr.error) {
         setMessage(prof.error?.message || addr.error?.message || 'Erro ao carregar dados')
       }

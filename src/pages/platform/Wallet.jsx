@@ -7,6 +7,7 @@ import { Helmet } from 'react-helmet-async'
 import { useAuth } from '../../hooks/useAuth'
 import { getWallet, getWalletTransactions } from '../../services/walletService'
 import { createTopUpCheckoutSession } from '../../services/paymentService'
+import { cacheKey, readCache, writeCache } from '../../lib/cache'
 
 function formatMoney(value, currency = 'BRL') {
   return Number(value)?.toLocaleString('pt-BR', { style: 'currency', currency }) ?? '—'
@@ -32,6 +33,13 @@ export default function Wallet() {
 
   const loadData = async (active) => {
     if (!user?.id) return
+    const k = cacheKey(user.id, 'wallet_page_v1')
+    const cached = readCache(k, 1000 * 60 * 30)
+    if (cached && active()) {
+      setWallet(cached.wallet ?? null)
+      setTransactions(cached.transactions ?? [])
+      setLoading(false)
+    }
     try {
       const [wRes, tRes] = await Promise.all([
         getWallet(user.id),
@@ -40,6 +48,7 @@ export default function Wallet() {
       if (!active()) return
       setWallet(wRes.data)
       setTransactions(tRes.data ?? [])
+      writeCache(k, { wallet: wRes.data ?? null, transactions: tRes.data ?? [] })
       if (wRes.error) setFeedback(wRes.error.message)
       if (tRes.error && !wRes.error) setFeedback(tRes.error.message)
     } catch (e) {
