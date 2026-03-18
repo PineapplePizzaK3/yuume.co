@@ -28,6 +28,7 @@ import {
 } from '../../services/orderService'
 import { addInventoryFromOrderAdmin, registerPackageAdmin } from '../../services/inventoryService'
 import { getUsersAdmin } from '../../services/profileService'
+import { brlToJpy, jpyToBrl, formatJPY } from '../../lib/fx'
 
 function formatMoney(v, currency = 'BRL') {
   return Number(v)?.toLocaleString('pt-BR', { style: 'currency', currency }) ?? '—'
@@ -195,7 +196,8 @@ export default function Admin() {
     setForm({
       name: p.name,
       description: p.description ?? '',
-      price: String(p.price ?? ''),
+      // UI do admin em JPY (mantemos persistência em BRL no banco)
+      price: String(Math.round(brlToJpy(Number(p.price ?? 0)))),
       image_url: p.image_url ?? urls[0] ?? '',
       image_urls: urls,
       is_active: p.is_active ?? true,
@@ -208,11 +210,13 @@ export default function Admin() {
   const handleSave = async (e) => {
     e.preventDefault()
     setMessage('')
-    const price = parseFloat(form.price)
-    if (isNaN(price) || price < 0) {
+    const priceJpy = parseFloat(form.price)
+    if (isNaN(priceJpy) || priceJpy < 0) {
       setMessage('Preço inválido')
       return
     }
+    // Converter JPY (UI) -> BRL (banco), já que o projeto salva preços da loja em BRL.
+    const price = jpyToBrl(priceJpy)
     const imageUrls = Array.isArray(form.image_urls) && form.image_urls.length > 0
       ? form.image_urls.filter(Boolean)
       : (form.image_url ? [form.image_url] : [])
@@ -1323,11 +1327,11 @@ export default function Admin() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-earth-700">Preço (R$) *</label>
+                <label className="block text-sm font-medium text-earth-700">Preço (¥ JPY) *</label>
                 <input
                   required
                   type="number"
-                  step="0.01"
+                  step="1"
                   min="0"
                   value={form.price}
                   onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
@@ -1504,7 +1508,7 @@ export default function Admin() {
                       )}
                       <div>
                         <span className="font-medium text-earth-900">{p.name}</span>
-                        <span className="ml-2 text-sm text-earth-600">{formatMoney(p.price)}</span>
+                        <span className="ml-2 text-sm text-earth-600">{formatJPY(brlToJpy(p.price))}</span>
                         {!p.is_active && (
                           <span className="ml-2 rounded bg-amber-200 px-2 py-0.5 text-xs text-amber-900">
                             Inativo
