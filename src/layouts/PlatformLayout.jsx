@@ -18,6 +18,7 @@ const NAV_ITEMS = [
   { to: '/app/cart', label: 'Carrinho' },
   { to: '/app/grupo-de-compras', label: 'Grupo de Compras' },
   { to: '/app/lista-desejos', label: 'Lista de Desejos' },
+  { to: '/app/envios', label: 'Envios' },
 ]
 
 export function PlatformLayout() {
