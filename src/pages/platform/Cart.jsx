@@ -26,7 +26,6 @@ export default function Cart() {
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [shipImmediately, setShipImmediately] = useState(null)
-  const [freightConfirmed, setFreightConfirmed] = useState(false)
   const [tipoFrete, setTipoFrete] = useState('ems')
   const [wallet, setWallet] = useState(null)
   const [payModal, setPayModal] = useState({ open: false, order: null, useWallet: true })
@@ -75,7 +74,6 @@ export default function Cart() {
     const { error } = await updateCartItem(user.id, productId, qty)
     if (error) setFeedback(error.message)
     else {
-      if (shipImmediately === true) setFreightConfirmed(false)
       loadCart()
     }
   }
@@ -84,7 +82,6 @@ export default function Cart() {
     const { error } = await removeFromCart(user.id, productId)
     if (error) setFeedback(error.message)
     else {
-      if (shipImmediately === true) setFreightConfirmed(false)
       loadCart()
     }
   }
@@ -127,11 +124,6 @@ export default function Cart() {
     if (shipImmediately === true) {
       if (!freightCostJpyComputed || freightCostJpyComputed <= 0) {
         setFeedback('Para calcular o frete, informe o peso (kg) de todos os produtos.')
-        setFreightConfirmed(false)
-        return
-      }
-      if (!freightConfirmed) {
-        setFeedback('Confirme o frete estimado antes de finalizar a compra.')
         return
       }
     }
@@ -316,7 +308,6 @@ export default function Cart() {
                     checked={shipImmediately === false}
                     onChange={() => {
                       setShipImmediately(false)
-                      setFreightConfirmed(false)
                     }}
                     className="mt-1 border-earth-300"
                   />
@@ -334,24 +325,21 @@ export default function Cart() {
                       if (!totalWeightG || totalWeightG <= 0) {
                         setFeedback('Para calcular o frete, informe o peso (kg) de todos os produtos.')
                         setShipImmediately(false)
-                        setFreightConfirmed(false)
                         return
                       }
                       if (!freightCostJpyComputed || freightCostJpyComputed <= 0) {
                         setFeedback('Não foi possível calcular o frete com base no peso informado.')
                         setShipImmediately(false)
-                        setFreightConfirmed(false)
                         return
                       }
                       setShipImmediately(true)
-                      setFreightConfirmed(false) // usuário precisa confirmar o frete estimado
                     }}
                     className="mt-1 border-earth-300"
                   />
                   <div>
                     <span className="block font-medium text-earth-900">Envio imediato</span>
                     <span className="text-sm text-earth-600">
-                      Frete estimado calculado pelo peso. Você paga o frete depois, após os produtos serem pagos.
+                      Frete calculado pelo peso. Você paga o frete depois, após os produtos serem pagos.
                     </span>
                   </div>
                 </label>
@@ -367,7 +355,6 @@ export default function Cart() {
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm text-earth-600">Estimativa</p>
                       <p className="text-lg font-semibold text-earth-900">
                         {freightCostJpyComputed != null ? formatJPY(freightCostJpyComputed) : '—'}
                       </p>
@@ -402,7 +389,6 @@ export default function Cart() {
                             onChange={() => {
                               if (!isAvailable) return
                               setTipoFrete(t.id)
-                              setFreightConfirmed(false)
                             }}
                             className="mt-1 border-earth-300"
                           />
@@ -413,21 +399,6 @@ export default function Cart() {
                         </label>
                       )
                     })}
-                  </div>
-
-                  <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                    <p className="text-xs text-earth-500">
-                      Este valor é uma estimativa. Para enviar, o administrador consolida o pedido e pode ajustar o valor final.
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => setFreightConfirmed(true)}
-                      className={`rounded-lg px-4 py-2 font-medium transition ${
-                        freightConfirmed ? 'bg-earth-800 text-earth-50 hover:bg-earth-700' : 'bg-earth-900 text-earth-50 hover:bg-earth-800'
-                      }`}
-                    >
-                      {freightConfirmed ? 'Frete confirmado' : 'Confirmar frete'}
-                    </button>
                   </div>
                 </div>
               )}
