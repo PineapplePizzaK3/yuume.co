@@ -26,19 +26,19 @@ export const ORDER_STATUS = {
 
 export const ORDER_STATUS_LABELS = {
   pending_approval: 'Aguardando aprovação',
-  approved: 'Aprovado (aguardando pacotes)',
+  approved: 'Aprovado',
   rejected: 'Rejeitado',
   awaiting_quote: 'Aguardando orçamento',
   quoted: 'Orçamento enviado',
-  awaiting_arrival: 'Aguardando pacotes',
+  awaiting_arrival: 'Aguardando chegada',
   item_received: 'Pacotes recebidos',
-  stored: 'Armazenado',
+  stored: 'Em armazenamento',
   ready_for_shipment: 'Pronto para envio',
   awaiting_payment: 'Aguardando pagamento',
   paid: 'Pago',
-  products_paid: 'Produtos pagos (aguardando frete)',
+  products_paid: 'Produtos pagos (frete pendente)',
   shipped: 'Enviado',
-  completed: 'Registrado e finalizado',
+  completed: 'Finalizado',
 }
 
 /**

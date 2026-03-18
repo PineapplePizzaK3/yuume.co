@@ -55,6 +55,7 @@ export default function Admin() {
     name: '',
     description: '',
     price: '',
+    weight_kg: '',
     image_url: '',
     image_urls: [],
     is_active: true,
@@ -176,6 +177,7 @@ export default function Admin() {
       name: '',
       description: '',
       price: '',
+      weight_kg: '',
       image_url: '',
       image_urls: [],
       is_active: true,
@@ -198,6 +200,7 @@ export default function Admin() {
       description: p.description ?? '',
       // UI do admin em JPY (mantemos persistência em BRL no banco)
       price: String(Math.round(brlToJpy(Number(p.price ?? 0)))),
+      weight_kg: String(Number(p.weight_kg ?? 0)),
       image_url: p.image_url ?? urls[0] ?? '',
       image_urls: urls,
       is_active: p.is_active ?? true,
@@ -215,6 +218,11 @@ export default function Admin() {
       setMessage('Preço inválido')
       return
     }
+    const weightKg = parseFloat(form.weight_kg)
+    if (isNaN(weightKg) || weightKg <= 0) {
+      setMessage('Peso inválido (informe o peso do produto em kg)')
+      return
+    }
     // Converter JPY (UI) -> BRL (banco), já que o projeto salva preços da loja em BRL.
     const price = jpyToBrl(priceJpy)
     const imageUrls = Array.isArray(form.image_urls) && form.image_urls.length > 0
@@ -224,6 +232,7 @@ export default function Admin() {
       name: form.name,
       description: form.description || null,
       price,
+      weight_kg: weightKg,
       image_url: imageUrls[0] || form.image_url || null,
       image_urls: imageUrls,
       is_active: form.is_active,
@@ -1338,6 +1347,18 @@ export default function Admin() {
                   className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
                 />
               </div>
+              <div>
+                <label className="block text-sm font-medium text-earth-700">Peso do produto (kg) *</label>
+                <input
+                  required
+                  type="number"
+                  step="0.001"
+                  min="0"
+                  value={form.weight_kg}
+                  onChange={(e) => setForm((f) => ({ ...f, weight_kg: e.target.value }))}
+                  className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                />
+              </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-earth-700">Descrição</label>
@@ -1509,6 +1530,9 @@ export default function Admin() {
                       <div>
                         <span className="font-medium text-earth-900">{p.name}</span>
                         <span className="ml-2 text-sm text-earth-600">{formatJPY(brlToJpy(p.price))}</span>
+                        <span className="ml-2 text-xs text-earth-500">
+                          {Number(p.weight_kg ?? 0) > 0 ? `• ${p.weight_kg}kg` : '• peso não definido'}
+                        </span>
                         {!p.is_active && (
                           <span className="ml-2 rounded bg-amber-200 px-2 py-0.5 text-xs text-amber-900">
                             Inativo

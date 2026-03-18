@@ -82,16 +82,14 @@ export async function clearCart(userId) {
   }
 }
 
-/**
- * Cria pedido da loja a partir do carrinho.
- * Retorna o pedido criado para redirecionar ao pagamento.
- */
-export async function createStoreOrder(userId, shipImmediately) {
+export async function createStoreOrder(userId, shipImmediately, shippingCostJpy = null) {
   try {
     const { data, error } = await withDbTimeout(
       supabase.rpc('create_store_order', {
         p_user_id: userId,
         p_ship_immediately: shipImmediately,
+        p_shipping_cost: shipImmediately ? shippingCostJpy : null,
+        p_shipping_currency: 'JPY',
       })
     )
     return { data: data ?? null, error }

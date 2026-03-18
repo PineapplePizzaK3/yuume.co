@@ -130,23 +130,23 @@ export default async function handler(req, res) {
 
     // Recarga de carteira (adicionar saldo)
     if (body.type === 'topup') {
-      const amountCents = Math.round(Number(body.amountCents) || 0)
-      const minCents = 500 // R$ 5,00
-      const maxCents = 500000 // R$ 5.000
-      if (amountCents < minCents || amountCents > maxCents) {
-        return res.status(400).json({ error: 'Valor deve ser entre R$ 5,00 e R$ 5.000,00' })
+      const amountJpy = Math.round(Number(body.amountJpy) || 0)
+      const minJpy = 500 // ¥500
+      const maxJpy = 500000 // ¥500.000
+      if (amountJpy < minJpy || amountJpy > maxJpy) {
+        return res.status(400).json({ error: 'Valor deve ser entre ¥500 e ¥500.000' })
       }
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],
         line_items: [
           {
             price_data: {
-              currency: 'brl',
+              currency: 'jpy',
               product_data: {
                 name: 'Adicionar saldo - Carteira',
-                description: 'Crédito na sua carteira virtual para pagar serviços, frete e loja.',
+                description: 'Crédito na sua carteira virtual (JPY) para pagar serviços, frete e loja.',
               },
-              unit_amount: amountCents,
+              unit_amount: amountJpy,
             },
             quantity: 1,
           },
@@ -203,10 +203,30 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Valor não definido para este pedido' })
     }
 
-    // Cobrança sempre em JPY
-    // (carteira BRL não é aplicada quando a cobrança é em JPY)
     const chargeJpy = toChargeAmountJpy(amount, currency)
-    const unitAmount = Math.round(chargeJpy) // JPY sem casas decimais
+    let walletApplied = 0
+    let remainingJpy = Number(chargeJpy) || 0
+
+    // Aplicar carteira (JPY) como parte do pagamento, quando solicitado.
+    if (body.useWallet) {
+      const accessToken = authHeader.replace('Bearer ', '')
+      const supabaseUser = getSupabaseUser(accessToken)
+      if (supabaseUser) {
+        const { data: applyData, error: applyErr } = await supabaseUser.rpc('wallet_apply_to_order_jpy', {
+          p_order_id: orderId,
+          p_user_id: user.id,
+          p_total_amount_jpy: remainingJpy,
+        })
+        if (applyErr) throw new Error(applyErr.message || 'Erro ao aplicar carteira')
+        walletApplied = Number(applyData?.applied_amount) || 0
+        remainingJpy = Number(applyData?.remaining_amount) || 0
+        if (applyData?.paid === true || remainingJpy <= 0) {
+          return res.status(200).json({ paid: true, walletApplied })
+        }
+      }
+    }
+
+    const unitAmount = Math.round(remainingJpy) // JPY sem casas decimais
     if (!unitAmount || unitAmount <= 0) return res.status(400).json({ error: 'Valor inválido para cobrança' })
 
     try {
@@ -228,7 +248,7 @@ export default async function handler(req, res) {
         mode: 'payment',
         success_url: `${baseUrl}/app/orders?success=true`,
         cancel_url: `${baseUrl}/app/orders?canceled=true`,
-        metadata: { orderId, orderSource: order.order_source || 'service' },
+        metadata: { orderId, orderSource: order.order_source || 'service', walletApplied: String(walletApplied || 0) },
       })
       return res.status(200).json({ url: session.url, provider: 'stripe' })
     } catch (e) {

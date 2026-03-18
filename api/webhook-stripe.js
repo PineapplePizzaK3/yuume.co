@@ -61,7 +61,10 @@ export default async function handler(req, res) {
 
     if (session.metadata?.type === 'topup' && session.metadata?.userId && supabase) {
       const userId = session.metadata.userId
-      const amountTotal = session.amount_total != null ? session.amount_total / 100 : 0
+      const currency = (session.currency || 'jpy').toLowerCase()
+      const amountTotal = session.amount_total != null
+        ? (currency === 'brl' ? session.amount_total / 100 : session.amount_total)
+        : 0
       if (amountTotal > 0) {
         const { error } = await supabase.rpc('wallet_credit', {
           p_user_id: userId,

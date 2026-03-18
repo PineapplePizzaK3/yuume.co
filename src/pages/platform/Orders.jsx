@@ -8,7 +8,7 @@ import { Helmet } from 'react-helmet-async'
 import { useAuth } from '../../hooks/useAuth'
 import { deleteMyOrder, getMyOrders, requestOrderExtraServices, ORDER_STATUS_LABELS, updateMyOrder } from '../../services/orderService'
 import { createCheckoutSession, createKomojuSession } from '../../services/paymentService'
-import { getWallet, payOrderWithWallet } from '../../services/walletService'
+import { getWallet } from '../../services/walletService'
 import { cacheKey, readCache, writeCache } from '../../lib/cache'
 import { brlToJpy, formatBRL, formatJPY, jpyToBrl } from '../../lib/fx'
 
@@ -193,38 +193,6 @@ export default function Orders() {
     }
   }
 
-  const handlePayWithWallet = async (order) => {
-    const payable = getPayableAmount(order)
-    if (!payable) return
-    if (payable.currency !== 'BRL') {
-      setFeedback('Pagamento com carteira disponível apenas para valores em R$ (BRL).')
-      return
-    }
-    const balance = wallet?.balance ?? 0
-    if (balance < payable.amount) {
-      setFeedback('Saldo insuficiente na carteira. Adicione saldo em Carteira ou pague com cartão.')
-      return
-    }
-    setPayingId(order.id)
-    setFeedback('')
-    try {
-      const { data, error } = await payOrderWithWallet(order.id, user.id)
-      if (error) {
-        setFeedback(error.message || 'Erro ao pagar com carteira')
-        return
-      }
-      setFeedback('Pagamento realizado com carteira!')
-      const { data: ordersData } = await getMyOrders(user.id)
-      setOrders(ordersData ?? [])
-      const { data: walletData } = await getWallet(user.id)
-      setWallet(walletData ?? null)
-    } catch (err) {
-      setFeedback(err.message || 'Erro ao processar pagamento')
-    } finally {
-      setPayingId(null)
-    }
-  }
-
   return (
     <>
       <Helmet>
@@ -373,18 +341,6 @@ export default function Orders() {
                       </>
                     )}
                     {getPayableAmount(o) && (
-                      <>
-                      {getPayableAmount(o).currency === 'BRL' &&
-                        (wallet?.balance ?? 0) >= getPayableAmount(o).amount && (
-                        <button
-                          type="button"
-                          onClick={() => handlePayWithWallet(o)}
-                          disabled={payingId === o.id}
-                          className="rounded-lg bg-earth-800 px-4 py-2.5 font-medium text-earth-50 hover:bg-earth-700 disabled:opacity-60"
-                        >
-                          {payingId === o.id ? 'Processando...' : 'Pagar com carteira'}
-                        </button>
-                      )}
                       <button
                         type="button"
                         onClick={() => setPayModal({ open: true, order: o, useWallet: true })}
@@ -393,7 +349,6 @@ export default function Orders() {
                       >
                         {payingId === o.id ? 'Redirecionando...' : 'Pagar'}
                       </button>
-                      </>
                     )}
                   </div>
                 </div>
@@ -467,7 +422,7 @@ export default function Orders() {
             {(() => {
               const p = getChargeJpy(payModal.order)
               const balance = wallet?.balance ?? 0
-              const canUseWallet = false
+              const canUseWallet = balance > 0
               return (
                 <div className="mt-4 space-y-4">
                   {p && (
@@ -492,7 +447,7 @@ export default function Orders() {
                     <div>
                       <p className="font-medium text-earth-900">Usar saldo da carteira</p>
                       <p className="text-sm text-earth-600">
-                        Cobrança é sempre em JPY. A carteira (BRL) ficará disponível quando ativarmos conversão por saldo.
+                        Aplicaremos o saldo disponível (JPY) como parte do pagamento. Se não cobrir tudo, o restante vai para cartão.
                       </p>
                     </div>
                   </label>

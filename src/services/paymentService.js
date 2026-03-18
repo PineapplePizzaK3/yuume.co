@@ -116,10 +116,10 @@ export async function createCartCheckoutSession(items, accessToken) {
 }
 
 /**
- * Create Stripe Checkout session para adicionar saldo na carteira (R$ em centavos).
- * amountCents: valor em centavos (ex.: 10000 = R$ 100,00).
+ * Create Stripe Checkout session para adicionar saldo na carteira (¥ em JPY).
+ * amountJpy: valor inteiro em ienes (ex.: 1000 = ¥1.000).
  */
-export async function createTopUpCheckoutSession(amountCents, accessToken) {
+export async function createTopUpCheckoutSession(amountJpy, accessToken) {
   const headers = { 'Content-Type': 'application/json' }
   if (accessToken) {
     headers['Authorization'] = `Bearer ${accessToken}`
@@ -128,7 +128,7 @@ export async function createTopUpCheckoutSession(amountCents, accessToken) {
   const res = await fetch(`${API_BASE}/create-checkout-session`, {
     method: 'POST',
     headers,
-    body: JSON.stringify({ type: 'topup', amountCents }),
+    body: JSON.stringify({ type: 'topup', amountJpy }),
     credentials: 'include',
   })
 

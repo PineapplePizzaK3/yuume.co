@@ -196,7 +196,10 @@ export default function Dashboard() {
               )}
 
               {!notifsLoading && notifications.length > 0 && (
-                <div className="mt-4 space-y-2">
+                <div
+                  className="mt-4 max-h-72 space-y-2 overflow-y-auto pr-2"
+                  aria-label="Lista de notificações"
+                >
                   {notifications.map((n) => {
                     const isUnread = !n.read_at
                     return (

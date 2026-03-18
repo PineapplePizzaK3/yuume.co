@@ -20,8 +20,8 @@ export async function getWallet(userId) {
     if (error) return { data: null, error }
     return {
       data: data
-        ? { balance: Number(data.balance) || 0, currency: data.currency || 'BRL', updated_at: data.updated_at }
-        : { balance: 0, currency: 'BRL', updated_at: null },
+        ? { balance: Number(data.balance) || 0, currency: data.currency || 'JPY', updated_at: data.updated_at }
+        : { balance: 0, currency: 'JPY', updated_at: null },
       error: null,
     }
   } catch (e) {

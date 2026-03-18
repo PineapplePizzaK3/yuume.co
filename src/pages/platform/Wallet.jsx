@@ -27,7 +27,7 @@ export default function Wallet() {
   const [wallet, setWallet] = useState(null)
   const [transactions, setTransactions] = useState([])
   const [loading, setLoading] = useState(true)
-  const [topUpAmount, setTopUpAmount] = useState('50')
+  const [topUpAmount, setTopUpAmount] = useState('1000')
   const [adding, setAdding] = useState(false)
   const [feedback, setFeedback] = useState('')
 
@@ -80,11 +80,11 @@ export default function Wallet() {
   const handleAddFunds = async (e) => {
     e.preventDefault()
     const value = parseFloat(topUpAmount?.replace(',', '.'))
-    if (!value || value < 5 || value > 5000) {
-      setFeedback('Informe um valor entre R$ 5,00 e R$ 5.000,00')
+    if (!value || value < 500 || value > 500000) {
+      setFeedback('Informe um valor entre ¥500 e ¥500.000')
       return
     }
-    const amountCents = Math.round(value * 100)
+    const amountJpy = Math.round(value)
     setAdding(true)
     setFeedback('')
     try {
@@ -94,7 +94,7 @@ export default function Wallet() {
         setAdding(false)
         return
       }
-      const { url } = await createTopUpCheckoutSession(amountCents, accessToken)
+      const { url } = await createTopUpCheckoutSession(amountJpy, accessToken)
       if (url) window.location.href = url
       else setFeedback('Erro ao abrir pagamento')
     } catch (err) {
@@ -104,7 +104,7 @@ export default function Wallet() {
     }
   }
 
-  const presets = [50, 100, 200, 500]
+  const presets = [1000, 2000, 5000, 10000]
 
   return (
     <>
@@ -138,7 +138,7 @@ export default function Wallet() {
             <div className="mt-6 rounded-xl border border-earth-200 bg-earth-50 p-6">
               <p className="text-sm font-medium text-earth-600">Saldo disponível</p>
               <p className="mt-1 text-3xl font-bold text-earth-900">
-                {formatMoney(wallet?.balance ?? 0, wallet?.currency ?? 'BRL')}
+                {formatMoney(wallet?.balance ?? 0, 'JPY')}
               </p>
 
               <form onSubmit={handleAddFunds} className="mt-6">
@@ -155,7 +155,7 @@ export default function Wallet() {
                           : 'border-earth-300 text-earth-700 hover:bg-earth-100'
                       }`}
                     >
-                      R$ {p}
+                      ¥ {p}
                     </button>
                   ))}
                   <input
@@ -163,10 +163,10 @@ export default function Wallet() {
                     inputMode="decimal"
                     value={topUpAmount}
                     onChange={(e) => setTopUpAmount(e.target.value.replace(/[^0-9,.]/g, ''))}
-                    placeholder="Outro valor"
+                    placeholder="Outro valor (¥)"
                     className="w-28 rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
                   />
-                  <span className="text-sm text-earth-500">mín. R$ 5 — máx. R$ 5.000</span>
+                  <span className="text-sm text-earth-500">mín. ¥500 — máx. ¥500.000</span>
                 </div>
                 <button
                   type="submit"
@@ -205,11 +205,11 @@ export default function Wallet() {
                       <div className="text-right">
                         <span className={tx.kind === 'credit' ? 'text-green-700' : 'text-earth-900'}>
                           {tx.kind === 'credit' ? '+' : ''}
-                          {formatMoney(tx.amount, 'BRL')}
+                          {formatMoney(tx.amount, 'JPY')}
                         </span>
                         {tx.balance_after != null && (
                           <p className="text-xs text-earth-500">
-                            Saldo: {formatMoney(tx.balance_after, 'BRL')}
+                            Saldo: {formatMoney(tx.balance_after, 'JPY')}
                           </p>
                         )}
                       </div>
