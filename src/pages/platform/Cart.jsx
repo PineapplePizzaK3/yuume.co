@@ -7,7 +7,8 @@ import { Helmet } from 'react-helmet-async'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import { getCart, updateCartItem, removeFromCart, createStoreOrder } from '../../services/cartService'
-import { createCheckoutSession } from '../../services/paymentService'
+import { createCheckoutSession, createKomojuSession } from '../../services/paymentService'
+import { getWallet } from '../../services/walletService'
 import { brlToJpy, formatBRL, formatJPY, jpyToBrl } from '../../lib/fx'
 import { calcularFreteEMS } from '../../data/tabelaFreteEMS'
 
@@ -28,6 +29,8 @@ export default function Cart() {
   const [freightConfirmed, setFreightConfirmed] = useState(false)
   const [freightCostJpy, setFreightCostJpy] = useState(null)
   const [freightWeightG, setFreightWeightG] = useState(0)
+  const [wallet, setWallet] = useState(null)
+  const [payModal, setPayModal] = useState({ open: false, order: null, useWallet: true })
   const [feedback, setFeedback] = useState('')
 
   const success = searchParams.get('success') === 'true'
@@ -44,6 +47,20 @@ export default function Cart() {
 
   useEffect(() => {
     loadCart()
+  }, [user?.id])
+
+  useEffect(() => {
+    let isActive = true
+    const run = async () => {
+      if (!user?.id) return
+      const { data } = await getWallet(user.id)
+      if (!isActive) return
+      setWallet(data ?? null)
+    }
+    run()
+    return () => {
+      isActive = false
+    }
   }, [user?.id])
 
   useEffect(() => {
@@ -118,17 +135,66 @@ export default function Cart() {
         setSubmitting(false)
         return
       }
-      const accessToken = session?.access_token
-      if (!accessToken) {
-        setFeedback('Faça login novamente para continuar.')
-        setSubmitting(false)
-        return
-      }
-      const { url } = await createCheckoutSession(order.id, accessToken)
-      if (url) window.location.href = url
-      else setFeedback('Erro ao redirecionar para pagamento.')
+      // Pedido criado: abre modal de pagamento (Stripe / PIX / carteira)
+      setPayModal({ open: true, order, useWallet: true })
+      setFeedback('')
     } catch (e) {
       setFeedback(e?.message || 'Erro ao processar')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const getOrderChargeJpy = (order) => {
+    if (!order?.total_amount) return null
+    const totalBrl = Number(order.total_amount)
+    if (!totalBrl || totalBrl <= 0) return null
+    const jpy = Math.round(brlToJpy(totalBrl))
+    return { jpy, approxBrl: totalBrl }
+  }
+
+  const handlePayCard = async () => {
+    if (!payModal.order) return
+    const accessToken = session?.access_token
+    if (!accessToken) {
+      setFeedback('Faça login novamente para pagar.')
+      return
+    }
+    const orderId = payModal.order.id
+    try {
+      setSubmitting(true)
+      setFeedback('')
+      const result = await createCheckoutSession(orderId, accessToken, { useWallet: !!payModal.useWallet })
+      if (result?.paid) {
+        setPayModal({ open: false, order: null, useWallet: true })
+        setFeedback('Pagamento realizado com carteira.')
+        window.location.href = '/app/orders?success=true'
+        return
+      }
+      if (result?.url) window.location.href = result.url
+      else setFeedback('Erro ao redirecionar para pagamento.')
+    } catch (err) {
+      setFeedback(err.message || 'Erro ao processar pagamento.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const handlePayPix = async () => {
+    if (!payModal.order) return
+    const accessToken = session?.access_token
+    if (!accessToken) {
+      setFeedback('Faça login novamente para pagar.')
+      return
+    }
+    try {
+      setSubmitting(true)
+      setFeedback('')
+      const { url } = await createKomojuSession(payModal.order.id, 'pix', accessToken)
+      if (url) window.location.href = url
+      else setFeedback('Erro ao redirecionar para PIX.')
+    } catch (err) {
+      setFeedback(err.message || 'Erro ao processar PIX.')
     } finally {
       setSubmitting(false)
     }
@@ -351,6 +417,89 @@ export default function Cart() {
                 Trocar para Armazenar
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {payModal.open && payModal.order && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-lg">
+            <h3 className="font-semibold text-earth-900">Pagamento</h3>
+            <p className="mt-1 text-sm text-earth-600">Escolha a forma de pagamento.</p>
+
+            {(() => {
+              const charge = getOrderChargeJpy(payModal.order)
+              const balance = wallet?.balance ?? 0
+              const canUseWallet = balance > 0 && (wallet?.currency || 'JPY') === 'JPY'
+
+              return (
+                <div className="mt-4 space-y-4">
+                  {charge && (
+                    <div className="rounded-lg border border-earth-200 bg-earth-50 p-4">
+                      <p className="text-sm text-earth-700">
+                        <span className="font-medium text-earth-900">Valor (JPY)</span>: {formatJPY(charge.jpy)}
+                      </p>
+                      <p className="mt-1 text-xs text-earth-600">
+                        Aprox. em BRL: {formatBRL(charge.approxBrl)}
+                      </p>
+                    </div>
+                  )}
+
+                  <label
+                    className={`flex items-start gap-3 rounded-lg border p-4 ${
+                      canUseWallet ? 'border-earth-200 bg-white' : 'border-earth-100 bg-earth-50 opacity-70'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={!!payModal.useWallet}
+                      disabled={!canUseWallet}
+                      onChange={(e) => setPayModal((m) => ({ ...m, useWallet: e.target.checked }))}
+                      className="mt-1"
+                    />
+                    <div>
+                      <p className="font-medium text-earth-900">Usar saldo da carteira</p>
+                      <p className="text-sm text-earth-600">
+                        Aplicaremos seu saldo (JPY) e o restante será pago.
+                      </p>
+                    </div>
+                  </label>
+
+                  <div className="rounded-lg border border-earth-200 bg-white p-4">
+                    <p className="text-sm font-medium text-earth-800">Formas de pagamento</p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={handlePayCard}
+                        disabled={submitting}
+                        className="rounded-lg bg-earth-900 px-4 py-2.5 font-medium text-earth-50 hover:bg-earth-800 disabled:opacity-60"
+                      >
+                        {submitting ? 'Processando...' : 'Cartão'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handlePayPix}
+                        disabled={submitting}
+                        className="rounded-lg border border-earth-300 bg-white px-4 py-2.5 font-medium text-earth-800 hover:bg-earth-50 disabled:opacity-60"
+                      >
+                        PIX
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPayModal({ open: false, order: null, useWallet: true })}
+                        disabled={submitting}
+                        className="rounded-lg border border-earth-300 px-4 py-2.5 font-medium text-earth-700 hover:bg-earth-100 disabled:opacity-60"
+                      >
+                        Fechar
+                      </button>
+                    </div>
+                    <p className="mt-2 text-xs text-earth-500">
+                      Cartão: Stripe (principal) com fallback para KOMOJU.
+                    </p>
+                  </div>
+                </div>
+              )
+            })()}
           </div>
         </div>
       )}
