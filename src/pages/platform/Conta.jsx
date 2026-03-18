@@ -18,7 +18,7 @@ const ESTADOS = [
 ]
 
 export default function Conta() {
-  const { user } = useAuth()
+  const { user, refreshProfile } = useAuth()
   const [profile, setProfile] = useState(null)
   const [addresses, setAddresses] = useState([])
   const [loading, setLoading] = useState(true)
@@ -94,7 +94,12 @@ export default function Conta() {
     const { error } = await updateProfile(user.id, payload)
     setSaving(false)
     setMessage(error ? error.message : 'Dados salvos')
-    if (!error) loadData()
+    if (!error) {
+      // Atualiza o estado local e o AuthContext (Navbar/menu/dashboard) imediatamente.
+      setProfile((p) => (p ? { ...p, ...payload } : p))
+      await refreshProfile()
+      loadData()
+    }
   }
 
   const resetAddressForm = () => {
