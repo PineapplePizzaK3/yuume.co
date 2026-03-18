@@ -19,14 +19,6 @@ const NAV_ITEMS = [
   { to: '/app/lista-desejos', label: 'Lista de Desejos' },
 ]
 
-const MOBILE_NAV_ITEMS = [
-  { to: '/app/dashboard', label: 'Home', icon: '🏠' },
-  { to: '/app/orders', label: 'Pedidos', icon: '🛒' },
-  { to: '/app/services', label: 'Explorar', icon: '🔍' },
-  { to: '/app/lista-desejos', label: 'Favoritos', icon: '❤️' },
-  { to: '/app/conta', label: 'Conta', icon: '👤' },
-]
-
 export function PlatformLayout() {
   const { user, isAdmin, signOut } = useAuth()
   const location = useLocation()
@@ -37,61 +29,38 @@ export function PlatformLayout() {
     <div className="flex min-h-screen flex-col pt-16 lg:flex-row">
       <aside className="w-full border-b border-earth-200 bg-earth-100 lg:w-56 lg:border-b-0 lg:border-r lg:min-h-screen">
         <div className="flex flex-wrap gap-2 p-4 lg:flex-col lg:gap-0 lg:p-4">
-          {/* Mobile: menu enxuto (máximo 5 itens) */}
-          <div className="flex flex-wrap gap-2 lg:hidden w-full">
-            {MOBILE_NAV_ITEMS.map((item) => (
-              <Link
-                key={item.to}
-                to={item.to}
-                className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition ${
-                  isActive(item.to)
-                    ? 'bg-earth-900 text-earth-50'
-                    : 'text-earth-700 hover:bg-earth-200'
-                }`}
-              >
-                <span aria-hidden>{item.icon}</span>
-                <span className="truncate">{item.label}</span>
-              </Link>
-            ))}
-          </div>
-
-          {/* Desktop: menu completo */}
-          <div className="hidden lg:flex flex-col gap-2 w-full">
-            {NAV_ITEMS.map((item) => (
-              <Link
-                key={item.to}
-                to={item.to}
-                className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
-                  isActive(item.to)
-                    ? 'bg-earth-900 text-earth-50'
-                    : 'text-earth-700 hover:bg-earth-200'
-                }`}
-              >
-                {item.label}
-              </Link>
-            ))}
-
-            {isAdmin && (
-              <Link
-                to="/app/admin"
-                className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
-                  isActive('/app/admin')
-                    ? 'bg-amber-600 text-white'
-                    : 'text-amber-800 hover:bg-amber-100'
-                }`}
-              >
-                Admin
-              </Link>
-            )}
-
-            <button
-              type="button"
-              onClick={() => signOut()}
-              className="mt-2 rounded-lg px-4 py-2 text-left text-sm font-medium text-earth-600 hover:bg-earth-200 lg:mt-auto"
+          {NAV_ITEMS.map((item) => (
+            <Link
+              key={item.to}
+              to={item.to}
+              className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
+                isActive(item.to)
+                  ? 'bg-earth-900 text-earth-50'
+                  : 'text-earth-700 hover:bg-earth-200'
+              }`}
             >
-              Sair
-            </button>
-          </div>
+              {item.label}
+            </Link>
+          ))}
+          {isAdmin && (
+            <Link
+              to="/app/admin"
+              className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
+                isActive('/app/admin')
+                  ? 'bg-amber-600 text-white'
+                  : 'text-amber-800 hover:bg-amber-100'
+              }`}
+            >
+              Admin
+            </Link>
+          )}
+          <button
+            type="button"
+            onClick={() => signOut()}
+            className="mt-4 rounded-lg px-4 py-2 text-left text-sm font-medium text-earth-600 hover:bg-earth-200 lg:mt-auto"
+          >
+            Sair
+          </button>
         </div>
       </aside>
       <main className="flex-1 p-4 pt-24">
