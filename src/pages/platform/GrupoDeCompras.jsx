@@ -7,6 +7,9 @@ import { Helmet } from 'react-helmet-async'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import { getPurchaseGroups } from '../../services/groupService'
+import { getProducts } from '../../services/productService'
+import { addToCart } from '../../services/cartService'
+import { brlToJpy, formatJPY } from '../../lib/fx'
 
 function getGroupImages(g) {
   if (Array.isArray(g?.image_urls) && g.image_urls.length > 0) return g.image_urls.filter(Boolean)
@@ -21,6 +24,7 @@ export default function GrupoDeCompras() {
   const [message, setMessage] = useState('')
   const [detailGroup, setDetailGroup] = useState(null)
   const [detailImageIndex, setDetailImageIndex] = useState(0)
+  const [productsById, setProductsById] = useState({})
 
   useEffect(() => {
     let isActive = true
@@ -28,10 +32,15 @@ export default function GrupoDeCompras() {
       setLoading(true)
       setMessage('')
       try {
-        const { data, error } = await getPurchaseGroups()
+        const [{ data, error }, { data: productsData, error: productsError }] = await Promise.all([
+          getPurchaseGroups(),
+          getProducts(),
+        ])
         if (!isActive) return
         setGroups(data ?? [])
-        if (error) setMessage(error.message)
+        const map = Object.fromEntries((productsData ?? []).map((p) => [p.id, p]))
+        setProductsById(map)
+        if (error || productsError) setMessage(error?.message || productsError?.message)
       } catch (e) {
         if (isActive) setMessage(e?.message || 'Erro ao carregar grupos de compra')
       } finally {
@@ -51,6 +60,24 @@ export default function GrupoDeCompras() {
   const openDetail = (g) => {
     setDetailGroup(g)
     setDetailImageIndex(0)
+  }
+
+  const getGroupProducts = (group) => {
+    const ids = Array.isArray(group?.product_ids) ? group.product_ids : []
+    return ids.map((id) => productsById[id]).filter(Boolean)
+  }
+
+  const handleComprar = async (product) => {
+    if (!user?.id) {
+      setMessage('Faça login para comprar.')
+      return
+    }
+    const { error } = await addToCart(user.id, product.id, 1)
+    if (error) {
+      setMessage(error.message)
+      return
+    }
+    setMessage('Produto adicionado ao carrinho!')
   }
 
   if (!user) {
@@ -90,6 +117,7 @@ export default function GrupoDeCompras() {
             {groups.map((g) => {
               const imgs = getGroupImages(g)
               const mainImg = imgs[0]
+              const groupProducts = getGroupProducts(g)
 
               return (
                 <div
@@ -109,6 +137,9 @@ export default function GrupoDeCompras() {
                     <div className="p-4">
                       <h2 className="font-semibold text-earth-900">{g.name}</h2>
                       {g.description && <p className="mt-1 line-clamp-2 text-sm text-earth-600">{g.description}</p>}
+                      <p className="mt-2 text-xs text-earth-500">
+                        Produtos no grupo: {groupProducts.length}
+                      </p>
                     </div>
                   </button>
 
@@ -205,6 +236,31 @@ export default function GrupoDeCompras() {
                   {detailGroup.name}
                 </h2>
                 {detailGroup.description && <p className="mt-2 text-earth-600">{detailGroup.description}</p>}
+
+                <div className="mt-5">
+                  <h3 className="text-sm font-semibold uppercase tracking-wide text-earth-700">Produtos disponíveis</h3>
+                  {getGroupProducts(detailGroup).length === 0 ? (
+                    <p className="mt-2 text-sm text-earth-600">Este grupo ainda não possui produtos vinculados.</p>
+                  ) : (
+                    <ul className="mt-3 space-y-2">
+                      {getGroupProducts(detailGroup).map((p) => (
+                        <li key={p.id} className="flex items-center justify-between gap-3 rounded-lg border border-earth-200 bg-earth-50 p-3">
+                          <div>
+                            <p className="font-medium text-earth-900">{p.name}</p>
+                            <p className="text-sm text-earth-600">{formatJPY(brlToJpy(p.price))}</p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleComprar(p)}
+                            className="rounded-lg bg-earth-900 px-3 py-2 text-sm font-medium text-white hover:bg-earth-800"
+                          >
+                            Comprar
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
 
                 <div className="mt-6 flex flex-wrap gap-3">
                   <button

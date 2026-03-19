@@ -34,12 +34,14 @@ export async function getPurchaseGroupsAdmin() {
 export async function createPurchaseGroup(group) {
   try {
     const imageUrls = Array.isArray(group.image_urls) ? group.image_urls : []
+    const productIds = Array.isArray(group.product_ids) ? group.product_ids.filter(Boolean) : []
     const payload = {
       name: group.name,
       description: group.description ?? '',
       image_url: group.image_url ?? (imageUrls[0] || ''),
       image_urls: imageUrls,
       is_active: group.is_active ?? true,
+      product_ids: productIds,
     }
 
     const { data, error } = await withDbTimeout(
@@ -48,6 +50,39 @@ export async function createPurchaseGroup(group) {
     return { data: data ?? null, error }
   } catch (e) {
     return { data: null, error: toServiceError(e) }
+  }
+}
+
+export async function updatePurchaseGroup(id, group) {
+  try {
+    const imageUrls = Array.isArray(group.image_urls) ? group.image_urls : []
+    const productIds = Array.isArray(group.product_ids) ? group.product_ids.filter(Boolean) : []
+    const payload = {
+      name: group.name,
+      description: group.description ?? '',
+      image_url: group.image_url ?? (imageUrls[0] || ''),
+      image_urls: imageUrls,
+      is_active: group.is_active ?? true,
+      product_ids: productIds,
+    }
+
+    const { data, error } = await withDbTimeout(
+      supabase.rpc('admin_update_purchase_group', { p_id: id, p_group: payload })
+    )
+    return { data: data ?? null, error }
+  } catch (e) {
+    return { data: null, error: toServiceError(e) }
+  }
+}
+
+export async function deletePurchaseGroup(id) {
+  try {
+    const { error } = await withDbTimeout(
+      supabase.rpc('admin_delete_purchase_group', { p_id: id })
+    )
+    return { error }
+  } catch (e) {
+    return { error: toServiceError(e) }
   }
 }
 

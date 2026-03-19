@@ -28,7 +28,12 @@ import {
 } from '../../services/orderService'
 import { addInventoryFromOrderAdmin, registerPackageAdmin } from '../../services/inventoryService'
 import { getUsersAdmin } from '../../services/profileService'
-import { createPurchaseGroup, getPurchaseGroupsAdmin } from '../../services/groupService'
+import {
+  createPurchaseGroup,
+  getPurchaseGroupsAdmin,
+  updatePurchaseGroup,
+  deletePurchaseGroup,
+} from '../../services/groupService'
 import { brlToJpy, jpyToBrl, formatJPY } from '../../lib/fx'
 
 function formatMoney(v, currency = 'BRL') {
@@ -115,7 +120,9 @@ export default function Admin() {
     image_url: '',
     image_urls: [],
     is_active: true,
+    product_ids: [],
   })
+  const [editingGroupId, setEditingGroupId] = useState(null)
   const [groupImageUploading, setGroupImageUploading] = useState(false)
   const [groupImageUploadError, setGroupImageUploadError] = useState('')
   const [newGroupImageUrl, setNewGroupImageUrl] = useState('')
@@ -219,7 +226,9 @@ export default function Admin() {
       image_url: '',
       image_urls: [],
       is_active: true,
+      product_ids: [],
     })
+    setEditingGroupId(null)
     setGroupImageUploadError('')
     setNewGroupImageUrl('')
   }
@@ -262,19 +271,46 @@ export default function Admin() {
         image_urls: imageUrls,
         image_url: groupForm.image_url || imageUrls[0] || '',
         is_active: groupForm.is_active ?? true,
+        product_ids: Array.isArray(groupForm.product_ids) ? groupForm.product_ids : [],
       }
 
-      const { error } = await createPurchaseGroup(payload)
+      const { error } = editingGroupId
+        ? await updatePurchaseGroup(editingGroupId, payload)
+        : await createPurchaseGroup(payload)
       if (error) {
-        setMessage(error.message || 'Erro ao criar grupo')
+        setMessage(error.message || (editingGroupId ? 'Erro ao atualizar grupo' : 'Erro ao criar grupo'))
         return
       }
 
-      setMessage('Grupo criado com sucesso')
+      setMessage(editingGroupId ? 'Grupo atualizado com sucesso' : 'Grupo criado com sucesso')
       resetGroupForm()
       loadGroups()
     } finally {
       setGroupSubmitting(false)
+    }
+  }
+
+  const handleEditGroup = (group) => {
+    setGroupForm({
+      name: group.name ?? '',
+      description: group.description ?? '',
+      image_url: group.image_url ?? '',
+      image_urls: Array.isArray(group.image_urls) ? group.image_urls.filter(Boolean) : [],
+      is_active: group.is_active ?? true,
+      product_ids: Array.isArray(group.product_ids) ? group.product_ids.filter(Boolean) : [],
+    })
+    setEditingGroupId(group.id)
+    setGroupImageUploadError('')
+    setNewGroupImageUrl('')
+  }
+
+  const handleDeleteGroup = async (groupId) => {
+    if (!confirm('Remover este grupo de compras?')) return
+    const { error } = await deletePurchaseGroup(groupId)
+    setMessage(error ? error.message : 'Grupo removido')
+    if (!error) {
+      if (editingGroupId === groupId) resetGroupForm()
+      loadGroups()
     }
   }
 
@@ -1437,6 +1473,55 @@ export default function Admin() {
               </div>
 
               <div>
+                <label className="block text-sm font-medium text-earth-700">Produtos do grupo</label>
+                <p className="mt-1 text-xs text-earth-500">
+                  Selecione os produtos que estarão disponíveis para compra dentro deste grupo.
+                </p>
+                {products.length === 0 ? (
+                  <p className="mt-2 text-sm text-earth-600">Nenhum produto cadastrado ainda.</p>
+                ) : (
+                  <div className="mt-2 max-h-48 space-y-2 overflow-y-auto rounded-lg border border-earth-200 bg-white p-3">
+                    {products.map((p) => (
+                      <label key={p.id} className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={groupForm.product_ids?.includes(p.id)}
+                          onChange={(e) =>
+                            setGroupForm((f) => {
+                              const current = Array.isArray(f.product_ids) ? f.product_ids : []
+                              return {
+                                ...f,
+                                product_ids: e.target.checked
+                                  ? [...current, p.id]
+                                  : current.filter((id) => id !== p.id),
+                              }
+                            })
+                          }
+                          className="rounded border-earth-300"
+                        />
+                        <span className="text-sm text-earth-700">
+                          {p.name} - {formatJPY(brlToJpy(p.price))}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="group_is_active"
+                  checked={groupForm.is_active}
+                  onChange={(e) => setGroupForm((f) => ({ ...f, is_active: e.target.checked }))}
+                  className="rounded border-earth-300"
+                />
+                <label htmlFor="group_is_active" className="text-sm font-medium text-earth-700">
+                  Ativo (visível na página de grupo de compras)
+                </label>
+              </div>
+
+              <div>
                 <label className="block text-sm font-medium text-earth-700">Fotos do grupo (obrigatório)</label>
                 <div className="mt-2 flex flex-wrap items-center gap-3">
                   <label className="cursor-pointer rounded-lg border border-earth-300 bg-white px-3 py-2 text-sm font-medium text-earth-700 hover:bg-earth-50">
@@ -1549,7 +1634,7 @@ export default function Admin() {
                   disabled={groupSubmitting}
                   className="rounded-lg bg-earth-900 px-4 py-2 font-medium text-earth-50 hover:bg-earth-800 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  {groupSubmitting ? 'Criando...' : 'Criar grupo de compra'}
+                  {groupSubmitting ? (editingGroupId ? 'Salvando...' : 'Criando...') : (editingGroupId ? 'Salvar alterações' : 'Criar grupo de compra')}
                 </button>
                 <button
                   type="button"
@@ -1584,11 +1669,30 @@ export default function Admin() {
                         <div>
                           <p className="font-medium text-earth-900">{g.name}</p>
                           {g.description && <p className="mt-1 text-sm text-earth-600 line-clamp-2">{g.description}</p>}
+                          <p className="mt-1 text-xs text-earth-500">
+                            Produtos vinculados: {Array.isArray(g.product_ids) ? g.product_ids.length : 0}
+                          </p>
                         </div>
                       </div>
-                      {!g.is_active && (
-                        <span className="rounded bg-amber-200 px-2 py-0.5 text-xs text-amber-900">Inativo</span>
-                      )}
+                      <div className="flex items-center gap-3">
+                        {!g.is_active && (
+                          <span className="rounded bg-amber-200 px-2 py-0.5 text-xs text-amber-900">Inativo</span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => handleEditGroup(g)}
+                          className="text-sm font-medium text-earth-600 hover:text-earth-900"
+                        >
+                          Editar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteGroup(g.id)}
+                          className="text-sm font-medium text-red-600 hover:text-red-800"
+                        >
+                          Remover
+                        </button>
+                      </div>
                     </li>
                   ))}
                 </ul>
