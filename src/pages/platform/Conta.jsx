@@ -1,5 +1,5 @@
 /**
- * Minha Conta - Informações do usuário e endereços para envio.
+ * Minha Conta - Informações do usuário, endereços e segurança.
  */
 import { useEffect, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
@@ -12,6 +12,7 @@ import {
   deleteAddress,
 } from '../../services/addressService'
 import { cacheKey, readCache, writeCache } from '../../lib/cache'
+import { supabase } from '../../lib/supabase'
 
 const ESTADOS = [
   'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS',
@@ -19,7 +20,7 @@ const ESTADOS = [
 ]
 
 export default function Conta() {
-  const { user, refreshProfile } = useAuth()
+  const { user, refreshProfile, signOut } = useAuth()
   const [profile, setProfile] = useState(null)
   const [addresses, setAddresses] = useState([])
   const [loading, setLoading] = useState(true)
@@ -27,6 +28,7 @@ export default function Conta() {
   const [message, setMessage] = useState('')
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState(null)
+  const [activeTab, setActiveTab] = useState('dados')
   const [profileForm, setProfileForm] = useState({ name: '', cpf_cnpj: '', phone: '' })
   const [addressForm, setAddressForm] = useState({
     label: '',
@@ -40,6 +42,9 @@ export default function Conta() {
     postal_code: '',
     country: 'Brasil',
   })
+  const [securityMessage, setSecurityMessage] = useState('')
+  const [passwordForm, setPasswordForm] = useState({ newPassword: '', confirm: '' })
+  const [passwordSaving, setPasswordSaving] = useState(false)
 
   const loadData = async (active = () => true) => {
     if (!user?.id) {
@@ -188,6 +193,36 @@ export default function Conta() {
     setSaving(false)
   }
 
+  const isOAuthUser = () => {
+    const identities = user?.identities ?? []
+    const hasEmail = identities.some((i) => i?.provider === 'email')
+    return !hasEmail && identities.length > 0
+  }
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault()
+    setSecurityMessage('')
+    const { newPassword, confirm: confirmVal } = passwordForm
+    if (newPassword.length < 6) {
+      setSecurityMessage('A senha deve ter pelo menos 6 caracteres')
+      return
+    }
+    if (newPassword !== confirmVal) {
+      setSecurityMessage('As senhas não coincidem')
+      return
+    }
+    setPasswordSaving(true)
+    const { error } = await supabase.auth.updateUser({ password: newPassword })
+    setPasswordSaving(false)
+    setSecurityMessage(error ? error.message : 'Senha alterada com sucesso')
+    if (!error) setPasswordForm({ newPassword: '', confirm: '' })
+  }
+
+  const TABS = [
+    { id: 'dados', label: 'Dados pessoais', icon: '👤' },
+    { id: 'seguranca', label: 'Segurança', icon: '🔐' },
+  ]
+
   return (
     <>
       <Helmet>
@@ -195,12 +230,32 @@ export default function Conta() {
       </Helmet>
       <div>
         <h1 className="text-2xl font-bold text-earth-900">Minha Conta</h1>
-        <p className="mt-2 text-earth-600">Seus dados e endereços para envio</p>
+        <p className="mt-2 text-earth-600">Seus dados, endereços e configurações de segurança</p>
+
+        <nav className="mt-6 border-b border-earth-200">
+          <div className="flex gap-1">
+            {TABS.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-colors ${
+                  activeTab === tab.id
+                    ? 'border-b-2 border-earth-900 bg-earth-50 text-earth-900'
+                    : 'text-earth-600 hover:bg-earth-100 hover:text-earth-800'
+                }`}
+              >
+                <span>{tab.icon}</span>
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </nav>
 
         {loading && <p className="mt-6 text-earth-600">Carregando...</p>}
 
-        {!loading && (
-          <div className="mt-6 space-y-8">
+        {!loading && activeTab === 'dados' && (
+          <div className="mt-6 space-y-8 rounded-b-xl border border-t-0 border-earth-200 bg-earth-50 p-6">
             {/* Dados pessoais */}
             <section className="rounded-xl border border-earth-200 bg-earth-50 p-6">
               <h2 className="text-lg font-semibold text-earth-900">Dados pessoais</h2>
@@ -445,6 +500,76 @@ export default function Conta() {
                   </div>
                 ))}
               </div>
+            </section>
+          </div>
+        )}
+
+        {!loading && activeTab === 'seguranca' && (
+          <div className="mt-0 space-y-6 rounded-b-xl border border-t-0 border-earth-200 bg-earth-50 p-6">
+            <section className="rounded-xl border border-earth-200 bg-white p-6">
+              <h2 className="text-lg font-semibold text-earth-900">Alterar senha</h2>
+              {isOAuthUser() ? (
+                <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4">
+                  <p className="text-sm text-amber-900">
+                    Você entrou com um provedor externo (Google, etc). A senha é gerenciada pelo provedor.
+                    Para redefinir o acesso, use a opção &quot;Esqueci minha senha&quot; na tela de login com seu email.
+                  </p>
+                </div>
+              ) : (
+                <form onSubmit={handleChangePassword} className="mt-4 max-w-md space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-earth-700">Nova senha</label>
+                    <input
+                      type="password"
+                      value={passwordForm.newPassword}
+                      onChange={(e) => setPasswordForm((f) => ({ ...f, newPassword: e.target.value }))}
+                      minLength={6}
+                      placeholder="Mínimo 6 caracteres"
+                      className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-earth-700">Confirmar nova senha</label>
+                    <input
+                      type="password"
+                      value={passwordForm.confirm}
+                      onChange={(e) => setPasswordForm((f) => ({ ...f, confirm: e.target.value }))}
+                      minLength={6}
+                      placeholder="Repita a senha"
+                      className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                    />
+                  </div>
+                  {securityMessage && (
+                    <p className={`text-sm ${securityMessage.includes('sucesso') ? 'text-green-700' : 'text-red-600'}`}>
+                      {securityMessage}
+                    </p>
+                  )}
+                  <button
+                    type="submit"
+                    disabled={passwordSaving}
+                    className="rounded-lg bg-earth-900 px-4 py-2 font-medium text-earth-50 hover:bg-earth-800 disabled:opacity-70"
+                  >
+                    {passwordSaving ? 'Salvando...' : 'Alterar senha'}
+                  </button>
+                </form>
+              )}
+            </section>
+
+            <section className="rounded-xl border border-earth-200 bg-white p-6">
+              <h2 className="text-lg font-semibold text-earth-900">Sessão</h2>
+              <p className="mt-2 text-sm text-earth-600">
+                Encerrar sessão fará com que você precise fazer login novamente neste dispositivo.
+              </p>
+              <button
+                type="button"
+                onClick={async () => {
+                  await signOut()
+                  window.location.href = '/login'
+                }}
+                className="mt-4 rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50"
+              >
+                Encerrar sessão
+              </button>
             </section>
           </div>
         )}

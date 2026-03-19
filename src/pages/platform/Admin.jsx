@@ -34,6 +34,7 @@ import {
   updatePurchaseGroup,
   deletePurchaseGroup,
 } from '../../services/groupService'
+import { getAdminLogs, logAdminAction } from '../../services/logService'
 import { brlToJpy, jpyToBrl, formatJPY } from '../../lib/fx'
 
 function formatMoney(v, currency = 'BRL') {
@@ -131,7 +132,11 @@ export default function Admin() {
     { id: 'pedidos', label: 'Pedidos', icon: '📦' },
     { id: 'produtos', label: 'Loja / Produtos', icon: '🛒' },
     { id: 'grupos', label: 'Grupo de Compras', icon: '👥' },
+    { id: 'logs', label: 'Logs', icon: '📋' },
   ]
+
+  const [logs, setLogs] = useState([])
+  const [logsLoading, setLogsLoading] = useState(false)
 
   const loadProducts = async (active = () => true) => {
     if (active()) setLoading(true)
@@ -204,6 +209,16 @@ export default function Admin() {
     }
   }, [])
 
+  useEffect(() => {
+    if (activeTab === 'logs') {
+      let isActive = true
+      loadLogs(() => isActive)
+      return () => {
+        isActive = false
+      }
+    }
+  }, [activeTab])
+
   const resetForm = () => {
     setForm({
       name: '',
@@ -247,6 +262,20 @@ export default function Admin() {
     }
   }
 
+  const loadLogs = async (active = () => true) => {
+    if (active()) setLogsLoading(true)
+    try {
+      const { data, error } = await getAdminLogs(200, 0)
+      if (!active()) return
+      setLogs(data ?? [])
+      if (error) setMessage(error.message)
+    } catch (e) {
+      if (active()) setMessage(e?.message || 'Erro ao carregar logs')
+    } finally {
+      if (active()) setLogsLoading(false)
+    }
+  }
+
   const handleSaveGroup = async (e) => {
     e.preventDefault()
     setMessage('')
@@ -274,7 +303,7 @@ export default function Admin() {
         product_ids: Array.isArray(groupForm.product_ids) ? groupForm.product_ids : [],
       }
 
-      const { error } = editingGroupId
+      const { data: groupData, error } = editingGroupId
         ? await updatePurchaseGroup(editingGroupId, payload)
         : await createPurchaseGroup(payload)
       if (error) {
@@ -282,6 +311,12 @@ export default function Admin() {
         return
       }
 
+      logAdminAction(
+        editingGroupId ? 'group_update' : 'group_create',
+        'purchase_group',
+        editingGroupId || groupData?.id,
+        { name: payload.name }
+      )
       setMessage(editingGroupId ? 'Grupo atualizado com sucesso' : 'Grupo criado com sucesso')
       resetGroupForm()
       loadGroups()
@@ -309,6 +344,7 @@ export default function Admin() {
     const { error } = await deletePurchaseGroup(groupId)
     setMessage(error ? error.message : 'Grupo removido')
     if (!error) {
+      logAdminAction('group_delete', 'purchase_group', groupId)
       if (editingGroupId === groupId) resetGroupForm()
       loadGroups()
     }
@@ -370,13 +406,15 @@ export default function Admin() {
         const { error } = await updateProduct(editingId, payload)
         setMessage(error ? error.message : 'Produto atualizado')
         if (!error) {
+          logAdminAction('product_update', 'product', editingId, { name: payload.name })
           resetForm()
           loadProducts()
         }
       } else {
-        const { error } = await createProduct(payload)
+        const { data, error } = await createProduct(payload)
         setMessage(error ? error.message : 'Produto criado')
         if (!error) {
+          logAdminAction('product_create', 'product', data?.id, { name: payload.name })
           resetForm()
           loadProducts()
         }
@@ -389,14 +427,24 @@ export default function Admin() {
   const handleDelete = async (id) => {
     if (!confirm('Remover este produto?')) return
     const { error } = await deleteProduct(id)
-    setMessage(error ? error.message : 'Produto removido')
-    if (!error) loadProducts()
+    if (error) {
+      setMessage(error.message || 'Erro ao remover produto')
+      return
+    }
+
+    setMessage('Produto removido')
+    loadProducts()
+    // Log não deve interferir no UX de remoção.
+    logAdminAction('product_delete', 'product', id).catch(() => {})
   }
 
   const handleOrderStatus = async (orderId, status) => {
     const { error } = await updateOrderStatusAdmin(orderId, status)
     setMessage(error ? error.message : 'Status atualizado')
-    if (!error) loadOrders()
+    if (!error) {
+      logAdminAction('order_status_update', 'order', orderId, { status })
+      loadOrders()
+    }
   }
 
   const openShippingModal = (order) => {
@@ -422,6 +470,7 @@ export default function Admin() {
     )
     setMessage(error ? error.message : 'Frete definido. Aguardando pagamento do cliente.')
     if (!error) {
+      logAdminAction('order_set_shipping', 'order', shippingModal.orderId, { cost, currency: shippingModal.currency })
       setShippingModal({ open: false, orderId: null, cost: '', currency: 'JPY' })
       loadOrders()
     }
@@ -440,6 +489,7 @@ export default function Admin() {
     setSubmitting(false)
     setMessage(error ? error.message : 'Orçamento definido. Cliente pode pagar em Pedidos.')
     if (!error) {
+      logAdminAction('order_set_quote', 'order', quoteModal.orderId, { amount, currency: 'JPY' })
       setQuoteModal({ open: false, orderId: null, amount: '', currency: 'JPY', message: '' })
       loadOrders()
     }
@@ -494,6 +544,7 @@ export default function Admin() {
     const { error } = await updateOrderAdmin(orderEditModal.orderId, payload)
     setMessage(error ? error.message : 'Pedido atualizado')
     if (!error) {
+      logAdminAction('order_edit', 'order', orderEditModal.orderId, { status: payload.status })
       closeOrderEditModal()
       loadOrders()
     }
@@ -503,7 +554,10 @@ export default function Admin() {
     if (!confirm('Remover este pedido? Esta ação não pode ser desfeita.')) return
     const { error } = await deleteOrderAdmin(orderId)
     setMessage(error ? error.message : 'Pedido removido')
-    if (!error) loadOrders()
+    if (!error) {
+      logAdminAction('order_delete', 'order', orderId)
+      loadOrders()
+    }
   }
 
   const openInventoryModal = (order) => {
@@ -540,6 +594,7 @@ export default function Admin() {
       })
       setMessage(error ? error.message : 'Item adicionado ao inventário do usuário.')
       if (!error) {
+        logAdminAction('inventory_add_from_order', 'order', inventoryModal.orderId, { name })
         setInventoryModal({ open: false, orderId: null, orderMessage: '', name: '', notes: '', weight_kg: '', photo_url: '', video_url: '' })
         loadOrders()
       }
@@ -564,6 +619,7 @@ export default function Admin() {
       })
       setMessage(error ? error.message : 'Pedido criado na conta do usuário.')
       if (!error) {
+        logAdminAction('order_create_for_user', 'order', null, { user_id: createOrderModal.user_id })
         setCreateOrderModal({ open: false, user_id: '', service_id: '', message: '' })
         loadOrders()
       }
@@ -597,6 +653,7 @@ export default function Admin() {
       })
       setMessage(error ? error.message : 'Pacote registrado na conta do usuário.')
       if (!error) {
+        logAdminAction('package_register', null, null, { user_id: registerPackageModal.user_id })
         setRegisterPackageModal({ open: false, user_id: '', products_description: '', items_count: '', weight_kg: '', order_id: '', photo_url: '', video_url: '' })
       }
     } finally {
@@ -787,7 +844,10 @@ export default function Admin() {
                             onClick={async () => {
                               const { error } = await approveOrderAdmin(o.id)
                               setMessage(error ? error.message : 'Pedido aprovado.')
-                              if (!error) loadOrders()
+                              if (!error) {
+                                logAdminAction('order_approve', 'order', o.id)
+                                loadOrders()
+                              }
                             }}
                             className="rounded bg-green-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-green-700"
                           >
@@ -799,7 +859,10 @@ export default function Admin() {
                               const reason = prompt('Motivo da rejeição (opcional):')
                               const { error } = await rejectOrderAdmin(o.id, reason || undefined)
                               setMessage(error ? error.message : 'Pedido rejeitado.')
-                              if (!error) loadOrders()
+                              if (!error) {
+                                logAdminAction('order_reject', 'order', o.id, { reason })
+                                loadOrders()
+                              }
                             }}
                             className="rounded bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700"
                           >
@@ -1669,9 +1732,24 @@ export default function Admin() {
                         <div>
                           <p className="font-medium text-earth-900">{g.name}</p>
                           {g.description && <p className="mt-1 text-sm text-earth-600 line-clamp-2">{g.description}</p>}
-                          <p className="mt-1 text-xs text-earth-500">
-                            Produtos vinculados: {Array.isArray(g.product_ids) ? g.product_ids.length : 0}
-                          </p>
+                          {(() => {
+                            const ids = Array.isArray(g.product_ids) ? g.product_ids : []
+                            const linked = ids
+                              .map((id) => products.find((p) => p.id === id))
+                              .filter(Boolean)
+                            if (linked.length > 0) {
+                              return (
+                                <p className="mt-1 text-xs text-earth-500 line-clamp-2">
+                                  Produtos no grupo: {linked.map((p) => p.name).join(', ')}
+                                </p>
+                              )
+                            }
+                            return (
+                              <p className="mt-1 text-xs text-earth-500">
+                                Produtos vinculados: {ids.length}
+                              </p>
+                            )
+                          })()}
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
@@ -1698,6 +1776,75 @@ export default function Admin() {
                 </ul>
               )}
             </div>
+          </section>
+        )}
+
+        {/* Logs */}
+        {activeTab === 'logs' && (
+          <section className="mt-0 rounded-b-xl border border-t-0 border-earth-200 bg-earth-50 p-6">
+            <h2 className="text-lg font-semibold text-earth-900">Logs de atividades</h2>
+            <p className="mt-1 text-sm text-earth-600">Registro das ações realizadas por administradores</p>
+            <div className="mt-4">
+              <button
+                type="button"
+                onClick={() => loadLogs()}
+                disabled={logsLoading}
+                className="rounded-lg border border-earth-300 px-3 py-1.5 text-sm font-medium text-earth-700 hover:bg-earth-100 disabled:opacity-70"
+              >
+                {logsLoading ? 'Atualizando...' : 'Atualizar'}
+              </button>
+            </div>
+            {logsLoading && <p className="mt-4 text-sm text-earth-600">Carregando logs...</p>}
+            {!logsLoading && logs.length === 0 && (
+              <p className="mt-4 text-sm text-earth-600">Nenhum registro ainda.</p>
+            )}
+            {!logsLoading && logs.length > 0 && (
+              <div className="mt-4 overflow-x-auto rounded-lg border border-earth-200 bg-white">
+                <table className="min-w-full divide-y divide-earth-200 text-left text-sm">
+                  <thead>
+                    <tr className="bg-earth-50">
+                      <th className="px-4 py-3 font-medium text-earth-900">Data</th>
+                      <th className="px-4 py-3 font-medium text-earth-900">Admin</th>
+                      <th className="px-4 py-3 font-medium text-earth-900">Ação</th>
+                      <th className="px-4 py-3 font-medium text-earth-900">Entidade</th>
+                      <th className="px-4 py-3 font-medium text-earth-900">Detalhes</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-earth-200">
+                    {logs.map((log) => (
+                      <tr key={log.id} className="hover:bg-earth-50/50">
+                        <td className="whitespace-nowrap px-4 py-2 text-earth-600">
+                          {log.created_at
+                            ? new Date(log.created_at).toLocaleString('pt-BR', {
+                                dateStyle: 'short',
+                                timeStyle: 'short',
+                              })
+                            : '—'}
+                        </td>
+                        <td className="px-4 py-2 text-earth-700">
+                          {log.admin_name || log.admin_email || log.admin_id?.slice(0, 8) || '—'}
+                        </td>
+                        <td className="px-4 py-2 font-medium text-earth-900">{log.action || '—'}</td>
+                        <td className="px-4 py-2 text-earth-600">
+                          {log.entity_type && log.entity_id ? (
+                            <span>
+                              {log.entity_type} · {String(log.entity_id).slice(0, 8)}…
+                            </span>
+                          ) : (
+                            '—'
+                          )}
+                        </td>
+                        <td className="max-w-[200px] truncate px-4 py-2 text-earth-600">
+                          {log.details && Object.keys(log.details).length > 0
+                            ? JSON.stringify(log.details)
+                            : '—'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </section>
         )}
 
