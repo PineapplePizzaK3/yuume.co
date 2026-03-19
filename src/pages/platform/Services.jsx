@@ -15,7 +15,7 @@ const REDIRECIONAMENTO = 'Redirecionamento'
 const PERSONAL_SHOPPING = 'Personal Shopping'
 
 const DESCRICOES_FIXAS = {
-  Redirecionamento: 'Módulos: eu compro e envio | pré-pagamento (nós compramos) + frete',
+  Redirecionamento: 'Módulos: 📦 Você Compra | 🛍️ Nós Compramos + frete',
   'Personal Shopping': '25% do valor da compra + frete — ideal para quem precisa de ajuda para decidir o que comprar',
 }
 
@@ -172,9 +172,9 @@ export default function Services() {
                         className="mt-1"
                       />
                       <div>
-                        <span className="block font-semibold text-earth-900">Eu compro e envio</span>
+                        <span className="block font-semibold text-earth-900">📦 Você Compra</span>
                         <span className="block text-sm text-earth-600">
-                          Taxa por quantidade de itens: 1 item ¥900 | 2 itens ¥750/item | 3–4 itens ¥600/item | 5+ itens ¥500/item + frete. Você compra nas lojas japonesas e envia para nosso endereço.
+                          Taxa: 1 item ¥1.000 | 2–4 itens ¥750/item | 5+ itens ¥500/item + frete. Você compra nas lojas japonesas e envia para nosso endereço.
                         </span>
                       </div>
                     </label>
@@ -187,9 +187,9 @@ export default function Services() {
                         className="mt-1"
                       />
                       <div>
-                        <span className="block font-semibold text-earth-900">Você compra pra mim (pré-pagamento)</span>
+                        <span className="block font-semibold text-earth-900">🛍️ Nós Compramos</span>
                         <span className="block text-sm text-earth-600">
-                          Nós compramos para você. Cobramos 15% do valor da compra + taxa por item (1–2: ¥400 | 3–5: ¥250 | 6+: ¥150) + frete. Você envia a lista e retornamos o orçamento para pré-pagamento.
+                          Mesmas taxas (1 item ¥1.000 | 2–4 ¥750/item | 5+ ¥500/item) + 12% sobre o valor da compra + frete. Você envia a lista e retornamos o orçamento para pré-pagamento.
                         </span>
                       </div>
                     </label>

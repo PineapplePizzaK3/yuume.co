@@ -26,15 +26,27 @@ import {
   ORDER_STATUS,
   ORDER_STATUS_LABELS,
 } from '../../services/orderService'
-import { addInventoryFromOrderAdmin, registerPackageAdmin } from '../../services/inventoryService'
+import {
+  addInventoryFromOrderAdmin,
+  registerPackageAdmin,
+  getShippingPanelAdmin,
+  setShipmentFreightAdmin,
+  setShipmentShippedAdmin,
+  setShipmentCompletedAdmin,
+  setShipmentPaidAdmin,
+} from '../../services/inventoryService'
 import { getUsersAdmin } from '../../services/profileService'
 import {
   createPurchaseGroup,
   getPurchaseGroupsAdmin,
   updatePurchaseGroup,
   deletePurchaseGroup,
+  createPurchaseGroupProduct,
+  updatePurchaseGroupProduct,
+  deletePurchaseGroupProduct,
 } from '../../services/groupService'
-import { getAdminLogs, logAdminAction } from '../../services/logService'
+import { getPurchaseGroupProducts } from '../../services/productService'
+import { getUserLogs, getAuthLogs, logAdminAction } from '../../services/logService'
 import { brlToJpy, jpyToBrl, formatJPY } from '../../lib/fx'
 
 function formatMoney(v, currency = 'BRL') {
@@ -43,8 +55,8 @@ function formatMoney(v, currency = 'BRL') {
 
 function formatOrderModuleLabel(order) {
   if (!order) return null
-  if (order.order_module === 'self_buy') return 'Redirecionamento: eu compro'
-  if (order.order_module === 'assisted_buy') return 'Redirecionamento: pré-pagamento'
+  if (order.order_module === 'self_buy') return 'Redirecionamento: 📦 Você Compra'
+  if (order.order_module === 'assisted_buy') return 'Redirecionamento: 🛍️ Nós Compramos'
   return null
 }
 
@@ -63,6 +75,7 @@ export default function Admin() {
     description: '',
     price: '',
     weight_kg: '',
+    stock_quantity: '',
     image_url: '',
     image_urls: [],
     is_active: true,
@@ -121,22 +134,42 @@ export default function Admin() {
     image_url: '',
     image_urls: [],
     is_active: true,
-    product_ids: [],
   })
   const [editingGroupId, setEditingGroupId] = useState(null)
   const [groupImageUploading, setGroupImageUploading] = useState(false)
   const [groupImageUploadError, setGroupImageUploadError] = useState('')
   const [newGroupImageUrl, setNewGroupImageUrl] = useState('')
+  const [groupProducts, setGroupProducts] = useState([])
+  const [pendingGroupProducts, setPendingGroupProducts] = useState([])
+  const [groupProductForm, setGroupProductForm] = useState({
+    name: '',
+    price: '',
+    description: '',
+    image_url: '',
+    image_urls: [],
+    weight_kg: '0',
+  })
+  const [editingGroupProductId, setEditingGroupProductId] = useState(null)
+  const [editingPendingProductIndex, setEditingPendingProductIndex] = useState(null)
+  const [groupProductSubmitting, setGroupProductSubmitting] = useState(false)
 
   const TABS = [
     { id: 'pedidos', label: 'Pedidos', icon: '📦' },
-    { id: 'produtos', label: 'Loja / Produtos', icon: '🛒' },
+    { id: 'envios', label: 'Envios', icon: '🚚' },
+    { id: 'produtos', label: 'Produtos', icon: '🛒' },
     { id: 'grupos', label: 'Grupo de Compras', icon: '👥' },
     { id: 'logs', label: 'Logs', icon: '📋' },
   ]
 
-  const [logs, setLogs] = useState([])
-  const [logsLoading, setLogsLoading] = useState(false)
+  const [userLogs, setUserLogs] = useState([])
+  const [userLogsLoading, setUserLogsLoading] = useState(false)
+  const [authLogs, setAuthLogs] = useState([])
+  const [authLogsLoading, setAuthLogsLoading] = useState(false)
+
+  const [shippingPanel, setShippingPanel] = useState({ shipments: [], orders: [], inventoryReady: [] })
+  const [shippingPanelLoading, setShippingPanelLoading] = useState(false)
+  const [shipmentFreightModal, setShipmentFreightModal] = useState({ open: false, shipmentId: null, cost: '', currency: 'JPY' })
+  const [shipmentShippedModal, setShipmentShippedModal] = useState({ open: false, shipmentId: null, trackingCode: '' })
 
   const loadProducts = async (active = () => true) => {
     if (active()) setLoading(true)
@@ -212,10 +245,33 @@ export default function Admin() {
   useEffect(() => {
     if (activeTab === 'logs') {
       let isActive = true
-      loadLogs(() => isActive)
+      loadUserLogs(() => isActive)
+      loadAuthLogs(() => isActive)
       return () => {
         isActive = false
       }
+    }
+  }, [activeTab])
+
+  const loadShippingPanel = async (active = () => true) => {
+    if (active()) setShippingPanelLoading(true)
+    try {
+      const { data, error } = await getShippingPanelAdmin()
+      if (!active()) return
+      setShippingPanel(data ?? { shipments: [], orders: [], inventoryReady: [] })
+      if (error) setMessage(error?.message)
+    } catch (e) {
+      if (active()) setMessage(e?.message || 'Erro ao carregar painel de envios')
+    } finally {
+      if (active()) setShippingPanelLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (activeTab === 'envios') {
+      let isActive = true
+      loadShippingPanel(() => isActive)
+      return () => { isActive = false }
     }
   }, [activeTab])
 
@@ -225,6 +281,7 @@ export default function Admin() {
       description: '',
       price: '',
       weight_kg: '',
+      stock_quantity: '',
       image_url: '',
       image_urls: [],
       is_active: true,
@@ -241,11 +298,154 @@ export default function Admin() {
       image_url: '',
       image_urls: [],
       is_active: true,
-      product_ids: [],
     })
     setEditingGroupId(null)
     setGroupImageUploadError('')
     setNewGroupImageUrl('')
+    setGroupProducts([])
+    setPendingGroupProducts([])
+    setGroupProductForm({ name: '', price: '', description: '', image_url: '', image_urls: [], weight_kg: '0' })
+    setEditingGroupProductId(null)
+    setEditingPendingProductIndex(null)
+  }
+
+  const loadGroupProducts = async (groupId) => {
+    if (!groupId) return
+    const { data } = await getPurchaseGroupProducts(groupId)
+    setGroupProducts(data ?? [])
+  }
+
+  const handleEditGroup = (g) => {
+    setGroupForm({
+      name: g.name ?? '',
+      description: g.description ?? '',
+      image_url: g.image_url ?? '',
+      image_urls: Array.isArray(g.image_urls) ? g.image_urls.filter(Boolean) : [],
+      is_active: g.is_active ?? true,
+    })
+    setEditingGroupId(g.id)
+    setGroupImageUploadError('')
+    setNewGroupImageUrl('')
+    setEditingGroupProductId(null)
+    setEditingPendingProductIndex(null)
+    setPendingGroupProducts([])
+    setGroupProductForm({ name: '', price: '', description: '', image_url: '', image_urls: [], weight_kg: '0' })
+    loadGroupProducts(g.id)
+  }
+
+  const resetGroupProductForm = () => {
+    setGroupProductForm({ name: '', price: '', description: '', image_url: '', image_urls: [], weight_kg: '0' })
+    setEditingGroupProductId(null)
+    setEditingPendingProductIndex(null)
+  }
+
+  const buildGroupProductPayload = () => {
+    const price = parseFloat(groupProductForm.price)
+    if (isNaN(price) || price < 0) return null
+    const imageUrls = Array.isArray(groupProductForm.image_urls)?.length
+      ? groupProductForm.image_urls.filter(Boolean)
+      : groupProductForm.image_url ? [groupProductForm.image_url] : []
+    return {
+      name: groupProductForm.name.trim(),
+      description: groupProductForm.description?.trim() || '',
+      price: jpyToBrl(price),
+      image_url: imageUrls[0] || groupProductForm.image_url || '',
+      image_urls: imageUrls,
+      weight_kg: parseFloat(groupProductForm.weight_kg) || 0,
+    }
+  }
+
+  const handleSaveGroupProduct = async (e) => {
+    e.preventDefault()
+    const price = parseFloat(groupProductForm.price)
+    if (isNaN(price) || price < 0) {
+      setMessage('Preço inválido')
+      return
+    }
+    const payload = buildGroupProductPayload()
+    if (!payload) return
+
+    if (editingGroupId) {
+      setGroupProductSubmitting(true)
+      setMessage('')
+      try {
+        if (editingGroupProductId) {
+          const { error } = await updatePurchaseGroupProduct(editingGroupId, editingGroupProductId, payload)
+          if (error) setMessage(error.message)
+          else {
+            resetGroupProductForm()
+            loadGroupProducts(editingGroupId)
+          }
+        } else {
+          const { error } = await createPurchaseGroupProduct(editingGroupId, payload)
+          if (error) setMessage(error.message)
+          else {
+            resetGroupProductForm()
+            loadGroupProducts(editingGroupId)
+          }
+        }
+      } finally {
+        setGroupProductSubmitting(false)
+      }
+    } else {
+      const item = { id: crypto.randomUUID(), ...payload }
+      if (editingPendingProductIndex != null) {
+        setPendingGroupProducts((prev) => {
+          const next = [...prev]
+          next[editingPendingProductIndex] = item
+          return next
+        })
+        setEditingPendingProductIndex(null)
+      } else {
+        setPendingGroupProducts((prev) => [...prev, item])
+      }
+      resetGroupProductForm()
+      setMessage('')
+    }
+  }
+
+  const handleEditGroupProduct = (p) => {
+    setGroupProductForm({
+      name: p.name ?? '',
+      price: String(Math.round(brlToJpy(Number(p.price ?? 0)))),
+      description: p.description ?? '',
+      image_url: p.image_url ?? '',
+      image_urls: Array.isArray(p.image_urls) ? p.image_urls : (p.image_url ? [p.image_url] : []),
+      weight_kg: String(Number(p.weight_kg ?? 0)),
+    })
+    setEditingGroupProductId(p.id)
+  }
+
+  const handleDeleteGroupProduct = async (productId) => {
+    if (!editingGroupId || !confirm('Remover este produto do grupo?')) return
+    const { error } = await deletePurchaseGroupProduct(editingGroupId, productId)
+    if (error) setMessage(error.message)
+    else {
+      loadGroupProducts(editingGroupId)
+      resetGroupProductForm()
+    }
+  }
+
+  const handleEditPendingGroupProduct = (item, index) => {
+    setGroupProductForm({
+      name: item.name ?? '',
+      price: String(Math.round(brlToJpy(Number(item.price ?? 0)))),
+      description: item.description ?? '',
+      image_url: item.image_url ?? '',
+      image_urls: Array.isArray(item.image_urls) ? item.image_urls : (item.image_url ? [item.image_url] : []),
+      weight_kg: String(Number(item.weight_kg ?? 0)),
+    })
+    setEditingPendingProductIndex(index)
+  }
+
+  const handleRemovePendingGroupProduct = (index) => {
+    setPendingGroupProducts((prev) => prev.filter((_, i) => i !== index))
+    if (editingPendingProductIndex === index) {
+      resetGroupProductForm()
+      setEditingPendingProductIndex(null)
+    } else if (editingPendingProductIndex != null && editingPendingProductIndex > index) {
+      setEditingPendingProductIndex(editingPendingProductIndex - 1)
+    }
   }
 
   const loadGroups = async (active = () => true) => {
@@ -262,17 +462,31 @@ export default function Admin() {
     }
   }
 
-  const loadLogs = async (active = () => true) => {
-    if (active()) setLogsLoading(true)
+  const loadUserLogs = async (active = () => true) => {
+    if (active()) setUserLogsLoading(true)
     try {
-      const { data, error } = await getAdminLogs(200, 0)
+      const { data, error } = await getUserLogs(200, 0)
       if (!active()) return
-      setLogs(data ?? [])
+      setUserLogs(data ?? [])
       if (error) setMessage(error.message)
     } catch (e) {
       if (active()) setMessage(e?.message || 'Erro ao carregar logs')
     } finally {
-      if (active()) setLogsLoading(false)
+      if (active()) setUserLogsLoading(false)
+    }
+  }
+
+  const loadAuthLogs = async (active = () => true) => {
+    if (active()) setAuthLogsLoading(true)
+    try {
+      const { data, error } = await getAuthLogs(200, 0)
+      if (!active()) return
+      setAuthLogs(data ?? [])
+      if (error) setMessage(error.message)
+    } catch (e) {
+      if (active()) setMessage(e?.message || 'Erro ao carregar logs de autenticação')
+    } finally {
+      if (active()) setAuthLogsLoading(false)
     }
   }
 
@@ -300,7 +514,6 @@ export default function Admin() {
         image_urls: imageUrls,
         image_url: groupForm.image_url || imageUrls[0] || '',
         is_active: groupForm.is_active ?? true,
-        product_ids: Array.isArray(groupForm.product_ids) ? groupForm.product_ids : [],
       }
 
       const { data: groupData, error } = editingGroupId
@@ -317,26 +530,30 @@ export default function Admin() {
         editingGroupId || groupData?.id,
         { name: payload.name }
       )
+
+      if (!editingGroupId && pendingGroupProducts.length > 0) {
+        for (const prod of pendingGroupProducts) {
+          const { error: prodErr } = await createPurchaseGroupProduct(groupData?.id, prod)
+          if (prodErr) {
+            setMessage(prodErr.message || 'Erro ao criar alguns produtos')
+            return
+          }
+        }
+        setPendingGroupProducts([])
+      }
+
       setMessage(editingGroupId ? 'Grupo atualizado com sucesso' : 'Grupo criado com sucesso')
-      resetGroupForm()
-      loadGroups()
+      if (editingGroupId) {
+        loadGroups()
+        loadGroupProducts(editingGroupId)
+      } else {
+        setEditingGroupId(groupData?.id)
+        setGroupForm((f) => ({ ...f, ...payload }))
+        loadGroupProducts(groupData?.id)
+      }
     } finally {
       setGroupSubmitting(false)
     }
-  }
-
-  const handleEditGroup = (group) => {
-    setGroupForm({
-      name: group.name ?? '',
-      description: group.description ?? '',
-      image_url: group.image_url ?? '',
-      image_urls: Array.isArray(group.image_urls) ? group.image_urls.filter(Boolean) : [],
-      is_active: group.is_active ?? true,
-      product_ids: Array.isArray(group.product_ids) ? group.product_ids.filter(Boolean) : [],
-    })
-    setEditingGroupId(group.id)
-    setGroupImageUploadError('')
-    setNewGroupImageUrl('')
   }
 
   const handleDeleteGroup = async (groupId) => {
@@ -364,6 +581,7 @@ export default function Admin() {
       // UI do admin em JPY (mantemos persistência em BRL no banco)
       price: String(Math.round(brlToJpy(Number(p.price ?? 0)))),
       weight_kg: String(Number(p.weight_kg ?? 0)),
+      stock_quantity: p.stock_quantity != null ? String(p.stock_quantity) : '',
       image_url: p.image_url ?? urls[0] ?? '',
       image_urls: urls,
       is_active: p.is_active ?? true,
@@ -391,11 +609,15 @@ export default function Admin() {
     const imageUrls = Array.isArray(form.image_urls) && form.image_urls.length > 0
       ? form.image_urls.filter(Boolean)
       : (form.image_url ? [form.image_url] : [])
+    const stockQty = form.stock_quantity === '' || form.stock_quantity == null
+      ? null
+      : Math.max(0, parseInt(form.stock_quantity, 10) || 0)
     const payload = {
       name: form.name,
       description: form.description || null,
       price,
       weight_kg: weightKg,
+      stock_quantity: stockQty,
       image_url: imageUrls[0] || form.image_url || null,
       image_urls: imageUrls,
       is_active: form.is_active,
@@ -472,6 +694,70 @@ export default function Admin() {
     if (!error) {
       logAdminAction('order_set_shipping', 'order', shippingModal.orderId, { cost, currency: shippingModal.currency })
       setShippingModal({ open: false, orderId: null, cost: '', currency: 'JPY' })
+      loadOrders()
+    }
+  }
+
+  const openShipmentFreightModal = (s) => {
+    setShipmentFreightModal({ open: true, shipmentId: s.id, cost: s.shipping_cost ? String(s.shipping_cost) : '', currency: s.shipping_currency || 'JPY' })
+  }
+
+  const handleSetShipmentFreight = async (e) => {
+    e.preventDefault()
+    const cost = parseFloat(shipmentFreightModal.cost)
+    if (isNaN(cost) || cost < 0) {
+      setMessage('Valor do frete inválido')
+      return
+    }
+    setSubmitting(true)
+    setMessage('')
+    const { error } = await setShipmentFreightAdmin(shipmentFreightModal.shipmentId, cost, shipmentFreightModal.currency)
+    setSubmitting(false)
+    setMessage(error ? error.message : 'Frete definido no envio. Aguardando pagamento.')
+    if (!error) {
+      setShipmentFreightModal({ open: false, shipmentId: null, cost: '', currency: 'JPY' })
+      loadShippingPanel()
+      loadOrders()
+    }
+  }
+
+  const openShipmentShippedModal = (s) => {
+    setShipmentShippedModal({ open: true, shipmentId: s.id, trackingCode: s.tracking_code || '' })
+  }
+
+  const handleSetShipmentShipped = async (e) => {
+    e.preventDefault()
+    setSubmitting(true)
+    setMessage('')
+    const { error } = await setShipmentShippedAdmin(shipmentShippedModal.shipmentId, shipmentShippedModal.trackingCode)
+    setSubmitting(false)
+    setMessage(error ? error.message : 'Envio marcado como enviado.')
+    if (!error) {
+      setShipmentShippedModal({ open: false, shipmentId: null, trackingCode: '' })
+      loadShippingPanel()
+      loadOrders()
+    }
+  }
+
+  const handleSetShipmentPaid = async (shipmentId) => {
+    setSubmitting(true)
+    setMessage('')
+    const { error } = await setShipmentPaidAdmin(shipmentId)
+    setSubmitting(false)
+    setMessage(error ? error.message : 'Envio marcado como pago.')
+    if (!error) {
+      loadShippingPanel()
+    }
+  }
+
+  const handleSetShipmentCompleted = async (shipmentId) => {
+    setSubmitting(true)
+    setMessage('')
+    const { error } = await setShipmentCompletedAdmin(shipmentId)
+    setSubmitting(false)
+    setMessage(error ? error.message : 'Envio finalizado.')
+    if (!error) {
+      loadShippingPanel()
       loadOrders()
     }
   }
@@ -667,18 +953,9 @@ export default function Admin() {
         <title>Admin | Plataforma</title>
       </Helmet>
       <div>
-        <h1 className="text-2xl font-bold text-earth-900">Admin</h1>
-        <p className="mt-2 text-earth-600">
-          Área de gestão da plataforma
-        </p>
-        <div className="mt-6 rounded-lg border border-earth-200 bg-earth-100 p-4">
-          <h2 className="font-semibold text-earth-900">Sessão admin</h2>
-          <p className="mt-1 text-sm text-earth-600">
-            Logado como: {user?.email}
-          </p>
-          <p className="text-sm text-earth-600">
-            Perfil: {profile?.name || '—'} • Role: {profile?.role}
-          </p>
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-earth-900">Admin</h1>
+          <span className="text-sm text-earth-600">{user?.email}</span>
         </div>
 
         {message && (
@@ -712,9 +989,6 @@ export default function Admin() {
         {activeTab === 'pedidos' && (
         <section className="mt-0 rounded-b-xl border border-t-0 border-earth-200 bg-earth-50 p-6">
           <h2 className="text-lg font-semibold text-earth-900">Pedidos</h2>
-          <p className="mt-1 text-sm text-earth-600">
-            Fluxo Redirecionamento: pedido (user ou admin) → aprovação → aguardando pacotes → admin registra pacotes na conta do user → user solicita envio → invoice/frete/serviços extras → pagamento → enviado + rastreio
-          </p>
           <div className="mt-3 flex flex-wrap gap-2">
             <button
               type="button"
@@ -964,9 +1238,6 @@ export default function Admin() {
                 onClick={(e) => e.stopPropagation()}
               >
                 <h3 className="font-semibold text-earth-900">Definir valor do frete</h3>
-                <p className="mt-1 text-sm text-earth-600">
-                  O cliente será notificado para pagar o frete.
-                </p>
                 <div className="mt-4 space-y-3">
                   <div>
                     <label className="block text-sm font-medium text-earth-700">Valor (¥)</label>
@@ -1010,6 +1281,105 @@ export default function Admin() {
             </form>
           )}
 
+          {shipmentFreightModal.open && (
+            <form
+              onSubmit={handleSetShipmentFreight}
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+            >
+              <div
+                className="w-full max-w-sm rounded-xl bg-white p-6 shadow-lg"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <h3 className="font-semibold text-earth-900">Definir frete no envio</h3>
+                <div className="mt-4 space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-earth-700">Valor do frete (¥)</label>
+                    <input
+                      type="number"
+                      step="1"
+                      min="0"
+                      required
+                      value={shipmentFreightModal.cost}
+                      onChange={(e) =>
+                        setShipmentFreightModal((m) => ({ ...m, cost: e.target.value }))
+                      }
+                      placeholder="Ex: 5000"
+                      className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-earth-700">Moeda</label>
+                    <input
+                      value="JPY (¥)"
+                      disabled
+                      className="mt-1 block w-full rounded-lg border border-earth-300 bg-earth-50 px-3 py-2 text-earth-900"
+                    />
+                  </div>
+                </div>
+                <div className="mt-6 flex gap-2">
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="rounded-lg bg-earth-900 px-4 py-2 font-medium text-earth-50 hover:bg-earth-800 disabled:opacity-60"
+                  >
+                    {submitting ? 'Salvando...' : 'Definir frete'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShipmentFreightModal({ open: false, shipmentId: null, cost: '', currency: 'JPY' })}
+                    className="rounded-lg border border-earth-300 px-4 py-2 font-medium text-earth-700 hover:bg-earth-100"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            </form>
+          )}
+
+          {shipmentShippedModal.open && (
+            <form
+              onSubmit={handleSetShipmentShipped}
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+            >
+              <div
+                className="w-full max-w-sm rounded-xl bg-white p-6 shadow-lg"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <h3 className="font-semibold text-earth-900">Marcar envio como enviado</h3>
+                <div className="mt-4 space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-earth-700">Código de rastreio (opcional)</label>
+                    <input
+                      type="text"
+                      value={shipmentShippedModal.trackingCode}
+                      onChange={(e) =>
+                        setShipmentShippedModal((m) => ({ ...m, trackingCode: e.target.value }))
+                      }
+                      placeholder="Ex: RR123456789JP"
+                      className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                    />
+                  </div>
+                </div>
+                <div className="mt-6 flex gap-2">
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="rounded-lg bg-earth-900 px-4 py-2 font-medium text-earth-50 hover:bg-earth-800 disabled:opacity-60"
+                  >
+                    {submitting ? 'Salvando...' : 'Marcar enviado'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShipmentShippedModal({ open: false, shipmentId: null, trackingCode: '' })}
+                    className="rounded-lg border border-earth-300 px-4 py-2 font-medium text-earth-700 hover:bg-earth-100"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            </form>
+          )}
+
           {quoteModal.open && (
             <form
               onSubmit={handleSetQuote}
@@ -1020,9 +1390,6 @@ export default function Admin() {
                 onClick={(e) => e.stopPropagation()}
               >
                 <h3 className="font-semibold text-earth-900">Definir orçamento (Personal Shopping)</h3>
-                <p className="mt-1 text-sm text-earth-600">
-                  O cliente poderá pagar o orçamento na página Pedidos.
-                </p>
                 <div className="mt-4 space-y-3">
                   <div>
                     <label className="block text-sm font-medium text-earth-700">Valor (¥)</label>
@@ -1090,9 +1457,6 @@ export default function Admin() {
                 onClick={(e) => e.stopPropagation()}
               >
                 <h3 className="font-semibold text-earth-900">Editar pedido</h3>
-                <p className="mt-1 text-sm text-earth-600">
-                  Atualize status, serviço, mensagem e dados de frete.
-                </p>
                 <div className="mt-4 grid gap-3 sm:grid-cols-2">
                   <div>
                     <label className="block text-sm font-medium text-earth-700">Serviço</label>
@@ -1140,7 +1504,6 @@ export default function Admin() {
                 {(orderEditModal.status === 'item_received' || orderEditModal.status === 'stored') && (
                   <div className="mt-3">
                     <span className="block text-sm font-medium text-earth-700">Serviços extras</span>
-                    <p className="mt-1 text-xs text-earth-500">Fotos e/ou vídeo do produto (disponíveis quando status = Item recebido)</p>
                     <div className="mt-2 flex gap-4">
                       <label className="flex items-center gap-2">
                         <input
@@ -1226,9 +1589,6 @@ export default function Admin() {
                 onClick={(e) => e.stopPropagation()}
               >
                 <h3 className="font-semibold text-earth-900">Adicionar ao inventário do usuário</h3>
-                <p className="mt-1 text-sm text-earth-600">
-                  O item aparecerá em &quot;Meus Produtos&quot; para o cliente solicitar envio.
-                </p>
                 <div className="mt-4 space-y-3">
                   <div>
                     <label className="block text-sm font-medium text-earth-700">Nome do item *</label>
@@ -1309,9 +1669,6 @@ export default function Admin() {
                 onClick={(e) => e.stopPropagation()}
               >
                 <h3 className="font-semibold text-earth-900">Criar pedido para usuário</h3>
-                <p className="mt-1 text-sm text-earth-600">
-                  O pedido será criado na conta do usuário com status &quot;Aguardando aprovação&quot;.
-                </p>
                 <div className="mt-4 space-y-3">
                   <div>
                     <label className="block text-sm font-medium text-earth-700">Usuário *</label>
@@ -1388,9 +1745,6 @@ export default function Admin() {
                 onClick={(e) => e.stopPropagation()}
               >
                 <h3 className="font-semibold text-earth-900">Registrar pacote na conta do usuário</h3>
-                <p className="mt-1 text-sm text-earth-600">
-                  Dados do pacote: descrição, quantidade de itens e peso. O tempo de armazenamento é contado automaticamente a partir do registro.
-                </p>
                 <div className="mt-4 space-y-3">
                   <div>
                     <label className="block text-sm font-medium text-earth-700">Usuário *</label>
@@ -1511,7 +1865,6 @@ export default function Admin() {
         {activeTab === 'grupos' && (
           <section className="mt-0 rounded-b-xl border border-t-0 border-earth-200 bg-earth-50 p-6">
             <h2 className="text-lg font-semibold text-earth-900">Grupo de Compras</h2>
-            <p className="mt-1 text-sm text-earth-600">Crie grupos exibidos na página de Grupo de Compras</p>
 
             <form onSubmit={handleSaveGroup} className="mt-4 space-y-3">
               <div>
@@ -1538,37 +1891,87 @@ export default function Admin() {
               <div>
                 <label className="block text-sm font-medium text-earth-700">Produtos do grupo</label>
                 <p className="mt-1 text-xs text-earth-500">
-                  Selecione os produtos que estarão disponíveis para compra dentro deste grupo.
+                  {editingGroupId ? 'Crie produtos específicos deste grupo' : 'Adicione produtos antes de criar o grupo'}
                 </p>
-                {products.length === 0 ? (
-                  <p className="mt-2 text-sm text-earth-600">Nenhum produto cadastrado ainda.</p>
-                ) : (
-                  <div className="mt-2 max-h-48 space-y-2 overflow-y-auto rounded-lg border border-earth-200 bg-white p-3">
-                    {products.map((p) => (
-                      <label key={p.id} className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          checked={groupForm.product_ids?.includes(p.id)}
-                          onChange={(e) =>
-                            setGroupForm((f) => {
-                              const current = Array.isArray(f.product_ids) ? f.product_ids : []
-                              return {
-                                ...f,
-                                product_ids: e.target.checked
-                                  ? [...current, p.id]
-                                  : current.filter((id) => id !== p.id),
-                              }
-                            })
-                          }
-                          className="rounded border-earth-300"
-                        />
-                        <span className="text-sm text-earth-700">
-                          {p.name} - {formatJPY(brlToJpy(p.price))}
-                        </span>
-                      </label>
+                {editingGroupId && groupProducts.length > 0 && (
+                  <ul className="mt-2 space-y-2">
+                    {groupProducts.map((p) => (
+                      <li key={p.id} className="flex items-center justify-between rounded-lg border border-earth-200 bg-white px-3 py-2">
+                        <span className="text-sm text-earth-800">{p.name} — {formatJPY(brlToJpy(p.price))}</span>
+                        <div className="flex gap-2">
+                          <button type="button" onClick={() => handleEditGroupProduct(p)} className="text-sm font-medium text-earth-600 hover:text-earth-900">
+                            Editar
+                          </button>
+                          <button type="button" onClick={() => handleDeleteGroupProduct(p.id)} className="text-sm font-medium text-red-600 hover:text-red-800">
+                            Remover
+                          </button>
+                        </div>
+                      </li>
                     ))}
-                  </div>
+                  </ul>
                 )}
+                {!editingGroupId && pendingGroupProducts.length > 0 && (
+                  <ul className="mt-2 space-y-2">
+                    {pendingGroupProducts.map((p, i) => (
+                      <li key={p.id} className="flex items-center justify-between rounded-lg border border-earth-200 bg-white px-3 py-2">
+                        <span className="text-sm text-earth-800">{p.name} — {formatJPY(brlToJpy(p.price))}</span>
+                        <div className="flex gap-2">
+                          <button type="button" onClick={() => handleEditPendingGroupProduct(p, i)} className="text-sm font-medium text-earth-600 hover:text-earth-900">
+                            Editar
+                          </button>
+                          <button type="button" onClick={() => handleRemovePendingGroupProduct(i)} className="text-sm font-medium text-red-600 hover:text-red-800">
+                            Remover
+                          </button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <form onSubmit={handleSaveGroupProduct} className="mt-3 space-y-2 rounded-lg border border-earth-200 bg-earth-50 p-3">
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <input
+                      type="text"
+                      placeholder="Nome do produto"
+                      value={groupProductForm.name}
+                      onChange={(e) => setGroupProductForm((f) => ({ ...f, name: e.target.value }))}
+                      className="rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
+                    />
+                    <input
+                      type="number"
+                      placeholder="Preço (¥)"
+                      value={groupProductForm.price}
+                      onChange={(e) => setGroupProductForm((f) => ({ ...f, price: e.target.value }))}
+                      className="rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      type="url"
+                      placeholder="URL da imagem"
+                      value={groupProductForm.image_url}
+                      onChange={(e) => setGroupProductForm((f) => ({ ...f, image_url: e.target.value }))}
+                      className="flex-1 rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
+                    />
+                    <input
+                      type="number"
+                      step="0.001"
+                      placeholder="Peso kg"
+                      value={groupProductForm.weight_kg}
+                      onChange={(e) => setGroupProductForm((f) => ({ ...f, weight_kg: e.target.value }))}
+                      className="w-24 rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <button type="submit" disabled={groupProductSubmitting || !groupProductForm.name?.trim()} className="rounded-lg bg-earth-800 px-3 py-1.5 text-sm font-medium text-white hover:bg-earth-900 disabled:opacity-60">
+                      {editingGroupProductId || editingPendingProductIndex != null ? 'Salvar' : 'Adicionar'} produto
+                    </button>
+                    {(editingGroupProductId || editingPendingProductIndex != null) && (
+                      <button type="button" onClick={resetGroupProductForm} className="rounded-lg border border-earth-300 px-3 py-1.5 text-sm font-medium text-earth-700 hover:bg-earth-100">
+                        Cancelar
+                      </button>
+                    )}
+                  </div>
+                </form>
               </div>
 
               <div className="flex items-center gap-2">
@@ -1732,24 +2135,9 @@ export default function Admin() {
                         <div>
                           <p className="font-medium text-earth-900">{g.name}</p>
                           {g.description && <p className="mt-1 text-sm text-earth-600 line-clamp-2">{g.description}</p>}
-                          {(() => {
-                            const ids = Array.isArray(g.product_ids) ? g.product_ids : []
-                            const linked = ids
-                              .map((id) => products.find((p) => p.id === id))
-                              .filter(Boolean)
-                            if (linked.length > 0) {
-                              return (
-                                <p className="mt-1 text-xs text-earth-500 line-clamp-2">
-                                  Produtos no grupo: {linked.map((p) => p.name).join(', ')}
-                                </p>
-                              )
-                            }
-                            return (
-                              <p className="mt-1 text-xs text-earth-500">
-                                Produtos vinculados: {ids.length}
-                              </p>
-                            )
-                          })()}
+                          <p className="mt-1 text-xs text-earth-500">
+                            Produtos: {g.products_count ?? 0}
+                          </p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
@@ -1781,78 +2169,358 @@ export default function Admin() {
 
         {/* Logs */}
         {activeTab === 'logs' && (
-          <section className="mt-0 rounded-b-xl border border-t-0 border-earth-200 bg-earth-50 p-6">
-            <h2 className="text-lg font-semibold text-earth-900">Logs de atividades</h2>
-            <p className="mt-1 text-sm text-earth-600">Registro das ações realizadas por administradores</p>
-            <div className="mt-4">
-              <button
-                type="button"
-                onClick={() => loadLogs()}
-                disabled={logsLoading}
-                className="rounded-lg border border-earth-300 px-3 py-1.5 text-sm font-medium text-earth-700 hover:bg-earth-100 disabled:opacity-70"
-              >
-                {logsLoading ? 'Atualizando...' : 'Atualizar'}
-              </button>
-            </div>
-            {logsLoading && <p className="mt-4 text-sm text-earth-600">Carregando logs...</p>}
-            {!logsLoading && logs.length === 0 && (
-              <p className="mt-4 text-sm text-earth-600">Nenhum registro ainda.</p>
-            )}
-            {!logsLoading && logs.length > 0 && (
-              <div className="mt-4 overflow-x-auto rounded-lg border border-earth-200 bg-white">
-                <table className="min-w-full divide-y divide-earth-200 text-left text-sm">
-                  <thead>
-                    <tr className="bg-earth-50">
-                      <th className="px-4 py-3 font-medium text-earth-900">Data</th>
-                      <th className="px-4 py-3 font-medium text-earth-900">Admin</th>
-                      <th className="px-4 py-3 font-medium text-earth-900">Ação</th>
-                      <th className="px-4 py-3 font-medium text-earth-900">Entidade</th>
-                      <th className="px-4 py-3 font-medium text-earth-900">Detalhes</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-earth-200">
-                    {logs.map((log) => (
-                      <tr key={log.id} className="hover:bg-earth-50/50">
-                        <td className="whitespace-nowrap px-4 py-2 text-earth-600">
-                          {log.created_at
-                            ? new Date(log.created_at).toLocaleString('pt-BR', {
-                                dateStyle: 'short',
-                                timeStyle: 'short',
-                              })
-                            : '—'}
-                        </td>
-                        <td className="px-4 py-2 text-earth-700">
-                          {log.admin_name || log.admin_email || log.admin_id?.slice(0, 8) || '—'}
-                        </td>
-                        <td className="px-4 py-2 font-medium text-earth-900">{log.action || '—'}</td>
-                        <td className="px-4 py-2 text-earth-600">
-                          {log.entity_type && log.entity_id ? (
-                            <span>
-                              {log.entity_type} · {String(log.entity_id).slice(0, 8)}…
-                            </span>
-                          ) : (
-                            '—'
-                          )}
-                        </td>
-                        <td className="max-w-[200px] truncate px-4 py-2 text-earth-600">
-                          {log.details && Object.keys(log.details).length > 0
-                            ? JSON.stringify(log.details)
-                            : '—'}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+          <section className="mt-0 space-y-6 rounded-b-xl border border-t-0 border-earth-200 bg-earth-50 p-6">
+            {/* Painel 1: Atividades dos usuários */}
+            <div>
+              <h2 className="text-lg font-semibold text-earth-900">Atividades dos usuários</h2>
+              <div className="mt-4">
+                <button
+                  type="button"
+                  onClick={() => loadUserLogs()}
+                  disabled={userLogsLoading}
+                  className="rounded-lg border border-earth-300 px-3 py-1.5 text-sm font-medium text-earth-700 hover:bg-earth-100 disabled:opacity-70"
+                >
+                  {userLogsLoading ? 'Atualizando...' : 'Atualizar'}
+                </button>
               </div>
-            )}
+              {userLogsLoading && <p className="mt-4 text-sm text-earth-600">Carregando...</p>}
+              {!userLogsLoading && userLogs.length === 0 && (
+                <p className="mt-4 text-sm text-earth-600">Nenhum registro ainda.</p>
+              )}
+              {!userLogsLoading && userLogs.length > 0 && (
+                <div className="mt-4 overflow-x-auto rounded-lg border border-earth-200 bg-white">
+                  <table className="min-w-full divide-y divide-earth-200 text-left text-sm">
+                    <thead>
+                      <tr className="bg-earth-50">
+                        <th className="px-4 py-3 font-medium text-earth-900">Data</th>
+                        <th className="px-4 py-3 font-medium text-earth-900">Usuário</th>
+                        <th className="px-4 py-3 font-medium text-earth-900">Ação</th>
+                        <th className="px-4 py-3 font-medium text-earth-900">Entidade</th>
+                        <th className="px-4 py-3 font-medium text-earth-900">Detalhes</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-earth-200">
+                      {userLogs.map((log) => (
+                        <tr key={log.id} className="hover:bg-earth-50/50">
+                          <td className="whitespace-nowrap px-4 py-2 text-earth-600">
+                            {log.created_at
+                              ? new Date(log.created_at).toLocaleString('pt-BR', {
+                                  dateStyle: 'short',
+                                  timeStyle: 'short',
+                                })
+                              : '—'}
+                          </td>
+                          <td className="px-4 py-2 text-earth-700">
+                            {log.user_name || log.user_email || log.user_id?.slice(0, 8) || '—'}
+                          </td>
+                          <td className="px-4 py-2 font-medium text-earth-900">
+                            {log.action === 'order_create' ? 'Criou pedido' : log.action === 'cart_add' ? 'Adicionou ao carrinho' : log.action === 'profile_update' ? 'Atualizou perfil' : log.action || '—'}
+                          </td>
+                          <td className="px-4 py-2 text-earth-600">
+                            {log.entity_type && log.entity_id ? (
+                              <span>
+                                {log.entity_type === 'order' ? 'Pedido' : log.entity_type === 'product' ? 'Produto' : log.entity_type} · {String(log.entity_id).slice(0, 8)}…
+                              </span>
+                            ) : (
+                              '—'
+                            )}
+                          </td>
+                          <td className="max-w-[200px] truncate px-4 py-2 text-earth-600">
+                            {log.details && Object.keys(log.details).length > 0
+                              ? JSON.stringify(log.details)
+                              : '—'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            {/* Painel 2: Registro / Login dos usuários */}
+            <div>
+              <h2 className="text-lg font-semibold text-earth-900">Registro e login</h2>
+              <div className="mt-4">
+                <button
+                  type="button"
+                  onClick={() => loadAuthLogs()}
+                  disabled={authLogsLoading}
+                  className="rounded-lg border border-earth-300 px-3 py-1.5 text-sm font-medium text-earth-700 hover:bg-earth-100 disabled:opacity-70"
+                >
+                  {authLogsLoading ? 'Atualizando...' : 'Atualizar'}
+                </button>
+              </div>
+              {authLogsLoading && <p className="mt-4 text-sm text-earth-600">Carregando...</p>}
+              {!authLogsLoading && authLogs.length === 0 && (
+                <p className="mt-4 text-sm text-earth-600">Nenhum registro ainda.</p>
+              )}
+              {!authLogsLoading && authLogs.length > 0 && (
+                <div className="mt-4 overflow-x-auto rounded-lg border border-earth-200 bg-white">
+                  <table className="min-w-full divide-y divide-earth-200 text-left text-sm">
+                    <thead>
+                      <tr className="bg-earth-50">
+                        <th className="px-4 py-3 font-medium text-earth-900">Data</th>
+                        <th className="px-4 py-3 font-medium text-earth-900">Evento</th>
+                        <th className="px-4 py-3 font-medium text-earth-900">Email / Usuário</th>
+                        <th className="px-4 py-3 font-medium text-earth-900">ID usuário</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-earth-200">
+                      {authLogs.map((log) => (
+                        <tr key={log.id} className="hover:bg-earth-50/50">
+                          <td className="whitespace-nowrap px-4 py-2 text-earth-600">
+                            {log.created_at
+                              ? new Date(log.created_at).toLocaleString('pt-BR', {
+                                  dateStyle: 'short',
+                                  timeStyle: 'short',
+                                })
+                              : '—'}
+                          </td>
+                          <td className="px-4 py-2 font-medium text-earth-900">
+                            {log.action === 'user_signedup' ? 'Cadastro' : log.action === 'login' ? 'Login' : log.action || '—'}
+                          </td>
+                          <td className="px-4 py-2 text-earth-700">{log.email || '—'}</td>
+                          <td className="px-4 py-2 text-earth-600 font-mono text-xs">
+                            {log.user_id ? String(log.user_id).slice(0, 8) + '…' : '—'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
           </section>
+        )}
+
+        {/* Painel de Envios */}
+        {activeTab === 'envios' && (
+        <section className="mt-0 rounded-b-xl border border-t-0 border-earth-200 bg-earth-50 p-6">
+          <h2 className="text-lg font-semibold text-earth-900">Envios</h2>
+          <div className="mt-4 flex gap-2">
+            <button
+              type="button"
+              onClick={() => loadShippingPanel()}
+              disabled={shippingPanelLoading}
+              className="rounded-lg border border-earth-300 px-3 py-2 text-sm font-medium text-earth-700 hover:bg-earth-100 disabled:opacity-70"
+            >
+              Atualizar
+            </button>
+          </div>
+
+          {shippingPanelLoading && <p className="mt-4 text-sm text-earth-600">Carregando...</p>}
+
+          {!shippingPanelLoading && (
+            <div className="mt-6 space-y-8">
+              {/* Pedidos em fluxo de envio */}
+              <div>
+                <h3 className="font-medium text-earth-900">Pedidos em fluxo de envio</h3>
+                {(!shippingPanel.orders || shippingPanel.orders.length === 0) ? (
+                  <p className="mt-4 text-sm text-earth-500">Nenhum pedido em fluxo de envio.</p>
+                ) : (
+                  <ul className="mt-4 space-y-3">
+                    {shippingPanel.orders.map((o) => (
+                      <li key={o.id} className="rounded-lg border border-earth-200 bg-white p-4">
+                        <div className="flex flex-wrap items-start justify-between gap-2">
+                          <div>
+                            <span className="font-medium text-earth-900">Pedido {o.id?.slice(0, 8)}…</span>
+                            <span className="ml-2 rounded bg-earth-200 px-2 py-0.5 text-xs text-earth-700">
+                              {ORDER_STATUS_LABELS[o.status] ?? o.status}
+                            </span>
+                            <p className="mt-1 text-sm text-earth-600">
+                              {o.user_name || o.user_email || o.user_id} • {o.order_source === 'store' ? 'Loja' : o.service_name || '—'}
+                            </p>
+                            {o.shipping_cost != null && (
+                              <p className="mt-1 text-sm font-medium text-earth-700">
+                                Frete: {formatMoney(o.shipping_cost, o.shipping_currency || 'JPY')}
+                              </p>
+                            )}
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {(o.status === ORDER_STATUS.READY_FOR_SHIPMENT || o.status === ORDER_STATUS.PRODUCTS_PAID) && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setActiveTab('pedidos')
+                                  loadOrders()
+                                  openShippingModal(o)
+                                }}
+                                className="rounded bg-earth-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-earth-800"
+                              >
+                                Definir frete
+                              </button>
+                            )}
+                            {o.status === ORDER_STATUS.PAID && (
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  await handleOrderStatus(o.id, ORDER_STATUS.SHIPPED)
+                                  loadShippingPanel()
+                                }}
+                                className="rounded bg-earth-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-earth-800"
+                              >
+                                Marcar enviado
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setActiveTab('pedidos')
+                                loadOrders()
+                                openOrderEditModal(o)
+                              }}
+                              className="rounded border border-earth-300 px-3 py-1.5 text-sm font-medium text-earth-700 hover:bg-earth-100"
+                            >
+                              Editar pedido
+                            </button>
+                          </div>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              {/* Solicitações de envio (shipments) */}
+              <div>
+                <h3 className="font-medium text-earth-900">Solicitações de envio</h3>
+                {(!shippingPanel.shipments || shippingPanel.shipments.length === 0) ? (
+                  <p className="mt-4 text-sm text-earth-500">Nenhuma solicitação de envio.</p>
+                ) : (
+                  <ul className="mt-4 space-y-3">
+                    {shippingPanel.shipments.map((s) => {
+                      const statusLabels = {
+                        requested: 'Solicitado',
+                        awaiting_payment: 'Aguardando pagamento',
+                        paid: 'Pago',
+                        shipped: 'Enviado',
+                        completed: 'Finalizado',
+                      }
+                      const statusLabel = statusLabels[s.status] ?? s.status
+                      const hasPaidOrder = Array.isArray(s.order_ids) && shippingPanel.orders?.some(
+                        (o) => s.order_ids?.includes(o.id) && o.status === ORDER_STATUS.PAID
+                      )
+                      const canMarkShipped = s.status === 'paid' || (s.status === 'awaiting_payment' && hasPaidOrder)
+                      return (
+                        <li key={s.id} className="rounded-lg border border-earth-200 bg-white p-4">
+                          <div className="flex flex-wrap items-start justify-between gap-2">
+                            <div>
+                              <span className="font-medium text-earth-900">Envio {s.id?.slice(0, 8)}…</span>
+                              <span className="ml-2 rounded bg-earth-200 px-2 py-0.5 text-xs text-earth-700">
+                                {statusLabel}
+                              </span>
+                              <p className="mt-1 text-sm text-earth-600">
+                                {s.user_name || s.user_email || s.user_id}
+                              </p>
+                              {s.shipping_cost != null && (
+                                <p className="mt-1 text-sm font-medium text-earth-700">
+                                  Frete: {formatMoney(s.shipping_cost, s.shipping_currency || 'JPY')}
+                                </p>
+                              )}
+                              {s.tracking_code && (
+                                <p className="mt-1 text-sm text-earth-600">Rastreio: {s.tracking_code}</p>
+                              )}
+                              {Array.isArray(s.items) && s.items.length > 0 && (
+                                <div className="mt-2 text-xs text-earth-500">
+                                  Itens: {s.items.map((i) => i.inventory_name || i.inventory_id?.slice(0, 8)).filter(Boolean).join(', ')}
+                                </div>
+                              )}
+                              {Array.isArray(s.order_ids) && s.order_ids.length > 0 && (
+                                <p className="mt-1 text-xs text-earth-500">
+                                  Pedidos vinculados: {s.order_ids.filter(Boolean).map((id) => id?.slice(0, 8)).join(', ')}…
+                                </p>
+                              )}
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              {s.status === 'requested' && (
+                                <button
+                                  type="button"
+                                  onClick={() => openShipmentFreightModal(s)}
+                                  className="rounded bg-earth-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-earth-800"
+                                >
+                                  Definir frete
+                                </button>
+                              )}
+                              {s.status === 'awaiting_payment' && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleSetShipmentPaid(s.id)}
+                                  disabled={submitting}
+                                  className="rounded border border-earth-300 px-3 py-1.5 text-sm font-medium text-earth-700 hover:bg-earth-100 disabled:opacity-60"
+                                >
+                                  Marcar como pago
+                                </button>
+                              )}
+                              {canMarkShipped && (
+                                <button
+                                  type="button"
+                                  onClick={() => openShipmentShippedModal(s)}
+                                  className="rounded bg-earth-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-earth-800"
+                                >
+                                  Marcar enviado
+                                </button>
+                              )}
+                              {s.status === 'shipped' && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleSetShipmentCompleted(s.id)}
+                                  disabled={submitting}
+                                  className="rounded bg-earth-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-earth-800 disabled:opacity-60"
+                                >
+                                  Marcar finalizado
+                                </button>
+                              )}
+                              {Array.isArray(s.order_ids) && s.order_ids.length > 0 && s.status === 'requested' && (
+                                <button
+                                  type="button"
+                                  onClick={async () => {
+                                    setActiveTab('pedidos')
+                                    await loadOrders()
+                                    const ord = shippingPanel.orders?.find((x) => s.order_ids?.includes(x.id))
+                                    if (ord && (ord.status === ORDER_STATUS.READY_FOR_SHIPMENT || ord.status === ORDER_STATUS.PRODUCTS_PAID)) {
+                                      openShippingModal(ord)
+                                    }
+                                  }}
+                                  className="rounded border border-earth-300 px-3 py-1.5 text-sm font-medium text-earth-700 hover:bg-earth-100"
+                                >
+                                  Ver pedidos
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                )}
+              </div>
+
+              {/* Inventário pronto para envio */}
+              <div>
+                <h3 className="font-medium text-earth-900">Itens prontos para envio</h3>
+                {(!shippingPanel.inventoryReady || shippingPanel.inventoryReady.length === 0) ? (
+                  <p className="mt-4 text-sm text-earth-500">Nenhum item pronto para envio.</p>
+                ) : (
+                  <ul className="mt-4 space-y-2">
+                    {shippingPanel.inventoryReady.map((inv) => (
+                      <li key={inv.id} className="flex items-center justify-between rounded border border-earth-100 bg-white px-4 py-2 text-sm">
+                        <span className="text-earth-800">{inv.name || inv.id?.slice(0, 8)}</span>
+                        <span className="text-earth-600">{inv.user_name || inv.user_email} • Pedido {inv.order_id?.slice(0, 8)}…</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          )}
+        </section>
         )}
 
         {/* Loja - Produtos */}
         {activeTab === 'produtos' && (
         <section className="mt-0 rounded-b-xl border border-t-0 border-earth-200 bg-earth-50 p-6">
-          <h2 className="text-lg font-semibold text-earth-900">Loja Virtual - Produtos</h2>
-          <p className="mt-1 text-sm text-earth-600">Criar e editar itens exibidos na loja</p>
+          <h2 className="text-lg font-semibold text-earth-900">Produtos</h2>
 
           <form onSubmit={handleSave} className="mt-4 space-y-3">
             <div className="grid gap-3 sm:grid-cols-2">
@@ -1887,6 +2555,18 @@ export default function Admin() {
                   min="0"
                   value={form.weight_kg}
                   onChange={(e) => setForm((f) => ({ ...f, weight_kg: e.target.value }))}
+                  className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-earth-700">Estoque</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={form.stock_quantity}
+                  onChange={(e) => setForm((f) => ({ ...f, stock_quantity: e.target.value }))}
+                  placeholder="Ilimitado (deixe vazio)"
                   className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
                 />
               </div>
@@ -2063,6 +2743,9 @@ export default function Admin() {
                         <span className="ml-2 text-sm text-earth-600">{formatJPY(brlToJpy(p.price))}</span>
                         <span className="ml-2 text-xs text-earth-500">
                           {Number(p.weight_kg ?? 0) > 0 ? `• ${p.weight_kg}kg` : '• peso não definido'}
+                        </span>
+                        <span className="ml-2 text-xs text-earth-500">
+                          • Estoque: {p.stock_quantity != null ? p.stock_quantity : 'ilimitado'}
                         </span>
                         {!p.is_active && (
                           <span className="ml-2 rounded bg-amber-200 px-2 py-0.5 text-xs text-amber-900">

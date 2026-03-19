@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
-import { getMyShipments } from '../../services/inventoryService'
+import { getMyShipments, cancelShipment } from '../../services/inventoryService'
 import { cacheKey, readCache, writeCache } from '../../lib/cache'
 import { formatBRL, formatJPY, jpyToBrl } from '../../lib/fx'
 
@@ -23,6 +23,7 @@ export default function Envios() {
   const [shipments, setShipments] = useState([])
   const [loading, setLoading] = useState(true)
   const [feedback, setFeedback] = useState('')
+  const [cancellingId, setCancellingId] = useState(null)
 
   useEffect(() => {
     let isActive = true
@@ -56,6 +57,27 @@ export default function Envios() {
       isActive = false
     }
   }, [user?.id])
+
+  const refreshShipments = async () => {
+    if (!user?.id) return
+    const { data } = await getMyShipments(user.id)
+    setShipments(data ?? [])
+    writeCache(cacheKey(user.id, 'shipments_page_v1'), { shipments: data ?? [] })
+  }
+
+  const handleCancel = async (s) => {
+    if (s.status !== 'requested') return
+    setCancellingId(s.id)
+    setFeedback('')
+    const { error } = await cancelShipment(user.id, s.id)
+    setCancellingId(null)
+    if (error) {
+      setFeedback(error.message || 'Erro ao cancelar envio')
+      return
+    }
+    setFeedback('Envio cancelado.')
+    await refreshShipments()
+  }
 
   if (!user) {
     return (
@@ -112,7 +134,17 @@ export default function Envios() {
                         Status: <span className="font-medium text-earth-800">{statusLabel}</span>
                       </p>
                     </div>
-                    <div>
+                    <div className="flex flex-wrap items-center gap-3">
+                      {s.status === 'requested' && (
+                        <button
+                          type="button"
+                          onClick={() => handleCancel(s)}
+                          disabled={cancellingId === s.id}
+                          className="rounded-lg border border-red-300 bg-red-50 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-100 disabled:opacity-60"
+                        >
+                          {cancellingId === s.id ? 'Cancelando...' : 'Cancelar envio'}
+                        </button>
+                      )}
                       {cost != null && cost > 0 && (
                         <p className="text-sm font-medium text-earth-700">
                           Frete:{' '}

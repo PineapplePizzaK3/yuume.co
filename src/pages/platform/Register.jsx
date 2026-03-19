@@ -7,6 +7,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { useAuth } from '../../hooks/useAuth'
 import { getOrCreateProfile } from '../../services/profileService'
+import { validatePassword, PASSWORD_PLACEHOLDER } from '../../lib/passwordValidation'
 
 export default function Register() {
   const [email, setEmail] = useState('')
@@ -37,6 +38,11 @@ export default function Register() {
     setError('')
     if (!agreeTerms || !agreePrivacy) {
       setError('É necessário concordar com os Termos de Uso e com a Política de Privacidade para se cadastrar.')
+      return
+    }
+    const { valid, message } = validatePassword(password)
+    if (!valid) {
+      setError(message)
       return
     }
     setLoading(true)
@@ -180,9 +186,9 @@ export default function Register() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                minLength={6}
+                minLength={8}
                 className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
-                placeholder="Mínimo 6 caracteres"
+                placeholder={PASSWORD_PLACEHOLDER}
               />
             </div>
             <div className="space-y-3">

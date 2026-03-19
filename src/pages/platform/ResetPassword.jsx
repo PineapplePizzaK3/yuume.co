@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { supabase } from '../../lib/supabase'
+import { validatePassword, PASSWORD_PLACEHOLDER } from '../../lib/passwordValidation'
 
 export default function ResetPassword() {
   const [password, setPassword] = useState('')
@@ -29,8 +30,9 @@ export default function ResetPassword() {
       setError('As senhas não coincidem')
       return
     }
-    if (password.length < 6) {
-      setError('A senha deve ter pelo menos 6 caracteres')
+    const { valid, message } = validatePassword(password)
+    if (!valid) {
+      setError(message)
       return
     }
     setLoading(true)
@@ -94,9 +96,9 @@ export default function ResetPassword() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                minLength={6}
+                minLength={8}
                 className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
-                placeholder="Mínimo 6 caracteres"
+                placeholder={PASSWORD_PLACEHOLDER}
               />
             </div>
             <div>
@@ -109,7 +111,7 @@ export default function ResetPassword() {
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
                 required
-                minLength={6}
+                minLength={8}
                 className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
               />
             </div>

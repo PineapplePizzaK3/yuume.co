@@ -11,23 +11,81 @@ const LINHAS_VALORES = (percentual, porItem, freteTexto, formatarIene) => [
   { label: 'Frete internacional', valor: freteTexto },
 ]
 
-/** Tabela de taxas para redirecionamento (apenas valores, sem percentual). */
+/** Taxas: 1 item 1000¥, 2-4 750¥/item, 5+ 500¥/item. Nós Compramos + 12%. */
 const LINHAS_REDIRECIONAMENTO = (formatarIene) => [
-  { label: '1 item', valor: formatarIene(900) },
-  { label: '2 itens', valor: `${formatarIene(750)}/item` },
-  { label: '3–4 itens', valor: `${formatarIene(600)}/item` },
-  { label: '5+ itens', valor: `${formatarIene(500)}/item` },
-  { label: 'Frete internacional', valor: 'Informado após consolidação (Japan Post)' },
+  { componente: '1 item', voceCompra: formatarIene(1000), nosCompramos: formatarIene(1000) },
+  { componente: '2–4 itens', voceCompra: `${formatarIene(750)}/item`, nosCompramos: `${formatarIene(750)}/item` },
+  { componente: '5+ itens', voceCompra: `${formatarIene(500)}/item`, nosCompramos: `${formatarIene(500)}/item` },
+  { componente: 'Taxa adicional', voceCompra: '—', nosCompramos: '12% sobre o valor da compra' },
+  { componente: 'Frete internacional', voceCompra: 'Informado após consolidação (Japan Post)', nosCompramos: 'Informado após consolidação (Japan Post)' },
 ]
 
-function TabelaValores({ percentual, porItem, freteTexto, modoRedirecionamento }) {
-  const linhas = modoRedirecionamento
-    ? LINHAS_REDIRECIONAMENTO(formatarIene)
-    : LINHAS_VALORES(percentual, porItem, freteTexto, formatarIene)
+const LINHAS_LOJA = (freteTexto) => [
+  { label: 'Preço do produto', valor: 'Conforme catálogo (por item)' },
+  { label: 'Frete internacional', valor: freteTexto || 'Informado após solicitar envio (Japan Post)' },
+]
 
+function TabelaValores({ percentual, porItem, freteTexto, modoRedirecionamento, modoLoja }) {
+  const linhasSimples = !modoRedirecionamento && !modoLoja
+    ? LINHAS_VALORES(percentual, porItem, freteTexto, formatarIene)
+    : modoLoja
+      ? LINHAS_LOJA(freteTexto)
+      : null
+  const linhasRedir = modoRedirecionamento ? LINHAS_REDIRECIONAMENTO(formatarIene) : null
+
+  if (modoRedirecionamento && linhasRedir) {
+    return (
+      <div className="mt-6 rounded-lg border border-earth-200 overflow-hidden">
+        <div className="hidden sm:block overflow-x-auto">
+          <table className="w-full divide-y divide-earth-200 min-w-[400px]">
+            <thead className="bg-earth-100">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-earth-600">
+                  Componente
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-earth-600">
+                  📦 Você Compra
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-earth-600">
+                  🛍️ Nós Compramos
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-earth-200 bg-earth-100">
+              {linhasRedir.map((linha, i) => (
+                <tr key={i}>
+                  <td className="px-4 py-3 text-sm text-earth-900">{linha.componente}</td>
+                  <td className="px-4 py-3 text-sm font-medium text-earth-900">{linha.voceCompra}</td>
+                  <td className="px-4 py-3 text-sm font-medium text-earth-900">{linha.nosCompramos}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="sm:hidden divide-y divide-earth-200 bg-earth-100">
+          {linhasRedir.map((linha, i) => (
+            <div key={i} className="flex flex-col gap-1.5 px-4 py-3">
+              <span className="text-xs font-medium text-earth-500 uppercase">{linha.componente}</span>
+              <div className="space-y-0.5">
+                <div className="text-sm">
+                  <span className="text-earth-500">📦 Você Compra:</span>{' '}
+                  <span className="font-medium text-earth-900">{linha.voceCompra}</span>
+                </div>
+                <div className="text-sm">
+                  <span className="text-earth-500">🛍️ Nós Compramos:</span>{' '}
+                  <span className="font-medium text-earth-900">{linha.nosCompramos}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  const linhas = linhasSimples
   return (
     <div className="mt-6 rounded-lg border border-earth-200 overflow-hidden">
-      {/* Desktop: tabela */}
       <div className="hidden sm:block">
         <table className="w-full divide-y divide-earth-200">
           <thead className="bg-earth-100">
@@ -43,19 +101,13 @@ function TabelaValores({ percentual, porItem, freteTexto, modoRedirecionamento }
           <tbody className="divide-y divide-earth-200 bg-earth-100">
             {linhas.map((linha, i) => (
               <tr key={i}>
-                <td className="px-4 py-3 text-sm text-earth-900">
-                  {linha.label}
-                </td>
-                <td className="px-4 py-3 text-sm font-medium text-earth-900">
-                  {linha.valor}
-                </td>
+                <td className="px-4 py-3 text-sm text-earth-900">{linha.label}</td>
+                <td className="px-4 py-3 text-sm font-medium text-earth-900">{linha.valor}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-
-      {/* Mobile: cards empilhados (label + valor por linha) */}
       <div className="sm:hidden divide-y divide-earth-200 bg-earth-100">
         {linhas.map((linha, i) => (
           <div key={i} className="flex flex-col gap-0.5 px-4 py-3">
@@ -76,10 +128,10 @@ const FLUXOS = [
   {
     id: 'redirecionamento',
     titulo: 'Redirecionamento',
-    descricao: 'Compre em lojas japonesas e envie para nosso endereço.',
+    descricao: 'Compre em lojas japonesas e envie para nosso endereço. Dois módulos: 📦 Você Compra (você compra e envia) ou 🛍️ Nós Compramos (nós compramos para você, com pré-pagamento).',
     passos: [
       'Cadastre-se e receba nosso endereço no Japão',
-      'Faça suas compras e envie os pacotes para nosso endereço',
+      'Faça suas compras e envie os pacotes para nosso endereço (ou envie a lista para nós comprarmos)',
       'Recebemos e consolidamos os produtos',
       'Informamos o valor real do frete — você paga',
       'Enviamos até você',
@@ -99,13 +151,26 @@ const FLUXOS = [
     ],
   },
   {
-    id: 'curadoria',
-    titulo: 'Curadoria',
-    descricao: 'Seleções especiais feitas por nós.',
+    id: 'grupo-de-compras',
+    titulo: 'Grupo de Compras',
+    descricao: 'Seleções especiais organizadas por tema ou período. Produtos criados exclusivamente para cada grupo.',
     passos: [
-      'Navegue pelas nossas seleções',
-      'Escolha os produtos que deseja',
-      'Faça o pedido pelo nosso canal',
+      'Navegue pelos grupos de compra disponíveis',
+      'Escolha os produtos que deseja no grupo',
+      'Adicione ao carrinho e finalize a compra',
+      'Produtos vão para Meus Produtos — solicite o envio quando quiser',
+      'Pague o frete e receba em casa',
+    ],
+  },
+  {
+    id: 'loja-virtual',
+    titulo: 'Loja Virtual',
+    descricao: 'Catálogo fixo de produtos com preços definidos. Compre e armazene para enviar depois.',
+    passos: [
+      'Navegue pela loja virtual',
+      'Escolha os produtos e adicione ao carrinho',
+      'Finalize a compra (produtos vão para Meus Produtos)',
+      'Solicite o envio quando quiser e pague o frete',
       'Receba em casa',
     ],
   },
@@ -122,7 +187,7 @@ function Servicos() {
         <title>Nossos serviços | Serviços e Preços | Delivery</title>
         <meta
           name="description"
-          content="Conheça nossos serviços: redirecionamento, personal shopping e curadoria. Entenda o fluxo de cada modalidade."
+          content="Conheça nossos serviços: redirecionamento, personal shopping, grupo de compras e loja virtual. Entenda o fluxo e taxas de cada modalidade."
         />
       </Helmet>
 
@@ -171,7 +236,7 @@ function Servicos() {
             {servico.id === 'redirecionamento' && (
               <>
                 <p className="mt-6 text-sm text-earth-600">
-                  <strong>Como cobramos:</strong> taxa por quantidade de itens (ver tabela) + frete.
+                  <strong>Como cobramos:</strong> Redirecionamento tem dois módulos — 📦 Você Compra e 🛍️ Nós Compramos — com taxas por quantidade de itens (ver tabela). Nós Compramos inclui 12% sobre o valor da compra. Frete informado após consolidação.
                 </p>
                 <TabelaValores modoRedirecionamento />
               </>
@@ -190,26 +255,46 @@ function Servicos() {
               </>
             )}
 
-            {servico.id === 'curadoria' && (
+            {servico.id === 'grupo-de-compras' && (
               <>
                 <p className="mt-6 text-sm text-earth-600">
-                  Valores e condições de curadoria variam conforme o item e a disponibilidade.
+                  <strong>Como cobramos:</strong> 20% do valor da compra + frete. Produtos com preços já definidos em cada grupo.
                 </p>
                 <TabelaValores
-                  percentual={null}
+                  percentual={20}
                   porItem={null}
-                  freteTexto="Informado após consolidação (Japan Post)"
+                  freteTexto="Informado após solicitar envio (Japan Post)"
                 />
               </>
             )}
 
-            <div className="mt-6">
+            {servico.id === 'loja-virtual' && (
+              <>
+                <p className="mt-6 text-sm text-earth-600">
+                  <strong>Como cobramos:</strong> Preço do produto (definido por item no catálogo) + frete quando solicitar o envio. Produtos ficam em Meus Produtos até você solicitar a consolidação.
+                </p>
+                <TabelaValores
+                  modoLoja
+                  freteTexto="Informado após solicitar envio (Japan Post)"
+                />
+              </>
+            )}
+
+            <div className="mt-6 flex flex-wrap gap-4">
               <Link
                 to="/servicos-e-precos/fretes-prazos"
                 className="text-sm font-medium text-earth-900 hover:underline"
               >
                 Ver fretes e prazos →
               </Link>
+              {(servico.id === 'grupo-de-compras' || servico.id === 'loja-virtual') && (
+                <Link
+                  to={servico.id === 'grupo-de-compras' ? '/app/grupo-de-compras' : '/app/loja'}
+                  className="text-sm font-medium text-earth-900 hover:underline"
+                >
+                  {servico.id === 'grupo-de-compras' ? 'Ver grupos de compra →' : 'Ir para a loja →'}
+                </Link>
+              )}
             </div>
           </div>
         ))}

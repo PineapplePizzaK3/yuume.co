@@ -7,7 +7,7 @@ import { Helmet } from 'react-helmet-async'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import { getPurchaseGroups } from '../../services/groupService'
-import { getProducts } from '../../services/productService'
+import { getPurchaseGroupProducts } from '../../services/productService'
 import { addToCart } from '../../services/cartService'
 import { brlToJpy, formatJPY } from '../../lib/fx'
 
@@ -20,11 +20,11 @@ function getGroupImages(g) {
 export default function GrupoDeCompras() {
   const { user } = useAuth()
   const [groups, setGroups] = useState([])
+  const [groupProducts, setGroupProducts] = useState({})
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
   const [detailGroup, setDetailGroup] = useState(null)
   const [detailImageIndex, setDetailImageIndex] = useState(0)
-  const [productsById, setProductsById] = useState({})
 
   useEffect(() => {
     let isActive = true
@@ -32,15 +32,18 @@ export default function GrupoDeCompras() {
       setLoading(true)
       setMessage('')
       try {
-        const [{ data, error }, { data: productsData, error: productsError }] = await Promise.all([
-          getPurchaseGroups(),
-          getProducts(),
-        ])
+        const { data: groupsData, error } = await getPurchaseGroups()
         if (!isActive) return
-        setGroups(data ?? [])
-        const map = Object.fromEntries((productsData ?? []).map((p) => [p.id, p]))
-        setProductsById(map)
-        if (error || productsError) setMessage(error?.message || productsError?.message)
+        setGroups(groupsData ?? [])
+        if (error) setMessage(error?.message)
+
+        const groupIds = (groupsData ?? []).map((g) => g.id)
+        const productsArrays = await Promise.all(
+          groupIds.map((id) => getPurchaseGroupProducts(id).then((r) => r.data ?? []))
+        )
+        if (!isActive) return
+        const map = Object.fromEntries(groupIds.map((id, i) => [id, productsArrays[i] ?? []]))
+        setGroupProducts(map)
       } catch (e) {
         if (isActive) setMessage(e?.message || 'Erro ao carregar grupos de compra')
       } finally {
@@ -63,8 +66,7 @@ export default function GrupoDeCompras() {
   }
 
   const getGroupProducts = (group) => {
-    const ids = Array.isArray(group?.product_ids) ? group.product_ids : []
-    return ids.map((id) => productsById[id]).filter(Boolean)
+    return groupProducts[group?.id] ?? []
   }
 
   const handleComprar = async (product) => {

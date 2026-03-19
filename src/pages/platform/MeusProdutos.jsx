@@ -5,6 +5,7 @@
 import { useEffect, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { useAuth } from '../../hooks/useAuth'
+import { Link } from 'react-router-dom'
 import { getMyInventory, createShipment } from '../../services/inventoryService'
 import { cacheKey, readCache, writeCache } from '../../lib/cache'
 
@@ -17,6 +18,12 @@ function daysSince(dateValue) {
   return Math.floor(diff / (1000 * 60 * 60 * 24))
 }
 
+const ETAPAS = [
+  { id: 1, titulo: 'Etapa 1' },
+  { id: 2, titulo: 'Serviços extras' },
+  { id: 3, titulo: 'Pagamento' },
+]
+
 export default function MeusProdutos() {
   const { user } = useAuth()
   const [items, setItems] = useState([])
@@ -24,6 +31,9 @@ export default function MeusProdutos() {
   const [selectedIds, setSelectedIds] = useState(new Set())
   const [feedback, setFeedback] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [shipmentModalOpen, setShipmentModalOpen] = useState(false)
+  const [shipmentStep, setShipmentStep] = useState(1)
+  const [extraServices, setExtraServices] = useState({ photos: false, video: false })
 
   const getCategory = (it) => {
     const order = it?.orders
@@ -31,8 +41,8 @@ export default function MeusProdutos() {
     const orderModule = order?.order_module
 
     if (orderSource === 'store') return 'Loja Virtual'
-    if (orderSource === 'service' && orderModule === 'assisted_buy') return 'Redirecionamento assistido'
-    if (orderSource === 'service' && orderModule === 'self_buy') return 'Redirecionamento (eu compro)'
+    if (orderSource === 'service' && orderModule === 'assisted_buy') return '🛍️ Nós Compramos'
+    if (orderSource === 'service' && orderModule === 'self_buy') return '📦 Você Compra'
     if (orderSource === 'service') return 'Personal Shopping'
     return 'Outros'
   }
@@ -82,21 +92,37 @@ export default function MeusProdutos() {
 
   const selectedItems = items.filter((i) => selectedIds.has(i.id))
 
-  const handleRequestShipment = async () => {
+  const openShipmentModal = () => {
     if (selectedIds.size === 0) {
       setFeedback('Selecione pelo menos um item para solicitar o envio.')
       return
     }
+    setFeedback('')
+    setShipmentStep(1)
+    setExtraServices({ photos: false, video: false })
+    setShipmentModalOpen(true)
+  }
+
+  const closeShipmentModal = () => {
+    setShipmentModalOpen(false)
+    setShipmentStep(1)
+  }
+
+  const handleRequestShipment = async () => {
+    if (selectedIds.size === 0) return
     setSubmitting(true)
     setFeedback('')
     try {
-      const { data, error } = await createShipment(user.id, [...selectedIds])
+      const { data, error } = await createShipment(user.id, [...selectedIds], {
+        extra_services: extraServices,
+      })
       if (error) {
         setFeedback(error.message || 'Erro ao solicitar envio')
         return
       }
       setFeedback('Solicitação de envio criada! Em breve definiremos o frete e você poderá pagar.')
       setSelectedIds(new Set())
+      closeShipmentModal()
       const { data: list } = await getMyInventory(user.id)
       setItems(list ?? [])
     } catch (e) {
@@ -159,8 +185,8 @@ export default function MeusProdutos() {
                 {(() => {
                   const orderedCategories = [
                     'Loja Virtual',
-                    'Redirecionamento assistido',
-                    'Redirecionamento (eu compro)',
+                    '🛍️ Nós Compramos',
+                    '📦 Você Compra',
                     'Personal Shopping',
                     'Outros',
                   ]
@@ -289,7 +315,7 @@ export default function MeusProdutos() {
                   <div className="mt-4 flex flex-col gap-2">
                     <button
                       type="button"
-                      onClick={handleRequestShipment}
+                      onClick={openShipmentModal}
                       disabled={selectedItems.length === 0 || submitting}
                       className="rounded-lg bg-earth-900 px-4 py-2.5 text-sm font-medium text-earth-50 hover:bg-earth-800 disabled:opacity-50"
                     >
@@ -307,6 +333,151 @@ export default function MeusProdutos() {
                 </div>
               </aside>
             </div>
+
+            {/* Modal: Procedimento de solicitação de envio */}
+            {shipmentModalOpen && (
+              <div
+                className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+                onClick={closeShipmentModal}
+              >
+                <div
+                  className="w-full max-w-lg rounded-xl bg-white shadow-xl"
+                  onClick={(e) => e.stopPropagation()}
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby="shipment-modal-title"
+                >
+                  <div className="border-b border-earth-200 px-6 py-4">
+                    <h2 id="shipment-modal-title" className="text-lg font-semibold text-earth-900">Solicitar envio</h2>
+                    <p className="mt-1 text-sm text-earth-600">
+                      {selectedItems.length} item(ns) selecionado(s)
+                    </p>
+                    <div className="mt-3 flex gap-2">
+                      {ETAPAS.map((e) => (
+                        <button
+                          key={e.id}
+                          type="button"
+                          onClick={() => setShipmentStep(e.id)}
+                          className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
+                            shipmentStep === e.id
+                              ? 'bg-earth-900 text-white'
+                              : 'bg-earth-100 text-earth-700 hover:bg-earth-200'
+                          }`}
+                        >
+                          {e.titulo}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="max-h-[50vh] overflow-y-auto px-6 py-5">
+                    {shipmentStep === 1 && (
+                      <div className="min-h-[120px] text-earth-600">
+                        {/* Etapa 1 em branco */}
+                      </div>
+                    )}
+
+                    {shipmentStep === 2 && (
+                      <div>
+                        <p className="text-sm font-medium text-earth-800">Serviços extras oferecidos</p>
+                        <p className="mt-1 text-sm text-earth-600">
+                          Adicione opções extras ao seu envio (sujeito a custo adicional):
+                        </p>
+                        <div className="mt-4 space-y-3">
+                          <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-earth-200 p-4 hover:bg-earth-50">
+                            <input
+                              type="checkbox"
+                              checked={extraServices.photos ?? false}
+                              onChange={(e) =>
+                                setExtraServices((s) => ({ ...s, photos: e.target.checked }))
+                              }
+                              className="mt-1 rounded border-earth-300"
+                            />
+                            <div>
+                              <span className="font-medium text-earth-900">Fotos</span>
+                              <p className="mt-0.5 text-sm text-earth-600">
+                                Registro fotográfico dos produtos antes do envio
+                              </p>
+                            </div>
+                          </label>
+                          <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-earth-200 p-4 hover:bg-earth-50">
+                            <input
+                              type="checkbox"
+                              checked={extraServices.video ?? false}
+                              onChange={(e) =>
+                                setExtraServices((s) => ({ ...s, video: e.target.checked }))
+                              }
+                              className="mt-1 rounded border-earth-300"
+                            />
+                            <div>
+                              <span className="font-medium text-earth-900">Vídeo</span>
+                              <p className="mt-0.5 text-sm text-earth-600">
+                                Registro em vídeo dos produtos antes do envio
+                              </p>
+                            </div>
+                          </label>
+                        </div>
+                      </div>
+                    )}
+
+                    {shipmentStep === 3 && (
+                      <div>
+                        <p className="text-sm font-medium text-earth-800">Pagamento</p>
+                        <p className="mt-2 text-sm text-earth-600">
+                          Após confirmar a solicitação, nosso time irá consolidar seus itens e definir o valor do frete.
+                          Você poderá efetuar o pagamento na página{' '}
+                          <Link to="/app/orders" className="font-medium text-earth-900 underline hover:no-underline">
+                            Pedidos
+                          </Link>{' '}
+                          ou pela{' '}
+                          <Link to="/app/wallet" className="font-medium text-earth-900 underline hover:no-underline">
+                            Carteira
+                          </Link>
+                          .
+                        </p>
+                        {(extraServices.photos || extraServices.video) && (
+                          <p className="mt-3 text-sm text-earth-600">
+                            Serviços extras selecionados: {extraServices.photos && 'Fotos'}
+                            {extraServices.photos && extraServices.video && ', '}
+                            {extraServices.video && 'Vídeo'}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex justify-between border-t border-earth-200 px-6 py-4">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        shipmentStep > 1 ? setShipmentStep((s) => s - 1) : closeShipmentModal()
+                      }
+                      className="rounded-lg border border-earth-300 px-4 py-2 text-sm font-medium text-earth-700 hover:bg-earth-100"
+                    >
+                      {shipmentStep === 1 ? 'Cancelar' : 'Voltar'}
+                    </button>
+                    {shipmentStep < 3 ? (
+                      <button
+                        type="button"
+                        onClick={() => setShipmentStep((s) => s + 1)}
+                        className="rounded-lg bg-earth-900 px-4 py-2 text-sm font-medium text-white hover:bg-earth-800"
+                      >
+                        Próximo
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleRequestShipment}
+                        disabled={submitting}
+                        className="rounded-lg bg-earth-900 px-4 py-2 text-sm font-medium text-white hover:bg-earth-800 disabled:opacity-60"
+                      >
+                        {submitting ? 'Enviando...' : 'Confirmar solicitação'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>

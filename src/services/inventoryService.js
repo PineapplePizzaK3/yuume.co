@@ -27,16 +27,22 @@ export async function getMyInventory(userId) {
 
 /**
  * Cria solicitação de envio (consolidação) com os itens selecionados.
+ * @param {string} userId
+ * @param {string[]} inventoryIds
+ * @param {{ extra_services?: { photos?: boolean, video?: boolean } }} options
  */
-export async function createShipment(userId, inventoryIds) {
+export async function createShipment(userId, inventoryIds, options = {}) {
   if (!Array.isArray(inventoryIds) || inventoryIds.length === 0) {
     return { data: null, error: { message: 'Selecione pelo menos um item.' } }
   }
+  const extraServices = options.extra_services && typeof options.extra_services === 'object'
+    ? { photos: !!options.extra_services.photos, video: !!options.extra_services.video }
+    : {}
   try {
     const { data: shipment, error: shipError } = await withDbTimeout(
       supabase
         .from('shipments')
-        .insert({ user_id: userId, status: 'requested' })
+        .insert({ user_id: userId, status: 'requested', extra_services: extraServices })
         .select()
         .single()
     )
@@ -116,6 +122,107 @@ export async function addInventoryFromOrderAdmin(orderId, { name, notes, weight_
     return { data: data ?? null, error }
   } catch (e) {
     return { data: null, error: toServiceError(e) }
+  }
+}
+
+/**
+ * Admin: define frete no envio.
+ */
+export async function setShipmentFreightAdmin(shipmentId, cost, currency = 'JPY') {
+  try {
+    const { error } = await withDbTimeout(
+      supabase.rpc('admin_set_shipment_freight', {
+        p_shipment_id: shipmentId,
+        p_shipping_cost: cost,
+        p_currency: currency || 'JPY',
+      })
+    )
+    return { error }
+  } catch (e) {
+    return { error: toServiceError(e) }
+  }
+}
+
+/**
+ * Admin: marca envio como enviado (com rastreio).
+ */
+export async function setShipmentShippedAdmin(shipmentId, trackingCode = '') {
+  try {
+    const { error } = await withDbTimeout(
+      supabase.rpc('admin_set_shipment_shipped', {
+        p_shipment_id: shipmentId,
+        p_tracking_code: trackingCode || null,
+      })
+    )
+    return { error }
+  } catch (e) {
+    return { error: toServiceError(e) }
+  }
+}
+
+/**
+ * Admin: marca envio como finalizado.
+ */
+export async function setShipmentCompletedAdmin(shipmentId) {
+  try {
+    const { error } = await withDbTimeout(
+      supabase.rpc('admin_set_shipment_completed', { p_shipment_id: shipmentId })
+    )
+    return { error }
+  } catch (e) {
+    return { error: toServiceError(e) }
+  }
+}
+
+/**
+ * Admin: marca envio como pago (confirmação manual).
+ */
+export async function setShipmentPaidAdmin(shipmentId) {
+  try {
+    const { error } = await withDbTimeout(
+      supabase.rpc('admin_set_shipment_paid', { p_shipment_id: shipmentId })
+    )
+    return { error }
+  } catch (e) {
+    return { error: toServiceError(e) }
+  }
+}
+
+/**
+ * Admin: dados do painel de envios (shipments, pedidos em fluxo, inventário pronto).
+ */
+export async function getShippingPanelAdmin() {
+  try {
+    const { data, error } = await withDbTimeout(supabase.rpc('admin_get_shipping_panel'))
+    if (error) return { data: null, error }
+    const panel = data ?? {}
+    return {
+      data: {
+        shipments: Array.isArray(panel.shipments) ? panel.shipments : [],
+        orders: Array.isArray(panel.orders) ? panel.orders : [],
+        inventoryReady: Array.isArray(panel.inventory_ready) ? panel.inventory_ready : [],
+      },
+      error: null,
+    }
+  } catch (e) {
+    return {
+      data: { shipments: [], orders: [], inventoryReady: [] },
+      error: toServiceError(e),
+    }
+  }
+}
+
+/**
+ * Usuário cancela solicitação de envio (apenas quando status = requested).
+ */
+export async function cancelShipment(userId, shipmentId) {
+  try {
+    const { error } = await withDbTimeout(
+      supabase.rpc('user_cancel_shipment', { p_shipment_id: shipmentId })
+    )
+    return { error }
+  } catch (e) {
+    return { error: toServiceError(e) }
   }
 }
 

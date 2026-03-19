@@ -25,9 +25,23 @@ export async function getProducts() {
         .from('products')
         .select('*')
         .eq('is_active', true)
+        .is('purchase_group_id', null)
         .order('created_at', { ascending: false })
     )
     return { data: data ?? [], error }
+  } catch (e) {
+    return { data: [], error: toError(e) }
+  }
+}
+
+/** Produtos de um grupo de compras */
+export async function getPurchaseGroupProducts(groupId) {
+  try {
+    const { data, error } = await withTimeout(
+      supabase.rpc('get_purchase_group_products', { p_group_id: groupId })
+    )
+    const list = Array.isArray(data) ? data : (data ?? [])
+    return { data: list, error }
   } catch (e) {
     return { data: [], error: toError(e) }
   }
@@ -58,6 +72,7 @@ export async function createProduct(product) {
       image_url: product.image_url ?? (imageUrls[0] || ''),
       image_urls: imageUrls,
       is_active: product.is_active ?? true,
+      ...(product.hasOwnProperty('stock_quantity') && { stock_quantity: product.stock_quantity ?? null }),
     }
     const { data, error } = await withTimeout(
       supabase.rpc('admin_create_product', { p_product: payload })
@@ -80,6 +95,7 @@ export async function updateProduct(id, product) {
       image_url: product.image_url ?? (imageUrls[0] || ''),
       image_urls: imageUrls,
       is_active: product.is_active ?? true,
+      ...(product.hasOwnProperty('stock_quantity') && { stock_quantity: product.stock_quantity ?? null }),
     }
     const { data, error } = await withTimeout(
       supabase.rpc('admin_update_product', { p_id: id, p_product: payload })

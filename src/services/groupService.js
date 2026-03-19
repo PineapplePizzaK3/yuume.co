@@ -34,14 +34,13 @@ export async function getPurchaseGroupsAdmin() {
 export async function createPurchaseGroup(group) {
   try {
     const imageUrls = Array.isArray(group.image_urls) ? group.image_urls : []
-    const productIds = Array.isArray(group.product_ids) ? group.product_ids.filter(Boolean) : []
     const payload = {
       name: group.name,
       description: group.description ?? '',
       image_url: group.image_url ?? (imageUrls[0] || ''),
       image_urls: imageUrls,
       is_active: group.is_active ?? true,
-      product_ids: productIds,
+      product_ids: [],
     }
 
     const { data, error } = await withDbTimeout(
@@ -56,14 +55,13 @@ export async function createPurchaseGroup(group) {
 export async function updatePurchaseGroup(id, group) {
   try {
     const imageUrls = Array.isArray(group.image_urls) ? group.image_urls : []
-    const productIds = Array.isArray(group.product_ids) ? group.product_ids.filter(Boolean) : []
     const payload = {
       name: group.name,
       description: group.description ?? '',
       image_url: group.image_url ?? (imageUrls[0] || ''),
       image_urls: imageUrls,
       is_active: group.is_active ?? true,
-      product_ids: productIds,
+      product_ids: [],
     }
 
     const { data, error } = await withDbTimeout(
@@ -79,6 +77,72 @@ export async function deletePurchaseGroup(id) {
   try {
     const { error } = await withDbTimeout(
       supabase.rpc('admin_delete_purchase_group', { p_id: id })
+    )
+    return { error }
+  } catch (e) {
+    return { error: toServiceError(e) }
+  }
+}
+
+/** Admin: cria produto específico do grupo */
+export async function createPurchaseGroupProduct(groupId, product) {
+  try {
+    const imageUrls = Array.isArray(product.image_urls) ? product.image_urls : []
+    const payload = {
+      name: product.name,
+      description: product.description ?? '',
+      price: product.price,
+      image_url: product.image_url ?? (imageUrls[0] || ''),
+      image_urls: imageUrls,
+      weight_kg: product.weight_kg ?? 0,
+      stock_quantity: product.stock_quantity ?? null,
+    }
+    const { data, error } = await withDbTimeout(
+      supabase.rpc('admin_create_purchase_group_product', {
+        p_group_id: groupId,
+        p_product: payload,
+      })
+    )
+    return { data: data ?? null, error }
+  } catch (e) {
+    return { data: null, error: toServiceError(e) }
+  }
+}
+
+/** Admin: atualiza produto do grupo */
+export async function updatePurchaseGroupProduct(groupId, productId, product) {
+  try {
+    const imageUrls = Array.isArray(product.image_urls) ? product.image_urls : []
+    const payload = {
+      name: product.name,
+      description: product.description ?? '',
+      price: product.price,
+      image_url: product.image_url ?? (imageUrls[0] || ''),
+      image_urls: imageUrls,
+      weight_kg: product.weight_kg ?? 0,
+      stock_quantity: product.stock_quantity ?? null,
+    }
+    const { data, error } = await withDbTimeout(
+      supabase.rpc('admin_update_purchase_group_product', {
+        p_group_id: groupId,
+        p_product_id: productId,
+        p_product: payload,
+      })
+    )
+    return { data: data ?? null, error }
+  } catch (e) {
+    return { data: null, error: toServiceError(e) }
+  }
+}
+
+/** Admin: remove produto do grupo */
+export async function deletePurchaseGroupProduct(groupId, productId) {
+  try {
+    const { error } = await withDbTimeout(
+      supabase.rpc('admin_delete_purchase_group_product', {
+        p_group_id: groupId,
+        p_product_id: productId,
+      })
     )
     return { error }
   } catch (e) {

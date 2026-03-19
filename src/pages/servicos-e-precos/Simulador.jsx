@@ -3,19 +3,19 @@ import { Helmet } from 'react-helmet-async'
 import { calcularFreteEMS } from '../../data/tabelaFreteEMS'
 import { calcularFreteParcel, calcularFreteEPacket } from '../../data/fretesJPPost'
 
-/** Taxa por item para redirecionamento: 1→900, 2→750, 3–4→600, 5+→500. */
+/** Taxa para redirecionamento: 1 item→1000¥, 2–4→750¥/item, 5+→500¥/item. */
 function calcularTaxaRedirecionamento(totalItens) {
   if (totalItens <= 0) return 0
-  if (totalItens === 1) return 900
-  if (totalItens === 2) return 750 * 2
-  if (totalItens <= 4) return 600 * totalItens
+  if (totalItens === 1) return 1000
+  if (totalItens <= 4) return 750 * totalItens
   return 500 * totalItens
 }
 
 const TAXA_POR_ITEM_PERSONAL = 150
 const SERVICOS = [
-  { id: 'redirecionamento', label: 'Redirecionamento', tipo: 'por-itens' },
-  { id: 'personal-shopping', label: 'Personal shopping', percentual: 20 },
+  { id: 'voce-compra', label: '📦 Você Compra', tipo: 'por-itens', percentualExtra: 0 },
+  { id: 'nos-compramos', label: '🛍️ Nós Compramos', tipo: 'por-itens', percentualExtra: 12 },
+  { id: 'personal-shopping', label: 'Personal shopping', tipo: 'percentual', percentual: 20 },
 ]
 const TIPOS_FRETE = [
   { id: 'ems', label: 'EMS', prazo: '5–10 dias úteis' },
@@ -35,7 +35,7 @@ function formatarValor(valor, moeda = '¥') {
  */
 function Simulador() {
   const [produtos, setProdutos] = useState([])
-  const [servicoId, setServicoId] = useState('redirecionamento')
+  const [servicoId, setServicoId] = useState('voce-compra')
   const [tipoFrete, setTipoFrete] = useState('ems')
   const [nome, setNome] = useState('')
   const [quantidade, setQuantidade] = useState('1')
@@ -97,15 +97,21 @@ function Simulador() {
   const prazoEntrega = tipoFreteSelecionado?.prazo ?? ''
   const totalItens = produtos.reduce((acc, p) => acc + p.quantidade, 0)
   const servico = SERVICOS.find((s) => s.id === servicoId)
-  const taxaServico =
+  const taxaBase =
     servico?.tipo === 'por-itens'
       ? calcularTaxaRedirecionamento(totalItens)
-      : totalProdutos * ((servico?.percentual ?? 20) / 100) +
-        totalItens * TAXA_POR_ITEM_PERSONAL
+      : totalProdutos * ((servico?.percentual ?? 20) / 100) + totalItens * TAXA_POR_ITEM_PERSONAL
+  const taxaExtra =
+    servico?.tipo === 'por-itens' && servico?.percentualExtra
+      ? totalProdutos * (servico.percentualExtra / 100)
+      : 0
+  const taxaServico = taxaBase + taxaExtra
   const totalFinal = totalProdutos + frete + taxaServico
   const labelTaxaServico =
     servico?.tipo === 'por-itens'
-      ? 'Taxa de serviço (por itens)'
+      ? servico?.percentualExtra
+        ? `Taxa de serviço (itens + ${servico.percentualExtra}%)`
+        : 'Taxa de serviço (por itens)'
       : `Taxa de serviço (${servico?.percentual ?? 20}% + ¥${TAXA_POR_ITEM_PERSONAL}/item)`
 
   return (

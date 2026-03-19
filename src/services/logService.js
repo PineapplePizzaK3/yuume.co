@@ -28,12 +28,42 @@ export async function logAdminAction(action, entityType = null, entityId = null,
 }
 
 /**
- * Lista logs do admin.
+ * Lista logs do admin (ações dos administradores).
  */
 export async function getAdminLogs(limit = 100, offset = 0) {
   try {
     const { data, error } = await withDbTimeout(
       supabase.rpc('admin_list_logs', { p_limit: limit, p_offset: offset })
+    )
+    const list = Array.isArray(data) ? data : (data ?? [])
+    return { data: list, error }
+  } catch (e) {
+    return { data: [], error: toServiceError(e) }
+  }
+}
+
+/**
+ * Lista logs de atividades dos usuários (pedidos, carrinho, perfil).
+ */
+export async function getUserLogs(limit = 100, offset = 0) {
+  try {
+    const { data, error } = await withDbTimeout(
+      supabase.rpc('admin_list_user_logs', { p_limit: limit, p_offset: offset })
+    )
+    const list = Array.isArray(data) ? data : (data ?? [])
+    return { data: list, error }
+  } catch (e) {
+    return { data: [], error: toServiceError(e) }
+  }
+}
+
+/**
+ * Lista logs de autenticação (registro e login de usuários).
+ */
+export async function getAuthLogs(limit = 100, offset = 0) {
+  try {
+    const { data, error } = await withDbTimeout(
+      supabase.rpc('admin_list_auth_logs', { p_limit: limit, p_offset: offset })
     )
     const list = Array.isArray(data) ? data : (data ?? [])
     return { data: list, error }

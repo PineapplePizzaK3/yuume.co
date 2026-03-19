@@ -12,6 +12,7 @@ import {
   deleteAddress,
 } from '../../services/addressService'
 import { cacheKey, readCache, writeCache } from '../../lib/cache'
+import { validatePassword, PASSWORD_PLACEHOLDER } from '../../lib/passwordValidation'
 import { supabase } from '../../lib/supabase'
 
 const ESTADOS = [
@@ -45,6 +46,14 @@ export default function Conta() {
   const [securityMessage, setSecurityMessage] = useState('')
   const [passwordForm, setPasswordForm] = useState({ newPassword: '', confirm: '' })
   const [passwordSaving, setPasswordSaving] = useState(false)
+
+  // MFA (Google Authenticator)
+  const [mfaFactors, setMfaFactors] = useState(null)
+  const [mfaLoading, setMfaLoading] = useState(false)
+  const [mfaEnrolling, setMfaEnrolling] = useState(false)
+  const [mfaEnrollData, setMfaEnrollData] = useState(null)
+  const [mfaVerifyCode, setMfaVerifyCode] = useState('')
+  const [mfaError, setMfaError] = useState('')
 
   const loadData = async (active = () => true) => {
     if (!user?.id) {
@@ -199,12 +208,98 @@ export default function Conta() {
     return !hasEmail && identities.length > 0
   }
 
+  const loadMfaFactors = async () => {
+    if (!user?.id) return
+    setMfaLoading(true)
+    setMfaError('')
+    const { data, error } = await supabase.auth.mfa.listFactors()
+    setMfaLoading(false)
+    if (error) {
+      setMfaError(error.message)
+      return
+    }
+    setMfaFactors(data)
+  }
+
+  useEffect(() => {
+    if (activeTab === 'seguranca' && user?.id) loadMfaFactors()
+  }, [activeTab, user?.id])
+
+  const startMfaEnroll = async () => {
+    setMfaError('')
+    setMfaEnrolling(true)
+    const { data, error } = await supabase.auth.mfa.enroll({
+      factorType: 'totp',
+      friendlyName: 'Plataforma',
+    })
+    setMfaEnrolling(false)
+    if (error) {
+      setMfaError(error.message)
+      return
+    }
+    setMfaEnrollData(data)
+    setMfaVerifyCode('')
+  }
+
+  const cancelMfaEnroll = () => {
+    setMfaEnrollData(null)
+    setMfaVerifyCode('')
+    setMfaError('')
+  }
+
+  const confirmMfaEnroll = async (e) => {
+    e.preventDefault()
+    if (!mfaEnrollData) return
+    setMfaError('')
+    const code = mfaVerifyCode.trim()
+    if (!code || code.length !== 6) {
+      setMfaError('Digite o código de 6 dígitos do seu app.')
+      return
+    }
+    setMfaEnrolling(true)
+    const challenge = await supabase.auth.mfa.challenge({ factorId: mfaEnrollData.id })
+    if (challenge.error) {
+      setMfaError(challenge.error.message)
+      setMfaEnrolling(false)
+      return
+    }
+    const verify = await supabase.auth.mfa.verify({
+      factorId: mfaEnrollData.id,
+      challengeId: challenge.data.id,
+      code,
+    })
+    setMfaEnrolling(false)
+    if (verify.error) {
+      setMfaError(verify.error.message)
+      return
+    }
+    setMfaEnrollData(null)
+    setMfaVerifyCode('')
+    loadMfaFactors()
+  }
+
+  const handleMfaUnenroll = async () => {
+    const totp = mfaFactors?.totp?.[0]
+    if (!totp) return
+    if (!confirm('Tem certeza que deseja desativar a autenticação em duas etapas?')) return
+    setMfaError('')
+    setMfaLoading(true)
+    const { error } = await supabase.auth.mfa.unenroll({ factorId: totp.id })
+    setMfaLoading(false)
+    if (error) {
+      setMfaError(error.message)
+      return
+    }
+    loadMfaFactors()
+  }
+
   const handleChangePassword = async (e) => {
     e.preventDefault()
     setSecurityMessage('')
     const { newPassword, confirm: confirmVal } = passwordForm
-    if (newPassword.length < 6) {
-      setSecurityMessage('A senha deve ter pelo menos 6 caracteres')
+    const { valid, message } = validatePassword(newPassword)
+    if (!valid) {
+      setSecurityMessage(message)
       return
     }
     if (newPassword !== confirmVal) {
@@ -523,8 +618,8 @@ export default function Conta() {
                       type="password"
                       value={passwordForm.newPassword}
                       onChange={(e) => setPasswordForm((f) => ({ ...f, newPassword: e.target.value }))}
-                      minLength={6}
-                      placeholder="Mínimo 6 caracteres"
+                      minLength={8}
+                      placeholder={PASSWORD_PLACEHOLDER}
                       className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
                     />
                   </div>
@@ -534,7 +629,7 @@ export default function Conta() {
                       type="password"
                       value={passwordForm.confirm}
                       onChange={(e) => setPasswordForm((f) => ({ ...f, confirm: e.target.value }))}
-                      minLength={6}
+                      minLength={8}
                       placeholder="Repita a senha"
                       className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
                     />
@@ -552,6 +647,100 @@ export default function Conta() {
                     {passwordSaving ? 'Salvando...' : 'Alterar senha'}
                   </button>
                 </form>
+              )}
+            </section>
+
+            <section className="rounded-xl border border-earth-200 bg-white p-6">
+              <h2 className="text-lg font-semibold text-earth-900">Autenticação em duas etapas</h2>
+              <p className="mt-2 text-sm text-earth-600">
+                Use o Google Authenticator ou outro app compatível para adicionar uma camada extra de segurança.
+              </p>
+              {mfaError && (
+                <p className="mt-3 rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700">{mfaError}</p>
+              )}
+              {mfaLoading && <p className="mt-3 text-sm text-earth-600">Carregando...</p>}
+              {!mfaLoading && !mfaEnrollData && (
+                <div className="mt-4">
+                  {mfaFactors?.totp?.length > 0 ? (
+                    <div className="flex flex-wrap items-center gap-3">
+                      <span className="inline-flex items-center rounded-full bg-green-100 px-3 py-1 text-sm text-green-800">
+                        Ativado
+                      </span>
+                      <button
+                        type="button"
+                        onClick={handleMfaUnenroll}
+                        disabled={mfaLoading}
+                        className="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-70"
+                      >
+                        Desativar 2FA
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={startMfaEnroll}
+                      disabled={mfaEnrolling}
+                      className="rounded-lg bg-earth-900 px-4 py-2 font-medium text-earth-50 hover:bg-earth-800 disabled:opacity-70"
+                    >
+                      {mfaEnrolling ? 'Preparando...' : 'Ativar Google Authenticator'}
+                    </button>
+                  )}
+                </div>
+              )}
+              {mfaEnrollData && (
+                <div className="mt-4 space-y-4">
+                  <p className="text-sm text-earth-700">Escaneie o QR code com seu app ou digite o código manualmente:</p>
+                  <div className="flex flex-wrap gap-6">
+                    {mfaEnrollData.totp?.qr_code && (
+                      <img
+                        src={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(mfaEnrollData.totp.qr_code)}`}
+                        alt="QR Code para app autenticador"
+                        width={200}
+                        height={200}
+                        className="rounded-lg border border-earth-200"
+                      />
+                    )}
+                    {mfaEnrollData.totp?.secret && (
+                      <div>
+                        <p className="text-xs font-medium text-earth-600">Ou digite manualmente:</p>
+                        <code className="mt-1 block break-all rounded bg-earth-100 px-2 py-1 text-sm">
+                          {mfaEnrollData.totp.secret}
+                        </code>
+                      </div>
+                    )}
+                  </div>
+                  <form onSubmit={confirmMfaEnroll} className="flex flex-wrap items-end gap-3">
+                    <div>
+                      <label className="block text-sm font-medium text-earth-700">Código de 6 dígitos</label>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={mfaVerifyCode}
+                        onChange={(e) => setMfaVerifyCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                        placeholder="000000"
+                        maxLength={6}
+                        className="mt-1 w-32 rounded-lg border border-earth-300 px-3 py-2 text-center tracking-widest"
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        type="submit"
+                        disabled={mfaEnrolling || mfaVerifyCode.length !== 6}
+                        className="rounded-lg bg-earth-900 px-4 py-2 font-medium text-earth-50 hover:bg-earth-800 disabled:opacity-70"
+                      >
+                        {mfaEnrolling ? 'Verificando...' : 'Confirmar'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={cancelMfaEnroll}
+                        disabled={mfaEnrolling}
+                        className="rounded-lg border border-earth-300 px-4 py-2 text-earth-700 hover:bg-earth-50 disabled:opacity-70"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  </form>
+                </div>
               )}
             </section>
 
