@@ -5,9 +5,30 @@
 import { useEffect, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { useAuth } from '../../hooks/useAuth'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { getMyInventory, createShipment } from '../../services/inventoryService'
 import { cacheKey, readCache, writeCache } from '../../lib/cache'
+import { formatJPY, formatWeight } from '../../lib/fx'
+import { createPortal } from 'react-dom'
+
+/** Categorias e itens de serviços extras. id deve bater com extra_services. */
+const SERVICOS_EXTRAS_CATEGORIAS = [
+  {
+    categoria: 'Registro visual',
+    itens: [
+      { id: 'photos', nome: 'Fotos', precoJpy: 500 },
+      { id: 'video', nome: 'Vídeo', precoJpy: 800 },
+    ],
+  },
+  {
+    categoria: 'Embalagem',
+    itens: [
+      { id: 'remove_packaging', nome: 'Remover embalagens', precoJpy: 0 },
+      { id: 'bubble_wrap_inside', nome: 'Plástico bolha extra dentro', precoJpy: 300 },
+      { id: 'bubble_wrap_outside', nome: 'Plástico bolha extra fora', precoJpy: 300 },
+    ],
+  },
+]
 
 function daysSince(dateValue) {
   if (!dateValue) return null
@@ -18,6 +39,11 @@ function daysSince(dateValue) {
   return Math.floor(diff / (1000 * 60 * 60 * 24))
 }
 
+function getStorageDays(item) {
+  const baseDate = item?.received_at || item?.created_at || null
+  return daysSince(baseDate)
+}
+
 const ETAPAS = [
   { id: 1, titulo: 'Etapa 1' },
   { id: 2, titulo: 'Serviços extras' },
@@ -26,6 +52,7 @@ const ETAPAS = [
 
 export default function MeusProdutos() {
   const { user } = useAuth()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedIds, setSelectedIds] = useState(new Set())
@@ -33,7 +60,13 @@ export default function MeusProdutos() {
   const [submitting, setSubmitting] = useState(false)
   const [shipmentModalOpen, setShipmentModalOpen] = useState(false)
   const [shipmentStep, setShipmentStep] = useState(1)
-  const [extraServices, setExtraServices] = useState({ photos: false, video: false })
+  const [extraServices, setExtraServices] = useState({
+    photos: false,
+    video: false,
+    remove_packaging: false,
+    bubble_wrap_inside: false,
+    bubble_wrap_outside: false,
+  })
 
   const getCategory = (it) => {
     const order = it?.orders
@@ -46,6 +79,19 @@ export default function MeusProdutos() {
     if (orderSource === 'service') return 'Personal Shopping'
     return 'Outros'
   }
+
+  useEffect(() => {
+    if (searchParams.get('success') === 'true' && user?.id) {
+      setFeedback('Compra realizada com sucesso! Seus produtos estão aqui. O pedido consta no histórico de pedidos.')
+      setSearchParams({}, { replace: true })
+      const k = cacheKey(user.id, 'inventory_v1')
+      writeCache(k, null)
+      getMyInventory(user.id).then(({ data }) => {
+        setItems(data ?? [])
+        writeCache(k, data ?? [])
+      })
+    }
+  }, [searchParams, setSearchParams, user?.id])
 
   useEffect(() => {
     let isActive = true
@@ -99,7 +145,13 @@ export default function MeusProdutos() {
     }
     setFeedback('')
     setShipmentStep(1)
-    setExtraServices({ photos: false, video: false })
+    setExtraServices({
+      photos: false,
+      video: false,
+      remove_packaging: false,
+      bubble_wrap_inside: false,
+      bubble_wrap_outside: false,
+    })
     setShipmentModalOpen(true)
   }
 
@@ -143,7 +195,7 @@ export default function MeusProdutos() {
           Itens recebidos e armazenados. Selecione os produtos que deseja enviar e solicite a consolidação e o envio. Após definirmos o frete, você poderá pagar na página Pedidos ou Carteira.
         </p>
 
-        {feedback && (
+        {feedback && !shipmentModalOpen && (
           <p
             className={`mt-4 rounded-lg px-4 py-2 text-sm ${
               feedback.includes('criada') || feedback.includes('sucesso')
@@ -213,63 +265,74 @@ export default function MeusProdutos() {
                           {grouped[c].map((item) => (
                             <li
                               key={item.id}
-                              className="flex flex-wrap items-start gap-4 rounded-xl border border-earth-200 bg-white p-4"
+                              className="rounded-xl border border-earth-200 bg-white p-4"
                             >
-                              <label className="flex cursor-pointer items-start gap-3">
-                                <input
-                                  type="checkbox"
-                                  checked={selectedIds.has(item.id)}
-                                  onChange={() => toggleSelect(item.id)}
-                                  className="mt-1 rounded border-earth-300"
-                                />
-                                <div className="min-w-0">
-                                  <p className="font-medium text-earth-900">{item.name}</p>
-                                  {item.products_description && (
-                                    <p className="mt-1 text-sm text-earth-700">{item.products_description}</p>
-                                  )}
-                                  {item.notes && (
-                                    <p className="mt-1 text-sm text-earth-600">{item.notes}</p>
-                                  )}
-                                  {(item.items_count != null || item.received_at) && (
-                                    <p className="mt-1 text-xs text-earth-500">
-                                      {item.items_count != null ? `Itens: ${item.items_count}` : ''}
-                                      {item.items_count != null && item.received_at ? ' • ' : ''}
-                                      {item.received_at
-                                        ? `Armazenado há ${daysSince(item.received_at) ?? 0} dia(s)`
-                                        : ''}
-                                    </p>
-                                  )}
-                                  {item.weight_kg != null && (
-                                    <p className="mt-1 text-xs text-earth-500">Peso: {item.weight_kg} kg</p>
-                                  )}
-                                  <span className="mt-1 inline-block rounded bg-earth-100 px-2 py-0.5 text-xs text-earth-600">
-                                    {item.status === 'stored' ? 'Armazenado' : 'Pronto para envio'}
-                                  </span>
-                                </div>
-                              </label>
-                              {(item.photo_url || item.video_url) && (
-                                <div className="flex gap-2">
-                                  {item.photo_url && (
-                                    <a
-                                      href={item.photo_url}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="text-sm text-earth-600 underline hover:text-earth-900"
-                                    >
-                                      Foto
-                                    </a>
-                                  )}
-                                  {item.video_url && (
-                                    <a
-                                      href={item.video_url}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="text-sm text-earth-600 underline hover:text-earth-900"
-                                    >
-                                      Vídeo
-                                    </a>
-                                  )}
-                                </div>
+                              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                  <label className="flex min-w-0 cursor-pointer items-start gap-3">
+                                    <input
+                                      type="checkbox"
+                                      checked={selectedIds.has(item.id)}
+                                      onChange={() => toggleSelect(item.id)}
+                                      className="mt-1 shrink-0 rounded border-earth-300"
+                                    />
+
+                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-earth-100 text-sm font-semibold text-earth-700">
+                                      {(item.name || '?').trim().slice(0, 1).toUpperCase()}
+                                    </div>
+
+                                    <div className="min-w-0">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                      <p className="min-w-0 truncate font-medium text-earth-900">{item.name}</p>
+                                      <span className="inline-flex items-center rounded bg-earth-100 px-2 py-0.5 text-xs text-earth-700">
+                                        {item.status === 'stored' ? 'Armazenado' : 'Pronto para envio'}
+                                      </span>
+                                      {getStorageDays(item) != null && (
+                                        <span className="inline-flex items-center rounded bg-amber-100 px-2 py-0.5 text-xs text-amber-800">
+                                          {getStorageDays(item)} dia(s)
+                                        </span>
+                                      )}
+                                    </div>
+
+                                    <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-earth-500">
+                                      {item.items_count != null && <span>Itens: {item.items_count}</span>}
+                                      {item.weight_kg != null && <span>Peso: {formatWeight(item.weight_kg)}</span>}
+                                    </div>
+                                    </div>
+                                  </label>
+
+                                {(item.photo_url || item.video_url) && (
+                                  <div className="shrink-0 flex flex-wrap gap-2">
+                                    {item.photo_url && (
+                                      <a
+                                        href={item.photo_url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-xs font-medium text-earth-600 underline hover:text-earth-900"
+                                      >
+                                        Foto
+                                      </a>
+                                    )}
+                                    {item.video_url && (
+                                      <a
+                                        href={item.video_url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-xs font-medium text-earth-600 underline hover:text-earth-900"
+                                      >
+                                        Vídeo
+                                      </a>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+
+                              {item.products_description && (
+                                <p className="mt-3 line-clamp-3 whitespace-pre-wrap text-sm text-earth-700">
+                                  {item.products_description}
+                                </p>
+                              )}
+                              {item.notes && (
+                                <p className="mt-2 line-clamp-2 text-sm text-earth-600">{item.notes}</p>
                               )}
                             </li>
                           ))}
@@ -297,7 +360,7 @@ export default function MeusProdutos() {
                           <div className="min-w-0">
                             <p className="truncate text-sm font-medium text-earth-900">{it.name}</p>
                             {it.weight_kg != null && (
-                              <p className="mt-0.5 text-xs text-earth-500">{it.weight_kg} kg</p>
+                              <p className="mt-0.5 text-xs text-earth-500">{formatWeight(it.weight_kg)}</p>
                             )}
                           </div>
                           <button
@@ -335,149 +398,156 @@ export default function MeusProdutos() {
             </div>
 
             {/* Modal: Procedimento de solicitação de envio */}
-            {shipmentModalOpen && (
-              <div
-                className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-                onClick={closeShipmentModal}
-              >
+            {shipmentModalOpen &&
+              createPortal(
                 <div
-                  className="w-full max-w-lg rounded-xl bg-white shadow-xl"
-                  onClick={(e) => e.stopPropagation()}
-                  role="dialog"
-                  aria-modal="true"
-                  aria-labelledby="shipment-modal-title"
+                  className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 relative"
+                  onClick={closeShipmentModal}
                 >
-                  <div className="border-b border-earth-200 px-6 py-4">
-                    <h2 id="shipment-modal-title" className="text-lg font-semibold text-earth-900">Solicitar envio</h2>
-                    <p className="mt-1 text-sm text-earth-600">
-                      {selectedItems.length} item(ns) selecionado(s)
-                    </p>
-                    <div className="mt-3 flex gap-2">
-                      {ETAPAS.map((e) => (
+                  {feedback && (
+                    <div className="absolute inset-0 z-[80] flex items-center justify-center pointer-events-none">
+                      <p
+                        className={`rounded-lg px-4 py-2 text-sm ${
+                          feedback.includes('criada') || feedback.includes('sucesso')
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-amber-100 text-amber-800'
+                        }`}
+                      >
+                        {feedback}
+                      </p>
+                    </div>
+                  )}
+                  <div
+                    className="w-full max-w-lg rounded-xl bg-white shadow-xl"
+                    onClick={(e) => e.stopPropagation()}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="shipment-modal-title"
+                  >
+                    <div className="border-b border-earth-200 px-6 py-4">
+                      <h2 id="shipment-modal-title" className="text-lg font-semibold text-earth-900">Solicitar envio</h2>
+                      <p className="mt-1 text-sm text-earth-600">
+                        {selectedItems.length} item(ns) selecionado(s)
+                      </p>
+                      <div className="mt-3 flex gap-2">
+                        {ETAPAS.map((e) => (
+                          <button
+                            key={e.id}
+                            type="button"
+                            onClick={() => setShipmentStep(e.id)}
+                            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
+                              shipmentStep === e.id
+                                ? 'bg-earth-900 text-white'
+                                : 'bg-earth-100 text-earth-700 hover:bg-earth-200'
+                            }`}
+                          >
+                            {e.titulo}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="max-h-[50vh] overflow-y-auto px-6 py-5">
+                      {shipmentStep === 1 && (
+                        <div className="min-h-[120px] text-earth-600">
+                          {/* Etapa 1 em branco */}
+                        </div>
+                      )}
+
+                      {shipmentStep === 2 && (
+                        <div className="space-y-6">
+                          {SERVICOS_EXTRAS_CATEGORIAS.map((cat) => (
+                            <div key={cat.categoria}>
+                              <h3 className="mb-2 text-sm font-semibold text-earth-700">{cat.categoria}</h3>
+                              <div className="space-y-1.5">
+                                {cat.itens.map((item) => (
+                                  <label
+                                    key={item.id}
+                                    className="flex cursor-pointer items-center justify-between gap-3 rounded-lg border border-earth-200 px-4 py-3 hover:bg-earth-50"
+                                  >
+                                    <div className="flex items-center gap-3">
+                                      <input
+                                        type="checkbox"
+                                        checked={extraServices[item.id] ?? false}
+                                        onChange={(e) =>
+                                          setExtraServices((s) => ({ ...s, [item.id]: e.target.checked }))
+                                        }
+                                        className="rounded border-earth-300"
+                                      />
+                                      <span className="text-sm font-medium text-earth-900">{item.nome}</span>
+                                    </div>
+                                    <span className="text-sm font-medium text-earth-600">{formatJPY(item.precoJpy)}</span>
+                                  </label>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {shipmentStep === 3 && (
+                        <div>
+                          <p className="text-sm font-medium text-earth-800">Pagamento</p>
+                          <p className="mt-2 text-sm text-earth-600">
+                            Após confirmar a solicitação, nosso time irá consolidar seus itens e definir o valor do frete.
+                            Você poderá efetuar o pagamento na página{' '}
+                            <Link to="/app/orders" className="font-medium text-earth-900 underline hover:no-underline">
+                              Pedidos
+                            </Link>{' '}
+                            ou pela{' '}
+                            <Link to="/app/wallet" className="font-medium text-earth-900 underline hover:no-underline">
+                              Carteira
+                            </Link>
+                            .
+                          </p>
+                          {(() => {
+                            const selecionados = SERVICOS_EXTRAS_CATEGORIAS.flatMap((c) =>
+                              c.itens.filter((i) => extraServices[i.id]).map((i) => i.nome)
+                            )
+                            return selecionados.length > 0 ? (
+                              <p className="mt-3 text-sm text-earth-600">
+                                Serviços extras selecionados: {selecionados.join(', ')}
+                              </p>
+                            ) : null
+                          })()}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex justify-between border-t border-earth-200 px-6 py-4">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          shipmentStep > 1 ? setShipmentStep((s) => s - 1) : closeShipmentModal()
+                        }
+                        className="rounded-lg border border-earth-300 px-4 py-2 text-sm font-medium text-earth-700 hover:bg-earth-100"
+                      >
+                        {shipmentStep === 1 ? 'Cancelar' : 'Voltar'}
+                      </button>
+                      {shipmentStep < 3 ? (
                         <button
-                          key={e.id}
                           type="button"
-                          onClick={() => setShipmentStep(e.id)}
-                          className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
-                            shipmentStep === e.id
-                              ? 'bg-earth-900 text-white'
-                              : 'bg-earth-100 text-earth-700 hover:bg-earth-200'
-                          }`}
+                          onClick={() => setShipmentStep((s) => s + 1)}
+                          className="rounded-lg bg-earth-900 px-4 py-2 text-sm font-medium text-white hover:bg-earth-800"
                         >
-                          {e.titulo}
+                          Próximo
                         </button>
-                      ))}
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={handleRequestShipment}
+                          disabled={submitting}
+                          className="rounded-lg bg-earth-900 px-4 py-2 text-sm font-medium text-white hover:bg-earth-800 disabled:opacity-60"
+                        >
+                          {submitting ? 'Enviando...' : 'Confirmar solicitação'}
+                        </button>
+                      )}
                     </div>
                   </div>
-
-                  <div className="max-h-[50vh] overflow-y-auto px-6 py-5">
-                    {shipmentStep === 1 && (
-                      <div className="min-h-[120px] text-earth-600">
-                        {/* Etapa 1 em branco */}
-                      </div>
-                    )}
-
-                    {shipmentStep === 2 && (
-                      <div>
-                        <p className="text-sm font-medium text-earth-800">Serviços extras oferecidos</p>
-                        <p className="mt-1 text-sm text-earth-600">
-                          Adicione opções extras ao seu envio (sujeito a custo adicional):
-                        </p>
-                        <div className="mt-4 space-y-3">
-                          <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-earth-200 p-4 hover:bg-earth-50">
-                            <input
-                              type="checkbox"
-                              checked={extraServices.photos ?? false}
-                              onChange={(e) =>
-                                setExtraServices((s) => ({ ...s, photos: e.target.checked }))
-                              }
-                              className="mt-1 rounded border-earth-300"
-                            />
-                            <div>
-                              <span className="font-medium text-earth-900">Fotos</span>
-                              <p className="mt-0.5 text-sm text-earth-600">
-                                Registro fotográfico dos produtos antes do envio
-                              </p>
-                            </div>
-                          </label>
-                          <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-earth-200 p-4 hover:bg-earth-50">
-                            <input
-                              type="checkbox"
-                              checked={extraServices.video ?? false}
-                              onChange={(e) =>
-                                setExtraServices((s) => ({ ...s, video: e.target.checked }))
-                              }
-                              className="mt-1 rounded border-earth-300"
-                            />
-                            <div>
-                              <span className="font-medium text-earth-900">Vídeo</span>
-                              <p className="mt-0.5 text-sm text-earth-600">
-                                Registro em vídeo dos produtos antes do envio
-                              </p>
-                            </div>
-                          </label>
-                        </div>
-                      </div>
-                    )}
-
-                    {shipmentStep === 3 && (
-                      <div>
-                        <p className="text-sm font-medium text-earth-800">Pagamento</p>
-                        <p className="mt-2 text-sm text-earth-600">
-                          Após confirmar a solicitação, nosso time irá consolidar seus itens e definir o valor do frete.
-                          Você poderá efetuar o pagamento na página{' '}
-                          <Link to="/app/orders" className="font-medium text-earth-900 underline hover:no-underline">
-                            Pedidos
-                          </Link>{' '}
-                          ou pela{' '}
-                          <Link to="/app/wallet" className="font-medium text-earth-900 underline hover:no-underline">
-                            Carteira
-                          </Link>
-                          .
-                        </p>
-                        {(extraServices.photos || extraServices.video) && (
-                          <p className="mt-3 text-sm text-earth-600">
-                            Serviços extras selecionados: {extraServices.photos && 'Fotos'}
-                            {extraServices.photos && extraServices.video && ', '}
-                            {extraServices.video && 'Vídeo'}
-                          </p>
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex justify-between border-t border-earth-200 px-6 py-4">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        shipmentStep > 1 ? setShipmentStep((s) => s - 1) : closeShipmentModal()
-                      }
-                      className="rounded-lg border border-earth-300 px-4 py-2 text-sm font-medium text-earth-700 hover:bg-earth-100"
-                    >
-                      {shipmentStep === 1 ? 'Cancelar' : 'Voltar'}
-                    </button>
-                    {shipmentStep < 3 ? (
-                      <button
-                        type="button"
-                        onClick={() => setShipmentStep((s) => s + 1)}
-                        className="rounded-lg bg-earth-900 px-4 py-2 text-sm font-medium text-white hover:bg-earth-800"
-                      >
-                        Próximo
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={handleRequestShipment}
-                        disabled={submitting}
-                        className="rounded-lg bg-earth-900 px-4 py-2 text-sm font-medium text-white hover:bg-earth-800 disabled:opacity-60"
-                      >
-                        {submitting ? 'Enviando...' : 'Confirmar solicitação'}
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
+                </div>,
+                // Garante que o modal não seja afetado por scroll/overflow da página.
+                document.body
+              )}
           </>
         )}
       </div>

@@ -18,6 +18,7 @@ import CommercialDisclosure from './pages/legal/CommercialDisclosure'
 import PrivacyPolicy from './pages/legal/PrivacyPolicy'
 import TermsOfService from './pages/legal/TermsOfService'
 import { ProtectedRoute } from './components/ProtectedRoute'
+import LojaPublicRoute from './components/LojaPublicRoute'
 import { AdminRoute } from './components/AdminRoute'
 import { PlatformLayout } from './layouts/PlatformLayout'
 import Login from './pages/platform/Login'
@@ -26,18 +27,16 @@ import ForgotPassword from './pages/platform/ForgotPassword'
 import ResetPassword from './pages/platform/ResetPassword'
 import Dashboard from './pages/platform/Dashboard'
 import Services from './pages/platform/Services'
-import Orders from './pages/platform/Orders'
-import Wallet from './pages/platform/Wallet'
 import Payments from './pages/platform/Payments'
 import Profile from './pages/platform/Profile'
 import Conta from './pages/platform/Conta'
 import Loja from './pages/platform/Loja'
+import LojaMirror from './pages/LojaMirror'
 import Cart from './pages/platform/Cart'
 import ListaDesejos from './pages/platform/ListaDesejos'
-import MeusProdutos from './pages/platform/MeusProdutos'
 import GrupoDeCompras from './pages/platform/GrupoDeCompras'
-import Envios from './pages/platform/Envios'
 import Admin from './pages/platform/Admin'
+import Lounge from './pages/platform/Lounge'
 
 /**
  * Componente principal da aplicação.
@@ -52,6 +51,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/como-funciona" element={<Navigate to="/servicos-e-precos" replace />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/loja" element={<LojaPublicRoute />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -63,18 +63,19 @@ function App() {
           }>
             <Route index element={<Navigate to="/app/dashboard" replace />} />
             <Route path="dashboard" element={<Dashboard />} />
+            <Route path="lounge" element={<Lounge />} />
             <Route path="services" element={<Services />} />
-            <Route path="orders" element={<Orders />} />
-            <Route path="wallet" element={<Wallet />} />
+            <Route path="orders" element={<Navigate to="/app/lounge" replace />} />
+            <Route path="wallet" element={<Navigate to="/app/lounge" replace />} />
             <Route path="payments" element={<Payments />} />
             <Route path="profile" element={<Profile />} />
             <Route path="conta" element={<Conta />} />
-            <Route path="meus-produtos" element={<MeusProdutos />} />
+            <Route path="meus-produtos" element={<Navigate to="/app/lounge" replace />} />
             <Route path="loja" element={<Loja />} />
             <Route path="cart" element={<Cart />} />
             <Route path="grupo-de-compras" element={<GrupoDeCompras />} />
             <Route path="lista-desejos" element={<ListaDesejos />} />
-            <Route path="envios" element={<Envios />} />
+            <Route path="envios" element={<Navigate to="/app/lounge" replace />} />
             <Route path="admin" element={
               <AdminRoute>
                 <Admin />

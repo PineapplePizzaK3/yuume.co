@@ -152,6 +152,66 @@ export async function uploadOrderAttachment(file, userId) {
 }
 
 /**
+ * Upload de comprovante PIX para pedido.
+ * Path: pix-comprovantes/{userId}/{orderId}-{timestamp}.ext
+ */
+export async function uploadPixComprovante(file, userId, orderId) {
+  if (!file || !file.type?.startsWith('image/')) {
+    return { data: null, error: { message: 'Selecione uma imagem do comprovante (JPG, PNG).' } }
+  }
+  if (!userId || !orderId) return { data: null, error: { message: 'Dados obrigatórios ausentes.' } }
+  try {
+    const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
+    const safeName = `${orderId}-${Date.now()}.${ext}`
+    const path = `pix-comprovantes/${userId}/${safeName}`
+
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from(PRODUCT_IMAGES_BUCKET)
+      .upload(path, file, { cacheControl: '3600', upsert: false })
+
+    if (uploadError) return { data: null, error: uploadError }
+
+    const { data: urlData } = supabase.storage
+      .from(PRODUCT_IMAGES_BUCKET)
+      .getPublicUrl(uploadData.path)
+
+    return { data: urlData?.publicUrl ?? null, error: null }
+  } catch (e) {
+    return { data: null, error: toError(e) }
+  }
+}
+
+/**
+ * Upload de comprovante PIX para recarga de carteira.
+ * Path: pix-comprovantes/{userId}/topup-{requestId}-{timestamp}.ext
+ */
+export async function uploadWalletTopupComprovante(file, userId, requestId) {
+  if (!file || !file.type?.startsWith('image/')) {
+    return { data: null, error: { message: 'Selecione uma imagem do comprovante (JPG, PNG).' } }
+  }
+  if (!userId || !requestId) return { data: null, error: { message: 'Dados obrigatórios ausentes.' } }
+  try {
+    const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
+    const safeName = `topup-${requestId}-${Date.now()}.${ext}`
+    const path = `pix-comprovantes/${userId}/${safeName}`
+
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from(PRODUCT_IMAGES_BUCKET)
+      .upload(path, file, { cacheControl: '3600', upsert: false })
+
+    if (uploadError) return { data: null, error: uploadError }
+
+    const { data: urlData } = supabase.storage
+      .from(PRODUCT_IMAGES_BUCKET)
+      .getPublicUrl(uploadData.path)
+
+    return { data: urlData?.publicUrl ?? null, error: null }
+  } catch (e) {
+    return { data: null, error: toError(e) }
+  }
+}
+
+/**
  * Admin: upload de imagem para o bucket product-images.
  * Retorna a URL pública da imagem ou erro.
  * @param {File} file - arquivo de imagem (ex.: do input type="file")

@@ -40,7 +40,7 @@ function Navbar() {
           </Link>
 
           {/* Links de navegação - desktop (oculto no mobile) */}
-          <div className="hidden items-center gap-6 lg:flex">
+          <div className="hidden h-16 items-center gap-6 lg:flex">
             <Link
               to="/"
               className={isAtivo('/') ? linkAtivo : linkNormal}
@@ -71,6 +71,16 @@ function Navbar() {
             >
               Contato
             </Link>
+            <div className="flex self-stretch">
+              <Link
+                to="/loja"
+                className={`flex items-center px-4 text-sm font-medium text-white transition hover:bg-red-400 ${
+                  isAtivo('/loja') ? 'bg-red-500 ring-2 ring-white' : 'bg-red-300'
+                }`}
+              >
+                Loja Virtual
+              </Link>
+            </div>
 
             {/* Login/Registro ou status logado */}
             {isAuthenticated ? (
@@ -187,6 +197,15 @@ function Navbar() {
                 className={`rounded-lg px-4 py-3 ${isAtivo('/contact') ? 'bg-earth-100 font-semibold text-earth-900' : 'text-earth-600 hover:bg-earth-50 hover:text-earth-900'}`}
               >
                 Contato
+              </Link>
+              <Link
+                to="/loja"
+                onClick={fecharMenu}
+                className={`px-4 py-3 font-medium text-white transition hover:bg-red-400 ${
+                  isAtivo('/loja') ? 'bg-red-500 ring-2 ring-white' : 'bg-red-300'
+                }`}
+              >
+                Loja Virtual
               </Link>
               <div className="mt-4 flex justify-center gap-4 border-t border-earth-200 pt-4">
                 {REDES_SOCIAIS.map((rede) => (

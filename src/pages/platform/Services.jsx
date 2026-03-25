@@ -189,7 +189,7 @@ export default function Services() {
                       <div>
                         <span className="block font-semibold text-earth-900">🛍️ Nós Compramos</span>
                         <span className="block text-sm text-earth-600">
-                          Mesmas taxas (1 item ¥1.000 | 2–4 ¥750/item | 5+ ¥500/item) + 12% sobre o valor da compra + frete. Você envia a lista e retornamos o orçamento para pré-pagamento.
+                          15% (1 item), 12,5% (2–4 itens) ou 10% (5+ itens) + taxa flat (¥1.000 | ¥750/item | ¥500/item) + frete. Você envia a lista e retornamos o orçamento para pré-pagamento.
                         </span>
                       </div>
                     </label>

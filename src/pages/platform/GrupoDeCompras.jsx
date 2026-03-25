@@ -17,6 +17,13 @@ function getGroupImages(g) {
   return []
 }
 
+/** Retorna array de URLs de imagens do produto (image_urls ou image_url) */
+function getProductImages(p) {
+  if (Array.isArray(p?.image_urls) && p.image_urls.length > 0) return p.image_urls.filter(Boolean)
+  if (p?.image_url) return [p.image_url]
+  return []
+}
+
 export default function GrupoDeCompras() {
   const { user } = useAuth()
   const [groups, setGroups] = useState([])
@@ -68,6 +75,8 @@ export default function GrupoDeCompras() {
   const getGroupProducts = (group) => {
     return groupProducts[group?.id] ?? []
   }
+
+  const isOutOfStock = (p) => p?.stock_quantity != null && Number(p.stock_quantity) <= 0
 
   const handleComprar = async (product) => {
     if (!user?.id) {
@@ -138,7 +147,7 @@ export default function GrupoDeCompras() {
                     )}
                     <div className="p-4">
                       <h2 className="font-semibold text-earth-900">{g.name}</h2>
-                      {g.description && <p className="mt-1 line-clamp-2 text-sm text-earth-600">{g.description}</p>}
+                      {g.description && <p className="mt-1 line-clamp-2 whitespace-pre-wrap text-sm text-earth-600">{g.description}</p>}
                       <p className="mt-2 text-xs text-earth-500">
                         Produtos no grupo: {groupProducts.length}
                       </p>
@@ -237,30 +246,60 @@ export default function GrupoDeCompras() {
                 <h2 id="group-detail-title" className="text-xl font-bold text-earth-900">
                   {detailGroup.name}
                 </h2>
-                {detailGroup.description && <p className="mt-2 text-earth-600">{detailGroup.description}</p>}
+                {detailGroup.description && <p className="mt-2 whitespace-pre-wrap text-earth-600">{detailGroup.description}</p>}
 
                 <div className="mt-5">
                   <h3 className="text-sm font-semibold uppercase tracking-wide text-earth-700">Produtos disponíveis</h3>
                   {getGroupProducts(detailGroup).length === 0 ? (
                     <p className="mt-2 text-sm text-earth-600">Este grupo ainda não possui produtos vinculados.</p>
                   ) : (
-                    <ul className="mt-3 space-y-2">
-                      {getGroupProducts(detailGroup).map((p) => (
-                        <li key={p.id} className="flex items-center justify-between gap-3 rounded-lg border border-earth-200 bg-earth-50 p-3">
-                          <div>
-                            <p className="font-medium text-earth-900">{p.name}</p>
-                            <p className="text-sm text-earth-600">{formatJPY(brlToJpy(p.price))}</p>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => handleComprar(p)}
-                            className="rounded-lg bg-earth-900 px-3 py-2 text-sm font-medium text-white hover:bg-earth-800"
-                          >
-                            Comprar
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
+                    <div className="mt-3 overflow-x-auto rounded-lg border border-earth-200">
+                      <table className="min-w-full divide-y divide-earth-200 text-left text-sm">
+                        <thead>
+                          <tr className="bg-earth-100">
+                            <th className="px-4 py-3 font-medium text-earth-700 w-14"></th>
+                            <th className="px-4 py-3 font-medium text-earth-700">Nome</th>
+                            <th className="px-4 py-3 font-medium text-earth-700">Valor</th>
+                            <th className="px-4 py-3 font-medium text-earth-700 w-28"></th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-earth-200 bg-white">
+                          {getGroupProducts(detailGroup).map((p) => {
+                            const productImgs = getProductImages(p)
+                            const productMainImg = productImgs[0]
+                            return (
+                              <tr key={p.id} className="hover:bg-earth-50/50">
+                                <td className="px-4 py-3">
+                                  <div className="h-12 w-12 overflow-hidden rounded bg-earth-200">
+                                    {productMainImg ? (
+                                      <img
+                                        src={productMainImg}
+                                        alt={p.name}
+                                        className="h-full w-full object-cover"
+                                      />
+                                    ) : (
+                                      <div className="flex h-full w-full items-center justify-center text-earth-400 text-xs">—</div>
+                                    )}
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3 font-medium text-earth-900">{p.name}</td>
+                                <td className="px-4 py-3 text-earth-700">{formatJPY(brlToJpy(p.price))}</td>
+                                <td className="px-4 py-3">
+                                  <button
+                                    type="button"
+                                    onClick={() => !isOutOfStock(p) && handleComprar(p)}
+                                    disabled={isOutOfStock(p)}
+                                    className="rounded-lg px-3 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-60 disabled:bg-earth-300 disabled:text-earth-600 bg-earth-900 text-white hover:bg-earth-800"
+                                  >
+                                    {isOutOfStock(p) ? 'Esgotado' : 'Comprar'}
+                                  </button>
+                                </td>
+                              </tr>
+                            )
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
                   )}
                 </div>
 

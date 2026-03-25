@@ -167,7 +167,7 @@ export default async function handler(req, res) {
 
     const { data: order, error: orderError } = await supabase
       .from('orders')
-      .select('id, user_id, status, shipping_cost, shipping_currency, quote_amount, quote_currency, total_amount, order_source, ship_immediately')
+      .select('id, user_id, status, shipping_cost, shipping_currency, quote_amount, quote_currency, total_amount, wallet_applied_amount, order_source, ship_immediately')
       .eq('id', orderId)
       .single()
 
@@ -204,30 +204,44 @@ export default async function handler(req, res) {
     }
 
     const chargeJpy = toChargeAmountJpy(amount, currency)
+    const alreadyAppliedJpy = Math.max(0, Number(order.wallet_applied_amount) || 0)
     let walletApplied = 0
-    let remainingJpy = Number(chargeJpy) || 0
+    let remainingJpy = Math.max(0, (Number(chargeJpy) || 0) - alreadyAppliedJpy)
+
+    // Se o pedido já foi integralmente coberto por carteira anteriormente, não deve haver nova cobrança.
+    if (remainingJpy <= 0) {
+      return res.status(200).json({ paid: true, walletApplied: 0, alreadyPaidByWallet: alreadyAppliedJpy })
+    }
 
     // Aplicar carteira (JPY) como parte do pagamento, quando solicitado.
     if (body.useWallet) {
       const accessToken = authHeader.replace('Bearer ', '')
       const supabaseUser = getSupabaseUser(accessToken)
-      if (supabaseUser) {
-        const { data: applyData, error: applyErr } = await supabaseUser.rpc('wallet_apply_to_order_jpy', {
-          p_order_id: orderId,
-          p_user_id: user.id,
-          p_total_amount_jpy: remainingJpy,
+      if (!supabaseUser) {
+        return res.status(500).json({
+          error: 'Carteira indisponível no momento (configuração da API incompleta). Nenhuma cobrança foi criada.',
         })
-        if (applyErr) throw new Error(applyErr.message || 'Erro ao aplicar carteira')
-        walletApplied = Number(applyData?.applied_amount) || 0
-        remainingJpy = Number(applyData?.remaining_amount) || 0
-        if (applyData?.paid === true || remainingJpy <= 0) {
-          return res.status(200).json({ paid: true, walletApplied })
-        }
+      }
+
+      const { data: applyData, error: applyErr } = await supabaseUser.rpc('wallet_apply_to_order_jpy', {
+        p_order_id: orderId,
+        p_user_id: user.id,
+        p_total_amount_jpy: remainingJpy,
+      })
+      if (applyErr) throw new Error(applyErr.message || 'Erro ao aplicar carteira')
+      walletApplied = Number(applyData?.applied_amount) || 0
+      remainingJpy = Number(applyData?.remaining_amount) || 0
+      if (applyData?.paid === true || remainingJpy <= 0) {
+        return res.status(200).json({ paid: true, walletApplied })
       }
     }
 
     const unitAmount = Math.round(remainingJpy) // JPY sem casas decimais
     if (!unitAmount || unitAmount <= 0) return res.status(400).json({ error: 'Valor inválido para cobrança' })
+
+    const isStoreOrderNoShip = order.order_source === 'store' && !order.ship_immediately
+    const successPath = isStoreOrderNoShip ? '/app/meus-produtos' : '/app/orders'
+    const cancelPath = isStoreOrderNoShip ? '/app/cart' : '/app/orders'
 
     try {
       const session = await stripe.checkout.sessions.create({
@@ -246,37 +260,11 @@ export default async function handler(req, res) {
           },
         ],
         mode: 'payment',
-        success_url: `${baseUrl}/app/orders?success=true`,
-        cancel_url: `${baseUrl}/app/orders?canceled=true`,
+        success_url: `${baseUrl}${successPath}?success=true`,
+        cancel_url: `${baseUrl}${cancelPath}?canceled=true`,
         metadata: { orderId, orderSource: order.order_source || 'service', walletApplied: String(walletApplied || 0) },
       })
       return res.status(200).json({ url: session.url, provider: 'stripe' })
-    } catch (e) {
-      // Fallback para KOMOJU (cartão) quando Stripe falhar
-      const komojuKey = process.env.KOMOJU_SECRET_KEY
-      if (!komojuKey) throw e
-      const token = Buffer.from(`${komojuKey}:`, 'utf8').toString('base64')
-      const returnUrl = `${baseUrl}/api/komoju-return?orderId=${encodeURIComponent(orderId)}`
-      const komoju = await fetch('https://komoju.com/api/v1/sessions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Basic ${token}`,
-        },
-        body: JSON.stringify({
-          amount: unitAmount,
-          currency: 'JPY',
-          return_url: returnUrl,
-          external_order_num: orderId,
-          payment_types: ['credit_card'],
-          description: `Pedido ${orderId.slice(0, 8)} - pagamento`,
-        }),
-      }).then(async (r) => {
-        const json = await r.json().catch(() => ({}))
-        if (!r.ok) throw new Error(json?.error || json?.message || 'Erro ao criar sessão na KOMOJU')
-        return json
-      })
-      return res.status(200).json({ url: komoju.session_url, provider: 'komoju', fallback: true })
     }
   } catch (err) {
     console.error(err)

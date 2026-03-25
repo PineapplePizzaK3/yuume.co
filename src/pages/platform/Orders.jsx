@@ -6,11 +6,14 @@
 import { useEffect, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { useAuth } from '../../hooks/useAuth'
-import { deleteMyOrder, getMyOrders, requestOrderExtraServices, ORDER_STATUS_LABELS, updateMyOrder } from '../../services/orderService'
-import { createCheckoutSession, createKomojuSession } from '../../services/paymentService'
+import { deleteMyOrder, getMyOrders, requestOrderExtraServices, ORDER_STATUS_LABELS } from '../../services/orderService'
+import { createCheckoutSession } from '../../services/paymentService'
+import PixManualModal from '../../components/PixManualModal'
 import { getWallet } from '../../services/walletService'
 import { cacheKey, readCache, writeCache } from '../../lib/cache'
 import { brlToJpy, formatBRL, formatJPY, jpyToBrl } from '../../lib/fx'
+import QuoteProductsList from '../../components/QuoteProductsList'
+import OrderAttachments from '../../components/OrderAttachments'
 
 export default function Orders() {
   const { user, session } = useAuth()
@@ -20,9 +23,10 @@ export default function Orders() {
   const [payingId, setPayingId] = useState(null)
   const [feedback, setFeedback] = useState('')
   const [payModal, setPayModal] = useState({ open: false, order: null, useWallet: true })
+  const [pixModal, setPixModal] = useState({ open: false, order: null })
   const [extraServicesOrderId, setExtraServicesOrderId] = useState(null)
   const [extraServices, setExtraServices] = useState({ photos: false, video: false })
-  const [editModal, setEditModal] = useState({ open: false, orderId: null, message: '' })
+  const [detailsModal, setDetailsModal] = useState({ open: false, order: null })
   const [deletingId, setDeletingId] = useState(null)
 
   useEffect(() => {
@@ -139,28 +143,6 @@ export default function Orders() {
     }
   }
 
-  const handlePayWithKomoju = async (order, paymentType) => {
-    const payable = getPayableAmount(order)
-    if (!payable) return
-    setPayingId(order.id)
-    setFeedback('')
-    try {
-      const accessToken = session?.access_token
-      if (!accessToken) {
-        setFeedback('Faça login novamente para pagar')
-        setPayingId(null)
-        return
-      }
-      const { url } = await createKomojuSession(order.id, paymentType, accessToken)
-      if (url) window.location.href = url
-      else setFeedback('Erro ao criar sessão de pagamento (KOMOJU)')
-    } catch (err) {
-      setFeedback(err.message || 'Erro ao processar pagamento (KOMOJU)')
-    } finally {
-      setPayingId(null)
-    }
-  }
-
   const getExtraServicesForOrder = (order) => {
     if (extraServicesOrderId === order.id) return extraServices
     return {
@@ -243,7 +225,14 @@ export default function Orders() {
                       <p className="mt-1 text-sm text-earth-600">{o.service.name}</p>
                     )}
                     {o.message && (
-                      <p className="mt-1 text-sm text-earth-500 italic">{o.message}</p>
+                      <QuoteProductsList
+                        message={o.message}
+                        quoteCurrency={o.quote_currency || 'JPY'}
+                        formatMoney={(v) => formatJPY(v)}
+                      />
+                    )}
+                    {Array.isArray(o.attachment_urls) && o.attachment_urls.length > 0 && (
+                      <OrderAttachments urls={o.attachment_urls} />
                     )}
                     {(() => {
                       const c = getChargeJpy(o)
@@ -310,35 +299,33 @@ export default function Orders() {
                     )}
                   </div>
                   <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setDetailsModal({ open: true, order: o })}
+                      className="rounded-lg border border-earth-300 bg-white px-4 py-2.5 font-medium text-earth-800 hover:bg-earth-50"
+                    >
+                      Mostrar detalhes
+                    </button>
                     {shouldShowEditDelete(o) && (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => setEditModal({ open: true, orderId: o.id, message: o.message ?? '' })}
-                          className="rounded-lg border border-earth-300 bg-white px-4 py-2.5 font-medium text-earth-800 hover:bg-earth-50"
-                        >
-                          Editar
-                        </button>
-                        <button
-                          type="button"
-                          onClick={async () => {
-                            if (!confirm('Remover este pedido?')) return
-                            setDeletingId(o.id)
-                            setFeedback('')
-                            const { error } = await deleteMyOrder(user.id, o.id)
-                            setDeletingId(null)
-                            if (error) setFeedback(error.message || 'Erro ao remover pedido')
-                            else {
-                              setFeedback('Pedido removido.')
-                              await refreshOrders()
-                            }
-                          }}
-                          disabled={deletingId === o.id}
-                          className="rounded-lg border border-red-300 bg-white px-4 py-2.5 font-medium text-red-700 hover:bg-red-50 disabled:opacity-60"
-                        >
-                          {deletingId === o.id ? 'Removendo...' : 'Remover'}
-                        </button>
-                      </>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          if (!confirm('Remover este pedido?')) return
+                          setDeletingId(o.id)
+                          setFeedback('')
+                          const { error } = await deleteMyOrder(user.id, o.id)
+                          setDeletingId(null)
+                          if (error) setFeedback(error.message || 'Erro ao remover pedido')
+                          else {
+                            setFeedback('Pedido removido.')
+                            await refreshOrders()
+                          }
+                        }}
+                        disabled={deletingId === o.id}
+                        className="rounded-lg border border-red-300 bg-white px-4 py-2.5 font-medium text-red-700 hover:bg-red-50 disabled:opacity-60"
+                      >
+                        {deletingId === o.id ? 'Removendo...' : 'Remover'}
+                      </button>
                     )}
                     {getPayableAmount(o) && (
                       <button
@@ -358,118 +345,208 @@ export default function Orders() {
         )}
       </div>
 
-      {editModal.open && (
-        <form
-          onSubmit={async (e) => {
-            e.preventDefault()
-            setFeedback('')
-            const { error } = await updateMyOrder(user.id, editModal.orderId, { message: editModal.message })
-            if (error) {
-              setFeedback(error.message || 'Erro ao salvar')
-              return
-            }
-            setEditModal({ open: false, orderId: null, message: '' })
-            setFeedback('Pedido atualizado.')
-            await refreshOrders()
-          }}
+      {detailsModal.open && detailsModal.order && (
+        <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-          onClick={() => setEditModal({ open: false, orderId: null, message: '' })}
+          onClick={() => setDetailsModal({ open: false, order: null })}
         >
           <div
-            className="w-full max-w-lg rounded-xl bg-white p-6 shadow-lg"
+            className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-xl bg-white p-6 shadow-lg"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="font-semibold text-earth-900">Editar pedido</h3>
-            <p className="mt-1 text-sm text-earth-600">
-              Você pode editar a mensagem do pedido enquanto o pagamento não tiver sido realizado.
-            </p>
-            <div className="mt-4">
-              <label className="block text-sm font-medium text-earth-700">Mensagem</label>
-              <textarea
-                value={editModal.message}
-                onChange={(e) => setEditModal((m) => ({ ...m, message: e.target.value }))}
-                rows={4}
-                className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
-              />
+            <h3 className="font-semibold text-earth-900">Detalhes do pedido</h3>
+            <div className="mt-4 space-y-4">
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-earth-500">ID</p>
+                <p className="text-sm text-earth-800 font-mono">{detailsModal.order.id}</p>
+              </div>
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-earth-500">Status</p>
+                <p className="text-sm text-earth-800">
+                  {ORDER_STATUS_LABELS[detailsModal.order.status] ?? detailsModal.order.status}
+                </p>
+              </div>
+              {detailsModal.order.service?.name && (
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-wide text-earth-500">Serviço</p>
+                  <p className="text-sm text-earth-800">{detailsModal.order.service.name}</p>
+                </div>
+              )}
+              {detailsModal.order.message && (
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-wide text-earth-500 mb-1">Orçamento / Mensagem</p>
+                  <QuoteProductsList
+                    message={detailsModal.order.message}
+                    quoteCurrency={detailsModal.order.quote_currency || 'JPY'}
+                    formatMoney={(v) => formatJPY(v)}
+                  />
+                </div>
+              )}
+              {Array.isArray(detailsModal.order.attachment_urls) && detailsModal.order.attachment_urls.length > 0 && (
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-wide text-earth-500 mb-2">Imagens</p>
+                  <OrderAttachments urls={detailsModal.order.attachment_urls} />
+                </div>
+              )}
+              {detailsModal.order.quote_amount != null && (
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-wide text-earth-500">Orçamento total</p>
+                  <p className="text-sm font-medium text-earth-800">
+                    {formatJPY(detailsModal.order.quote_amount)}
+                  </p>
+                </div>
+              )}
+              {detailsModal.order.shipping_cost != null && (
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-wide text-earth-500">Frete</p>
+                  <p className="text-sm text-earth-800">
+                    {formatJPY(detailsModal.order.shipping_cost)}
+                  </p>
+                </div>
+              )}
             </div>
-            <div className="mt-6 flex gap-2">
-              <button
-                type="submit"
-                className="rounded-lg bg-earth-900 px-4 py-2 font-medium text-earth-50 hover:bg-earth-800"
-              >
-                Salvar
-              </button>
+            <div className="mt-6">
               <button
                 type="button"
-                onClick={() => setEditModal({ open: false, orderId: null, message: '' })}
+                onClick={() => setDetailsModal({ open: false, order: null })}
                 className="rounded-lg border border-earth-300 px-4 py-2 font-medium text-earth-700 hover:bg-earth-100"
               >
-                Cancelar
+                Fechar
               </button>
             </div>
           </div>
-        </form>
+        </div>
       )}
+
+      <PixManualModal
+        open={pixModal.open}
+        onClose={() => setPixModal({ open: false, order: null })}
+        onBack={() => {
+          if (pixModal.order) {
+            setPixModal({ open: false, order: null })
+            setPayModal({ open: true, order: pixModal.order, useWallet: true })
+          } else {
+            setPixModal({ open: false, order: null })
+          }
+        }}
+        order={pixModal.order}
+        amountBrl={pixModal.order ? (() => {
+          const p = getPayableAmount(pixModal.order)
+          if (!p) return null
+          return (p.currency || '').toUpperCase() === 'BRL' ? p.amount : jpyToBrl(p.amount)
+        })() : null}
+        userId={user?.id}
+      />
 
       {payModal.open && payModal.order && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-lg">
-            <h3 className="font-semibold text-earth-900">Pagamento</h3>
-            <p className="mt-1 text-sm text-earth-600">
-              Escolha como deseja pagar este pedido.
-            </p>
+          <div className="flex w-full max-w-lg max-h-[90vh] flex-col rounded-xl bg-white shadow-lg">
+            <div className="flex-1 min-h-0 overflow-y-auto p-6">
+              <h3 className="font-semibold text-earth-900">Pagamento</h3>
+              <p className="mt-1 text-sm text-earth-600">
+                Escolha como deseja pagar este pedido.
+              </p>
 
-            {(() => {
-              const p = getChargeJpy(payModal.order)
-              const balance = wallet?.balance ?? 0
-              const canUseWallet = balance > 0
-              return (
-                <div className="mt-4 space-y-4">
-                  {p && (
-                    <div className="rounded-lg border border-earth-200 bg-earth-50 p-4">
-                      <p className="text-sm text-earth-700">
-                        <span className="font-medium text-earth-900">{p.label}</span>: {formatJPY(p.amountJpy)}
-                      </p>
-                      <p className="mt-1 text-xs text-earth-600">
-                        Aproximado em BRL: {formatBRL(p.approxBrl)}
-                      </p>
+              {feedback && (
+                <p className={`mt-3 rounded-lg px-3 py-2 text-sm ${feedback.includes('Erro') || feedback.includes('erro') ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
+                  {feedback}
+                </p>
+              )}
+
+              {(() => {
+                const p = getChargeJpy(payModal.order)
+                const balance = wallet?.balance ?? 0
+                const canUseWallet = balance > 0 && (wallet?.currency || 'JPY') === 'JPY'
+                const totalJpy = p?.amountJpy ?? 0
+                const useWallet = !!payModal.useWallet && canUseWallet
+                const walletApplied = useWallet ? Math.min(balance, totalJpy) : 0
+                const remainingJpy = totalJpy - walletApplied
+
+                return (
+                  <div className="mt-4 space-y-4">
+                    <div className="rounded-lg border border-earth-200 bg-earth-50 p-4 space-y-2">
+                      {p && (
+                        <>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-earth-600">{p.label}</span>
+                            <span className="font-medium text-earth-900">{formatJPY(totalJpy)}</span>
+                          </div>
+                          {useWallet && walletApplied > 0 && (
+                            <div className="flex justify-between text-sm text-green-700">
+                              <span>Carteira aplicada</span>
+                              <span>-{formatJPY(walletApplied)}</span>
+                            </div>
+                          )}
+                          <div className="flex justify-between pt-2 border-t border-earth-200 font-medium">
+                            <span className="text-earth-800">Total a pagar</span>
+                            <span className="text-earth-900">{formatJPY(Math.max(0, remainingJpy))}</span>
+                          </div>
+                          <p className="text-xs text-earth-500 mt-1">Aprox. em BRL: {formatBRL(useWallet && remainingJpy > 0 ? jpyToBrl(remainingJpy) : (p?.approxBrl ?? 0))}</p>
+                        </>
+                      )}
                     </div>
-                  )}
 
-                  <label className={`flex items-start gap-3 rounded-lg border p-4 ${canUseWallet ? 'border-earth-200 bg-white' : 'border-earth-100 bg-earth-50 opacity-70'}`}>
-                    <input
-                      type="checkbox"
-                      checked={!!payModal.useWallet}
-                      disabled={!canUseWallet}
-                      onChange={(e) => setPayModal((m) => ({ ...m, useWallet: e.target.checked }))}
-                      className="mt-1"
-                    />
-                    <div>
-                      <p className="font-medium text-earth-900">Usar saldo da carteira</p>
-                      <p className="text-sm text-earth-600">
-                        Aplicaremos o saldo disponível (JPY) como parte do pagamento. Se não cobrir tudo, o restante vai para cartão.
-                      </p>
-                    </div>
-                  </label>
+                    <label className={`flex items-start gap-3 rounded-lg border p-4 ${canUseWallet ? 'border-earth-200 bg-white cursor-pointer' : 'border-earth-100 bg-earth-50 opacity-70'}`}>
+                      <input
+                        type="checkbox"
+                        checked={!!payModal.useWallet}
+                        disabled={!canUseWallet}
+                        onChange={(e) => setPayModal((m) => ({ ...m, useWallet: e.target.checked }))}
+                        className="mt-1"
+                      />
+                      <div>
+                        <p className="font-medium text-earth-900">Usar saldo da carteira</p>
+                        <p className="text-sm text-earth-600">
+                          Saldo disponível: {formatJPY(balance)}
+                        </p>
+                      </div>
+                    </label>
+                  </div>
+                )
+              })()}
+            </div>
 
-                  <div className="rounded-lg border border-earth-200 bg-white p-4">
-                    <p className="text-sm font-medium text-earth-800">Opções de pagamento</p>
-                    <div className="mt-3 flex flex-wrap gap-2">
+            <div className="shrink-0 border-t border-earth-200 bg-earth-50 p-4">
+              {(() => {
+                const p = getChargeJpy(payModal.order)
+                const balance = wallet?.balance ?? 0
+                const canUseWallet = balance > 0 && (wallet?.currency || 'JPY') === 'JPY'
+                const totalJpy = p?.amountJpy ?? 0
+                const useWallet = !!payModal.useWallet && canUseWallet
+                const remainingJpy = totalJpy - (useWallet ? Math.min(balance, totalJpy) : 0)
+                const isFullyCovered = remainingJpy <= 0 && useWallet
+
+                return (
+                  <div className="flex flex-col gap-3">
+                    <div className="flex flex-wrap gap-2">
                       <button
                         type="button"
-                        onClick={() => handlePayShipping(payModal.order, { useWallet: !!payModal.useWallet })}
+                        onClick={() => handlePayShipping(payModal.order, { useWallet })}
                         disabled={payingId === payModal.order.id}
-                        className="rounded-lg bg-earth-900 px-4 py-2.5 font-medium text-earth-50 hover:bg-earth-800 disabled:opacity-60"
+                        className="rounded-lg border border-earth-300 bg-white px-4 py-2.5 font-medium text-earth-800 hover:bg-earth-50 disabled:opacity-60"
                       >
-                        {payingId === payModal.order.id ? 'Processando...' : 'Cartão'}
+                        Cartão
                       </button>
                       <button
                         type="button"
-                        onClick={() => handlePayWithKomoju(payModal.order, 'pix')}
+                        onClick={() => {
+                          setPayModal((m) => ({ ...m, open: false }))
+                          setPixModal({ open: true, order: payModal.order })
+                        }}
                         disabled={payingId === payModal.order.id}
                         className="rounded-lg border border-earth-300 bg-white px-4 py-2.5 font-medium text-earth-800 hover:bg-earth-50 disabled:opacity-60"
                       >
                         PIX
+                      </button>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handlePayShipping(payModal.order, { useWallet: isFullyCovered ? true : useWallet })}
+                        disabled={payingId === payModal.order.id}
+                        className="flex-1 min-w-0 rounded-lg bg-earth-900 px-6 py-2.5 font-medium text-earth-50 hover:bg-earth-800 disabled:opacity-60"
+                      >
+                        {payingId === payModal.order.id ? 'Processando...' : 'Finalizar compra'}
                       </button>
                       <button
                         type="button"
@@ -479,13 +556,10 @@ export default function Orders() {
                         Cancelar
                       </button>
                     </div>
-                    <p className="mt-2 text-xs text-earth-500">
-                      Cartão: Stripe (principal) com fallback automático para KOMOJU em caso de falha.
-                    </p>
                   </div>
-                </div>
-              )
-            })()}
+                )
+              })()}
+            </div>
           </div>
         </div>
       )}

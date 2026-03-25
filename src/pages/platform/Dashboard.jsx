@@ -206,6 +206,14 @@ export default function Dashboard() {
                       <button
                         key={n.id}
                         type="button"
+                        onMouseEnter={async () => {
+                          if (isUnread) {
+                            await markNotificationRead(n.id)
+                            setNotifications((prev) =>
+                              prev.map((x) => (x.id === n.id ? { ...x, read_at: new Date().toISOString() } : x))
+                            )
+                          }
+                        }}
                         onClick={async () => {
                           if (isUnread) {
                             await markNotificationRead(n.id)

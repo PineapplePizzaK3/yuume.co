@@ -5,8 +5,10 @@
 import { useEffect, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { useAuth } from '../../hooks/useAuth'
-import { getWallet, getWalletTransactions } from '../../services/walletService'
+import { getWallet, getWalletTransactions, createWalletTopupRequest } from '../../services/walletService'
 import { createTopUpCheckoutSession } from '../../services/paymentService'
+import { jpyToBrl } from '../../lib/fx'
+import WalletTopupPixModal from '../../components/WalletTopupPixModal'
 import { cacheKey, readCache, writeCache } from '../../lib/cache'
 
 function formatMoney(value, currency = 'BRL') {
@@ -30,6 +32,7 @@ export default function Wallet() {
   const [topUpAmount, setTopUpAmount] = useState('1000')
   const [adding, setAdding] = useState(false)
   const [feedback, setFeedback] = useState('')
+  const [pixModal, setPixModal] = useState({ open: false, request: null })
 
   const loadData = async (active) => {
     if (!user?.id) return
@@ -77,7 +80,7 @@ export default function Wallet() {
     }
   }, [])
 
-  const handleAddFunds = async (e) => {
+  const handleAddFundsCard = async (e) => {
     e.preventDefault()
     const value = parseFloat(topUpAmount?.replace(',', '.'))
     if (!value || value < 500 || value > 500000) {
@@ -97,6 +100,32 @@ export default function Wallet() {
       const { url } = await createTopUpCheckoutSession(amountJpy, accessToken)
       if (url) window.location.href = url
       else setFeedback('Erro ao abrir pagamento')
+    } catch (err) {
+      setFeedback(err.message || 'Erro ao adicionar saldo')
+    } finally {
+      setAdding(false)
+    }
+  }
+
+  const handleAddFundsPix = async (e) => {
+    e.preventDefault()
+    const value = parseFloat(topUpAmount?.replace(',', '.'))
+    if (!value || value < 500 || value > 500000) {
+      setFeedback('Informe um valor entre ¥500 e ¥500.000')
+      return
+    }
+    const amountJpy = Math.round(value)
+    const amountBrl = jpyToBrl(amountJpy)
+    setAdding(true)
+    setFeedback('')
+    try {
+      const { data: request, error } = await createWalletTopupRequest(user.id, amountJpy, amountBrl)
+      if (error) {
+        setFeedback(error.message || 'Erro ao criar solicitação PIX')
+        setAdding(false)
+        return
+      }
+      setPixModal({ open: true, request })
     } catch (err) {
       setFeedback(err.message || 'Erro ao adicionar saldo')
     } finally {
@@ -141,7 +170,7 @@ export default function Wallet() {
                 {formatMoney(wallet?.balance ?? 0, 'JPY')}
               </p>
 
-              <form onSubmit={handleAddFunds} className="mt-6">
+              <form onSubmit={(e) => { e.preventDefault(); handleAddFundsCard(e); }} className="mt-6">
                 <label className="block text-sm font-medium text-earth-700">Adicionar saldo</label>
                 <div className="mt-2 flex flex-wrap items-center gap-2">
                   {presets.map((p) => (
@@ -168,13 +197,23 @@ export default function Wallet() {
                   />
                   <span className="text-sm text-earth-500">mín. ¥500 — máx. ¥500.000</span>
                 </div>
-                <button
-                  type="submit"
-                  disabled={adding}
-                  className="mt-4 rounded-lg bg-earth-900 px-5 py-2.5 font-medium text-earth-50 hover:bg-earth-800 disabled:opacity-60"
-                >
-                  {adding ? 'Abrindo pagamento...' : 'Adicionar saldo (cartão)'}
-                </button>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <button
+                    type="submit"
+                    disabled={adding}
+                    className="rounded-lg bg-earth-900 px-5 py-2.5 font-medium text-earth-50 hover:bg-earth-800 disabled:opacity-60"
+                  >
+                    {adding ? 'Abrindo...' : 'Cartão'}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={adding}
+                    onClick={handleAddFundsPix}
+                    className="rounded-lg border border-earth-900 bg-white px-5 py-2.5 font-medium text-earth-900 hover:bg-earth-50 disabled:opacity-60"
+                  >
+                    {adding ? '...' : 'PIX'}
+                  </button>
+                </div>
               </form>
             </div>
 
@@ -221,6 +260,15 @@ export default function Wallet() {
           </>
         )}
       </div>
+
+      <WalletTopupPixModal
+        open={pixModal.open}
+        onClose={() => setPixModal({ open: false, request: null })}
+        amountBrl={pixModal.request?.amount_brl}
+        amountJpy={pixModal.request?.amount_jpy}
+        requestId={pixModal.request?.id}
+        userId={user?.id}
+      />
     </>
   )
 }

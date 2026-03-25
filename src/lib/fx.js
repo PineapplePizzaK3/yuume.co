@@ -25,3 +25,11 @@ export function formatBRL(v) {
   return Number(v)?.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) ?? '—'
 }
 
+/** Formata peso em kg para exibição (usa g se < 1 kg). */
+export function formatWeight(weightKg) {
+  const kg = Number(weightKg)
+  if (!Number.isFinite(kg) || kg <= 0) return '—'
+  if (kg < 1) return `${Math.round(kg * 1000)} g`
+  return `${kg.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 3 })} kg`
+}
+

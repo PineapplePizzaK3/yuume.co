@@ -35,7 +35,13 @@ import {
   setShipmentCompletedAdmin,
   setShipmentPaidAdmin,
 } from '../../services/inventoryService'
-import { getUsersAdmin } from '../../services/profileService'
+import { getUsersAdmin, getUserFullAdmin, updateProfileAdmin } from '../../services/profileService'
+import {
+  addWalletBalanceAdmin,
+  getWalletTopupRequestsAdmin,
+  approveWalletTopupAdmin,
+  rejectWalletTopupAdmin,
+} from '../../services/walletService'
 import {
   createPurchaseGroup,
   getPurchaseGroupsAdmin,
@@ -47,7 +53,10 @@ import {
 } from '../../services/groupService'
 import { getPurchaseGroupProducts } from '../../services/productService'
 import { getUserLogs, getAuthLogs, logAdminAction } from '../../services/logService'
-import { brlToJpy, jpyToBrl, formatJPY } from '../../lib/fx'
+import { brlToJpy, jpyToBrl, formatJPY, formatWeight } from '../../lib/fx'
+import { parseQuoteMessage, serializeQuoteProducts } from '../../lib/quoteProducts'
+import QuoteProductsList from '../../components/QuoteProductsList'
+import OrderAttachments from '../../components/OrderAttachments'
 
 function formatMoney(v, currency = 'BRL') {
   return Number(v)?.toLocaleString('pt-BR', { style: 'currency', currency }) ?? '—'
@@ -75,6 +84,7 @@ export default function Admin() {
     description: '',
     price: '',
     weight_kg: '',
+    weight_unit: 'g',
     stock_quantity: '',
     image_url: '',
     image_urls: [],
@@ -82,9 +92,16 @@ export default function Admin() {
   })
   const [imageUploading, setImageUploading] = useState(false)
   const [imageUploadError, setImageUploadError] = useState('')
+  const [duplicatingId, setDuplicatingId] = useState(null)
   const [newImageUrl, setNewImageUrl] = useState('')
   const [shippingModal, setShippingModal] = useState({ open: false, orderId: null, cost: '', currency: 'JPY' })
-  const [quoteModal, setQuoteModal] = useState({ open: false, orderId: null, amount: '', currency: 'JPY', message: '' })
+  const [quoteModal, setQuoteModal] = useState({
+    open: false,
+    orderId: null,
+    orderDescription: '',
+    products: [{ name: '', valor: '', quantidade: 1, descricao: '' }],
+    currency: 'JPY',
+  })
   const [orderEditModal, setOrderEditModal] = useState({
     open: false,
     orderId: null,
@@ -139,6 +156,7 @@ export default function Admin() {
   const [groupImageUploading, setGroupImageUploading] = useState(false)
   const [groupImageUploadError, setGroupImageUploadError] = useState('')
   const [newGroupImageUrl, setNewGroupImageUrl] = useState('')
+  const [groupProductImageUploading, setGroupProductImageUploading] = useState(false)
   const [groupProducts, setGroupProducts] = useState([])
   const [pendingGroupProducts, setPendingGroupProducts] = useState([])
   const [groupProductForm, setGroupProductForm] = useState({
@@ -148,6 +166,7 @@ export default function Admin() {
     image_url: '',
     image_urls: [],
     weight_kg: '0',
+    weight_unit: 'g',
   })
   const [editingGroupProductId, setEditingGroupProductId] = useState(null)
   const [editingPendingProductIndex, setEditingPendingProductIndex] = useState(null)
@@ -155,11 +174,32 @@ export default function Admin() {
 
   const TABS = [
     { id: 'pedidos', label: 'Pedidos', icon: '📦' },
+    { id: 'usuarios', label: 'Usuários', icon: '👤' },
     { id: 'envios', label: 'Envios', icon: '🚚' },
     { id: 'produtos', label: 'Produtos', icon: '🛒' },
+    { id: 'catalogo_produtos', label: 'Lista de Produtos', icon: '📚' },
     { id: 'grupos', label: 'Grupo de Compras', icon: '👥' },
+    { id: 'recargas', label: 'Recargas PIX', icon: '💰' },
     { id: 'logs', label: 'Logs', icon: '📋' },
   ]
+
+  const [usersList, setUsersList] = useState([])
+  const [usersListLoading, setUsersListLoading] = useState(false)
+  const [topupRequests, setTopupRequests] = useState([])
+  const [topupLoading, setTopupLoading] = useState(false)
+  const [userDetailModal, setUserDetailModal] = useState({
+    open: false,
+    user: null,
+    profile: null,
+    wallet: null,
+    ordersCount: 0,
+    profileForm: { name: '', email: '', cpf_cnpj: '', phone: '', role: 'user', account_code: '' },
+    walletAmount: '',
+    walletDesc: '',
+    loading: false,
+    saving: false,
+    walletSaving: false,
+  })
 
   const [userLogs, setUserLogs] = useState([])
   const [userLogsLoading, setUserLogsLoading] = useState(false)
@@ -170,6 +210,8 @@ export default function Admin() {
   const [shippingPanelLoading, setShippingPanelLoading] = useState(false)
   const [shipmentFreightModal, setShipmentFreightModal] = useState({ open: false, shipmentId: null, cost: '', currency: 'JPY' })
   const [shipmentShippedModal, setShipmentShippedModal] = useState({ open: false, shipmentId: null, trackingCode: '' })
+  const [catalogSearch, setCatalogSearch] = useState('')
+  const [catalogStatusFilter, setCatalogStatusFilter] = useState('all')
 
   const loadProducts = async (active = () => true) => {
     if (active()) setLoading(true)
@@ -242,6 +284,152 @@ export default function Admin() {
     }
   }, [])
 
+  const loadUsersForAdmin = async (active = () => true) => {
+    if (active()) setUsersListLoading(true)
+    try {
+      const { data, error } = await getUsersAdmin()
+      if (!active()) return
+      setUsersList(data ?? [])
+      if (error) setMessage(error.message)
+    } catch (e) {
+      if (active()) setMessage(e?.message || 'Erro ao carregar usuários')
+    } finally {
+      if (active()) setUsersListLoading(false)
+    }
+  }
+
+  const openUserDetail = async (u) => {
+    setUserDetailModal((m) => ({ ...m, open: true, user: u, loading: true, profile: null, wallet: null, ordersCount: 0 }))
+    try {
+      const { data, error } = await getUserFullAdmin(u.id)
+      if (error) {
+        setMessage(error.message)
+        return
+      }
+      const p = data?.profile ?? {}
+      setUserDetailModal((m) => ({
+        ...m,
+        loading: false,
+        profile: p,
+        wallet: data?.wallet ?? { balance: 0, currency: 'JPY' },
+        ordersCount: data?.orders_count ?? 0,
+        profileForm: {
+          name: p.name ?? '',
+          email: p.email ?? '',
+          cpf_cnpj: p.cpf_cnpj ?? '',
+          phone: p.phone ?? '',
+          role: p.role ?? 'user',
+          account_code: p.account_code ?? '',
+        },
+        walletAmount: '',
+        walletDesc: '',
+      }))
+    } catch (e) {
+      setMessage(e?.message || 'Erro ao carregar usuário')
+      setUserDetailModal((m) => ({ ...m, loading: false }))
+    }
+  }
+
+  const closeUserDetail = () => {
+    setUserDetailModal({
+      open: false,
+      user: null,
+      profile: null,
+      wallet: null,
+      ordersCount: 0,
+      profileForm: { name: '', email: '', cpf_cnpj: '', phone: '', role: 'user', account_code: '' },
+      walletAmount: '',
+      walletDesc: '',
+      loading: false,
+      saving: false,
+      walletSaving: false,
+    })
+  }
+
+  const handleSaveProfileEdit = async (e) => {
+    e.preventDefault()
+    const uid = userDetailModal.user?.id
+    if (!uid) return
+    setUserDetailModal((m) => ({ ...m, saving: true }))
+    setMessage('')
+    try {
+      const { error } = await updateProfileAdmin(uid, {
+        name: userDetailModal.profileForm.name.trim() || null,
+        email: userDetailModal.profileForm.email.trim() || null,
+        cpf_cnpj: userDetailModal.profileForm.cpf_cnpj.trim() || null,
+        phone: userDetailModal.profileForm.phone.trim() || null,
+        role: userDetailModal.profileForm.role,
+        account_code: userDetailModal.profileForm.account_code.trim() || null,
+      })
+      if (error) {
+        setMessage(error.message)
+        return
+      }
+      logAdminAction('profile_edit', 'profile', uid, {})
+      const { data } = await getUserFullAdmin(uid)
+      const p = data?.profile ?? {}
+      setUserDetailModal((m) => ({
+        ...m,
+        saving: false,
+        profile: p,
+        profileForm: {
+          name: p.name ?? '',
+          email: p.email ?? '',
+          cpf_cnpj: p.cpf_cnpj ?? '',
+          phone: p.phone ?? '',
+          role: p.role ?? 'user',
+          account_code: p.account_code ?? '',
+        },
+      }))
+      setMessage('Perfil atualizado.')
+    } catch (e) {
+      setMessage(e?.message || 'Erro ao atualizar perfil')
+      setUserDetailModal((m) => ({ ...m, saving: false }))
+    }
+  }
+
+  const handleAddWalletBalance = async (e) => {
+    e.preventDefault()
+    const uid = userDetailModal.user?.id
+    if (!uid) return
+    const amount = parseFloat(userDetailModal.walletAmount)
+    if (isNaN(amount) || amount <= 0) {
+      setMessage('Informe um valor positivo.')
+      return
+    }
+    setUserDetailModal((m) => ({ ...m, walletSaving: true }))
+    setMessage('')
+    try {
+      const { error } = await addWalletBalanceAdmin(uid, amount, userDetailModal.walletDesc.trim() || null)
+      if (error) {
+        setMessage(error.message)
+        setUserDetailModal((m) => ({ ...m, walletSaving: false }))
+        return
+      }
+      logAdminAction('wallet_credit', 'profile', uid, { amount, description: userDetailModal.walletDesc })
+      const { data } = await getUserFullAdmin(uid)
+      setUserDetailModal((m) => ({
+        ...m,
+        walletSaving: false,
+        wallet: data?.wallet ?? { balance: 0, currency: 'JPY' },
+        walletAmount: '',
+        walletDesc: '',
+      }))
+      setMessage('Saldo adicionado com sucesso.')
+    } catch (e) {
+      setMessage(e?.message || 'Erro ao adicionar saldo')
+      setUserDetailModal((m) => ({ ...m, walletSaving: false }))
+    }
+  }
+
+  useEffect(() => {
+    if (activeTab === 'usuarios') {
+      let isActive = true
+      loadUsersForAdmin(() => isActive)
+      return () => { isActive = false }
+    }
+  }, [activeTab])
+
   useEffect(() => {
     if (activeTab === 'logs') {
       let isActive = true
@@ -275,12 +463,35 @@ export default function Admin() {
     }
   }, [activeTab])
 
+  const loadTopupRequests = async (active = () => true) => {
+    setTopupLoading(true)
+    try {
+      const { data, error } = await getWalletTopupRequestsAdmin('pending')
+      if (!active()) return
+      setTopupRequests(data ?? [])
+      if (error) setMessage(error?.message)
+    } catch (e) {
+      if (active()) setMessage(e?.message || 'Erro ao carregar recargas')
+    } finally {
+      if (active()) setTopupLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (activeTab === 'recargas') {
+      let isActive = true
+      loadTopupRequests(() => isActive)
+      return () => { isActive = false }
+    }
+  }, [activeTab])
+
   const resetForm = () => {
     setForm({
       name: '',
       description: '',
       price: '',
       weight_kg: '',
+      weight_unit: 'g',
       stock_quantity: '',
       image_url: '',
       image_urls: [],
@@ -304,7 +515,7 @@ export default function Admin() {
     setNewGroupImageUrl('')
     setGroupProducts([])
     setPendingGroupProducts([])
-    setGroupProductForm({ name: '', price: '', description: '', image_url: '', image_urls: [], weight_kg: '0' })
+    setGroupProductForm({ name: '', price: '', description: '', image_url: '', image_urls: [], weight_kg: '0', weight_unit: 'g' })
     setEditingGroupProductId(null)
     setEditingPendingProductIndex(null)
   }
@@ -329,12 +540,12 @@ export default function Admin() {
     setEditingGroupProductId(null)
     setEditingPendingProductIndex(null)
     setPendingGroupProducts([])
-    setGroupProductForm({ name: '', price: '', description: '', image_url: '', image_urls: [], weight_kg: '0' })
+    setGroupProductForm({ name: '', price: '', description: '', image_url: '', image_urls: [], weight_kg: '0', weight_unit: 'g' })
     loadGroupProducts(g.id)
   }
 
   const resetGroupProductForm = () => {
-    setGroupProductForm({ name: '', price: '', description: '', image_url: '', image_urls: [], weight_kg: '0' })
+    setGroupProductForm({ name: '', price: '', description: '', image_url: '', image_urls: [], weight_kg: '0', weight_unit: 'g' })
     setEditingGroupProductId(null)
     setEditingPendingProductIndex(null)
   }
@@ -342,6 +553,8 @@ export default function Admin() {
   const buildGroupProductPayload = () => {
     const price = parseFloat(groupProductForm.price)
     if (isNaN(price) || price < 0) return null
+    const weightVal = parseFloat(groupProductForm.weight_kg) || 0
+    const weightKg = groupProductForm.weight_unit === 'g' ? weightVal / 1000 : weightVal
     const imageUrls = Array.isArray(groupProductForm.image_urls)?.length
       ? groupProductForm.image_urls.filter(Boolean)
       : groupProductForm.image_url ? [groupProductForm.image_url] : []
@@ -351,7 +564,7 @@ export default function Admin() {
       price: jpyToBrl(price),
       image_url: imageUrls[0] || groupProductForm.image_url || '',
       image_urls: imageUrls,
-      weight_kg: parseFloat(groupProductForm.weight_kg) || 0,
+      weight_kg: weightKg,
     }
   }
 
@@ -405,13 +618,16 @@ export default function Admin() {
   }
 
   const handleEditGroupProduct = (p) => {
+    const kg = Number(p.weight_kg ?? 0)
+    const useG = kg > 0 && kg < 1
     setGroupProductForm({
       name: p.name ?? '',
       price: String(Math.round(brlToJpy(Number(p.price ?? 0)))),
       description: p.description ?? '',
       image_url: p.image_url ?? '',
       image_urls: Array.isArray(p.image_urls) ? p.image_urls : (p.image_url ? [p.image_url] : []),
-      weight_kg: String(Number(p.weight_kg ?? 0)),
+      weight_kg: useG ? String(Math.round(kg * 1000)) : String(kg),
+      weight_unit: useG ? 'g' : 'kg',
     })
     setEditingGroupProductId(p.id)
   }
@@ -427,13 +643,16 @@ export default function Admin() {
   }
 
   const handleEditPendingGroupProduct = (item, index) => {
+    const kg = Number(item.weight_kg ?? 0)
+    const useG = kg > 0 && kg < 1
     setGroupProductForm({
       name: item.name ?? '',
       price: String(Math.round(brlToJpy(Number(item.price ?? 0)))),
       description: item.description ?? '',
       image_url: item.image_url ?? '',
       image_urls: Array.isArray(item.image_urls) ? item.image_urls : (item.image_url ? [item.image_url] : []),
-      weight_kg: String(Number(item.weight_kg ?? 0)),
+      weight_kg: useG ? String(Math.round(kg * 1000)) : String(kg),
+      weight_unit: useG ? 'g' : 'kg',
     })
     setEditingPendingProductIndex(index)
   }
@@ -575,12 +794,15 @@ export default function Admin() {
 
   const handleEdit = (p) => {
     const urls = getProductImageUrls(p)
+    const kg = Number(p.weight_kg ?? 0)
+    const useG = kg > 0 && kg < 1
     setForm({
       name: p.name,
       description: p.description ?? '',
       // UI do admin em JPY (mantemos persistência em BRL no banco)
       price: String(Math.round(brlToJpy(Number(p.price ?? 0)))),
-      weight_kg: String(Number(p.weight_kg ?? 0)),
+      weight_kg: useG ? String(Math.round(kg * 1000)) : String(kg),
+      weight_unit: useG ? 'g' : 'kg',
       stock_quantity: p.stock_quantity != null ? String(p.stock_quantity) : '',
       image_url: p.image_url ?? urls[0] ?? '',
       image_urls: urls,
@@ -599,11 +821,12 @@ export default function Admin() {
       setMessage('Preço inválido')
       return
     }
-    const weightKg = parseFloat(form.weight_kg)
-    if (isNaN(weightKg) || weightKg <= 0) {
-      setMessage('Peso inválido (informe o peso do produto em kg)')
+    const weightVal = parseFloat(form.weight_kg)
+    if (isNaN(weightVal) || weightVal <= 0) {
+      setMessage('Peso inválido (informe o peso do produto)')
       return
     }
+    const weightKg = form.weight_unit === 'g' ? weightVal / 1000 : weightVal
     // Converter JPY (UI) -> BRL (banco), já que o projeto salva preços da loja em BRL.
     const price = jpyToBrl(priceJpy)
     const imageUrls = Array.isArray(form.image_urls) && form.image_urls.length > 0
@@ -658,6 +881,32 @@ export default function Admin() {
     loadProducts()
     // Log não deve interferir no UX de remoção.
     logAdminAction('product_delete', 'product', id).catch(() => {})
+  }
+
+  const handleDuplicate = async (p) => {
+    setDuplicatingId(p.id)
+    setMessage('')
+    const urls = Array.isArray(p.image_urls)?.length ? p.image_urls.filter(Boolean) : (p.image_url ? [p.image_url] : [])
+    const payload = {
+      name: `${(p.name || '').trim()} (cópia)`,
+      description: p.description ?? '',
+      price: p.price,
+      weight_kg: p.weight_kg ?? 0,
+      stock_quantity: p.stock_quantity ?? null,
+      image_url: urls[0] || p.image_url || '',
+      image_urls: urls,
+      is_active: p.is_active ?? true,
+    }
+    try {
+      const { data, error } = await createProduct(payload)
+      setMessage(error ? error.message : 'Produto duplicado')
+      if (!error) {
+        logAdminAction('product_duplicate', 'product', data?.id, { from: p.id, name: payload.name })
+        loadProducts()
+      }
+    } finally {
+      setDuplicatingId(null)
+    }
   }
 
   const handleOrderStatus = async (orderId, status) => {
@@ -764,19 +1013,27 @@ export default function Admin() {
 
   const handleSetQuote = async (e) => {
     e.preventDefault()
-    const amount = parseFloat(quoteModal.amount)
-    if (isNaN(amount) || amount <= 0) {
-      setMessage('Informe um valor válido para o orçamento.')
+    const products = quoteModal.products
+      .map((p) => ({
+        ...p,
+        valor: parseFloat(p.valor) || 0,
+        quantidade: Math.max(1, parseInt(p.quantidade, 10) || 1),
+      }))
+      .filter((p) => (p.name?.trim() || p.descricao?.trim()) && p.valor > 0)
+    if (products.length === 0) {
+      setMessage('Adicione ao menos um produto com nome ou descrição e valor.')
       return
     }
+    const total = products.reduce((s, p) => s + p.valor * p.quantidade, 0)
+    const message = serializeQuoteProducts(products, quoteModal.orderDescription)
     setSubmitting(true)
     setMessage('')
-    const { error } = await setQuoteAdmin(quoteModal.orderId, amount, 'JPY', quoteModal.message)
+    const { error } = await setQuoteAdmin(quoteModal.orderId, total, 'JPY', message)
     setSubmitting(false)
     setMessage(error ? error.message : 'Orçamento definido. Cliente pode pagar em Pedidos.')
     if (!error) {
-      logAdminAction('order_set_quote', 'order', quoteModal.orderId, { amount, currency: 'JPY' })
-      setQuoteModal({ open: false, orderId: null, amount: '', currency: 'JPY', message: '' })
+      logAdminAction('order_set_quote', 'order', quoteModal.orderId, { total, currency: 'JPY', productsCount: products.length })
+      setQuoteModal({ open: false, orderId: null, orderDescription: '', products: [{ name: '', valor: '', quantidade: 1, descricao: '' }], currency: 'JPY' })
       loadOrders()
     }
   }
@@ -947,6 +1204,25 @@ export default function Admin() {
     }
   }
 
+  const catalogTerm = catalogSearch.trim().toLowerCase()
+  const catalogProducts = products.filter((p) => {
+    const statusOk =
+      catalogStatusFilter === 'all' ||
+      (catalogStatusFilter === 'active' && !!p.is_active) ||
+      (catalogStatusFilter === 'inactive' && !p.is_active)
+    if (!statusOk) return false
+    if (!catalogTerm) return true
+    const haystack = [
+      p.id,
+      p.name,
+      p.description,
+      p.purchase_group_id ? 'grupo' : 'loja',
+    ]
+      .map((v) => String(v ?? '').toLowerCase())
+      .join(' ')
+    return haystack.includes(catalogTerm)
+  })
+
   return (
     <>
       <Helmet>
@@ -966,13 +1242,13 @@ export default function Admin() {
 
         {/* Navegação por abas */}
         <nav className="mt-6 border-b border-earth-200">
-          <div className="flex gap-1">
+          <div className="flex gap-1 overflow-x-auto pb-1">
             {TABS.map((tab) => (
               <button
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-colors ${
+                className={`shrink-0 whitespace-nowrap flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-colors ${
                   activeTab === tab.id
                     ? 'border-b-2 border-earth-900 bg-earth-50 text-earth-900'
                     : 'text-earth-600 hover:bg-earth-100 hover:text-earth-800'
@@ -1043,16 +1319,14 @@ export default function Admin() {
                         </p>
                       )}
                       {o.message && (
-                        <p className="mt-1 text-sm text-earth-500 italic">{o.message}</p>
+                        <QuoteProductsList
+                          message={o.message}
+                          quoteCurrency={o.quote_currency || 'JPY'}
+                          formatMoney={formatMoney}
+                        />
                       )}
                       {Array.isArray(o.attachment_urls) && o.attachment_urls.length > 0 && (
-                        <div className="mt-1 flex flex-wrap gap-1">
-                          {o.attachment_urls.slice(0, 5).map((url, i) => (
-                            <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="text-xs text-earth-600 underline">
-                              Imagem {i + 1}
-                            </a>
-                          ))}
-                        </div>
+                        <OrderAttachments urls={o.attachment_urls} maxThumbnails={8} />
                       )}
                       {o.quote_amount != null && (
                         <p className="mt-1 text-sm font-medium text-earth-700">
@@ -1074,7 +1348,19 @@ export default function Admin() {
                       {o.status === ORDER_STATUS.AWAITING_QUOTE && (
                         <button
                           type="button"
-                          onClick={() => setQuoteModal({ open: true, orderId: o.id, amount: '', currency: 'JPY', message: o.message ?? '' })}
+                          onClick={() => {
+                          const parsed = parseQuoteMessage(o.message)
+                          const orderDescription = parsed?.orderDescription ?? (parsed ? '' : (o.message?.trim() ?? ''))
+                          const products = parsed?.products?.length
+                            ? parsed.products.map((p) => ({
+                                name: String(p.name ?? ''),
+                                valor: p.valor != null ? String(p.valor) : '',
+                                quantidade: p.quantidade != null ? String(p.quantidade) : '1',
+                                descricao: String(p.descricao ?? ''),
+                              }))
+                            : [{ name: '', valor: '', quantidade: 1, descricao: '' }]
+                          setQuoteModal({ open: true, orderId: o.id, orderDescription, products, currency: 'JPY' })
+                        }}
                           className="rounded bg-amber-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-amber-700"
                         >
                           Definir orçamento
@@ -1386,45 +1672,138 @@ export default function Admin() {
               className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
             >
               <div
-                className="w-full max-w-sm rounded-xl bg-white p-6 shadow-lg"
+                className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl bg-white p-6 shadow-lg"
                 onClick={(e) => e.stopPropagation()}
               >
                 <h3 className="font-semibold text-earth-900">Definir orçamento (Personal Shopping)</h3>
-                <div className="mt-4 space-y-3">
+                <p className="mt-1 text-sm text-earth-600">Lista de produtos com nome, valor e descrição.</p>
+                <div className="mt-4 space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-earth-700">Valor (¥)</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      required
-                      value={quoteModal.amount}
-                      onChange={(e) =>
-                        setQuoteModal((m) => ({ ...m, amount: e.target.value }))
-                      }
-                      placeholder="Ex: 150.00"
-                      className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-earth-700">Moeda</label>
-                    <input
-                      value="JPY (¥)"
-                      disabled
-                      className="mt-1 block w-full rounded-lg border border-earth-300 bg-earth-50 px-3 py-2 text-earth-900"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-earth-700">Mensagem / descrição do pedido</label>
+                    <label className="block text-sm font-medium text-earth-700">Descrição do pedido (aparece no topo do orçamento)</label>
                     <textarea
-                      value={quoteModal.message}
-                      onChange={(e) =>
-                        setQuoteModal((m) => ({ ...m, message: e.target.value }))
-                      }
-                      rows={4}
-                      placeholder="Descreva o orçamento (itens, quantidades, links, observações...)"
-                      className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                      value={quoteModal.orderDescription}
+                      onChange={(e) => setQuoteModal((m) => ({ ...m, orderDescription: e.target.value }))}
+                      rows={2}
+                      placeholder="Mensagem/pedido do cliente..."
+                      className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
                     />
+                  </div>
+                  {quoteModal.products.map((item, idx) => (
+                    <div key={idx} className="rounded-lg border border-earth-200 bg-earth-50/50 p-4">
+                      <div className="mb-3 flex items-center justify-between">
+                        <span className="text-sm font-medium text-earth-700">Produto {idx + 1}</span>
+                        {quoteModal.products.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setQuoteModal((m) => ({
+                                ...m,
+                                products: m.products.filter((_, i) => i !== idx),
+                              }))
+                            }
+                            className="text-sm text-red-600 hover:text-red-800"
+                          >
+                            Remover
+                          </button>
+                        )}
+                      </div>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <div className="sm:col-span-2">
+                          <label className="block text-xs font-medium text-earth-600">Nome</label>
+                          <input
+                            type="text"
+                            value={item.name}
+                            onChange={(e) =>
+                              setQuoteModal((m) => ({
+                                ...m,
+                                products: m.products.map((p, i) =>
+                                  i === idx ? { ...p, name: e.target.value } : p
+                                ),
+                              }))
+                            }
+                            placeholder="Ex: Camiseta básica"
+                            className="mt-0.5 block w-full rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-earth-600">Valor (¥)</label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={item.valor}
+                            onChange={(e) =>
+                              setQuoteModal((m) => ({
+                                ...m,
+                                products: m.products.map((p, i) =>
+                                  i === idx ? { ...p, valor: e.target.value } : p
+                                ),
+                              }))
+                            }
+                            placeholder="Ex: 1500"
+                            className="mt-0.5 block w-full rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-earth-600">Qtd</label>
+                          <input
+                            type="number"
+                            min="1"
+                            value={item.quantidade ?? 1}
+                            onChange={(e) =>
+                              setQuoteModal((m) => ({
+                                ...m,
+                                products: m.products.map((p, i) =>
+                                  i === idx ? { ...p, quantidade: e.target.value } : p
+                                ),
+                              }))
+                            }
+                            placeholder="1"
+                            className="mt-0.5 block w-full rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
+                          />
+                        </div>
+                        <div className="sm:col-span-2">
+                          <label className="block text-xs font-medium text-earth-600">Descrição</label>
+                          <input
+                            type="text"
+                            value={item.descricao}
+                            onChange={(e) =>
+                              setQuoteModal((m) => ({
+                                ...m,
+                                products: m.products.map((p, i) =>
+                                  i === idx ? { ...p, descricao: e.target.value } : p
+                                ),
+                              }))
+                            }
+                            placeholder="Cor, tamanho, link..."
+                            className="mt-0.5 block w-full rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setQuoteModal((m) => ({
+                        ...m,
+                        products: [...m.products, { name: '', valor: '', quantidade: 1, descricao: '' }],
+                      }))
+                    }
+                    className="w-full rounded-lg border-2 border-dashed border-earth-300 py-2 text-sm font-medium text-earth-600 hover:border-earth-400 hover:bg-earth-50"
+                  >
+                    + Adicionar produto
+                  </button>
+                  <div className="rounded-lg bg-amber-50 border border-amber-200 px-4 py-3">
+                    <p className="text-sm font-semibold text-earth-900">
+                      Total: ¥ {quoteModal.products
+                        .reduce((s, p) => {
+                          const valor = parseFloat(p.valor) || 0
+                          const qty = Math.max(1, parseInt(p.quantidade, 10) || 1)
+                          return s + valor * qty
+                        }, 0)
+                        .toLocaleString('pt-BR')}
+                    </p>
                   </div>
                 </div>
                 <div className="mt-6 flex gap-2">
@@ -1437,7 +1816,15 @@ export default function Admin() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setQuoteModal({ open: false, orderId: null, amount: '', currency: 'JPY', message: '' })}
+                    onClick={() =>
+                      setQuoteModal({
+                        open: false,
+                        orderId: null,
+                        orderDescription: '',
+                        products: [{ name: '', valor: '', quantidade: 1, descricao: '' }],
+                        currency: 'JPY',
+                      })
+                    }
                     className="rounded-lg border border-earth-300 px-4 py-2 font-medium text-earth-700 hover:bg-earth-100"
                   >
                     Cancelar
@@ -1861,6 +2248,52 @@ export default function Admin() {
         </section>
         )}
 
+        {/* Usuários */}
+        {activeTab === 'usuarios' && (
+        <section className="mt-0 rounded-b-xl border border-t-0 border-earth-200 bg-earth-50 p-6">
+          <h2 className="text-lg font-semibold text-earth-900">Gestão de Usuários</h2>
+          <p className="mt-1 text-sm text-earth-600">
+            Visualize e edite informações dos usuários, adicione saldo na carteira e gerencie pedidos.
+          </p>
+          {usersListLoading && <p className="mt-4 text-sm text-earth-600">Carregando usuários...</p>}
+          {!usersListLoading && usersList.length === 0 && (
+            <p className="mt-4 text-sm text-earth-600">Nenhum usuário cadastrado.</p>
+          )}
+          {!usersListLoading && usersList.length > 0 && (
+            <div className="mt-4 overflow-x-auto rounded-lg border border-earth-200 bg-white">
+              <table className="min-w-full divide-y divide-earth-200 text-left text-sm">
+                <thead>
+                  <tr className="bg-earth-50">
+                    <th className="px-4 py-3 font-medium text-earth-900">Nome</th>
+                    <th className="px-4 py-3 font-medium text-earth-900">Email</th>
+                    <th className="px-4 py-3 font-medium text-earth-900">Código</th>
+                    <th className="px-4 py-3 font-medium text-earth-900">Ações</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-earth-200">
+                  {usersList.map((u) => (
+                    <tr key={u.id} className="hover:bg-earth-50/50">
+                      <td className="px-4 py-3 font-medium text-earth-900">{u.name || '—'}</td>
+                      <td className="px-4 py-3 text-earth-700">{u.email || '—'}</td>
+                      <td className="px-4 py-3 font-mono text-earth-600">{u.account_code || '—'}</td>
+                      <td className="px-4 py-3">
+                        <button
+                          type="button"
+                          onClick={() => openUserDetail(u)}
+                          className="rounded bg-earth-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-earth-800"
+                        >
+                          Ver / Editar
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+        )}
+
         {/* Grupo de Compras */}
         {activeTab === 'grupos' && (
           <section className="mt-0 rounded-b-xl border border-t-0 border-earth-200 bg-earth-50 p-6">
@@ -1897,7 +2330,7 @@ export default function Admin() {
                   <ul className="mt-2 space-y-2">
                     {groupProducts.map((p) => (
                       <li key={p.id} className="flex items-center justify-between rounded-lg border border-earth-200 bg-white px-3 py-2">
-                        <span className="text-sm text-earth-800">{p.name} — {formatJPY(brlToJpy(p.price))}</span>
+                        <span className="text-sm text-earth-800">{p.name} — {formatJPY(brlToJpy(p.price))}{Number(p.weight_kg ?? 0) > 0 ? ` • ${formatWeight(p.weight_kg)}` : ''}</span>
                         <div className="flex gap-2">
                           <button type="button" onClick={() => handleEditGroupProduct(p)} className="text-sm font-medium text-earth-600 hover:text-earth-900">
                             Editar
@@ -1914,7 +2347,7 @@ export default function Admin() {
                   <ul className="mt-2 space-y-2">
                     {pendingGroupProducts.map((p, i) => (
                       <li key={p.id} className="flex items-center justify-between rounded-lg border border-earth-200 bg-white px-3 py-2">
-                        <span className="text-sm text-earth-800">{p.name} — {formatJPY(brlToJpy(p.price))}</span>
+                        <span className="text-sm text-earth-800">{p.name} — {formatJPY(brlToJpy(p.price))}{Number(p.weight_kg ?? 0) > 0 ? ` • ${formatWeight(p.weight_kg)}` : ''}</span>
                         <div className="flex gap-2">
                           <button type="button" onClick={() => handleEditPendingGroupProduct(p, i)} className="text-sm font-medium text-earth-600 hover:text-earth-900">
                             Editar
@@ -1927,42 +2360,99 @@ export default function Admin() {
                     ))}
                   </ul>
                 )}
-                <form onSubmit={handleSaveGroupProduct} className="mt-3 space-y-2 rounded-lg border border-earth-200 bg-earth-50 p-3">
-                  <div className="grid gap-2 sm:grid-cols-2">
+                <div
+                  className="mt-3 space-y-2 rounded-lg border border-earth-200 bg-earth-50 p-3"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      if (groupProductForm.name?.trim() && !groupProductSubmitting) {
+                        handleSaveGroupProduct({ ...e, preventDefault: () => {} })
+                      }
+                    }
+                  }}
+                >
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-sm font-medium text-earth-700">Nome:</span>
                     <input
                       type="text"
                       placeholder="Nome do produto"
                       value={groupProductForm.name}
                       onChange={(e) => setGroupProductForm((f) => ({ ...f, name: e.target.value }))}
-                      className="rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
+                      className="min-w-[140px] flex-1 rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
                     />
+                    <span className="text-sm font-medium text-earth-700">Preço (¥):</span>
                     <input
                       type="number"
-                      placeholder="Preço (¥)"
+                      placeholder="0"
                       value={groupProductForm.price}
                       onChange={(e) => setGroupProductForm((f) => ({ ...f, price: e.target.value }))}
-                      className="rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
+                      className="w-24 rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
                     />
+                    <span className="text-sm font-medium text-earth-700">Peso:</span>
+                    <input
+                      type="number"
+                      step={groupProductForm.weight_unit === 'g' ? '1' : '0.001'}
+                      placeholder="0"
+                      value={groupProductForm.weight_kg}
+                      onChange={(e) => setGroupProductForm((f) => ({ ...f, weight_kg: e.target.value }))}
+                      className="w-20 rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
+                    />
+                    <select
+                      value={groupProductForm.weight_unit}
+                      onChange={(e) => setGroupProductForm((f) => ({ ...f, weight_unit: e.target.value }))}
+                      className="rounded-lg border border-earth-300 px-2 py-2 text-sm text-earth-900"
+                    >
+                      <option value="g">g</option>
+                      <option value="kg">kg</option>
+                    </select>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-sm font-medium text-earth-700">Imagem:</span>
+                    <label className="cursor-pointer rounded-lg border border-earth-300 bg-white px-3 py-2 text-sm font-medium text-earth-700 hover:bg-earth-50">
+                      {groupProductImageUploading ? 'Enviando...' : 'Enviar do PC'}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="sr-only"
+                        disabled={groupProductImageUploading}
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0]
+                          if (!file) return
+                          setGroupProductImageUploading(true)
+                          try {
+                            const { data, error } = await uploadProductImage(file)
+                            if (error) setMessage(error.message || 'Falha no upload')
+                            else if (data) {
+                              setGroupProductForm((f) => ({
+                                ...f,
+                                image_urls: [...(f.image_urls || []), data],
+                                image_url: f.image_url || data,
+                              }))
+                            }
+                          } finally {
+                            setGroupProductImageUploading(false)
+                            e.target.value = ''
+                          }
+                        }}
+                      />
+                    </label>
+                    <span className="text-sm text-earth-500">ou</span>
                     <input
                       type="url"
                       placeholder="URL da imagem"
                       value={groupProductForm.image_url}
                       onChange={(e) => setGroupProductForm((f) => ({ ...f, image_url: e.target.value }))}
-                      className="flex-1 rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
-                    />
-                    <input
-                      type="number"
-                      step="0.001"
-                      placeholder="Peso kg"
-                      value={groupProductForm.weight_kg}
-                      onChange={(e) => setGroupProductForm((f) => ({ ...f, weight_kg: e.target.value }))}
-                      className="w-24 rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
+                      className="min-w-[200px] flex-1 rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
                     />
                   </div>
                   <div className="flex gap-2">
-                    <button type="submit" disabled={groupProductSubmitting || !groupProductForm.name?.trim()} className="rounded-lg bg-earth-800 px-3 py-1.5 text-sm font-medium text-white hover:bg-earth-900 disabled:opacity-60">
+                    <button
+                      type="button"
+                      onClick={(e) => handleSaveGroupProduct({ ...e, preventDefault: () => {} })}
+                      disabled={groupProductSubmitting || !groupProductForm.name?.trim()}
+                      className="rounded-lg bg-earth-800 px-3 py-1.5 text-sm font-medium text-white hover:bg-earth-900 disabled:opacity-60"
+                    >
                       {editingGroupProductId || editingPendingProductIndex != null ? 'Salvar' : 'Adicionar'} produto
                     </button>
                     {(editingGroupProductId || editingPendingProductIndex != null) && (
@@ -1971,7 +2461,7 @@ export default function Admin() {
                       </button>
                     )}
                   </div>
-                </form>
+                </div>
               </div>
 
               <div className="flex items-center gap-2">
@@ -2134,7 +2624,7 @@ export default function Admin() {
                         )}
                         <div>
                           <p className="font-medium text-earth-900">{g.name}</p>
-                          {g.description && <p className="mt-1 text-sm text-earth-600 line-clamp-2">{g.description}</p>}
+                          {g.description && <p className="mt-1 line-clamp-2 whitespace-pre-wrap text-sm text-earth-600">{g.description}</p>}
                           <p className="mt-1 text-xs text-earth-500">
                             Produtos: {g.products_count ?? 0}
                           </p>
@@ -2164,6 +2654,79 @@ export default function Admin() {
                 </ul>
               )}
             </div>
+          </section>
+        )}
+
+        {/* Recargas PIX */}
+        {activeTab === 'recargas' && (
+          <section className="mt-0 rounded-b-xl border border-t-0 border-earth-200 bg-earth-50 p-6">
+            <h2 className="text-lg font-semibold text-earth-900">Recargas de carteira via PIX</h2>
+            <p className="mt-1 text-sm text-earth-600">
+              Solicitações pendentes de recarga. Verifique o comprovante e aprove para creditar o saldo.
+            </p>
+            {topupLoading && <p className="mt-4 text-sm text-earth-600">Carregando...</p>}
+            {!topupLoading && topupRequests.length === 0 && (
+              <p className="mt-4 text-sm text-earth-600">Nenhuma solicitação pendente.</p>
+            )}
+            {!topupLoading && topupRequests.length > 0 && (
+              <div className="mt-4 space-y-4">
+                {topupRequests.map((r) => (
+                  <div
+                    key={r.id}
+                    className="flex flex-wrap items-start justify-between gap-4 rounded-lg border border-earth-200 bg-white p-4"
+                  >
+                    <div>
+                      <p className="font-medium text-earth-900">
+                        {formatJPY(r.amount_jpy)} — {r.user_name || r.user_email || r.user_id?.slice(0, 8) || '—'}
+                      </p>
+                      <p className="mt-1 text-sm text-earth-600">
+                        {formatMoney(r.amount_brl, 'BRL')} • {r.created_at ? new Date(r.created_at).toLocaleString('pt-BR') : ''}
+                      </p>
+                      {r.comprovante_url && (
+                        <a
+                          href={r.comprovante_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-2 inline-block text-sm font-medium text-earth-700 underline hover:text-earth-900"
+                        >
+                          Ver comprovante
+                        </a>
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const { error } = await approveWalletTopupAdmin(r.id)
+                          if (error) setMessage(error.message)
+                          else {
+                            setMessage('Recarga aprovada e saldo creditado.')
+                            loadTopupRequests()
+                          }
+                        }}
+                        className="rounded-lg bg-green-700 px-4 py-2 text-sm font-medium text-white hover:bg-green-800"
+                      >
+                        Aprovar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const { error } = await rejectWalletTopupAdmin(r.id)
+                          if (error) setMessage(error.message)
+                          else {
+                            setMessage('Recarga rejeitada.')
+                            loadTopupRequests()
+                          }
+                        }}
+                        className="rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50"
+                      >
+                        Rejeitar
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </section>
         )}
 
@@ -2523,69 +3086,69 @@ export default function Admin() {
           <h2 className="text-lg font-semibold text-earth-900">Produtos</h2>
 
           <form onSubmit={handleSave} className="mt-4 space-y-3">
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div>
-                <label className="block text-sm font-medium text-earth-700">Nome *</label>
-                <input
-                  required
-                  type="text"
-                  value={form.name}
-                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                  className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-earth-700">Preço (¥ JPY) *</label>
-                <input
-                  required
-                  type="number"
-                  step="1"
-                  min="0"
-                  value={form.price}
-                  onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
-                  className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-earth-700">Peso do produto (kg) *</label>
-                <input
-                  required
-                  type="number"
-                  step="0.001"
-                  min="0"
-                  value={form.weight_kg}
-                  onChange={(e) => setForm((f) => ({ ...f, weight_kg: e.target.value }))}
-                  className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-earth-700">Estoque</label>
-                <input
-                  type="number"
-                  min="0"
-                  step="1"
-                  value={form.stock_quantity}
-                  onChange={(e) => setForm((f) => ({ ...f, stock_quantity: e.target.value }))}
-                  placeholder="Ilimitado (deixe vazio)"
-                  className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
-                />
-              </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="text-sm font-medium text-earth-700">Nome *</span>
+              <input
+                required
+                type="text"
+                value={form.name}
+                onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                className="min-w-[180px] flex-1 rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+              />
+              <span className="text-sm font-medium text-earth-700">Preço (¥) *</span>
+              <input
+                required
+                type="number"
+                step="1"
+                min="0"
+                value={form.price}
+                onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
+                className="w-28 rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+              />
+              <span className="text-sm font-medium text-earth-700">Peso *</span>
+              <input
+                required
+                type="number"
+                step={form.weight_unit === 'g' ? '1' : '0.001'}
+                min="0"
+                value={form.weight_kg}
+                onChange={(e) => setForm((f) => ({ ...f, weight_kg: e.target.value }))}
+                className="w-24 rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+              />
+              <select
+                value={form.weight_unit}
+                onChange={(e) => setForm((f) => ({ ...f, weight_unit: e.target.value }))}
+                className="rounded-lg border border-earth-300 px-2 py-2 text-earth-900"
+              >
+                <option value="g">g</option>
+                <option value="kg">kg</option>
+              </select>
+              <span className="text-sm font-medium text-earth-700">Estoque</span>
+              <input
+                type="number"
+                min="0"
+                step="1"
+                value={form.stock_quantity}
+                onChange={(e) => setForm((f) => ({ ...f, stock_quantity: e.target.value }))}
+                placeholder="Ilimitado"
+                className="w-24 rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+              />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-earth-700">Descrição</label>
+            <div className="flex flex-wrap items-start gap-2">
+              <span className="pt-2 text-sm font-medium text-earth-700">Descrição</span>
               <textarea
                 value={form.description}
                 onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
                 rows={2}
-                className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                className="min-w-[200px] flex-1 rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-earth-700">Fotos do produto (pode adicionar várias)</label>
-              <div className="mt-1 flex flex-wrap items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="text-sm font-medium text-earth-700">Fotos</span>
                 <label className="cursor-pointer rounded-lg border border-earth-300 bg-white px-3 py-2 text-sm font-medium text-earth-700 hover:bg-earth-50">
-                  {imageUploading ? 'Enviando...' : 'Enviar arquivo'}
-                  <input
+                {imageUploading ? 'Enviando...' : 'Enviar do PC'}
+                <input
                     type="file"
                     accept="image/*"
                     className="sr-only"
@@ -2615,6 +3178,8 @@ export default function Admin() {
                     }}
                   />
                 </label>
+                <span className="text-sm text-earth-500">ou</span>
+                <span className="text-sm font-medium text-earth-700">URL:</span>
                 <input
                   type="url"
                   value={newImageUrl}
@@ -2742,7 +3307,7 @@ export default function Admin() {
                         <span className="font-medium text-earth-900">{p.name}</span>
                         <span className="ml-2 text-sm text-earth-600">{formatJPY(brlToJpy(p.price))}</span>
                         <span className="ml-2 text-xs text-earth-500">
-                          {Number(p.weight_kg ?? 0) > 0 ? `• ${p.weight_kg}kg` : '• peso não definido'}
+                          {Number(p.weight_kg ?? 0) > 0 ? `• ${formatWeight(p.weight_kg)}` : '• peso não definido'}
                         </span>
                         <span className="ml-2 text-xs text-earth-500">
                           • Estoque: {p.stock_quantity != null ? p.stock_quantity : 'ilimitado'}
@@ -2764,6 +3329,14 @@ export default function Admin() {
                       </button>
                       <button
                         type="button"
+                        onClick={() => handleDuplicate(p)}
+                        disabled={duplicatingId === p.id}
+                        className="text-sm font-medium text-earth-600 hover:text-earth-900 disabled:opacity-50"
+                      >
+                        {duplicatingId === p.id ? 'Duplicando...' : 'Duplicar'}
+                      </button>
+                      <button
+                        type="button"
                         onClick={() => handleDelete(p.id)}
                         className="text-sm font-medium text-red-600 hover:text-red-800"
                       >
@@ -2776,6 +3349,331 @@ export default function Admin() {
             )}
           </div>
         </section>
+        )}
+
+        {/* Catálogo mestre de produtos */}
+        {activeTab === 'catalogo_produtos' && (
+        <section className="mt-0 rounded-b-xl border border-t-0 border-earth-200 bg-earth-50 p-6">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-semibold text-earth-900">Lista de Produtos (catálogo único)</h2>
+              <p className="mt-1 text-sm text-earth-600">
+                Base central de produtos usada em loja, grupos de compra, pedidos e invoices.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => loadProducts()}
+              className="rounded-lg border border-earth-300 bg-white px-3 py-2 text-sm font-medium text-earth-700 hover:bg-earth-100"
+            >
+              Atualizar lista
+            </button>
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <input
+              type="search"
+              value={catalogSearch}
+              onChange={(e) => setCatalogSearch(e.target.value)}
+              placeholder="Buscar por nome, id, descricao..."
+              className="min-w-[220px] flex-1 rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
+            />
+            <select
+              value={catalogStatusFilter}
+              onChange={(e) => setCatalogStatusFilter(e.target.value)}
+              className="rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
+            >
+              <option value="all">Todos</option>
+              <option value="active">Ativos</option>
+              <option value="inactive">Inativos</option>
+            </select>
+          </div>
+
+          <div className="mt-3 text-xs text-earth-600">
+            Exibindo {catalogProducts.length} de {products.length} produtos.
+          </div>
+
+          {loading && <p className="mt-4 text-sm text-earth-600">Carregando catálogo...</p>}
+          {!loading && catalogProducts.length === 0 && (
+            <p className="mt-4 text-sm text-earth-600">Nenhum produto encontrado com os filtros atuais.</p>
+          )}
+
+          {!loading && catalogProducts.length > 0 && (
+            <div className="mt-4 overflow-x-auto rounded-lg border border-earth-200 bg-white">
+              <table className="min-w-full divide-y divide-earth-200 text-sm">
+                <thead className="bg-earth-100 text-left text-earth-700">
+                  <tr>
+                    <th className="px-3 py-2 font-medium">Produto</th>
+                    <th className="px-3 py-2 font-medium">Origem</th>
+                    <th className="px-3 py-2 font-medium">Preco</th>
+                    <th className="px-3 py-2 font-medium">Estoque</th>
+                    <th className="px-3 py-2 font-medium">Status</th>
+                    <th className="px-3 py-2 font-medium">ID</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-earth-100">
+                  {catalogProducts.map((p) => (
+                    <tr key={p.id} className="align-top">
+                      <td className="px-3 py-2">
+                        <div className="flex items-center gap-3">
+                          {p.image_url ? (
+                            <img src={p.image_url} alt="" className="h-10 w-10 rounded object-cover" />
+                          ) : (
+                            <div className="h-10 w-10 rounded bg-earth-200" />
+                          )}
+                          <div className="min-w-0">
+                            <p className="font-medium text-earth-900">{p.name || 'Sem nome'}</p>
+                            {p.description && (
+                              <p className="line-clamp-2 text-xs text-earth-600">{p.description}</p>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-3 py-2 text-earth-700">
+                        {p.purchase_group_id ? 'Grupo de compras' : 'Loja virtual'}
+                      </td>
+                      <td className="px-3 py-2 text-earth-700">
+                        {formatJPY(brlToJpy(p.price))}
+                      </td>
+                      <td className="px-3 py-2 text-earth-700">
+                        {p.stock_quantity != null ? p.stock_quantity : 'Ilimitado'}
+                      </td>
+                      <td className="px-3 py-2">
+                        <span className={`rounded px-2 py-0.5 text-xs ${p.is_active ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'}`}>
+                          {p.is_active ? 'Ativo' : 'Inativo'}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2 text-xs text-earth-500">{p.id}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+        )}
+
+        {/* Modal: detalhes e edição do usuário */}
+        {userDetailModal.open && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+            onClick={closeUserDetail}
+            role="dialog"
+            aria-modal="true"
+          >
+            <div
+              className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl bg-white shadow-xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-earth-200 bg-white px-6 py-4">
+                <h3 className="text-lg font-semibold text-earth-900">
+                  {userDetailModal.loading ? 'Carregando...' : (userDetailModal.profile?.name || userDetailModal.user?.email || 'Usuário')}
+                </h3>
+                <button
+                  type="button"
+                  onClick={closeUserDetail}
+                  className="rounded p-1 text-earth-500 hover:bg-earth-100 hover:text-earth-900"
+                  aria-label="Fechar"
+                >
+                  ×
+                </button>
+              </div>
+              <div className="p-6 space-y-6">
+                {userDetailModal.loading && (
+                  <p className="text-sm text-earth-600">Carregando dados...</p>
+                )}
+                {!userDetailModal.loading && userDetailModal.profile && (
+                  <>
+                    {/* Perfil */}
+                    <div>
+                      <h4 className="font-medium text-earth-900 mb-3">Perfil</h4>
+                      <form onSubmit={handleSaveProfileEdit} className="space-y-3">
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          <div>
+                            <label className="block text-sm font-medium text-earth-700">Nome</label>
+                            <input
+                              type="text"
+                              value={userDetailModal.profileForm.name}
+                              onChange={(e) =>
+                                setUserDetailModal((m) => ({
+                                  ...m,
+                                  profileForm: { ...m.profileForm, name: e.target.value },
+                                }))
+                              }
+                              className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-earth-700">Email</label>
+                            <input
+                              type="email"
+                              value={userDetailModal.profileForm.email}
+                              onChange={(e) =>
+                                setUserDetailModal((m) => ({
+                                  ...m,
+                                  profileForm: { ...m.profileForm, email: e.target.value },
+                                }))
+                              }
+                              className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-earth-700">CPF/CNPJ</label>
+                            <input
+                              type="text"
+                              value={userDetailModal.profileForm.cpf_cnpj}
+                              onChange={(e) =>
+                                setUserDetailModal((m) => ({
+                                  ...m,
+                                  profileForm: { ...m.profileForm, cpf_cnpj: e.target.value },
+                                }))
+                              }
+                              className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-earth-700">Telefone</label>
+                            <input
+                              type="text"
+                              value={userDetailModal.profileForm.phone}
+                              onChange={(e) =>
+                                setUserDetailModal((m) => ({
+                                  ...m,
+                                  profileForm: { ...m.profileForm, phone: e.target.value },
+                                }))
+                              }
+                              className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-earth-700">Código da conta</label>
+                            <input
+                              type="text"
+                              value={userDetailModal.profileForm.account_code}
+                              onChange={(e) =>
+                                setUserDetailModal((m) => ({
+                                  ...m,
+                                  profileForm: { ...m.profileForm, account_code: e.target.value },
+                                }))
+                              }
+                              className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-earth-700">Função</label>
+                            <select
+                              value={userDetailModal.profileForm.role}
+                              onChange={(e) =>
+                                setUserDetailModal((m) => ({
+                                  ...m,
+                                  profileForm: { ...m.profileForm, role: e.target.value },
+                                }))
+                              }
+                              className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                            >
+                              <option value="user">Usuário</option>
+                              <option value="admin">Administrador</option>
+                            </select>
+                          </div>
+                        </div>
+                        <button
+                          type="submit"
+                          disabled={userDetailModal.saving}
+                          className="rounded-lg bg-earth-800 px-4 py-2 text-sm font-medium text-white hover:bg-earth-900 disabled:opacity-60"
+                        >
+                          {userDetailModal.saving ? 'Salvando...' : 'Salvar alterações'}
+                        </button>
+                      </form>
+                    </div>
+
+                    {/* Carteira */}
+                    <div>
+                      <h4 className="font-medium text-earth-900 mb-3">Carteira</h4>
+                      <p className="text-sm text-earth-600 mb-2">
+                        Saldo atual: {formatMoney(userDetailModal.wallet?.balance ?? 0, userDetailModal.wallet?.currency || 'JPY')}
+                      </p>
+                      <form onSubmit={handleAddWalletBalance} className="flex flex-wrap items-end gap-3">
+                        <div>
+                          <label className="block text-sm font-medium text-earth-700">Valor a adicionar (¥)</label>
+                          <input
+                            type="number"
+                            step="1"
+                            min="0.01"
+                            value={userDetailModal.walletAmount}
+                            onChange={(e) =>
+                              setUserDetailModal((m) => ({ ...m, walletAmount: e.target.value }))
+                            }
+                            placeholder="Ex: 1000"
+                            className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                          />
+                        </div>
+                        <div className="flex-1 min-w-[200px]">
+                          <label className="block text-sm font-medium text-earth-700">Descrição (opcional)</label>
+                          <input
+                            type="text"
+                            value={userDetailModal.walletDesc}
+                            onChange={(e) =>
+                              setUserDetailModal((m) => ({ ...m, walletDesc: e.target.value }))
+                            }
+                            placeholder="Ex: Ajuste de saldo"
+                            className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                          />
+                        </div>
+                        <button
+                          type="submit"
+                          disabled={userDetailModal.walletSaving}
+                          className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-700 disabled:opacity-60"
+                        >
+                          {userDetailModal.walletSaving ? 'Adicionando...' : 'Adicionar saldo'}
+                        </button>
+                      </form>
+                    </div>
+
+                    {/* Pedidos do usuário */}
+                    <div>
+                      <h4 className="font-medium text-earth-900 mb-3">Pedidos ({userDetailModal.ordersCount})</h4>
+                      {userDetailModal.ordersCount === 0 ? (
+                        <p className="text-sm text-earth-600">Nenhum pedido.</p>
+                      ) : (
+                        <p className="text-sm text-earth-600 mb-2">
+                          Vá para a aba Pedidos para editar os pedidos deste usuário.
+                        </p>
+                      )}
+                      {orders.filter((o) => o.user_id === userDetailModal.user?.id).slice(0, 5).map((o) => (
+                        <div
+                          key={o.id}
+                          className="flex items-center justify-between rounded-lg border border-earth-200 bg-earth-50 px-4 py-2 mb-2"
+                        >
+                          <div>
+                            <span className="font-medium text-earth-900">Pedido {o.id?.slice(0, 8)}…</span>
+                            <span className="ml-2 rounded bg-earth-200 px-2 py-0.5 text-xs text-earth-700">
+                              {ORDER_STATUS_LABELS[o.status] ?? o.status}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              openOrderEditModal(o)
+                              closeUserDetail()
+                              setActiveTab('pedidos')
+                            }}
+                            className="rounded border border-earth-300 px-2 py-1 text-sm font-medium text-earth-700 hover:bg-earth-100"
+                          >
+                            Editar
+                          </button>
+                        </div>
+                      ))}
+                      {userDetailModal.ordersCount > 5 && (
+                        <p className="text-xs text-earth-500 mt-2">
+                          Mostrando 5 de {userDetailModal.ordersCount}. Veja todos na aba Pedidos.
+                        </p>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </>

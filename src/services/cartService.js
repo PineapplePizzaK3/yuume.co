@@ -82,7 +82,7 @@ export async function clearCart(userId) {
   }
 }
 
-export async function createStoreOrder(userId, shipImmediately, shippingCostJpy = null, shippingAddressId = null) {
+export async function createStoreOrder(userId, shipImmediately, shippingCostJpy = null, shippingAddressId = null, couponCode = null) {
   try {
     const { data, error } = await withDbTimeout(
       supabase.rpc('create_store_order', {
@@ -91,6 +91,7 @@ export async function createStoreOrder(userId, shipImmediately, shippingCostJpy 
         p_shipping_cost: shipImmediately ? shippingCostJpy : null,
         p_shipping_currency: 'JPY',
         p_shipping_address_id: shippingAddressId,
+        p_coupon_code: couponCode && String(couponCode).trim() ? String(couponCode).trim() : null,
       })
     )
     return { data: data ?? null, error }

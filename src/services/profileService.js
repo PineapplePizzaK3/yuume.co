@@ -55,6 +55,37 @@ export async function getUsersAdmin() {
 }
 
 /**
+ * Admin: obtém dados completos do usuário (perfil, carteira, contagem de pedidos).
+ */
+export async function getUserFullAdmin(userId) {
+  try {
+    const { data, error } = await withDbTimeout(
+      supabase.rpc('admin_get_user_full', { p_user_id: userId })
+    )
+    return { data: data ?? null, error }
+  } catch (e) {
+    return { data: null, error: toServiceError(e) }
+  }
+}
+
+/**
+ * Admin: atualiza perfil de outro usuário.
+ */
+export async function updateProfileAdmin(userId, updates) {
+  try {
+    const { data, error } = await withDbTimeout(
+      supabase.rpc('admin_update_profile', {
+        p_user_id: userId,
+        p_updates: updates,
+      })
+    )
+    return { data: data ?? null, error }
+  } catch (e) {
+    return { data: null, error: toServiceError(e) }
+  }
+}
+
+/**
  * Get profile by user id.
  */
 export async function getProfile(userId) {

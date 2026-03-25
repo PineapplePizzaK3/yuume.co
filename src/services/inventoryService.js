@@ -36,7 +36,9 @@ export async function createShipment(userId, inventoryIds, options = {}) {
     return { data: null, error: { message: 'Selecione pelo menos um item.' } }
   }
   const extraServices = options.extra_services && typeof options.extra_services === 'object'
-    ? { photos: !!options.extra_services.photos, video: !!options.extra_services.video }
+    ? Object.fromEntries(
+        Object.entries(options.extra_services).map(([k, v]) => [k, !!v])
+      )
     : {}
   try {
     const { data: shipment, error: shipError } = await withDbTimeout(
@@ -239,6 +241,41 @@ export async function getMyShipments(userId) {
         .order('created_at', { ascending: false })
     )
     return { data: data ?? [], error }
+  } catch (e) {
+    return { data: [], error: toServiceError(e) }
+  }
+}
+
+/**
+ * Detalhes de um envio: lista itens vinculados (shipment_items + user_inventory).
+ * RLS garante que o usuário só verá os seus envios.
+ */
+export async function getShipmentItems(shipmentId) {
+  try {
+    const { data, error } = await withDbTimeout(
+      supabase
+        .from('shipment_items')
+        .select(`
+          id,
+          inventory_id,
+          user_inventory (
+            id,
+            name,
+            status,
+            items_count,
+            weight_kg,
+            notes,
+            products_description,
+            photo_url,
+            video_url,
+            received_at,
+            created_at
+          )
+        `)
+        .eq('shipment_id', shipmentId)
+        .order('id', { ascending: true })
+    )
+    return { data: Array.isArray(data) ? data : [], error }
   } catch (e) {
     return { data: [], error: toServiceError(e) }
   }

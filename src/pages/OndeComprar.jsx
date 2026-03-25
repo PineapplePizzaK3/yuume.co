@@ -1,13 +1,26 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
-import { CATEGORIAS_LOJAS } from '../data/lojasOndeComprar'
+import { CATEGORIAS_LOJAS, RECOMENDACOES_QUICK_ACCESS } from '../data/lojasOndeComprar'
+import ImageLightbox from '../components/ImageLightbox'
 
 /**
  * Card de loja simples (uma URL).
  */
 function LojaCardSimple({ loja }) {
   const [imgErro, setImgErro] = useState(false)
-  const logoPath = `/logos/${loja.id}.png`
+  const logoPathPng = `/logos/${loja.id}.png`
+  const logoPathSvg = `/logos/${loja.id}.svg`
+
+  const handleLogoError = (e) => {
+    const el = e.currentTarget
+    if (el.dataset.logoExt === 'svg') {
+      setImgErro(true)
+      return
+    }
+    el.dataset.logoExt = 'svg'
+    el.src = logoPathSvg
+  }
 
   return (
     <a
@@ -23,12 +36,13 @@ function LojaCardSimple({ loja }) {
           </span>
         ) : (
           <img
-            src={logoPath}
+            src={logoPathPng}
             alt={`Logo ${loja.nome}`}
             width={120}
             height={120}
             className="h-full w-full object-contain p-2"
-            onError={() => setImgErro(true)}
+            data-logo-ext="png"
+            onError={handleLogoError}
           />
         )}
       </div>
@@ -49,7 +63,18 @@ function LojaCardSimple({ loja }) {
  */
 function LojaCardAgrupada({ loja }) {
   const [imgErro, setImgErro] = useState(false)
-  const logoPath = `/logos/${loja.id}.png`
+  const logoPathPng = `/logos/${loja.id}.png`
+  const logoPathSvg = `/logos/${loja.id}.svg`
+
+  const handleLogoError = (e) => {
+    const el = e.currentTarget
+    if (el.dataset.logoExt === 'svg') {
+      setImgErro(true)
+      return
+    }
+    el.dataset.logoExt = 'svg'
+    el.src = logoPathSvg
+  }
 
   return (
     <div className="flex flex-col items-center rounded-lg border border-earth-200 bg-earth-100 p-4 shadow-sm transition hover:border-earth-300">
@@ -60,12 +85,13 @@ function LojaCardAgrupada({ loja }) {
           </span>
         ) : (
           <img
-            src={logoPath}
+            src={logoPathPng}
             alt={`Logo ${loja.nome}`}
             width={120}
             height={120}
             className="h-full w-full object-contain p-2"
-            onError={() => setImgErro(true)}
+            data-logo-ext="png"
+            onError={handleLogoError}
           />
         )}
       </div>
@@ -101,16 +127,211 @@ function LojaCard({ loja }) {
   return <LojaCardSimple loja={loja} />
 }
 
+/** Card compacto com ícone para Quick Access */
+function LojaMiniCard({ loja }) {
+  const [imgErro, setImgErro] = useState(false)
+  const logoPathPng = `/logos/${loja.id}.png`
+  const logoPathSvg = `/logos/${loja.id}.svg`
+
+  const handleLogoError = (e) => {
+    const el = e.currentTarget
+    if (el.dataset.logoExt === 'svg') {
+      setImgErro(true)
+      return
+    }
+    el.dataset.logoExt = 'svg'
+    el.src = logoPathSvg
+  }
+  const href = loja.sites?.length ? loja.sites[0].url : loja.url
+  const label = loja.nome
+
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-center gap-2 rounded-lg border border-earth-200 bg-white px-3 py-2 shadow-sm transition hover:border-earth-300 hover:shadow-md"
+    >
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-md bg-earth-100">
+        {imgErro ? (
+          <span className="text-sm font-bold text-earth-400">{loja.nome.charAt(0)}</span>
+        ) : (
+          <img
+            src={logoPathPng}
+            alt=""
+            width={40}
+            height={40}
+            className="h-full w-full object-contain p-0.5"
+            data-logo-ext="png"
+            onError={handleLogoError}
+          />
+        )}
+      </div>
+      <span className="text-sm font-medium text-earth-800">{label}</span>
+    </a>
+  )
+}
+
+/** Mapa id → loja de todas as categorias */
+function getLojasById() {
+  const mapa = new Map()
+  for (const cat of CATEGORIAS_LOJAS) {
+    for (const loja of cat.lojas) {
+      mapa.set(loja.id, loja)
+    }
+  }
+  return mapa
+}
+
+/**
+ * Quick Access: carrossel de recomendações por tipo de loja.
+ * Imagem, tipo, lojas recomendadas e descrição.
+ */
+function QuickAccessRecommendations() {
+  const [index, setIndex] = useState(0)
+  const [imgErro, setImgErro] = useState(false)
+  const [lightbox, setLightbox] = useState({ open: false, src: '', alt: '' })
+  const lojasById = useMemo(getLojasById, [])
+
+  const handleIndexChange = (newIndex) => {
+    setIndex(newIndex)
+    setImgErro(false)
+  }
+
+  const items = RECOMENDACOES_QUICK_ACCESS
+  const item = items[index]
+  const imagem = item?.imagens?.length ? item.imagens[0] : item?.imagem
+  const lojasRecomendadas = useMemo(() => {
+    if (!item) return []
+    return item.lojaIds
+      .map((id) => lojasById.get(id))
+      .filter(Boolean)
+  }, [item, lojasById])
+
+  const goNext = () => handleIndexChange((index + 1) % items.length)
+  const goPrev = () => handleIndexChange((index - 1 + items.length) % items.length)
+
+  const openLightbox = (src) => {
+    if (!src) return
+    setLightbox({ open: true, src, alt: item?.tipoLoja || '' })
+  }
+
+  return (
+    <div className="mb-10 overflow-hidden rounded-xl border border-earth-200 bg-earth-50 shadow-sm">
+      <h2 className="px-4 py-3 text-sm font-semibold uppercase tracking-wide text-earth-500">
+        Nossas recomendações
+      </h2>
+      <div className="relative flex items-stretch">
+        <button
+          type="button"
+          onClick={goPrev}
+          className="absolute left-0 top-1/2 z-10 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-earth-700 shadow-md transition hover:bg-white hover:text-earth-900"
+          aria-label="Item anterior"
+        >
+          <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        <button
+          type="button"
+          onClick={goNext}
+          className="absolute right-0 top-1/2 z-10 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-earth-700 shadow-md transition hover:bg-white hover:text-earth-900"
+          aria-label="Próximo item"
+        >
+          <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+
+        <div className="flex w-full flex-col sm:flex-row">
+          {/* Imagem */}
+          <div className="relative w-full shrink-0 overflow-hidden bg-earth-200 sm:w-64">
+            {!imgErro ? (
+              <button
+                type="button"
+                className="relative h-48 w-full cursor-zoom-in sm:h-56"
+                onClick={() => openLightbox(imagem)}
+                aria-label={`Ampliar imagem de ${item.tipoLoja}`}
+              >
+                <img
+                  src={imagem}
+                  alt={item.tipoLoja}
+                  className="h-full w-full object-cover"
+                  onError={() => setImgErro(true)}
+                />
+              </button>
+            ) : null}
+            <div
+              className={`h-full w-full items-center justify-center bg-gradient-to-br from-earth-300 to-earth-400 ${imgErro ? 'flex' : 'hidden'}`}
+              aria-hidden
+            >
+              <span className="text-4xl font-bold text-earth-600/50">{item.tipoLoja.charAt(0)}</span>
+            </div>
+          </div>
+
+          {/* Conteúdo */}
+          <div className="flex flex-1 flex-col p-4 sm:p-6">
+            <h3 className="text-lg font-semibold text-earth-900">{item.tipoLoja}</h3>
+
+            <div className="mt-3 flex flex-wrap gap-3">
+              {lojasRecomendadas.map((loja) => (
+                <LojaMiniCard key={loja.id} loja={loja} />
+              ))}
+            </div>
+
+            <p className="mt-3 flex-1 text-sm text-earth-600">{item.descricao}</p>
+
+            <div className="mt-4 flex items-center gap-2">
+              {items.map((_, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => handleIndexChange(i)}
+                  className={`h-2 w-2 rounded-full transition ${
+                    i === index ? 'bg-earth-900' : 'bg-earth-300 hover:bg-earth-400'
+                  }`}
+                  aria-label={`Ir para item ${i + 1}`}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+      <ImageLightbox
+        open={lightbox.open}
+        src={lightbox.src}
+        alt={lightbox.alt}
+        onClose={() => setLightbox({ open: false, src: '', alt: '' })}
+      />
+    </div>
+  )
+}
+
 /**
  * Página Aonde comprar.
  * Layout: logo da loja + nome. Categorias com sidebar e filtros.
  */
 function OndeComprar() {
+  const [searchParams] = useSearchParams()
+  const categoriaFromUrl = searchParams.get('categoria') || ''
   const [busca, setBusca] = useState('')
-  const [categoriaFiltro, setCategoriaFiltro] = useState('')
+  const [categoriaFiltro, setCategoriaFiltro] = useState(categoriaFromUrl)
+
+  useEffect(() => {
+    if (categoriaFromUrl) setCategoriaFiltro(categoriaFromUrl)
+  }, [categoriaFromUrl])
+
+  const categoriasOrdenadas = useMemo(() => {
+    const list = [...CATEGORIAS_LOJAS]
+    return list.sort((a, b) => {
+      if (a.id === 'gerais' && b.id !== 'gerais') return -1
+      if (b.id === 'gerais' && a.id !== 'gerais') return 1
+      return a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' })
+    })
+  }, [])
 
   const categoriasFiltradas = useMemo(() => {
-    let resultado = CATEGORIAS_LOJAS
+    let resultado = categoriasOrdenadas
 
     if (categoriaFiltro) {
       resultado = resultado.filter((cat) => cat.id === categoriaFiltro)
@@ -148,7 +369,7 @@ function OndeComprar() {
     }
 
     return resultado
-  }, [busca, categoriaFiltro])
+  }, [busca, categoriaFiltro, categoriasOrdenadas])
 
   return (
     <>
@@ -187,7 +408,7 @@ function OndeComprar() {
               aria-label="Filtrar por categoria"
             >
               <option value="">Todas as categorias</option>
-              {CATEGORIAS_LOJAS.map((cat) => (
+              {categoriasOrdenadas.map((cat) => (
                 <option key={cat.id} value={cat.id}>
                   {cat.nome}
                 </option>
@@ -203,7 +424,7 @@ function OndeComprar() {
                   Categorias
                 </h2>
                 <ul className="mt-3 space-y-1">
-                  {CATEGORIAS_LOJAS.map((cat) => (
+                  {categoriasOrdenadas.map((cat) => (
                     <li key={cat.id}>
                       <button
                         type="button"
@@ -226,8 +447,9 @@ function OndeComprar() {
               </div>
             </aside>
 
-            {/* Grid de lojas por categoria */}
+            {/* Quick Access + Grid de lojas por categoria */}
             <div className="min-w-0 flex-1">
+              <QuickAccessRecommendations />
               {categoriasFiltradas.length > 0 ? (
                 <div className="space-y-10">
                   {categoriasFiltradas.map((categoria) => (

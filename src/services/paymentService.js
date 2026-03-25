@@ -49,12 +49,20 @@ export async function createCheckoutSession(orderId, accessToken) {
     headers['Authorization'] = `Bearer ${accessToken}`
   }
 
-  const res = await fetch(`${API_BASE}/create-checkout-session`, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify({ orderId, useWallet: !!options?.useWallet }),
-    credentials: 'include',
-  })
+  let res
+  try {
+    res = await fetch(`${API_BASE}/create-checkout-session`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ orderId, useWallet: !!options?.useWallet }),
+      credentials: 'include',
+    })
+  } catch (err) {
+    if (err?.message === 'Failed to fetch' || err?.name === 'TypeError') {
+      throw new Error('Não foi possível conectar à API. Use "npm run dev" para rodar o ambiente completo.')
+    }
+    throw err
+  }
 
   const data = await res.json()
 
@@ -62,30 +70,6 @@ export async function createCheckoutSession(orderId, accessToken) {
     throw new Error(data.error || 'Erro ao criar sessão de pagamento')
   }
 
-  return data
-}
-
-/**
- * Create KOMOJU Hosted Page session for an order.
- * paymentType: 'credit_card' | 'pix' | 'bank_transfer'
- */
-export async function createKomojuSession(orderId, paymentType, accessToken) {
-  const headers = { 'Content-Type': 'application/json' }
-  if (accessToken) {
-    headers['Authorization'] = `Bearer ${accessToken}`
-  }
-
-  const res = await fetch(`${API_BASE}/create-komoju-session`, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify({ orderId, paymentType }),
-    credentials: 'include',
-  })
-
-  const data = await res.json()
-  if (!res.ok) {
-    throw new Error(data.error || 'Erro ao criar sessão de pagamento (KOMOJU)')
-  }
   return data
 }
 
@@ -113,6 +97,22 @@ export async function createCartCheckoutSession(items, accessToken) {
   }
 
   return data
+}
+
+/**
+ * Envia comprovante PIX para um pedido (pagamento manual).
+ */
+export async function submitPixComprovante(orderId, comprovanteUrl) {
+  try {
+    const { data, error } = await supabase.rpc('submit_pix_comprovante', {
+      p_order_id: orderId,
+      p_comprovante_url: comprovanteUrl,
+    })
+    if (error) throw error
+    return { data, error: null }
+  } catch (e) {
+    return { data: null, error: e }
+  }
 }
 
 /**

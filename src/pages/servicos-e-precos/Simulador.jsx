@@ -12,10 +12,18 @@ function calcularTaxaRedirecionamento(totalItens) {
 }
 
 const TAXA_POR_ITEM_PERSONAL = 150
+
+/** Nós Compramos: 15% (1 item), 12.5% (2–4), 10% (5+) + taxa flat */
+function getPercentualNosCompramos(totalItens) {
+  if (totalItens <= 1) return 15
+  if (totalItens <= 4) return 12.5
+  return 10
+}
+
 const SERVICOS = [
   { id: 'voce-compra', label: '📦 Você Compra', tipo: 'por-itens', percentualExtra: 0 },
-  { id: 'nos-compramos', label: '🛍️ Nós Compramos', tipo: 'por-itens', percentualExtra: 12 },
-  { id: 'personal-shopping', label: 'Personal shopping', tipo: 'percentual', percentual: 20 },
+  { id: 'nos-compramos', label: '🛍️ Nós Compramos', tipo: 'por-itens', percentualExtra: 'dynamic' },
+  { id: 'personal-shopping', label: 'Personal shopping', tipo: 'percentual', percentual: 25 },
 ]
 const TIPOS_FRETE = [
   { id: 'ems', label: 'EMS', prazo: '5–10 dias úteis' },
@@ -97,22 +105,23 @@ function Simulador() {
   const prazoEntrega = tipoFreteSelecionado?.prazo ?? ''
   const totalItens = produtos.reduce((acc, p) => acc + p.quantidade, 0)
   const servico = SERVICOS.find((s) => s.id === servicoId)
+  const percentualNosCompramos = servico?.id === 'nos-compramos' ? getPercentualNosCompramos(totalItens) : 0
   const taxaBase =
     servico?.tipo === 'por-itens'
       ? calcularTaxaRedirecionamento(totalItens)
-      : totalProdutos * ((servico?.percentual ?? 20) / 100) + totalItens * TAXA_POR_ITEM_PERSONAL
+      : totalProdutos * ((servico?.percentual ?? 25) / 100) + totalItens * TAXA_POR_ITEM_PERSONAL
   const taxaExtra =
-    servico?.tipo === 'por-itens' && servico?.percentualExtra
-      ? totalProdutos * (servico.percentualExtra / 100)
+    servico?.tipo === 'por-itens' && servico?.percentualExtra === 'dynamic'
+      ? totalProdutos * (percentualNosCompramos / 100)
       : 0
   const taxaServico = taxaBase + taxaExtra
   const totalFinal = totalProdutos + frete + taxaServico
   const labelTaxaServico =
     servico?.tipo === 'por-itens'
-      ? servico?.percentualExtra
-        ? `Taxa de serviço (itens + ${servico.percentualExtra}%)`
+      ? servico?.percentualExtra === 'dynamic'
+        ? `Taxa de serviço (${percentualNosCompramos}% + taxa flat)`
         : 'Taxa de serviço (por itens)'
-      : `Taxa de serviço (${servico?.percentual ?? 20}% + ¥${TAXA_POR_ITEM_PERSONAL}/item)`
+      : `Taxa de serviço (${servico?.percentual ?? 25}% + ¥${TAXA_POR_ITEM_PERSONAL}/item)`
 
   return (
     <>

@@ -11,12 +11,11 @@ const LINHAS_VALORES = (percentual, porItem, freteTexto, formatarIene) => [
   { label: 'Frete internacional', valor: freteTexto },
 ]
 
-/** Taxas: 1 item 1000¥, 2-4 750¥/item, 5+ 500¥/item. Nós Compramos + 12%. */
+/** Taxas: 1 item ¥1000, 2-4 ¥750/item, 5+ ¥500/item. Nós Compramos: 15% | 12.5% | 10% + taxa flat conforme qtd. */
 const LINHAS_REDIRECIONAMENTO = (formatarIene) => [
-  { componente: '1 item', voceCompra: formatarIene(1000), nosCompramos: formatarIene(1000) },
-  { componente: '2–4 itens', voceCompra: `${formatarIene(750)}/item`, nosCompramos: `${formatarIene(750)}/item` },
-  { componente: '5+ itens', voceCompra: `${formatarIene(500)}/item`, nosCompramos: `${formatarIene(500)}/item` },
-  { componente: 'Taxa adicional', voceCompra: '—', nosCompramos: '12% sobre o valor da compra' },
+  { componente: '1 item', voceCompra: formatarIene(1000), nosCompramos: `15% + ${formatarIene(1000)}` },
+  { componente: '2–4 itens', voceCompra: `${formatarIene(750)}/item`, nosCompramos: `12,5% + ${formatarIene(750)}/item` },
+  { componente: '5+ itens', voceCompra: `${formatarIene(500)}/item`, nosCompramos: `10% + ${formatarIene(500)}/item` },
   { componente: 'Frete internacional', voceCompra: 'Informado após consolidação (Japan Post)', nosCompramos: 'Informado após consolidação (Japan Post)' },
 ]
 
@@ -236,7 +235,7 @@ function Servicos() {
             {servico.id === 'redirecionamento' && (
               <>
                 <p className="mt-6 text-sm text-earth-600">
-                  <strong>Como cobramos:</strong> Redirecionamento tem dois módulos — 📦 Você Compra e 🛍️ Nós Compramos — com taxas por quantidade de itens (ver tabela). Nós Compramos inclui 12% sobre o valor da compra. Frete informado após consolidação.
+                  <strong>Como cobramos:</strong> Redirecionamento tem dois módulos — 📦 Você Compra e 🛍️ Nós Compramos — com taxas por quantidade de itens (ver tabela). Nós Compramos: 15% (1 item), 12,5% (2–4 itens) ou 10% (5+ itens) + taxa flat. Frete informado após consolidação.
                 </p>
                 <TabelaValores modoRedirecionamento />
               </>
@@ -289,7 +288,7 @@ function Servicos() {
               </Link>
               {(servico.id === 'grupo-de-compras' || servico.id === 'loja-virtual') && (
                 <Link
-                  to={servico.id === 'grupo-de-compras' ? '/app/grupo-de-compras' : '/app/loja'}
+                  to={servico.id === 'grupo-de-compras' ? '/app/grupo-de-compras' : '/loja'}
                   className="text-sm font-medium text-earth-900 hover:underline"
                 >
                   {servico.id === 'grupo-de-compras' ? 'Ver grupos de compra →' : 'Ir para a loja →'}
