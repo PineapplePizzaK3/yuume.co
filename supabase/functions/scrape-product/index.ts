@@ -79,25 +79,71 @@ function extractFromMeta(html: string): { name?: string; price?: number; currenc
   return result
 }
 
+function isProductType(value: unknown): boolean {
+  if (typeof value === 'string') return value.toLowerCase().includes('product')
+  if (Array.isArray(value)) return value.some((v) => typeof v === 'string' && v.toLowerCase().includes('product'))
+  return false
+}
+
+function findProductNode(node: unknown): Record<string, unknown> | null {
+  if (!node || typeof node !== 'object') return null
+
+  const current = node as Record<string, unknown>
+  if (isProductType(current['@type'])) return current
+
+  const graph = current['@graph']
+  if (Array.isArray(graph)) {
+    for (const item of graph) {
+      const found = findProductNode(item)
+      if (found) return found
+    }
+  }
+
+  for (const value of Object.values(current)) {
+    if (value && typeof value === 'object') {
+      const found = findProductNode(value)
+      if (found) return found
+    }
+  }
+
+  return null
+}
+
 function extractFromJsonLd(html: string): { name?: string; price?: number; currency?: string } | null {
   const scriptMatches = html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)
   for (const m of scriptMatches) {
-    try {
-      const json = JSON.parse(m[1].trim())
-      const obj = Array.isArray(json) ? json.find((x: { '@type'?: string }) => x?.['@type'] === 'Product') : json
-      if (obj && (obj['@type'] === 'Product' || obj['@type']?.includes?.('Product'))) {
-        const name = obj.name || obj.description
-        let price: number | undefined
-        let currency = 'JPY'
-        const offers = obj.offers
-        if (offers) {
-          const o = Array.isArray(offers) ? offers[0] : offers
-          price = parsePrice(o?.price ?? o?.lowPrice)
-          currency = o?.priceCurrency ?? 'JPY'
+    const raw = m[1]?.trim()
+    if (!raw) continue
+    const candidates = [
+      raw,
+      raw.replace(/^\uFEFF/, ''), // remove BOM
+      raw.replace(/<!--|-->/g, ''), // some pages wrap JSON-LD in HTML comments
+    ]
+    for (const candidate of candidates) {
+      try {
+        const parsed = JSON.parse(candidate)
+        const rootNodes = Array.isArray(parsed) ? parsed : [parsed]
+        for (const root of rootNodes) {
+          const product = findProductNode(root)
+          if (!product) continue
+          const name = (product['name'] as string) || (product['description'] as string)
+          let price: number | undefined
+          let currency = 'JPY'
+          const offers = product['offers']
+          if (offers) {
+            const offerObj = Array.isArray(offers) ? offers[0] : offers
+            if (offerObj && typeof offerObj === 'object') {
+              const o = offerObj as Record<string, unknown>
+              price = parsePrice(o['price'] ?? o['lowPrice'] ?? o['highPrice'])
+              currency = typeof o['priceCurrency'] === 'string' ? o['priceCurrency'] : 'JPY'
+            }
+          }
+          return { name, price, currency }
         }
-        return { name, price, currency }
+      } catch {
+        // ignore and try next candidate
       }
-    } catch { /* ignore */ }
+    }
   }
   return null
 }
@@ -124,6 +170,37 @@ function extractFromPage(html: string): { name?: string; price?: number } {
     }
   }
   return result
+}
+
+function extractFromText(text: string): { name?: string; price?: number; currency?: string } {
+  const lines = text
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean)
+
+  let name: string | undefined
+  for (const line of lines) {
+    if (line.length >= 6 && line.length <= 140 && !/^https?:\/\//i.test(line)) {
+      name = line.replace(/^#{1,6}\s*/, '').trim()
+      if (name) break
+    }
+  }
+
+  const candidates = [
+    ...text.matchAll(/(?:¥|JPY)\s*([\d,]+(?:\.\d+)?)/gi),
+    ...text.matchAll(/(?:R\$|BRL)\s*([\d.,]+)/gi),
+    ...text.matchAll(/(?:price|preço)\s*[:：]?\s*([\d.,]+)/gi),
+  ]
+
+  for (const m of candidates) {
+    const parsed = parsePrice(m[1])
+    if (parsed != null) {
+      const currency = /R\$|BRL/i.test(m[0]) ? 'BRL' : 'JPY'
+      return { name, price: parsed, currency }
+    }
+  }
+
+  return { name }
 }
 
 function jsonResponse(obj: object, status = 200) {
@@ -181,8 +258,9 @@ Deno.serve(async (req) => {
     try {
       res = await fetch(url, {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (compatible; EikoDelivery/1.0; +https://eikodelivery.com)',
-          'Accept': 'text/html,application/xhtml+xml',
+          'User-Agent': 'Mozilla/5.0 (compatible; EikoDelivery/1.0; +https://eiko-dls.com)',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'Accept-Language': 'ja,en-US;q=0.9,en;q=0.8,pt-BR;q=0.7',
         },
         redirect: 'follow',
         signal: AbortSignal.timeout(10000),
@@ -218,6 +296,31 @@ Deno.serve(async (req) => {
       currency = meta.currency ?? jsonLd?.currency ?? 'JPY'
       imageUrl = meta.imageUrl ?? undefined
     } catch { /* use defaults */ }
+
+    // Fallback para sites que bloqueiam bot ou renderizam preço via JS:
+    // usa r.jina.ai para obter uma versão legível do conteúdo.
+    const lowConfidence = (!price || name === 'Produto')
+    if (lowConfidence) {
+      try {
+        const jinaUrl = `https://r.jina.ai/http://${parsed.hostname}${parsed.pathname}${parsed.search}`
+        const jinaRes = await fetch(jinaUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (compatible; EikoDelivery/1.0; +https://eiko-dls.com)',
+            'Accept': 'text/plain,text/markdown,*/*',
+          },
+          signal: AbortSignal.timeout(10000),
+        })
+        if (jinaRes.ok) {
+          const text = await jinaRes.text()
+          const ext = extractFromText(text)
+          if (ext.name && name === 'Produto') name = ext.name
+          if (ext.price != null && price == null) price = ext.price
+          if (ext.currency && currency === 'JPY') currency = ext.currency
+        }
+      } catch {
+        // mantém resultado original
+      }
+    }
 
     return safeReturn({ name, price, currency, imageUrl })
   } catch (err) {

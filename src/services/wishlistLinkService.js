@@ -4,7 +4,97 @@
 import { supabase } from '../lib/supabase'
 import { withDbTimeout, toServiceError } from '../lib/dbGuard'
 
-const FUNCAO_SCRAPE = 'scrape-product'
+const FUNCOES_SCRAPE = ['scrape-product', 'scrape_product']
+
+function parsePriceLoose(value) {
+  if (value == null) return null
+  let text = String(value).trim()
+  if (!text) return null
+  text = text.replace(/[^\d.,-]/g, '')
+  if (!text) return null
+  const lastDot = text.lastIndexOf('.')
+  const lastComma = text.lastIndexOf(',')
+  if (lastDot !== -1 && lastComma !== -1) {
+    if (lastComma > lastDot) text = text.replace(/\./g, '').replace(',', '.')
+    else text = text.replace(/,/g, '')
+  } else if (lastComma !== -1) {
+    const parts = text.split(',')
+    const tail = parts[parts.length - 1] ?? ''
+    text = tail.length <= 2 ? `${parts.slice(0, -1).join('')}.${tail}` : parts.join('')
+  } else if (lastDot !== -1) {
+    const parts = text.split('.')
+    const tail = parts[parts.length - 1] ?? ''
+    if (tail.length > 2) text = parts.join('')
+  }
+  const parsed = Number(text)
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null
+}
+
+function extractFromJinaText(text) {
+  const lines = String(text || '')
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean)
+  let name = 'Produto'
+  for (const line of lines) {
+    if (line.length >= 6 && line.length <= 140 && !/^https?:\/\//i.test(line)) {
+      name = line.replace(/^#{1,6}\s*/, '').trim()
+      break
+    }
+  }
+  const priceMatch =
+    text.match(/(?:¥|JPY)\s*([\d,]+(?:\.\d+)?)/i) ||
+    text.match(/(?:R\$|BRL)\s*([\d.,]+)/i) ||
+    text.match(/(?:price|preço)\s*[:：]?\s*([\d.,]+)/i)
+  const price = parsePriceLoose(priceMatch?.[1] ?? null)
+  const currency = /R\$|BRL/i.test(priceMatch?.[0] || '') ? 'BRL' : 'JPY'
+  return { name, price, currency }
+}
+
+async function scrapeFallbackViaJina(url) {
+  try {
+    const parsed = new URL(url)
+    const jinaUrl = `https://r.jina.ai/http://${parsed.hostname}${parsed.pathname}${parsed.search}`
+    const res = await fetch(jinaUrl, { method: 'GET' })
+    if (!res.ok) return { data: null, error: { message: 'Fallback indisponível para este link.' } }
+    const text = await res.text()
+    const extracted = extractFromJinaText(text)
+    if (!extracted?.price && extracted?.name === 'Produto') {
+      return { data: null, error: { message: 'Não foi possível extrair dados desse link automaticamente.' } }
+    }
+    return { data: { name: extracted.name, price: extracted.price, currency: extracted.currency }, error: null }
+  } catch {
+    return { data: null, error: { message: 'Não foi possível extrair dados desse link automaticamente.' } }
+  }
+}
+
+async function normalizeInvokeError(err) {
+  const status = err?.context?.status
+  let backendMessage = ''
+  try {
+    if (err?.context) {
+      const clone = err.context.clone?.() || err.context
+      const asJson = await clone.json?.()
+      backendMessage = asJson?.error || asJson?.message || ''
+      if (!backendMessage) {
+        const asText = await clone.text?.()
+        backendMessage = asText || ''
+      }
+    }
+  } catch {
+    // ignore parse errors
+  }
+
+  if (status === 401 || status === 403) {
+    return { message: 'Sessão expirada ou sem permissão para chamar o scraper. Faça login novamente.' }
+  }
+  if (status === 404) {
+    return { message: 'Função scrape-product não encontrada no Supabase (deploy pendente ou nome divergente).' }
+  }
+  if (backendMessage) return { message: backendMessage }
+  if (status) return { message: `Erro no scraper (HTTP ${status}).` }
+  return { message: err?.message || 'Erro ao buscar dados' }
+}
 
 /**
  * Chama a Edge Function para extrair nome/preço de uma URL.
@@ -12,25 +102,35 @@ const FUNCAO_SCRAPE = 'scrape-product'
  */
 export async function scrapeProductUrl(url) {
   const TIMEOUT_MS = 25000
-  const invokePromise = supabase.functions.invoke(FUNCAO_SCRAPE, { body: { url } })
-  const timeoutPromise = new Promise((_, reject) =>
-    setTimeout(() => reject(new Error('Tempo esgotado. Tente novamente.')), TIMEOUT_MS)
-  )
-  try {
-    const result = await Promise.race([invokePromise, timeoutPromise])
-    const { data, error } = result ?? {}
-    if (error) {
-      const msg = error?.message?.includes('non-2xx')
-        ? 'O site não respondeu corretamente. Tente novamente ou adicione manualmente.'
-        : (error?.message || 'Erro ao buscar dados')
-      return { data: null, error: { message: msg } }
+  let lastError = null
+  for (const funcName of FUNCOES_SCRAPE) {
+    const invokePromise = supabase.functions.invoke(funcName, { body: { url } })
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Tempo esgotado. Tente novamente.')), TIMEOUT_MS)
+    )
+    try {
+      const result = await Promise.race([invokePromise, timeoutPromise])
+      const { data, error } = result ?? {}
+      if (error) {
+        lastError = await normalizeInvokeError(error)
+        // tenta o próximo nome de função quando a rota não existir
+        if (lastError?.message?.includes('não encontrada')) continue
+      } else if (data?.error) {
+        lastError = { message: data.error }
+      } else {
+        return { data, error: null }
+      }
+    } catch (e) {
+      lastError = { message: e?.message || 'Erro ao buscar dados' }
+      if (!String(lastError.message).includes('Tempo esgotado')) continue
     }
-    if (data?.error) return { data: null, error: { message: data.error } }
-    return { data, error: null }
-  } catch (e) {
-    const msg = e?.message || 'Erro ao buscar dados'
-    return { data: null, error: { message: msg } }
   }
+
+  // Fallback específico para sites que bloqueiam scraping server-side (ex.: Amazon/Mercari).
+  const fallback = await scrapeFallbackViaJina(url)
+  if (!fallback.error) return fallback
+
+  return { data: null, error: lastError || fallback.error || { message: 'Erro ao buscar dados' } }
 }
 
 export async function getWishlistLinks(userId) {
