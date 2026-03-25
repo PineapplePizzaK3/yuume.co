@@ -8,16 +8,34 @@ import { withDbTimeout, toServiceError } from '../lib/dbGuard'
 /**
  * Lista itens do inventário do usuário (status stored ou ready_for_shipment).
  */
-export async function getMyInventory(userId) {
+export async function getMyInventory(userId, options = {}) {
+  const limit = Math.max(1, Number(options?.limit) || 30)
+  const offset = Math.max(0, Number(options?.offset) || 0)
   try {
     const { data, error } = await withDbTimeout(
       supabase
         .from('user_inventory')
         // Embeds do pedido para classificar a origem do item (loja vs redirecionamento vs personal shopping)
-        .select('*, orders(order_source, order_module)')
+        .select(`
+          id,
+          order_id,
+          name,
+          notes,
+          weight_kg,
+          photo_url,
+          video_url,
+          status,
+          created_at,
+          updated_at,
+          products_description,
+          items_count,
+          received_at,
+          orders(order_source, order_module)
+        `)
         .eq('user_id', userId)
         .in('status', ['stored', 'ready_for_shipment'])
         .order('created_at', { ascending: false })
+        .range(offset, offset + limit - 1)
     )
     return { data: data ?? [], error }
   } catch (e) {
@@ -193,9 +211,18 @@ export async function setShipmentPaidAdmin(shipmentId) {
 /**
  * Admin: dados do painel de envios (shipments, pedidos em fluxo, inventário pronto).
  */
-export async function getShippingPanelAdmin() {
+export async function getShippingPanelAdmin(options = {}) {
+  const shipmentsLimit = Number(options?.shipmentsLimit) || 200
+  const ordersLimit = Number(options?.ordersLimit) || 300
+  const inventoryLimit = Number(options?.inventoryLimit) || 300
   try {
-    const { data, error } = await withDbTimeout(supabase.rpc('admin_get_shipping_panel'))
+    const { data, error } = await withDbTimeout(
+      supabase.rpc('admin_get_shipping_panel', {
+        p_limit_shipments: shipmentsLimit,
+        p_limit_orders: ordersLimit,
+        p_limit_inventory_ready: inventoryLimit,
+      })
+    )
     if (error) return { data: null, error }
     const panel = data ?? {}
     return {
@@ -231,14 +258,27 @@ export async function cancelShipment(userId, shipmentId) {
 /**
  * Lista envios do usuário.
  */
-export async function getMyShipments(userId) {
+export async function getMyShipments(userId, options = {}) {
+  const limit = Math.max(1, Number(options?.limit) || 20)
+  const offset = Math.max(0, Number(options?.offset) || 0)
   try {
     const { data, error } = await withDbTimeout(
       supabase
         .from('shipments')
-        .select('*')
+        .select(`
+          id,
+          user_id,
+          status,
+          shipping_cost,
+          shipping_currency,
+          tracking_code,
+          extra_services,
+          created_at,
+          updated_at
+        `)
         .eq('user_id', userId)
         .order('created_at', { ascending: false })
+        .range(offset, offset + limit - 1)
     )
     return { data: data ?? [], error }
   } catch (e) {
@@ -263,13 +303,7 @@ export async function getShipmentItems(shipmentId) {
             name,
             status,
             items_count,
-            weight_kg,
-            notes,
-            products_description,
-            photo_url,
-            video_url,
-            received_at,
-            created_at
+            weight_kg
           )
         `)
         .eq('shipment_id', shipmentId)

@@ -49,6 +49,7 @@ const ETAPAS = [
   { id: 2, titulo: 'Serviços extras' },
   { id: 3, titulo: 'Pagamento' },
 ]
+const INVENTORY_PAGE_SIZE = 24
 
 export default function MeusProdutos() {
   const { user } = useAuth()
@@ -60,6 +61,8 @@ export default function MeusProdutos() {
   const [submitting, setSubmitting] = useState(false)
   const [shipmentModalOpen, setShipmentModalOpen] = useState(false)
   const [shipmentStep, setShipmentStep] = useState(1)
+  const [inventoryPage, setInventoryPage] = useState(0)
+  const [inventoryHasMore, setInventoryHasMore] = useState(false)
   const [extraServices, setExtraServices] = useState({
     photos: false,
     video: false,
@@ -84,14 +87,19 @@ export default function MeusProdutos() {
     if (searchParams.get('success') === 'true' && user?.id) {
       setFeedback('Compra realizada com sucesso! Seus produtos estão aqui. O pedido consta no histórico de pedidos.')
       setSearchParams({}, { replace: true })
-      const k = cacheKey(user.id, 'inventory_v1')
+      const k = cacheKey(user.id, `inventory_v1_p${inventoryPage}`)
       writeCache(k, null)
-      getMyInventory(user.id).then(({ data }) => {
-        setItems(data ?? [])
-        writeCache(k, data ?? [])
+      getMyInventory(user.id, {
+        limit: INVENTORY_PAGE_SIZE,
+        offset: inventoryPage * INVENTORY_PAGE_SIZE,
+      }).then(({ data }) => {
+        const list = data ?? []
+        setItems(list)
+        setInventoryHasMore(list.length === INVENTORY_PAGE_SIZE)
+        writeCache(k, { items: list, hasMore: list.length === INVENTORY_PAGE_SIZE })
       })
     }
-  }, [searchParams, setSearchParams, user?.id])
+  }, [searchParams, setSearchParams, user?.id, inventoryPage])
 
   useEffect(() => {
     let isActive = true
@@ -100,17 +108,23 @@ export default function MeusProdutos() {
         if (isActive) setLoading(false)
         return
       }
-      const k = cacheKey(user.id, 'inventory_v1')
+      const k = cacheKey(user.id, `inventory_v1_p${inventoryPage}`)
       const cached = readCache(k, 1000 * 60 * 30)
       if (cached && isActive) {
-        setItems(Array.isArray(cached) ? cached : [])
+        setItems(Array.isArray(cached?.items) ? cached.items : [])
+        setInventoryHasMore(!!cached?.hasMore)
         setLoading(false)
       }
       try {
-        const { data, error } = await getMyInventory(user.id)
+        const { data, error } = await getMyInventory(user.id, {
+          limit: INVENTORY_PAGE_SIZE,
+          offset: inventoryPage * INVENTORY_PAGE_SIZE,
+        })
         if (!isActive) return
-        setItems(data ?? [])
-        writeCache(k, data ?? [])
+        const list = data ?? []
+        setItems(list)
+        setInventoryHasMore(list.length === INVENTORY_PAGE_SIZE)
+        writeCache(k, { items: list, hasMore: list.length === INVENTORY_PAGE_SIZE })
         if (error) setFeedback(error.message)
       } catch (e) {
         if (isActive) setFeedback(e?.message || 'Erro ao carregar itens')
@@ -120,7 +134,7 @@ export default function MeusProdutos() {
     }
     run()
     return () => { isActive = false }
-  }, [user?.id])
+  }, [user?.id, inventoryPage])
 
   const toggleSelect = (id) => {
     setSelectedIds((prev) => {
@@ -175,8 +189,13 @@ export default function MeusProdutos() {
       setFeedback('Solicitação de envio criada! Em breve definiremos o frete e você poderá pagar.')
       setSelectedIds(new Set())
       closeShipmentModal()
-      const { data: list } = await getMyInventory(user.id)
-      setItems(list ?? [])
+      const { data: listRaw } = await getMyInventory(user.id, {
+        limit: INVENTORY_PAGE_SIZE,
+        offset: inventoryPage * INVENTORY_PAGE_SIZE,
+      })
+      const list = listRaw ?? []
+      setItems(list)
+      setInventoryHasMore(list.length === INVENTORY_PAGE_SIZE)
     } catch (e) {
       setFeedback(e?.message || 'Erro ao solicitar envio')
     } finally {
@@ -395,6 +414,27 @@ export default function MeusProdutos() {
                   </div>
                 </div>
               </aside>
+            </div>
+            <div className="mt-4 flex items-center justify-between gap-3 rounded-lg border border-earth-200 bg-white px-3 py-2">
+              <p className="text-xs text-earth-600">Página {inventoryPage + 1}</p>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setInventoryPage((p) => Math.max(0, p - 1))}
+                  disabled={loading || inventoryPage <= 0}
+                  className="rounded border border-earth-300 px-3 py-1.5 text-sm font-medium text-earth-700 hover:bg-earth-100 disabled:opacity-50"
+                >
+                  Anterior
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setInventoryPage((p) => p + 1)}
+                  disabled={loading || !inventoryHasMore}
+                  className="rounded border border-earth-300 px-3 py-1.5 text-sm font-medium text-earth-700 hover:bg-earth-100 disabled:opacity-50"
+                >
+                  Próxima
+                </button>
+              </div>
             </div>
 
             {/* Modal: Procedimento de solicitação de envio */}

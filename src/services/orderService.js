@@ -97,7 +97,9 @@ export async function createOrder(userId, { service_id, message, attachment_urls
 /**
  * Lista pedidos do usuário logado.
  */
-export async function getMyOrders(userId) {
+export async function getMyOrders(userId, options = {}) {
+  const limit = Math.max(1, Number(options?.limit) || 20)
+  const offset = Math.max(0, Number(options?.offset) || 0)
   try {
     const { data, error } = await withDbTimeout(
       supabase
@@ -108,6 +110,7 @@ export async function getMyOrders(userId) {
     `)
         .eq('user_id', userId)
         .order('created_at', { ascending: false })
+        .range(offset, offset + limit - 1)
     )
     return { data: data ?? [], error }
   } catch (e) {
@@ -182,9 +185,14 @@ export async function getOrderById(orderId, userId) {
 /**
  * Admin: lista todos os pedidos com dados do usuário.
  */
-export async function getAllOrdersAdmin() {
+export async function getAllOrdersAdmin(limit = 300, offset = 0) {
   try {
-    const { data, error } = await withDbTimeout(supabase.rpc('admin_orders_with_users'))
+    const { data, error } = await withDbTimeout(
+      supabase.rpc('admin_orders_with_users', {
+        p_limit: limit,
+        p_offset: offset,
+      })
+    )
     const orders = Array.isArray(data) ? data : []
     return { data: orders, error }
   } catch (e) {

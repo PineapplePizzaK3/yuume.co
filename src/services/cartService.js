@@ -9,7 +9,21 @@ export async function getCart(userId) {
     const { data, error } = await withDbTimeout(
       supabase
         .from('cart_items')
-        .select('*, products(*)')
+        .select(`
+          id,
+          user_id,
+          product_id,
+          quantity,
+          created_at,
+          products(
+            id,
+            name,
+            price,
+            image_url,
+            is_active,
+            stock_quantity
+          )
+        `)
         .eq('user_id', userId)
         .order('created_at', { ascending: false })
     )

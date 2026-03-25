@@ -15,6 +15,8 @@ import { brlToJpy, formatBRL, formatJPY, jpyToBrl } from '../../lib/fx'
 import QuoteProductsList from '../../components/QuoteProductsList'
 import OrderAttachments from '../../components/OrderAttachments'
 
+const ORDERS_PAGE_SIZE = 12
+
 export default function Orders() {
   const { user, session } = useAuth()
   const [orders, setOrders] = useState([])
@@ -28,6 +30,8 @@ export default function Orders() {
   const [extraServices, setExtraServices] = useState({ photos: false, video: false })
   const [detailsModal, setDetailsModal] = useState({ open: false, order: null })
   const [deletingId, setDeletingId] = useState(null)
+  const [ordersPage, setOrdersPage] = useState(0)
+  const [ordersHasMore, setOrdersHasMore] = useState(false)
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -48,23 +52,29 @@ export default function Orders() {
         if (isActive) setLoading(false)
         return
       }
-      const k = cacheKey(user.id, 'orders_page_v1')
+      const k = cacheKey(user.id, `orders_page_v1_p${ordersPage}`)
       const cached = readCache(k, 1000 * 60 * 30)
       if (cached && isActive) {
         setOrders(cached.orders ?? [])
         setWallet(cached.wallet ?? null)
+        setOrdersHasMore(!!cached.hasMore)
         setLoading(false)
       }
       try {
         const [ordersRes, walletRes] = await Promise.all([
-          getMyOrders(user.id),
+          getMyOrders(user.id, {
+            limit: ORDERS_PAGE_SIZE,
+            offset: ordersPage * ORDERS_PAGE_SIZE,
+          }),
           getWallet(user.id),
         ])
         if (!isActive) return
-        setOrders(ordersRes.data ?? [])
+        const list = ordersRes.data ?? []
+        setOrders(list)
+        setOrdersHasMore(list.length === ORDERS_PAGE_SIZE)
         setWallet(walletRes.data ?? null)
         if (ordersRes.error) setFeedback(ordersRes.error.message)
-        writeCache(k, { orders: ordersRes.data ?? [], wallet: walletRes.data ?? null })
+        writeCache(k, { orders: list, wallet: walletRes.data ?? null, hasMore: list.length === ORDERS_PAGE_SIZE })
       } catch (e) {
         if (isActive) setFeedback(e?.message || 'Erro ao carregar pedidos')
       } finally {
@@ -75,7 +85,7 @@ export default function Orders() {
     return () => {
       isActive = false
     }
-  }, [user?.id])
+  }, [user?.id, ordersPage])
 
   const getPayableAmount = (order) => {
     if (order.status !== 'awaiting_payment') return null
@@ -107,11 +117,19 @@ export default function Orders() {
 
   const refreshOrders = async () => {
     if (!user?.id) return
-    const [ordersRes, walletRes] = await Promise.all([getMyOrders(user.id), getWallet(user.id)])
-    setOrders(ordersRes.data ?? [])
+    const [ordersRes, walletRes] = await Promise.all([
+      getMyOrders(user.id, {
+        limit: ORDERS_PAGE_SIZE,
+        offset: ordersPage * ORDERS_PAGE_SIZE,
+      }),
+      getWallet(user.id),
+    ])
+    const list = ordersRes.data ?? []
+    setOrders(list)
+    setOrdersHasMore(list.length === ORDERS_PAGE_SIZE)
     setWallet(walletRes.data ?? null)
-    const k = cacheKey(user.id, 'orders_page_v1')
-    writeCache(k, { orders: ordersRes.data ?? [], wallet: walletRes.data ?? null })
+    const k = cacheKey(user.id, `orders_page_v1_p${ordersPage}`)
+    writeCache(k, { orders: list, wallet: walletRes.data ?? null, hasMore: list.length === ORDERS_PAGE_SIZE })
   }
 
   const handlePayShipping = async (order, { useWallet = false } = {}) => {
@@ -166,8 +184,13 @@ export default function Orders() {
         return
       }
       setFeedback('Solicitação de serviços extras enviada!')
-      const { data: ordersData } = await getMyOrders(user.id)
-      setOrders(ordersData ?? [])
+      const { data: ordersData } = await getMyOrders(user.id, {
+        limit: ORDERS_PAGE_SIZE,
+        offset: ordersPage * ORDERS_PAGE_SIZE,
+      })
+      const list = ordersData ?? []
+      setOrders(list)
+      setOrdersHasMore(list.length === ORDERS_PAGE_SIZE)
       setExtraServicesOrderId(null)
       setExtraServices({ photos: false, video: false })
     } catch (err) {
@@ -341,6 +364,27 @@ export default function Orders() {
                 </div>
               </div>
             ))}
+            <div className="flex items-center justify-between gap-3 rounded-lg border border-earth-200 bg-white px-3 py-2">
+              <p className="text-xs text-earth-600">Página {ordersPage + 1}</p>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setOrdersPage((p) => Math.max(0, p - 1))}
+                  disabled={loading || ordersPage <= 0}
+                  className="rounded border border-earth-300 px-3 py-1.5 text-sm font-medium text-earth-700 hover:bg-earth-100 disabled:opacity-50"
+                >
+                  Anterior
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setOrdersPage((p) => p + 1)}
+                  disabled={loading || !ordersHasMore}
+                  className="rounded border border-earth-300 px-3 py-1.5 text-sm font-medium text-earth-700 hover:bg-earth-100 disabled:opacity-50"
+                >
+                  Próxima
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>

@@ -44,9 +44,14 @@ export async function getOrCreateProfile(userId, { email, name } = {}) {
 /**
  * Admin: lista usuários (id, email, name, account_code).
  */
-export async function getUsersAdmin() {
+export async function getUsersAdmin(limit = 500, offset = 0) {
   try {
-    const { data, error } = await withDbTimeout(supabase.rpc('admin_list_users'))
+    const { data, error } = await withDbTimeout(
+      supabase.rpc('admin_list_users', {
+        p_limit: limit,
+        p_offset: offset,
+      })
+    )
     const list = Array.isArray(data) ? data : []
     return { data: list, error }
   } catch (e) {

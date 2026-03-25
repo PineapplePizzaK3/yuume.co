@@ -6,6 +6,29 @@ import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '')
+const REQUEST_WINDOW_MS = 60 * 1000
+const MAX_REQUESTS_PER_WINDOW = 20
+const rateLimitMemory = globalThis.__checkoutRateLimitMap ?? new Map()
+globalThis.__checkoutRateLimitMap = rateLimitMemory
+
+function isRateLimited(key) {
+  if (!key) return false
+  const now = Date.now()
+  const windowStart = now - REQUEST_WINDOW_MS
+  const entries = rateLimitMemory.get(key) || []
+  const validEntries = entries.filter((ts) => ts >= windowStart)
+  validEntries.push(now)
+  rateLimitMemory.set(key, validEntries)
+  return validEntries.length > MAX_REQUESTS_PER_WINDOW
+}
+
+function getClientIp(req) {
+  const forwarded = req?.headers?.['x-forwarded-for']
+  if (typeof forwarded === 'string' && forwarded.trim()) {
+    return forwarded.split(',')[0].trim()
+  }
+  return req?.socket?.remoteAddress || 'unknown'
+}
 
 function getSupabaseAdmin() {
   const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
@@ -85,6 +108,11 @@ export default async function handler(req, res) {
     )
     if (authError || !user) {
       return res.status(401).json({ error: 'Sessão inválida. Faça login novamente.' })
+    }
+    const ip = getClientIp(req)
+    const rateKey = `${user.id}:${ip}`
+    if (isRateLimited(rateKey)) {
+      return res.status(429).json({ error: 'Muitas tentativas de pagamento. Aguarde 1 minuto e tente novamente.' })
     }
 
     const baseUrl = getBaseUrl(req)

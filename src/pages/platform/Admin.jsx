@@ -62,11 +62,43 @@ function formatMoney(v, currency = 'BRL') {
   return Number(v)?.toLocaleString('pt-BR', { style: 'currency', currency }) ?? '—'
 }
 
+const ADMIN_PAGE_SIZE = {
+  orders: 100,
+  products: 120,
+  users: 100,
+}
+
 function formatOrderModuleLabel(order) {
   if (!order) return null
   if (order.order_module === 'self_buy') return 'Redirecionamento: 📦 Você Compra'
   if (order.order_module === 'assisted_buy') return 'Redirecionamento: 🛍️ Nós Compramos'
   return null
+}
+
+function PaginationControls({ page, hasMore, loading, onPrev, onNext }) {
+  return (
+    <div className="mt-4 flex items-center justify-between gap-3 rounded-lg border border-earth-200 bg-white px-3 py-2 text-sm">
+      <span className="text-earth-600">Página {page + 1}</span>
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={onPrev}
+          disabled={loading || page <= 0}
+          className="rounded border border-earth-300 px-3 py-1.5 font-medium text-earth-700 hover:bg-earth-100 disabled:opacity-50"
+        >
+          Anterior
+        </button>
+        <button
+          type="button"
+          onClick={onNext}
+          disabled={loading || !hasMore}
+          className="rounded border border-earth-300 px-3 py-1.5 font-medium text-earth-700 hover:bg-earth-100 disabled:opacity-50"
+        >
+          Próxima
+        </button>
+      </div>
+    </div>
+  )
 }
 
 export default function Admin() {
@@ -212,13 +244,24 @@ export default function Admin() {
   const [shipmentShippedModal, setShipmentShippedModal] = useState({ open: false, shipmentId: null, trackingCode: '' })
   const [catalogSearch, setCatalogSearch] = useState('')
   const [catalogStatusFilter, setCatalogStatusFilter] = useState('all')
+  const [ordersPage, setOrdersPage] = useState(0)
+  const [ordersHasMore, setOrdersHasMore] = useState(false)
+  const [productsPage, setProductsPage] = useState(0)
+  const [productsHasMore, setProductsHasMore] = useState(false)
+  const [usersPage, setUsersPage] = useState(0)
+  const [usersHasMore, setUsersHasMore] = useState(false)
 
-  const loadProducts = async (active = () => true) => {
+  const loadProducts = async (active = () => true, page = productsPage) => {
     if (active()) setLoading(true)
     try {
-      const { data, error } = await getProductsAdmin()
+      const { data, error } = await getProductsAdmin(
+        ADMIN_PAGE_SIZE.products,
+        page * ADMIN_PAGE_SIZE.products
+      )
       if (!active()) return
-      setProducts(data ?? [])
+      const list = data ?? []
+      setProducts(list)
+      setProductsHasMore(list.length === ADMIN_PAGE_SIZE.products)
       if (error) setMessage(error.message)
     } catch (e) {
       if (active()) setMessage(e?.message || 'Erro ao carregar produtos')
@@ -227,12 +270,17 @@ export default function Admin() {
     }
   }
 
-  const loadOrders = async (active = () => true) => {
+  const loadOrders = async (active = () => true, page = ordersPage) => {
     if (active()) setOrdersLoading(true)
     try {
-      const { data, error } = await getAllOrdersAdmin()
+      const { data, error } = await getAllOrdersAdmin(
+        ADMIN_PAGE_SIZE.orders,
+        page * ADMIN_PAGE_SIZE.orders
+      )
       if (!active()) return
-      setOrders(data ?? [])
+      const list = data ?? []
+      setOrders(list)
+      setOrdersHasMore(list.length === ADMIN_PAGE_SIZE.orders)
       if (error) setMessage(error.message)
     } catch (e) {
       if (active()) setMessage(e?.message || 'Erro ao carregar pedidos')
@@ -258,7 +306,7 @@ export default function Admin() {
     return () => {
       isActive = false
     }
-  }, [])
+  }, [productsPage])
 
   useEffect(() => {
     let isActive = true
@@ -266,7 +314,7 @@ export default function Admin() {
     return () => {
       isActive = false
     }
-  }, [])
+  }, [ordersPage])
 
   useEffect(() => {
     let isActive = true
@@ -284,12 +332,17 @@ export default function Admin() {
     }
   }, [])
 
-  const loadUsersForAdmin = async (active = () => true) => {
+  const loadUsersForAdmin = async (active = () => true, page = usersPage) => {
     if (active()) setUsersListLoading(true)
     try {
-      const { data, error } = await getUsersAdmin()
+      const { data, error } = await getUsersAdmin(
+        ADMIN_PAGE_SIZE.users,
+        page * ADMIN_PAGE_SIZE.users
+      )
       if (!active()) return
-      setUsersList(data ?? [])
+      const list = data ?? []
+      setUsersList(list)
+      setUsersHasMore(list.length === ADMIN_PAGE_SIZE.users)
       if (error) setMessage(error.message)
     } catch (e) {
       if (active()) setMessage(e?.message || 'Erro ao carregar usuários')
@@ -428,7 +481,7 @@ export default function Admin() {
       loadUsersForAdmin(() => isActive)
       return () => { isActive = false }
     }
-  }, [activeTab])
+  }, [activeTab, usersPage])
 
   useEffect(() => {
     if (activeTab === 'logs') {
@@ -1269,7 +1322,7 @@ export default function Admin() {
             <button
               type="button"
               onClick={async () => {
-                const { data } = await getUsersAdmin()
+                const { data } = await getUsersAdmin(2000, 0)
                 setUsers(data ?? [])
                 setCreateOrderModal({ open: true, user_id: '', service_id: services[0]?.id ?? '', message: '' })
               }}
@@ -1280,7 +1333,7 @@ export default function Admin() {
             <button
               type="button"
               onClick={async () => {
-                const { data } = await getUsersAdmin()
+                const { data } = await getUsersAdmin(2000, 0)
                 setUsers(data ?? [])
                 setRegisterPackageModal({ open: true, user_id: '', products_description: '', items_count: '', weight_kg: '', order_id: '', photo_url: '', video_url: '' })
               }}
@@ -1379,7 +1432,7 @@ export default function Admin() {
                         <button
                           type="button"
                           onClick={async () => {
-                            const { data } = await getUsersAdmin()
+                            const { data } = await getUsersAdmin(2000, 0)
                             setUsers(data ?? [])
                             setRegisterPackageModal({
                               open: true,
@@ -1511,6 +1564,13 @@ export default function Admin() {
                   </div>
                 </div>
               ))}
+              <PaginationControls
+                page={ordersPage}
+                hasMore={ordersHasMore}
+                loading={ordersLoading}
+                onPrev={() => setOrdersPage((p) => Math.max(0, p - 1))}
+                onNext={() => setOrdersPage((p) => p + 1)}
+              />
             </div>
           )}
 
@@ -2260,35 +2320,44 @@ export default function Admin() {
             <p className="mt-4 text-sm text-earth-600">Nenhum usuário cadastrado.</p>
           )}
           {!usersListLoading && usersList.length > 0 && (
-            <div className="mt-4 overflow-x-auto rounded-lg border border-earth-200 bg-white">
-              <table className="min-w-full divide-y divide-earth-200 text-left text-sm">
-                <thead>
-                  <tr className="bg-earth-50">
-                    <th className="px-4 py-3 font-medium text-earth-900">Nome</th>
-                    <th className="px-4 py-3 font-medium text-earth-900">Email</th>
-                    <th className="px-4 py-3 font-medium text-earth-900">Código</th>
-                    <th className="px-4 py-3 font-medium text-earth-900">Ações</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-earth-200">
-                  {usersList.map((u) => (
-                    <tr key={u.id} className="hover:bg-earth-50/50">
-                      <td className="px-4 py-3 font-medium text-earth-900">{u.name || '—'}</td>
-                      <td className="px-4 py-3 text-earth-700">{u.email || '—'}</td>
-                      <td className="px-4 py-3 font-mono text-earth-600">{u.account_code || '—'}</td>
-                      <td className="px-4 py-3">
-                        <button
-                          type="button"
-                          onClick={() => openUserDetail(u)}
-                          className="rounded bg-earth-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-earth-800"
-                        >
-                          Ver / Editar
-                        </button>
-                      </td>
+            <div className="mt-4">
+              <div className="overflow-x-auto rounded-lg border border-earth-200 bg-white">
+                <table className="min-w-full divide-y divide-earth-200 text-left text-sm">
+                  <thead>
+                    <tr className="bg-earth-50">
+                      <th className="px-4 py-3 font-medium text-earth-900">Nome</th>
+                      <th className="px-4 py-3 font-medium text-earth-900">Email</th>
+                      <th className="px-4 py-3 font-medium text-earth-900">Código</th>
+                      <th className="px-4 py-3 font-medium text-earth-900">Ações</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-earth-200">
+                    {usersList.map((u) => (
+                      <tr key={u.id} className="hover:bg-earth-50/50">
+                        <td className="px-4 py-3 font-medium text-earth-900">{u.name || '—'}</td>
+                        <td className="px-4 py-3 text-earth-700">{u.email || '—'}</td>
+                        <td className="px-4 py-3 font-mono text-earth-600">{u.account_code || '—'}</td>
+                        <td className="px-4 py-3">
+                          <button
+                            type="button"
+                            onClick={() => openUserDetail(u)}
+                            className="rounded bg-earth-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-earth-800"
+                          >
+                            Ver / Editar
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <PaginationControls
+                page={usersPage}
+                hasMore={usersHasMore}
+                loading={usersListLoading}
+                onPrev={() => setUsersPage((p) => Math.max(0, p - 1))}
+                onNext={() => setUsersPage((p) => p + 1)}
+              />
             </div>
           )}
         </section>
@@ -3291,61 +3360,70 @@ export default function Admin() {
               <p className="mt-2 text-sm text-earth-600">Nenhum produto ainda.</p>
             )}
             {!loading && products.length > 0 && (
-              <ul className="mt-4 space-y-2">
-                {products.map((p) => (
-                  <li
-                    key={p.id}
-                    className="flex items-center justify-between rounded-lg border border-earth-200 bg-white p-4"
-                  >
-                    <div className="flex items-center gap-4">
-                      {p.image_url ? (
-                        <img src={p.image_url} alt="" className="h-12 w-12 rounded object-cover" />
-                      ) : (
-                        <div className="h-12 w-12 rounded bg-earth-200" />
-                      )}
-                      <div>
-                        <span className="font-medium text-earth-900">{p.name}</span>
-                        <span className="ml-2 text-sm text-earth-600">{formatJPY(brlToJpy(p.price))}</span>
-                        <span className="ml-2 text-xs text-earth-500">
-                          {Number(p.weight_kg ?? 0) > 0 ? `• ${formatWeight(p.weight_kg)}` : '• peso não definido'}
-                        </span>
-                        <span className="ml-2 text-xs text-earth-500">
-                          • Estoque: {p.stock_quantity != null ? p.stock_quantity : 'ilimitado'}
-                        </span>
-                        {!p.is_active && (
-                          <span className="ml-2 rounded bg-amber-200 px-2 py-0.5 text-xs text-amber-900">
-                            Inativo
-                          </span>
+              <div className="mt-4 space-y-2">
+                <ul className="space-y-2">
+                  {products.map((p) => (
+                    <li
+                      key={p.id}
+                      className="flex items-center justify-between rounded-lg border border-earth-200 bg-white p-4"
+                    >
+                      <div className="flex items-center gap-4">
+                        {p.image_url ? (
+                          <img src={p.image_url} alt="" className="h-12 w-12 rounded object-cover" />
+                        ) : (
+                          <div className="h-12 w-12 rounded bg-earth-200" />
                         )}
+                        <div>
+                          <span className="font-medium text-earth-900">{p.name}</span>
+                          <span className="ml-2 text-sm text-earth-600">{formatJPY(brlToJpy(p.price))}</span>
+                          <span className="ml-2 text-xs text-earth-500">
+                            {Number(p.weight_kg ?? 0) > 0 ? `• ${formatWeight(p.weight_kg)}` : '• peso não definido'}
+                          </span>
+                          <span className="ml-2 text-xs text-earth-500">
+                            • Estoque: {p.stock_quantity != null ? p.stock_quantity : 'ilimitado'}
+                          </span>
+                          {!p.is_active && (
+                            <span className="ml-2 rounded bg-amber-200 px-2 py-0.5 text-xs text-amber-900">
+                              Inativo
+                            </span>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => handleEdit(p)}
-                        className="text-sm font-medium text-earth-600 hover:text-earth-900"
-                      >
-                        Editar
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDuplicate(p)}
-                        disabled={duplicatingId === p.id}
-                        className="text-sm font-medium text-earth-600 hover:text-earth-900 disabled:opacity-50"
-                      >
-                        {duplicatingId === p.id ? 'Duplicando...' : 'Duplicar'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(p.id)}
-                        className="text-sm font-medium text-red-600 hover:text-red-800"
-                      >
-                        Remover
-                      </button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleEdit(p)}
+                          className="text-sm font-medium text-earth-600 hover:text-earth-900"
+                        >
+                          Editar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDuplicate(p)}
+                          disabled={duplicatingId === p.id}
+                          className="text-sm font-medium text-earth-600 hover:text-earth-900 disabled:opacity-50"
+                        >
+                          {duplicatingId === p.id ? 'Duplicando...' : 'Duplicar'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(p.id)}
+                          className="text-sm font-medium text-red-600 hover:text-red-800"
+                        >
+                          Remover
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+                <PaginationControls
+                  page={productsPage}
+                  hasMore={productsHasMore}
+                  loading={loading}
+                  onPrev={() => setProductsPage((p) => Math.max(0, p - 1))}
+                  onNext={() => setProductsPage((p) => p + 1)}
+                />
+              </div>
             )}
           </div>
         </section>
@@ -3399,55 +3477,64 @@ export default function Admin() {
           )}
 
           {!loading && catalogProducts.length > 0 && (
-            <div className="mt-4 overflow-x-auto rounded-lg border border-earth-200 bg-white">
-              <table className="min-w-full divide-y divide-earth-200 text-sm">
-                <thead className="bg-earth-100 text-left text-earth-700">
-                  <tr>
-                    <th className="px-3 py-2 font-medium">Produto</th>
-                    <th className="px-3 py-2 font-medium">Origem</th>
-                    <th className="px-3 py-2 font-medium">Preco</th>
-                    <th className="px-3 py-2 font-medium">Estoque</th>
-                    <th className="px-3 py-2 font-medium">Status</th>
-                    <th className="px-3 py-2 font-medium">ID</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-earth-100">
-                  {catalogProducts.map((p) => (
-                    <tr key={p.id} className="align-top">
-                      <td className="px-3 py-2">
-                        <div className="flex items-center gap-3">
-                          {p.image_url ? (
-                            <img src={p.image_url} alt="" className="h-10 w-10 rounded object-cover" />
-                          ) : (
-                            <div className="h-10 w-10 rounded bg-earth-200" />
-                          )}
-                          <div className="min-w-0">
-                            <p className="font-medium text-earth-900">{p.name || 'Sem nome'}</p>
-                            {p.description && (
-                              <p className="line-clamp-2 text-xs text-earth-600">{p.description}</p>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-3 py-2 text-earth-700">
-                        {p.purchase_group_id ? 'Grupo de compras' : 'Loja virtual'}
-                      </td>
-                      <td className="px-3 py-2 text-earth-700">
-                        {formatJPY(brlToJpy(p.price))}
-                      </td>
-                      <td className="px-3 py-2 text-earth-700">
-                        {p.stock_quantity != null ? p.stock_quantity : 'Ilimitado'}
-                      </td>
-                      <td className="px-3 py-2">
-                        <span className={`rounded px-2 py-0.5 text-xs ${p.is_active ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'}`}>
-                          {p.is_active ? 'Ativo' : 'Inativo'}
-                        </span>
-                      </td>
-                      <td className="px-3 py-2 text-xs text-earth-500">{p.id}</td>
+            <div className="mt-4">
+              <div className="overflow-x-auto rounded-lg border border-earth-200 bg-white">
+                <table className="min-w-full divide-y divide-earth-200 text-sm">
+                  <thead className="bg-earth-100 text-left text-earth-700">
+                    <tr>
+                      <th className="px-3 py-2 font-medium">Produto</th>
+                      <th className="px-3 py-2 font-medium">Origem</th>
+                      <th className="px-3 py-2 font-medium">Preco</th>
+                      <th className="px-3 py-2 font-medium">Estoque</th>
+                      <th className="px-3 py-2 font-medium">Status</th>
+                      <th className="px-3 py-2 font-medium">ID</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-earth-100">
+                    {catalogProducts.map((p) => (
+                      <tr key={p.id} className="align-top">
+                        <td className="px-3 py-2">
+                          <div className="flex items-center gap-3">
+                            {p.image_url ? (
+                              <img src={p.image_url} alt="" className="h-10 w-10 rounded object-cover" />
+                            ) : (
+                              <div className="h-10 w-10 rounded bg-earth-200" />
+                            )}
+                            <div className="min-w-0">
+                              <p className="font-medium text-earth-900">{p.name || 'Sem nome'}</p>
+                              {p.description && (
+                                <p className="line-clamp-2 text-xs text-earth-600">{p.description}</p>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-3 py-2 text-earth-700">
+                          {p.purchase_group_id ? 'Grupo de compras' : 'Loja virtual'}
+                        </td>
+                        <td className="px-3 py-2 text-earth-700">
+                          {formatJPY(brlToJpy(p.price))}
+                        </td>
+                        <td className="px-3 py-2 text-earth-700">
+                          {p.stock_quantity != null ? p.stock_quantity : 'Ilimitado'}
+                        </td>
+                        <td className="px-3 py-2">
+                          <span className={`rounded px-2 py-0.5 text-xs ${p.is_active ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'}`}>
+                            {p.is_active ? 'Ativo' : 'Inativo'}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2 text-xs text-earth-500">{p.id}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <PaginationControls
+                page={productsPage}
+                hasMore={productsHasMore}
+                loading={loading}
+                onPrev={() => setProductsPage((p) => Math.max(0, p - 1))}
+                onNext={() => setProductsPage((p) => p + 1)}
+              />
             </div>
           )}
         </section>

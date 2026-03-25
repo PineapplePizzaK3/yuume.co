@@ -17,6 +17,7 @@ const SHIPMENT_STATUS_LABELS = {
   shipped: 'Enviado',
   completed: 'Finalizado',
 }
+const SHIPMENTS_PAGE_SIZE = 12
 
 export default function Envios() {
   const { user } = useAuth()
@@ -27,6 +28,8 @@ export default function Envios() {
   const [detailsOpenId, setDetailsOpenId] = useState(null)
   const [detailsLoadingId, setDetailsLoadingId] = useState(null)
   const [detailsByShipmentId, setDetailsByShipmentId] = useState({})
+  const [shipmentsPage, setShipmentsPage] = useState(0)
+  const [shipmentsHasMore, setShipmentsHasMore] = useState(false)
 
   useEffect(() => {
     let isActive = true
@@ -35,20 +38,26 @@ export default function Envios() {
         if (isActive) setLoading(false)
         return
       }
-      const k = cacheKey(user.id, 'shipments_page_v1')
+      const k = cacheKey(user.id, `shipments_page_v1_p${shipmentsPage}`)
       const cached = readCache(k, 1000 * 60 * 30)
       if (cached && isActive) {
         setShipments(cached.shipments ?? [])
+        setShipmentsHasMore(!!cached.hasMore)
         setLoading(false)
       }
 
       try {
         if (isActive) setLoading(true)
-        const { data, error } = await getMyShipments(user.id)
+        const { data, error } = await getMyShipments(user.id, {
+          limit: SHIPMENTS_PAGE_SIZE,
+          offset: shipmentsPage * SHIPMENTS_PAGE_SIZE,
+        })
         if (!isActive) return
-        setShipments(data ?? [])
+        const list = data ?? []
+        setShipments(list)
+        setShipmentsHasMore(list.length === SHIPMENTS_PAGE_SIZE)
         if (error) setFeedback(error.message)
-        writeCache(k, { shipments: data ?? [] })
+        writeCache(k, { shipments: list, hasMore: list.length === SHIPMENTS_PAGE_SIZE })
       } catch (e) {
         if (isActive) setFeedback(e?.message || 'Erro ao carregar envios')
       } finally {
@@ -59,13 +68,21 @@ export default function Envios() {
     return () => {
       isActive = false
     }
-  }, [user?.id])
+  }, [user?.id, shipmentsPage])
 
   const refreshShipments = async () => {
     if (!user?.id) return
-    const { data } = await getMyShipments(user.id)
-    setShipments(data ?? [])
-    writeCache(cacheKey(user.id, 'shipments_page_v1'), { shipments: data ?? [] })
+    const { data } = await getMyShipments(user.id, {
+      limit: SHIPMENTS_PAGE_SIZE,
+      offset: shipmentsPage * SHIPMENTS_PAGE_SIZE,
+    })
+    const list = data ?? []
+    setShipments(list)
+    setShipmentsHasMore(list.length === SHIPMENTS_PAGE_SIZE)
+    writeCache(cacheKey(user.id, `shipments_page_v1_p${shipmentsPage}`), {
+      shipments: list,
+      hasMore: list.length === SHIPMENTS_PAGE_SIZE,
+    })
   }
 
   const handleCancel = async (s) => {
@@ -266,6 +283,27 @@ export default function Envios() {
                 </section>
               )
             })}
+            <div className="flex items-center justify-between gap-3 rounded-lg border border-earth-200 bg-white px-3 py-2">
+              <p className="text-xs text-earth-600">Página {shipmentsPage + 1}</p>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShipmentsPage((p) => Math.max(0, p - 1))}
+                  disabled={loading || shipmentsPage <= 0}
+                  className="rounded border border-earth-300 px-3 py-1.5 text-sm font-medium text-earth-700 hover:bg-earth-100 disabled:opacity-50"
+                >
+                  Anterior
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShipmentsPage((p) => p + 1)}
+                  disabled={loading || !shipmentsHasMore}
+                  className="rounded border border-earth-300 px-3 py-1.5 text-sm font-medium text-earth-700 hover:bg-earth-100 disabled:opacity-50"
+                >
+                  Próxima
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>

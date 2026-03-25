@@ -3,60 +3,50 @@
  * Usuários veem apenas produtos ativos; admin pode CRUD.
  */
 import { supabase } from '../lib/supabase'
-
-/** Timeout em ms - Supabase free tier pode levar ~30–60s ao acordar após pausa */
-const DB_TIMEOUT = 60000
-
-async function withTimeout(promise, ms = DB_TIMEOUT) {
-  const timeout = new Promise((_, reject) =>
-    setTimeout(() => reject(new Error('Operação demorou demais. Tente novamente.')), ms)
-  )
-  return Promise.race([promise, timeout])
-}
-
-function toError(err) {
-  return err instanceof Error ? err : { message: String(err) }
-}
+import { withDbTimeout, toServiceError } from '../lib/dbGuard'
 
 export async function getProducts() {
   try {
-    const { data, error } = await withTimeout(
+    const { data, error } = await withDbTimeout(
       supabase
         .from('products')
         .select('*')
         .eq('is_active', true)
         .is('purchase_group_id', null)
         .order('created_at', { ascending: false })
-    )
+    , 60000, 'products:getProducts')
     return { data: data ?? [], error }
   } catch (e) {
-    return { data: [], error: toError(e) }
+    return { data: [], error: toServiceError(e) }
   }
 }
 
 /** Produtos de um grupo de compras */
 export async function getPurchaseGroupProducts(groupId) {
   try {
-    const { data, error } = await withTimeout(
+    const { data, error } = await withDbTimeout(
       supabase.rpc('get_purchase_group_products', { p_group_id: groupId })
-    )
+    , 60000, 'products:getPurchaseGroupProducts')
     const list = Array.isArray(data) ? data : (data ?? [])
     return { data: list, error }
   } catch (e) {
-    return { data: [], error: toError(e) }
+    return { data: [], error: toServiceError(e) }
   }
 }
 
 /** Admin: usa RPC para contornar problemas de acesso direto à tabela products */
-export async function getProductsAdmin() {
+export async function getProductsAdmin(limit = 500, offset = 0) {
   try {
-    const { data, error } = await withTimeout(
-      supabase.rpc('admin_list_products')
-    )
+    const { data, error } = await withDbTimeout(
+      supabase.rpc('admin_list_products', {
+        p_limit: limit,
+        p_offset: offset,
+      })
+    , 60000, 'products:getProductsAdmin')
     const list = Array.isArray(data) ? data : (data ?? [])
     return { data: list, error }
   } catch (e) {
-    return { data: [], error: toError(e) }
+    return { data: [], error: toServiceError(e) }
   }
 }
 
@@ -74,12 +64,12 @@ export async function createProduct(product) {
       is_active: product.is_active ?? true,
       ...(product.hasOwnProperty('stock_quantity') && { stock_quantity: product.stock_quantity ?? null }),
     }
-    const { data, error } = await withTimeout(
+    const { data, error } = await withDbTimeout(
       supabase.rpc('admin_create_product', { p_product: payload })
-    )
+    , 60000, 'products:createProduct')
     return { data: data ?? null, error }
   } catch (e) {
-    return { data: null, error: toError(e) }
+    return { data: null, error: toServiceError(e) }
   }
 }
 
@@ -97,24 +87,24 @@ export async function updateProduct(id, product) {
       is_active: product.is_active ?? true,
       ...(product.hasOwnProperty('stock_quantity') && { stock_quantity: product.stock_quantity ?? null }),
     }
-    const { data, error } = await withTimeout(
+    const { data, error } = await withDbTimeout(
       supabase.rpc('admin_update_product', { p_id: id, p_product: payload })
-    )
+    , 60000, 'products:updateProduct')
     return { data: data ?? null, error }
   } catch (e) {
-    return { data: null, error: toError(e) }
+    return { data: null, error: toServiceError(e) }
   }
 }
 
 /** Admin: usa RPC para remover produto */
 export async function deleteProduct(id) {
   try {
-    const { error } = await withTimeout(
+    const { error } = await withDbTimeout(
       supabase.rpc('admin_delete_product', { p_id: id })
-    )
+    , 60000, 'products:deleteProduct')
     return { error }
   } catch (e) {
-    return { error: toError(e) }
+    return { error: toServiceError(e) }
   }
 }
 
@@ -147,7 +137,7 @@ export async function uploadOrderAttachment(file, userId) {
 
     return { data: urlData?.publicUrl ?? null, error: null }
   } catch (e) {
-    return { data: null, error: toError(e) }
+    return { data: null, error: toServiceError(e) }
   }
 }
 
@@ -177,7 +167,7 @@ export async function uploadPixComprovante(file, userId, orderId) {
 
     return { data: urlData?.publicUrl ?? null, error: null }
   } catch (e) {
-    return { data: null, error: toError(e) }
+    return { data: null, error: toServiceError(e) }
   }
 }
 
@@ -207,7 +197,7 @@ export async function uploadWalletTopupComprovante(file, userId, requestId) {
 
     return { data: urlData?.publicUrl ?? null, error: null }
   } catch (e) {
-    return { data: null, error: toError(e) }
+    return { data: null, error: toServiceError(e) }
   }
 }
 
@@ -243,6 +233,6 @@ export async function uploadProductImage(file) {
 
     return { data: urlData?.publicUrl ?? null, error: null }
   } catch (e) {
-    return { data: null, error: toError(e) }
+    return { data: null, error: toServiceError(e) }
   }
 }
