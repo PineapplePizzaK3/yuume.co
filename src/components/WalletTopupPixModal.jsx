@@ -2,6 +2,7 @@
  * Modal PIX para recarga de carteira: QR Code, chave e upload de comprovante.
  */
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { generatePixQr } from '../lib/pixQr'
 import { PIX_CONFIG } from '../data/pixConfig'
 import { uploadWalletTopupComprovante } from '../services/productService'
@@ -84,95 +85,102 @@ export default function WalletTopupPixModal({ open, onClose, amountBrl, amountJp
   if (!open) return null
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-      onClick={onClose}
-    >
+    createPortal(
       <div
-        className="w-full max-w-md rounded-xl bg-white p-6 shadow-lg"
-        onClick={(e) => e.stopPropagation()}
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 relative"
+        onClick={onClose}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="wallet-topup-pix-title"
       >
-        <h3 className="font-semibold text-earth-900">Recarga de carteira via PIX</h3>
-        <p className="mt-1 text-sm text-earth-600">
-          Pague via PIX e envie o comprovante. Verificaremos e creditaremos o saldo o mais rápido possível.
-        </p>
+        {feedback && (
+          <div className="absolute inset-0 z-[80] flex items-center justify-center pointer-events-none">
+            <p
+              className={`rounded-lg px-4 py-2 text-sm ${
+                feedback.includes('enviado') ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
+              }`}
+            >
+              {feedback}
+            </p>
+          </div>
+        )}
+        <div
+          className="w-full max-w-md rounded-xl bg-white p-6 shadow-lg"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <h3 id="wallet-topup-pix-title" className="font-semibold text-earth-900">Recarga de carteira via PIX</h3>
+          <p className="mt-1 text-sm text-earth-600">
+            Pague via PIX e envie o comprovante. Verificaremos e creditaremos o saldo o mais rápido possível.
+          </p>
 
-        {value != null && value > 0 && (
-          <div className="mt-4 rounded-lg border border-earth-200 bg-earth-50 p-4 text-center">
-            <p className="text-sm font-medium text-earth-800">Valor a pagar</p>
-            <p className="text-xl font-bold text-earth-900">{formatBRL(value)}</p>
-            {amountJpy != null && (
-              <p className="mt-1 text-sm text-earth-600">≈ ¥{Number(amountJpy).toLocaleString('pt-BR')}</p>
+          {value != null && value > 0 && (
+            <div className="mt-4 rounded-lg border border-earth-200 bg-earth-50 p-4 text-center">
+              <p className="text-sm font-medium text-earth-800">Valor a pagar</p>
+              <p className="text-xl font-bold text-earth-900">{formatBRL(value)}</p>
+              {amountJpy != null && (
+                <p className="mt-1 text-sm text-earth-600">≈ ¥{Number(amountJpy).toLocaleString('pt-BR')}</p>
+              )}
+            </div>
+          )}
+
+          {qrBase64 && (
+            <div className="mt-4 flex justify-center">
+              <img src={qrBase64} alt="QR Code PIX" className="h-48 w-48 rounded-lg border border-earth-200" />
+            </div>
+          )}
+
+          <div className="mt-4 rounded-lg border border-earth-200 bg-earth-50 p-3">
+            <p className="text-xs text-earth-600">Chave PIX (copie e cole no app do seu banco)</p>
+            <div className="mt-1 flex items-center gap-2">
+              <code className="flex-1 truncate rounded bg-white px-2 py-1.5 text-sm text-earth-800">
+                {PIX_CONFIG.key}
+              </code>
+              <button
+                type="button"
+                onClick={handleCopyKey}
+                className="shrink-0 rounded-lg bg-earth-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-earth-800"
+              >
+                Copiar
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-6 space-y-2">
+            <p className="text-sm font-medium text-earth-800">Envie o comprovante</p>
+            <p className="text-xs text-earth-600">
+              Após realizar o pagamento, envie a imagem do comprovante abaixo.
+            </p>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => setComprovanteFile(e.target.files?.[0] || null)}
+              className="block w-full text-sm text-earth-600 file:mr-2 file:rounded-lg file:border-0 file:bg-earth-200 file:px-4 file:py-2 file:text-sm file:font-medium file:text-earth-800"
+            />
+            {comprovanteFile && (
+              <p className="text-xs text-earth-500">{comprovanteFile.name}</p>
             )}
           </div>
-        )}
 
-        {qrBase64 && (
-          <div className="mt-4 flex justify-center">
-            <img src={qrBase64} alt="QR Code PIX" className="h-48 w-48 rounded-lg border border-earth-200" />
-          </div>
-        )}
-
-        <div className="mt-4 rounded-lg border border-earth-200 bg-earth-50 p-3">
-          <p className="text-xs text-earth-600">Chave PIX (copie e cole no app do seu banco)</p>
-          <div className="mt-1 flex items-center gap-2">
-            <code className="flex-1 truncate rounded bg-white px-2 py-1.5 text-sm text-earth-800">
-              {PIX_CONFIG.key}
-            </code>
+          <div className="mt-6 flex flex-wrap gap-2">
             <button
               type="button"
-              onClick={handleCopyKey}
-              className="shrink-0 rounded-lg bg-earth-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-earth-800"
+              onClick={handleSubmit}
+              disabled={submitting || !comprovanteFile}
+              className="flex-1 min-w-0 rounded-lg bg-earth-900 py-2.5 font-medium text-white hover:bg-earth-800 disabled:opacity-50"
             >
-              Copiar
+              {submitting ? 'Enviando...' : 'Enviar comprovante'}
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-lg border border-earth-300 px-4 py-2.5 font-medium text-earth-700 hover:bg-earth-50"
+            >
+              Fechar
             </button>
           </div>
         </div>
-
-        <div className="mt-6 space-y-2">
-          <p className="text-sm font-medium text-earth-800">Envie o comprovante</p>
-          <p className="text-xs text-earth-600">
-            Após realizar o pagamento, envie a imagem do comprovante abaixo.
-          </p>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => setComprovanteFile(e.target.files?.[0] || null)}
-            className="block w-full text-sm text-earth-600 file:mr-2 file:rounded-lg file:border-0 file:bg-earth-200 file:px-4 file:py-2 file:text-sm file:font-medium file:text-earth-800"
-          />
-          {comprovanteFile && (
-            <p className="text-xs text-earth-500">{comprovanteFile.name}</p>
-          )}
-        </div>
-
-        {feedback && (
-          <p
-            className={`mt-4 rounded-lg px-3 py-2 text-sm ${
-              feedback.includes('enviado') ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
-            }`}
-          >
-            {feedback}
-          </p>
-        )}
-
-        <div className="mt-6 flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={submitting || !comprovanteFile}
-            className="flex-1 min-w-0 rounded-lg bg-earth-900 py-2.5 font-medium text-white hover:bg-earth-800 disabled:opacity-50"
-          >
-            {submitting ? 'Enviando...' : 'Enviar comprovante'}
-          </button>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg border border-earth-300 px-4 py-2.5 font-medium text-earth-700 hover:bg-earth-50"
-          >
-            Fechar
-          </button>
-        </div>
-      </div>
-    </div>
+      </div>,
+      document.body
+    )
   )
 }

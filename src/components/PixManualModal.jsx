@@ -2,6 +2,7 @@
  * Modal PIX manual: QR Code, chave e upload de comprovante.
  */
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { generatePixQr } from '../lib/pixQr'
 import { PIX_CONFIG } from '../data/pixConfig'
 import { uploadPixComprovante } from '../services/productService'
@@ -87,31 +88,35 @@ export default function PixManualModal({ open, onClose, onBack, order, amountBrl
   if (!open) return null
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 relative"
-      onClick={onClose}
-    >
-      {feedback && (
-        <div className="absolute inset-0 z-[80] flex items-center justify-center pointer-events-none">
-          <p
-            className={`rounded-lg px-4 py-2 text-sm ${
-              feedback.includes('enviado')
-                ? 'bg-green-100 text-green-800'
-                : 'bg-amber-100 text-amber-800'
-            }`}
-          >
-            {feedback}
-          </p>
-        </div>
-      )}
+    createPortal(
       <div
-        className="w-full max-w-md rounded-xl bg-white p-6 shadow-lg"
-        onClick={(e) => e.stopPropagation()}
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 relative"
+        onClick={onClose}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="pix-manual-title"
       >
-        <h3 className="font-semibold text-earth-900">Pagamento via PIX</h3>
-        <p className="mt-1 text-sm text-earth-600">
-          Por enquanto trabalhamos com PIX manual. Verificaremos o comprovante o mais rápido possível.
-        </p>
+        {feedback && (
+          <div className="absolute inset-0 z-[80] flex items-center justify-center pointer-events-none">
+            <p
+              className={`rounded-lg px-4 py-2 text-sm ${
+                feedback.includes('enviado')
+                  ? 'bg-green-100 text-green-800'
+                  : 'bg-amber-100 text-amber-800'
+              }`}
+            >
+              {feedback}
+            </p>
+          </div>
+        )}
+        <div
+          className="w-full max-w-md rounded-xl bg-white p-6 shadow-lg"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <h3 id="pix-manual-title" className="font-semibold text-earth-900">Pagamento via PIX</h3>
+          <p className="mt-1 text-sm text-earth-600">
+            Por enquanto trabalhamos com PIX manual. Verificaremos o comprovante o mais rápido possível.
+          </p>
 
         {value != null && value > 0 && (
           <div className="mt-4 rounded-lg border border-earth-200 bg-earth-50 p-4 text-center">
@@ -187,7 +192,9 @@ export default function PixManualModal({ open, onClose, onBack, order, amountBrl
             Fechar
           </button>
         </div>
-      </div>
-    </div>
+        </div>
+      </div>,
+      document.body
+    )
   )
 }

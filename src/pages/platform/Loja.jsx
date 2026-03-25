@@ -248,12 +248,12 @@ export default function Loja() {
                   </div>
                 )}
               </div>
-              <div className="overflow-y-auto p-5">
+              <div className="flex-1 min-h-0 overflow-y-auto p-5">
                 <h2 id="product-detail-title" className="text-xl font-bold text-earth-900">
                   {detailProduct.name}
                 </h2>
                 {detailProduct.description && (
-                  <p className="mt-2 max-h-56 overflow-y-auto whitespace-pre-wrap pr-1 text-earth-600">
+                  <p className="mt-2 whitespace-pre-wrap text-earth-600">
                     {detailProduct.description}
                   </p>
                 )}
