@@ -58,13 +58,23 @@ function extractFromMeta(html: string): { name?: string; price?: number; currenc
   try {
     const metaOgTitle = html.match(/<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)["']/i)
       || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:title["']/i)
-    if (metaOgTitle?.[1]) result.name = String(metaOgTitle[1]).trim()
+    const metaTwitterTitle = html.match(/<meta[^>]+name=["']twitter:title["'][^>]+content=["']([^"']+)["']/i)
+      || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+name=["']twitter:title["']/i)
+    const metaTitle = html.match(/<meta[^>]+name=["']title["'][^>]+content=["']([^"']+)["']/i)
+    if (metaOgTitle?.[1] || metaTwitterTitle?.[1] || metaTitle?.[1]) {
+      result.name = String(metaOgTitle?.[1] || metaTwitterTitle?.[1] || metaTitle?.[1]).trim()
+    }
   } catch { /* ignore */ }
 
   try {
     const metaOgImage = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)
       || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i)
-    if (metaOgImage?.[1]) result.imageUrl = String(metaOgImage[1]).trim()
+    const metaTwitterImage = html.match(/<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i)
+      || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+name=["']twitter:image["']/i)
+    const itempropImage = html.match(/<meta[^>]+itemprop=["']image["'][^>]+content=["']([^"']+)["']/i)
+    if (metaOgImage?.[1] || metaTwitterImage?.[1] || itempropImage?.[1]) {
+      result.imageUrl = String(metaOgImage?.[1] || metaTwitterImage?.[1] || itempropImage?.[1]).trim()
+    }
   } catch { /* ignore */ }
   try {
     const metaPrice = html.match(/<meta[^>]+property=["']product:price:amount["'][^>]+content=["']([^"']+)["']/i)
@@ -109,7 +119,7 @@ function findProductNode(node: unknown): Record<string, unknown> | null {
   return null
 }
 
-function extractFromJsonLd(html: string): { name?: string; price?: number; currency?: string } | null {
+function extractFromJsonLd(html: string): { name?: string; price?: number; currency?: string; imageUrl?: string } | null {
   const scriptMatches = html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)
   for (const m of scriptMatches) {
     const raw = m[1]?.trim()
@@ -129,7 +139,15 @@ function extractFromJsonLd(html: string): { name?: string; price?: number; curre
           const name = (product['name'] as string) || (product['description'] as string)
           let price: number | undefined
           let currency = 'JPY'
+          let imageUrl: string | undefined
           const offers = product['offers']
+          const image = product['image']
+          if (typeof image === 'string') imageUrl = image
+          else if (Array.isArray(image)) imageUrl = typeof image[0] === 'string' ? image[0] : undefined
+          else if (image && typeof image === 'object') {
+            const imgObj = image as Record<string, unknown>
+            if (typeof imgObj['url'] === 'string') imageUrl = imgObj['url']
+          }
           if (offers) {
             const offerObj = Array.isArray(offers) ? offers[0] : offers
             if (offerObj && typeof offerObj === 'object') {
@@ -138,7 +156,7 @@ function extractFromJsonLd(html: string): { name?: string; price?: number; curre
               currency = typeof o['priceCurrency'] === 'string' ? o['priceCurrency'] : 'JPY'
             }
           }
-          return { name, price, currency }
+          return { name, price, currency, imageUrl }
         }
       } catch {
         // ignore and try next candidate
@@ -151,11 +169,14 @@ function extractFromJsonLd(html: string): { name?: string; price?: number; curre
 function extractFromPage(html: string): { name?: string; price?: number } {
   const result: { name?: string; price?: number } = {}
   const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i)
-  if (titleMatch) result.name = titleMatch[1].trim().replace(/\s*[|-]\s*.*$/, '')
+  if (titleMatch) result.name = titleMatch[1].trim()
 
   const pricePatterns = [
     /(?:¥|R\$\s*|US\$\s*|USD\s*|JPY\s*|BRL\s*)?([\d.,]+)\s*(?:円|yen)?/gi,
     /["']price["']\s*:\s*["']?([\d.,]+)/gi,
+    /["']priceAmount["']\s*:\s*["']?([\d.,]+)/gi,
+    /["']priceToPay["']\s*:\s*\{[\s\S]{0,120}?["']amount["']\s*:\s*["']?([\d.,]+)/gi,
+    /class=["'][^"']*a-price-whole[^"']*["'][^>]*>\s*([\d.,]+)/gi,
     /itemprop=["']price["'][^>]*content=["']([^"']+)["']/gi,
     /data-price=["']([^"']+)["']/gi,
   ]
@@ -172,19 +193,27 @@ function extractFromPage(html: string): { name?: string; price?: number } {
   return result
 }
 
-function extractFromText(text: string): { name?: string; price?: number; currency?: string } {
+function extractFromText(text: string): { name?: string; price?: number; currency?: string; imageUrl?: string } {
   const lines = text
     .split('\n')
     .map((l) => l.trim())
     .filter(Boolean)
 
-  let name: string | undefined
-  for (const line of lines) {
-    if (line.length >= 6 && line.length <= 140 && !/^https?:\/\//i.test(line)) {
-      name = line.replace(/^#{1,6}\s*/, '').trim()
-      if (name) break
+  let name: string | undefined = text.match(/(?:^|\n)Title:\s*(.+)/i)?.[1]?.trim()
+  const skipLine = /^(URL Source|Markdown Content|Warning|http[s]?:\/\/)/i
+  if (!name) {
+    for (const line of lines) {
+      if (skipLine.test(line)) continue
+      if (line.length >= 6 && line.length <= 180) {
+        name = line.replace(/^#{1,6}\s*/, '').trim()
+        if (name) break
+      }
     }
   }
+
+  const imageMatch =
+    text.match(/!\[[^\]]*\]\((https?:\/\/[^)\s]+)\)/i) ||
+    text.match(/https?:\/\/[^\s)"']+\.(?:jpg|jpeg|png|webp|gif)(?:\?[^\s)"']*)?/i)
 
   const candidates = [
     ...text.matchAll(/(?:¥|JPY)\s*([\d,]+(?:\.\d+)?)/gi),
@@ -196,11 +225,32 @@ function extractFromText(text: string): { name?: string; price?: number; currenc
     const parsed = parsePrice(m[1])
     if (parsed != null) {
       const currency = /R\$|BRL/i.test(m[0]) ? 'BRL' : 'JPY'
-      return { name, price: parsed, currency }
+      return { name, price: parsed, currency, imageUrl: imageMatch?.[1] || imageMatch?.[0] }
     }
   }
 
-  return { name }
+  return { name, imageUrl: imageMatch?.[1] || imageMatch?.[0] }
+}
+
+function normalizeProductName(input: string | undefined, pageUrl: URL): string {
+  const raw = String(input || '').replace(/\s+/g, ' ').trim()
+  if (!raw) return 'Produto'
+
+  const host = pageUrl.hostname.toLowerCase()
+  let name = raw
+  if (host.includes('amazon.')) {
+    name = name.replace(/^amazon\.[^:]+:\s*/i, '')
+    name = name.replace(/\s*[:|\-|｜]\s*amazon\.[^\s]+.*$/i, '')
+  }
+  if (host.includes('mercari.')) {
+    name = name.replace(/\s*[:|\-|｜]\s*mercari.*$/i, '')
+  }
+
+  name = name
+    .replace(/\s*[:|\-|｜]\s*(Amazon|Mercari|Rakuten|Yahoo!?\s*ショッピング|Yahoo!? Shopping).*$/i, '')
+    .trim()
+
+  return name.length >= 3 ? name : raw
 }
 
 function jsonResponse(obj: object, status = 200) {
@@ -291,10 +341,10 @@ Deno.serve(async (req) => {
       const meta = extractFromMeta(html)
       const jsonLd = extractFromJsonLd(html)
       const page = extractFromPage(html)
-      name = meta.name ?? jsonLd?.name ?? page.name ?? 'Produto'
+      name = normalizeProductName(meta.name ?? jsonLd?.name ?? page.name ?? 'Produto', parsed)
       price = meta.price ?? jsonLd?.price ?? page.price ?? undefined
       currency = meta.currency ?? jsonLd?.currency ?? 'JPY'
-      imageUrl = meta.imageUrl ?? undefined
+      imageUrl = meta.imageUrl ?? jsonLd?.imageUrl ?? undefined
     } catch { /* use defaults */ }
 
     // Fallback para sites que bloqueiam bot ou renderizam preço via JS:
@@ -313,9 +363,10 @@ Deno.serve(async (req) => {
         if (jinaRes.ok) {
           const text = await jinaRes.text()
           const ext = extractFromText(text)
-          if (ext.name && name === 'Produto') name = ext.name
+          if (ext.name && name === 'Produto') name = normalizeProductName(ext.name, parsed)
           if (ext.price != null && price == null) price = ext.price
           if (ext.currency && currency === 'JPY') currency = ext.currency
+          if (ext.imageUrl && !imageUrl) imageUrl = ext.imageUrl
         }
       } catch {
         // mantém resultado original
