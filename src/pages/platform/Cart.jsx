@@ -9,7 +9,7 @@ import { createPortal } from 'react-dom'
 import { useAuth } from '../../hooks/useAuth'
 import { getCart, updateCartItem, removeFromCart, createStoreOrder, getLatestPendingStoreOrder } from '../../services/cartService'
 import { validateCoupon } from '../../services/couponService'
-import { createCheckoutSession } from '../../services/paymentService'
+import { createCheckoutSession, getMyPayments } from '../../services/paymentService'
 import { getMyOrders, ORDER_STATUS_LABELS } from '../../services/orderService'
 import PixManualModal from '../../components/PixManualModal'
 import { getWallet } from '../../services/walletService'
@@ -21,14 +21,23 @@ function formatPriceBrlAsJpy(brl) {
   return { jpy, approxBrl }
 }
 
+const PAYMENT_STATUS_LABELS = {
+  pending: 'Pendente',
+  completed: 'Concluído',
+  failed: 'Falhou',
+  refunded: 'Reembolsado',
+}
+
 function Cart() {
   const { user, session } = useAuth()
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [items, setItems] = useState([])
   const [qtyDrafts, setQtyDrafts] = useState({})
   const [pendingOrders, setPendingOrders] = useState([])
+  const [payments, setPayments] = useState([])
   const [loading, setLoading] = useState(true)
   const [pendingLoading, setPendingLoading] = useState(true)
+  const [paymentsLoading, setPaymentsLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [wallet, setWallet] = useState(null)
   const [payModal, setPayModal] = useState({ open: false, order: null, useWallet: true })
@@ -41,6 +50,7 @@ function Cart() {
   const success = searchParams.get('success') === 'true'
   const canceled = searchParams.get('canceled') === 'true'
   const payOrderId = searchParams.get('payOrderId')
+  const activeTab = searchParams.get('tab') === 'history' ? 'history' : 'checkout'
 
   const loadCart = async () => {
     if (!user?.id) return
@@ -81,6 +91,20 @@ function Cart() {
     return list
   }
 
+  const loadPayments = async () => {
+    if (!user?.id) return
+    setPaymentsLoading(true)
+    const { data, error } = await getMyPayments()
+    if (error) {
+      setFeedback(error.message || 'Erro ao carregar histórico de pagamentos.')
+      setPayments([])
+      setPaymentsLoading(false)
+      return
+    }
+    setPayments(data ?? [])
+    setPaymentsLoading(false)
+  }
+
   useEffect(() => {
     loadCart()
   }, [user?.id])
@@ -99,6 +123,10 @@ function Cart() {
 
   useEffect(() => {
     loadPendingOrders()
+  }, [user?.id])
+
+  useEffect(() => {
+    loadPayments()
   }, [user?.id])
 
   useEffect(() => {
@@ -332,6 +360,7 @@ function Cart() {
         setFeedback('Pagamento realizado com carteira.')
         await loadCart()
         await loadPendingOrders()
+        await loadPayments()
         return
       }
       if (result?.url) window.location.href = result.url
@@ -380,6 +409,39 @@ function Cart() {
           Faça todos os pagamentos da sua conta aqui: pedidos da loja, fretes e valores pendentes.
         </p>
 
+        <div className="mt-4 inline-flex rounded-lg border border-earth-200 bg-earth-50 p-1">
+          <button
+            type="button"
+            onClick={() => {
+              const next = new URLSearchParams(searchParams)
+              next.delete('tab')
+              setSearchParams(next, { replace: true })
+            }}
+            className={`rounded-md px-3 py-1.5 text-sm font-medium ${
+              activeTab === 'checkout'
+                ? 'bg-earth-900 text-white'
+                : 'text-earth-700 hover:bg-earth-100'
+            }`}
+          >
+            Pagamento
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              const next = new URLSearchParams(searchParams)
+              next.set('tab', 'history')
+              setSearchParams(next, { replace: true })
+            }}
+            className={`rounded-md px-3 py-1.5 text-sm font-medium ${
+              activeTab === 'history'
+                ? 'bg-earth-900 text-white'
+                : 'text-earth-700 hover:bg-earth-100'
+            }`}
+          >
+            Histórico
+          </button>
+        </div>
+
         {feedback && !payModal.open && !pixModal.open && (
           <p
             className={`mt-4 rounded-lg px-4 py-2 text-sm ${
@@ -390,15 +452,15 @@ function Cart() {
           </p>
         )}
 
-        {loading && <p className="mt-6 text-earth-600">Carregando...</p>}
+        {activeTab === 'checkout' && loading && <p className="mt-6 text-earth-600">Carregando...</p>}
 
-        {!loading && items.length === 0 && (
+        {activeTab === 'checkout' && !loading && items.length === 0 && (
           <p className="mt-6 text-earth-600">
             Sem itens da loja no momento. <Link to="/app/loja" className="font-medium text-earth-900 underline">Compre na loja</Link>.
           </p>
         )}
 
-        {!loading && items.length > 0 && (
+        {activeTab === 'checkout' && !loading && items.length > 0 && (
           <div className="mt-6 space-y-6">
             <div className="space-y-4">
               {items.map((item) => {
@@ -516,7 +578,7 @@ function Cart() {
           </div>
         )}
 
-        <div className="mt-8">
+        {activeTab === 'checkout' && <div className="mt-8">
           <h2 className="text-xl font-semibold text-earth-900">Pagamentos pendentes</h2>
           <p className="mt-1 text-sm text-earth-600">Pedidos aguardando pagamento para finalizar o fluxo.</p>
 
@@ -559,7 +621,92 @@ function Cart() {
               })}
             </div>
           )}
-        </div>
+        </div>}
+
+        {activeTab === 'history' && (
+          <div className="mt-6">
+            {paymentsLoading && <p className="text-earth-600">Carregando histórico...</p>}
+            {!paymentsLoading && payments.length === 0 && (
+              <p className="text-earth-600">Nenhum pagamento registrado.</p>
+            )}
+            {!paymentsLoading && payments.length > 0 && (
+              <div className="overflow-hidden rounded-xl border border-earth-200">
+                <div className="hidden bg-earth-100 sm:grid sm:grid-cols-12 sm:gap-4 sm:px-4 sm:py-3 sm:text-xs sm:font-semibold sm:uppercase sm:tracking-wide sm:text-earth-600">
+                  <div className="sm:col-span-3">Data</div>
+                  <div className="sm:col-span-3">Descrição</div>
+                  <div className="sm:col-span-2">Valor</div>
+                  <div className="sm:col-span-2">Método</div>
+                  <div className="sm:col-span-2">Status</div>
+                </div>
+                <ul className="divide-y divide-earth-200">
+                  {payments.map((p) => {
+                    const order = p.orders ?? p.order
+                    const orderId = order?.id ?? p.order_id
+                    const serviceName = order?.service?.name ?? order?.service?.[0]?.name ?? ''
+                    const paymentMethod = p.stripe_payment_id === 'wallet' ? 'Carteira' : (p.stripe_payment_id ? 'Cartão' : '—')
+                    const moneyCurrency = order?.shipping_currency || 'BRL'
+                    return (
+                      <li
+                        key={p.id}
+                        className="flex flex-wrap items-center gap-2 bg-white px-4 py-4 sm:grid sm:grid-cols-12 sm:gap-4 sm:py-3"
+                      >
+                        <div className="w-full text-earth-700 sm:col-span-3 sm:w-auto">
+                          {p.created_at
+                            ? new Date(p.created_at).toLocaleString('pt-BR', {
+                                day: '2-digit',
+                                month: '2-digit',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })
+                            : '—'}
+                        </div>
+                        <div className="w-full sm:col-span-3 sm:w-auto">
+                          <span className="text-earth-900">
+                            Frete
+                            {orderId ? ` · Pedido ${String(orderId).slice(0, 8)}…` : ''}
+                          </span>
+                          {serviceName && (
+                            <p className="text-sm text-earth-500">{serviceName}</p>
+                          )}
+                        </div>
+                        <div className="w-full font-medium text-earth-900 sm:col-span-2 sm:w-auto">
+                          {moneyCurrency === 'JPY' ? formatJPY(p.amount) : formatBRL(p.amount)}
+                        </div>
+                        <div className="w-full text-earth-600 sm:col-span-2 sm:w-auto">
+                          {paymentMethod}
+                        </div>
+                        <div className="w-full sm:col-span-2 sm:w-auto">
+                          <span
+                            className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
+                              p.status === 'completed'
+                                ? 'bg-green-100 text-green-800'
+                                : p.status === 'pending'
+                                  ? 'bg-amber-100 text-amber-800'
+                                  : 'bg-earth-100 text-earth-700'
+                            }`}
+                          >
+                            {PAYMENT_STATUS_LABELS[p.status] ?? p.status}
+                          </span>
+                        </div>
+                        {orderId && (
+                          <div className="w-full sm:col-span-12 sm:mt-1 sm:flex sm:justify-end">
+                            <Link
+                              to="/app/orders"
+                              className="text-sm font-medium text-earth-700 hover:text-earth-900"
+                            >
+                              Ver pedido →
+                            </Link>
+                          </div>
+                        )}
+                      </li>
+                    )
+                  })}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       
@@ -663,7 +810,7 @@ function Cart() {
                       <button
                         type="button"
                         onClick={() => handlePayCard(!!payModal.useWallet)}
-                        disabled={submitting}
+                        disabled={submitting || isFullyCovered}
                         className="rounded-lg border border-earth-300 bg-white px-4 py-2.5 font-medium text-earth-800 hover:bg-earth-50 disabled:opacity-60"
                       >
                         Cartão
@@ -671,14 +818,10 @@ function Cart() {
                       <button
                         type="button"
                         onClick={() => {
-                          if (isFullyCovered) {
-                            handlePayCard(true)
-                            return
-                          }
                           setPayModal((m) => ({ ...m, open: false }))
                           setPixModal({ open: true, order: payModal.order, amountBrl: remainingBrl })
                         }}
-                        disabled={submitting}
+                        disabled={submitting || isFullyCovered}
                         className="rounded-lg border border-earth-300 bg-white px-4 py-2.5 font-medium text-earth-800 hover:bg-earth-50 disabled:opacity-60"
                       >
                         PIX

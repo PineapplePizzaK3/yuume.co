@@ -82,8 +82,14 @@ export default function ListaDesejos() {
   const [manualUrl, setManualUrl] = useState('')
   const [manualName, setManualName] = useState('')
   const [manualPrice, setManualPrice] = useState('')
-  const [editingPriceId, setEditingPriceId] = useState(null)
-  const [editPriceValue, setEditPriceValue] = useState('')
+  const [editingItemId, setEditingItemId] = useState(null)
+  const [editForm, setEditForm] = useState({
+    url: '',
+    product_name: '',
+    price: '',
+    currency: 'JPY',
+    image_url: '',
+  })
 
   const load = async (active = () => true) => {
     if (!user?.id) {
@@ -205,26 +211,44 @@ export default function ListaDesejos() {
     load()
   }
 
-  const handleEditPrice = (item) => {
-    setEditingPriceId(item.id)
-    setEditPriceValue(item.price != null ? String(item.price) : '')
+  const handleEditItem = (item) => {
+    setEditingItemId(item.id)
+    setEditForm({
+      url: item.url || '',
+      product_name: item.product_name || '',
+      price: item.price != null ? String(item.price) : '',
+      currency: item.currency || 'JPY',
+      image_url: item.image_url || '',
+    })
   }
 
-  const handleSaveEditPrice = async (item) => {
-    const newPrice = editPriceValue.trim() ? parsePriceInput(editPriceValue) : null
-    if (newPrice == null && editPriceValue.trim()) {
+  const handleSaveEditItem = async (item) => {
+    const trimmedName = editForm.product_name.trim()
+    const trimmedUrl = editForm.url.trim()
+    if (!trimmedName) {
+      setMessage('Informe o nome do produto.')
+      return
+    }
+    if (!trimmedUrl) {
+      setMessage('Informe o link do produto.')
+      return
+    }
+    const newPrice = editForm.price.trim() ? parsePriceInput(editForm.price) : null
+    if (newPrice == null && editForm.price.trim()) {
       setMessage('Preço inválido')
       return
     }
     setMessage('')
     const { error } = await updateWishlistLink(user.id, item.id, {
-      product_name: item.product_name,
+      url: trimmedUrl,
+      product_name: trimmedName,
+      currency: editForm.currency || item.currency || 'JPY',
+      image_url: editForm.image_url.trim() || null,
       price: newPrice,
       previous_price: item.price,
-      image_url: item.image_url,
     })
-    setEditingPriceId(null)
-    setEditPriceValue('')
+    setEditingItemId(null)
+    setEditForm({ url: '', product_name: '', price: '', currency: 'JPY', image_url: '' })
     if (error) {
       setMessage(error.message || 'Erro ao atualizar')
       return
@@ -397,29 +421,65 @@ export default function ListaDesejos() {
                           {item.url}
                         </a>
                         <div className="mt-1 flex flex-wrap items-center gap-2">
-                          {editingPriceId === item.id ? (
-                            <div className="flex items-center gap-2">
-                              <input
-                                type="text"
-                                value={editPriceValue}
-                                onChange={(e) => setEditPriceValue(e.target.value)}
-                                placeholder="Ex: 15000"
-                                className="w-24 rounded border border-earth-300 px-2 py-1 text-sm"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => handleSaveEditPrice(item)}
-                                className="text-sm font-medium text-earth-700 hover:underline"
-                              >
-                                Salvar
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => { setEditingPriceId(null); setEditPriceValue('') }}
-                                className="text-sm text-earth-600 hover:underline"
-                              >
-                                Cancelar
-                              </button>
+                          {editingItemId === item.id ? (
+                            <div className="w-full rounded-lg border border-earth-200 bg-white p-3">
+                              <div className="grid gap-2 sm:grid-cols-2">
+                                <input
+                                  type="text"
+                                  value={editForm.product_name}
+                                  onChange={(e) => setEditForm((f) => ({ ...f, product_name: e.target.value }))}
+                                  placeholder="Nome do produto"
+                                  className="rounded border border-earth-300 px-2 py-1 text-sm sm:col-span-2"
+                                />
+                                <input
+                                  type="url"
+                                  value={editForm.url}
+                                  onChange={(e) => setEditForm((f) => ({ ...f, url: e.target.value }))}
+                                  placeholder="Link do produto"
+                                  className="rounded border border-earth-300 px-2 py-1 text-sm sm:col-span-2"
+                                />
+                                <input
+                                  type="text"
+                                  value={editForm.price}
+                                  onChange={(e) => setEditForm((f) => ({ ...f, price: e.target.value }))}
+                                  placeholder="Preço"
+                                  className="rounded border border-earth-300 px-2 py-1 text-sm"
+                                />
+                                <select
+                                  value={editForm.currency}
+                                  onChange={(e) => setEditForm((f) => ({ ...f, currency: e.target.value }))}
+                                  className="rounded border border-earth-300 px-2 py-1 text-sm"
+                                >
+                                  <option value="JPY">JPY</option>
+                                  <option value="BRL">BRL</option>
+                                </select>
+                                <input
+                                  type="url"
+                                  value={editForm.image_url}
+                                  onChange={(e) => setEditForm((f) => ({ ...f, image_url: e.target.value }))}
+                                  placeholder="URL da imagem (opcional)"
+                                  className="rounded border border-earth-300 px-2 py-1 text-sm sm:col-span-2"
+                                />
+                              </div>
+                              <div className="mt-2 flex items-center gap-3">
+                                <button
+                                  type="button"
+                                  onClick={() => handleSaveEditItem(item)}
+                                  className="text-sm font-medium text-earth-700 hover:underline"
+                                >
+                                  Salvar
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setEditingItemId(null)
+                                    setEditForm({ url: '', product_name: '', price: '', currency: 'JPY', image_url: '' })
+                                  }}
+                                  className="text-sm text-earth-600 hover:underline"
+                                >
+                                  Cancelar
+                                </button>
+                              </div>
                             </div>
                           ) : (
                             <>
@@ -449,10 +509,10 @@ export default function ListaDesejos() {
                         </button>
                         <button
                           type="button"
-                          onClick={() => handleEditPrice(item)}
+                          onClick={() => handleEditItem(item)}
                           className="rounded-lg border border-earth-300 px-3 py-1.5 text-sm font-medium text-earth-700 hover:bg-earth-100"
                         >
-                          Editar preço
+                          Editar item
                         </button>
                         <button
                           type="button"

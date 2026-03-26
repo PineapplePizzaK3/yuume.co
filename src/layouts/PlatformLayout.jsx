@@ -7,21 +7,19 @@ import { Link, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 
 const LOJA_ITEMS = [
+  { to: '/app/services', label: 'Serviços' },
+  { to: '/app/grupo-de-compras', label: 'Grupo de Compras' },
   { to: '/app/loja', label: 'Loja Virtual' },
   { to: '/app/cart', label: 'Central de Pagamentos' },
-  { to: '/app/grupo-de-compras', label: 'Grupo de Compras' },
 ]
 
 const MINHA_CONTA_ITEMS = [
+  { to: '/app/lounge', label: '⭐ Lounge' },
   { to: '/app/conta', label: 'Dados da conta' },
-  { to: '/app/payments', label: 'Pagamentos' },
-  { to: '/app/lista-desejos', label: 'Lista de Desejos' },
 ]
 
 const NAV_ITEMS = [
-  { to: '/app/lounge', label: '⭐ Lounge', featured: true },
-  { to: '/app/dashboard', label: 'Dashboard' },
-  { to: '/app/services', label: 'Serviços' },
+  { to: '/app/dashboard', label: 'Resumo da Conta' },
 ]
 
 export function PlatformLayout() {

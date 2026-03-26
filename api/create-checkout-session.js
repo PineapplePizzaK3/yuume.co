@@ -9,9 +9,24 @@ const REQUEST_WINDOW_MS = 60 * 1000
 const MAX_REQUESTS_PER_WINDOW = 20
 const rateLimitMemory = globalThis.__checkoutRateLimitMap ?? new Map()
 globalThis.__checkoutRateLimitMap = rateLimitMemory
-const FX_REFRESH_MS = 1000 * 60 * 30 // 30 min
+const FX_REFRESH_MS = 1000 * 60 * 60 // 1h
 const fxRateCache = globalThis.__fxBrlPerJpyCache ?? { rate: null, updatedAt: 0 }
 globalThis.__fxBrlPerJpyCache = fxRateCache
+
+function normalizeBrlPerJpy(rawRate) {
+  const n = Number(rawRate)
+  if (!Number.isFinite(n) || n <= 0) return null
+  if (n >= 0.002 && n <= 0.5) return n
+  if (n > 1) {
+    const inv = 1 / n
+    if (inv >= 0.002 && inv <= 0.5) return inv
+  }
+  return null
+}
+
+function getDayKey(ts = Date.now()) {
+  return new Date(ts).toISOString().slice(0, 10)
+}
 
 function getStripeClient() {
   const key = process.env.STRIPE_SECRET_KEY
@@ -61,7 +76,7 @@ function getSupabaseUser(accessToken) {
 
 function getFxBrlPerJpy() {
   const v = Number(process.env.FX_BRL_PER_JPY || process.env.VITE_FX_BRL_PER_JPY)
-  return v && v > 0 ? v : 0.033
+  return normalizeBrlPerJpy(v) ?? 0.033
 }
 
 async function fetchBrlPerJpyFromProviders() {
@@ -80,8 +95,8 @@ async function fetchBrlPerJpyFromProviders() {
       const res = await fetch(provider.url, { cache: 'no-store' })
       if (!res.ok) continue
       const data = await res.json()
-      const rate = provider.read(data)
-      if (rate > 0) return rate
+      const rate = normalizeBrlPerJpy(provider.read(data))
+      if (rate) return rate
     } catch {
       // try next provider
     }
@@ -91,11 +106,13 @@ async function fetchBrlPerJpyFromProviders() {
 
 async function getLiveFxBrlPerJpy() {
   const now = Date.now()
-  if (fxRateCache.rate > 0 && now - fxRateCache.updatedAt < FX_REFRESH_MS) {
-    return fxRateCache.rate
+  const cached = normalizeBrlPerJpy(fxRateCache.rate)
+  const dayChanged = fxRateCache.updatedAt > 0 && getDayKey(now) !== getDayKey(fxRateCache.updatedAt)
+  if (cached && !dayChanged && now - fxRateCache.updatedAt < FX_REFRESH_MS) {
+    return cached
   }
-  const fetched = await fetchBrlPerJpyFromProviders()
-  if (fetched && fetched > 0) {
+  const fetched = normalizeBrlPerJpy(await fetchBrlPerJpyFromProviders())
+  if (fetched) {
     fxRateCache.rate = fetched
     fxRateCache.updatedAt = now
     return fetched

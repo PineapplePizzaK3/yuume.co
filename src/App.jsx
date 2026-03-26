@@ -29,13 +29,11 @@ const ForgotPassword = lazy(() => import('./pages/platform/ForgotPassword'))
 const ResetPassword = lazy(() => import('./pages/platform/ResetPassword'))
 const Dashboard = lazy(() => import('./pages/platform/Dashboard'))
 const Services = lazy(() => import('./pages/platform/Services'))
-const Payments = lazy(() => import('./pages/platform/Payments'))
 const Profile = lazy(() => import('./pages/platform/Profile'))
 const Conta = lazy(() => import('./pages/platform/Conta'))
 const Loja = lazy(() => import('./pages/platform/Loja'))
 const LojaMirror = lazy(() => import('./pages/LojaMirror'))
 const Cart = lazy(() => import('./pages/platform/Cart'))
-const ListaDesejos = lazy(() => import('./pages/platform/ListaDesejos'))
 const GrupoDeCompras = lazy(() => import('./pages/platform/GrupoDeCompras'))
 const Admin = lazy(() => import('./pages/platform/Admin'))
 const Lounge = lazy(() => import('./pages/platform/Lounge'))
@@ -71,14 +69,14 @@ function App() {
               <Route path="services" element={<Services />} />
               <Route path="orders" element={<Navigate to="/app/lounge" replace />} />
               <Route path="wallet" element={<Navigate to="/app/lounge" replace />} />
-              <Route path="payments" element={<Payments />} />
+              <Route path="payments" element={<Navigate to="/app/cart?tab=history" replace />} />
               <Route path="profile" element={<Profile />} />
               <Route path="conta" element={<Conta />} />
               <Route path="meus-produtos" element={<Navigate to="/app/lounge" replace />} />
               <Route path="loja" element={<Loja />} />
               <Route path="cart" element={<Cart />} />
               <Route path="grupo-de-compras" element={<GrupoDeCompras />} />
-              <Route path="lista-desejos" element={<ListaDesejos />} />
+              <Route path="lista-desejos" element={<Navigate to="/app/lounge?tab=desejos" replace />} />
               <Route path="envios" element={<Navigate to="/app/lounge" replace />} />
               <Route path="admin" element={
                 <AdminRoute>

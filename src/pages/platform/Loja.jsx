@@ -41,6 +41,18 @@ export default function Loja() {
   const [detailImageIndex, setDetailImageIndex] = useState(0)
 
   useEffect(() => {
+    if (!message) return
+    const t = setTimeout(() => setMessage(''), 3000)
+    return () => clearTimeout(t)
+  }, [message])
+
+  useEffect(() => {
+    if (!modalFeedback) return
+    const t = setTimeout(() => setModalFeedback(''), 2200)
+    return () => clearTimeout(t)
+  }, [modalFeedback])
+
+  useEffect(() => {
     let isActive = true
     const run = async () => {
       try {

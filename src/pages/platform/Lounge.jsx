@@ -1,26 +1,38 @@
 import { useEffect, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
+import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import { getWallet, getWalletTransactions } from '../../services/walletService'
 import { formatJPY } from '../../lib/fx'
 import MeusProdutos from './MeusProdutos'
 import Envios from './Envios'
 import Orders from './Orders'
+import ListaDesejos from './ListaDesejos'
 
 const LOUNGE_MODULES = [
   { id: 'produtos', label: 'Meus Produtos' },
   { id: 'envios', label: 'Envios' },
   { id: 'pedidos', label: 'Pedidos' },
+  { id: 'desejos', label: 'Lista de Desejos' },
 ]
 
 export default function Lounge() {
   const { user } = useAuth()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [orders, setOrders] = useState([])
   const [loadingWallet, setLoadingWallet] = useState(true)
   const [wallet, setWallet] = useState(null)
   const [transactions, setTransactions] = useState([])
-  const [activeModule, setActiveModule] = useState('produtos')
+  const initialTab = searchParams.get('tab')
+  const initialModule = LOUNGE_MODULES.some((m) => m.id === initialTab) ? initialTab : 'produtos'
+  const [activeModule, setActiveModule] = useState(initialModule)
   const [feedback, setFeedback] = useState('')
+
+  useEffect(() => {
+    const tab = searchParams.get('tab')
+    const moduleId = LOUNGE_MODULES.some((m) => m.id === tab) ? tab : 'produtos'
+    if (moduleId !== activeModule) setActiveModule(moduleId)
+  }, [searchParams, activeModule])
 
   useEffect(() => {
     let isActive = true
@@ -56,7 +68,7 @@ export default function Lounge() {
       <div>
         <h1 className="text-2xl font-bold text-earth-900">Lounge</h1>
         <p className="mt-2 text-earth-600">
-          Central de Pedidos, Envios e Meus Produtos com todas as funções completas.
+          Central de Pedidos, Envios, Meus Produtos e Lista de Desejos com todas as funções completas.
         </p>
 
         {feedback && (
@@ -90,7 +102,13 @@ export default function Lounge() {
               <button
                 key={m.id}
                 type="button"
-                onClick={() => setActiveModule(m.id)}
+                onClick={() => {
+                  setActiveModule(m.id)
+                  const next = new URLSearchParams(searchParams)
+                  if (m.id === 'produtos') next.delete('tab')
+                  else next.set('tab', m.id)
+                  setSearchParams(next, { replace: true })
+                }}
                 className={`rounded-lg px-3 py-1.5 text-sm font-medium ${
                   activeModule === m.id
                     ? 'bg-earth-900 text-white'
@@ -107,6 +125,7 @@ export default function Lounge() {
           {activeModule === 'produtos' && <MeusProdutos />}
           {activeModule === 'envios' && <Envios />}
           {activeModule === 'pedidos' && <Orders />}
+          {activeModule === 'desejos' && <ListaDesejos />}
         </section>
       </div>
     </>

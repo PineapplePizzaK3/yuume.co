@@ -1,21 +1,38 @@
 const DEFAULT_FX_BRL_PER_JPY = 0.033
 const FX_CACHE_KEY = 'fx_brl_per_jpy_cache_v1'
-const FX_REFRESH_MS = 1000 * 60 * 30 // 30 min
+const FX_REFRESH_MS = 1000 * 60 * 60 // 1h
 
 const envRate = Number(import.meta.env.VITE_FX_BRL_PER_JPY)
-const initialRate = envRate && envRate > 0 ? envRate : DEFAULT_FX_BRL_PER_JPY
+function normalizeBrlPerJpy(rawRate) {
+  const n = Number(rawRate)
+  if (!Number.isFinite(n) || n <= 0) return null
+  // Normal esperado: BRL por 1 JPY (~0.02 a ~0.20).
+  if (n >= 0.002 && n <= 0.5) return n
+  // Se vier invertido (JPY por 1 BRL, ex: ~30), inverte.
+  if (n > 1) {
+    const inv = 1 / n
+    if (inv >= 0.002 && inv <= 0.5) return inv
+  }
+  return null
+}
+
+const initialRate = normalizeBrlPerJpy(envRate) ?? DEFAULT_FX_BRL_PER_JPY
 let currentFxBrlPerJpy = initialRate
 let lastFxUpdatedAt = 0
 let refreshInFlight = null
+
+function getDayKey(ts = Date.now()) {
+  return new Date(ts).toISOString().slice(0, 10)
+}
 
 if (typeof window !== 'undefined') {
   try {
     const raw = window.localStorage.getItem(FX_CACHE_KEY)
     if (raw) {
       const parsed = JSON.parse(raw)
-      const rate = Number(parsed?.rate)
+      const rate = normalizeBrlPerJpy(parsed?.rate)
       const updatedAt = Number(parsed?.updatedAt)
-      if (rate > 0) currentFxBrlPerJpy = rate
+      if (rate) currentFxBrlPerJpy = rate
       if (updatedAt > 0) lastFxUpdatedAt = updatedAt
     }
   } catch {
@@ -24,11 +41,13 @@ if (typeof window !== 'undefined') {
 }
 
 function persistFxRate(rate) {
+  const normalized = normalizeBrlPerJpy(rate)
+  if (!normalized) return
   if (typeof window === 'undefined') return
   try {
     window.localStorage.setItem(
       FX_CACHE_KEY,
-      JSON.stringify({ rate, updatedAt: Date.now() })
+      JSON.stringify({ rate: normalized, updatedAt: Date.now() })
     )
   } catch {
     // noop
@@ -52,8 +71,8 @@ async function fetchBrlPerJpyFromProviders() {
       const res = await fetch(provider.url, { cache: 'no-store' })
       if (!res.ok) continue
       const data = await res.json()
-      const rate = provider.read(data)
-      if (rate > 0) return rate
+      const rate = normalizeBrlPerJpy(provider.read(data))
+      if (rate) return rate
     } catch {
       // try next provider
     }
@@ -63,12 +82,13 @@ async function fetchBrlPerJpyFromProviders() {
 
 export async function refreshFxRate(force = false) {
   const now = Date.now()
-  if (!force && now - lastFxUpdatedAt < FX_REFRESH_MS) return currentFxBrlPerJpy
+  const dayChanged = lastFxUpdatedAt > 0 && getDayKey(now) !== getDayKey(lastFxUpdatedAt)
+  if (!force && !dayChanged && now - lastFxUpdatedAt < FX_REFRESH_MS) return currentFxBrlPerJpy
   if (refreshInFlight) return refreshInFlight
 
   refreshInFlight = (async () => {
-    const liveRate = await fetchBrlPerJpyFromProviders()
-    if (liveRate && liveRate > 0) {
+    const liveRate = normalizeBrlPerJpy(await fetchBrlPerJpyFromProviders())
+    if (liveRate) {
       currentFxBrlPerJpy = liveRate
       lastFxUpdatedAt = Date.now()
       persistFxRate(liveRate)
@@ -87,8 +107,12 @@ export async function refreshFxRate(force = false) {
 }
 
 export function getFxBrlPerJpy() {
-  if (typeof window !== 'undefined' && Date.now() - lastFxUpdatedAt >= FX_REFRESH_MS) {
-    void refreshFxRate()
+  if (typeof window !== 'undefined') {
+    const now = Date.now()
+    const dayChanged = lastFxUpdatedAt > 0 && getDayKey(now) !== getDayKey(lastFxUpdatedAt)
+    if (dayChanged || now - lastFxUpdatedAt >= FX_REFRESH_MS) {
+      void refreshFxRate(dayChanged)
+    }
   }
   return currentFxBrlPerJpy
 }

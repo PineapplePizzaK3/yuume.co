@@ -53,6 +53,53 @@ function parsePrice(value: unknown): number | undefined {
   return parsed
 }
 
+function decodeJsEscaped(input: string): string {
+  return String(input || '')
+    .replace(/\\u0026/gi, '&')
+    .replace(/\\u003d/gi, '=')
+    .replace(/\\u002f/gi, '/')
+    .replace(/\\\//g, '/')
+}
+
+function normalizeImageCandidate(url: string | undefined, pageUrl: URL): string | undefined {
+  if (!url) return undefined
+  const clean = decodeJsEscaped(String(url).trim())
+  if (!clean) return undefined
+  try {
+    return new URL(clean, pageUrl.origin).toString()
+  } catch {
+    return undefined
+  }
+}
+
+function isBadImageUrl(url: string | undefined): boolean {
+  if (!url) return true
+  const u = url.toLowerCase()
+  if (u.startsWith('data:')) return true
+  if (u.includes('transparent') || u.includes('spacer') || u.includes('pixel')) return true
+  if (u.includes('sprite') || u.includes('icon') || u.includes('placeholder') || u.includes('loading')) return true
+  if (u.includes('nav-logo') || u.includes('amazon-logo') || u.includes('amazon-ui')) return true
+  if (u.endsWith('.svg')) return true
+  return false
+}
+
+function pickBestImageUrl(candidates: string[], pageUrl: URL): string | undefined {
+  const uniq = Array.from(new Set(candidates.map((c) => normalizeImageCandidate(c, pageUrl)).filter(Boolean) as string[]))
+  const scored = uniq
+    .filter((u) => !isBadImageUrl(u))
+    .map((u) => {
+      let score = 0
+      const lower = u.toLowerCase()
+      if (/\.(jpg|jpeg|png|webp)(\?|$)/i.test(lower)) score += 2
+      if (/(_sl\d+_|_ac_sl\d+_)/i.test(lower)) score += 3
+      if (/(images-na\.ssl-images-amazon|m\.media-amazon|rakuma|fril)/i.test(lower)) score += 2
+      if (/(small|thumb|thumbnail)/i.test(lower)) score -= 2
+      return { u, score }
+    })
+    .sort((a, b) => b.score - a.score)
+  return scored[0]?.u
+}
+
 function extractFromMeta(html: string): { name?: string; price?: number; currency?: string; imageUrl?: string } {
   const result: { name?: string; price?: number; currency?: string; imageUrl?: string } = {}
   try {
@@ -86,6 +133,79 @@ function extractFromMeta(html: string): { name?: string; price?: number; currenc
       || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']product:price:currency["']/i)
     if (metaCurrency?.[1]) result.currency = String(metaCurrency[1])
   } catch { /* ignore */ }
+  return result
+}
+
+function extractMarketplaceData(html: string, pageUrl: URL): { name?: string; price?: number; currency?: string; imageUrl?: string } {
+  const host = pageUrl.hostname.toLowerCase()
+  const result: { name?: string; price?: number; currency?: string; imageUrl?: string } = {}
+
+  if (host.includes('amazon.')) {
+    const amazonPrice =
+      html.match(/class=["'][^"']*a-offscreen[^"']*["'][^>]*>\s*([^<]+)\s*<\/span>/i)?.[1] ||
+      html.match(/["']price["']\s*:\s*["']?([\d.,]+)/i)?.[1] ||
+      html.match(/["']priceAmount["']\s*:\s*["']?([\d.,]+)/i)?.[1]
+    const parsed = parsePrice(amazonPrice)
+    if (parsed != null) {
+      result.price = parsed
+      result.currency = /R\$|BRL/i.test(String(amazonPrice || '')) ? 'BRL' : 'JPY'
+    }
+
+    const dynamicImageJsonRaw =
+      html.match(/data-a-dynamic-image=["']([^"']+)["']/i)?.[1] ||
+      html.match(/"data-a-dynamic-image"\s*:\s*"([^"]+)"/i)?.[1]
+
+    const imageCandidates = [
+      html.match(/"landingImageUrl"\s*:\s*"([^"]+)"/i)?.[1],
+      html.match(/"hiRes"\s*:\s*"([^"]+)"/i)?.[1],
+      html.match(/"large"\s*:\s*"([^"]+)"/i)?.[1],
+      html.match(/"mainUrl"\s*:\s*"([^"]+)"/i)?.[1],
+      html.match(/data-old-hires=["']([^"']+)["']/i)?.[1],
+      html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)?.[1],
+      ...Array.from(html.matchAll(/"colorImages"[\s\S]{0,1200}?"hiRes"\s*:\s*"([^"]+)"/gi)).map((m) => m[1]),
+      ...Array.from(html.matchAll(/"colorImages"[\s\S]{0,1200}?"large"\s*:\s*"([^"]+)"/gi)).map((m) => m[1]),
+      ...Array.from(html.matchAll(/https?:\/\/[^"'\s)]+\/images\/I\/[^"'\s)]+?\.(?:jpg|jpeg|png|webp)(?:\?[^"'\s)]*)?/gi)).map((m) => m[0]),
+    ].filter(Boolean) as string[]
+
+    if (dynamicImageJsonRaw) {
+      try {
+        const decoded = decodeJsEscaped(dynamicImageJsonRaw)
+          .replace(/&quot;/g, '"')
+          .replace(/&#34;/g, '"')
+          .replace(/&amp;/g, '&')
+        const parsedDynamic = JSON.parse(decoded) as Record<string, unknown>
+        for (const key of Object.keys(parsedDynamic || {})) {
+          if (typeof key === 'string' && key.startsWith('http')) imageCandidates.push(key)
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    // For Amazon, prefer product image URLs on /images/I/
+    const preferred = imageCandidates.filter((u) => /\/images\/I\//i.test(String(u)))
+    result.imageUrl = pickBestImageUrl(preferred.length > 0 ? preferred : imageCandidates, pageUrl)
+  }
+
+  if (host.includes('rakuma.') || host.includes('fril.jp')) {
+    const rakumaPrice =
+      html.match(/(?:¥|￥)\s*([\d,]+(?:\.\d+)?)/i)?.[0] ||
+      html.match(/["']price["']\s*:\s*["']?([\d.,]+)/i)?.[1]
+    const parsed = parsePrice(rakumaPrice)
+    if (parsed != null) {
+      result.price = parsed
+      result.currency = /R\$|BRL/i.test(String(rakumaPrice || '')) ? 'BRL' : 'JPY'
+    }
+
+    const imageCandidates = [
+      html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)?.[1],
+      html.match(/<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i)?.[1],
+      html.match(/"image(?:Url)?"\s*:\s*"([^"]+)"/i)?.[1],
+      html.match(/"photo"\s*:\s*"([^"]+)"/i)?.[1],
+    ].filter(Boolean) as string[]
+    result.imageUrl = pickBestImageUrl(imageCandidates, pageUrl)
+  }
+
   return result
 }
 
@@ -341,15 +461,22 @@ Deno.serve(async (req) => {
       const meta = extractFromMeta(html)
       const jsonLd = extractFromJsonLd(html)
       const page = extractFromPage(html)
-      name = normalizeProductName(meta.name ?? jsonLd?.name ?? page.name ?? 'Produto', parsed)
-      price = meta.price ?? jsonLd?.price ?? page.price ?? undefined
-      currency = meta.currency ?? jsonLd?.currency ?? 'JPY'
-      imageUrl = meta.imageUrl ?? jsonLd?.imageUrl ?? undefined
+      const marketplace = extractMarketplaceData(html, parsed)
+      const imageCandidates = [
+        marketplace.imageUrl,
+        meta.imageUrl,
+        jsonLd?.imageUrl,
+        ...Array.from(html.matchAll(/<img[^>]+src=["']([^"']+)["']/gi)).map((m) => m[1]),
+      ].filter(Boolean) as string[]
+      name = normalizeProductName(marketplace.name ?? meta.name ?? jsonLd?.name ?? page.name ?? 'Produto', parsed)
+      price = marketplace.price ?? meta.price ?? jsonLd?.price ?? page.price ?? undefined
+      currency = marketplace.currency ?? meta.currency ?? jsonLd?.currency ?? 'JPY'
+      imageUrl = pickBestImageUrl(imageCandidates, parsed)
     } catch { /* use defaults */ }
 
     // Fallback para sites que bloqueiam bot ou renderizam preço via JS:
     // usa r.jina.ai para obter uma versão legível do conteúdo.
-    const lowConfidence = (!price || name === 'Produto')
+    const lowConfidence = (!price || name === 'Produto' || !imageUrl)
     if (lowConfidence) {
       try {
         const jinaUrl = `https://r.jina.ai/http://${parsed.hostname}${parsed.pathname}${parsed.search}`
@@ -366,7 +493,10 @@ Deno.serve(async (req) => {
           if (ext.name && name === 'Produto') name = normalizeProductName(ext.name, parsed)
           if (ext.price != null && price == null) price = ext.price
           if (ext.currency && currency === 'JPY') currency = ext.currency
-          if (ext.imageUrl && !imageUrl) imageUrl = ext.imageUrl
+          if (ext.imageUrl && !imageUrl) {
+            const picked = pickBestImageUrl([ext.imageUrl], parsed)
+            if (picked) imageUrl = picked
+          }
         }
       } catch {
         // mantém resultado original

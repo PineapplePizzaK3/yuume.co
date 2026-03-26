@@ -214,12 +214,13 @@ export async function addWishlistLink(userId, { url, product_name, price, curren
   }
 }
 
-export async function updateWishlistLink(userId, id, { product_name, price, previous_price, image_url, currency }) {
+export async function updateWishlistLink(userId, id, { url, product_name, price, previous_price, image_url, currency }) {
   try {
     const { data, error } = await withDbTimeout(
       supabase
         .from('wishlist_links')
         .update({
+          url: url ?? undefined,
           product_name: product_name ?? undefined,
           price: price ?? undefined,
           previous_price: previous_price ?? undefined,

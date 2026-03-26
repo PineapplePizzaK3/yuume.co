@@ -567,7 +567,7 @@ export default function Orders() {
                       <button
                         type="button"
                         onClick={() => handlePayShipping(payModal.order, { useWallet })}
-                        disabled={payingId === payModal.order.id}
+                        disabled={payingId === payModal.order.id || isFullyCovered}
                         className="rounded-lg border border-earth-300 bg-white px-4 py-2.5 font-medium text-earth-800 hover:bg-earth-50 disabled:opacity-60"
                       >
                         Cartão
@@ -578,7 +578,7 @@ export default function Orders() {
                           setPayModal((m) => ({ ...m, open: false }))
                           setPixModal({ open: true, order: payModal.order })
                         }}
-                        disabled={payingId === payModal.order.id}
+                        disabled={payingId === payModal.order.id || isFullyCovered}
                         className="rounded-lg border border-earth-300 bg-white px-4 py-2.5 font-medium text-earth-800 hover:bg-earth-50 disabled:opacity-60"
                       >
                         PIX

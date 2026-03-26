@@ -12,6 +12,11 @@ import App from './App.jsx'
 import './index.css'
 
 void refreshFxRate()
+if (typeof window !== 'undefined') {
+  window.setInterval(() => {
+    void refreshFxRate()
+  }, 1000 * 60 * 60)
+}
 
 const root = document.getElementById('root')
 ReactDOM.createRoot(root).render(
