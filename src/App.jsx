@@ -24,6 +24,7 @@ import { AdminRoute } from './components/AdminRoute'
 const PlatformLayout = lazy(() => import('./layouts/PlatformLayout').then((m) => ({ default: m.PlatformLayout })))
 const Login = lazy(() => import('./pages/platform/Login'))
 const Register = lazy(() => import('./pages/platform/Register'))
+const CompleteSocialProfile = lazy(() => import('./pages/platform/CompleteSocialProfile'))
 const ForgotPassword = lazy(() => import('./pages/platform/ForgotPassword'))
 const ResetPassword = lazy(() => import('./pages/platform/ResetPassword'))
 const Dashboard = lazy(() => import('./pages/platform/Dashboard'))
@@ -65,6 +66,7 @@ function App() {
             }>
               <Route index element={<Navigate to="/app/dashboard" replace />} />
               <Route path="dashboard" element={<Dashboard />} />
+              <Route path="complete-social-profile" element={<CompleteSocialProfile />} />
               <Route path="lounge" element={<Lounge />} />
               <Route path="services" element={<Services />} />
               <Route path="orders" element={<Navigate to="/app/lounge" replace />} />

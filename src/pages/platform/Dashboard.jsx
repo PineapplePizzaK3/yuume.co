@@ -110,6 +110,7 @@ export default function Dashboard() {
   useEffect(() => {
     let isActive = true
     const run = async () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return
       if (!user?.id) {
         if (isActive) setNotifsLoading(false)
         return
@@ -131,7 +132,7 @@ export default function Dashboard() {
       }
     }
     run()
-    const interval = setInterval(run, 15000)
+    const interval = setInterval(run, 30000)
     return () => {
       isActive = false
       clearInterval(interval)

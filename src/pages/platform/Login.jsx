@@ -11,13 +11,13 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const { signIn, signInWithOAuth, isAuthenticated } = useAuth()
+  const { signIn, signInWithOAuth, isAuthenticated, needsSocialOnboarding } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const from = location.state?.from?.pathname || '/app/dashboard'
 
   if (isAuthenticated) {
-    navigate(from, { replace: true })
+    navigate(needsSocialOnboarding ? '/app/complete-social-profile' : from, { replace: true })
     return null
   }
 
@@ -40,7 +40,7 @@ export default function Login() {
       return
     }
     if (data?.user) {
-      navigate(from, { replace: true })
+      navigate(needsSocialOnboarding ? '/app/complete-social-profile' : from, { replace: true })
     }
   }
 

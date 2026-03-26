@@ -44,7 +44,7 @@ export default function Conta() {
     country: 'Brasil',
   })
   const [securityMessage, setSecurityMessage] = useState('')
-  const [passwordForm, setPasswordForm] = useState({ newPassword: '', confirm: '' })
+  const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirm: '' })
   const [passwordSaving, setPasswordSaving] = useState(false)
 
   // MFA (Google Authenticator)
@@ -296,7 +296,11 @@ export default function Conta() {
   const handleChangePassword = async (e) => {
     e.preventDefault()
     setSecurityMessage('')
-    const { newPassword, confirm: confirmVal } = passwordForm
+    const { currentPassword, newPassword, confirm: confirmVal } = passwordForm
+    if (!currentPassword) {
+      setSecurityMessage('Digite sua senha atual')
+      return
+    }
     const { valid, message } = validatePassword(newPassword)
     if (!valid) {
       setSecurityMessage(message)
@@ -307,10 +311,26 @@ export default function Conta() {
       return
     }
     setPasswordSaving(true)
+    const email = user?.email || profile?.email
+    if (!email) {
+      setPasswordSaving(false)
+      setSecurityMessage('Não foi possível validar sua senha atual. Faça login novamente.')
+      return
+    }
+    // Reautentica com senha atual antes de permitir a troca.
+    const { error: reauthError } = await supabase.auth.signInWithPassword({
+      email,
+      password: currentPassword,
+    })
+    if (reauthError) {
+      setPasswordSaving(false)
+      setSecurityMessage('Senha atual incorreta')
+      return
+    }
     const { error } = await supabase.auth.updateUser({ password: newPassword })
     setPasswordSaving(false)
     setSecurityMessage(error ? error.message : 'Senha alterada com sucesso')
-    if (!error) setPasswordForm({ newPassword: '', confirm: '' })
+    if (!error) setPasswordForm({ currentPassword: '', newPassword: '', confirm: '' })
   }
 
   const TABS = [
@@ -612,6 +632,16 @@ export default function Conta() {
                 </div>
               ) : (
                 <form onSubmit={handleChangePassword} className="mt-4 max-w-md space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-earth-700">Senha atual</label>
+                    <input
+                      type="password"
+                      value={passwordForm.currentPassword}
+                      onChange={(e) => setPasswordForm((f) => ({ ...f, currentPassword: e.target.value }))}
+                      placeholder="Digite sua senha atual"
+                      className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                    />
+                  </div>
                   <div>
                     <label className="block text-sm font-medium text-earth-700">Nova senha</label>
                     <input

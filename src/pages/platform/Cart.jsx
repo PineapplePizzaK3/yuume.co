@@ -1,14 +1,16 @@
 /**
- * Carrinho - Checkout da loja virtual.
- * Produtos comprados vão para Meus Produtos; o cliente solicita o envio quando quiser.
+ * Central de Pagamentos - checkout da loja + pagamentos pendentes.
+ * Todos os pagamentos da conta são centralizados aqui para melhorar a UX.
  */
 import { useEffect, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Link, useSearchParams } from 'react-router-dom'
+import { createPortal } from 'react-dom'
 import { useAuth } from '../../hooks/useAuth'
 import { getCart, updateCartItem, removeFromCart, createStoreOrder } from '../../services/cartService'
 import { validateCoupon } from '../../services/couponService'
 import { createCheckoutSession } from '../../services/paymentService'
+import { getMyOrders, ORDER_STATUS_LABELS } from '../../services/orderService'
 import PixManualModal from '../../components/PixManualModal'
 import { getWallet } from '../../services/walletService'
 import { brlToJpy, formatBRL, formatJPY, jpyToBrl } from '../../lib/fx'
@@ -23,7 +25,10 @@ function Cart() {
   const { user, session } = useAuth()
   const [searchParams] = useSearchParams()
   const [items, setItems] = useState([])
+  const [qtyDrafts, setQtyDrafts] = useState({})
+  const [pendingOrders, setPendingOrders] = useState([])
   const [loading, setLoading] = useState(true)
+  const [pendingLoading, setPendingLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [wallet, setWallet] = useState(null)
   const [payModal, setPayModal] = useState({ open: false, order: null, useWallet: true })
@@ -35,6 +40,7 @@ function Cart() {
 
   const success = searchParams.get('success') === 'true'
   const canceled = searchParams.get('canceled') === 'true'
+  const payOrderId = searchParams.get('payOrderId')
 
   const loadCart = async () => {
     if (!user?.id) return
@@ -45,8 +51,54 @@ function Cart() {
     setLoading(false)
   }
 
+  const getPayableAmount = (order) => {
+    if (order?.status !== 'awaiting_payment') return null
+    if (order?.quote_amount != null && Number(order.quote_amount) > 0) {
+      return { amount: Number(order.quote_amount), currency: order.quote_currency || 'BRL', label: 'Orçamento' }
+    }
+    if (order?.total_amount != null && Number(order.total_amount) > 0) {
+      return { amount: Number(order.total_amount), currency: 'BRL', label: 'Total' }
+    }
+    if (order?.shipping_cost != null && Number(order.shipping_cost) > 0) {
+      return { amount: Number(order.shipping_cost), currency: order.shipping_currency || 'JPY', label: 'Frete' }
+    }
+    return null
+  }
+
+  const loadPendingOrders = async () => {
+    if (!user?.id) return
+    setPendingLoading(true)
+    const { data, error } = await getMyOrders(user.id, { limit: 40, offset: 0 })
+    if (error) {
+      setFeedback(error.message || 'Erro ao carregar pagamentos pendentes.')
+      setPendingOrders([])
+      setPendingLoading(false)
+      return []
+    }
+    const list = (data ?? []).filter((order) => !!getPayableAmount(order))
+    setPendingOrders(list)
+    setPendingLoading(false)
+    return list
+  }
+
   useEffect(() => {
     loadCart()
+  }, [user?.id])
+
+  useEffect(() => {
+    setQtyDrafts((prev) => {
+      const next = {}
+      for (const item of items) {
+        if (Object.prototype.hasOwnProperty.call(prev, item.product_id)) {
+          next[item.product_id] = prev[item.product_id]
+        }
+      }
+      return next
+    })
+  }, [items])
+
+  useEffect(() => {
+    loadPendingOrders()
   }, [user?.id])
 
   useEffect(() => {
@@ -64,9 +116,27 @@ function Cart() {
   }, [user?.id])
 
   useEffect(() => {
-    if (success) setFeedback('Compra realizada com sucesso! Os produtos estão em Meus Produtos.')
+    if (success) setFeedback('Pagamento realizado com sucesso!')
     if (canceled) setFeedback('Pagamento cancelado.')
   }, [success, canceled])
+
+  useEffect(() => {
+    if (!payOrderId || pendingLoading || payModal.open) return
+    const target = pendingOrders.find((o) => o.id === payOrderId)
+    if (!target) return
+    setPayModal({ open: true, order: target, useWallet: true })
+    setFeedback('')
+  }, [payOrderId, pendingLoading, pendingOrders, payModal.open])
+
+  useEffect(() => {
+    const modalOpen = payModal.open || pixModal.open
+    if (!modalOpen) return
+    const prevOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = prevOverflow
+    }
+  }, [payModal.open, pixModal.open])
 
   const totalBrl = items.reduce((sum, i) => sum + (Number(i.products?.price ?? 0) * (i.quantity || 1)), 0)
   const discountBrl = couponApplied?.discount_brl ?? 0
@@ -100,9 +170,24 @@ function Cart() {
 
   const handleUpdateQty = async (productId, quantity) => {
     const qty = Math.max(1, Math.min(99, Number(quantity) || 1))
+    const currentItem = items.find((i) => i.product_id === productId)
+    const currentQty = Number(currentItem?.quantity || 1)
+    if (qty === currentQty) {
+      setQtyDrafts((d) => {
+        const next = { ...d }
+        delete next[productId]
+        return next
+      })
+      return
+    }
     const { error } = await updateCartItem(user.id, productId, qty)
     if (error) setFeedback(error.message)
     else {
+      setQtyDrafts((d) => {
+        const next = { ...d }
+        delete next[productId]
+        return next
+      })
       loadCart()
     }
   }
@@ -117,7 +202,7 @@ function Cart() {
 
   const handleCheckout = async () => {
     if (items.length === 0) {
-      setFeedback('Carrinho vazio.')
+      setFeedback('Sem itens da loja para finalizar.')
       return
     }
     setSubmitting(true)
@@ -135,8 +220,37 @@ function Cart() {
         setSubmitting(false)
         return
       }
+      const pendingList = await loadPendingOrders()
+      let orderToPay = order && typeof order === 'object' ? order : null
+
+      if (!orderToPay?.id) {
+        const maybeOrderId =
+          (typeof order === 'string' && order) ||
+          order?.id ||
+          order?.order_id ||
+          order?.orderId ||
+          null
+
+        if (maybeOrderId) {
+          orderToPay = (pendingList ?? []).find((o) => o.id === maybeOrderId) ?? null
+        }
+      }
+
+      // Fallback: abre a pendência de pagamento mais recente.
+      if (!orderToPay?.id) {
+        orderToPay =
+          (pendingList ?? []).find((o) => o.order_source === 'store') ||
+          (pendingList ?? [])[0] ||
+          null
+      }
+
+      if (!orderToPay?.id) {
+        setFeedback('Pedido criado, mas não foi possível abrir o modal automaticamente. Use "Pagamentos pendentes" abaixo.')
+        return
+      }
+
       // Pedido criado: abre modal de pagamento (Stripe / PIX / carteira)
-      setPayModal({ open: true, order, useWallet: true })
+      setPayModal({ open: true, order: orderToPay, useWallet: true })
       setCouponApplied(null)
       setCouponInput('')
       setFeedback('')
@@ -148,12 +262,13 @@ function Cart() {
   }
 
   const getOrderChargeJpy = (order) => {
-    if (!order?.total_amount) return null
-    const totalBrl = Number(order.total_amount)
-    if (!totalBrl || totalBrl <= 0) return null
-    // Mantemos o valor em JPY sem arredondar para reduzir divergências com o backend.
-    const jpy = brlToJpy(totalBrl)
-    return { jpy, approxBrl: totalBrl }
+    const payable = getPayableAmount(order)
+    if (!payable) return null
+    const currency = (payable.currency || 'JPY').toUpperCase()
+    if (currency === 'BRL') {
+      return { jpy: brlToJpy(payable.amount), approxBrl: payable.amount, label: payable.label }
+    }
+    return { jpy: Number(payable.amount) || 0, approxBrl: jpyToBrl(payable.amount), label: payable.label }
   }
 
   const getPaymentBreakdown = (order, useWallet) => {
@@ -203,7 +318,8 @@ function Cart() {
       if (result?.paid) {
         setPayModal({ open: false, order: null, useWallet: true })
         setFeedback('Pagamento realizado com carteira.')
-        window.location.href = '/app/meus-produtos?success=true'
+        await loadCart()
+        await loadPendingOrders()
         return
       }
       if (result?.url) window.location.href = result.url
@@ -220,7 +336,7 @@ function Cart() {
     return (
       <div className="py-8">
         <p className="text-earth-600">
-          <Link to="/login" className="font-medium text-earth-900 underline">Faça login</Link> para acessar o carrinho.
+          <Link to="/login" className="font-medium text-earth-900 underline">Faça login</Link> para acessar a central de pagamentos.
         </p>
       </div>
     )
@@ -229,7 +345,7 @@ function Cart() {
   return (
     <>
       <Helmet>
-        <title>Carrinho | Plataforma</title>
+        <title>Central de Pagamentos | Plataforma</title>
       </Helmet>
       <PixManualModal
         open={pixModal.open}
@@ -243,13 +359,13 @@ function Cart() {
           }
         }}
         order={pixModal.order}
-        amountBrl={pixModal.amountBrl ?? (pixModal.order?.total_amount ? Number(pixModal.order.total_amount) : null)}
+        amountBrl={pixModal.amountBrl ?? (getOrderChargeJpy(pixModal.order)?.approxBrl ?? null)}
         userId={user?.id}
       />
       <div>
-        <h1 className="text-2xl font-bold text-earth-900">Carrinho</h1>
+        <h1 className="text-2xl font-bold text-earth-900">Central de Pagamentos</h1>
         <p className="mt-2 text-earth-600">
-          Revise seus itens e finalize a compra. Os produtos irão para Meus Produtos; solicite o envio quando quiser.
+          Faça todos os pagamentos da sua conta aqui: pedidos da loja, fretes e valores pendentes.
         </p>
 
         {feedback && !payModal.open && !pixModal.open && (
@@ -266,7 +382,7 @@ function Cart() {
 
         {!loading && items.length === 0 && (
           <p className="mt-6 text-earth-600">
-            Carrinho vazio. <Link to="/app/loja" className="font-medium text-earth-900 underline">Compre na loja</Link>.
+            Sem itens da loja no momento. <Link to="/app/loja" className="font-medium text-earth-900 underline">Compre na loja</Link>.
           </p>
         )}
 
@@ -302,9 +418,17 @@ function Cart() {
                         type="number"
                         min="1"
                         max="99"
-                        value={item.quantity}
-                        onChange={(e) => handleUpdateQty(item.product_id, e.target.value)}
+                        value={qtyDrafts[item.product_id] ?? item.quantity}
+                        onChange={(e) =>
+                          setQtyDrafts((d) => ({ ...d, [item.product_id]: e.target.value }))
+                        }
                         onBlur={(e) => handleUpdateQty(item.product_id, e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault()
+                            handleUpdateQty(item.product_id, e.currentTarget.value)
+                          }
+                        }}
                         className="w-16 rounded border border-earth-300 px-2 py-1 text-center text-earth-900"
                       />
                       <span className="font-semibold text-earth-900">{formatJPY(sub.jpy)}</span>
@@ -379,12 +503,62 @@ function Cart() {
             </div>
           </div>
         )}
+
+        <div className="mt-8">
+          <h2 className="text-xl font-semibold text-earth-900">Pagamentos pendentes</h2>
+          <p className="mt-1 text-sm text-earth-600">Pedidos aguardando pagamento para finalizar o fluxo.</p>
+
+          {pendingLoading && <p className="mt-4 text-earth-600">Carregando pendências...</p>}
+
+          {!pendingLoading && pendingOrders.length === 0 && (
+            <p className="mt-4 text-earth-600">Nenhum pagamento pendente.</p>
+          )}
+
+          {!pendingLoading && pendingOrders.length > 0 && (
+            <div className="mt-4 space-y-3">
+              {pendingOrders.map((order) => {
+                const payable = getPayableAmount(order)
+                const charge = getOrderChargeJpy(order)
+                return (
+                  <div key={order.id} className="rounded-xl border border-earth-200 bg-earth-50 p-4">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <p className="font-medium text-earth-900">Pedido {order.id?.slice(0, 8)}…</p>
+                        <p className="text-xs text-earth-600">
+                          {ORDER_STATUS_LABELS[order.status] ?? order.status}
+                          {payable?.label ? ` - ${payable.label}` : ''}
+                        </p>
+                        {charge && (
+                          <p className="mt-1 text-sm text-earth-700">
+                            {formatJPY(charge.jpy)} <span className="text-earth-500">({formatBRL(charge.approxBrl)} aprox.)</span>
+                          </p>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setPayModal({ open: true, order, useWallet: true })}
+                        className="rounded-lg bg-earth-900 px-4 py-2 text-sm font-medium text-white hover:bg-earth-800"
+                      >
+                        Pagar agora
+                      </button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
       </div>
 
       
 
-      {payModal.open && payModal.order && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 relative">
+      {payModal.open && payModal.order &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/40 p-4 relative"
+            style={{ position: 'fixed', inset: 0 }}
+            onClick={() => setPayModal({ open: false, order: null, useWallet: true })}
+          >
           {feedback && (
             <div className="absolute inset-0 z-[80] flex items-center justify-center pointer-events-none">
               <p
@@ -398,7 +572,10 @@ function Cart() {
               </p>
             </div>
           )}
-          <div className="flex w-full max-w-lg max-h-[90vh] flex-col rounded-xl bg-white shadow-lg">
+          <div
+            className="flex w-full max-w-lg max-h-[90vh] flex-col rounded-xl bg-white shadow-lg"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex-1 min-h-0 overflow-y-auto p-6">
               <h3 className="font-semibold text-earth-900">Pagamento</h3>
               <p className="mt-1 text-sm text-earth-600">Escolha a forma de pagamento.</p>
@@ -420,7 +597,7 @@ function Cart() {
                       {charge && (
                         <>
                           <div className="flex justify-between text-sm">
-                            <span className="text-earth-600">Subtotal</span>
+                            <span className="text-earth-600">{charge.label || 'Subtotal'}</span>
                             <span className="font-medium text-earth-900">{formatJPY(totalJpy)}</span>
                           </div>
                           {useWallet && walletApplied > 0 && (
@@ -502,7 +679,7 @@ function Cart() {
                         disabled={submitting}
                         className="flex-1 min-w-0 rounded-lg bg-earth-900 px-6 py-2.5 font-medium text-earth-50 hover:bg-earth-800 disabled:opacity-60"
                       >
-                        {submitting ? 'Processando...' : 'Finalizar compra'}
+                        {submitting ? 'Processando...' : 'Finalizar pagamento'}
                       </button>
                       <button
                         type="button"
@@ -518,8 +695,9 @@ function Cart() {
               })()}
             </div>
           </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
     </>
   )
 }

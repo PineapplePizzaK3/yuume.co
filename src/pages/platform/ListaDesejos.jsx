@@ -257,7 +257,7 @@ export default function ListaDesejos() {
       <div>
         <h1 className="text-2xl font-bold text-earth-900">Lista de Desejos</h1>
         <p className="mt-2 text-earth-600">
-          Adicione itens pelo link e acompanhe os preços. Apenas links de produtos externos — para comprar itens da loja, use o Carrinho.
+          Adicione itens pelo link e acompanhe os preços. Apenas links de produtos externos — para comprar itens da loja, use a Central de Pagamentos.
         </p>
 
         {/* Adicionar por link */}

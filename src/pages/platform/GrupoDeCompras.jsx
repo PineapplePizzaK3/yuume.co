@@ -30,6 +30,7 @@ export default function GrupoDeCompras() {
   const [groupProducts, setGroupProducts] = useState({})
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
+  const [modalFeedback, setModalFeedback] = useState('')
   const [detailGroup, setDetailGroup] = useState(null)
   const [detailImageIndex, setDetailImageIndex] = useState(0)
 
@@ -70,6 +71,7 @@ export default function GrupoDeCompras() {
   const openDetail = (g) => {
     setDetailGroup(g)
     setDetailImageIndex(0)
+    setModalFeedback('')
   }
 
   const getGroupProducts = (group) => {
@@ -84,11 +86,14 @@ export default function GrupoDeCompras() {
       return
     }
     const { error } = await addToCart(user.id, product.id, 1)
+    const inModal = !!detailGroup
     if (error) {
-      setMessage(error.message)
+      if (inModal) setModalFeedback(error.message || 'Erro ao adicionar ao carrinho')
+      else setMessage(error.message)
       return
     }
-    setMessage('Produto adicionado ao carrinho!')
+    if (inModal) setModalFeedback('Produto adicionado ao carrinho!')
+    else setMessage('Produto adicionado ao carrinho!')
   }
 
   if (!user) {
@@ -118,7 +123,7 @@ export default function GrupoDeCompras() {
           </div>
         </div>
 
-        {message && <p className="mt-4 rounded-lg bg-earth-100 px-4 py-2 text-sm text-earth-800">{message}</p>}
+        {message && !detailGroup && <p className="mt-4 rounded-lg bg-earth-100 px-4 py-2 text-sm text-earth-800">{message}</p>}
 
         {loading && <p className="mt-6 text-earth-600">Carregando...</p>}
         {!loading && groups.length === 0 && <p className="mt-6 text-earth-600">Nenhum grupo disponível no momento.</p>}
@@ -179,9 +184,20 @@ export default function GrupoDeCompras() {
             aria-labelledby="group-detail-title"
           >
             <div
-              className="max-h-[90vh] w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-xl"
+              className="relative max-h-[90vh] w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-xl"
               onClick={(e) => e.stopPropagation()}
             >
+              {modalFeedback && (
+                <div className="absolute inset-0 z-[60] flex items-center justify-center pointer-events-none">
+                  <p className={`rounded-lg px-4 py-2 text-sm ${
+                    modalFeedback.toLowerCase().includes('erro')
+                      ? 'bg-red-100 text-red-800'
+                      : 'bg-green-100 text-green-800'
+                  }`}>
+                    {modalFeedback}
+                  </p>
+                </div>
+              )}
               <div className="relative bg-earth-100">
                 {images.length > 0 ? (
                   <>
@@ -291,7 +307,7 @@ export default function GrupoDeCompras() {
                                     disabled={isOutOfStock(p)}
                                     className="rounded-lg px-3 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-60 disabled:bg-earth-300 disabled:text-earth-600 bg-earth-900 text-white hover:bg-earth-800"
                                   >
-                                    {isOutOfStock(p) ? 'Esgotado' : 'Comprar'}
+                                    {isOutOfStock(p) ? 'Esgotado' : 'Adicionar ao carrinho'}
                                   </button>
                                 </td>
                               </tr>

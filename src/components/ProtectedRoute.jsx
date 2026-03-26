@@ -10,7 +10,7 @@ import { supabase } from '../lib/supabase'
 import { MFAGate } from './MFAGate'
 
 export function ProtectedRoute({ children }) {
-  const { isAuthenticated, loading, session } = useAuth()
+  const { isAuthenticated, loading, session, needsSocialOnboarding } = useAuth()
   const location = useLocation()
   const [aalCheck, setAalCheck] = useState({ loading: true, needsMFA: false })
 
@@ -42,6 +42,10 @@ export function ProtectedRoute({ children }) {
 
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />
+  }
+
+  if (needsSocialOnboarding && location.pathname !== '/app/complete-social-profile') {
+    return <Navigate to="/app/complete-social-profile" replace />
   }
 
   if (aalCheck.needsMFA) {

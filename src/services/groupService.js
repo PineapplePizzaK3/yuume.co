@@ -144,6 +144,29 @@ export async function deletePurchaseGroupProduct(groupId, productId) {
         p_product_id: productId,
       })
     )
+    if (!error) return { error: null }
+
+    const msg = String(error?.message || '').toLowerCase()
+    const isFkViolation =
+      msg.includes('foreign key') ||
+      msg.includes('violat') ||
+      msg.includes('constraint')
+
+    // Fallback seguro: mantém histórico de pedidos e apenas remove o produto do grupo.
+    if (isFkViolation) {
+      const { error: fallbackError } = await withDbTimeout(
+        supabase
+          .from('products')
+          .update({
+            purchase_group_id: null,
+            is_active: false,
+          })
+          .eq('id', productId)
+          .eq('purchase_group_id', groupId)
+      )
+      return { error: fallbackError }
+    }
+
     return { error }
   } catch (e) {
     return { error: toServiceError(e) }

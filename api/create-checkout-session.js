@@ -267,9 +267,9 @@ export default async function handler(req, res) {
     const unitAmount = Math.round(remainingJpy) // JPY sem casas decimais
     if (!unitAmount || unitAmount <= 0) return res.status(400).json({ error: 'Valor inválido para cobrança' })
 
-    const isStoreOrderNoShip = order.order_source === 'store' && !order.ship_immediately
-    const successPath = isStoreOrderNoShip ? '/app/meus-produtos' : '/app/orders'
-    const cancelPath = isStoreOrderNoShip ? '/app/cart' : '/app/orders'
+    // Centralizamos todos os pagamentos no carrinho/central de pagamentos.
+    const successPath = '/app/cart'
+    const cancelPath = '/app/cart'
 
     try {
       const session = await stripe.checkout.sessions.create({

@@ -19,11 +19,11 @@ export default function Register() {
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [needsConfirmation, setNeedsConfirmation] = useState(false)
-  const { signUp, signInWithOAuth, isAuthenticated } = useAuth()
+  const { signUp, signInWithOAuth, isAuthenticated, needsSocialOnboarding } = useAuth()
   const navigate = useNavigate()
 
   if (isAuthenticated) {
-    navigate('/app/dashboard', { replace: true })
+    navigate(needsSocialOnboarding ? '/app/complete-social-profile' : '/app/dashboard', { replace: true })
     return null
   }
 

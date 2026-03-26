@@ -90,7 +90,8 @@ export default function PixManualModal({ open, onClose, onBack, order, amountBrl
   return (
     createPortal(
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 relative"
+        className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/40 p-4 relative"
+        style={{ position: 'fixed', inset: 0 }}
         onClick={onClose}
         role="dialog"
         aria-modal="true"
@@ -110,7 +111,7 @@ export default function PixManualModal({ open, onClose, onBack, order, amountBrl
           </div>
         )}
         <div
-          className="w-full max-w-md rounded-xl bg-white p-6 shadow-lg"
+          className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-xl bg-white p-6 shadow-lg"
           onClick={(e) => e.stopPropagation()}
         >
           <h3 id="pix-manual-title" className="font-semibold text-earth-900">Pagamento via PIX</h3>

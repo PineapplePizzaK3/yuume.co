@@ -6,6 +6,27 @@ import { withDbTimeout, toServiceError } from '../lib/dbGuard'
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api'
 
+async function parseApiPayload(res) {
+  const contentType = (res.headers.get('content-type') || '').toLowerCase()
+  const rawText = await res.text()
+
+  if (!rawText) return {}
+
+  if (contentType.includes('application/json')) {
+    try {
+      return JSON.parse(rawText)
+    } catch {
+      return { error: 'Resposta inválida do servidor (JSON malformado).' }
+    }
+  }
+
+  try {
+    return JSON.parse(rawText)
+  } catch {
+    return { error: rawText }
+  }
+}
+
 /**
  * Lista pagamentos do usuário (vinculados aos seus pedidos via RLS).
  * Inclui dados do pedido e do serviço.
@@ -64,10 +85,10 @@ export async function createCheckoutSession(orderId, accessToken) {
     throw err
   }
 
-  const data = await res.json()
+  const data = await parseApiPayload(res)
 
   if (!res.ok) {
-    throw new Error(data.error || 'Erro ao criar sessão de pagamento')
+    throw new Error(data?.error || `Erro ao criar sessão de pagamento (HTTP ${res.status})`)
   }
 
   return data
@@ -90,10 +111,10 @@ export async function createCartCheckoutSession(items, accessToken) {
     credentials: 'include',
   })
 
-  const data = await res.json()
+  const data = await parseApiPayload(res)
 
   if (!res.ok) {
-    throw new Error(data.error || 'Erro ao criar sessão de pagamento')
+    throw new Error(data?.error || `Erro ao criar sessão de pagamento (HTTP ${res.status})`)
   }
 
   return data
@@ -132,10 +153,10 @@ export async function createTopUpCheckoutSession(amountJpy, accessToken) {
     credentials: 'include',
   })
 
-  const data = await res.json()
+  const data = await parseApiPayload(res)
 
   if (!res.ok) {
-    throw new Error(data.error || 'Erro ao criar sessão de pagamento')
+    throw new Error(data?.error || `Erro ao criar sessão de pagamento (HTTP ${res.status})`)
   }
 
   return data

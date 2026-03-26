@@ -136,6 +136,15 @@ export default function MeusProdutos() {
     return () => { isActive = false }
   }, [user?.id, inventoryPage])
 
+  useEffect(() => {
+    if (!shipmentModalOpen) return
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [shipmentModalOpen])
+
   const toggleSelect = (id) => {
     setSelectedIds((prev) => {
       const next = new Set(prev)
@@ -441,7 +450,8 @@ export default function MeusProdutos() {
             {shipmentModalOpen &&
               createPortal(
                 <div
-                  className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 relative"
+                  className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 p-4 relative"
+                  style={{ position: 'fixed', inset: 0 }}
                   onClick={closeShipmentModal}
                 >
                   {feedback && (
@@ -531,12 +541,8 @@ export default function MeusProdutos() {
                           <p className="mt-2 text-sm text-earth-600">
                             Após confirmar a solicitação, nosso time irá consolidar seus itens e definir o valor do frete.
                             Você poderá efetuar o pagamento na página{' '}
-                            <Link to="/app/orders" className="font-medium text-earth-900 underline hover:no-underline">
-                              Pedidos
-                            </Link>{' '}
-                            ou pela{' '}
-                            <Link to="/app/wallet" className="font-medium text-earth-900 underline hover:no-underline">
-                              Carteira
+                            <Link to="/app/cart" className="font-medium text-earth-900 underline hover:no-underline">
+                              Central de Pagamentos
                             </Link>
                             .
                           </p>

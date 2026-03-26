@@ -1,6 +1,6 @@
 /**
  * Loja Virtual - Itens disponíveis para compra.
- * Usuário vê apenas produtos ativos. Clique no card abre modal com detalhes e botão Comprar.
+ * Usuário vê apenas produtos ativos. Clique no card abre modal com detalhes e botão Adicionar ao carrinho.
  */
 import { useEffect, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
@@ -36,6 +36,7 @@ export default function Loja() {
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
+  const [modalFeedback, setModalFeedback] = useState('')
   const [detailProduct, setDetailProduct] = useState(null)
   const [detailImageIndex, setDetailImageIndex] = useState(0)
 
@@ -62,17 +63,20 @@ export default function Loja() {
   const openDetail = (p) => {
     setDetailProduct(p)
     setDetailImageIndex(0)
+    setModalFeedback('')
   }
 
   const handleComprar = async (p) => {
     if (!user?.id) return
     const { error } = await addToCart(user.id, p.id, 1)
+    const inModal = !!detailProduct
     if (error) {
-      setMessage(error.message)
+      if (inModal) setModalFeedback(error.message || 'Erro ao adicionar ao carrinho')
+      else setMessage(error.message)
       return
     }
-    setMessage('Produto adicionado ao carrinho!')
-    setDetailProduct(null)
+    if (inModal) setModalFeedback('Produto adicionado ao carrinho!')
+    else setMessage('Produto adicionado ao carrinho!')
   }
 
   const images = detailProduct ? getProductImages(detailProduct) : []
@@ -85,7 +89,7 @@ export default function Loja() {
       <div className="px-4 pt-24 pb-12">
         <div className="mx-auto max-w-6xl">
         <h1 className="text-2xl font-bold text-earth-900">Loja Virtual</h1>
-        {message && (
+        {message && !detailProduct && (
           <p className="mt-4 rounded-lg bg-earth-100 px-4 py-2 text-sm text-earth-800">{message}</p>
         )}
         {loading && <p className="mt-6 text-earth-600">Carregando...</p>}
@@ -144,7 +148,7 @@ export default function Loja() {
                       disabled={isOutOfStock(p)}
                       className="flex-1 rounded-lg px-3 py-2 text-xs font-medium disabled:cursor-not-allowed disabled:opacity-60 disabled:bg-earth-300 disabled:text-earth-600 bg-earth-900 text-white hover:bg-earth-800"
                     >
-                      {isOutOfStock(p) ? 'Esgotado' : 'Comprar'}
+                      {isOutOfStock(p) ? 'Esgotado' : 'Adicionar ao carrinho'}
                     </button>
                     {isOutOfStock(p) && (
                       <Link
@@ -185,9 +189,20 @@ export default function Loja() {
             aria-labelledby="product-detail-title"
           >
             <div
-              className="flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-white shadow-xl"
+              className="relative flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-white shadow-xl"
               onClick={(e) => e.stopPropagation()}
             >
+              {modalFeedback && (
+                <div className="absolute inset-0 z-[60] flex items-center justify-center pointer-events-none">
+                  <p className={`rounded-lg px-4 py-2 text-sm ${
+                    modalFeedback.toLowerCase().includes('erro')
+                      ? 'bg-red-100 text-red-800'
+                      : 'bg-green-100 text-green-800'
+                  }`}>
+                    {modalFeedback}
+                  </p>
+                </div>
+              )}
               {/* Galeria de fotos */}
               <div className="relative bg-earth-100">
                 {images.length > 0 ? (
@@ -273,7 +288,7 @@ export default function Loja() {
                     disabled={isOutOfStock(detailProduct)}
                     className="rounded-xl px-6 py-3 font-medium disabled:cursor-not-allowed disabled:opacity-60 disabled:bg-earth-300 disabled:text-earth-600 bg-earth-900 text-white hover:bg-earth-800"
                   >
-                    {isOutOfStock(detailProduct) ? 'Esgotado' : 'Comprar'}
+                    {isOutOfStock(detailProduct) ? 'Esgotado' : 'Adicionar ao carrinho'}
                   </button>
                   {isOutOfStock(detailProduct) && (
                     <Link

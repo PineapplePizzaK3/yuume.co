@@ -8,7 +8,7 @@ import { useAuth } from '../hooks/useAuth'
 
 const LOJA_ITEMS = [
   { to: '/app/loja', label: 'Loja Virtual' },
-  { to: '/app/cart', label: 'Carrinho' },
+  { to: '/app/cart', label: 'Central de Pagamentos' },
   { to: '/app/grupo-de-compras', label: 'Grupo de Compras' },
 ]
 

@@ -206,7 +206,7 @@ export default function Orders() {
       <div>
         <h1 className="text-2xl font-bold text-earth-900">Pedidos</h1>
         <p className="mt-2 text-earth-600">
-          Acompanhe seus pedidos: criação → aguardando chegada → item recebido → armazenado → pronto para envio → aguardando pagamento do frete → enviado → finalizado. Os itens recebidos aparecem em Meus Produtos, onde você pode solicitar a consolidação e o envio.
+          Acompanhe seus pedidos: criação → aguardando chegada → item recebido → armazenado → pronto para envio → aguardando pagamento do frete → enviado → finalizado. Os pagamentos foram centralizados em Central de Pagamentos.
         </p>
 
         {feedback && (
@@ -353,11 +353,12 @@ export default function Orders() {
                     {getPayableAmount(o) && (
                       <button
                         type="button"
-                        onClick={() => setPayModal({ open: true, order: o, useWallet: true })}
-                        disabled={payingId === o.id}
+                        onClick={() => {
+                          window.location.href = `/app/cart?payOrderId=${encodeURIComponent(o.id)}`
+                        }}
                         className="rounded-lg bg-earth-900 px-4 py-2.5 font-medium text-earth-50 hover:bg-earth-800 disabled:opacity-60"
                       >
-                        {payingId === o.id ? 'Redirecionando...' : 'Pagar'}
+                        Ir para pagamento
                       </button>
                     )}
                   </div>

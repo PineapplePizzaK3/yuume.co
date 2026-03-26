@@ -159,16 +159,25 @@ export function AuthProvider({ children }) {
   }
 
   const signInWithOAuth = async (provider) => {
-    // Para OAuth, use sempre o origin atual (evita redirects errados tipo localhost em produção).
+    // Para OAuth, use sempre o origin atual.
     const siteUrl = window.location.origin
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: `${siteUrl}/app/dashboard`,
+        redirectTo: `${siteUrl}/app/complete-social-profile`,
       },
     })
     return { data, error }
   }
+
+  const providers = Array.isArray(user?.app_metadata?.providers)
+    ? user.app_metadata.providers
+    : []
+  const isSocialUser = providers.includes('google') || providers.includes('facebook')
+  const socialOnboardingCompleted = user?.user_metadata?.social_onboarding_completed === true
+  // Evita falso positivo durante lentidão do backend:
+  // a obrigatoriedade depende do flag de onboarding concluído.
+  const needsSocialOnboarding = !!user && isSocialUser && !socialOnboardingCompleted
 
   const value = {
     user,
@@ -177,6 +186,7 @@ export function AuthProvider({ children }) {
     loading,
     isAuthenticated: !!user,
     isAdmin: profile?.role === 'admin',
+    needsSocialOnboarding,
     signIn,
     signUp,
     signOut,
