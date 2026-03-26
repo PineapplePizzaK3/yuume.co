@@ -327,29 +327,27 @@ export default async function handler(req, res) {
     const successPath = '/app/cart'
     const cancelPath = '/app/cart'
 
-    try {
-      const session = await stripe.checkout.sessions.create({
-        payment_method_types: ['card'],
-        line_items: [
-          {
-            price_data: {
-              currency: 'jpy',
-              product_data: {
-                name: productName,
-                description: productDesc,
-              },
-              unit_amount: unitAmount,
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: [
+        {
+          price_data: {
+            currency: 'jpy',
+            product_data: {
+              name: productName,
+              description: productDesc,
             },
-            quantity: 1,
+            unit_amount: unitAmount,
           },
-        ],
-        mode: 'payment',
-        success_url: `${baseUrl}${successPath}?success=true`,
-        cancel_url: `${baseUrl}${cancelPath}?canceled=true`,
-        metadata: { orderId, orderSource: order.order_source || 'service', walletApplied: String(walletApplied || 0) },
-      })
-      return res.status(200).json({ url: session.url, provider: 'stripe' })
-    }
+          quantity: 1,
+        },
+      ],
+      mode: 'payment',
+      success_url: `${baseUrl}${successPath}?success=true`,
+      cancel_url: `${baseUrl}${cancelPath}?canceled=true`,
+      metadata: { orderId, orderSource: order.order_source || 'service', walletApplied: String(walletApplied || 0) },
+    })
+    return res.status(200).json({ url: session.url, provider: 'stripe' })
   } catch (err) {
     console.error(err)
     return res.status(500).json({ error: err.message || 'Internal server error' })
