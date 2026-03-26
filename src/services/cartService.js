@@ -113,3 +113,22 @@ export async function createStoreOrder(userId, shipImmediately, shippingCostJpy 
     return { data: null, error: toServiceError(e) }
   }
 }
+
+export async function getLatestPendingStoreOrder(userId) {
+  try {
+    const { data, error } = await withDbTimeout(
+      supabase
+        .from('orders')
+        .select('id, user_id, status, order_source, created_at, total_amount, quote_amount, quote_currency, shipping_cost, shipping_currency, wallet_applied_amount')
+        .eq('user_id', userId)
+        .eq('order_source', 'store')
+        .eq('status', 'awaiting_payment')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+    )
+    return { data: data ?? null, error }
+  } catch (e) {
+    return { data: null, error: toServiceError(e) }
+  }
+}

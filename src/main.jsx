@@ -7,8 +7,11 @@ import { BrowserRouter } from 'react-router-dom'
 import { HelmetProvider } from 'react-helmet-async'
 import { AuthProvider } from './contexts/AuthContext'
 import { ErrorBoundary } from './components/ErrorBoundary'
+import { refreshFxRate } from './lib/fx'
 import App from './App.jsx'
 import './index.css'
+
+void refreshFxRate()
 
 const root = document.getElementById('root')
 ReactDOM.createRoot(root).render(

@@ -7,7 +7,7 @@ import { Helmet } from 'react-helmet-async'
 import { Link, useSearchParams } from 'react-router-dom'
 import { createPortal } from 'react-dom'
 import { useAuth } from '../../hooks/useAuth'
-import { getCart, updateCartItem, removeFromCart, createStoreOrder } from '../../services/cartService'
+import { getCart, updateCartItem, removeFromCart, createStoreOrder, getLatestPendingStoreOrder } from '../../services/cartService'
 import { validateCoupon } from '../../services/couponService'
 import { createCheckoutSession } from '../../services/paymentService'
 import { getMyOrders, ORDER_STATUS_LABELS } from '../../services/orderService'
@@ -208,6 +208,18 @@ function Cart() {
     setSubmitting(true)
     setFeedback('')
     try {
+      const { data: latestPendingStoreOrder, error: latestPendingError } = await getLatestPendingStoreOrder(user.id)
+      if (latestPendingError) {
+        setFeedback(latestPendingError.message || 'Erro ao verificar pagamento pendente.')
+        return
+      }
+
+      if (latestPendingStoreOrder?.id) {
+        setPayModal({ open: true, order: latestPendingStoreOrder, useWallet: true })
+        setFeedback('')
+        return
+      }
+
       const { data: order, error } = await createStoreOrder(
         user.id,
         false,
@@ -249,7 +261,7 @@ function Cart() {
         return
       }
 
-      // Pedido criado: abre modal de pagamento (Stripe / PIX / carteira)
+      // Pedido criado: abre modal de pagamento (Stripe / PIX / carteira).
       setPayModal({ open: true, order: orderToPay, useWallet: true })
       setCouponApplied(null)
       setCouponInput('')

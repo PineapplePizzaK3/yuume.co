@@ -5,11 +5,24 @@
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '')
 const REQUEST_WINDOW_MS = 60 * 1000
 const MAX_REQUESTS_PER_WINDOW = 20
 const rateLimitMemory = globalThis.__checkoutRateLimitMap ?? new Map()
 globalThis.__checkoutRateLimitMap = rateLimitMemory
+const FX_REFRESH_MS = 1000 * 60 * 30 // 30 min
+const fxRateCache = globalThis.__fxBrlPerJpyCache ?? { rate: null, updatedAt: 0 }
+globalThis.__fxBrlPerJpyCache = fxRateCache
+
+function getStripeClient() {
+  const key = process.env.STRIPE_SECRET_KEY
+  if (!key) return null
+  try {
+    return new Stripe(key)
+  } catch (e) {
+    console.error('Invalid STRIPE_SECRET_KEY:', e?.message || e)
+    return null
+  }
+}
 
 function isRateLimited(key) {
   if (!key) return false
@@ -51,13 +64,55 @@ function getFxBrlPerJpy() {
   return v && v > 0 ? v : 0.033
 }
 
-function toChargeAmountJpy(amount, currency) {
+async function fetchBrlPerJpyFromProviders() {
+  const providers = [
+    {
+      url: 'https://api.frankfurter.app/latest?from=JPY&to=BRL',
+      read: (json) => Number(json?.rates?.BRL),
+    },
+    {
+      url: 'https://economia.awesomeapi.com.br/json/last/JPY-BRL',
+      read: (json) => Number(json?.JPYBRL?.bid),
+    },
+  ]
+  for (const provider of providers) {
+    try {
+      const res = await fetch(provider.url, { cache: 'no-store' })
+      if (!res.ok) continue
+      const data = await res.json()
+      const rate = provider.read(data)
+      if (rate > 0) return rate
+    } catch {
+      // try next provider
+    }
+  }
+  return null
+}
+
+async function getLiveFxBrlPerJpy() {
+  const now = Date.now()
+  if (fxRateCache.rate > 0 && now - fxRateCache.updatedAt < FX_REFRESH_MS) {
+    return fxRateCache.rate
+  }
+  const fetched = await fetchBrlPerJpyFromProviders()
+  if (fetched && fetched > 0) {
+    fxRateCache.rate = fetched
+    fxRateCache.updatedAt = now
+    return fetched
+  }
+  const fallback = getFxBrlPerJpy()
+  fxRateCache.rate = fallback
+  fxRateCache.updatedAt = now
+  return fallback
+}
+
+async function toChargeAmountJpy(amount, currency) {
   const c = (currency || 'jpy').toLowerCase()
   const n = Number(amount) || 0
   if (n <= 0) return 0
   if (c === 'jpy') return n
   if (c === 'brl') {
-    const fx = getFxBrlPerJpy()
+    const fx = await getLiveFxBrlPerJpy()
     return n / fx
   }
   return n
@@ -87,7 +142,8 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  if (!process.env.STRIPE_SECRET_KEY) {
+  const stripe = getStripeClient()
+  if (!stripe) {
     return res.status(500).json({ error: 'Stripe not configured' })
   }
 
@@ -231,7 +287,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Valor não definido para este pedido' })
     }
 
-    const chargeJpy = toChargeAmountJpy(amount, currency)
+    const chargeJpy = await toChargeAmountJpy(amount, currency)
     const alreadyAppliedJpy = Math.max(0, Number(order.wallet_applied_amount) || 0)
     let walletApplied = 0
     let remainingJpy = Math.max(0, (Number(chargeJpy) || 0) - alreadyAppliedJpy)
