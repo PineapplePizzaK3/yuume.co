@@ -7,10 +7,7 @@ import { Helmet } from 'react-helmet-async'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import { getMyPayments } from '../../services/paymentService'
-
-function formatMoney(value, currency = 'BRL') {
-  return Number(value)?.toLocaleString('pt-BR', { style: 'currency', currency }) ?? '—'
-}
+import { formatBRL, formatJPY, jpyToBrl } from '../../lib/fx'
 
 const STATUS_LABELS = {
   pending: 'Pendente',
@@ -63,9 +60,20 @@ export default function Payments() {
     const svc = o.service
     return (svc && (svc.name ?? (Array.isArray(svc) ? svc[0]?.name : null))) ?? ''
   }
-  const currency = (p) => {
-    const o = order(p)
-    return (o && o.shipping_currency) ? o.shipping_currency : 'BRL'
+  // Diretriz de moeda: JPY é valor base; BRL é sempre derivado por conversão.
+  const amountDisplay = (p) => {
+    const amount = Number(p?.amount) || 0
+    const currency = String(p?.currency || 'JPY').toUpperCase()
+    if (currency === 'BRL') {
+      return {
+        primary: formatBRL(amount),
+        secondary: 'registro legado em BRL',
+      }
+    }
+    return {
+      primary: formatJPY(amount),
+      secondary: `${formatBRL(jpyToBrl(amount))} convertido`,
+    }
   }
 
   return (
@@ -77,7 +85,7 @@ export default function Payments() {
         <h1 className="text-2xl font-bold text-earth-900">Pagamentos</h1>
         <p className="mt-2 text-earth-600">
           Histórico de pagamentos de frete e serviços. Recargas da carteira aparecem em{' '}
-          <Link to="/app/wallet" className="font-medium text-earth-900 underline hover:no-underline">
+          <Link to="/app/lounge" className="font-medium text-earth-900 underline hover:no-underline">
             Carteira
           </Link>
           .
@@ -108,6 +116,7 @@ export default function Payments() {
               {payments.map((p) => {
                 const o = order(p)
                 const orderId = o?.id ?? p.order_id
+                const display = amountDisplay(p)
                 return (
                   <li
                     key={p.id}
@@ -125,16 +134,23 @@ export default function Payments() {
                         : '—'}
                     </div>
                     <div className="w-full sm:col-span-3 sm:w-auto">
-                      <span className="text-earth-900">
-                        Frete
-                        {orderId ? ` · Pedido ${String(orderId).slice(0, 8)}…` : ''}
-                      </span>
+                      {orderId ? (
+                        <Link
+                          to={`/app/lounge?tab=pedidos&orderId=${encodeURIComponent(orderId)}`}
+                          className="text-earth-900 underline decoration-earth-300 underline-offset-2 hover:decoration-earth-700"
+                        >
+                          Frete · Pedido {String(orderId).slice(0, 8)}…
+                        </Link>
+                      ) : (
+                        <span className="text-earth-900">Frete</span>
+                      )}
                       {serviceName(p) && (
                         <p className="text-sm text-earth-500">{serviceName(p)}</p>
                       )}
                     </div>
                     <div className="w-full font-medium text-earth-900 sm:col-span-2 sm:w-auto">
-                      {formatMoney(p.amount, currency(p))}
+                      <div>{display.primary}</div>
+                      <p className="text-xs font-normal text-earth-500">{display.secondary}</p>
                     </div>
                     <div className="w-full text-earth-600 sm:col-span-2 sm:w-auto">
                       {paymentMethod(p)}
@@ -152,16 +168,6 @@ export default function Payments() {
                         {STATUS_LABELS[p.status] ?? p.status}
                       </span>
                     </div>
-                    {orderId && (
-                      <div className="w-full sm:col-span-12 sm:mt-1 sm:flex sm:justify-end">
-                        <Link
-                          to="/app/orders"
-                          className="text-sm font-medium text-earth-700 hover:text-earth-900"
-                        >
-                          Ver pedido →
-                        </Link>
-                      </div>
-                    )}
                   </li>
                 )
               })}

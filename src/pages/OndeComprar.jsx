@@ -211,6 +211,15 @@ function QuickAccessRecommendations() {
   const goNext = () => handleIndexChange((index + 1) % items.length)
   const goPrev = () => handleIndexChange((index - 1 + items.length) % items.length)
 
+  useEffect(() => {
+    if (items.length <= 1) return undefined
+    const t = setInterval(() => {
+      setIndex((i) => (i + 1) % items.length)
+      setImgErro(false)
+    }, 20000)
+    return () => clearInterval(t)
+  }, [items.length])
+
   const openLightbox = (src) => {
     if (!src) return
     setLightbox({ open: true, src, alt: item?.tipoLoja || '' })

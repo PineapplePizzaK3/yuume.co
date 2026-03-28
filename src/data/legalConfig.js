@@ -7,7 +7,7 @@ export const LEGAL_CONFIG = {
   BUSINESS_OWNER_JA: 'Aoki Shimada Jonathan',
   BUSINESS_OWNER_PT: 'Aoki Shimada Jonathan',
   BUSINESS_OWNER_EN: 'Aoki Shimada Jonathan',
-  SUPPORT_EMAIL: 'eiko.dlss@gmail.com',
+  SUPPORT_EMAIL: 'support@eiko-dls.com',
 }
 
 /**

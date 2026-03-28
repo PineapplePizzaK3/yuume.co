@@ -197,7 +197,7 @@ function Home() {
                   Serviços
                 </h3>
                 <p className="mt-2 flex-1 text-earth-600">
-                  Redirecionamento (📦 Você Compra ou 🛍️ Nós Compramos), personal shopping, grupo de compras e loja virtual.
+                  Redirecionamento (📦 Padrão ou 🛍️ Assistido), personal shopping, grupo de compras e loja virtual.
                 </p>
                 <span className="mt-4 text-sm font-medium text-earth-900 group-hover:underline">
                   Ver serviços →
@@ -307,7 +307,7 @@ function Home() {
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center self-start rounded-full bg-earth-900 text-sm font-bold text-earth-50">2</span>
                 <h3 className="mt-4 font-semibold text-earth-900">Escolha o serviço</h3>
                 <p className="mt-2 flex-1 text-sm text-earth-600">
-                  Redirecionamento (você compra ou nós compramos), personal shopping, grupo de compras ou loja virtual.
+                  Redirecionamento Padrão ou Assistido, personal shopping, grupo de compras ou loja virtual.
                 </p>
               </div>
             </li>

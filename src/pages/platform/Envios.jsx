@@ -1,12 +1,14 @@
 /**
- * Envios - acompanhamento de solicitações de envio (shipments).
- * Mostra solicitados → aguardando pagamento → pagos → enviados → finalizados.
+ * Envios — acompanhamento + solicitação de envio.
  */
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
+import { createPortal } from 'react-dom'
 import { useAuth } from '../../hooks/useAuth'
-import { getMyShipments, cancelShipment, getShipmentItems } from '../../services/inventoryService'
+import { getAddresses } from '../../services/addressService'
+import { getMyInventory, getMyShipments, cancelShipment, createShipment, getShipmentItems } from '../../services/inventoryService'
+import CustomsDeclarationForm from '../../components/CustomsDeclarationForm'
 import { cacheKey, readCache, writeCache } from '../../lib/cache'
 import { formatBRL, formatJPY, formatWeight, jpyToBrl } from '../../lib/fx'
 
@@ -15,14 +17,62 @@ const SHIPMENT_STATUS_LABELS = {
   awaiting_payment: 'Aguardando pagamento do frete',
   paid: 'Frete pago',
   shipped: 'Enviado',
-  completed: 'Finalizado',
+  completed: 'Entregue',
 }
+/** Em andamento até o cliente receber em casa (exclui finalizado). */
+const SHIPMENT_IN_PROCESS_STATUSES = ['requested', 'awaiting_payment', 'paid', 'shipped']
 const SHIPMENTS_PAGE_SIZE = 12
+const REQUEST_INVENTORY_PAGE_SIZE = 200
+
+/** Sub-abas: ?tab=envios&envSub=recebidos */
+const ENVIOS_SUB_TABS = [
+  { id: 'processo', label: 'Envios em processo' },
+  { id: 'recebidos', label: 'Recebidos em casa' },
+]
+
+const REQUEST_STEPS = [
+  { id: 1, title: 'Seleção de produtos' },
+  { id: 2, title: 'Declaração aduaneira' },
+  { id: 3, title: 'Serviços extras' },
+  { id: 4, title: 'Confirmação' },
+]
+
+const EXTRA_SERVICES = [
+  {
+    categoria: 'Registro visual',
+    itens: [
+      { id: 'photos', nome: 'Fotos', precoJpy: 500 },
+      { id: 'video', nome: 'Vídeo', precoJpy: 800 },
+    ],
+  },
+  {
+    categoria: 'Embalagem',
+    itens: [
+      { id: 'remove_packaging', nome: 'Remover embalagens', precoJpy: 0 },
+      { id: 'bubble_wrap_inside', nome: 'Plástico bolha extra dentro', precoJpy: 300 },
+      { id: 'bubble_wrap_outside', nome: 'Plástico bolha extra fora', precoJpy: 300 },
+    ],
+  },
+  {
+    categoria: 'Envio urgente',
+    itens: [
+      { id: 'urgent_priority_queue', nome: 'Fila prioritária', precoJpy: 1500 },
+      { id: 'urgent_dispatch_48h', nome: 'Despacho em até 48h úteis', precoJpy: 3000 },
+    ],
+  },
+]
 
 export default function Envios() {
   const { user } = useAuth()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const envSubRaw = searchParams.get('envSub')
+  const activeSubTab =
+    ENVIOS_SUB_TABS.some((t) => t.id === envSubRaw) && envSubRaw ? envSubRaw : 'processo'
+
   const [shipments, setShipments] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [loadingShipments, setLoadingShipments] = useState(true)
+  const [deliveredShipments, setDeliveredShipments] = useState([])
+  const [loadingDelivered, setLoadingDelivered] = useState(true)
   const [feedback, setFeedback] = useState('')
   const [cancellingId, setCancellingId] = useState(null)
   const [detailsOpenId, setDetailsOpenId] = useState(null)
@@ -30,27 +80,136 @@ export default function Envios() {
   const [detailsByShipmentId, setDetailsByShipmentId] = useState({})
   const [shipmentsPage, setShipmentsPage] = useState(0)
   const [shipmentsHasMore, setShipmentsHasMore] = useState(false)
+  const [deliveredPage, setDeliveredPage] = useState(0)
+  const [deliveredHasMore, setDeliveredHasMore] = useState(false)
+  const [requestModalOpen, setRequestModalOpen] = useState(false)
+  const [requestStep, setRequestStep] = useState(1)
+  const [inventoryForRequest, setInventoryForRequest] = useState([])
+  const [inventoryLoading, setInventoryLoading] = useState(false)
+  const [selectedInventoryIds, setSelectedInventoryIds] = useState(new Set())
+  const [addresses, setAddresses] = useState([])
+  const [addressesLoading, setAddressesLoading] = useState(false)
+  const [selectedAddressId, setSelectedAddressId] = useState('')
+  const [requestNotes, setRequestNotes] = useState('')
+  const [customsMode, setCustomsMode] = useState('team_fill')
+  const [customsDeclarations, setCustomsDeclarations] = useState({})
+  const [extraServices, setExtraServices] = useState({
+    photos: false,
+    video: false,
+    remove_packaging: false,
+    bubble_wrap_inside: false,
+    bubble_wrap_outside: false,
+    urgent_priority_queue: false,
+    urgent_dispatch_48h: false,
+  })
+  const [agreeRequestConfirmation, setAgreeRequestConfirmation] = useState(false)
+  const [requestSubmitting, setRequestSubmitting] = useState(false)
+
+  const selectedInventoryItems = useMemo(
+    () => inventoryForRequest.filter((it) => selectedInventoryIds.has(it.id)),
+    [inventoryForRequest, selectedInventoryIds]
+  )
+  const selectedAddress = useMemo(
+    () => addresses.find((a) => a.id === selectedAddressId) || null,
+    [addresses, selectedAddressId]
+  )
+  const selectedExtraItems = useMemo(
+    () =>
+      EXTRA_SERVICES.flatMap((c) =>
+        c.itens.filter((i) => extraServices[i.id]).map((i) => ({ ...i, categoria: c.categoria }))
+      ),
+    [extraServices]
+  )
+  const requestExtrasTotalJpy = selectedExtraItems.reduce((sum, i) => sum + Number(i.precoJpy || 0), 0)
+  const selectedUnits = selectedInventoryItems.reduce((sum, i) => sum + Number(i.items_count || 1), 0)
+  const selectedWeightKg = selectedInventoryItems.reduce((sum, i) => sum + Number(i.weight_kg || 0), 0)
+  const declaredProductRows = useMemo(
+    () =>
+      selectedInventoryItems.map((it) => {
+        const row = customsDeclarations[it.id] || {}
+        const unit = Number(row.unit_value || 0)
+        const qty = Number(row.quantity || 0)
+        return {
+          inventoryId: it.id,
+          itemName: row.item_description || it.name || 'Item',
+          unitValue: Number.isFinite(unit) ? unit : 0,
+          quantity: Number.isFinite(qty) ? qty : 0,
+          subtotal: (Number.isFinite(unit) ? unit : 0) * (Number.isFinite(qty) ? qty : 0),
+        }
+      }),
+    [selectedInventoryItems, customsDeclarations]
+  )
+  const declaredProductsTotal = declaredProductRows.reduce((sum, row) => sum + row.subtotal, 0)
+  const declarationList = useMemo(
+    () => selectedInventoryItems.map((it) => ({ inventory_id: it.id, ...(customsDeclarations[it.id] || {}) })),
+    [selectedInventoryItems, customsDeclarations]
+  )
+
+  const getDefaultDeclaration = (item) => ({
+    item_description: item?.name || '',
+    unit_value: '',
+    quantity: String(Math.max(1, Number(item?.items_count) || 1)),
+  })
 
   useEffect(() => {
     let isActive = true
     const run = async () => {
-      if (!user?.id) {
-        if (isActive) setLoading(false)
+      if (!user?.id || activeSubTab !== 'recebidos') {
+        if (isActive) setLoadingDelivered(false)
         return
       }
-      const k = cacheKey(user.id, `shipments_page_v1_p${shipmentsPage}`)
+      const k = cacheKey(user.id, `shipments_entregues_v1_p${deliveredPage}`)
+      const cached = readCache(k, 1000 * 60 * 30)
+      if (cached && isActive) {
+        setDeliveredShipments(cached.shipments ?? [])
+        setDeliveredHasMore(!!cached.hasMore)
+        setLoadingDelivered(false)
+      }
+      try {
+        if (isActive) setLoadingDelivered(true)
+        const { data, error } = await getMyShipments(user.id, {
+          limit: SHIPMENTS_PAGE_SIZE,
+          offset: deliveredPage * SHIPMENTS_PAGE_SIZE,
+          statusIn: ['completed'],
+        })
+        if (!isActive) return
+        const list = data ?? []
+        setDeliveredShipments(list)
+        setDeliveredHasMore(list.length === SHIPMENTS_PAGE_SIZE)
+        if (error) setFeedback(error.message)
+        writeCache(k, { shipments: list, hasMore: list.length === SHIPMENTS_PAGE_SIZE })
+      } catch (e) {
+        if (isActive) setFeedback(e?.message || 'Erro ao carregar entregas')
+      } finally {
+        if (isActive) setLoadingDelivered(false)
+      }
+    }
+    run()
+    return () => {
+      isActive = false
+    }
+  }, [user?.id, deliveredPage, activeSubTab])
+
+  useEffect(() => {
+    let isActive = true
+    const run = async () => {
+      if (!user?.id || activeSubTab !== 'processo') {
+        if (isActive) setLoadingShipments(false)
+        return
+      }
+      const k = cacheKey(user.id, `shipments_processo_v1_p${shipmentsPage}`)
       const cached = readCache(k, 1000 * 60 * 30)
       if (cached && isActive) {
         setShipments(cached.shipments ?? [])
         setShipmentsHasMore(!!cached.hasMore)
-        setLoading(false)
+        setLoadingShipments(false)
       }
-
       try {
-        if (isActive) setLoading(true)
+        if (isActive) setLoadingShipments(true)
         const { data, error } = await getMyShipments(user.id, {
           limit: SHIPMENTS_PAGE_SIZE,
           offset: shipmentsPage * SHIPMENTS_PAGE_SIZE,
+          statusIn: SHIPMENT_IN_PROCESS_STATUSES,
         })
         if (!isActive) return
         const list = data ?? []
@@ -61,28 +220,204 @@ export default function Envios() {
       } catch (e) {
         if (isActive) setFeedback(e?.message || 'Erro ao carregar envios')
       } finally {
-        if (isActive) setLoading(false)
+        if (isActive) setLoadingShipments(false)
       }
     }
     run()
     return () => {
       isActive = false
     }
-  }, [user?.id, shipmentsPage])
+  }, [user?.id, shipmentsPage, activeSubTab])
+
+  useEffect(() => {
+    setCustomsDeclarations((prev) => {
+      const next = {}
+      for (const item of selectedInventoryItems) {
+        const existing = prev[item.id]
+        next[item.id] = existing
+          ? { ...getDefaultDeclaration(item), ...existing }
+          : getDefaultDeclaration(item)
+      }
+      return next
+    })
+  }, [selectedInventoryItems])
+
+  const refreshDelivered = async () => {
+    if (!user?.id) return
+    const { data } = await getMyShipments(user.id, {
+      limit: SHIPMENTS_PAGE_SIZE,
+      offset: deliveredPage * SHIPMENTS_PAGE_SIZE,
+      statusIn: ['completed'],
+    })
+    const list = data ?? []
+    setDeliveredShipments(list)
+    setDeliveredHasMore(list.length === SHIPMENTS_PAGE_SIZE)
+    writeCache(cacheKey(user.id, `shipments_entregues_v1_p${deliveredPage}`), {
+      shipments: list,
+      hasMore: list.length === SHIPMENTS_PAGE_SIZE,
+    })
+  }
 
   const refreshShipments = async () => {
     if (!user?.id) return
     const { data } = await getMyShipments(user.id, {
       limit: SHIPMENTS_PAGE_SIZE,
       offset: shipmentsPage * SHIPMENTS_PAGE_SIZE,
+      statusIn: SHIPMENT_IN_PROCESS_STATUSES,
     })
     const list = data ?? []
     setShipments(list)
     setShipmentsHasMore(list.length === SHIPMENTS_PAGE_SIZE)
-    writeCache(cacheKey(user.id, `shipments_page_v1_p${shipmentsPage}`), {
+    writeCache(cacheKey(user.id, `shipments_processo_v1_p${shipmentsPage}`), {
       shipments: list,
       hasMore: list.length === SHIPMENTS_PAGE_SIZE,
     })
+  }
+
+  const resetRequestFlow = () => {
+    setRequestStep(1)
+    setSelectedInventoryIds(new Set())
+    setRequestNotes('')
+    setCustomsMode('team_fill')
+    setCustomsDeclarations({})
+    setExtraServices({
+      photos: false,
+      video: false,
+      remove_packaging: false,
+      bubble_wrap_inside: false,
+      bubble_wrap_outside: false,
+      urgent_priority_queue: false,
+      urgent_dispatch_48h: false,
+    })
+    setAgreeRequestConfirmation(false)
+  }
+
+  const openRequestModal = async () => {
+    if (!user?.id) return
+    resetRequestFlow()
+    setRequestModalOpen(true)
+    setInventoryLoading(true)
+    setAddressesLoading(true)
+    const [invRes, addrRes] = await Promise.all([
+      getMyInventory(user.id, { limit: REQUEST_INVENTORY_PAGE_SIZE, offset: 0 }),
+      getAddresses(user.id),
+    ])
+    setInventoryForRequest(invRes.data ?? [])
+    if (invRes.error) setFeedback(invRes.error.message || 'Erro ao carregar itens para solicitação')
+    const addrList = addrRes.data ?? []
+    setAddresses(addrList)
+    setSelectedAddressId(addrList[0]?.id || '')
+    if (addrRes.error) setFeedback(addrRes.error.message || 'Erro ao carregar endereços')
+    setInventoryLoading(false)
+    setAddressesLoading(false)
+  }
+
+  const closeRequestModal = () => {
+    setRequestModalOpen(false)
+    resetRequestFlow()
+  }
+
+  const toggleInventorySelection = (id) => {
+    setSelectedInventoryIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const toggleSelectAllInventory = () => {
+    if (selectedInventoryIds.size === inventoryForRequest.length) {
+      setSelectedInventoryIds(new Set())
+      return
+    }
+    setSelectedInventoryIds(new Set(inventoryForRequest.map((it) => it.id)))
+  }
+
+  const canAdvanceRequestStep = (step) => {
+    if (step === 1) return selectedInventoryIds.size > 0
+    if (step === 2) {
+      if (customsMode !== 'self_fill') return true
+      if (selectedInventoryItems.length === 0) return false
+      return selectedInventoryItems.every((it) => {
+        const row = customsDeclarations[it.id] || {}
+        const unit = Number(row.unit_value)
+        const qty = Number(row.quantity)
+        return (
+          String(row.item_description || '').trim().length > 0 &&
+          Number.isFinite(unit) &&
+          unit > 0 &&
+          Number.isFinite(qty) &&
+          qty > 0
+        )
+      })
+    }
+    if (step === 3) return true
+    if (step === 4) return !!selectedAddressId && agreeRequestConfirmation
+    return true
+  }
+
+  const submitShipmentRequest = async () => {
+    if (!user?.id || selectedInventoryIds.size === 0) return
+    if (!canAdvanceRequestStep(4)) {
+      setFeedback('Revise os dados da solicitação e confirme para continuar.')
+      return
+    }
+    setRequestSubmitting(true)
+    setFeedback('')
+    try {
+      const payloadMeta = {
+        workflow_version: 3,
+        selected_items_summary: {
+          items_count: selectedInventoryItems.length,
+          units_count: selectedUnits,
+          weight_kg: Number(selectedWeightKg.toFixed(3)),
+        },
+        customs_declaration: {
+          mode: customsMode,
+          declarations: declarationList.map((row) => ({
+            inventory_id: row.inventory_id,
+            item_description: row.item_description || '',
+            unit_value: Number(row.unit_value || 0),
+            quantity: Number(row.quantity || 0),
+          })),
+        },
+        request_confirmation: {
+          address_id: selectedAddress?.id || null,
+          address_snapshot: selectedAddress
+            ? {
+                label: selectedAddress.label || null,
+                recipient_name: selectedAddress.recipient_name || '',
+                street: selectedAddress.street || '',
+                number: selectedAddress.number || '',
+                complement: selectedAddress.complement || null,
+                neighborhood: selectedAddress.neighborhood || '',
+                city: selectedAddress.city || '',
+                state: selectedAddress.state || '',
+                postal_code: selectedAddress.postal_code || '',
+                country: selectedAddress.country || 'Brasil',
+              }
+            : null,
+          notes: requestNotes || null,
+          agreed_at: new Date().toISOString(),
+        },
+      }
+      const { error } = await createShipment(user.id, [...selectedInventoryIds], {
+        extra_services: {
+          ...extraServices,
+          shipment_submission: payloadMeta,
+        },
+      })
+      if (error) {
+        setFeedback(error.message || 'Erro ao solicitar envio')
+        return
+      }
+      setFeedback('Solicitação enviada! A equipe vai revisar e calcular o valor final do frete + taxas de serviço.')
+      closeRequestModal()
+      await refreshShipments()
+    } finally {
+      setRequestSubmitting(false)
+    }
   }
 
   const handleCancel = async (s) => {
@@ -96,7 +431,7 @@ export default function Envios() {
       return
     }
     setFeedback('Envio cancelado.')
-    await refreshShipments()
+    await Promise.all([refreshShipments(), refreshDelivered()])
   }
 
   const toggleDetails = async (shipmentId) => {
@@ -116,6 +451,122 @@ export default function Envios() {
       return
     }
     setDetailsByShipmentId((prev) => ({ ...prev, [shipmentId]: data ?? [] }))
+  }
+
+  const renderShipmentCard = (s, { allowCancel }) => {
+    const statusLabel = SHIPMENT_STATUS_LABELS[s.status] || s.status || '—'
+    const currency = (s.shipping_currency || 'JPY').toUpperCase()
+    const cost = s.shipping_cost != null ? Number(s.shipping_cost) : null
+    const isOpen = detailsOpenId === s.id
+    const items = detailsByShipmentId[s.id] || null
+
+    return (
+      <section key={s.id} className="rounded-xl border border-earth-200 bg-white p-5">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h3 className="text-base font-semibold text-earth-900">Envio {String(s.id).slice(0, 8)}</h3>
+            <p className="mt-1 text-sm text-earth-600">
+              Status: <span className="font-medium text-earth-800">{statusLabel}</span>
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={() => toggleDetails(s.id)}
+              className="rounded-lg border border-earth-300 bg-white px-3 py-1.5 text-sm font-medium text-earth-800 hover:bg-earth-50"
+            >
+              {isOpen ? 'Ocultar detalhes' : 'Ver detalhes'}
+            </button>
+            {allowCancel && s.status === 'requested' && (
+              <button
+                type="button"
+                onClick={() => handleCancel(s)}
+                disabled={cancellingId === s.id}
+                className="rounded-lg border border-red-300 bg-red-50 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-100 disabled:opacity-60"
+              >
+                {cancellingId === s.id ? 'Cancelando...' : 'Cancelar envio'}
+              </button>
+            )}
+            {cost != null && cost > 0 && (
+              <p className="text-sm font-medium text-earth-700">
+                Frete: {currency === 'BRL' ? formatBRL(cost) : formatJPY(cost)}
+              </p>
+            )}
+            {cost != null && cost > 0 && currency !== 'BRL' && (
+              <p className="text-xs text-earth-600">Aproximado em BRL: {formatBRL(jpyToBrl(cost))}</p>
+            )}
+          </div>
+        </div>
+
+        {s.tracking_code && (
+          <div className="mt-3 rounded-lg border border-earth-100 bg-earth-50 p-3">
+            <p className="text-sm font-medium text-earth-800">Rastreio</p>
+            <p className="mt-1 text-sm text-earth-600">{s.tracking_code}</p>
+          </div>
+        )}
+
+        {s.extra_services && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {s.extra_services.photos && (
+              <span className="rounded bg-earth-100 px-2 py-0.5 text-xs text-earth-700">Fotos</span>
+            )}
+            {s.extra_services.video && (
+              <span className="rounded bg-earth-100 px-2 py-0.5 text-xs text-earth-700">Vídeo</span>
+            )}
+          </div>
+        )}
+
+        {isOpen && (
+          <div className="mt-4 rounded-lg border border-earth-100 bg-earth-50 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-sm font-semibold text-earth-900">Detalhes do envio</p>
+              <p className="text-xs text-earth-600">
+                Criado em: {s.created_at ? new Date(s.created_at).toLocaleString('pt-BR') : '—'}
+                {s.updated_at && s.status === 'completed' ? (
+                  <>
+                    {' '}
+                    · Finalizado: {new Date(s.updated_at).toLocaleString('pt-BR')}
+                  </>
+                ) : null}
+              </p>
+            </div>
+
+            {detailsLoadingId === s.id && <p className="mt-3 text-sm text-earth-600">Carregando itens...</p>}
+
+            {detailsLoadingId !== s.id && items && (
+              <>
+                {items.length === 0 ? (
+                  <p className="mt-3 text-sm text-earth-600">Nenhum item encontrado neste envio.</p>
+                ) : (
+                  <ul className="mt-3 space-y-2">
+                    {items.map((row) => {
+                      const it = row.user_inventory
+                      return (
+                        <li
+                          key={row.id}
+                          className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-earth-200 bg-white px-3 py-2"
+                        >
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-medium text-earth-900">{it?.name || 'Item'}</p>
+                            <p className="mt-0.5 text-xs text-earth-600">
+                              {it?.items_count != null ? `Itens: ${it.items_count}` : 'Itens: —'}
+                              {it?.weight_kg != null ? ` • Peso: ${formatWeight(it.weight_kg)}` : ''}
+                            </p>
+                          </div>
+                          <span className="rounded bg-earth-100 px-2 py-0.5 text-xs text-earth-700">
+                            {it?.status || '—'}
+                          </span>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                )}
+              </>
+            )}
+          </div>
+        )}
+      </section>
+    )
   }
 
   if (!user) {
@@ -140,174 +591,443 @@ export default function Envios() {
       <div>
         <h1 className="text-2xl font-bold text-earth-900">Envios</h1>
         <p className="mt-2 text-earth-600">
-          Acompanhe seus envios solicitados, em execução e finalizados.
+          Acompanhe envios em andamento até chegarem aí, e o histórico dos que você já recebeu em casa.
         </p>
 
         {feedback && (
-          <p className="mt-4 rounded-lg bg-amber-100 px-4 py-2 text-sm text-amber-800">
-            {feedback}
-          </p>
+          <p className="mt-4 rounded-lg bg-amber-100 px-4 py-2 text-sm text-amber-800">{feedback}</p>
         )}
 
-        {loading && <p className="mt-6 text-earth-600">Carregando...</p>}
+        <div className="mt-6 flex flex-wrap gap-2 rounded-xl border border-earth-200 bg-earth-50 p-3">
+          {ENVIOS_SUB_TABS.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => {
+                const next = new URLSearchParams(searchParams)
+                next.set('tab', 'envios')
+                if (t.id === 'processo') next.delete('envSub')
+                else next.set('envSub', t.id)
+                setSearchParams(next, { replace: true })
+              }}
+              className={`rounded-lg px-3 py-1.5 text-sm font-medium ${
+                activeSubTab === t.id
+                  ? 'bg-earth-900 text-white'
+                  : 'bg-white text-earth-700 hover:bg-earth-100'
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
 
-        {!loading && shipments.length === 0 && (
-          <p className="mt-6 text-earth-600">Você ainda não solicitou envios.</p>
-        )}
-
-        {!loading && shipments.length > 0 && (
-          <div className="mt-6 space-y-4">
-            {shipments.map((s) => {
-              const statusLabel = SHIPMENT_STATUS_LABELS[s.status] || s.status || '—'
-              const currency = (s.shipping_currency || 'JPY').toUpperCase()
-              const cost = s.shipping_cost != null ? Number(s.shipping_cost) : null
-              const isOpen = detailsOpenId === s.id
-              const items = detailsByShipmentId[s.id] || null
-
-              return (
-                <section key={s.id} className="rounded-xl border border-earth-200 bg-white p-5">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <h2 className="text-base font-semibold text-earth-900">
-                        Envio {String(s.id).slice(0, 8)}
-                      </h2>
-                      <p className="mt-1 text-sm text-earth-600">
-                        Status: <span className="font-medium text-earth-800">{statusLabel}</span>
-                      </p>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-3">
-                      <button
-                        type="button"
-                        onClick={() => toggleDetails(s.id)}
-                        className="rounded-lg border border-earth-300 bg-white px-3 py-1.5 text-sm font-medium text-earth-800 hover:bg-earth-50"
-                      >
-                        {isOpen ? 'Ocultar detalhes' : 'Ver detalhes'}
-                      </button>
-                      {s.status === 'requested' && (
-                        <button
-                          type="button"
-                          onClick={() => handleCancel(s)}
-                          disabled={cancellingId === s.id}
-                          className="rounded-lg border border-red-300 bg-red-50 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-100 disabled:opacity-60"
-                        >
-                          {cancellingId === s.id ? 'Cancelando...' : 'Cancelar envio'}
-                        </button>
-                      )}
-                      {cost != null && cost > 0 && (
-                        <p className="text-sm font-medium text-earth-700">
-                          Frete:{' '}
-                          {currency === 'BRL' ? (
-                            formatBRL(cost)
-                          ) : (
-                            formatJPY(cost)
-                          )}
-                        </p>
-                      )}
-                      {cost != null && cost > 0 && currency !== 'BRL' && (
-                        <p className="text-xs text-earth-600">
-                          Aproximado em BRL: {formatBRL(jpyToBrl(cost))}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  {s.tracking_code && (
-                    <div className="mt-3 rounded-lg border border-earth-100 bg-earth-50 p-3">
-                      <p className="text-sm font-medium text-earth-800">Rastreio</p>
-                      <p className="mt-1 text-sm text-earth-600">{s.tracking_code}</p>
-                    </div>
-                  )}
-
-                  {s.extra_services && (
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {s.extra_services.photos && (
-                        <span className="rounded bg-earth-100 px-2 py-0.5 text-xs text-earth-700">
-                          Fotos
-                        </span>
-                      )}
-                      {s.extra_services.video && (
-                        <span className="rounded bg-earth-100 px-2 py-0.5 text-xs text-earth-700">
-                          Vídeo
-                        </span>
-                      )}
-                    </div>
-                  )}
-
-                  {isOpen && (
-                    <div className="mt-4 rounded-lg border border-earth-100 bg-earth-50 p-4">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <p className="text-sm font-semibold text-earth-900">Detalhes do envio</p>
-                        <p className="text-xs text-earth-600">
-                          Criado em: {s.created_at ? new Date(s.created_at).toLocaleString('pt-BR') : '—'}
-                        </p>
-                      </div>
-
-                      {detailsLoadingId === s.id && (
-                        <p className="mt-3 text-sm text-earth-600">Carregando itens...</p>
-                      )}
-
-                      {detailsLoadingId !== s.id && items && (
-                        <>
-                          {items.length === 0 ? (
-                            <p className="mt-3 text-sm text-earth-600">Nenhum item encontrado neste envio.</p>
-                          ) : (
-                            <ul className="mt-3 space-y-2">
-                              {items.map((row) => {
-                                const it = row.user_inventory
-                                return (
-                                  <li
-                                    key={row.id}
-                                    className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-earth-200 bg-white px-3 py-2"
-                                  >
-                                    <div className="min-w-0">
-                                      <p className="truncate text-sm font-medium text-earth-900">
-                                        {it?.name || 'Item'}
-                                      </p>
-                                      <p className="mt-0.5 text-xs text-earth-600">
-                                        {it?.items_count != null ? `Itens: ${it.items_count}` : 'Itens: —'}
-                                        {it?.weight_kg != null ? ` • Peso: ${formatWeight(it.weight_kg)}` : ''}
-                                      </p>
-                                    </div>
-                                    <span className="rounded bg-earth-100 px-2 py-0.5 text-xs text-earth-700">
-                                      {it?.status || '—'}
-                                    </span>
-                                  </li>
-                                )
-                              })}
-                            </ul>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  )}
-                </section>
-              )
-            })}
-            <div className="flex items-center justify-between gap-3 rounded-lg border border-earth-200 bg-white px-3 py-2">
-              <p className="text-xs text-earth-600">Página {shipmentsPage + 1}</p>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShipmentsPage((p) => Math.max(0, p - 1))}
-                  disabled={loading || shipmentsPage <= 0}
-                  className="rounded border border-earth-300 px-3 py-1.5 text-sm font-medium text-earth-700 hover:bg-earth-100 disabled:opacity-50"
-                >
-                  Anterior
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShipmentsPage((p) => p + 1)}
-                  disabled={loading || !shipmentsHasMore}
-                  className="rounded border border-earth-300 px-3 py-1.5 text-sm font-medium text-earth-700 hover:bg-earth-100 disabled:opacity-50"
-                >
-                  Próxima
-                </button>
+        {activeSubTab === 'processo' && (
+          <section className="mt-4 rounded-xl border border-sky-300 bg-gradient-to-r from-sky-50 to-blue-50 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-sky-900">Pronto para enviar seus itens?</p>
+                <p className="mt-1 text-xs text-sky-800">
+                  Inicie uma nova solicitação para a equipe revisar, consolidar e calcular frete + taxas.
+                </p>
               </div>
+              <button
+                type="button"
+                onClick={openRequestModal}
+                className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700"
+              >
+                Solicitar novo envio
+              </button>
             </div>
-          </div>
+          </section>
+        )}
+
+        {activeSubTab === 'recebidos' && (
+          <section className="mt-6">
+            <h2 className="text-lg font-semibold text-earth-900">Recebidos em casa</h2>
+            <p className="mt-1 text-sm text-earth-600">
+              Envios internacionais já finalizados — pacotes que chegaram ao seu endereço.
+            </p>
+
+            {loadingDelivered && <p className="mt-4 text-earth-600">Carregando...</p>}
+
+            {!loadingDelivered && deliveredShipments.length === 0 && (
+              <p className="mt-4 text-earth-600">
+                Você ainda não tem envios marcados como entregues. Quando um envio for finalizado, ele aparece aqui.
+              </p>
+            )}
+
+            {!loadingDelivered && deliveredShipments.length > 0 && (
+              <div className="mt-4 space-y-4">
+                {deliveredShipments.map((s) => renderShipmentCard(s, { allowCancel: false }))}
+                <div className="flex items-center justify-between gap-3 rounded-lg border border-earth-200 bg-white px-3 py-2">
+                  <p className="text-xs text-earth-600">Página {deliveredPage + 1}</p>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setDeliveredPage((p) => Math.max(0, p - 1))}
+                      disabled={loadingDelivered || deliveredPage <= 0}
+                      className="rounded border border-earth-300 px-3 py-1.5 text-sm font-medium text-earth-700 hover:bg-earth-100 disabled:opacity-50"
+                    >
+                      Anterior
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDeliveredPage((p) => p + 1)}
+                      disabled={loadingDelivered || !deliveredHasMore}
+                      className="rounded border border-earth-300 px-3 py-1.5 text-sm font-medium text-earth-700 hover:bg-earth-100 disabled:opacity-50"
+                    >
+                      Próxima
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </section>
+        )}
+
+        {activeSubTab === 'processo' && (
+          <section className="mt-6">
+            <h2 className="text-lg font-semibold text-earth-900">Envios em processo</h2>
+            <p className="mt-1 text-sm text-earth-600">
+              Do pedido de envio até o pacote sair do Japão.
+            </p>
+
+            {loadingShipments && <p className="mt-4 text-earth-600">Carregando...</p>}
+
+            {!loadingShipments && shipments.length === 0 && (
+              <p className="mt-4 text-earth-600">Nenhum envio em andamento.</p>
+            )}
+
+            {!loadingShipments && shipments.length > 0 && (
+              <div className="mt-4 space-y-4">
+                {shipments.map((s) => renderShipmentCard(s, { allowCancel: true }))}
+                <div className="flex items-center justify-between gap-3 rounded-lg border border-earth-200 bg-white px-3 py-2">
+                  <p className="text-xs text-earth-600">Página {shipmentsPage + 1}</p>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShipmentsPage((p) => Math.max(0, p - 1))}
+                      disabled={loadingShipments || shipmentsPage <= 0}
+                      className="rounded border border-earth-300 px-3 py-1.5 text-sm font-medium text-earth-700 hover:bg-earth-100 disabled:opacity-50"
+                    >
+                      Anterior
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShipmentsPage((p) => p + 1)}
+                      disabled={loadingShipments || !shipmentsHasMore}
+                      className="rounded border border-earth-300 px-3 py-1.5 text-sm font-medium text-earth-700 hover:bg-earth-100 disabled:opacity-50"
+                    >
+                      Próxima
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </section>
         )}
       </div>
+      {requestModalOpen &&
+        createPortal(
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 p-4">
+            <div
+              className="w-full max-w-3xl rounded-xl bg-white shadow-xl"
+              onClick={(e) => e.stopPropagation()}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="shipment-request-title"
+            >
+              <div className="border-b border-earth-200 px-6 py-4">
+                <h2 id="shipment-request-title" className="text-lg font-semibold text-earth-900">Solicitar envio</h2>
+                <p className="mt-1 text-sm text-earth-600">Fluxo em 4 etapas</p>
+                <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  {REQUEST_STEPS.map((s) => (
+                    <button
+                      key={s.id}
+                      type="button"
+                      onClick={() => setRequestStep(s.id)}
+                      className={`rounded-lg px-2 py-1.5 text-xs font-medium sm:text-sm ${
+                        requestStep === s.id ? 'bg-earth-900 text-white' : 'bg-earth-100 text-earth-700 hover:bg-earth-200'
+                      }`}
+                    >
+                      {s.title}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="max-h-[62vh] overflow-y-auto px-6 py-5">
+                {requestStep === 1 && (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-semibold text-earth-800">Seleção dos produtos para envio</h3>
+                      <label className="flex items-center gap-2 text-sm text-earth-700">
+                        <input
+                          type="checkbox"
+                          checked={inventoryForRequest.length > 0 && selectedInventoryIds.size === inventoryForRequest.length}
+                          onChange={toggleSelectAllInventory}
+                          className="rounded border-earth-300"
+                        />
+                        Selecionar todos
+                      </label>
+                    </div>
+                    {inventoryLoading && <p className="text-sm text-earth-600">Carregando inventário...</p>}
+                    {!inventoryLoading && inventoryForRequest.length === 0 && (
+                      <p className="text-sm text-earth-600">Você não possui itens disponíveis para solicitar envio.</p>
+                    )}
+                    {!inventoryLoading && inventoryForRequest.length > 0 && (
+                      <ul className="space-y-2">
+                        {inventoryForRequest.map((it) => (
+                          <li key={it.id} className="rounded-lg border border-earth-200 bg-earth-50 px-3 py-2">
+                            <label className="flex cursor-pointer items-start gap-3">
+                              <input
+                                type="checkbox"
+                                checked={selectedInventoryIds.has(it.id)}
+                                onChange={() => toggleInventorySelection(it.id)}
+                                className="mt-1 rounded border-earth-300"
+                              />
+                              <div className="min-w-0">
+                                <p className="truncate text-sm font-medium text-earth-900">{it.name || 'Item'}</p>
+                                <p className="text-xs text-earth-600">
+                                  {it.items_count != null ? `Unidades: ${it.items_count}` : 'Unidades: —'}
+                                  {it.weight_kg != null ? ` • Peso: ${formatWeight(it.weight_kg)}` : ''}
+                                </p>
+                              </div>
+                            </label>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    <p className="text-xs text-earth-600">
+                      Selecionados: {selectedInventoryItems.length} item(ns) • {selectedUnits} unidade(s) • {formatWeight(selectedWeightKg)}
+                    </p>
+                  </div>
+                )}
+
+                {requestStep === 2 && (
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-semibold text-earth-800">Declaração aduaneira</h3>
+                    <p className="text-xs text-earth-600">
+                      Os itens selecionados na etapa 1 aparecem abaixo para declaração.
+                    </p>
+                    <div className="space-y-2 rounded-lg border border-earth-200 bg-earth-50 p-3">
+                      <label className="flex items-start gap-2 text-sm text-earth-800">
+                        <input
+                          type="radio"
+                          name="customs-mode-envios"
+                          value="team_fill"
+                          checked={customsMode === 'team_fill'}
+                          onChange={(e) => setCustomsMode(e.target.value)}
+                          className="mt-0.5"
+                        />
+                        Quero que a equipe preencha a declaração aduaneira.
+                      </label>
+                      <label className="flex items-start gap-2 text-sm text-earth-800">
+                        <input
+                          type="radio"
+                          name="customs-mode-envios"
+                          value="self_fill"
+                          checked={customsMode === 'self_fill'}
+                          onChange={(e) => setCustomsMode(e.target.value)}
+                          className="mt-0.5"
+                        />
+                        Vou preencher a declaração agora.
+                      </label>
+                    </div>
+                    {customsMode === 'self_fill' && (
+                      <div className="space-y-3">
+                        {selectedInventoryItems.map((it, idx) => (
+                          <article
+                            key={it.id}
+                            className="overflow-hidden rounded-xl border-2 border-sky-200 bg-white shadow-sm"
+                            aria-label={`Formulário de declaração do item ${idx + 1}`}
+                          >
+                            <header className="flex items-center justify-between border-b border-sky-100 bg-sky-50 px-3 py-2">
+                              <div>
+                                <p className="text-xs font-medium uppercase tracking-wide text-sky-700">
+                                  Declaracao aduaneira
+                                </p>
+                                <p className="text-sm font-semibold text-sky-900">
+                                  Item {idx + 1}: {it.name || 'Item'}
+                                </p>
+                              </div>
+                              <span className="rounded bg-white px-2 py-0.5 text-[11px] font-medium text-sky-700 ring-1 ring-sky-200">
+                                Preencher
+                              </span>
+                            </header>
+                            <div className="p-3">
+                              <p className="mb-2 text-xs text-earth-600">
+                                Informe descricao, valor unitario e quantidade deste item especificamente.
+                              </p>
+                            <CustomsDeclarationForm
+                              value={customsDeclarations[it.id] || getDefaultDeclaration(it)}
+                              onChange={(next) =>
+                                setCustomsDeclarations((prev) => ({ ...prev, [it.id]: next }))
+                              }
+                              required
+                            />
+                            </div>
+                          </article>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {requestStep === 3 && (
+                  <div className="space-y-6">
+                    {EXTRA_SERVICES.map((cat) => (
+                      <div key={cat.categoria}>
+                        <h3 className="mb-2 text-sm font-semibold text-earth-700">{cat.categoria}</h3>
+                        <div className="space-y-1.5">
+                          {cat.itens.map((item) => (
+                            <label
+                              key={item.id}
+                              className="flex cursor-pointer items-center justify-between gap-3 rounded-lg border border-earth-200 px-4 py-3 hover:bg-earth-50"
+                            >
+                              <div className="flex items-center gap-3">
+                                <input
+                                  type="checkbox"
+                                  checked={extraServices[item.id] ?? false}
+                                  onChange={(e) => setExtraServices((s) => ({ ...s, [item.id]: e.target.checked }))}
+                                  className="rounded border-earth-300"
+                                />
+                                <span className="text-sm font-medium text-earth-900">{item.nome}</span>
+                              </div>
+                              <span className="text-sm font-medium text-earth-600">{formatJPY(item.precoJpy)}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                    <div className="rounded-lg border border-earth-200 bg-earth-50 px-3 py-2 text-sm text-earth-700">
+                      Total extras: {formatJPY(requestExtrasTotalJpy)}
+                    </div>
+                  </div>
+                )}
+
+                {requestStep === 4 && (
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-semibold text-earth-800">Confirmação da solicitação</h3>
+                    <div className="rounded-lg border border-earth-200 bg-earth-50 p-3 text-sm text-earth-700">
+                      <p><strong>Itens selecionados:</strong> {selectedInventoryItems.length}</p>
+                      <p><strong>Unidades:</strong> {selectedUnits}</p>
+                      <p><strong>Peso total:</strong> {formatWeight(selectedWeightKg)}</p>
+                      <p><strong>Declaração aduaneira:</strong> {customsMode === 'self_fill' ? 'Preenchida por você' : 'Preenchimento pela equipe'}</p>
+                      <p><strong>Serviços extras:</strong> {selectedExtraItems.length > 0 ? selectedExtraItems.map((x) => x.nome).join(', ') : 'Nenhum'}</p>
+                      <p><strong>Total extras:</strong> {formatJPY(requestExtrasTotalJpy)}</p>
+                      {customsMode === 'self_fill' ? (
+                        <>
+                          <p className="mt-2"><strong>Valores dos produtos declarados:</strong></p>
+                          <ul className="mt-1 space-y-1 text-xs">
+                            {declaredProductRows.map((row) => (
+                              <li key={row.inventoryId}>
+                                {row.itemName}: {formatJPY(row.unitValue)} x {row.quantity} = {formatJPY(row.subtotal)}
+                              </li>
+                            ))}
+                          </ul>
+                          <p className="mt-1"><strong>Total declarado dos produtos:</strong> {formatJPY(declaredProductsTotal)}</p>
+                        </>
+                      ) : (
+                        <p className="mt-1 text-xs text-earth-600">
+                          Valores dos produtos serão informados pela equipe no preenchimento da declaração.
+                        </p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-earth-700">Endereço de destino</label>
+                      {addressesLoading ? (
+                        <p className="mt-2 text-sm text-earth-600">Carregando endereços...</p>
+                      ) : addresses.length === 0 ? (
+                        <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+                          Nenhum endereço cadastrado. Cadastre em <Link to="/app/conta" className="font-medium underline">Dados da conta</Link>.
+                        </div>
+                      ) : (
+                        <select
+                          value={selectedAddressId}
+                          onChange={(e) => setSelectedAddressId(e.target.value)}
+                          className="mt-2 w-full rounded border border-earth-300 px-3 py-2 text-earth-900"
+                        >
+                          {addresses.map((a) => (
+                            <option key={a.id} value={a.id}>
+                              {(a.label || 'Endereço')} - {a.recipient_name} - {a.city}/{a.state}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
+
+                    {selectedAddress && (
+                      <div className="rounded-lg border border-earth-200 bg-earth-50 p-3 text-xs text-earth-700">
+                        <p className="font-medium text-earth-900">{selectedAddress.recipient_name}</p>
+                        <p>
+                          {selectedAddress.street}, {selectedAddress.number}
+                          {selectedAddress.complement ? ` - ${selectedAddress.complement}` : ''}
+                        </p>
+                        <p>
+                          {selectedAddress.neighborhood} - {selectedAddress.city}/{selectedAddress.state}
+                        </p>
+                        <p>{selectedAddress.postal_code} - {selectedAddress.country || 'Brasil'}</p>
+                      </div>
+                    )}
+
+                    <label className="block text-sm">
+                      <span className="text-earth-700">Observações (opcional)</span>
+                      <textarea
+                        rows={3}
+                        value={requestNotes}
+                        onChange={(e) => setRequestNotes(e.target.value)}
+                        className="mt-1 w-full rounded border border-earth-300 px-3 py-2 text-earth-900"
+                        placeholder="Ex.: priorizar proteção de itens frágeis"
+                      />
+                    </label>
+
+                    <label className="flex items-start gap-2 text-sm text-earth-800">
+                      <input
+                        type="checkbox"
+                        checked={agreeRequestConfirmation}
+                        onChange={(e) => setAgreeRequestConfirmation(e.target.checked)}
+                        className="mt-0.5"
+                      />
+                      Confirmo os dados desta solicitação. A equipe revisará e calculará o valor final (frete + taxas de serviço).
+                    </label>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-between border-t border-earth-200 px-6 py-4">
+                <button
+                  type="button"
+                  onClick={() => (requestStep > 1 ? setRequestStep((s) => s - 1) : closeRequestModal())}
+                  className="rounded-lg border border-earth-300 px-4 py-2 text-sm font-medium text-earth-700 hover:bg-earth-100"
+                >
+                  {requestStep === 1 ? 'Cancelar' : 'Voltar'}
+                </button>
+                {requestStep < 4 ? (
+                  <button
+                    type="button"
+                    onClick={() => setRequestStep((s) => s + 1)}
+                    disabled={!canAdvanceRequestStep(requestStep)}
+                    className="rounded-lg bg-earth-900 px-4 py-2 text-sm font-medium text-white hover:bg-earth-800 disabled:opacity-60"
+                  >
+                    Próximo
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={submitShipmentRequest}
+                    disabled={requestSubmitting || !canAdvanceRequestStep(4)}
+                    className="rounded-lg bg-earth-900 px-4 py-2 text-sm font-medium text-white hover:bg-earth-800 disabled:opacity-60"
+                  >
+                    {requestSubmitting ? 'Enviando...' : 'Solicitar envio'}
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
     </>
   )
 }
-

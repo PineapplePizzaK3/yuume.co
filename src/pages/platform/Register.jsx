@@ -8,13 +8,21 @@ import { Helmet } from 'react-helmet-async'
 import { useAuth } from '../../hooks/useAuth'
 import { getOrCreateProfile } from '../../services/profileService'
 import { validatePassword, PASSWORD_PLACEHOLDER } from '../../lib/passwordValidation'
+import { LEGAL_CONFIG } from '../../data/legalConfig'
+import { TermsOfUsePtBrBody } from '../../legal/TermsOfUsePtBrBody'
+
+const TERMS_CFG = {
+  BUSINESS_NAME: LEGAL_CONFIG.BUSINESS_NAME,
+  SUPPORT_EMAIL: LEGAL_CONFIG.SUPPORT_EMAIL,
+}
 
 export default function Register() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [passwordConfirm, setPasswordConfirm] = useState('')
   const [name, setName] = useState('')
   const [agreeTerms, setAgreeTerms] = useState(false)
-  const [agreePrivacy, setAgreePrivacy] = useState(false)
+  const [canAgreeTerms, setCanAgreeTerms] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
@@ -36,8 +44,12 @@ export default function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
-    if (!agreeTerms || !agreePrivacy) {
-      setError('É necessário concordar com os Termos de Uso e com a Política de Privacidade para se cadastrar.')
+    if (!canAgreeTerms) {
+      setError('Role até o final dos Termos de Uso para liberar o aceite.')
+      return
+    }
+    if (!agreeTerms) {
+      setError('É necessário concordar com os Termos de Uso para se cadastrar.')
       return
     }
     const { valid, message } = validatePassword(password)
@@ -45,11 +57,19 @@ export default function Register() {
       setError(message)
       return
     }
+    if (password !== passwordConfirm) {
+      setError('As senhas não coincidem.')
+      return
+    }
     setLoading(true)
     setNeedsConfirmation(false)
 
+    const referralCode = (localStorage.getItem('referral_signup_code') || '').trim().toUpperCase()
+    const metadata = { name }
+    if (referralCode) metadata.referral_code = referralCode
+
     const { data, error: err } = await signUp(email, password, {
-      userMetadata: { name },
+      userMetadata: metadata,
     })
 
     setLoading(false)
@@ -58,6 +78,9 @@ export default function Register() {
       return
     }
     if (data?.user) {
+      if (referralCode && data.user.id) {
+        localStorage.removeItem('referral_signup_code')
+      }
       if (data?.session) {
         await getOrCreateProfile(data.user.id, { email, name })
         setSuccess(true)
@@ -66,6 +89,12 @@ export default function Register() {
         setNeedsConfirmation(true)
       }
     }
+  }
+
+  const unlockOnScrollEnd = (event, unlock) => {
+    const el = event.currentTarget
+    const remaining = el.scrollHeight - el.scrollTop - el.clientHeight
+    if (remaining <= 8) unlock(true)
   }
 
   if (success) {
@@ -107,7 +136,7 @@ export default function Register() {
         <title>Cadastre-se | Plataforma</title>
       </Helmet>
       <section className="flex min-h-[calc(100vh-8rem)] items-center justify-center px-4 pt-24 pb-16">
-        <div className="w-full max-w-sm rounded-lg border border-earth-200 bg-earth-100 p-6 shadow-sm">
+        <div className="w-full max-w-2xl rounded-lg border border-earth-200 bg-earth-100 p-6 shadow-sm">
           <h1 className="text-xl font-bold text-earth-900">Cadastre-se</h1>
           <p className="mt-1 text-sm text-earth-600">
             Crie sua conta na plataforma
@@ -187,45 +216,78 @@ export default function Register() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength={8}
+                autoComplete="new-password"
                 className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
                 placeholder={PASSWORD_PLACEHOLDER}
               />
             </div>
+            <div>
+              <label htmlFor="passwordConfirm" className="block text-sm font-medium text-earth-700">
+                Confirmar senha
+              </label>
+              <input
+                id="passwordConfirm"
+                type="password"
+                value={passwordConfirm}
+                onChange={(e) => setPasswordConfirm(e.target.value)}
+                required
+                minLength={8}
+                autoComplete="new-password"
+                className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                placeholder="Digite a senha novamente"
+              />
+              {passwordConfirm.length > 0 && password !== passwordConfirm && (
+                <p className="mt-1 text-xs text-red-600">As senhas não coincidem.</p>
+              )}
+            </div>
             <div className="space-y-3">
-              <label className="flex items-start gap-3 cursor-pointer">
+              <div className="rounded-lg border border-earth-300 bg-white p-3">
+                <p className="text-sm font-medium text-earth-800">Termos de Uso (texto integral)</p>
+                <p className="mt-1 text-xs text-earth-600">Role até o final para habilitar o aceite.</p>
+                <div
+                  className="mt-2 max-h-[min(24rem,55vh)] overflow-y-auto rounded border border-earth-200 bg-earth-50 p-3"
+                  onScroll={(e) => unlockOnScrollEnd(e, setCanAgreeTerms)}
+                >
+                  <div className="space-y-6">
+                    <TermsOfUsePtBrBody cfg={TERMS_CFG} compact />
+                  </div>
+                </div>
+                <p className="mt-2 text-xs text-earth-600">
+                  Versão também em{' '}
+                  <Link to="/legal/terms" target="_blank" rel="noopener noreferrer" className="font-medium text-earth-900 underline hover:no-underline">
+                    /legal/terms
+                  </Link>
+                  .
+                </p>
+              </div>
+
+              <label className="flex cursor-pointer items-start gap-3">
                 <input
                   type="checkbox"
                   checked={agreeTerms}
                   onChange={(e) => setAgreeTerms(e.target.checked)}
+                  disabled={!canAgreeTerms}
                   className="mt-1 rounded border-earth-300 text-earth-900"
                 />
                 <span className="text-sm text-earth-700">
                   Li e concordo com os{' '}
                   <Link to="/legal/terms" target="_blank" rel="noopener noreferrer" className="font-medium text-earth-900 underline hover:no-underline">
                     Termos de Uso
-                  </Link>
-                  .
-                </span>
-              </label>
-              <label className="flex items-start gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={agreePrivacy}
-                  onChange={(e) => setAgreePrivacy(e.target.checked)}
-                  className="mt-1 rounded border-earth-300 text-earth-900"
-                />
-                <span className="text-sm text-earth-700">
-                  Li e concordo com a{' '}
-                  <Link to="/legal/privacy" target="_blank" rel="noopener noreferrer" className="font-medium text-earth-900 underline hover:no-underline">
-                    Política de Privacidade
-                  </Link>
-                  .
+                  </Link>{' '}
+                  acima.
                 </span>
               </label>
             </div>
             <button
               type="submit"
-              disabled={loading || !agreeTerms || !agreePrivacy}
+              disabled={
+                loading ||
+                !agreeTerms ||
+                !canAgreeTerms ||
+                !password.trim() ||
+                !passwordConfirm.trim() ||
+                password !== passwordConfirm
+              }
               className="w-full rounded-lg bg-earth-900 px-4 py-3 font-medium text-earth-50 hover:bg-earth-800 disabled:opacity-70"
             >
               {loading ? 'Criando conta...' : 'Cadastrar'}

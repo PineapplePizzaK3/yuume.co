@@ -39,6 +39,7 @@ export async function getMyPayments() {
         .select(`
           id,
           amount,
+          currency,
           status,
           stripe_payment_id,
           created_at,
@@ -75,7 +76,13 @@ export async function createCheckoutSession(orderId, accessToken) {
     res = await fetch(`${API_BASE}/create-checkout-session`, {
       method: 'POST',
       headers,
-      body: JSON.stringify({ orderId, useWallet: !!options?.useWallet }),
+      body: JSON.stringify({
+        orderId,
+        useWallet: !!options?.useWallet,
+        walletAmountJpy: options?.walletAmountJpy != null ? Number(options.walletAmountJpy) : null,
+        acquisitionMode: options?.acquisitionMode || null,
+        affiliateCode: options?.affiliateCode || null,
+      }),
       credentials: 'include',
     })
   } catch (err) {

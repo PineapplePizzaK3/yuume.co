@@ -53,10 +53,14 @@ import {
 } from '../../services/groupService'
 import { getPurchaseGroupProducts } from '../../services/productService'
 import { getUserLogs, getAuthLogs, logAdminAction } from '../../services/logService'
+import { getMyAdminNotifications, markNotificationRead } from '../../services/notificationService'
+import { getFraudReviewQueue, decideFraudCase } from '../../services/fraudService'
+import { searchCatalogAdmin } from '../../services/catalogSearchService'
 import { brlToJpy, jpyToBrl, formatJPY, formatWeight } from '../../lib/fx'
 import { parseQuoteMessage, serializeQuoteProducts } from '../../lib/quoteProducts'
 import QuoteProductsList from '../../components/QuoteProductsList'
 import OrderAttachments from '../../components/OrderAttachments'
+import { getSystemSettings, saveSystemSettingsAdmin } from '../../services/settingsService'
 
 function formatMoney(v, currency = 'BRL') {
   return Number(v)?.toLocaleString('pt-BR', { style: 'currency', currency }) ?? '—'
@@ -67,11 +71,12 @@ const ADMIN_PAGE_SIZE = {
   products: 120,
   users: 100,
 }
+const ADMIN_TAB_ORDER_STORAGE_KEY = 'admin_tabs_order_v1'
 
 function formatOrderModuleLabel(order) {
   if (!order) return null
-  if (order.order_module === 'self_buy') return 'Redirecionamento: 📦 Você Compra'
-  if (order.order_module === 'assisted_buy') return 'Redirecionamento: 🛍️ Nós Compramos'
+  if (order.order_module === 'self_buy') return 'Redirecionamento · Padrão'
+  if (order.order_module === 'assisted_buy') return 'Redirecionamento · Assistido'
   return null
 }
 
@@ -199,6 +204,7 @@ export default function Admin() {
     image_urls: [],
     weight_kg: '0',
     weight_unit: 'g',
+    stock_quantity: '',
   })
   const [editingGroupProductId, setEditingGroupProductId] = useState(null)
   const [editingPendingProductIndex, setEditingPendingProductIndex] = useState(null)
@@ -208,9 +214,13 @@ export default function Admin() {
     { id: 'pedidos', label: 'Pedidos', icon: '📦' },
     { id: 'usuarios', label: 'Usuários', icon: '👤' },
     { id: 'envios', label: 'Envios', icon: '🚚' },
-    { id: 'produtos', label: 'Produtos', icon: '🛒' },
+    { id: 'produtos', label: 'Produtos Loja', icon: '🛒' },
     { id: 'catalogo_produtos', label: 'Lista de Produtos', icon: '📚' },
+    { id: 'busca_catalogo', label: 'Busca em Catálogos', icon: '🔎' },
     { id: 'grupos', label: 'Grupo de Compras', icon: '👥' },
+    { id: 'marketing', label: 'Referral', icon: '🎯' },
+    { id: 'fraude', label: 'Fraude', icon: '🛡️' },
+    { id: 'notificacoes', label: 'Notificações', icon: '🔔' },
     { id: 'recargas', label: 'Recargas PIX', icon: '💰' },
     { id: 'logs', label: 'Logs', icon: '📋' },
   ]
@@ -219,6 +229,20 @@ export default function Admin() {
   const [usersListLoading, setUsersListLoading] = useState(false)
   const [topupRequests, setTopupRequests] = useState([])
   const [topupLoading, setTopupLoading] = useState(false)
+  const [marketingLoading, setMarketingLoading] = useState(false)
+  const [settingsForm, setSettingsForm] = useState({
+    referral_discount_value: '',
+    referral_credit_value: '',
+    fx_brl_per_jpy: '0.033',
+  })
+  const [adminNotifications, setAdminNotifications] = useState([])
+  const [adminNotificationsLoading, setAdminNotificationsLoading] = useState(false)
+  const [fraudQueue, setFraudQueue] = useState({ referrals: [], affiliate_orders: [], fraud_logs: [] })
+  const [fraudQueueLoading, setFraudQueueLoading] = useState(false)
+  const [fraudDecisionLoadingId, setFraudDecisionLoadingId] = useState('')
+  const [fraudMinScore, setFraudMinScore] = useState('0')
+  const [fraudStatusFilter, setFraudStatusFilter] = useState('all')
+  const [fraudSearchTerm, setFraudSearchTerm] = useState('')
   const [userDetailModal, setUserDetailModal] = useState({
     open: false,
     user: null,
@@ -244,12 +268,56 @@ export default function Admin() {
   const [shipmentShippedModal, setShipmentShippedModal] = useState({ open: false, shipmentId: null, trackingCode: '' })
   const [catalogSearch, setCatalogSearch] = useState('')
   const [catalogStatusFilter, setCatalogStatusFilter] = useState('all')
+  const [catalogCreateOpen, setCatalogCreateOpen] = useState(false)
+  const [productReferenceSearch, setProductReferenceSearch] = useState('')
+  const [productReferenceId, setProductReferenceId] = useState('')
+  const [groupProductReferenceSearch, setGroupProductReferenceSearch] = useState('')
+  const [groupProductReferenceId, setGroupProductReferenceId] = useState('')
+  const [externalSearchQuery, setExternalSearchQuery] = useState('')
+  const [externalSearchStores, setExternalSearchStores] = useState({
+    amazon: true,
+    rakuma: true,
+    mercari: true,
+  })
+  const [externalSearchResults, setExternalSearchResults] = useState([])
+  const [externalSearchMeta, setExternalSearchMeta] = useState(null)
+  const [externalSearchPartials, setExternalSearchPartials] = useState([])
+  const [externalSearchLoading, setExternalSearchLoading] = useState(false)
+  const [externalSearchPage, setExternalSearchPage] = useState(1)
+  const [externalSearchError, setExternalSearchError] = useState('')
   const [ordersPage, setOrdersPage] = useState(0)
   const [ordersHasMore, setOrdersHasMore] = useState(false)
   const [productsPage, setProductsPage] = useState(0)
   const [productsHasMore, setProductsHasMore] = useState(false)
   const [usersPage, setUsersPage] = useState(0)
   const [usersHasMore, setUsersHasMore] = useState(false)
+  const [draggingTabId, setDraggingTabId] = useState('')
+  const [tabOrder, setTabOrder] = useState(TABS.map((tab) => tab.id))
+
+  const normalizeTabOrder = (raw) => {
+    const allowed = TABS.map((tab) => tab.id)
+    const base = Array.isArray(raw) ? raw : []
+    const safe = base.filter((id) => allowed.includes(id))
+    for (const id of allowed) {
+      if (!safe.includes(id)) safe.push(id)
+    }
+    return safe
+  }
+
+  const orderedTabs = normalizeTabOrder(tabOrder)
+
+  const handleTabReorder = (draggedId, targetId) => {
+    if (!draggedId || !targetId || draggedId === targetId) return
+    setTabOrder((prev) => {
+      const current = normalizeTabOrder(prev)
+      const draggedIndex = current.indexOf(draggedId)
+      const targetIndex = current.indexOf(targetId)
+      if (draggedIndex < 0 || targetIndex < 0) return current
+      current.splice(draggedIndex, 1)
+      current.splice(targetIndex, 0, draggedId)
+      return current
+    })
+  }
 
   const loadProducts = async (active = () => true, page = productsPage) => {
     if (active()) setLoading(true)
@@ -331,6 +399,36 @@ export default function Admin() {
       isActive = false
     }
   }, [])
+
+  useEffect(() => {
+    if (!user?.id) {
+      setTabOrder(TABS.map((tab) => tab.id))
+      return
+    }
+    try {
+      const raw = localStorage.getItem(ADMIN_TAB_ORDER_STORAGE_KEY)
+      if (!raw) {
+        setTabOrder(TABS.map((tab) => tab.id))
+        return
+      }
+      const all = JSON.parse(raw)
+      setTabOrder(normalizeTabOrder(all?.[user.id]))
+    } catch {
+      setTabOrder(TABS.map((tab) => tab.id))
+    }
+  }, [user?.id])
+
+  useEffect(() => {
+    if (!user?.id) return
+    try {
+      const raw = localStorage.getItem(ADMIN_TAB_ORDER_STORAGE_KEY)
+      const all = raw ? JSON.parse(raw) : {}
+      all[user.id] = normalizeTabOrder(tabOrder)
+      localStorage.setItem(ADMIN_TAB_ORDER_STORAGE_KEY, JSON.stringify(all))
+    } catch {
+      // ignore
+    }
+  }, [user?.id, tabOrder])
 
   const loadUsersForAdmin = async (active = () => true, page = usersPage) => {
     if (active()) setUsersListLoading(true)
@@ -530,10 +628,110 @@ export default function Admin() {
     }
   }
 
+  const loadMarketingData = async (active = () => true) => {
+    setMarketingLoading(true)
+    try {
+      const settingsRes = await getSystemSettings()
+      if (!active()) return
+      const settings = settingsRes.data || {}
+      setSettingsForm({
+        referral_discount_value: String(settings?.referral_discount_value?.amount ?? ''),
+        referral_credit_value: String(settings?.referral_credit_value?.amount ?? ''),
+        fx_brl_per_jpy: String(settings?.fx_brl_per_jpy?.amount ?? '0.033'),
+      })
+      if (settingsRes.error) {
+        setMessage(settingsRes.error?.message || 'Erro ao carregar referral')
+      }
+    } catch (e) {
+      if (active()) setMessage(e?.message || 'Erro ao carregar dados de referral')
+    } finally {
+      if (active()) setMarketingLoading(false)
+    }
+  }
+
+  const loadAdminNotifications = async (active = () => true) => {
+    setAdminNotificationsLoading(true)
+    try {
+      const { data, error } = await getMyAdminNotifications(user?.id, 120)
+      if (!active()) return
+      setAdminNotifications(data ?? [])
+      if (error) setMessage(error?.message)
+    } catch (e) {
+      if (active()) setMessage(e?.message || 'Erro ao carregar notificações do admin')
+    } finally {
+      if (active()) setAdminNotificationsLoading(false)
+    }
+  }
+
+  const loadFraudQueue = async (active = () => true) => {
+    setFraudQueueLoading(true)
+    try {
+      const { data, error } = await getFraudReviewQueue(150)
+      if (!active()) return
+      if (error) {
+        setMessage(error?.message || 'Erro ao carregar fila de fraude')
+        return
+      }
+      setFraudQueue({
+        referrals: Array.isArray(data?.referrals) ? data.referrals : [],
+        affiliate_orders: Array.isArray(data?.affiliate_orders) ? data.affiliate_orders : [],
+        fraud_logs: Array.isArray(data?.fraud_logs) ? data.fraud_logs : [],
+      })
+    } catch (e) {
+      if (active()) setMessage(e?.message || 'Erro ao carregar fila de fraude')
+    } finally {
+      if (active()) setFraudQueueLoading(false)
+    }
+  }
+
+  const handleFraudDecision = async (entityType, id, decision) => {
+    const key = `${entityType}:${id}:${decision}`
+    setFraudDecisionLoadingId(key)
+    try {
+      const { error } = await decideFraudCase({ entityType, id, decision })
+      if (error) {
+        setMessage(error.message || 'Erro ao atualizar decisão antifraude')
+        return
+      }
+      setMessage('Decisão antifraude salva.')
+      loadFraudQueue()
+    } finally {
+      setFraudDecisionLoadingId('')
+    }
+  }
+
   useEffect(() => {
     if (activeTab === 'recargas') {
       let isActive = true
       loadTopupRequests(() => isActive)
+      return () => { isActive = false }
+    }
+  }, [activeTab])
+
+  useEffect(() => {
+    if (activeTab === 'notificacoes') {
+      let isActive = true
+      loadAdminNotifications(() => isActive)
+      const interval = setInterval(() => loadAdminNotifications(() => isActive), 30000)
+      return () => {
+        isActive = false
+        clearInterval(interval)
+      }
+    }
+  }, [activeTab, user?.id])
+
+  useEffect(() => {
+    if (activeTab === 'marketing') {
+      let isActive = true
+      loadMarketingData(() => isActive)
+      return () => { isActive = false }
+    }
+  }, [activeTab])
+
+  useEffect(() => {
+    if (activeTab === 'fraude') {
+      let isActive = true
+      loadFraudQueue(() => isActive)
       return () => { isActive = false }
     }
   }, [activeTab])
@@ -553,6 +751,7 @@ export default function Admin() {
     setEditingId(null)
     setImageUploadError('')
     setNewImageUrl('')
+    setProductReferenceId('')
   }
 
   const resetGroupForm = () => {
@@ -568,7 +767,7 @@ export default function Admin() {
     setNewGroupImageUrl('')
     setGroupProducts([])
     setPendingGroupProducts([])
-    setGroupProductForm({ name: '', price: '', description: '', image_url: '', image_urls: [], weight_kg: '0', weight_unit: 'g' })
+    setGroupProductForm({ name: '', price: '', description: '', image_url: '', image_urls: [], weight_kg: '0', weight_unit: 'g', stock_quantity: '' })
     setEditingGroupProductId(null)
     setEditingPendingProductIndex(null)
   }
@@ -593,14 +792,15 @@ export default function Admin() {
     setEditingGroupProductId(null)
     setEditingPendingProductIndex(null)
     setPendingGroupProducts([])
-    setGroupProductForm({ name: '', price: '', description: '', image_url: '', image_urls: [], weight_kg: '0', weight_unit: 'g' })
+    setGroupProductForm({ name: '', price: '', description: '', image_url: '', image_urls: [], weight_kg: '0', weight_unit: 'g', stock_quantity: '' })
     loadGroupProducts(g.id)
   }
 
   const resetGroupProductForm = () => {
-    setGroupProductForm({ name: '', price: '', description: '', image_url: '', image_urls: [], weight_kg: '0', weight_unit: 'g' })
+    setGroupProductForm({ name: '', price: '', description: '', image_url: '', image_urls: [], weight_kg: '0', weight_unit: 'g', stock_quantity: '' })
     setEditingGroupProductId(null)
     setEditingPendingProductIndex(null)
+    setGroupProductReferenceId('')
   }
 
   const buildGroupProductPayload = () => {
@@ -608,6 +808,9 @@ export default function Admin() {
     if (isNaN(price) || price < 0) return null
     const weightVal = parseFloat(groupProductForm.weight_kg) || 0
     const weightKg = groupProductForm.weight_unit === 'g' ? weightVal / 1000 : weightVal
+    const stockQty = groupProductForm.stock_quantity === '' || groupProductForm.stock_quantity == null
+      ? null
+      : Math.max(0, parseInt(groupProductForm.stock_quantity, 10) || 0)
     const imageUrls = Array.isArray(groupProductForm.image_urls)?.length
       ? groupProductForm.image_urls.filter(Boolean)
       : groupProductForm.image_url ? [groupProductForm.image_url] : []
@@ -618,6 +821,7 @@ export default function Admin() {
       image_url: imageUrls[0] || groupProductForm.image_url || '',
       image_urls: imageUrls,
       weight_kg: weightKg,
+      stock_quantity: stockQty,
     }
   }
 
@@ -681,8 +885,10 @@ export default function Admin() {
       image_urls: Array.isArray(p.image_urls) ? p.image_urls : (p.image_url ? [p.image_url] : []),
       weight_kg: useG ? String(Math.round(kg * 1000)) : String(kg),
       weight_unit: useG ? 'g' : 'kg',
+      stock_quantity: p.stock_quantity != null ? String(p.stock_quantity) : '',
     })
     setEditingGroupProductId(p.id)
+    setGroupProductReferenceId(p.id || '')
   }
 
   const handleDeleteGroupProduct = async (productId) => {
@@ -706,8 +912,10 @@ export default function Admin() {
       image_urls: Array.isArray(item.image_urls) ? item.image_urls : (item.image_url ? [item.image_url] : []),
       weight_kg: useG ? String(Math.round(kg * 1000)) : String(kg),
       weight_unit: useG ? 'g' : 'kg',
+      stock_quantity: item.stock_quantity != null ? String(item.stock_quantity) : '',
     })
     setEditingPendingProductIndex(index)
+    setGroupProductReferenceId(item.id || '')
   }
 
   const handleRemovePendingGroupProduct = (index) => {
@@ -845,6 +1053,43 @@ export default function Admin() {
     return []
   }
 
+  const applyReferenceToStoreForm = (refProduct) => {
+    if (!refProduct) return
+    const urls = getProductImageUrls(refProduct)
+    const kg = Number(refProduct.weight_kg ?? 0)
+    const useG = kg > 0 && kg < 1
+    setForm((prev) => ({
+      ...prev,
+      name: refProduct.name ?? prev.name,
+      description: refProduct.description ?? prev.description,
+      price: String(Math.round(brlToJpy(Number(refProduct.price ?? 0)))),
+      weight_kg: useG ? String(Math.round(kg * 1000)) : String(kg || ''),
+      weight_unit: useG ? 'g' : 'kg',
+      stock_quantity: refProduct.stock_quantity != null ? String(refProduct.stock_quantity) : prev.stock_quantity,
+      image_url: refProduct.image_url ?? urls[0] ?? '',
+      image_urls: urls,
+    }))
+    setProductReferenceId(refProduct.id || '')
+  }
+
+  const applyReferenceToGroupProductForm = (refProduct) => {
+    if (!refProduct) return
+    const urls = getProductImageUrls(refProduct)
+    const kg = Number(refProduct.weight_kg ?? 0)
+    const useG = kg > 0 && kg < 1
+    setGroupProductForm((prev) => ({
+      ...prev,
+      name: refProduct.name ?? prev.name,
+      description: refProduct.description ?? prev.description,
+      price: String(Math.round(brlToJpy(Number(refProduct.price ?? 0)))),
+      image_url: refProduct.image_url ?? urls[0] ?? '',
+      image_urls: urls,
+      weight_kg: useG ? String(Math.round(kg * 1000)) : String(kg || '0'),
+      weight_unit: useG ? 'g' : 'kg',
+    }))
+    setGroupProductReferenceId(refProduct.id || '')
+  }
+
   const handleEdit = (p) => {
     const urls = getProductImageUrls(p)
     const kg = Number(p.weight_kg ?? 0)
@@ -862,6 +1107,7 @@ export default function Admin() {
       is_active: p.is_active ?? true,
     })
     setEditingId(p.id)
+    setProductReferenceId(p.id || '')
     setImageUploadError('')
     setNewImageUrl('')
   }
@@ -1257,6 +1503,83 @@ export default function Admin() {
     }
   }
 
+  const selectedExternalStores = Object.entries(externalSearchStores)
+    .filter(([, checked]) => checked)
+    .map(([storeId]) => storeId)
+
+  const runExternalSearch = async (page = 1) => {
+    const query = externalSearchQuery.trim()
+    if (query.length < 2) {
+      setExternalSearchError('Digite ao menos 2 caracteres para buscar.')
+      return
+    }
+    if (selectedExternalStores.length === 0) {
+      setExternalSearchError('Selecione ao menos uma loja para buscar.')
+      return
+    }
+    setExternalSearchLoading(true)
+    setExternalSearchError('')
+    try {
+      const { data, error } = await searchCatalogAdmin({
+        query,
+        stores: selectedExternalStores,
+        page,
+        pageSize: 12,
+      })
+      if (error) {
+        setExternalSearchError(error.message || 'Erro ao buscar catálogos.')
+        if (page === 1) {
+          setExternalSearchResults([])
+          setExternalSearchMeta(null)
+          setExternalSearchPartials([])
+        }
+        return
+      }
+      setExternalSearchPage(page)
+      setExternalSearchResults(data?.results ?? [])
+      setExternalSearchMeta(data?.meta ?? null)
+      setExternalSearchPartials(data?.partials ?? [])
+    } catch (e) {
+      setExternalSearchError(e?.message || 'Erro ao buscar catálogos.')
+    } finally {
+      setExternalSearchLoading(false)
+    }
+  }
+
+  const handleExternalSearchSubmit = async (e) => {
+    e.preventDefault()
+    await runExternalSearch(1)
+  }
+
+  const toggleExternalStore = (storeId) => {
+    setExternalSearchStores((prev) => ({ ...prev, [storeId]: !prev[storeId] }))
+  }
+
+  const formatExternalPrice = (price, currency = 'JPY') => {
+    if (price == null || Number.isNaN(Number(price))) return 'Preço indisponível'
+    return Number(price).toLocaleString('pt-BR', { style: 'currency', currency: String(currency).toUpperCase() })
+  }
+
+  const masterProductReferences = products.filter((p) => !p.purchase_group_id)
+  const productReferenceTerm = productReferenceSearch.trim().toLowerCase()
+  const groupProductReferenceTerm = groupProductReferenceSearch.trim().toLowerCase()
+
+  const filteredProductReferences = masterProductReferences.filter((p) => {
+    if (!productReferenceTerm) return true
+    const haystack = [p.id, p.name, p.description]
+      .map((v) => String(v ?? '').toLowerCase())
+      .join(' ')
+    return haystack.includes(productReferenceTerm)
+  })
+
+  const filteredGroupProductReferences = masterProductReferences.filter((p) => {
+    if (!groupProductReferenceTerm) return true
+    const haystack = [p.id, p.name, p.description]
+      .map((v) => String(v ?? '').toLowerCase())
+      .join(' ')
+    return haystack.includes(groupProductReferenceTerm)
+  })
+
   const catalogTerm = catalogSearch.trim().toLowerCase()
   const catalogProducts = products.filter((p) => {
     const statusOk =
@@ -1275,6 +1598,30 @@ export default function Admin() {
       .join(' ')
     return haystack.includes(catalogTerm)
   })
+
+  const fraudSearch = fraudSearchTerm.trim().toLowerCase()
+  const fraudMinScoreValue = Number(fraudMinScore) || 0
+  const passesFraudFilters = (row, idFields = []) => {
+    const score = Number(row?.risk_score || 0)
+    if (score < fraudMinScoreValue) return false
+    if (fraudStatusFilter !== 'all' && String(row?.status || '') !== fraudStatusFilter) return false
+    if (!fraudSearch) return true
+    const haystack = [
+      ...(idFields || []).map((k) => row?.[k]),
+      row?.status,
+      JSON.stringify(row?.flags || row?.fraud_flags || {}),
+    ]
+      .map((v) => String(v ?? '').toLowerCase())
+      .join(' ')
+    return haystack.includes(fraudSearch)
+  }
+
+  const filteredFraudReferrals = (fraudQueue.referrals || []).filter((row) =>
+    passesFraudFilters(row, ['id', 'referrer_id', 'referred_id'])
+  )
+  const filteredFraudAffiliateOrders = (fraudQueue.affiliate_orders || []).filter((row) =>
+    passesFraudFilters(row, ['id', 'order_id', 'affiliate_id'])
+  )
 
   return (
     <>
@@ -1296,11 +1643,29 @@ export default function Admin() {
         {/* Navegação por abas */}
         <nav className="mt-6 border-b border-earth-200">
           <div className="flex gap-1 overflow-x-auto pb-1">
-            {TABS.map((tab) => (
+            {orderedTabs.map((tabId) => {
+              const tab = TABS.find((entry) => entry.id === tabId)
+              if (!tab) return null
+              return (
               <button
                 key={tab.id}
                 type="button"
+                draggable
                 onClick={() => setActiveTab(tab.id)}
+                onDragStart={(e) => {
+                  setDraggingTabId(tab.id)
+                  e.dataTransfer.effectAllowed = 'move'
+                }}
+                onDragOver={(e) => {
+                  if (!draggingTabId || draggingTabId === tab.id) return
+                  e.preventDefault()
+                }}
+                onDrop={(e) => {
+                  if (!draggingTabId || draggingTabId === tab.id) return
+                  e.preventDefault()
+                  handleTabReorder(draggingTabId, tab.id)
+                }}
+                onDragEnd={() => setDraggingTabId('')}
                 className={`shrink-0 whitespace-nowrap flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-colors ${
                   activeTab === tab.id
                     ? 'border-b-2 border-earth-900 bg-earth-50 text-earth-900'
@@ -1310,7 +1675,8 @@ export default function Admin() {
                 <span>{tab.icon}</span>
                 {tab.label}
               </button>
-            ))}
+              )
+            })}
           </div>
         </nav>
 
@@ -1383,7 +1749,7 @@ export default function Admin() {
                       )}
                       {o.quote_amount != null && (
                         <p className="mt-1 text-sm font-medium text-earth-700">
-                          Orçamento: {formatMoney(o.quote_amount, o.quote_currency || 'BRL')}
+                          Orçamento: {formatMoney(o.quote_amount, o.quote_currency || 'JPY')}
                         </p>
                       )}
                       {o.total_amount != null && (
@@ -1737,6 +2103,10 @@ export default function Admin() {
               >
                 <h3 className="font-semibold text-earth-900">Definir orçamento (Personal Shopping)</h3>
                 <p className="mt-1 text-sm text-earth-600">Lista de produtos com nome, valor e descrição.</p>
+                <p className="mt-2 text-xs text-earth-600">
+                  Referência de precificação: <strong>25% sobre o valor dos produtos + ¥200 por unidade</strong> (some tudo em ienes
+                  ao valor total do orçamento, além do frete quando aplicável).
+                </p>
                 <div className="mt-4 space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-earth-700">Descrição do pedido (aparece no topo do orçamento)</label>
@@ -2393,13 +2763,19 @@ export default function Admin() {
               <div>
                 <label className="block text-sm font-medium text-earth-700">Produtos do grupo</label>
                 <p className="mt-1 text-xs text-earth-500">
-                  {editingGroupId ? 'Crie produtos específicos deste grupo' : 'Adicione produtos antes de criar o grupo'}
+                  {editingGroupId
+                    ? 'Produtos do grupo seguem a mesma lógica da loja (nome, preço, peso, estoque e imagem).'
+                    : 'Adicione produtos antes de criar o grupo'}
                 </p>
                 {editingGroupId && groupProducts.length > 0 && (
                   <ul className="mt-2 space-y-2">
                     {groupProducts.map((p) => (
                       <li key={p.id} className="flex items-center justify-between rounded-lg border border-earth-200 bg-white px-3 py-2">
-                        <span className="text-sm text-earth-800">{p.name} — {formatJPY(brlToJpy(p.price))}{Number(p.weight_kg ?? 0) > 0 ? ` • ${formatWeight(p.weight_kg)}` : ''}</span>
+                        <span className="text-sm text-earth-800">
+                          {p.name} — {formatJPY(brlToJpy(p.price))}
+                          {Number(p.weight_kg ?? 0) > 0 ? ` • ${formatWeight(p.weight_kg)}` : ''}
+                          {` • Estoque: ${p.stock_quantity != null ? p.stock_quantity : 'ilimitado'}`}
+                        </span>
                         <div className="flex gap-2">
                           <button type="button" onClick={() => handleEditGroupProduct(p)} className="text-sm font-medium text-earth-600 hover:text-earth-900">
                             Editar
@@ -2416,7 +2792,11 @@ export default function Admin() {
                   <ul className="mt-2 space-y-2">
                     {pendingGroupProducts.map((p, i) => (
                       <li key={p.id} className="flex items-center justify-between rounded-lg border border-earth-200 bg-white px-3 py-2">
-                        <span className="text-sm text-earth-800">{p.name} — {formatJPY(brlToJpy(p.price))}{Number(p.weight_kg ?? 0) > 0 ? ` • ${formatWeight(p.weight_kg)}` : ''}</span>
+                        <span className="text-sm text-earth-800">
+                          {p.name} — {formatJPY(brlToJpy(p.price))}
+                          {Number(p.weight_kg ?? 0) > 0 ? ` • ${formatWeight(p.weight_kg)}` : ''}
+                          {` • Estoque: ${p.stock_quantity != null ? p.stock_quantity : 'ilimitado'}`}
+                        </span>
                         <div className="flex gap-2">
                           <button type="button" onClick={() => handleEditPendingGroupProduct(p, i)} className="text-sm font-medium text-earth-600 hover:text-earth-900">
                             Editar
@@ -2441,6 +2821,43 @@ export default function Admin() {
                     }
                   }}
                 >
+                  <div className="grid gap-2 md:grid-cols-[1fr_1fr_auto]">
+                    <input
+                      type="search"
+                      value={groupProductReferenceSearch}
+                      onChange={(e) => setGroupProductReferenceSearch(e.target.value)}
+                      placeholder="Buscar item na Lista de Produtos..."
+                      className="rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
+                    />
+                    <select
+                      value={groupProductReferenceId}
+                      onChange={(e) => {
+                        const nextId = e.target.value
+                        setGroupProductReferenceId(nextId)
+                        const ref = filteredGroupProductReferences.find((p) => p.id === nextId)
+                        if (ref) applyReferenceToGroupProductForm(ref)
+                      }}
+                      className="rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
+                    >
+                      <option value="">Selecionar referência do catálogo</option>
+                      {filteredGroupProductReferences.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name} ({String(p.id).slice(0, 8)}…)
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const ref = masterProductReferences.find((p) => p.id === groupProductReferenceId)
+                        if (ref) applyReferenceToGroupProductForm(ref)
+                      }}
+                      disabled={!groupProductReferenceId}
+                      className="rounded-lg border border-earth-300 bg-white px-3 py-2 text-sm font-medium text-earth-700 hover:bg-earth-100 disabled:opacity-60"
+                    >
+                      Aplicar referência
+                    </button>
+                  </div>
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="text-sm font-medium text-earth-700">Nome:</span>
                     <input
@@ -2475,6 +2892,16 @@ export default function Admin() {
                       <option value="g">g</option>
                       <option value="kg">kg</option>
                     </select>
+                    <span className="text-sm font-medium text-earth-700">Estoque:</span>
+                    <input
+                      type="number"
+                      min="0"
+                      step="1"
+                      placeholder="Ilimitado"
+                      value={groupProductForm.stock_quantity}
+                      onChange={(e) => setGroupProductForm((f) => ({ ...f, stock_quantity: e.target.value }))}
+                      className="w-28 rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
+                    />
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="text-sm font-medium text-earth-700">Imagem:</span>
@@ -2723,6 +3150,359 @@ export default function Admin() {
                 </ul>
               )}
             </div>
+          </section>
+        )}
+
+        {/* Referral */}
+        {activeTab === 'marketing' && (
+          <section className="mt-0 space-y-6 rounded-b-xl border border-t-0 border-earth-200 bg-earth-50 p-6">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h2 className="text-lg font-semibold text-earth-900">Programa de indicação (referral)</h2>
+              <button
+                type="button"
+                onClick={() => loadMarketingData()}
+                disabled={marketingLoading}
+                className="rounded-lg border border-earth-300 px-3 py-1.5 text-sm font-medium text-earth-700 hover:bg-earth-100 disabled:opacity-70"
+              >
+                {marketingLoading ? 'Atualizando...' : 'Atualizar'}
+              </button>
+            </div>
+
+            <p className="text-sm text-earth-600">
+              O desconto ({formatJPY(Math.round(brlToJpy(Number(settingsForm.referral_discount_value) || 0))}) aplica-se no checkout do indicado
+              quando ele usa o benefício. O crédito ao indicador ({formatJPY(Math.round(brlToJpy(Number(settingsForm.referral_credit_value) || 0))}) é
+              lançado quando o pedido do indicado (com referral aplicado) atinge status <strong>enviado</strong> ou{' '}
+              <strong>concluído</strong>.
+            </p>
+
+            <div className="rounded-lg border border-earth-200 bg-white p-4">
+              <h3 className="font-medium text-earth-900">Valores (BRL)</h3>
+              <div className="mt-3 grid gap-3 md:grid-cols-2">
+                <label className="text-sm md:col-span-2">
+                  <span className="text-earth-700">
+                    Cotação BRL por 1 JPY (fx_brl_per_jpy) — usada no servidor para converter ¥200/un. do Grupo de Compras
+                  </span>
+                  <input
+                    type="number"
+                    min="0.0001"
+                    step="0.0001"
+                    value={settingsForm.fx_brl_per_jpy}
+                    onChange={(e) => setSettingsForm((s) => ({ ...s, fx_brl_per_jpy: e.target.value }))}
+                    className="mt-1 w-full max-w-xs rounded border border-earth-300 px-3 py-2"
+                  />
+                </label>
+                <label className="text-sm">
+                  <span className="text-earth-700">Desconto para o indicado (referral_discount_value)</span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={settingsForm.referral_discount_value}
+                    onChange={(e) => setSettingsForm((s) => ({ ...s, referral_discount_value: e.target.value }))}
+                    className="mt-1 w-full rounded border border-earth-300 px-3 py-2"
+                  />
+                </label>
+                <label className="text-sm">
+                  <span className="text-earth-700">Crédito ao indicador (referral_credit_value)</span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={settingsForm.referral_credit_value}
+                    onChange={(e) => setSettingsForm((s) => ({ ...s, referral_credit_value: e.target.value }))}
+                    className="mt-1 w-full rounded border border-earth-300 px-3 py-2"
+                  />
+                </label>
+              </div>
+              <div className="mt-4">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const payload = {
+                      referral_discount_value: { amount: Number(settingsForm.referral_discount_value) || 0 },
+                      referral_credit_value: { amount: Number(settingsForm.referral_credit_value) || 0 },
+                      fx_brl_per_jpy: {
+                        amount: Math.max(0.0001, Number(settingsForm.fx_brl_per_jpy) || 0.033),
+                      },
+                    }
+                    const { error } = await saveSystemSettingsAdmin(payload)
+                    if (error) setMessage(error.message || 'Erro ao salvar configurações')
+                    else {
+                      setMessage('Configurações de referral salvas.')
+                      loadMarketingData()
+                    }
+                  }}
+                  className="rounded-lg bg-earth-900 px-4 py-2 text-sm font-medium text-white hover:bg-earth-800"
+                >
+                  Salvar
+                </button>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* Fila antifraude */}
+        {activeTab === 'fraude' && (
+          <section className="mt-0 space-y-6 rounded-b-xl border border-t-0 border-earth-200 bg-earth-50 p-6">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h2 className="text-lg font-semibold text-earth-900">Revisão antifraude</h2>
+                <p className="mt-1 text-sm text-earth-600">
+                  Casos de referral e affiliate com risco elevado para decisão manual.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => loadFraudQueue()}
+                disabled={fraudQueueLoading}
+                className="rounded-lg border border-earth-300 px-3 py-1.5 text-sm font-medium text-earth-700 hover:bg-earth-100 disabled:opacity-70"
+              >
+                {fraudQueueLoading ? 'Atualizando...' : 'Atualizar'}
+              </button>
+            </div>
+
+            {fraudQueueLoading && <p className="text-sm text-earth-600">Carregando fila de fraude...</p>}
+
+            {!fraudQueueLoading && (
+              <>
+                <div className="rounded-lg border border-earth-200 bg-white p-4">
+                  <div className="grid gap-3 md:grid-cols-3">
+                    <label className="text-sm">
+                      <span className="text-earth-700">Score mínimo</span>
+                      <input
+                        type="number"
+                        min="0"
+                        step="1"
+                        value={fraudMinScore}
+                        onChange={(e) => setFraudMinScore(e.target.value)}
+                        className="mt-1 w-full rounded border border-earth-300 px-3 py-2"
+                      />
+                    </label>
+                    <label className="text-sm">
+                      <span className="text-earth-700">Status</span>
+                      <select
+                        value={fraudStatusFilter}
+                        onChange={(e) => setFraudStatusFilter(e.target.value)}
+                        className="mt-1 w-full rounded border border-earth-300 px-3 py-2"
+                      >
+                        <option value="all">Todos</option>
+                        <option value="pending">Pending</option>
+                        <option value="flagged">Flagged</option>
+                        <option value="rejected">Rejected</option>
+                        <option value="approved">Approved</option>
+                      </select>
+                    </label>
+                    <label className="text-sm">
+                      <span className="text-earth-700">Busca (ID / flags)</span>
+                      <input
+                        type="search"
+                        value={fraudSearchTerm}
+                        onChange={(e) => setFraudSearchTerm(e.target.value)}
+                        placeholder="pedido, referral, user..."
+                        className="mt-1 w-full rounded border border-earth-300 px-3 py-2"
+                      />
+                    </label>
+                  </div>
+                </div>
+
+                <div className="rounded-lg border border-earth-200 bg-white p-4">
+                  <h3 className="font-medium text-earth-900">Referrals em revisão</h3>
+                  <p className="mt-1 text-xs text-earth-500">
+                    Exibindo {filteredFraudReferrals.length} de {(fraudQueue.referrals || []).length}
+                  </p>
+                  {filteredFraudReferrals.length === 0 ? (
+                    <p className="mt-2 text-sm text-earth-600">Nenhum referral pendente.</p>
+                  ) : (
+                    <ul className="mt-3 space-y-2">
+                      {filteredFraudReferrals.map((row) => (
+                        <li key={row.id} className="rounded border border-earth-200 bg-earth-50 p-3">
+                          <p className="text-sm font-medium text-earth-900">
+                            Referral {String(row.id).slice(0, 8)}… • score {Number(row.risk_score || 0).toFixed(1)}
+                          </p>
+                          <p className="mt-1 text-xs text-earth-600">
+                            {row.status} • referrer {String(row.referrer_id || '').slice(0, 8)}… • referred {String(row.referred_id || '').slice(0, 8)}…
+                          </p>
+                          <p className="mt-1 break-all text-xs text-earth-500">
+                            flags: {JSON.stringify(row.fraud_flags || {})}
+                          </p>
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {[
+                              ['approve', 'Aprovar'],
+                              ['reject', 'Rejeitar'],
+                              ['flag', 'Flag'],
+                              ['pending', 'Pendente'],
+                            ].map(([decision, label]) => {
+                              const key = `referral:${row.id}:${decision}`
+                              return (
+                                <button
+                                  key={decision}
+                                  type="button"
+                                  onClick={() => handleFraudDecision('referral', row.id, decision)}
+                                  disabled={fraudDecisionLoadingId === key}
+                                  className="rounded border border-earth-300 bg-white px-2.5 py-1 text-xs font-medium text-earth-700 hover:bg-earth-100 disabled:opacity-60"
+                                >
+                                  {label}
+                                </button>
+                              )
+                            })}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+
+                <div className="rounded-lg border border-earth-200 bg-white p-4">
+                  <h3 className="font-medium text-earth-900">Affiliate orders em revisão</h3>
+                  <p className="mt-1 text-xs text-earth-500">
+                    Exibindo {filteredFraudAffiliateOrders.length} de {(fraudQueue.affiliate_orders || []).length}
+                  </p>
+                  {filteredFraudAffiliateOrders.length === 0 ? (
+                    <p className="mt-2 text-sm text-earth-600">Nenhum affiliate order pendente.</p>
+                  ) : (
+                    <ul className="mt-3 space-y-2">
+                      {filteredFraudAffiliateOrders.map((row) => (
+                        <li key={row.id} className="rounded border border-earth-200 bg-earth-50 p-3">
+                          <p className="text-sm font-medium text-earth-900">
+                            Affiliate order {String(row.id).slice(0, 8)}… • score {Number(row.risk_score || 0).toFixed(1)}
+                          </p>
+                          <p className="mt-1 text-xs text-earth-600">
+                            {row.status} • order {String(row.order_id || '').slice(0, 8)}… • comissão {formatMoney(Number(row.commission_amount || 0), 'BRL')}
+                          </p>
+                          <p className="mt-1 break-all text-xs text-earth-500">
+                            flags: {JSON.stringify(row.flags || {})}
+                          </p>
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {[
+                              ['approve', 'Aprovar'],
+                              ['reject', 'Rejeitar'],
+                              ['flag', 'Flag'],
+                              ['pending', 'Pendente'],
+                            ].map(([decision, label]) => {
+                              const key = `affiliate_order:${row.id}:${decision}`
+                              return (
+                                <button
+                                  key={decision}
+                                  type="button"
+                                  onClick={() => handleFraudDecision('affiliate_order', row.id, decision)}
+                                  disabled={fraudDecisionLoadingId === key}
+                                  className="rounded border border-earth-300 bg-white px-2.5 py-1 text-xs font-medium text-earth-700 hover:bg-earth-100 disabled:opacity-60"
+                                >
+                                  {label}
+                                </button>
+                              )
+                            })}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </>
+            )}
+          </section>
+        )}
+
+        {/* Notificações (ações para admin) */}
+        {activeTab === 'notificacoes' && (
+          <section className="mt-0 rounded-b-xl border border-t-0 border-earth-200 bg-earth-50 p-6">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h2 className="text-lg font-semibold text-earth-900">Notificações do admin</h2>
+                <p className="mt-1 text-sm text-earth-600">
+                  Eventos que exigem ação administrativa (aprovar, orçar, validar comprovante, envio, etc.).
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => loadAdminNotifications()}
+                disabled={adminNotificationsLoading}
+                className="rounded-lg border border-earth-300 px-3 py-1.5 text-sm font-medium text-earth-700 hover:bg-earth-100 disabled:opacity-70"
+              >
+                {adminNotificationsLoading ? 'Atualizando...' : 'Atualizar'}
+              </button>
+            </div>
+
+            {adminNotificationsLoading && (
+              <p className="mt-4 text-sm text-earth-600">Carregando notificações...</p>
+            )}
+            {!adminNotificationsLoading && adminNotifications.length === 0 && (
+              <p className="mt-4 text-sm text-earth-600">Nenhuma notificação pendente no momento.</p>
+            )}
+            {!adminNotificationsLoading && adminNotifications.length > 0 && (
+              <div className="mt-4 space-y-3">
+                {adminNotifications.map((n) => {
+                  const isUnread = !n.read_at
+                  const meta = n.meta || {}
+                  const requesterLabel = meta.requester_name || meta.requester_email || meta.user_id || null
+                  const targetTab = n.type?.includes('topup')
+                    ? 'recargas'
+                    : (n.type?.includes('shipment') || n.type?.includes('ready_for_shipment'))
+                      ? 'envios'
+                      : 'pedidos'
+                  return (
+                    <div
+                      key={n.id}
+                      className={`rounded-lg border bg-white p-4 ${isUnread ? 'border-amber-300' : 'border-earth-200'}`}
+                    >
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="flex items-center gap-2 font-medium text-earth-900">
+                            {isUnread && <span className="inline-block h-2 w-2 rounded-full bg-amber-500" aria-hidden />}
+                            <span>{n.title || 'Ação do admin necessária'}</span>
+                          </p>
+                          {n.body && <p className="mt-1 text-sm text-earth-600">{n.body}</p>}
+                          {requesterLabel && (
+                            <p className="mt-1 text-xs text-earth-600">
+                              Solicitado por: <span className="font-medium text-earth-800">{requesterLabel}</span>
+                            </p>
+                          )}
+                          <p className="mt-1 text-xs text-earth-500">
+                            {n.created_at ? new Date(n.created_at).toLocaleString('pt-BR') : '—'}
+                          </p>
+                          {(meta.order_id || meta.shipment_id || meta.topup_request_id) && (
+                            <p className="mt-1 text-xs text-earth-500 font-mono">
+                              {meta.order_id ? `pedido=${String(meta.order_id).slice(0, 8)}…` : ''}
+                              {meta.shipment_id ? ` envio=${String(meta.shipment_id).slice(0, 8)}…` : ''}
+                              {meta.topup_request_id ? ` recarga=${String(meta.topup_request_id).slice(0, 8)}…` : ''}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              await markNotificationRead(n.id)
+                              setAdminNotifications((prev) => prev.map((x) => (
+                                x.id === n.id ? { ...x, read_at: x.read_at || new Date().toISOString() } : x
+                              )))
+                              setActiveTab(targetTab)
+                            }}
+                            className="rounded-lg bg-earth-900 px-3 py-2 text-sm font-medium text-white hover:bg-earth-800"
+                          >
+                            Abrir área
+                          </button>
+                          {isUnread && (
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                await markNotificationRead(n.id)
+                                setAdminNotifications((prev) => prev.map((x) => (
+                                  x.id === n.id ? { ...x, read_at: new Date().toISOString() } : x
+                                )))
+                              }}
+                              className="rounded-lg border border-earth-300 bg-white px-3 py-2 text-sm font-medium text-earth-700 hover:bg-earth-50"
+                            >
+                              Marcar como lida
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
           </section>
         )}
 
@@ -3153,205 +3933,22 @@ export default function Admin() {
         {activeTab === 'produtos' && (
         <section className="mt-0 rounded-b-xl border border-t-0 border-earth-200 bg-earth-50 p-6">
           <h2 className="text-lg font-semibold text-earth-900">Produtos</h2>
-
-          <form onSubmit={handleSave} className="mt-4 space-y-3">
-            <div className="flex flex-wrap items-center gap-3">
-              <span className="text-sm font-medium text-earth-700">Nome *</span>
-              <input
-                required
-                type="text"
-                value={form.name}
-                onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                className="min-w-[180px] flex-1 rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
-              />
-              <span className="text-sm font-medium text-earth-700">Preço (¥) *</span>
-              <input
-                required
-                type="number"
-                step="1"
-                min="0"
-                value={form.price}
-                onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
-                className="w-28 rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
-              />
-              <span className="text-sm font-medium text-earth-700">Peso *</span>
-              <input
-                required
-                type="number"
-                step={form.weight_unit === 'g' ? '1' : '0.001'}
-                min="0"
-                value={form.weight_kg}
-                onChange={(e) => setForm((f) => ({ ...f, weight_kg: e.target.value }))}
-                className="w-24 rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
-              />
-              <select
-                value={form.weight_unit}
-                onChange={(e) => setForm((f) => ({ ...f, weight_unit: e.target.value }))}
-                className="rounded-lg border border-earth-300 px-2 py-2 text-earth-900"
-              >
-                <option value="g">g</option>
-                <option value="kg">kg</option>
-              </select>
-              <span className="text-sm font-medium text-earth-700">Estoque</span>
-              <input
-                type="number"
-                min="0"
-                step="1"
-                value={form.stock_quantity}
-                onChange={(e) => setForm((f) => ({ ...f, stock_quantity: e.target.value }))}
-                placeholder="Ilimitado"
-                className="w-24 rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
-              />
-            </div>
-            <div className="flex flex-wrap items-start gap-2">
-              <span className="pt-2 text-sm font-medium text-earth-700">Descrição</span>
-              <textarea
-                value={form.description}
-                onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-                rows={2}
-                className="min-w-[200px] flex-1 rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
-              />
-            </div>
-            <div>
-              <div className="flex flex-wrap items-center gap-3">
-                <span className="text-sm font-medium text-earth-700">Fotos</span>
-                <label className="cursor-pointer rounded-lg border border-earth-300 bg-white px-3 py-2 text-sm font-medium text-earth-700 hover:bg-earth-50">
-                {imageUploading ? 'Enviando...' : 'Enviar do PC'}
-                <input
-                    type="file"
-                    accept="image/*"
-                    className="sr-only"
-                    disabled={imageUploading}
-                    onChange={async (e) => {
-                      const file = e.target.files?.[0]
-                      if (!file) return
-                      setImageUploadError('')
-                      setImageUploading(true)
-                      try {
-                        const { data, error } = await uploadProductImage(file)
-                        if (error) {
-                          setImageUploadError(error.message || 'Falha no upload')
-                          return
-                        }
-                        if (data) {
-                          setForm((f) => ({
-                            ...f,
-                            image_urls: [...(f.image_urls || []), data],
-                            image_url: f.image_url || data,
-                          }))
-                        }
-                      } finally {
-                        setImageUploading(false)
-                        e.target.value = ''
-                      }
-                    }}
-                  />
-                </label>
-                <span className="text-sm text-earth-500">ou</span>
-                <span className="text-sm font-medium text-earth-700">URL:</span>
-                <input
-                  type="url"
-                  value={newImageUrl}
-                  onChange={(e) => {
-                    setNewImageUrl(e.target.value)
-                    setImageUploadError('')
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault()
-                      const url = newImageUrl?.trim()
-                      if (url) {
-                        setForm((f) => ({
-                          ...f,
-                          image_urls: [...(f.image_urls || []), url],
-                          image_url: f.image_url || url,
-                        }))
-                        setNewImageUrl('')
-                      }
-                    }
-                  }}
-                  placeholder="Cole a URL e pressione Enter"
-                  className="min-w-[200px] flex-1 rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    const url = newImageUrl?.trim()
-                    if (url) {
-                      setForm((f) => ({
-                        ...f,
-                        image_urls: [...(f.image_urls || []), url],
-                        image_url: f.image_url || url,
-                      }))
-                      setNewImageUrl('')
-                    }
-                  }}
-                  className="rounded-lg border border-earth-300 bg-white px-3 py-2 text-sm font-medium text-earth-700 hover:bg-earth-50"
-                >
-                  Adicionar URL
-                </button>
-              </div>
-              {imageUploadError && (
-                <p className="mt-1 text-sm text-red-600">{imageUploadError}</p>
-              )}
-              {(form.image_urls?.length > 0 || form.image_url) && (
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {(form.image_urls?.length ? form.image_urls : [form.image_url]).filter(Boolean).map((url, i) => (
-                    <div key={i} className="relative inline-block">
-                      <img src={url} alt="" className="h-20 w-20 rounded border border-earth-200 object-cover" />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const list = [...(form.image_urls || [])]
-                          if (!list.length && form.image_url) list.push(form.image_url)
-                          list.splice(i, 1)
-                          setForm((f) => ({
-                            ...f,
-                            image_urls: list,
-                            image_url: list[0] || '',
-                          }))
-                        }}
-                        className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white hover:bg-red-600"
-                        aria-label="Remover foto"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="is_active"
-                checked={form.is_active}
-                onChange={(e) => setForm((f) => ({ ...f, is_active: e.target.checked }))}
-                className="rounded border-earth-300"
-              />
-              <label htmlFor="is_active" className="text-sm font-medium text-earth-700">
-                Ativo (visível na loja)
-              </label>
-            </div>
-            <div className="flex gap-2">
+          <div className="mt-4 rounded-lg border border-earth-200 bg-white p-4 text-sm text-earth-700">
+            O cadastro/edição de itens agora acontece na aba <strong>Lista de Produtos</strong>, para manter um catálogo único.
+            <div className="mt-3">
               <button
-                type="submit"
-                disabled={submitting}
-                className="rounded-lg bg-earth-900 px-4 py-2 font-medium text-earth-50 hover:bg-earth-800 disabled:opacity-60 disabled:cursor-not-allowed"
+                type="button"
+                onClick={() => {
+                  resetForm()
+                  setCatalogCreateOpen(true)
+                  setActiveTab('catalogo_produtos')
+                }}
+                className="rounded-lg bg-earth-900 px-3 py-2 text-sm font-medium text-white hover:bg-earth-800"
               >
-                {submitting ? (editingId ? 'Atualizando...' : 'Criando...') : (editingId ? 'Atualizar' : 'Criar produto')}
+                Ir para Lista de Produtos
               </button>
-              {editingId && (
-                <button
-                  type="button"
-                  onClick={resetForm}
-                  className="rounded-lg border border-earth-300 px-4 py-2 font-medium text-earth-700 hover:bg-earth-100"
-                >
-                  Cancelar
-                </button>
-              )}
             </div>
-          </form>
+          </div>
 
           <div className="mt-6">
             <h3 className="font-medium text-earth-900">Produtos cadastrados</h3>
@@ -3392,7 +3989,11 @@ export default function Admin() {
                       <div className="flex gap-2">
                         <button
                           type="button"
-                          onClick={() => handleEdit(p)}
+                          onClick={() => {
+                            handleEdit(p)
+                            setCatalogCreateOpen(true)
+                            setActiveTab('catalogo_produtos')
+                          }}
                           className="text-sm font-medium text-earth-600 hover:text-earth-900"
                         >
                           Editar
@@ -3429,6 +4030,146 @@ export default function Admin() {
         </section>
         )}
 
+        {/* Busca unificada em catálogos externos (MVP admin) */}
+        {activeTab === 'busca_catalogo' && (
+        <section className="mt-0 rounded-b-xl border border-t-0 border-earth-200 bg-earth-50 p-6">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-semibold text-earth-900">Busca em catálogos externos</h2>
+              <p className="mt-1 text-sm text-earth-600">
+                Piloto no Admin para consultar Amazon, Rakuma e Mercari em um catálogo único.
+              </p>
+            </div>
+            <div className="text-xs text-earth-500">
+              Versão de teste: somente painel admin
+            </div>
+          </div>
+
+          <form onSubmit={handleExternalSearchSubmit} className="mt-4 rounded-lg border border-earth-200 bg-white p-4">
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <input
+                  type="search"
+                  value={externalSearchQuery}
+                  onChange={(e) => setExternalSearchQuery(e.target.value)}
+                  placeholder="Ex.: Pokemon card Pikachu, Nendoroid, Nintendo Switch..."
+                  className="min-w-[240px] flex-1 rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
+                />
+                <button
+                  type="submit"
+                  disabled={externalSearchLoading}
+                  className="rounded-lg bg-earth-800 px-4 py-2 text-sm font-medium text-white hover:bg-earth-900 disabled:opacity-60"
+                >
+                  {externalSearchLoading ? 'Buscando...' : 'Buscar'}
+                </button>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2 text-sm">
+                <span className="font-medium text-earth-700">Lojas:</span>
+                {[
+                  { id: 'amazon', label: 'Amazon JP' },
+                  { id: 'rakuma', label: 'Rakuma' },
+                  { id: 'mercari', label: 'Mercari' },
+                ].map((store) => (
+                  <label key={store.id} className="inline-flex items-center gap-2 rounded border border-earth-200 px-2.5 py-1.5">
+                    <input
+                      type="checkbox"
+                      checked={!!externalSearchStores[store.id]}
+                      onChange={() => toggleExternalStore(store.id)}
+                    />
+                    <span className="text-earth-700">{store.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          </form>
+
+          {externalSearchError && (
+            <div className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              {externalSearchError}
+            </div>
+          )}
+
+          {!externalSearchLoading && externalSearchMeta && (
+            <div className="mt-3 text-xs text-earth-600">
+              {externalSearchMeta.totalEstimated ?? 0} resultados estimados • página {externalSearchMeta.page ?? externalSearchPage} • {externalSearchMeta.tookMs ?? 0}ms
+            </div>
+          )}
+
+          {externalSearchPartials?.length > 0 && (
+            <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              Algumas lojas falharam nesta tentativa:{' '}
+              {externalSearchPartials.map((p) => `${p.storeId} (${p.reason})`).join(' | ')}
+            </div>
+          )}
+
+          {!externalSearchLoading && externalSearchResults.length === 0 && externalSearchMeta && (
+            <p className="mt-4 text-sm text-earth-600">Nenhum resultado encontrado com os filtros atuais.</p>
+          )}
+
+          {externalSearchLoading && (
+            <p className="mt-4 text-sm text-earth-600">Consultando lojas externas...</p>
+          )}
+
+          {!externalSearchLoading && externalSearchResults.length > 0 && (
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {externalSearchResults.map((item) => (
+                <article key={item.id} className="overflow-hidden rounded-lg border border-earth-200 bg-white shadow-sm">
+                  <div className="h-44 bg-earth-100">
+                    {item.imageUrl ? (
+                      <img src={item.imageUrl} alt={item.title} className="h-full w-full object-cover" loading="lazy" />
+                    ) : (
+                      <div className="flex h-full items-center justify-center text-sm text-earth-500">Sem imagem</div>
+                    )}
+                  </div>
+                  <div className="space-y-2 p-3">
+                    <p className="line-clamp-2 text-sm font-medium text-earth-900">{item.title}</p>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="rounded bg-earth-100 px-2 py-1 text-earth-700">{item.storeName}</span>
+                      <span className="font-medium text-earth-800">
+                        {formatExternalPrice(item.price, item.currency)}
+                      </span>
+                    </div>
+                    <a
+                      href={item.productUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex text-xs font-medium text-earth-700 underline hover:text-earth-900"
+                    >
+                      Abrir produto
+                    </a>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+
+          {!externalSearchLoading && externalSearchMeta && (
+            <div className="mt-4 flex items-center justify-between gap-3 rounded-lg border border-earth-200 bg-white px-3 py-2 text-sm">
+              <span className="text-earth-600">Página {externalSearchPage}</span>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => runExternalSearch(Math.max(1, externalSearchPage - 1))}
+                  disabled={externalSearchLoading || externalSearchPage <= 1}
+                  className="rounded border border-earth-300 px-3 py-1.5 font-medium text-earth-700 hover:bg-earth-100 disabled:opacity-50"
+                >
+                  Anterior
+                </button>
+                <button
+                  type="button"
+                  onClick={() => runExternalSearch(externalSearchPage + 1)}
+                  disabled={externalSearchLoading || !externalSearchMeta?.hasMore}
+                  className="rounded border border-earth-300 px-3 py-1.5 font-medium text-earth-700 hover:bg-earth-100 disabled:opacity-50"
+                >
+                  Próxima
+                </button>
+              </div>
+            </div>
+          )}
+        </section>
+        )}
+
         {/* Catálogo mestre de produtos */}
         {activeTab === 'catalogo_produtos' && (
         <section className="mt-0 rounded-b-xl border border-t-0 border-earth-200 bg-earth-50 p-6">
@@ -3439,13 +4180,25 @@ export default function Admin() {
                 Base central de produtos usada em loja, grupos de compra, pedidos e invoices.
               </p>
             </div>
-            <button
-              type="button"
-              onClick={() => loadProducts()}
-              className="rounded-lg border border-earth-300 bg-white px-3 py-2 text-sm font-medium text-earth-700 hover:bg-earth-100"
-            >
-              Atualizar lista
-            </button>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  resetForm()
+                  setCatalogCreateOpen(true)
+                }}
+                className="rounded-lg bg-earth-900 px-3 py-2 text-sm font-medium text-white hover:bg-earth-800"
+              >
+                Adicionar produto na lista
+              </button>
+              <button
+                type="button"
+                onClick={() => loadProducts()}
+                className="rounded-lg border border-earth-300 bg-white px-3 py-2 text-sm font-medium text-earth-700 hover:bg-earth-100"
+              >
+                Atualizar lista
+              </button>
+            </div>
           </div>
 
           <div className="mt-4 flex flex-wrap items-center gap-2">
@@ -3466,6 +4219,116 @@ export default function Admin() {
               <option value="inactive">Inativos</option>
             </select>
           </div>
+
+          {catalogCreateOpen && (
+            <form
+              onSubmit={handleSave}
+              className="mt-4 space-y-3 rounded-lg border border-earth-200 bg-white p-4"
+            >
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="text-sm font-medium text-earth-700">Nome *</span>
+                <input
+                  required
+                  type="text"
+                  value={form.name}
+                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                  className="min-w-[180px] flex-1 rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                />
+                <span className="text-sm font-medium text-earth-700">Preço (¥) *</span>
+                <input
+                  required
+                  type="number"
+                  step="1"
+                  min="0"
+                  value={form.price}
+                  onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
+                  className="w-28 rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                />
+                <span className="text-sm font-medium text-earth-700">Peso *</span>
+                <input
+                  required
+                  type="number"
+                  step={form.weight_unit === 'g' ? '1' : '0.001'}
+                  min="0"
+                  value={form.weight_kg}
+                  onChange={(e) => setForm((f) => ({ ...f, weight_kg: e.target.value }))}
+                  className="w-24 rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                />
+                <select
+                  value={form.weight_unit}
+                  onChange={(e) => setForm((f) => ({ ...f, weight_unit: e.target.value }))}
+                  className="rounded-lg border border-earth-300 px-2 py-2 text-earth-900"
+                >
+                  <option value="g">g</option>
+                  <option value="kg">kg</option>
+                </select>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="text-sm font-medium text-earth-700">Estoque</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={form.stock_quantity}
+                  onChange={(e) => setForm((f) => ({ ...f, stock_quantity: e.target.value }))}
+                  placeholder="Ilimitado"
+                  className="w-28 rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                />
+                <span className="text-sm font-medium text-earth-700">Imagem (URL)</span>
+                <input
+                  type="url"
+                  value={form.image_url}
+                  onChange={(e) => setForm((f) => ({ ...f, image_url: e.target.value }))}
+                  placeholder="https://..."
+                  className="min-w-[220px] flex-1 rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                />
+              </div>
+
+              <div className="flex flex-wrap items-start gap-2">
+                <span className="pt-2 text-sm font-medium text-earth-700">Descrição</span>
+                <textarea
+                  value={form.description}
+                  onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+                  rows={2}
+                  className="min-w-[240px] flex-1 rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="catalog_is_active"
+                  checked={form.is_active}
+                  onChange={(e) => setForm((f) => ({ ...f, is_active: e.target.checked }))}
+                  className="rounded border-earth-300"
+                />
+                <label htmlFor="catalog_is_active" className="text-sm font-medium text-earth-700">
+                  Ativo (visível na loja)
+                </label>
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="rounded-lg bg-earth-900 px-4 py-2 text-sm font-medium text-white hover:bg-earth-800 disabled:opacity-60"
+                >
+                  {submitting ? 'Salvando...' : (editingId ? 'Atualizar produto' : 'Criar produto')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    resetForm()
+                    setCatalogCreateOpen(false)
+                  }}
+                  className="rounded-lg border border-earth-300 px-4 py-2 text-sm font-medium text-earth-700 hover:bg-earth-100"
+                >
+                  Fechar
+                </button>
+              </div>
+            </form>
+          )}
 
           <div className="mt-3 text-xs text-earth-600">
             Exibindo {catalogProducts.length} de {products.length} produtos.
@@ -3488,6 +4351,7 @@ export default function Admin() {
                       <th className="px-3 py-2 font-medium">Estoque</th>
                       <th className="px-3 py-2 font-medium">Status</th>
                       <th className="px-3 py-2 font-medium">ID</th>
+                      <th className="px-3 py-2 font-medium">Ações</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-earth-100">
@@ -3523,6 +4387,15 @@ export default function Admin() {
                           </span>
                         </td>
                         <td className="px-3 py-2 text-xs text-earth-500">{p.id}</td>
+                        <td className="px-3 py-2">
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(p.id)}
+                            className="text-sm font-medium text-red-600 hover:text-red-800"
+                          >
+                            Remover
+                          </button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>

@@ -1,6 +1,6 @@
 /**
  * Services - Contratação de Redirecionamento e Personal Shopping.
- * Redirecionamento: disclaimer → user cria pedido → admin aprova.
+ * Redirecionamento (Padrão ou Assistido): disclaimer → user cria pedido → admin aprova / orça.
  * Personal Shopping: user envia pedido com imagens → admin orça → user paga.
  */
 import { useEffect, useState } from 'react'
@@ -15,8 +15,9 @@ const REDIRECIONAMENTO = 'Redirecionamento'
 const PERSONAL_SHOPPING = 'Personal Shopping'
 
 const DESCRICOES_FIXAS = {
-  Redirecionamento: 'Módulos: 📦 Você Compra | 🛍️ Nós Compramos + frete',
-  'Personal Shopping': '25% do valor da compra + frete — ideal para quem precisa de ajuda para decidir o que comprar',
+  Redirecionamento: 'Módulos: 📦 Redirecionamento Padrão | 🛍️ Redirecionamento Assistido + frete',
+  'Personal Shopping':
+    '25% do valor da compra + ¥200 por item + frete — ideal para quem precisa de ajuda para decidir o que comprar',
 }
 
 export default function Services() {
@@ -161,7 +162,7 @@ export default function Services() {
             {isRedirecionamento && (
               <div className="space-y-4">
                 <div className="rounded-lg border border-earth-200 bg-white p-4">
-                  <p className="text-sm font-medium text-earth-800">Módulo do Redirecionamento</p>
+                  <p className="text-sm font-medium text-earth-800">Modalidade de redirecionamento</p>
                   <div className="mt-3 grid gap-3 sm:grid-cols-2">
                     <label className={`flex cursor-pointer items-start gap-3 rounded-lg border p-4 ${redirModule === 'self_buy' ? 'border-earth-900 bg-earth-50' : 'border-earth-200 bg-white hover:bg-earth-50'}`}>
                       <input
@@ -172,7 +173,7 @@ export default function Services() {
                         className="mt-1"
                       />
                       <div>
-                        <span className="block font-semibold text-earth-900">📦 Você Compra</span>
+                        <span className="block font-semibold text-earth-900">📦 Redirecionamento Padrão</span>
                         <span className="block text-sm text-earth-600">
                           Taxa: 1 item ¥1.000 | 2–4 itens ¥750/item | 5+ itens ¥500/item + frete. Você compra nas lojas japonesas e envia para nosso endereço.
                         </span>
@@ -187,9 +188,9 @@ export default function Services() {
                         className="mt-1"
                       />
                       <div>
-                        <span className="block font-semibold text-earth-900">🛍️ Nós Compramos</span>
+                        <span className="block font-semibold text-earth-900">🛍️ Redirecionamento Assistido</span>
                         <span className="block text-sm text-earth-600">
-                          15% (1 item), 12,5% (2–4 itens) ou 10% (5+ itens) + taxa flat (¥1.000 | ¥750/item | ¥500/item) + frete. Você envia a lista e retornamos o orçamento para pré-pagamento.
+                          15% sobre o valor da compra + ¥500 por item + frete. Você envia a lista e retornamos o orçamento para pré-pagamento.
                         </span>
                       </div>
                     </label>

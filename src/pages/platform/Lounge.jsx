@@ -9,6 +9,7 @@ import Envios from './Envios'
 import Orders from './Orders'
 import ListaDesejos from './ListaDesejos'
 
+const LOUNGE_TAB_ORDER_STORAGE_KEY = 'lounge_tabs_order_v1'
 const LOUNGE_MODULES = [
   { id: 'produtos', label: 'Meus Produtos' },
   { id: 'envios', label: 'Envios' },
@@ -26,13 +27,70 @@ export default function Lounge() {
   const initialTab = searchParams.get('tab')
   const initialModule = LOUNGE_MODULES.some((m) => m.id === initialTab) ? initialTab : 'produtos'
   const [activeModule, setActiveModule] = useState(initialModule)
+  const [draggingTabId, setDraggingTabId] = useState('')
+  const [tabOrder, setTabOrder] = useState(LOUNGE_MODULES.map((m) => m.id))
   const [feedback, setFeedback] = useState('')
+
+  const normalizeTabOrder = (raw) => {
+    const allowed = LOUNGE_MODULES.map((m) => m.id)
+    const base = Array.isArray(raw) ? raw : []
+    const safe = base.filter((id) => allowed.includes(id))
+    for (const id of allowed) {
+      if (!safe.includes(id)) safe.push(id)
+    }
+    return safe
+  }
+
+  const orderedModules = normalizeTabOrder(tabOrder)
+
+  const handleTabReorder = (draggedId, targetId) => {
+    if (!draggedId || !targetId || draggedId === targetId) return
+    setTabOrder((prev) => {
+      const current = normalizeTabOrder(prev)
+      const draggedIndex = current.indexOf(draggedId)
+      const targetIndex = current.indexOf(targetId)
+      if (draggedIndex < 0 || targetIndex < 0) return current
+      current.splice(draggedIndex, 1)
+      current.splice(targetIndex, 0, draggedId)
+      return current
+    })
+  }
 
   useEffect(() => {
     const tab = searchParams.get('tab')
     const moduleId = LOUNGE_MODULES.some((m) => m.id === tab) ? tab : 'produtos'
     if (moduleId !== activeModule) setActiveModule(moduleId)
   }, [searchParams, activeModule])
+
+  useEffect(() => {
+    if (!user?.id) {
+      setTabOrder(LOUNGE_MODULES.map((m) => m.id))
+      return
+    }
+    try {
+      const raw = localStorage.getItem(LOUNGE_TAB_ORDER_STORAGE_KEY)
+      if (!raw) {
+        setTabOrder(LOUNGE_MODULES.map((m) => m.id))
+        return
+      }
+      const all = JSON.parse(raw)
+      setTabOrder(normalizeTabOrder(all?.[user.id]))
+    } catch {
+      setTabOrder(LOUNGE_MODULES.map((m) => m.id))
+    }
+  }, [user?.id])
+
+  useEffect(() => {
+    if (!user?.id) return
+    try {
+      const raw = localStorage.getItem(LOUNGE_TAB_ORDER_STORAGE_KEY)
+      const all = raw ? JSON.parse(raw) : {}
+      all[user.id] = normalizeTabOrder(tabOrder)
+      localStorage.setItem(LOUNGE_TAB_ORDER_STORAGE_KEY, JSON.stringify(all))
+    } catch {
+      // ignore
+    }
+  }, [user?.id, tabOrder])
 
   useEffect(() => {
     let isActive = true
@@ -98,10 +156,14 @@ export default function Lounge() {
 
         <section className="mt-4 rounded-xl border border-earth-200 bg-earth-50 p-3">
           <div className="flex flex-wrap gap-2">
-            {LOUNGE_MODULES.map((m) => (
-              <button
+            {orderedModules.map((moduleId) => {
+              const m = LOUNGE_MODULES.find((entry) => entry.id === moduleId)
+              if (!m) return null
+              return (
+                <button
                 key={m.id}
                 type="button"
+                draggable
                 onClick={() => {
                   setActiveModule(m.id)
                   const next = new URLSearchParams(searchParams)
@@ -109,6 +171,20 @@ export default function Lounge() {
                   else next.set('tab', m.id)
                   setSearchParams(next, { replace: true })
                 }}
+                onDragStart={(e) => {
+                  setDraggingTabId(m.id)
+                  e.dataTransfer.effectAllowed = 'move'
+                }}
+                onDragOver={(e) => {
+                  if (!draggingTabId || draggingTabId === m.id) return
+                  e.preventDefault()
+                }}
+                onDrop={(e) => {
+                  if (!draggingTabId || draggingTabId === m.id) return
+                  e.preventDefault()
+                  handleTabReorder(draggingTabId, m.id)
+                }}
+                onDragEnd={() => setDraggingTabId('')}
                 className={`rounded-lg px-3 py-1.5 text-sm font-medium ${
                   activeModule === m.id
                     ? 'bg-earth-900 text-white'
@@ -117,7 +193,8 @@ export default function Lounge() {
               >
                 {m.label}
               </button>
-            ))}
+              )
+            })}
           </div>
         </section>
 

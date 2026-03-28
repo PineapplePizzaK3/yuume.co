@@ -30,6 +30,7 @@ export async function getMyInventory(userId, options = {}) {
           products_description,
           items_count,
           received_at,
+          product:products(image_url),
           orders(order_source, order_module)
         `)
         .eq('user_id', userId)
@@ -47,7 +48,7 @@ export async function getMyInventory(userId, options = {}) {
  * Cria solicitação de envio (consolidação) com os itens selecionados.
  * @param {string} userId
  * @param {string[]} inventoryIds
- * @param {{ extra_services?: { photos?: boolean, video?: boolean } }} options
+ * @param {{ extra_services?: Record<string, unknown> }} options
  */
 export async function createShipment(userId, inventoryIds, options = {}) {
   if (!Array.isArray(inventoryIds) || inventoryIds.length === 0) {
@@ -55,7 +56,16 @@ export async function createShipment(userId, inventoryIds, options = {}) {
   }
   const extraServices = options.extra_services && typeof options.extra_services === 'object'
     ? Object.fromEntries(
-        Object.entries(options.extra_services).map(([k, v]) => [k, !!v])
+        Object.entries(options.extra_services)
+          .filter(([k]) => !!k)
+          .map(([k, v]) => {
+            if (typeof v === 'boolean') return [k, v]
+            if (typeof v === 'number' && Number.isFinite(v)) return [k, v]
+            if (typeof v === 'string') return [k, v]
+            if (Array.isArray(v)) return [k, v]
+            if (v && typeof v === 'object') return [k, v]
+            return [k, null]
+          })
       )
     : {}
   try {
@@ -257,15 +267,16 @@ export async function cancelShipment(userId, shipmentId) {
 
 /**
  * Lista envios do usuário.
+ * @param {{ limit?: number, offset?: number, statusIn?: string[] }} options — se statusIn for informado, filtra por esses status.
  */
 export async function getMyShipments(userId, options = {}) {
   const limit = Math.max(1, Number(options?.limit) || 20)
   const offset = Math.max(0, Number(options?.offset) || 0)
+  const statusIn = Array.isArray(options?.statusIn) ? options.statusIn.filter(Boolean) : []
   try {
-    const { data, error } = await withDbTimeout(
-      supabase
-        .from('shipments')
-        .select(`
+    let q = supabase
+      .from('shipments')
+      .select(`
           id,
           user_id,
           status,
@@ -276,9 +287,12 @@ export async function getMyShipments(userId, options = {}) {
           created_at,
           updated_at
         `)
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .range(offset, offset + limit - 1)
+      .eq('user_id', userId)
+    if (statusIn.length > 0) {
+      q = q.in('status', statusIn)
+    }
+    const { data, error } = await withDbTimeout(
+      q.order('created_at', { ascending: false }).range(offset, offset + limit - 1)
     )
     return { data: data ?? [], error }
   } catch (e) {

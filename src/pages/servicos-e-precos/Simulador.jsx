@@ -2,28 +2,24 @@ import { useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { calcularFreteEMS } from '../../data/tabelaFreteEMS'
 import { calcularFreteParcel, calcularFreteEPacket } from '../../data/fretesJPPost'
+import { SERVICE_FEE_JPY_PER_ITEM } from '../../data/serviceFees'
 
-/** Taxa para redirecionamento: 1 item→1000¥, 2–4→750¥/item, 5+→500¥/item. */
-function calcularTaxaRedirecionamento(totalItens) {
+/** Redirecionamento Padrão: 1 item→1000¥, 2–4→750¥/item, 5+→500¥/item. */
+function calcularTaxaRedirecionamentoPadrao(totalItens) {
   if (totalItens <= 0) return 0
   if (totalItens === 1) return 1000
   if (totalItens <= 4) return 750 * totalItens
   return 500 * totalItens
 }
 
-const TAXA_POR_ITEM_PERSONAL = 150
-
-/** Nós Compramos: 15% (1 item), 12.5% (2–4), 10% (5+) + taxa flat */
-function getPercentualNosCompramos(totalItens) {
-  if (totalItens <= 1) return 15
-  if (totalItens <= 4) return 12.5
-  return 10
-}
+const REDIR_ASSISTIDO_PERCENTUAL = 15
+const REDIR_ASSISTIDO_IENE_POR_ITEM = 500
 
 const SERVICOS = [
-  { id: 'voce-compra', label: '📦 Você Compra', tipo: 'por-itens', percentualExtra: 0 },
-  { id: 'nos-compramos', label: '🛍️ Nós Compramos', tipo: 'por-itens', percentualExtra: 'dynamic' },
+  { id: 'redirecionamento-padrao', label: '📦 Redirecionamento Padrão', tipo: 'redir-padrao' },
+  { id: 'redirecionamento-assistido', label: '🛍️ Redirecionamento Assistido', tipo: 'redir-assistido' },
   { id: 'personal-shopping', label: 'Personal shopping', tipo: 'percentual', percentual: 25 },
+  { id: 'grupo-compras', label: 'Grupo de Compras', tipo: 'percentual', percentual: 20 },
 ]
 const TIPOS_FRETE = [
   { id: 'ems', label: 'EMS', prazo: '5–10 dias úteis' },
@@ -43,7 +39,7 @@ function formatarValor(valor, moeda = '¥') {
  */
 function Simulador() {
   const [produtos, setProdutos] = useState([])
-  const [servicoId, setServicoId] = useState('voce-compra')
+  const [servicoId, setServicoId] = useState('redirecionamento-padrao')
   const [tipoFrete, setTipoFrete] = useState('ems')
   const [nome, setNome] = useState('')
   const [quantidade, setQuantidade] = useState('1')
@@ -105,23 +101,24 @@ function Simulador() {
   const prazoEntrega = tipoFreteSelecionado?.prazo ?? ''
   const totalItens = produtos.reduce((acc, p) => acc + p.quantidade, 0)
   const servico = SERVICOS.find((s) => s.id === servicoId)
-  const percentualNosCompramos = servico?.id === 'nos-compramos' ? getPercentualNosCompramos(totalItens) : 0
-  const taxaBase =
-    servico?.tipo === 'por-itens'
-      ? calcularTaxaRedirecionamento(totalItens)
-      : totalProdutos * ((servico?.percentual ?? 25) / 100) + totalItens * TAXA_POR_ITEM_PERSONAL
-  const taxaExtra =
-    servico?.tipo === 'por-itens' && servico?.percentualExtra === 'dynamic'
-      ? totalProdutos * (percentualNosCompramos / 100)
-      : 0
-  const taxaServico = taxaBase + taxaExtra
+
+  let taxaServico = 0
+  let labelTaxaServico = ''
+  if (servico?.tipo === 'redir-padrao') {
+    taxaServico = calcularTaxaRedirecionamentoPadrao(totalItens)
+    labelTaxaServico = 'Taxa de serviço (Redirecionamento Padrão — por itens)'
+  } else if (servico?.tipo === 'redir-assistido') {
+    taxaServico =
+      totalProdutos * (REDIR_ASSISTIDO_PERCENTUAL / 100) +
+      REDIR_ASSISTIDO_IENE_POR_ITEM * totalItens
+    labelTaxaServico = `Taxa de serviço (Redirecionamento Assistido — ${REDIR_ASSISTIDO_PERCENTUAL}% + ¥${REDIR_ASSISTIDO_IENE_POR_ITEM}/item)`
+  } else if (servico?.tipo === 'percentual') {
+    const pct = servico?.percentual ?? 25
+    taxaServico = totalProdutos * (pct / 100) + totalItens * SERVICE_FEE_JPY_PER_ITEM
+    labelTaxaServico = `Taxa de serviço (${pct}% + ¥${SERVICE_FEE_JPY_PER_ITEM}/item)`
+  }
+
   const totalFinal = totalProdutos + frete + taxaServico
-  const labelTaxaServico =
-    servico?.tipo === 'por-itens'
-      ? servico?.percentualExtra === 'dynamic'
-        ? `Taxa de serviço (${percentualNosCompramos}% + taxa flat)`
-        : 'Taxa de serviço (por itens)'
-      : `Taxa de serviço (${servico?.percentual ?? 25}% + ¥${TAXA_POR_ITEM_PERSONAL}/item)`
 
   return (
     <>

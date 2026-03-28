@@ -266,21 +266,46 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'orderId ou type topup com amountCents é obrigatório' })
     }
 
-    const { data: order, error: orderError } = await supabase
+    const { data: orderBase, error: orderError } = await supabase
       .from('orders')
-      .select('id, user_id, status, shipping_cost, shipping_currency, quote_amount, quote_currency, total_amount, wallet_applied_amount, order_source, ship_immediately')
+      .select('id, user_id, status, shipping_cost, shipping_currency, quote_amount, quote_currency, total_amount, wallet_applied_amount, order_source, ship_immediately, acquisition_mode, referral_discount_amount, affiliate_id, referral_id')
       .eq('id', orderId)
       .single()
 
-    if (orderError || !order) {
+    if (orderError || !orderBase) {
       return res.status(404).json({ error: 'Pedido não encontrado' })
     }
-    if (order.user_id !== user.id) {
+    if (orderBase.user_id !== user.id) {
       return res.status(403).json({ error: 'Este pedido não pertence a você' })
     }
-    if (order.status !== 'awaiting_payment') {
+    if (orderBase.status !== 'awaiting_payment') {
       return res.status(400).json({ error: 'Este pedido não está aguardando pagamento' })
     }
+
+    // Escolha manual entre referral e affiliate (ou none).
+    const requestedAcquisitionMode = typeof body.acquisitionMode === 'string'
+      ? body.acquisitionMode.trim().toLowerCase()
+      : null
+    if (requestedAcquisitionMode && ['none', 'referral', 'affiliate'].includes(requestedAcquisitionMode)) {
+      const { data: applyData, error: applyErr } = await supabase.rpc('apply_order_acquisition', {
+        p_order_id: orderId,
+        p_user_id: user.id,
+        p_mode: requestedAcquisitionMode,
+        p_affiliate_code: body.affiliateCode || null,
+      })
+      if (applyErr) {
+        return res.status(400).json({ error: applyErr.message || 'Erro ao aplicar origem da aquisição' })
+      }
+      if (applyData?.ok === false) {
+        return res.status(400).json({ error: applyData?.error || 'Aquisição não elegível' })
+      }
+    }
+
+    const { data: order } = await supabase
+      .from('orders')
+      .select('id, user_id, status, shipping_cost, shipping_currency, quote_amount, quote_currency, total_amount, wallet_applied_amount, order_source, ship_immediately, acquisition_mode, referral_discount_amount, affiliate_id, referral_id')
+      .eq('id', orderId)
+      .single()
 
     let amount, currency, productName, productDesc
     if (order.order_source === 'store') {
@@ -304,6 +329,20 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Valor não definido para este pedido' })
     }
 
+    // Referral discount: configurado em BRL no painel e convertido quando necessário.
+    if (order.acquisition_mode === 'referral') {
+      const referralDiscountBrl = Math.max(0, Number(order.referral_discount_amount) || 0)
+      if (referralDiscountBrl > 0) {
+        if (currency === 'brl') {
+          amount = Math.max(0, Number(amount) - referralDiscountBrl)
+        } else {
+          const fx = await getLiveFxBrlPerJpy()
+          const discountJpy = referralDiscountBrl / fx
+          amount = Math.max(0, Number(amount) - discountJpy)
+        }
+      }
+    }
+
     const chargeJpy = await toChargeAmountJpy(amount, currency)
     const alreadyAppliedJpy = Math.max(0, Number(order.wallet_applied_amount) || 0)
     let walletApplied = 0
@@ -324,10 +363,15 @@ export default async function handler(req, res) {
         })
       }
 
+      const requestedWalletAmount = Math.floor(Number(body.walletAmountJpy) || 0)
+      const totalForWalletApply = requestedWalletAmount > 0
+        ? Math.min(remainingJpy, requestedWalletAmount)
+        : remainingJpy
+
       const { data: applyData, error: applyErr } = await supabaseUser.rpc('wallet_apply_to_order_jpy', {
         p_order_id: orderId,
         p_user_id: user.id,
-        p_total_amount_jpy: remainingJpy,
+        p_total_amount_jpy: totalForWalletApply,
       })
       if (applyErr) throw new Error(applyErr.message || 'Erro ao aplicar carteira')
       walletApplied = Number(applyData?.applied_amount) || 0
@@ -338,7 +382,24 @@ export default async function handler(req, res) {
     }
 
     const unitAmount = Math.round(remainingJpy) // JPY sem casas decimais
-    if (!unitAmount || unitAmount <= 0) return res.status(400).json({ error: 'Valor inválido para cobrança' })
+    if (!unitAmount || unitAmount <= 0) {
+      const newStatus = order?.order_source === 'store' && order?.ship_immediately
+        ? 'products_paid'
+        : 'paid'
+      await supabase
+        .from('orders')
+        .update({ status: newStatus })
+        .eq('id', orderId)
+        .eq('status', 'awaiting_payment')
+      await supabase.from('payments').insert({
+        order_id: orderId,
+        stripe_payment_id: 'referral_discount',
+        status: 'completed',
+        amount: 0,
+        currency: 'JPY',
+      })
+      return res.status(200).json({ paid: true, walletApplied, discounted: true })
+    }
 
     // Centralizamos todos os pagamentos no carrinho/central de pagamentos.
     const successPath = '/app/cart'
@@ -362,7 +423,14 @@ export default async function handler(req, res) {
       mode: 'payment',
       success_url: `${baseUrl}${successPath}?success=true`,
       cancel_url: `${baseUrl}${cancelPath}?canceled=true`,
-      metadata: { orderId, orderSource: order.order_source || 'service', walletApplied: String(walletApplied || 0) },
+      metadata: {
+        orderId,
+        orderSource: order.order_source || 'service',
+        walletApplied: String(walletApplied || 0),
+        acquisitionMode: order.acquisition_mode || 'none',
+        affiliateId: order.affiliate_id ? String(order.affiliate_id) : '',
+        referralId: order.referral_id ? String(order.referral_id) : '',
+      },
     })
     return res.status(200).json({ url: session.url, provider: 'stripe' })
   } catch (err) {

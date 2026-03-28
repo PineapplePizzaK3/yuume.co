@@ -4,7 +4,12 @@
 import { useEffect, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { useAuth } from '../../hooks/useAuth'
-import { getProfile, updateProfile } from '../../services/profileService'
+import {
+  getProfile,
+  updateProfile,
+  uploadKycDocument,
+  removeKycDocumentFromStorage,
+} from '../../services/profileService'
 import {
   getAddresses,
   createAddress,
@@ -14,6 +19,20 @@ import {
 import { cacheKey, readCache, writeCache } from '../../lib/cache'
 import { validatePassword, PASSWORD_PLACEHOLDER } from '../../lib/passwordValidation'
 import { supabase } from '../../lib/supabase'
+
+const MAX_KYC_FILES = 5
+const CONTA_TAB_ORDER_STORAGE_KEY = 'conta_tabs_order_v1'
+
+function normalizeKycDocuments(raw) {
+  if (!raw) return []
+  if (!Array.isArray(raw)) return []
+  return raw.filter((d) => d && typeof d.path === 'string')
+}
+
+function normalizeProfileRow(p) {
+  if (!p) return null
+  return { ...p, kyc_documents: normalizeKycDocuments(p.kyc_documents) }
+}
 
 const ESTADOS = [
   'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS',
@@ -30,6 +49,12 @@ export default function Conta() {
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState(null)
   const [activeTab, setActiveTab] = useState('dados')
+  const [draggingTabId, setDraggingTabId] = useState('')
+  const TABS = [
+    { id: 'dados', label: 'Dados pessoais', icon: '👤' },
+    { id: 'seguranca', label: 'Segurança', icon: '🔐' },
+  ]
+  const [tabOrder, setTabOrder] = useState(TABS.map((tab) => tab.id))
   const [profileForm, setProfileForm] = useState({ name: '', cpf_cnpj: '', phone: '' })
   const [addressForm, setAddressForm] = useState({
     label: '',
@@ -55,6 +80,10 @@ export default function Conta() {
   const [mfaVerifyCode, setMfaVerifyCode] = useState('')
   const [mfaError, setMfaError] = useState('')
 
+  const [kycMessage, setKycMessage] = useState('')
+  const [kycUploading, setKycUploading] = useState(false)
+  const [kycPreviewUrls, setKycPreviewUrls] = useState({})
+
   const loadData = async (active = () => true) => {
     if (!user?.id) {
       if (active()) setLoading(false)
@@ -65,7 +94,7 @@ export default function Conta() {
       const k = cacheKey(user.id, 'conta_v1')
       const cached = readCache(k, 1000 * 60 * 30)
       if (cached && active()) {
-        setProfile(cached.profile ?? null)
+        setProfile(normalizeProfileRow(cached.profile))
         setAddresses(cached.addresses ?? [])
         setLoading(false)
       }
@@ -74,9 +103,10 @@ export default function Conta() {
         getAddresses(user.id),
       ])
       if (!active()) return
-      setProfile(prof.data ?? null)
+      const profNorm = normalizeProfileRow(prof.data ?? null)
+      setProfile(profNorm)
       setAddresses(addr.data ?? [])
-      writeCache(k, { profile: prof.data ?? null, addresses: addr.data ?? [] })
+      writeCache(k, { profile: profNorm, addresses: addr.data ?? [] })
       if (prof.error || addr.error) {
         setMessage(prof.error?.message || addr.error?.message || 'Erro ao carregar dados')
       }
@@ -104,6 +134,61 @@ export default function Conta() {
       })
     }
   }, [profile])
+
+  const normalizeTabOrder = (raw) => {
+    const allowed = TABS.map((tab) => tab.id)
+    const base = Array.isArray(raw) ? raw : []
+    const safe = base.filter((id) => allowed.includes(id))
+    for (const id of allowed) {
+      if (!safe.includes(id)) safe.push(id)
+    }
+    return safe
+  }
+
+  const orderedTabs = normalizeTabOrder(tabOrder)
+
+  const handleTabReorder = (draggedId, targetId) => {
+    if (!draggedId || !targetId || draggedId === targetId) return
+    setTabOrder((prev) => {
+      const current = normalizeTabOrder(prev)
+      const draggedIndex = current.indexOf(draggedId)
+      const targetIndex = current.indexOf(targetId)
+      if (draggedIndex < 0 || targetIndex < 0) return current
+      current.splice(draggedIndex, 1)
+      current.splice(targetIndex, 0, draggedId)
+      return current
+    })
+  }
+
+  useEffect(() => {
+    if (!user?.id) {
+      setTabOrder(TABS.map((tab) => tab.id))
+      return
+    }
+    try {
+      const raw = localStorage.getItem(CONTA_TAB_ORDER_STORAGE_KEY)
+      if (!raw) {
+        setTabOrder(TABS.map((tab) => tab.id))
+        return
+      }
+      const all = JSON.parse(raw)
+      setTabOrder(normalizeTabOrder(all?.[user.id]))
+    } catch {
+      setTabOrder(TABS.map((tab) => tab.id))
+    }
+  }, [user?.id])
+
+  useEffect(() => {
+    if (!user?.id) return
+    try {
+      const raw = localStorage.getItem(CONTA_TAB_ORDER_STORAGE_KEY)
+      const all = raw ? JSON.parse(raw) : {}
+      all[user.id] = normalizeTabOrder(tabOrder)
+      localStorage.setItem(CONTA_TAB_ORDER_STORAGE_KEY, JSON.stringify(all))
+    } catch {
+      // ignore
+    }
+  }, [user?.id, tabOrder])
 
   const handleSaveProfile = async (e) => {
     e.preventDefault()
@@ -225,6 +310,102 @@ export default function Conta() {
     if (activeTab === 'seguranca' && user?.id) loadMfaFactors()
   }, [activeTab, user?.id])
 
+  useEffect(() => {
+    const docs = normalizeKycDocuments(profile?.kyc_documents)
+    if (docs.length === 0) {
+      setKycPreviewUrls({})
+      return undefined
+    }
+    let cancelled = false
+    ;(async () => {
+      const map = {}
+      for (const doc of docs) {
+        const { data, error } = await supabase.storage
+          .from('kyc-documents')
+          .createSignedUrl(doc.path, 3600)
+        if (!cancelled && !error && data?.signedUrl) map[doc.path] = data.signedUrl
+      }
+      if (!cancelled) setKycPreviewUrls(map)
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [profile?.kyc_documents])
+
+  const isKycPdf = (doc) => {
+    const n = (doc.original_name || doc.path || '').toLowerCase()
+    return n.endsWith('.pdf')
+  }
+
+  const handleKycUpload = async (e) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file || !user?.id) return
+    const current = normalizeKycDocuments(profile?.kyc_documents)
+    if (current.length >= MAX_KYC_FILES) {
+      setKycMessage(`Você já enviou o máximo de ${MAX_KYC_FILES} documentos. Remova um para enviar outro.`)
+      return
+    }
+    setKycUploading(true)
+    setKycMessage('')
+    const { data: docMeta, error: upErr } = await uploadKycDocument(file, user.id)
+    if (upErr) {
+      setKycUploading(false)
+      setKycMessage(upErr.message || 'Falha no envio do arquivo.')
+      return
+    }
+    const nextDocs = [...current, docMeta]
+    const { error: saveErr } = await updateProfile(user.id, { kyc_documents: nextDocs })
+    if (saveErr) {
+      await removeKycDocumentFromStorage([docMeta.path])
+      setKycUploading(false)
+      setKycMessage(saveErr.message || 'Não foi possível registrar o documento.')
+      return
+    }
+    setProfile((p) => (p ? { ...p, kyc_documents: nextDocs } : p))
+    const k = cacheKey(user.id, 'conta_v1')
+    const cached = readCache(k, 1000 * 60 * 30)
+    if (cached?.profile) {
+      writeCache(k, {
+        ...cached,
+        profile: { ...normalizeProfileRow(cached.profile), kyc_documents: nextDocs },
+      })
+    }
+    setKycUploading(false)
+    setKycMessage('Documento enviado com sucesso.')
+  }
+
+  const handleRemoveKyc = async (path) => {
+    if (!path || !user?.id) return
+    if (!confirm('Remover este documento do seu cadastro?')) return
+    setKycUploading(true)
+    setKycMessage('')
+    const { error: rmErr } = await removeKycDocumentFromStorage([path])
+    if (rmErr) {
+      setKycUploading(false)
+      setKycMessage(rmErr.message || 'Não foi possível remover o arquivo.')
+      return
+    }
+    const nextDocs = normalizeKycDocuments(profile?.kyc_documents).filter((d) => d.path !== path)
+    const { error: saveErr } = await updateProfile(user.id, { kyc_documents: nextDocs })
+    if (saveErr) {
+      setKycUploading(false)
+      setKycMessage(saveErr.message || 'Arquivo removido do armazenamento, mas falhou ao atualizar o perfil. Entre em contato com o suporte.')
+      return
+    }
+    setProfile((p) => (p ? { ...p, kyc_documents: nextDocs } : p))
+    const k = cacheKey(user.id, 'conta_v1')
+    const cached = readCache(k, 1000 * 60 * 30)
+    if (cached?.profile) {
+      writeCache(k, {
+        ...cached,
+        profile: { ...normalizeProfileRow(cached.profile), kyc_documents: nextDocs },
+      })
+    }
+    setKycUploading(false)
+    setKycMessage('Documento removido.')
+  }
+
   const startMfaEnroll = async () => {
     setMfaError('')
     setMfaEnrolling(true)
@@ -333,11 +514,6 @@ export default function Conta() {
     if (!error) setPasswordForm({ currentPassword: '', newPassword: '', confirm: '' })
   }
 
-  const TABS = [
-    { id: 'dados', label: 'Dados pessoais', icon: '👤' },
-    { id: 'seguranca', label: 'Segurança', icon: '🔐' },
-  ]
-
   return (
     <>
       <Helmet>
@@ -349,11 +525,29 @@ export default function Conta() {
 
         <nav className="mt-6 border-b border-earth-200">
           <div className="flex gap-1">
-            {TABS.map((tab) => (
+            {orderedTabs.map((tabId) => {
+              const tab = TABS.find((entry) => entry.id === tabId)
+              if (!tab) return null
+              return (
               <button
                 key={tab.id}
                 type="button"
+                draggable
                 onClick={() => setActiveTab(tab.id)}
+                onDragStart={(e) => {
+                  setDraggingTabId(tab.id)
+                  e.dataTransfer.effectAllowed = 'move'
+                }}
+                onDragOver={(e) => {
+                  if (!draggingTabId || draggingTabId === tab.id) return
+                  e.preventDefault()
+                }}
+                onDrop={(e) => {
+                  if (!draggingTabId || draggingTabId === tab.id) return
+                  e.preventDefault()
+                  handleTabReorder(draggingTabId, tab.id)
+                }}
+                onDragEnd={() => setDraggingTabId('')}
                 className={`flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-colors ${
                   activeTab === tab.id
                     ? 'border-b-2 border-earth-900 bg-earth-50 text-earth-900'
@@ -363,7 +557,8 @@ export default function Conta() {
                 <span>{tab.icon}</span>
                 {tab.label}
               </button>
-            ))}
+              )
+            })}
           </div>
         </nav>
 
@@ -425,6 +620,105 @@ export default function Conta() {
                   </button>
                 </div>
               </form>
+            </section>
+
+            {/* Verificação de identidade (KYC) */}
+            <section className="rounded-xl border border-earth-200 bg-white p-6 shadow-sm">
+              <h2 className="text-lg font-semibold text-earth-900">Verificação de identidade (KYC)</h2>
+              <p className="mt-2 text-sm text-earth-600">
+                Em alguns casos — especialmente em pagamentos, antifraude ou exigências de parceiros — podemos solicitar
+                comprovação de identidade. Você pode adiantar enviando documentos aqui (opcional): por exemplo, RG ou CNH
+                (frente e verso em arquivos separados, se preferir) ou outro documento oficial com foto.
+              </p>
+              <p className="mt-2 text-xs text-earth-500">
+                Os arquivos ficam em armazenamento restrito à sua conta e à equipe autorizada. Formatos aceitos: JPG, PNG,
+                WebP ou PDF, até 10 MB cada. Máximo de {MAX_KYC_FILES} arquivos.
+              </p>
+
+              {kycMessage && (
+                <p
+                  className={`mt-3 rounded-lg px-3 py-2 text-sm ${
+                    kycMessage.includes('sucesso') || kycMessage.includes('removido')
+                      ? 'bg-green-50 text-green-800'
+                      : 'bg-amber-50 text-amber-900'
+                  }`}
+                >
+                  {kycMessage}
+                </p>
+              )}
+
+              <div className="mt-4">
+                <label className="inline-flex cursor-pointer items-center rounded-lg bg-earth-900 px-4 py-2 text-sm font-medium text-earth-50 transition hover:bg-earth-800 disabled:cursor-not-allowed disabled:opacity-60">
+                  {kycUploading ? 'Enviando...' : 'Enviar documento'}
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,application/pdf"
+                    className="sr-only"
+                    disabled={kycUploading || normalizeKycDocuments(profile?.kyc_documents).length >= MAX_KYC_FILES}
+                    onChange={handleKycUpload}
+                  />
+                </label>
+                <span className="ml-3 text-sm text-earth-500">
+                  {normalizeKycDocuments(profile?.kyc_documents).length}/{MAX_KYC_FILES} enviados
+                </span>
+              </div>
+
+              {normalizeKycDocuments(profile?.kyc_documents).length > 0 && (
+                <ul className="mt-4 space-y-3">
+                  {normalizeKycDocuments(profile?.kyc_documents).map((doc) => (
+                    <li
+                      key={doc.path}
+                      className="flex flex-col gap-3 rounded-lg border border-earth-200 bg-earth-50 p-3 sm:flex-row sm:items-center sm:justify-between"
+                    >
+                      <div className="min-w-0 flex flex-1 items-start gap-3">
+                        {!isKycPdf(doc) && kycPreviewUrls[doc.path] ? (
+                          <img
+                            src={kycPreviewUrls[doc.path]}
+                            alt=""
+                            className="h-16 w-16 shrink-0 rounded border border-earth-200 object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded border border-earth-200 bg-earth-100 text-2xl">
+                            {isKycPdf(doc) ? '📄' : '🖼️'}
+                          </div>
+                        )}
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium text-earth-900">
+                            {doc.original_name || doc.path.split('/').pop()}
+                          </p>
+                          {doc.uploaded_at && (
+                            <p className="text-xs text-earth-500">
+                              Enviado em{' '}
+                              {new Date(doc.uploaded_at).toLocaleString('pt-BR', {
+                                dateStyle: 'short',
+                                timeStyle: 'short',
+                              })}
+                            </p>
+                          )}
+                          {isKycPdf(doc) && kycPreviewUrls[doc.path] && (
+                            <a
+                              href={kycPreviewUrls[doc.path]}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="mt-1 inline-block text-sm font-medium text-earth-800 underline hover:no-underline"
+                            >
+                              Abrir PDF
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveKyc(doc.path)}
+                        disabled={kycUploading}
+                        className="shrink-0 rounded-lg border border-red-200 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-50"
+                      >
+                        Remover
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </section>
 
             {/* Endereços */}

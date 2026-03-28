@@ -5,6 +5,59 @@
 import { supabase } from '../lib/supabase'
 import { withDbTimeout, toServiceError } from '../lib/dbGuard'
 
+const KYC_BUCKET = 'kyc-documents'
+const KYC_MAX_BYTES = 10 * 1024 * 1024
+const KYC_ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf']
+
+/**
+ * Upload de documento KYC (identidade) — bucket privado kyc-documents/{userId}/...
+ * @returns {{ data: { path: string, original_name: string, uploaded_at: string } | null, error }}
+ */
+export async function uploadKycDocument(file, userId) {
+  if (!file || !KYC_ALLOWED_TYPES.includes(file.type)) {
+    return { data: null, error: { message: 'Envie JPG, PNG, WebP ou PDF.' } }
+  }
+  if (file.size > KYC_MAX_BYTES) {
+    return { data: null, error: { message: 'Arquivo deve ter no máximo 10 MB.' } }
+  }
+  if (!userId) return { data: null, error: { message: 'Usuário não identificado.' } }
+  try {
+    const ext = file.name.split('.').pop()?.toLowerCase() || 'bin'
+    const safeName = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}.${ext}`
+    const path = `${userId}/${safeName}`
+
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from(KYC_BUCKET)
+      .upload(path, file, { cacheControl: '3600', upsert: false })
+
+    if (uploadError) return { data: null, error: uploadError }
+
+    const uploadedAt = new Date().toISOString()
+    return {
+      data: {
+        path: uploadData.path,
+        original_name: file.name,
+        uploaded_at: uploadedAt,
+      },
+      error: null,
+    }
+  } catch (e) {
+    return { data: null, error: toServiceError(e) }
+  }
+}
+
+/** Remove arquivo KYC do storage (paths completos retornados pelo upload). */
+export async function removeKycDocumentFromStorage(paths) {
+  const list = Array.isArray(paths) ? paths.filter(Boolean) : []
+  if (list.length === 0) return { error: null }
+  try {
+    const { error } = await supabase.storage.from(KYC_BUCKET).remove(list)
+    return { error }
+  } catch (e) {
+    return { error: toServiceError(e) }
+  }
+}
+
 /**
  * Get or create profile for the current user.
  * Call after signup to create profile row.

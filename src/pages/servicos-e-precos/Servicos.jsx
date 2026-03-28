@@ -11,12 +11,18 @@ const LINHAS_VALORES = (percentual, porItem, freteTexto, formatarIene) => [
   { label: 'Frete internacional', valor: freteTexto },
 ]
 
-/** Taxas: 1 item ¥1000, 2-4 ¥750/item, 5+ ¥500/item. Nós Compramos: 15% | 12.5% | 10% + taxa flat conforme qtd. */
+/** Padrão: escada por qtd. Assistido: 15% + ¥500/item. */
 const LINHAS_REDIRECIONAMENTO = (formatarIene) => [
-  { componente: '1 item', voceCompra: formatarIene(1000), nosCompramos: `15% + ${formatarIene(1000)}` },
-  { componente: '2–4 itens', voceCompra: `${formatarIene(750)}/item`, nosCompramos: `12,5% + ${formatarIene(750)}/item` },
-  { componente: '5+ itens', voceCompra: `${formatarIene(500)}/item`, nosCompramos: `10% + ${formatarIene(500)}/item` },
-  { componente: 'Frete internacional', voceCompra: 'Informado após consolidação (Japan Post)', nosCompramos: 'Informado após consolidação (Japan Post)' },
+  {
+    componente: 'Taxa de serviço',
+    padrao: `1 item ${formatarIene(1000)} · 2–4 itens ${formatarIene(750)}/item · 5+ itens ${formatarIene(500)}/item`,
+    assistido: `15% sobre o valor da compra + ${formatarIene(500)}/item`,
+  },
+  {
+    componente: 'Frete internacional',
+    padrao: 'Informado após consolidação (Japan Post)',
+    assistido: 'Informado após consolidação (Japan Post)',
+  },
 ]
 
 const LINHAS_LOJA = (freteTexto) => [
@@ -43,10 +49,10 @@ function TabelaValores({ percentual, porItem, freteTexto, modoRedirecionamento, 
                   Componente
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-earth-600">
-                  📦 Você Compra
+                  📦 Redirecionamento Padrão
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-earth-600">
-                  🛍️ Nós Compramos
+                  🛍️ Redirecionamento Assistido
                 </th>
               </tr>
             </thead>
@@ -54,8 +60,8 @@ function TabelaValores({ percentual, porItem, freteTexto, modoRedirecionamento, 
               {linhasRedir.map((linha, i) => (
                 <tr key={i}>
                   <td className="px-4 py-3 text-sm text-earth-900">{linha.componente}</td>
-                  <td className="px-4 py-3 text-sm font-medium text-earth-900">{linha.voceCompra}</td>
-                  <td className="px-4 py-3 text-sm font-medium text-earth-900">{linha.nosCompramos}</td>
+                  <td className="px-4 py-3 text-sm font-medium text-earth-900">{linha.padrao}</td>
+                  <td className="px-4 py-3 text-sm font-medium text-earth-900">{linha.assistido}</td>
                 </tr>
               ))}
             </tbody>
@@ -67,12 +73,12 @@ function TabelaValores({ percentual, porItem, freteTexto, modoRedirecionamento, 
               <span className="text-xs font-medium text-earth-500 uppercase">{linha.componente}</span>
               <div className="space-y-0.5">
                 <div className="text-sm">
-                  <span className="text-earth-500">📦 Você Compra:</span>{' '}
-                  <span className="font-medium text-earth-900">{linha.voceCompra}</span>
+                  <span className="text-earth-500">📦 Redirecionamento Padrão:</span>{' '}
+                  <span className="font-medium text-earth-900">{linha.padrao}</span>
                 </div>
                 <div className="text-sm">
-                  <span className="text-earth-500">🛍️ Nós Compramos:</span>{' '}
-                  <span className="font-medium text-earth-900">{linha.nosCompramos}</span>
+                  <span className="text-earth-500">🛍️ Redirecionamento Assistido:</span>{' '}
+                  <span className="font-medium text-earth-900">{linha.assistido}</span>
                 </div>
               </div>
             </div>
@@ -127,7 +133,8 @@ const FLUXOS = [
   {
     id: 'redirecionamento',
     titulo: 'Redirecionamento',
-    descricao: 'Compre em lojas japonesas e envie para nosso endereço. Dois módulos: 📦 Você Compra (você compra e envia) ou 🛍️ Nós Compramos (nós compramos para você, com pré-pagamento).',
+    descricao:
+      'Compre em lojas japonesas e envie para nosso endereço. Dois módulos: 📦 Redirecionamento Padrão (você compra e envia) ou 🛍️ Redirecionamento Assistido (nós compramos para você, com pré-pagamento).',
     passos: [
       'Cadastre-se e receba nosso endereço no Japão',
       'Faça suas compras e envie os pacotes para nosso endereço (ou envie a lista para nós comprarmos)',
@@ -235,7 +242,7 @@ function Servicos() {
             {servico.id === 'redirecionamento' && (
               <>
                 <p className="mt-6 text-sm text-earth-600">
-                  <strong>Como cobramos:</strong> Redirecionamento tem dois módulos — 📦 Você Compra e 🛍️ Nós Compramos — com taxas por quantidade de itens (ver tabela). Nós Compramos: 15% (1 item), 12,5% (2–4 itens) ou 10% (5+ itens) + taxa flat. Frete informado após consolidação.
+                  <strong>Como cobramos:</strong> Redirecionamento tem dois módulos — 📦 Redirecionamento Padrão (taxa por quantidade de itens, ver tabela) e 🛍️ Redirecionamento Assistido (15% sobre o valor da compra + ¥500 por item). Frete informado após consolidação.
                 </p>
                 <TabelaValores modoRedirecionamento />
               </>
@@ -244,11 +251,11 @@ function Servicos() {
             {servico.id === 'personal-shopping' && (
               <>
                 <p className="mt-6 text-sm text-earth-600">
-                  <strong>Como cobramos:</strong> 25% do valor da compra + frete. Este serviço inclui ajuda para decidir o que comprar.
+                  <strong>Como cobramos:</strong> 25% do valor da compra + ¥200 por item + frete. Este serviço inclui ajuda para decidir o que comprar.
                 </p>
                 <TabelaValores
                   percentual={25}
-                  porItem={null}
+                  porItem={200}
                   freteTexto="Informado após consolidação (Japan Post)"
                 />
               </>
@@ -257,11 +264,11 @@ function Servicos() {
             {servico.id === 'grupo-de-compras' && (
               <>
                 <p className="mt-6 text-sm text-earth-600">
-                  <strong>Como cobramos:</strong> 20% do valor da compra + frete. Produtos com preços já definidos em cada grupo.
+                  <strong>Como cobramos:</strong> 20% do valor da compra + ¥200 por unidade de produto + frete. Preços dos itens vêm do catálogo de cada grupo.
                 </p>
                 <TabelaValores
                   percentual={20}
-                  porItem={null}
+                  porItem={200}
                   freteTexto="Informado após solicitar envio (Japan Post)"
                 />
               </>

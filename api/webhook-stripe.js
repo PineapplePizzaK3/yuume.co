@@ -112,6 +112,7 @@ export default async function handler(req, res) {
         stripe_payment_id: session.payment_intent || session.id,
         status: 'completed',
         amount,
+        currency: currency.toUpperCase(),
       })
 
       // Loja: se ship_immediately=false, adiciona produtos ao inventário

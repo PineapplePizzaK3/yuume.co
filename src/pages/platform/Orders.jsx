@@ -6,7 +6,7 @@
 import { useEffect, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { useAuth } from '../../hooks/useAuth'
-import { deleteMyOrder, getMyOrders, requestOrderExtraServices, ORDER_STATUS_LABELS } from '../../services/orderService'
+import { deleteMyOrder, getMyOrders, getOrderById, requestOrderExtraServices, ORDER_STATUS_LABELS } from '../../services/orderService'
 import { createCheckoutSession } from '../../services/paymentService'
 import PixManualModal from '../../components/PixManualModal'
 import { getWallet } from '../../services/walletService'
@@ -16,6 +16,10 @@ import QuoteProductsList from '../../components/QuoteProductsList'
 import OrderAttachments from '../../components/OrderAttachments'
 
 const ORDERS_PAGE_SIZE = 12
+const ORDER_FILTERS = {
+  OPEN: 'open',
+  COMPLETED: 'completed',
+}
 
 export default function Orders() {
   const { user, session } = useAuth()
@@ -32,18 +36,70 @@ export default function Orders() {
   const [deletingId, setDeletingId] = useState(null)
   const [ordersPage, setOrdersPage] = useState(0)
   const [ordersHasMore, setOrdersHasMore] = useState(false)
+  const [ordersFilter, setOrdersFilter] = useState(ORDER_FILTERS.OPEN)
+  const [targetOrderId, setTargetOrderId] = useState(null)
+  const [hasOpenedTargetOrder, setHasOpenedTargetOrder] = useState(false)
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
+    const clearPaymentParams = () => {
+      try {
+        const url = new URL(window.location.href)
+        url.searchParams.delete('success')
+        url.searchParams.delete('canceled')
+        window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`)
+      } catch {
+        // noop
+      }
+    }
     if (params.get('success') === 'true') {
       setFeedback('Pagamento realizado com sucesso!')
-      window.history.replaceState({}, '', '/app/orders')
+      clearPaymentParams()
     }
     if (params.get('canceled') === 'true') {
       setFeedback('Pagamento cancelado.')
-      window.history.replaceState({}, '', '/app/orders')
+      clearPaymentParams()
+    }
+    const orderIdFromQuery = params.get('orderId')
+    if (orderIdFromQuery) {
+      setTargetOrderId(orderIdFromQuery)
     }
   }, [])
+
+  useEffect(() => {
+    setOrdersPage(0)
+  }, [ordersFilter])
+
+  useEffect(() => {
+    let isActive = true
+    const openTargetOrder = async () => {
+      if (!user?.id || !targetOrderId || hasOpenedTargetOrder) return
+
+      const orderOnCurrentPage = orders.find((o) => o.id === targetOrderId)
+      if (orderOnCurrentPage) {
+        if (!isActive) return
+        setDetailsModal({ open: true, order: orderOnCurrentPage })
+        setHasOpenedTargetOrder(true)
+        return
+      }
+
+      const { data, error } = await getOrderById(targetOrderId, user.id)
+      if (!isActive) return
+      if (error || !data) {
+        setFeedback('Nao foi possivel localizar o pedido selecionado.')
+        setHasOpenedTargetOrder(true)
+        return
+      }
+
+      setDetailsModal({ open: true, order: data })
+      setHasOpenedTargetOrder(true)
+    }
+
+    openTargetOrder()
+    return () => {
+      isActive = false
+    }
+  }, [user?.id, targetOrderId, hasOpenedTargetOrder, orders])
 
   useEffect(() => {
     let isActive = true
@@ -65,6 +121,9 @@ export default function Orders() {
           getMyOrders(user.id, {
             limit: ORDERS_PAGE_SIZE,
             offset: ordersPage * ORDERS_PAGE_SIZE,
+            ...(ordersFilter === ORDER_FILTERS.COMPLETED
+              ? { status: 'completed' }
+              : { excludeStatus: 'completed' }),
           }),
           getWallet(user.id),
         ])
@@ -85,12 +144,12 @@ export default function Orders() {
     return () => {
       isActive = false
     }
-  }, [user?.id, ordersPage])
+  }, [user?.id, ordersPage, ordersFilter])
 
   const getPayableAmount = (order) => {
     if (order.status !== 'awaiting_payment') return null
     if (order.quote_amount != null && Number(order.quote_amount) > 0) {
-      return { amount: Number(order.quote_amount), currency: order.quote_currency || 'BRL', label: 'Orçamento' }
+      return { amount: Number(order.quote_amount), currency: order.quote_currency || 'JPY', label: 'Orçamento' }
     }
     if (order.total_amount != null && Number(order.total_amount) > 0) {
       return { amount: Number(order.total_amount), currency: 'BRL', label: 'Total' }
@@ -121,6 +180,9 @@ export default function Orders() {
       getMyOrders(user.id, {
         limit: ORDERS_PAGE_SIZE,
         offset: ordersPage * ORDERS_PAGE_SIZE,
+        ...(ordersFilter === ORDER_FILTERS.COMPLETED
+          ? { status: 'completed' }
+          : { excludeStatus: 'completed' }),
       }),
       getWallet(user.id),
     ])
@@ -169,6 +231,35 @@ export default function Orders() {
     }
   }
 
+  const getRequestedItems = (order) => {
+    if (!Array.isArray(order?.order_items)) return []
+    return order.order_items
+      .map((it, index) => {
+        const qty = Math.max(1, parseInt(it?.quantity, 10) || 1)
+        const unitPrice = Number(it?.price_at_purchase) || 0
+        const name = it?.product?.name || `Item ${index + 1}`
+        return {
+          id: it?.id || `${name}-${index}`,
+          name,
+          qty,
+          unitPrice,
+          lineTotal: unitPrice * qty,
+        }
+      })
+  }
+
+  const formatByCurrency = (value, currency = 'JPY') => {
+    const normalized = String(currency || 'JPY').toUpperCase()
+    return normalized === 'BRL' ? formatBRL(value) : formatJPY(value)
+  }
+
+  const getRequestedItemsCurrency = (order) => {
+    if (order?.order_source === 'store') return 'BRL'
+    if (order?.quote_currency) return order.quote_currency
+    if (order?.shipping_currency) return order.shipping_currency
+    return 'JPY'
+  }
+
   const handleRequestExtraServices = async (order) => {
     if (order.status !== 'item_received') return
     const toSend = getExtraServicesForOrder(order)
@@ -198,6 +289,21 @@ export default function Orders() {
     }
   }
 
+  const closeDetailsModal = () => {
+    setDetailsModal({ open: false, order: null })
+    setTargetOrderId(null)
+    setHasOpenedTargetOrder(false)
+    try {
+      const url = new URL(window.location.href)
+      if (url.searchParams.has('orderId')) {
+        url.searchParams.delete('orderId')
+        window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`)
+      }
+    } catch {
+      // noop
+    }
+  }
+
   return (
     <>
       <Helmet>
@@ -208,6 +314,30 @@ export default function Orders() {
         <p className="mt-2 text-earth-600">
           Acompanhe seus pedidos: criação → aguardando chegada → item recebido → armazenado → pronto para envio → aguardando pagamento do frete → enviado → finalizado. Os pagamentos foram centralizados em Central de Pagamentos.
         </p>
+        <div className="mt-4 inline-flex rounded-lg border border-earth-200 bg-earth-50 p-1">
+          <button
+            type="button"
+            onClick={() => setOrdersFilter(ORDER_FILTERS.OPEN)}
+            className={`rounded-md px-3 py-1.5 text-sm font-medium ${
+              ordersFilter === ORDER_FILTERS.OPEN
+                ? 'bg-earth-900 text-white'
+                : 'text-earth-700 hover:bg-earth-100'
+            }`}
+          >
+            Em andamento
+          </button>
+          <button
+            type="button"
+            onClick={() => setOrdersFilter(ORDER_FILTERS.COMPLETED)}
+            className={`rounded-md px-3 py-1.5 text-sm font-medium ${
+              ordersFilter === ORDER_FILTERS.COMPLETED
+                ? 'bg-earth-900 text-white'
+                : 'text-earth-700 hover:bg-earth-100'
+            }`}
+          >
+            Finalizados
+          </button>
+        </div>
 
         {feedback && (
           <p
@@ -226,7 +356,11 @@ export default function Orders() {
         {loading && <p className="mt-6 text-earth-600">Carregando pedidos...</p>}
 
         {!loading && orders.length === 0 && (
-          <p className="mt-6 text-earth-600">Você ainda não tem pedidos.</p>
+          <p className="mt-6 text-earth-600">
+            {ordersFilter === ORDER_FILTERS.COMPLETED
+              ? 'Você ainda não tem pedidos finalizados.'
+              : 'Você ainda não tem pedidos em andamento.'}
+          </p>
         )}
 
         {!loading && orders.length > 0 && (
@@ -251,7 +385,7 @@ export default function Orders() {
                       <QuoteProductsList
                         message={o.message}
                         quoteCurrency={o.quote_currency || 'JPY'}
-                        formatMoney={(v) => formatJPY(v)}
+                        formatMoney={(v, c) => formatByCurrency(v, c)}
                       />
                     )}
                     {Array.isArray(o.attachment_urls) && o.attachment_urls.length > 0 && (
@@ -393,7 +527,7 @@ export default function Orders() {
       {detailsModal.open && detailsModal.order && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-          onClick={() => setDetailsModal({ open: false, order: null })}
+          onClick={closeDetailsModal}
         >
           <div
             className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-xl bg-white p-6 shadow-lg"
@@ -419,14 +553,46 @@ export default function Orders() {
               )}
               {detailsModal.order.message && (
                 <div>
-                  <p className="text-xs font-medium uppercase tracking-wide text-earth-500 mb-1">Orçamento / Mensagem</p>
+                  <p className="text-xs font-medium uppercase tracking-wide text-earth-500 mb-1">Solicitação do pedido</p>
                   <QuoteProductsList
                     message={detailsModal.order.message}
                     quoteCurrency={detailsModal.order.quote_currency || 'JPY'}
-                    formatMoney={(v) => formatJPY(v)}
+                    formatMoney={(v, c) => formatByCurrency(v, c)}
                   />
                 </div>
               )}
+              {(() => {
+                const requestedItems = getRequestedItems(detailsModal.order)
+                if (requestedItems.length === 0) return null
+                const totalRequested = requestedItems.reduce((sum, item) => sum + item.lineTotal, 0)
+                const itemsCurrency = getRequestedItemsCurrency(detailsModal.order)
+                return (
+                  <div>
+                    <p className="text-xs font-medium uppercase tracking-wide text-earth-500 mb-2">Itens solicitados</p>
+                    <div className="rounded-lg border border-earth-200 bg-earth-50 p-3">
+                      <ul className="space-y-2">
+                        {requestedItems.map((item) => (
+                          <li key={item.id} className="flex items-start justify-between gap-3 text-sm">
+                            <div className="min-w-0">
+                              <p className="font-medium text-earth-900">{item.name}</p>
+                              <p className="text-xs text-earth-600">Quantidade: {item.qty}</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-earth-700">{formatByCurrency(item.lineTotal, itemsCurrency)}</p>
+                              {item.qty > 1 && (
+                                <p className="text-xs text-earth-500">{formatByCurrency(item.unitPrice, itemsCurrency)} cada</p>
+                              )}
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                      <p className="mt-3 border-t border-earth-200 pt-2 text-sm font-semibold text-earth-900">
+                        Total dos itens: {formatByCurrency(totalRequested, itemsCurrency)}
+                      </p>
+                    </div>
+                  </div>
+                )
+              })()}
               {Array.isArray(detailsModal.order.attachment_urls) && detailsModal.order.attachment_urls.length > 0 && (
                 <div>
                   <p className="text-xs font-medium uppercase tracking-wide text-earth-500 mb-2">Imagens</p>
@@ -437,7 +603,7 @@ export default function Orders() {
                 <div>
                   <p className="text-xs font-medium uppercase tracking-wide text-earth-500">Orçamento total</p>
                   <p className="text-sm font-medium text-earth-800">
-                    {formatJPY(detailsModal.order.quote_amount)}
+                    {formatByCurrency(detailsModal.order.quote_amount, detailsModal.order.quote_currency || 'JPY')}
                   </p>
                 </div>
               )}
@@ -445,7 +611,7 @@ export default function Orders() {
                 <div>
                   <p className="text-xs font-medium uppercase tracking-wide text-earth-500">Frete</p>
                   <p className="text-sm text-earth-800">
-                    {formatJPY(detailsModal.order.shipping_cost)}
+                    {formatByCurrency(detailsModal.order.shipping_cost, detailsModal.order.shipping_currency || 'JPY')}
                   </p>
                 </div>
               )}
@@ -453,7 +619,7 @@ export default function Orders() {
             <div className="mt-6">
               <button
                 type="button"
-                onClick={() => setDetailsModal({ open: false, order: null })}
+                onClick={closeDetailsModal}
                 className="rounded-lg border border-earth-300 px-4 py-2 font-medium text-earth-700 hover:bg-earth-100"
               >
                 Fechar

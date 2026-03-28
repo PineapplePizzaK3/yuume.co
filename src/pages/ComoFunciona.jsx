@@ -8,11 +8,12 @@ const FLUXOS = [
   {
     id: 'redirecionamento',
     titulo: 'Redirecionamento',
-    descricao: 'Compre em lojas japonesas e envie para nosso endereço.',
+    descricao:
+      'Compre em lojas japonesas com Redirecionamento Padrão (você compra e envia) ou Redirecionamento Assistido (nós compramos com pré-pagamento).',
     passos: [
       'Cadastre-se e receba nosso endereço no Japão',
-      'Faça suas compras nas lojas parceiras',
-      'Envie os pacotes para nosso endereço',
+      'Escolha Padrão (você compra nas lojas) ou Assistido (envie a lista para orçamento)',
+      'No Padrão, envie os pacotes para nosso endereço; no Assistido, pague após o orçamento',
       'Consolidamos e enviamos até você',
     ],
   },

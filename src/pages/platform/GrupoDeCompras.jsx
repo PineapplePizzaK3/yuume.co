@@ -131,7 +131,10 @@ export default function GrupoDeCompras() {
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-earth-900">Grupo de Compras</h1>
-            <p className="mt-2 text-earth-600">Veja grupos disponíveis e detalhes com fotos.</p>
+            <p className="mt-2 text-earth-600">
+              Veja grupos disponíveis e detalhes com fotos. Taxa de serviço: 20% sobre o valor dos produtos do grupo + ¥200 por
+              unidade (no checkout a conversão para real segue a cotação configurada).
+            </p>
           </div>
         </div>
 
@@ -196,7 +199,7 @@ export default function GrupoDeCompras() {
             aria-labelledby="group-detail-title"
           >
             <div
-              className="relative max-h-[90vh] w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-xl"
+              className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white shadow-xl"
               onClick={(e) => e.stopPropagation()}
             >
               {modalFeedback && (

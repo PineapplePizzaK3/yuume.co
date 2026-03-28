@@ -16,6 +16,8 @@
 ## Funções por Serviço
 
 ### 1. Redirecionamento
+- **Redirecionamento Padrão** — você compra nas lojas e envia para nosso endereço (taxa por quantidade de itens).
+- **Redirecionamento Assistido** — você envia a lista; nós orçamos e compramos com pré-pagamento (15% + ¥500/item).
 - Cadastrar e obter endereço no Japão
 - Registrar pacotes recebidos
 - Consolidar pedidos
@@ -28,8 +30,13 @@
 - Aprovar itens
 - Receber produtos consolidados
 - Pagar taxas e fretes
+- Taxa de referência: **25% sobre o valor da compra + ¥200 por item** (+ frete), conforme orçamento enviado pelo admin
 
-### 3. Loja Virtual (Curadoria)
+### 3. Grupo de Compras
+- Comprar produtos dos grupos pelo carrinho
+- Taxa: **20% sobre o subtotal dos itens do grupo + ¥200 por unidade** (conversão da parte fixa usa a cotação `fx_brl_per_jpy` nas configurações)
+
+### 4. Loja Virtual (Curadoria)
 - Navegar seleções
 - Adicionar ao carrinho
 - Fazer pedido

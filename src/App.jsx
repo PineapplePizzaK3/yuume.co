@@ -1,8 +1,9 @@
-import { Suspense, lazy } from 'react'
+import { Suspense, lazy, useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import WhatsAppFloating from './components/WhatsAppFloating'
+import { recordAffiliateClick } from './services/affiliateService'
 const Home = lazy(() => import('./pages/Home'))
 const Contact = lazy(() => import('./pages/Contact'))
 const OndeComprar = lazy(() => import('./pages/OndeComprar'))
@@ -37,12 +38,75 @@ const Cart = lazy(() => import('./pages/platform/Cart'))
 const GrupoDeCompras = lazy(() => import('./pages/platform/GrupoDeCompras'))
 const Admin = lazy(() => import('./pages/platform/Admin'))
 const Lounge = lazy(() => import('./pages/platform/Lounge'))
-
 /**
  * Componente principal da aplicação.
  * Define as rotas e o layout (Navbar + conteúdo + Footer).
  */
 function App() {
+  useEffect(() => {
+    const url = new URL(window.location.href)
+    const referralCode = (url.searchParams.get('invite') || url.searchParams.get('referral') || '').trim().toUpperCase()
+    if (referralCode) {
+      localStorage.setItem('referral_signup_code', referralCode)
+    }
+
+    const affiliateCode = (url.searchParams.get('ref') || '').trim().toLowerCase()
+    if (affiliateCode) {
+      localStorage.setItem('affiliate_code', affiliateCode)
+      const utm = {}
+      for (const [k, v] of url.searchParams.entries()) {
+        if (k.startsWith('utm_') && v) utm[k] = v
+      }
+      const sessionKey = localStorage.getItem('affiliate_session_key') || crypto.randomUUID()
+      localStorage.setItem('affiliate_session_key', sessionKey)
+      void recordAffiliateClick({
+        code: affiliateCode,
+        sessionKey,
+        source: document.referrer || 'direct',
+        utm,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || null,
+      })
+    }
+
+  }, [])
+
+  useEffect(() => {
+    const body = document.body
+    const originalOverflow = body.style.overflow
+    const originalPaddingRight = body.style.paddingRight
+
+    const hasOpenModal = () =>
+      !!document.querySelector('[role="dialog"][aria-modal="true"]')
+
+    const syncBodyScrollLock = () => {
+      if (hasOpenModal()) {
+        // Compensa a largura da scrollbar para evitar "pulo" de layout.
+        const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth
+        body.style.overflow = 'hidden'
+        body.style.paddingRight = scrollbarWidth > 0 ? `${scrollbarWidth}px` : ''
+      } else {
+        body.style.overflow = originalOverflow
+        body.style.paddingRight = originalPaddingRight
+      }
+    }
+
+    const observer = new MutationObserver(syncBodyScrollLock)
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['aria-modal', 'role'],
+    })
+
+    syncBodyScrollLock()
+
+    return () => {
+      observer.disconnect()
+      body.style.overflow = originalOverflow
+      body.style.paddingRight = originalPaddingRight
+    }
+  }, [])
+
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar />
@@ -76,6 +140,7 @@ function App() {
               <Route path="loja" element={<Loja />} />
               <Route path="cart" element={<Cart />} />
               <Route path="grupo-de-compras" element={<GrupoDeCompras />} />
+              <Route path="affiliate" element={<Navigate to="/app/dashboard" replace />} />
               <Route path="lista-desejos" element={<Navigate to="/app/lounge?tab=desejos" replace />} />
               <Route path="envios" element={<Navigate to="/app/lounge" replace />} />
               <Route path="admin" element={

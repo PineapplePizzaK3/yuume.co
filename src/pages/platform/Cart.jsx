@@ -2,7 +2,7 @@
  * Central de Pagamentos - checkout da loja + pagamentos pendentes.
  * Todos os pagamentos da conta são centralizados aqui para melhorar a UX.
  */
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Link, useSearchParams } from 'react-router-dom'
 import { createPortal } from 'react-dom'
@@ -13,7 +13,10 @@ import { createCheckoutSession, getMyPayments } from '../../services/paymentServ
 import { getMyOrders, ORDER_STATUS_LABELS } from '../../services/orderService'
 import PixManualModal from '../../components/PixManualModal'
 import { getWallet } from '../../services/walletService'
-import { brlToJpy, formatBRL, formatJPY, jpyToBrl } from '../../lib/fx'
+import { computeGrupoComprasFeeBrl, SERVICE_FEE_JPY_PER_ITEM, GRUPO_COMPRAS_FEE_PERCENT } from '../../data/serviceFees'
+import { brlToJpy, formatBRL, formatJPY, jpyToBrl, getFxBrlPerJpy } from '../../lib/fx'
+import { getSystemSettings } from '../../services/settingsService'
+import { supabase } from '../../lib/supabase'
 
 function formatPriceBrlAsJpy(brl) {
   const jpy = Math.round(brlToJpy(brl))
@@ -27,6 +30,11 @@ const PAYMENT_STATUS_LABELS = {
   failed: 'Falhou',
   refunded: 'Reembolsado',
 }
+const CART_TAB_ORDER_STORAGE_KEY = 'cart_tabs_order_v1'
+const CART_TABS = [
+  { id: 'checkout', label: 'Pagamento' },
+  { id: 'history', label: 'Histórico' },
+]
 
 function Cart() {
   const { user, session } = useAuth()
@@ -41,16 +49,48 @@ function Cart() {
   const [submitting, setSubmitting] = useState(false)
   const [wallet, setWallet] = useState(null)
   const [payModal, setPayModal] = useState({ open: false, order: null, useWallet: true })
+  const [walletApplyMode, setWalletApplyMode] = useState('full')
+  const [walletCustomAmount, setWalletCustomAmount] = useState('')
   const [pixModal, setPixModal] = useState({ open: false, order: null })
   const [feedback, setFeedback] = useState('')
+  const [systemSettings, setSystemSettings] = useState(null)
+  const [referralEligibility, setReferralEligibility] = useState(false)
+  const [acquisitionMode, setAcquisitionMode] = useState('none')
   const [couponInput, setCouponInput] = useState('')
   const [couponApplied, setCouponApplied] = useState(null)
   const [couponLoading, setCouponLoading] = useState(false)
+  const [draggingTabId, setDraggingTabId] = useState('')
+  const [tabOrder, setTabOrder] = useState(CART_TABS.map((tab) => tab.id))
 
   const success = searchParams.get('success') === 'true'
   const canceled = searchParams.get('canceled') === 'true'
   const payOrderId = searchParams.get('payOrderId')
   const activeTab = searchParams.get('tab') === 'history' ? 'history' : 'checkout'
+
+  const normalizeTabOrder = (raw) => {
+    const allowed = CART_TABS.map((tab) => tab.id)
+    const base = Array.isArray(raw) ? raw : []
+    const safe = base.filter((id) => allowed.includes(id))
+    for (const id of allowed) {
+      if (!safe.includes(id)) safe.push(id)
+    }
+    return safe
+  }
+
+  const orderedTabs = normalizeTabOrder(tabOrder)
+
+  const handleTabReorder = (draggedId, targetId) => {
+    if (!draggedId || !targetId || draggedId === targetId) return
+    setTabOrder((prev) => {
+      const current = normalizeTabOrder(prev)
+      const draggedIndex = current.indexOf(draggedId)
+      const targetIndex = current.indexOf(targetId)
+      if (draggedIndex < 0 || targetIndex < 0) return current
+      current.splice(draggedIndex, 1)
+      current.splice(targetIndex, 0, draggedId)
+      return current
+    })
+  }
 
   const loadCart = async () => {
     if (!user?.id) return
@@ -61,10 +101,40 @@ function Cart() {
     setLoading(false)
   }
 
+  useEffect(() => {
+    if (!user?.id) {
+      setTabOrder(CART_TABS.map((tab) => tab.id))
+      return
+    }
+    try {
+      const raw = localStorage.getItem(CART_TAB_ORDER_STORAGE_KEY)
+      if (!raw) {
+        setTabOrder(CART_TABS.map((tab) => tab.id))
+        return
+      }
+      const all = JSON.parse(raw)
+      setTabOrder(normalizeTabOrder(all?.[user.id]))
+    } catch {
+      setTabOrder(CART_TABS.map((tab) => tab.id))
+    }
+  }, [user?.id])
+
+  useEffect(() => {
+    if (!user?.id) return
+    try {
+      const raw = localStorage.getItem(CART_TAB_ORDER_STORAGE_KEY)
+      const all = raw ? JSON.parse(raw) : {}
+      all[user.id] = normalizeTabOrder(tabOrder)
+      localStorage.setItem(CART_TAB_ORDER_STORAGE_KEY, JSON.stringify(all))
+    } catch {
+      // ignore
+    }
+  }, [user?.id, tabOrder])
+
   const getPayableAmount = (order) => {
     if (order?.status !== 'awaiting_payment') return null
     if (order?.quote_amount != null && Number(order.quote_amount) > 0) {
-      return { amount: Number(order.quote_amount), currency: order.quote_currency || 'BRL', label: 'Orçamento' }
+      return { amount: Number(order.quote_amount), currency: order.quote_currency || 'JPY', label: 'Orçamento' }
     }
     if (order?.total_amount != null && Number(order.total_amount) > 0) {
       return { amount: Number(order.total_amount), currency: 'BRL', label: 'Total' }
@@ -149,12 +219,43 @@ function Cart() {
   }, [success, canceled])
 
   useEffect(() => {
+    let isActive = true
+    const run = async () => {
+      if (!user?.id) return
+      const [settingsRes, referralRes] = await Promise.all([
+        getSystemSettings(),
+        supabase
+          .from('referrals')
+          .select('id')
+          .eq('referred_id', user.id)
+          .eq('reward_given', false)
+          .in('status', ['pending', 'qualified'])
+          .limit(1),
+      ])
+      if (!isActive) return
+      setSystemSettings(settingsRes.data || null)
+      setReferralEligibility((referralRes.data ?? []).length > 0)
+    }
+    run()
+    return () => { isActive = false }
+  }, [user?.id])
+
+  useEffect(() => {
     if (!payOrderId || pendingLoading || payModal.open) return
     const target = pendingOrders.find((o) => o.id === payOrderId)
     if (!target) return
     setPayModal({ open: true, order: target, useWallet: true })
     setFeedback('')
   }, [payOrderId, pendingLoading, pendingOrders, payModal.open])
+
+  useEffect(() => {
+    if (!payModal.open) {
+      setAcquisitionMode('none')
+      return
+    }
+    if (referralEligibility) setAcquisitionMode('referral')
+    else setAcquisitionMode('none')
+  }, [payModal.open, referralEligibility])
 
   useEffect(() => {
     const modalOpen = payModal.open || pixModal.open
@@ -166,7 +267,39 @@ function Cart() {
     }
   }, [payModal.open, pixModal.open])
 
-  const totalBrl = items.reduce((sum, i) => sum + (Number(i.products?.price ?? 0) * (i.quantity || 1)), 0)
+  useEffect(() => {
+    if (!payModal.open && !pixModal.open) {
+      setWalletApplyMode('full')
+      setWalletCustomAmount('')
+    }
+  }, [payModal.open, pixModal.open])
+
+  const { productSubtotalBrl, grupoFeeBrl, grupoQty } = useMemo(() => {
+    let loja = 0
+    let grupo = 0
+    let q = 0
+    for (const i of items) {
+      const p = i.products
+      if (!p) continue
+      const line = Number(p.price ?? 0) * (i.quantity || 1)
+      if (p.purchase_group_id) {
+        grupo += line
+        q += Number(i.quantity) || 1
+      } else {
+        loja += line
+      }
+    }
+    const fxRaw = Number(systemSettings?.fx_brl_per_jpy?.amount)
+    const fx = Number.isFinite(fxRaw) && fxRaw > 0 ? fxRaw : getFxBrlPerJpy()
+    const fee = computeGrupoComprasFeeBrl(grupo, q, fx)
+    return {
+      productSubtotalBrl: loja + grupo,
+      grupoFeeBrl: fee,
+      grupoQty: q,
+    }
+  }, [items, systemSettings])
+
+  const totalBrl = productSubtotalBrl + grupoFeeBrl
   const discountBrl = couponApplied?.discount_brl ?? 0
   const totalAfterDiscountBrl = Math.max(0, totalBrl - discountBrl)
   const totalJpy = Math.round(brlToJpy(totalAfterDiscountBrl))
@@ -305,13 +438,29 @@ function Cart() {
     const payable = getPayableAmount(order)
     if (!payable) return null
     const currency = (payable.currency || 'JPY').toUpperCase()
+    const referralDiscountBrl = acquisitionMode === 'referral'
+      ? Math.max(0, Number(systemSettings?.referral_discount_value?.amount) || 0)
+      : 0
+
     if (currency === 'BRL') {
-      return { jpy: brlToJpy(payable.amount), approxBrl: payable.amount, label: payable.label }
+      const discountedBrl = Math.max(0, (Number(payable.amount) || 0) - referralDiscountBrl)
+      return { jpy: brlToJpy(discountedBrl), approxBrl: discountedBrl, label: payable.label }
     }
-    return { jpy: Number(payable.amount) || 0, approxBrl: jpyToBrl(payable.amount), label: payable.label }
+    const jpyFromDiscount = referralDiscountBrl > 0 ? brlToJpy(referralDiscountBrl) : 0
+    const discountedJpy = Math.max(0, (Number(payable.amount) || 0) - jpyFromDiscount)
+    return { jpy: discountedJpy, approxBrl: jpyToBrl(discountedJpy), label: payable.label }
   }
 
-  const getPaymentBreakdown = (order, useWallet) => {
+  const parseWalletAmountJpy = (rawValue) => {
+    const normalized = String(rawValue ?? '')
+      .replace(',', '.')
+      .replace(/[^\d.]/g, '')
+    const n = Number(normalized)
+    if (!Number.isFinite(n) || n <= 0) return 0
+    return Math.floor(n)
+  }
+
+  const getPaymentBreakdown = (order, useWallet, applyMode = 'full', customAmountRaw = '') => {
     const charge = getOrderChargeJpy(order)
     const balance = wallet?.balance ?? 0
     const canUseWallet = balance > 0 && (wallet?.currency || 'JPY') === 'JPY'
@@ -322,8 +471,15 @@ function Cart() {
     const alreadyAppliedJpy = Math.max(0, Number(order?.wallet_applied_amount) || 0)
     const remainingAfterAlreadyApplied = Math.max(0, totalJpy - alreadyAppliedJpy)
 
+    const customRequestedJpy = parseWalletAmountJpy(customAmountRaw)
+    const requestedWalletJpy = applyMode === 'custom'
+      ? customRequestedJpy
+      : Math.floor(remainingAfterAlreadyApplied)
+
     // "Carteira aplicada" aqui é quanto vai ser aplicado (nesta intenção) somado ao que já foi aplicado.
-    const walletAppliedAdditional = !!useWallet && canUseWallet ? Math.min(balance, remainingAfterAlreadyApplied) : 0
+    const walletAppliedAdditional = !!useWallet && canUseWallet
+      ? Math.min(balance, remainingAfterAlreadyApplied, Math.max(0, requestedWalletJpy))
+      : 0
     const walletApplied = alreadyAppliedJpy + walletAppliedAdditional
     const remainingJpy = Math.max(0, totalJpy - walletApplied)
 
@@ -337,13 +493,15 @@ function Cart() {
       canUseWallet,
       totalJpy,
       walletApplied,
+      requestedWalletJpy: Math.max(0, requestedWalletJpy),
+      remainingAfterAlreadyApplied,
       remainingJpy,
       remainingBrl,
       isFullyCovered: !!useWallet && remainingJpy <= EPS_JPY,
     }
   }
 
-  const handlePayCard = async (forceWallet = false) => {
+  const handlePayCard = async ({ forceWallet = false } = {}) => {
     if (!payModal.order) return
     const accessToken = session?.access_token
     if (!accessToken) {
@@ -351,10 +509,25 @@ function Cart() {
       return
     }
     const orderId = payModal.order.id
+    const breakdown = getPaymentBreakdown(
+      payModal.order,
+      payModal.useWallet,
+      walletApplyMode,
+      walletCustomAmount
+    )
+    const walletAmountJpy = forceWallet
+      ? Math.floor(Math.max(0, breakdown.remainingAfterAlreadyApplied))
+      : Math.floor(Math.max(0, breakdown.requestedWalletJpy))
+    const shouldUseWallet = forceWallet || (!!payModal.useWallet && walletAmountJpy > 0)
     try {
       setSubmitting(true)
       setFeedback('')
-      const result = await createCheckoutSession(orderId, accessToken, { useWallet: forceWallet || !!payModal.useWallet })
+      const result = await createCheckoutSession(orderId, accessToken, {
+        useWallet: shouldUseWallet,
+        walletAmountJpy: shouldUseWallet ? walletAmountJpy : null,
+        acquisitionMode,
+        affiliateCode: null,
+      })
       if (result?.paid) {
         setPayModal({ open: false, order: null, useWallet: true })
         setFeedback('Pagamento realizado com carteira.')
@@ -369,6 +542,15 @@ function Cart() {
       setFeedback(err.message || 'Erro ao processar pagamento.')
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  const closePayModal = () => {
+    setPayModal({ open: false, order: null, useWallet: true })
+    const next = new URLSearchParams(searchParams)
+    if (next.has('payOrderId')) {
+      next.delete('payOrderId')
+      setSearchParams(next, { replace: true })
     }
   }
 
@@ -410,36 +592,44 @@ function Cart() {
         </p>
 
         <div className="mt-4 inline-flex rounded-lg border border-earth-200 bg-earth-50 p-1">
-          <button
-            type="button"
-            onClick={() => {
-              const next = new URLSearchParams(searchParams)
-              next.delete('tab')
-              setSearchParams(next, { replace: true })
-            }}
-            className={`rounded-md px-3 py-1.5 text-sm font-medium ${
-              activeTab === 'checkout'
-                ? 'bg-earth-900 text-white'
-                : 'text-earth-700 hover:bg-earth-100'
-            }`}
-          >
-            Pagamento
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              const next = new URLSearchParams(searchParams)
-              next.set('tab', 'history')
-              setSearchParams(next, { replace: true })
-            }}
-            className={`rounded-md px-3 py-1.5 text-sm font-medium ${
-              activeTab === 'history'
-                ? 'bg-earth-900 text-white'
-                : 'text-earth-700 hover:bg-earth-100'
-            }`}
-          >
-            Histórico
-          </button>
+          {orderedTabs.map((tabId) => {
+            const tab = CART_TABS.find((entry) => entry.id === tabId)
+            if (!tab) return null
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                draggable
+                onClick={() => {
+                  const next = new URLSearchParams(searchParams)
+                  if (tab.id === 'checkout') next.delete('tab')
+                  else next.set('tab', tab.id)
+                  setSearchParams(next, { replace: true })
+                }}
+                onDragStart={(e) => {
+                  setDraggingTabId(tab.id)
+                  e.dataTransfer.effectAllowed = 'move'
+                }}
+                onDragOver={(e) => {
+                  if (!draggingTabId || draggingTabId === tab.id) return
+                  e.preventDefault()
+                }}
+                onDrop={(e) => {
+                  if (!draggingTabId || draggingTabId === tab.id) return
+                  e.preventDefault()
+                  handleTabReorder(draggingTabId, tab.id)
+                }}
+                onDragEnd={() => setDraggingTabId('')}
+                className={`rounded-md px-3 py-1.5 text-sm font-medium ${
+                  activeTab === tab.id
+                    ? 'bg-earth-900 text-white'
+                    : 'text-earth-700 hover:bg-earth-100'
+                }`}
+              >
+                {tab.label}
+              </button>
+            )
+          })}
         </div>
 
         {feedback && !payModal.open && !pixModal.open && (
@@ -557,8 +747,26 @@ function Cart() {
                   Cupom {couponApplied.code} aplicado! Desconto: -{formatBRL(couponApplied.discount_brl)}
                 </p>
               )}
+              {grupoFeeBrl > 0 && (
+                <div className="rounded-lg border border-earth-200 bg-white px-3 py-2 text-sm text-earth-700">
+                  <p className="font-medium text-earth-900">Taxa Grupo de Compras</p>
+                  <p className="mt-1">
+                    {GRUPO_COMPRAS_FEE_PERCENT}% sobre o subtotal dos itens do grupo + {formatJPY(SERVICE_FEE_JPY_PER_ITEM)} por
+                    unidade ({grupoQty} un.) — {formatBRL(grupoFeeBrl)} no total do pedido.
+                  </p>
+                </div>
+              )}
               <div className="flex items-center justify-between pt-2 border-t border-earth-200">
                 <div>
+                  <p className="text-sm text-earth-600">
+                    Subtotal produtos: {formatBRL(productSubtotalBrl)}
+                    {grupoFeeBrl > 0 && (
+                      <>
+                        {' '}
+                        + taxa grupo: {formatBRL(grupoFeeBrl)}
+                      </>
+                    )}
+                  </p>
                   <p className="text-xl font-bold text-earth-900">Total: {formatJPY(totalJpy)}</p>
                   <p className="text-sm text-earth-600">Aprox.: {formatBRL(jpyToBrl(totalJpy))}</p>
                   {discountBrl > 0 && (
@@ -597,7 +805,14 @@ function Cart() {
                   <div key={order.id} className="rounded-xl border border-earth-200 bg-earth-50 p-4">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
-                        <p className="font-medium text-earth-900">Pedido {order.id?.slice(0, 8)}…</p>
+                        <p>
+                          <Link
+                            to={`/app/lounge?tab=pedidos&orderId=${encodeURIComponent(order.id)}`}
+                            className="font-medium text-earth-900 underline decoration-earth-300 underline-offset-2 hover:decoration-earth-700"
+                          >
+                            Pedido {order.id?.slice(0, 8)}…
+                          </Link>
+                        </p>
                         <p className="text-xs text-earth-600">
                           {ORDER_STATUS_LABELS[order.status] ?? order.status}
                           {payable?.label ? ` - ${payable.label}` : ''}
@@ -644,7 +859,8 @@ function Cart() {
                     const orderId = order?.id ?? p.order_id
                     const serviceName = order?.service?.name ?? order?.service?.[0]?.name ?? ''
                     const paymentMethod = p.stripe_payment_id === 'wallet' ? 'Carteira' : (p.stripe_payment_id ? 'Cartão' : '—')
-                    const moneyCurrency = order?.shipping_currency || 'BRL'
+                    const paymentCurrency = String(p.currency || 'JPY').toUpperCase()
+                    const amount = Number(p.amount) || 0
                     return (
                       <li
                         key={p.id}
@@ -662,16 +878,27 @@ function Cart() {
                             : '—'}
                         </div>
                         <div className="w-full sm:col-span-3 sm:w-auto">
-                          <span className="text-earth-900">
-                            Frete
-                            {orderId ? ` · Pedido ${String(orderId).slice(0, 8)}…` : ''}
-                          </span>
+                          {orderId ? (
+                            <Link
+                              to={`/app/lounge?tab=pedidos&orderId=${encodeURIComponent(orderId)}`}
+                              className="text-earth-900 underline decoration-earth-300 underline-offset-2 hover:decoration-earth-700"
+                            >
+                              Frete · Pedido {String(orderId).slice(0, 8)}…
+                            </Link>
+                          ) : (
+                            <span className="text-earth-900">Frete</span>
+                          )}
                           {serviceName && (
                             <p className="text-sm text-earth-500">{serviceName}</p>
                           )}
                         </div>
                         <div className="w-full font-medium text-earth-900 sm:col-span-2 sm:w-auto">
-                          {moneyCurrency === 'JPY' ? formatJPY(p.amount) : formatBRL(p.amount)}
+                          <div>{paymentCurrency === 'BRL' ? formatBRL(amount) : formatJPY(amount)}</div>
+                          <p className="text-xs font-normal text-earth-500">
+                            {paymentCurrency === 'BRL'
+                              ? 'registro legado em BRL'
+                              : `${formatBRL(jpyToBrl(amount))} convertido`}
+                          </p>
                         </div>
                         <div className="w-full text-earth-600 sm:col-span-2 sm:w-auto">
                           {paymentMethod}
@@ -689,16 +916,6 @@ function Cart() {
                             {PAYMENT_STATUS_LABELS[p.status] ?? p.status}
                           </span>
                         </div>
-                        {orderId && (
-                          <div className="w-full sm:col-span-12 sm:mt-1 sm:flex sm:justify-end">
-                            <Link
-                              to="/app/orders"
-                              className="text-sm font-medium text-earth-700 hover:text-earth-900"
-                            >
-                              Ver pedido →
-                            </Link>
-                          </div>
-                        )}
                       </li>
                     )
                   })}
@@ -716,7 +933,7 @@ function Cart() {
           <div
             className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/40 p-4 relative"
             style={{ position: 'fixed', inset: 0 }}
-            onClick={() => setPayModal({ open: false, order: null, useWallet: true })}
+            onClick={closePayModal}
           >
           {feedback && (
             <div className="absolute inset-0 z-[80] flex items-center justify-center pointer-events-none">
@@ -747,7 +964,7 @@ function Cart() {
                   totalJpy,
                   walletApplied,
                   remainingJpy,
-                } = getPaymentBreakdown(payModal.order, payModal.useWallet)
+                } = getPaymentBreakdown(payModal.order, payModal.useWallet, walletApplyMode, walletCustomAmount)
                 const useWallet = !!payModal.useWallet && canUseWallet
 
                 return (
@@ -793,8 +1010,79 @@ function Cart() {
                         <p className="text-sm text-earth-600">
                           Saldo disponível: {formatJPY(balance)}
                         </p>
+                        {useWallet && canUseWallet && (
+                          <div className="mt-3 space-y-2">
+                            <label className="flex items-center gap-2 text-sm text-earth-700">
+                              <input
+                                type="radio"
+                                name="wallet-apply-mode"
+                                checked={walletApplyMode === 'full'}
+                                onChange={() => setWalletApplyMode('full')}
+                              />
+                              <span>Usar saldo máximo possível</span>
+                            </label>
+                            <label className="flex items-center gap-2 text-sm text-earth-700">
+                              <input
+                                type="radio"
+                                name="wallet-apply-mode"
+                                checked={walletApplyMode === 'custom'}
+                                onChange={() => setWalletApplyMode('custom')}
+                              />
+                              <span>Usar valor específico</span>
+                            </label>
+                            {walletApplyMode === 'custom' && (
+                              <div className="mt-2">
+                                <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-earth-500">
+                                  Valor da carteira (JPY)
+                                </label>
+                                <input
+                                  type="number"
+                                  min="1"
+                                  step="1"
+                                  value={walletCustomAmount}
+                                  onChange={(e) => setWalletCustomAmount(e.target.value)}
+                                  placeholder="Ex: 1000"
+                                  className="w-full rounded border border-earth-300 px-3 py-2 text-sm text-earth-900"
+                                />
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </label>
+                    {referralEligibility && (
+                      <div className="rounded-lg border border-earth-200 bg-white p-4">
+                        <p className="text-sm font-medium text-earth-900">Indicação</p>
+                        <p className="mt-1 text-xs text-earth-600">
+                          Você entrou com código de indicação. Pode aplicar o desconto de primeira compra ou pagar o valor integral.
+                        </p>
+                        <div className="mt-3 space-y-2">
+                          <label className="flex items-center gap-2 text-sm text-earth-700">
+                            <input
+                              type="radio"
+                              name="acquisition-mode"
+                              checked={acquisitionMode === 'none'}
+                              onChange={() => setAcquisitionMode('none')}
+                            />
+                            <span>Não aplicar desconto de indicação</span>
+                          </label>
+                          <label className="flex items-center gap-2 text-sm text-earth-700">
+                            <input
+                              type="radio"
+                              name="acquisition-mode"
+                              checked={acquisitionMode === 'referral'}
+                              onChange={() => setAcquisitionMode('referral')}
+                            />
+                            <span>
+                              Aplicar desconto de indicação
+                              <span className="ml-1 text-earth-500">
+                                (-{formatJPY(Math.round(brlToJpy(systemSettings?.referral_discount_value?.amount || 0)))})
+                              </span>
+                            </span>
+                          </label>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )
               })()}
@@ -802,15 +1090,21 @@ function Cart() {
 
             <div className="shrink-0 border-t border-earth-200 bg-earth-50 p-4">
               {(() => {
-                const { isFullyCovered, remainingBrl } = getPaymentBreakdown(payModal.order, payModal.useWallet)
+                const { isFullyCovered, remainingBrl } = getPaymentBreakdown(
+                  payModal.order,
+                  payModal.useWallet,
+                  walletApplyMode,
+                  walletCustomAmount
+                )
+                const requiresReferralChoice = referralEligibility && acquisitionMode === 'none'
 
                 return (
                   <div className="flex flex-col gap-3">
                     <div className="flex flex-wrap gap-2">
                       <button
                         type="button"
-                        onClick={() => handlePayCard(!!payModal.useWallet)}
-                        disabled={submitting || isFullyCovered}
+                        onClick={() => handlePayCard({ forceWallet: false })}
+                        disabled={submitting || isFullyCovered || requiresReferralChoice}
                         className="rounded-lg border border-earth-300 bg-white px-4 py-2.5 font-medium text-earth-800 hover:bg-earth-50 disabled:opacity-60"
                       >
                         Cartão
@@ -821,7 +1115,7 @@ function Cart() {
                           setPayModal((m) => ({ ...m, open: false }))
                           setPixModal({ open: true, order: payModal.order, amountBrl: remainingBrl })
                         }}
-                        disabled={submitting || isFullyCovered}
+                        disabled={submitting || isFullyCovered || requiresReferralChoice}
                         className="rounded-lg border border-earth-300 bg-white px-4 py-2.5 font-medium text-earth-800 hover:bg-earth-50 disabled:opacity-60"
                       >
                         PIX
@@ -830,15 +1124,15 @@ function Cart() {
                     <div className="flex flex-wrap gap-2">
                       <button
                         type="button"
-                        onClick={() => handlePayCard(isFullyCovered ? true : !!payModal.useWallet)}
-                        disabled={submitting}
+                        onClick={() => handlePayCard({ forceWallet: isFullyCovered })}
+                        disabled={submitting || requiresReferralChoice}
                         className="flex-1 min-w-0 rounded-lg bg-earth-900 px-6 py-2.5 font-medium text-earth-50 hover:bg-earth-800 disabled:opacity-60"
                       >
                         {submitting ? 'Processando...' : 'Finalizar pagamento'}
                       </button>
                       <button
                         type="button"
-                        onClick={() => setPayModal({ open: false, order: null, useWallet: true })}
+                        onClick={closePayModal}
                         disabled={submitting}
                         className="rounded-lg border border-earth-300 px-4 py-2.5 font-medium text-earth-700 hover:bg-earth-100 disabled:opacity-60"
                       >

@@ -10,9 +10,15 @@ import { getMyOrders } from '../../services/orderService'
 import { getWallet } from '../../services/walletService'
 import { getWishlistLinks } from '../../services/wishlistLinkService'
 import { getMyNotifications, markNotificationRead } from '../../services/notificationService'
-import { getMyInventory, getMyShipments } from '../../services/inventoryService'
+import { getMyShipments } from '../../services/inventoryService'
 import { SHIPPING_ADDRESS_JAPAN } from '../../data/legalConfig'
 import { cacheKey, readCache, writeCache } from '../../lib/cache'
+import { getMyReferralOverview } from '../../services/referralService'
+import { getSystemSettings } from '../../services/settingsService'
+import { brlToJpy, formatJPY } from '../../lib/fx'
+
+/** Mesmos status da aba "Envios em processo" em Lounge → Envios. */
+const SHIPMENT_IN_PROCESS_STATUSES = ['requested', 'awaiting_payment', 'paid', 'shipped']
 
 const DASHBOARD_PREFS_KEY = 'dashboard_prefs_v1'
 const DEFAULT_DASHBOARD_PREFS = {
@@ -96,9 +102,18 @@ export default function Dashboard() {
   const [orders, setOrders] = useState([])
   const [wallet, setWallet] = useState(null)
   const [wishlist, setWishlist] = useState([])
-  const [receivedCount, setReceivedCount] = useState(0)
-  const [requestedCount, setRequestedCount] = useState(0)
+  const [deliveredAtHomeCount, setDeliveredAtHomeCount] = useState(0)
+  const [shipmentsInProcessCount, setShipmentsInProcessCount] = useState(0)
   const [notifications, setNotifications] = useState([])
+  const [referral, setReferral] = useState({
+    code: null,
+    referrals: [],
+    credits: 0,
+    stats: { total: 0, awaitingReferrerCredit: 0, rewarded: 0 },
+  })
+  const [referralRewards, setReferralRewards] = useState({ discountBrl: 0, creditBrl: 0 })
+  const [referralLoadError, setReferralLoadError] = useState('')
+  const [referralRefreshing, setReferralRefreshing] = useState(false)
   const [loading, setLoading] = useState(true)
   const [notifsLoading, setNotifsLoading] = useState(true)
   const [showCustomizer, setShowCustomizer] = useState(false)
@@ -130,38 +145,40 @@ export default function Dashboard() {
         setOrders(cached.orders ?? [])
         setWallet(cached.wallet ?? null)
         setWishlist(cached.wishlist ?? [])
-        setReceivedCount(Number(cached.receivedCount) || 0)
-        setRequestedCount(Number(cached.requestedCount) || 0)
+        setDeliveredAtHomeCount(Number(cached.deliveredAtHomeCount) || 0)
+        setShipmentsInProcessCount(Number(cached.shipmentsInProcessCount) || 0)
         setLoading(false)
       }
       try {
-        const [ordersRes, walletRes, wishlistLinksRes, inventoryRes, shipmentsRes] = await Promise.all([
+        const [ordersRes, walletRes, wishlistLinksRes, deliveredRes, inProcessRes] = await Promise.all([
           getMyOrders(user.id),
           getWallet(user.id),
           getWishlistLinks(user.id),
-          getMyInventory(user.id, { limit: 200, offset: 0 }),
-          getMyShipments(user.id, { limit: 200, offset: 0 }),
+          getMyShipments(user.id, { limit: 200, offset: 0, statusIn: ['completed'] }),
+          getMyShipments(user.id, { limit: 200, offset: 0, statusIn: SHIPMENT_IN_PROCESS_STATUSES }),
         ])
         if (!isActive) return
         setOrders(ordersRes.data ?? [])
         setWallet(walletRes.data ?? null)
         setWishlist(wishlistLinksRes.data ?? [])
-        setReceivedCount((inventoryRes.data ?? []).length)
-        setRequestedCount((shipmentsRes.data ?? []).length)
+        const deliveredN = (deliveredRes.data ?? []).length
+        const processN = (inProcessRes.data ?? []).length
+        setDeliveredAtHomeCount(deliveredN)
+        setShipmentsInProcessCount(processN)
         writeCache(k, {
           orders: ordersRes.data ?? [],
           wallet: walletRes.data ?? null,
           wishlist: wishlistLinksRes.data ?? [],
-          receivedCount: (inventoryRes.data ?? []).length,
-          requestedCount: (shipmentsRes.data ?? []).length,
+          deliveredAtHomeCount: deliveredN,
+          shipmentsInProcessCount: processN,
         })
       } catch {
         if (isActive) {
           setOrders([])
           setWallet(null)
           setWishlist([])
-          setReceivedCount(0)
-          setRequestedCount(0)
+          setDeliveredAtHomeCount(0)
+          setShipmentsInProcessCount(0)
         }
       } finally {
         if (isActive) setLoading(false)
@@ -170,6 +187,39 @@ export default function Dashboard() {
     run()
     return () => { isActive = false }
   }, [user?.id])
+
+  useEffect(() => {
+    let isActive = true
+    const run = async () => {
+      if (!user?.id) return
+      const [overviewRes, settingsRes] = await Promise.all([
+        getMyReferralOverview(user.id),
+        getSystemSettings(),
+      ])
+      if (!isActive) return
+      if (overviewRes.data) setReferral(overviewRes.data)
+      setReferralLoadError(overviewRes.error?.message || '')
+      const s = settingsRes.data || {}
+      setReferralRewards({
+        discountBrl: Math.max(0, Number(s?.referral_discount_value?.amount) || 0),
+        creditBrl: Math.max(0, Number(s?.referral_credit_value?.amount) || 0),
+      })
+    }
+    run()
+    return () => { isActive = false }
+  }, [user?.id])
+
+  const refreshReferralCode = async () => {
+    if (!user?.id) return
+    setReferralRefreshing(true)
+    try {
+      const { data: overviewData, error: overviewError } = await getMyReferralOverview(user.id)
+      if (overviewData) setReferral(overviewData)
+      setReferralLoadError(overviewError?.message || '')
+    } finally {
+      setReferralRefreshing(false)
+    }
+  }
 
   useEffect(() => {
     let isActive = true
@@ -207,7 +257,10 @@ export default function Dashboard() {
   const accountCode = profile?.account_code ?? ''
   const recipientLine = accountCode ? `${name} - ${accountCode}` : name
   const balance = wallet?.balance ?? 0
-  const currency = wallet?.currency ?? 'BRL'
+  const currency = wallet?.currency ?? 'JPY'
+  const referralDiscountJpy = Math.round(brlToJpy(referralRewards.discountBrl || 0))
+  const referralCreditJpy = Math.round(brlToJpy(referralRewards.creditBrl || 0))
+  const referralCreditsJpy = Math.round(brlToJpy(referral.credits || 0))
   const unreadCount = notifications.filter((n) => !n.read_at).length
   const addressForUser = {
     recipient: recipientLine,
@@ -282,14 +335,14 @@ export default function Dashboard() {
                     />
                     Card Minha conta
                   </label>
-                  <label className="flex items-center gap-2 text-sm text-earth-700">
+                  <label className="flex items-center gap-2 text-sm text-earth-700 sm:col-span-2">
                     <input
                       type="checkbox"
                       checked={dashboardPrefs.showCardShipments}
                       onChange={(e) => updateDashboardPref('showCardShipments', e.target.checked)}
                       className="rounded border-earth-300"
                     />
-                    Card Envios
+                    Cards Envios (em processo + entregues em casa)
                   </label>
                   <label className="flex items-center gap-2 text-sm text-earth-700">
                     <input
@@ -380,7 +433,7 @@ export default function Dashboard() {
                             )
                           }
                           const orderId = n.meta?.order_id
-                          if (orderId) window.location.href = '/app/orders'
+                          if (orderId) window.location.href = `/app/lounge?tab=pedidos&orderId=${encodeURIComponent(orderId)}`
                         }}
                         className="w-full rounded-lg border border-earth-200 bg-earth-50 p-3 text-left hover:bg-earth-100"
                       >
@@ -420,23 +473,52 @@ export default function Dashboard() {
                   <span className="block truncate text-earth-500">{accountCode ? `Conta · ${accountCode}` : 'Conta'}</span>
                 </span>
               </Link>}
-              {dashboardPrefs.showCardShipments && <Link
-                to="/app/lounge?tab=envios"
-                className="flex items-center gap-2 rounded-lg border border-earth-200 bg-white px-3 py-2 text-left transition hover:bg-earth-50"
-                title="Envios"
-              >
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-earth-100 text-earth-600">
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8 4-8-4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                  </svg>
-                </span>
-                <span className="min-w-0 text-xs">
-                  <span className="block font-medium text-earth-900">Recebidos: {receivedCount}</span>
-                  <span className="block text-earth-500">Solicitados: {requestedCount}</span>
-                </span>
-              </Link>}
+              {dashboardPrefs.showCardShipments && (
+                <>
+                  <Link
+                    to="/app/lounge?tab=envios"
+                    className="flex items-center gap-2 rounded-lg border border-earth-200 bg-white px-3 py-2 text-left transition hover:bg-earth-50"
+                    title="Envios em processo — Lounge → Envios"
+                  >
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-earth-100 text-earth-600">
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"
+                        />
+                      </svg>
+                    </span>
+                    <span className="min-w-0 text-xs">
+                      <span className="block font-medium text-earth-900">{shipmentsInProcessCount} em processo</span>
+                      <span className="block text-earth-500">Envios em andamento</span>
+                    </span>
+                  </Link>
+                  <Link
+                    to="/app/lounge?tab=envios&envSub=recebidos"
+                    className="flex items-center gap-2 rounded-lg border border-earth-200 bg-white px-3 py-2 text-left transition hover:bg-earth-50"
+                    title="Entregues em casa — histórico no Lounge → Envios"
+                  >
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-earth-100 text-earth-600">
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+                        />
+                      </svg>
+                    </span>
+                    <span className="min-w-0 text-xs">
+                      <span className="block font-medium text-earth-900">{deliveredAtHomeCount} entregues</span>
+                      <span className="block text-earth-500">Recebidos em casa</span>
+                    </span>
+                  </Link>
+                </>
+              )}
               {dashboardPrefs.showCardWallet && <Link
-                to="/app/wallet"
+                to="/app/lounge"
                 className="flex items-center gap-2 rounded-lg border border-earth-200 bg-white px-3 py-2 text-left transition hover:bg-earth-50"
                 title="Carteira"
               >
@@ -451,7 +533,7 @@ export default function Dashboard() {
                 </span>
               </Link>}
               {dashboardPrefs.showCardOrders && <Link
-                to="/app/orders"
+                to="/app/lounge?tab=pedidos"
                 className="flex items-center gap-2 rounded-lg border border-earth-200 bg-white px-3 py-2 text-left transition hover:bg-earth-50"
                 title="Pedidos"
               >
@@ -520,6 +602,55 @@ export default function Dashboard() {
               </address>
               <CopyAddressButton address={addressForUser} />
             </section>}
+
+            <section id="referral-section" className="rounded-xl border border-green-200 bg-green-50 p-4 sm:p-5">
+              <h2 className="text-lg font-semibold text-earth-900">Programa de indicação</h2>
+              {referralLoadError && (
+                <p className="mt-2 rounded bg-amber-100 px-3 py-2 text-xs text-amber-800">
+                  {referralLoadError}
+                </p>
+              )}
+              <p className="mt-2 text-sm text-earth-800">
+                <strong>Para quem você indica:</strong> ao se cadastrar com seu link e aplicar o benefício no primeiro pagamento
+                elegível na central de pagamentos, a pessoa pode receber até{' '}
+                <strong>{formatJPY(referralDiscountJpy)}</strong> de desconto nesse pedido (conforme regras no checkout).
+              </p>
+              <p className="mt-2 text-sm text-earth-800">
+                <strong>Para você:</strong> quando o indicado <strong>finalizar o envio</strong> desse pedido (status{' '}
+                <em>enviado</em> ou <em>concluído</em> no sistema), você recebe{' '}
+                <strong>{formatJPY(referralCreditJpy)}</strong> em crédito na carteira, desde que o benefício de
+                indicação tenha sido aplicado naquele pedido.
+              </p>
+              <div className="mt-4 flex flex-wrap items-center gap-2">
+                <span className="rounded bg-white px-3 py-1.5 text-sm font-semibold text-earth-900 border border-green-200">
+                  Seu código: {referral.code || '—'}
+                </span>
+                <button
+                  type="button"
+                  onClick={refreshReferralCode}
+                  disabled={referralRefreshing}
+                  className="rounded border border-green-300 bg-white px-3 py-1.5 text-sm font-medium text-green-700 hover:bg-green-100 disabled:opacity-70"
+                >
+                  {referralRefreshing ? 'Gerando...' : 'Gerar novamente'}
+                </button>
+                {referral.code && (
+                  <button
+                    type="button"
+                    onClick={() => navigator.clipboard.writeText(`${window.location.origin}/register?invite=${referral.code}`)}
+                    className="rounded border border-green-300 bg-white px-3 py-1.5 text-sm font-medium text-green-700 hover:bg-green-100"
+                  >
+                    Copiar link de cadastro
+                  </button>
+                )}
+              </div>
+              <p className="mt-3 text-sm text-earth-700">
+                Créditos na carteira: <strong>{formatJPY(referralCreditsJpy)}</strong>
+              </p>
+              <p className="mt-1 text-xs text-earth-600">
+                Indicados: {referral.stats?.total || 0} • Aguardando seu crédito (ex.: após o envio do indicado):{' '}
+                {referral.stats?.awaitingReferrerCredit ?? 0} • Crédito já recebido por indicação: {referral.stats?.rewarded || 0}
+              </p>
+            </section>
           </div>
         )}
       </div>

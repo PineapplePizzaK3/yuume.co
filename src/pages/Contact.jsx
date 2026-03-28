@@ -27,7 +27,7 @@ const ICONES = {
 
 /**
  * Página de Contato com formulário (via Web3Forms) e opções de contato direto.
- * Configure VITE_WEB3FORMS_ACCESS_KEY em .env (obtenha em web3forms.com com eiko.dlss@gmail.com).
+ * Configure VITE_WEB3FORMS_ACCESS_KEY em .env (obtenha em web3forms.com com support@eiko-dls.com).
  */
 function Contact() {
   const [formData, setFormData] = useState({

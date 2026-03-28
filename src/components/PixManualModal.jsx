@@ -90,7 +90,7 @@ export default function PixManualModal({ open, onClose, onBack, order, amountBrl
   return (
     createPortal(
       <div
-        className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/40 p-4 relative"
+        className="fixed inset-0 z-[11000] flex items-center justify-center bg-black/40 p-4 relative"
         style={{ position: 'fixed', inset: 0 }}
         onClick={onClose}
         role="dialog"

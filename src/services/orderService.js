@@ -42,7 +42,7 @@ export const ORDER_STATUS_LABELS = {
 }
 
 /**
- * Busca serviços disponíveis (Redirecionamento, Personal Shopping).
+ * Busca serviços disponíveis (Redirecionamento com módulos Padrão/Assistido, Personal Shopping).
  */
 export async function getServices() {
   try {
@@ -61,8 +61,8 @@ export async function getServices() {
 /**
  * Cria pedido - usuário solicita.
  * Redirecionamento:
- * - self_buy: status pending_approval
- * - assisted_buy (pré-pagamento): status awaiting_quote (admin define orçamento)
+ * - self_buy (Redirecionamento Padrão): status pending_approval
+ * - assisted_buy (Redirecionamento Assistido, pré-pagamento): status awaiting_quote (admin define orçamento)
  * Personal Shopping: status awaiting_quote.
  */
 export async function createOrder(userId, { service_id, message, attachment_urls, service_name, order_module }) {
@@ -100,17 +100,30 @@ export async function createOrder(userId, { service_id, message, attachment_urls
 export async function getMyOrders(userId, options = {}) {
   const limit = Math.max(1, Number(options?.limit) || 20)
   const offset = Math.max(0, Number(options?.offset) || 0)
+  const status = typeof options?.status === 'string' ? options.status : null
+  const excludeStatus = typeof options?.excludeStatus === 'string' ? options.excludeStatus : null
   try {
-    const { data, error } = await withDbTimeout(
-      supabase
-        .from('orders')
-        .select(`
+    let query = supabase
+      .from('orders')
+      .select(`
       *,
-      service:services(name)
+      service:services(name),
+      order_items(
+        id,
+        quantity,
+        price_at_purchase,
+        product:products(name, image_url)
+      )
     `)
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .range(offset, offset + limit - 1)
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1)
+
+    if (status) query = query.eq('status', status)
+    if (excludeStatus) query = query.neq('status', excludeStatus)
+
+    const { data, error } = await withDbTimeout(
+      query
     )
     return { data: data ?? [], error }
   } catch (e) {
@@ -170,7 +183,13 @@ export async function getOrderById(orderId, userId) {
         .from('orders')
         .select(`
       *,
-      service:services(name)
+      service:services(name),
+      order_items(
+        id,
+        quantity,
+        price_at_purchase,
+        product:products(name, image_url)
+      )
     `)
         .eq('id', orderId)
         .eq('user_id', userId)

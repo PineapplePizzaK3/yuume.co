@@ -26,7 +26,7 @@ export const RECOMENDACOES_QUICK_ACCESS = [
     id: 'tcg',
     tipoLoja: 'Cards e colecionáveis',
     imagem: '',
-    imagens: ['/home/tcg-2-packs.png', '/home/tcg-1-japanese-booster-boxes-WLC.png', '/home/tcg-3-wstcg.jpg'],
+    imagens: ['https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0202/users/dfebff570644144f878ddd3c0212bba1fb2e74a9/i-img1200x823-17720300831609u5vj7.jpg', '/home/tcg-2-packs.png', '/home/tcg-1-japanese-booster-boxes-WLC.png', '/home/tcg-3-wstcg.jpg'],
     lojaIds: ['hareruya', 'magicamp'],
     objetivoVisual: 'valor + raridade',
     estiloVisual: 'realista, luz dirigida e foco no item',
@@ -42,7 +42,7 @@ export const RECOMENDACOES_QUICK_ACCESS = [
     tipoLoja: 'Cosméticos e beleza',
     imagem: '',
     imagens: ['/home/cosmeticos-1-comesticos.png', '/home/cosmeticos-2-cosmeticos.png', '/home/cosmeticos-3-livejapan.jpg'],
-    lojaIds: ['cosme', 'qoo10'],
+    lojaIds: ['cosme', 'qoo10', 'amazon'],
     objetivoVisual: 'confiança + qualidade japonesa',
     estiloVisual: 'clean premium (MUJI vibes), iluminação suave',
     roteiroImagens: [
@@ -72,7 +72,7 @@ export const RECOMENDACOES_QUICK_ACCESS = [
     tipoLoja: 'Papelaria e dia a dia',
     imagem: '',
     imagens: ['/home/stationery-1-upload.png', '/home/stationery-2-upload.png', '/home/stationery-3-fountain-pen.jpg'],
-    lojaIds: ['loft', 'itoya', 'muji'],
+    lojaIds: ['loft', 'itoya', 'amazon'],
     objetivoVisual: 'fofura + utilidade',
     estiloVisual: 'realista com paleta suave e enquadramento padronizado',
     roteiroImagens: [
