@@ -3169,8 +3169,8 @@ export default function Admin() {
             </div>
 
             <p className="text-sm text-earth-600">
-              O desconto ({formatJPY(Math.round(brlToJpy(Number(settingsForm.referral_discount_value) || 0))}) aplica-se no checkout do indicado
-              quando ele usa o benefício. O crédito ao indicador ({formatJPY(Math.round(brlToJpy(Number(settingsForm.referral_credit_value) || 0))}) é
+              O desconto ({formatJPY(Math.round(brlToJpy(Number(settingsForm.referral_discount_value) || 0)))}) aplica-se no checkout do indicado
+              quando ele usa o benefício. O crédito ao indicador ({formatJPY(Math.round(brlToJpy(Number(settingsForm.referral_credit_value) || 0)))}) é
               lançado quando o pedido do indicado (com referral aplicado) atinge status <strong>enviado</strong> ou{' '}
               <strong>concluído</strong>.
             </p>
