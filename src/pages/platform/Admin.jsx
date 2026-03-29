@@ -7,6 +7,9 @@ import { Helmet } from 'react-helmet-async'
 import { useAuth } from '../../hooks/useAuth'
 import {
   getProductsAdmin,
+  getStoreProductsAdmin,
+  addProductToStoreAdmin,
+  removeProductFromStoreAdmin,
   createProduct,
   updateProduct,
   deleteProduct,
@@ -109,6 +112,7 @@ function PaginationControls({ page, hasMore, loading, onPrev, onNext }) {
 export default function Admin() {
   const { user, profile } = useAuth()
   const [products, setProducts] = useState([])
+  const [storeProducts, setStoreProducts] = useState([])
   const [orders, setOrders] = useState([])
   const [services, setServices] = useState([])
   const [loading, setLoading] = useState(true)
@@ -291,6 +295,10 @@ export default function Admin() {
   const [orderStatusFilter, setOrderStatusFilter] = useState([])
   const [productsPage, setProductsPage] = useState(0)
   const [productsHasMore, setProductsHasMore] = useState(false)
+  const [storeProductsPage, setStoreProductsPage] = useState(0)
+  const [storeProductsHasMore, setStoreProductsHasMore] = useState(false)
+  const [storeProductSearch, setStoreProductSearch] = useState('')
+  const [storeLinkSubmittingId, setStoreLinkSubmittingId] = useState('')
   const [usersPage, setUsersPage] = useState(0)
   const [usersHasMore, setUsersHasMore] = useState(false)
   const [draggingTabId, setDraggingTabId] = useState('')
@@ -363,6 +371,25 @@ export default function Admin() {
     }
   }
 
+  const loadStoreProducts = async (active = () => true, page = storeProductsPage) => {
+    if (active()) setLoading(true)
+    try {
+      const { data, error } = await getStoreProductsAdmin(
+        ADMIN_PAGE_SIZE.products,
+        page * ADMIN_PAGE_SIZE.products
+      )
+      if (!active()) return
+      const list = data ?? []
+      setStoreProducts(list)
+      setStoreProductsHasMore(list.length === ADMIN_PAGE_SIZE.products)
+      if (error) setMessage(error.message)
+    } catch (e) {
+      if (active()) setMessage(e?.message || 'Erro ao carregar produtos da loja')
+    } finally {
+      if (active()) setLoading(false)
+    }
+  }
+
   const loadOrders = async (active = () => true, page = ordersPage) => {
     if (active()) setOrdersLoading(true)
     try {
@@ -401,6 +428,14 @@ export default function Admin() {
       isActive = false
     }
   }, [productsPage])
+
+  useEffect(() => {
+    let isActive = true
+    loadStoreProducts(() => isActive)
+    return () => {
+      isActive = false
+    }
+  }, [storeProductsPage])
 
   useEffect(() => {
     let isActive = true
@@ -1248,6 +1283,32 @@ export default function Admin() {
     logAdminAction('product_delete', 'product', id).catch(() => {})
   }
 
+  const handlePublishToStore = async (productId) => {
+    if (!productId) return
+    setStoreLinkSubmittingId(productId)
+    const { error } = await addProductToStoreAdmin(productId)
+    setStoreLinkSubmittingId('')
+    if (error) {
+      setMessage(error.message || 'Erro ao publicar produto na loja')
+      return
+    }
+    setMessage('Produto publicado na loja virtual')
+    loadStoreProducts()
+  }
+
+  const handleUnpublishFromStore = async (productId) => {
+    if (!productId || !confirm('Remover este item da Loja Virtual?')) return
+    setStoreLinkSubmittingId(productId)
+    const { error } = await removeProductFromStoreAdmin(productId)
+    setStoreLinkSubmittingId('')
+    if (error) {
+      setMessage(error.message || 'Erro ao remover produto da loja')
+      return
+    }
+    setMessage('Produto removido da loja virtual')
+    loadStoreProducts()
+  }
+
   const handleDuplicate = async (p) => {
     setDuplicatingId(p.id)
     setMessage('')
@@ -1674,8 +1735,10 @@ export default function Admin() {
   }
 
   const masterProductReferences = products.filter((p) => !p.purchase_group_id)
+  const storePublishCandidates = masterProductReferences.filter((p) => !p.store_linked)
   const productReferenceTerm = productReferenceSearch.trim().toLowerCase()
   const groupProductReferenceTerm = groupProductReferenceSearch.trim().toLowerCase()
+  const storeProductTerm = storeProductSearch.trim().toLowerCase()
 
   const filteredProductReferences = masterProductReferences.filter((p) => {
     if (!productReferenceTerm) return true
@@ -1691,6 +1754,14 @@ export default function Admin() {
       .map((v) => String(v ?? '').toLowerCase())
       .join(' ')
     return haystack.includes(groupProductReferenceTerm)
+  })
+
+  const filteredStorePublishCandidates = storePublishCandidates.filter((p) => {
+    if (!storeProductTerm) return true
+    const haystack = [p.id, p.name, p.description]
+      .map((v) => String(v ?? '').toLowerCase())
+      .join(' ')
+    return haystack.includes(storeProductTerm)
   })
 
   const catalogTerm = catalogSearch.trim().toLowerCase()
@@ -4247,82 +4318,104 @@ export default function Admin() {
             </div>
           </div>
 
-          <div className="mt-6">
-            <h3 className="font-medium text-earth-900">Produtos cadastrados</h3>
-            {loading && <p className="mt-2 text-sm text-earth-600">Carregando...</p>}
-            {!loading && products.length === 0 && (
-              <p className="mt-2 text-sm text-earth-600">Nenhum produto ainda.</p>
-            )}
-            {!loading && products.length > 0 && (
-              <div className="mt-4 space-y-2">
-                <ul className="space-y-2">
-                  {products.map((p) => (
-                    <li
-                      key={p.id}
-                      className="flex items-center justify-between rounded-lg border border-earth-200 bg-white p-4"
-                    >
-                      <div className="flex items-center gap-4">
-                        {p.image_url ? (
-                          <img src={p.image_url} alt="" className="h-12 w-12 rounded object-cover" />
-                        ) : (
-                          <div className="h-12 w-12 rounded bg-earth-200" />
-                        )}
-                        <div>
-                          <span className="font-medium text-earth-900">{p.name}</span>
-                          <span className="ml-2 text-sm text-earth-600">{formatJPY(brlToJpy(p.price))}</span>
-                          <span className="ml-2 text-xs text-earth-500">
-                            {Number(p.weight_kg ?? 0) > 0 ? `• ${formatWeight(p.weight_kg)}` : '• peso não definido'}
-                          </span>
-                          <span className="ml-2 text-xs text-earth-500">
-                            • Estoque: {p.stock_quantity != null ? p.stock_quantity : 'ilimitado'}
-                          </span>
-                          {!p.is_active && (
-                            <span className="ml-2 rounded bg-amber-200 px-2 py-0.5 text-xs text-amber-900">
-                              Inativo
-                            </span>
-                          )}
-                        </div>
+          <div className="mt-6 space-y-6">
+            <div className="rounded-lg border border-earth-200 bg-white p-4">
+              <h3 className="font-medium text-earth-900">Publicar itens da base na Loja Virtual</h3>
+              <p className="mt-1 text-xs text-earth-600">
+                Aqui você apenas vincula/desvincula itens da loja. O cadastro e edição do produto-base fica na aba Lista de Produtos.
+              </p>
+              <input
+                type="search"
+                value={storeProductSearch}
+                onChange={(e) => setStoreProductSearch(e.target.value)}
+                placeholder="Buscar produto-base para publicar..."
+                className="mt-3 w-full rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
+              />
+              {filteredStorePublishCandidates.length === 0 ? (
+                <p className="mt-3 text-sm text-earth-600">Nenhum produto-base disponível para publicação.</p>
+              ) : (
+                <ul className="mt-3 max-h-72 space-y-2 overflow-y-auto pr-1">
+                  {filteredStorePublishCandidates.slice(0, 40).map((p) => (
+                    <li key={p.id} className="flex items-center justify-between rounded border border-earth-200 px-3 py-2">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium text-earth-900">{p.name}</p>
+                        <p className="text-xs text-earth-600">
+                          {formatJPY(brlToJpy(p.price))} • {p.stock_quantity != null ? `Estoque ${p.stock_quantity}` : 'Estoque ilimitado'}
+                        </p>
                       </div>
-                      <div className="flex gap-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            handleEdit(p)
-                            setCatalogCreateOpen(true)
-                            setActiveTab('catalogo_produtos')
-                          }}
-                          className="text-sm font-medium text-earth-600 hover:text-earth-900"
-                        >
-                          Editar
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDuplicate(p)}
-                          disabled={duplicatingId === p.id}
-                          className="text-sm font-medium text-earth-600 hover:text-earth-900 disabled:opacity-50"
-                        >
-                          {duplicatingId === p.id ? 'Duplicando...' : 'Duplicar'}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(p.id)}
-                          className="text-sm font-medium text-red-600 hover:text-red-800"
-                        >
-                          Remover
-                        </button>
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handlePublishToStore(p.id)}
+                        disabled={storeLinkSubmittingId === p.id}
+                        className="rounded border border-earth-300 bg-white px-3 py-1.5 text-xs font-medium text-earth-800 hover:bg-earth-100 disabled:opacity-50"
+                      >
+                        {storeLinkSubmittingId === p.id ? 'Publicando...' : 'Publicar'}
+                      </button>
                     </li>
                   ))}
                 </ul>
-                <PaginationControls
-                  page={productsPage}
-                  hasMore={productsHasMore}
-                  loading={loading}
-                  onPrev={() => setProductsPage((p) => Math.max(0, p - 1))}
-                  onNext={() => setProductsPage((p) => p + 1)}
-                />
-              </div>
-            )}
+              )}
+            </div>
+
+            <div>
+              <h3 className="font-medium text-earth-900">Produtos publicados na Loja Virtual</h3>
+              {loading && <p className="mt-2 text-sm text-earth-600">Carregando...</p>}
+              {!loading && storeProducts.length === 0 && (
+                <p className="mt-2 text-sm text-earth-600">Nenhum produto publicado na loja.</p>
+              )}
+              {!loading && storeProducts.length > 0 && (
+                <div className="mt-4 space-y-2">
+                  <ul className="space-y-2">
+                    {storeProducts.map((p) => (
+                      <li
+                        key={p.id}
+                        className="flex items-center justify-between rounded-lg border border-earth-200 bg-white p-4"
+                      >
+                        <div className="flex items-center gap-4">
+                          {p.image_url ? (
+                            <img src={p.image_url} alt="" className="h-12 w-12 rounded object-cover" />
+                          ) : (
+                            <div className="h-12 w-12 rounded bg-earth-200" />
+                          )}
+                          <div>
+                            <span className="font-medium text-earth-900">{p.name}</span>
+                            <span className="ml-2 text-sm text-earth-600">{formatJPY(brlToJpy(p.price))}</span>
+                            <span className="ml-2 text-xs text-earth-500">
+                              {Number(p.weight_kg ?? 0) > 0 ? `• ${formatWeight(p.weight_kg)}` : '• peso não definido'}
+                            </span>
+                            <span className="ml-2 text-xs text-earth-500">
+                              • Estoque: {p.stock_quantity != null ? p.stock_quantity : 'ilimitado'}
+                            </span>
+                            {!p.is_active && (
+                              <span className="ml-2 rounded bg-amber-200 px-2 py-0.5 text-xs text-amber-900">
+                                Inativo na base
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleUnpublishFromStore(p.id)}
+                            disabled={storeLinkSubmittingId === p.id}
+                            className="text-sm font-medium text-red-600 hover:text-red-800 disabled:opacity-50"
+                          >
+                            {storeLinkSubmittingId === p.id ? 'Removendo...' : 'Remover da loja'}
+                          </button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                  <PaginationControls
+                    page={storeProductsPage}
+                    hasMore={storeProductsHasMore}
+                    loading={loading}
+                    onPrev={() => setStoreProductsPage((p) => Math.max(0, p - 1))}
+                    onNext={() => setStoreProductsPage((p) => p + 1)}
+                  />
+                </div>
+              )}
+            </div>
           </div>
         </section>
         )}
@@ -4752,7 +4845,8 @@ export default function Admin() {
                   <thead className="bg-earth-100 text-left text-earth-700">
                     <tr>
                       <th className="px-3 py-2 font-medium">Produto</th>
-                      <th className="px-3 py-2 font-medium">Origem</th>
+                      <th className="px-3 py-2 font-medium">Contexto</th>
+                      <th className="px-3 py-2 font-medium">Publicado na loja</th>
                       <th className="px-3 py-2 font-medium">Preco</th>
                       <th className="px-3 py-2 font-medium">Estoque</th>
                       <th className="px-3 py-2 font-medium">Status</th>
@@ -4779,7 +4873,10 @@ export default function Admin() {
                           </div>
                         </td>
                         <td className="px-3 py-2 text-earth-700">
-                          {p.purchase_group_id ? 'Grupo de compras' : 'Loja virtual'}
+                          {p.purchase_group_id ? 'Produto de grupo' : 'Produto-base'}
+                        </td>
+                        <td className="px-3 py-2 text-earth-700">
+                          {!p.purchase_group_id && p.store_linked ? 'Sim' : 'Não'}
                         </td>
                         <td className="px-3 py-2 text-earth-700">
                           {formatJPY(brlToJpy(p.price))}
@@ -4794,6 +4891,24 @@ export default function Admin() {
                         </td>
                         <td className="px-3 py-2 text-xs text-earth-500">{p.id}</td>
                         <td className="px-3 py-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              handleEdit(p)
+                              setCatalogCreateOpen(true)
+                            }}
+                            className="mr-3 text-sm font-medium text-earth-600 hover:text-earth-900"
+                          >
+                            Editar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDuplicate(p)}
+                            disabled={duplicatingId === p.id}
+                            className="mr-3 text-sm font-medium text-earth-600 hover:text-earth-900 disabled:opacity-50"
+                          >
+                            {duplicatingId === p.id ? 'Duplicando...' : 'Duplicar'}
+                          </button>
                           <button
                             type="button"
                             onClick={() => handleDelete(p.id)}

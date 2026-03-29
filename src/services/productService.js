@@ -8,14 +8,13 @@ import { withDbTimeout, toServiceError } from '../lib/dbGuard'
 export async function getProducts() {
   try {
     const { data, error } = await withDbTimeout(
-      supabase
-        .from('products')
-        .select('*')
-        .eq('is_active', true)
-        .is('purchase_group_id', null)
-        .order('created_at', { ascending: false })
+      supabase.rpc('list_store_products', {
+        p_limit: 500,
+        p_offset: 0,
+      })
     , 60000, 'products:getProducts')
-    return { data: data ?? [], error }
+    const list = Array.isArray(data) ? data : (data ?? [])
+    return { data: list, error }
   } catch (e) {
     return { data: [], error: toServiceError(e) }
   }
@@ -47,6 +46,50 @@ export async function getProductsAdmin(limit = 500, offset = 0) {
     return { data: list, error }
   } catch (e) {
     return { data: [], error: toServiceError(e) }
+  }
+}
+
+/** Admin: lista produtos publicados na loja virtual (vínculo). */
+export async function getStoreProductsAdmin(limit = 500, offset = 0) {
+  try {
+    const { data, error } = await withDbTimeout(
+      supabase.rpc('admin_list_store_products', {
+        p_limit: limit,
+        p_offset: offset,
+      })
+    , 60000, 'products:getStoreProductsAdmin')
+    const list = Array.isArray(data) ? data : (data ?? [])
+    return { data: list, error }
+  } catch (e) {
+    return { data: [], error: toServiceError(e) }
+  }
+}
+
+/** Admin: publica produto-base na loja virtual. */
+export async function addProductToStoreAdmin(productId) {
+  try {
+    const { data, error } = await withDbTimeout(
+      supabase.rpc('admin_add_product_to_store', {
+        p_product_id: productId,
+      })
+    , 60000, 'products:addProductToStoreAdmin')
+    return { data: data ?? null, error }
+  } catch (e) {
+    return { data: null, error: toServiceError(e) }
+  }
+}
+
+/** Admin: remove produto da loja virtual sem apagar da base. */
+export async function removeProductFromStoreAdmin(productId) {
+  try {
+    const { data, error } = await withDbTimeout(
+      supabase.rpc('admin_remove_product_from_store', {
+        p_product_id: productId,
+      })
+    , 60000, 'products:removeProductFromStoreAdmin')
+    return { data: data ?? null, error }
+  } catch (e) {
+    return { data: null, error: toServiceError(e) }
   }
 }
 

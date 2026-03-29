@@ -231,21 +231,36 @@ export default function Orders() {
     }
   }
 
+  const getProductThumb = (product) => {
+    if (!product) return null
+    const u = typeof product.image_url === 'string' ? product.image_url.trim() : ''
+    if (u) return u
+    const raw = product.image_urls
+    if (Array.isArray(raw) && raw.length) {
+      const first = raw[0]
+      return typeof first === 'string' ? first : null
+    }
+    return null
+  }
+
   const getRequestedItems = (order) => {
     if (!Array.isArray(order?.order_items)) return []
-    return order.order_items
-      .map((it, index) => {
-        const qty = Math.max(1, parseInt(it?.quantity, 10) || 1)
-        const unitPrice = Number(it?.price_at_purchase) || 0
-        const name = it?.product?.name || `Item ${index + 1}`
-        return {
-          id: it?.id || `${name}-${index}`,
-          name,
-          qty,
-          unitPrice,
-          lineTotal: unitPrice * qty,
-        }
-      })
+    return order.order_items.map((it, index) => {
+      const qty = Math.max(1, parseInt(it?.quantity, 10) || 1)
+      const unitPrice = Number(it?.price_at_purchase) || 0
+      const pid = it?.product_id
+      const name =
+        it?.product?.name ||
+        (pid ? `Produto (${String(pid).slice(0, 8)}…)` : `Item ${index + 1}`)
+      return {
+        id: it?.id || `${name}-${index}`,
+        name,
+        qty,
+        unitPrice,
+        lineTotal: unitPrice * qty,
+        thumb: getProductThumb(it?.product),
+      }
+    })
   }
 
   const formatByCurrency = (value, currency = 'JPY') => {
@@ -378,6 +393,82 @@ export default function Orders() {
                     <span className="ml-2 rounded bg-earth-200 px-2 py-0.5 text-xs text-earth-700">
                       {ORDER_STATUS_LABELS[o.status] ?? o.status}
                     </span>
+                    {o.order_source === 'store' && (
+                      <div className="mt-2 space-y-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="rounded-md bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900">
+                            Loja virtual
+                          </span>
+                          {o.ship_immediately ? (
+                            <span className="rounded-md bg-blue-50 px-2 py-0.5 text-xs text-blue-800">
+                              Envio após o pagamento dos produtos
+                            </span>
+                          ) : (
+                            <span className="rounded-md bg-earth-100 px-2 py-0.5 text-xs text-earth-800">
+                              Frete pago depois (armazenagem)
+                            </span>
+                          )}
+                        </div>
+                        {(() => {
+                          const items = getRequestedItems(o)
+                          if (items.length === 0) {
+                            return (
+                              <p className="text-sm text-earth-600">
+                                {Number(o.total_amount) > 0
+                                  ? `Total: ${formatBRL(o.total_amount)}`
+                                  : 'Itens do pedido indisponíveis no momento.'}
+                              </p>
+                            )
+                          }
+                          return (
+                            <>
+                              <ul className="space-y-2">
+                                {items.map((item) => (
+                                  <li key={item.id} className="flex gap-2 text-sm">
+                                    {item.thumb ? (
+                                      <img
+                                        src={item.thumb}
+                                        alt=""
+                                        className="h-11 w-11 shrink-0 rounded-md border border-earth-200 object-cover"
+                                      />
+                                    ) : (
+                                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-earth-200 bg-earth-100 text-xs text-earth-400">
+                                        —
+                                      </div>
+                                    )}
+                                    <div className="min-w-0 flex-1">
+                                      <p className="font-medium text-earth-900">{item.name}</p>
+                                      <p className="text-xs text-earth-600">
+                                        {item.qty} × {formatByCurrency(item.unitPrice, 'BRL')}
+                                      </p>
+                                    </div>
+                                    <p className="shrink-0 font-medium text-earth-800">
+                                      {formatByCurrency(item.lineTotal, 'BRL')}
+                                    </p>
+                                  </li>
+                                ))}
+                              </ul>
+                              <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
+                                {o.total_amount != null && Number(o.total_amount) > 0 && (
+                                  <p>
+                                    <span className="text-earth-600">Total: </span>
+                                    <span className="font-semibold text-earth-900">{formatBRL(o.total_amount)}</span>
+                                  </p>
+                                )}
+                                {o.discount_amount != null && Number(o.discount_amount) > 0 && (
+                                  <p className="text-green-700">Desconto: −{formatBRL(o.discount_amount)}</p>
+                                )}
+                                {o.wallet_applied_amount != null && Number(o.wallet_applied_amount) > 0 && (
+                                  <p className="text-earth-700">
+                                    Carteira aplicada: {formatJPY(o.wallet_applied_amount)}
+                                  </p>
+                                )}
+                              </div>
+                            </>
+                          )
+                        })()}
+                      </div>
+                    )}
                     {o.service?.name && (
                       <p className="mt-1 text-sm text-earth-600">{o.service.name}</p>
                     )}
@@ -546,6 +637,39 @@ export default function Orders() {
                   {ORDER_STATUS_LABELS[detailsModal.order.status] ?? detailsModal.order.status}
                 </p>
               </div>
+              {detailsModal.order.order_source === 'store' && (
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-wide text-earth-500">Origem</p>
+                  <div className="mt-1 flex flex-wrap items-center gap-2">
+                    <span className="rounded-md bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900">
+                      Loja virtual
+                    </span>
+                    {detailsModal.order.ship_immediately ? (
+                      <span className="text-sm text-earth-700">Envio após o pagamento dos produtos</span>
+                    ) : (
+                      <span className="text-sm text-earth-700">Frete cobrado em etapa separada (armazenagem)</span>
+                    )}
+                  </div>
+                  {detailsModal.order.total_amount != null && Number(detailsModal.order.total_amount) > 0 && (
+                    <p className="mt-2 text-sm text-earth-800">
+                      <span className="text-earth-600">Total do pedido (produtos): </span>
+                      <span className="font-semibold">{formatBRL(detailsModal.order.total_amount)}</span>
+                      {detailsModal.order.discount_amount != null &&
+                        Number(detailsModal.order.discount_amount) > 0 && (
+                          <span className="ml-2 text-green-700">
+                            (−{formatBRL(detailsModal.order.discount_amount)} desconto)
+                          </span>
+                        )}
+                    </p>
+                  )}
+                  {detailsModal.order.wallet_applied_amount != null &&
+                    Number(detailsModal.order.wallet_applied_amount) > 0 && (
+                      <p className="mt-1 text-sm text-earth-700">
+                        Carteira aplicada: {formatJPY(detailsModal.order.wallet_applied_amount)}
+                      </p>
+                    )}
+                </div>
+              )}
               {detailsModal.order.service?.name && (
                 <div>
                   <p className="text-xs font-medium uppercase tracking-wide text-earth-500">Serviço</p>
@@ -559,6 +683,7 @@ export default function Orders() {
                     message={detailsModal.order.message}
                     quoteCurrency={detailsModal.order.quote_currency || 'JPY'}
                     formatMoney={(v, c) => formatByCurrency(v, c)}
+                    orderModule={detailsModal.order.order_module}
                   />
                 </div>
               )}
@@ -574,11 +699,24 @@ export default function Orders() {
                       <ul className="space-y-2">
                         {requestedItems.map((item) => (
                           <li key={item.id} className="flex items-start justify-between gap-3 text-sm">
-                            <div className="min-w-0">
-                              <p className="font-medium text-earth-900">{item.name}</p>
-                              <p className="text-xs text-earth-600">Quantidade: {item.qty}</p>
+                            <div className="flex min-w-0 gap-2">
+                              {item.thumb ? (
+                                <img
+                                  src={item.thumb}
+                                  alt=""
+                                  className="h-12 w-12 shrink-0 rounded-md border border-earth-200 object-cover"
+                                />
+                              ) : (
+                                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md border border-earth-200 bg-earth-100 text-xs text-earth-400">
+                                  —
+                                </div>
+                              )}
+                              <div className="min-w-0">
+                                <p className="font-medium text-earth-900">{item.name}</p>
+                                <p className="text-xs text-earth-600">Quantidade: {item.qty}</p>
+                              </div>
                             </div>
-                            <div className="text-right">
+                            <div className="text-right shrink-0">
                               <p className="text-earth-700">{formatByCurrency(item.lineTotal, itemsCurrency)}</p>
                               {item.qty > 1 && (
                                 <p className="text-xs text-earth-500">{formatByCurrency(item.unitPrice, itemsCurrency)} cada</p>

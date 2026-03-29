@@ -110,9 +110,10 @@ export async function getMyOrders(userId, options = {}) {
       service:services(name),
       order_items(
         id,
+        product_id,
         quantity,
         price_at_purchase,
-        product:products(name, image_url)
+        product:products(name, image_url, image_urls)
       )
     `)
       .eq('user_id', userId)
@@ -186,9 +187,10 @@ export async function getOrderById(orderId, userId) {
       service:services(name),
       order_items(
         id,
+        product_id,
         quantity,
         price_at_purchase,
-        product:products(name, image_url)
+        product:products(name, image_url, image_urls)
       )
     `)
         .eq('id', orderId)
