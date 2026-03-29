@@ -10,6 +10,7 @@ import { getPurchaseGroups } from '../../services/groupService'
 import { getPurchaseGroupProducts } from '../../services/productService'
 import { addToCart } from '../../services/cartService'
 import { brlToJpy, formatJPY } from '../../lib/fx'
+import LinkifyText from '../../components/LinkifyText'
 
 function getGroupImages(g) {
   if (Array.isArray(g?.image_urls) && g.image_urls.length > 0) return g.image_urls.filter(Boolean)
@@ -167,7 +168,11 @@ export default function GrupoDeCompras() {
                     )}
                     <div className="p-4">
                       <h2 className="font-semibold text-earth-900">{g.name}</h2>
-                      {g.description && <p className="mt-1 line-clamp-2 whitespace-pre-wrap text-sm text-earth-600">{g.description}</p>}
+                      {g.description && (
+                        <p className="mt-1 line-clamp-2 whitespace-pre-wrap text-sm text-earth-600">
+                          <LinkifyText text={g.description} />
+                        </p>
+                      )}
                       <p className="mt-2 text-xs text-earth-500">
                         Produtos no grupo: {groupProducts.length}
                       </p>
@@ -277,7 +282,11 @@ export default function GrupoDeCompras() {
                 <h2 id="group-detail-title" className="text-xl font-bold text-earth-900">
                   {detailGroup.name}
                 </h2>
-                {detailGroup.description && <p className="mt-2 whitespace-pre-wrap text-earth-600">{detailGroup.description}</p>}
+                {detailGroup.description && (
+                  <p className="mt-2 whitespace-pre-wrap text-earth-600">
+                    <LinkifyText text={detailGroup.description} />
+                  </p>
+                )}
 
                 <div className="mt-5">
                   <h3 className="text-sm font-semibold uppercase tracking-wide text-earth-700">Produtos disponíveis</h3>

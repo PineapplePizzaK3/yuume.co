@@ -1,7 +1,7 @@
 /**
  * Services - Contratação de Redirecionamento e Personal Shopping.
  * Redirecionamento (Padrão ou Assistido): disclaimer → user cria pedido → admin aprova / orça.
- * Personal Shopping: user envia pedido com imagens → admin orça → user paga.
+ * Personal Shopping e Redirecionamento: anexos por arquivo ou URL; admin orça / aprova conforme o fluxo.
  */
 import { useEffect, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
@@ -28,15 +28,20 @@ export default function Services() {
   const [agreeProhibited, setAgreeProhibited] = useState(false)
   const [redirModule, setRedirModule] = useState('self_buy')
   const [attachmentUrls, setAttachmentUrls] = useState([])
+  const [imageUrlDraft, setImageUrlDraft] = useState('')
   const [uploading, setUploading] = useState(false)
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [feedback, setFeedback] = useState('')
+  const [successNotice, setSuccessNotice] = useState(null)
+  const [failedThumbUrls, setFailedThumbUrls] = useState(() => new Set())
 
   const selectedService = selectedId ? services.find((s) => s.id === selectedId) : null
   const isRedirecionamento = selectedService?.name === REDIRECIONAMENTO
   const isPersonalShopping = selectedService?.name === PERSONAL_SHOPPING
   const isRedirAssisted = isRedirecionamento && redirModule === 'assisted_buy'
+  const isRedirStandard = isRedirecionamento && redirModule === 'self_buy'
+  const showImageAttachments = isPersonalShopping || isRedirAssisted || isRedirStandard
   const canSubmit = !isRedirecionamento || agreeProhibited
 
   useEffect(() => {
@@ -61,18 +66,55 @@ export default function Services() {
 
   const oferta = services.filter((s) => SERVICOS_OFERTADOS.includes(s.name))
 
+  const addImageUrl = () => {
+    const raw = imageUrlDraft.trim()
+    if (!raw) return
+    let u = raw
+    if (!/^https?:\/\//i.test(u)) {
+      setFeedback('Use uma URL completa começando com http:// ou https://')
+      return
+    }
+    try {
+      const parsed = new URL(u)
+      if (!parsed.protocol.startsWith('http')) {
+        setFeedback('Use uma URL http ou https.')
+        return
+      }
+    } catch {
+      setFeedback('URL inválida. Verifique o endereço.')
+      return
+    }
+    setSuccessNotice(null)
+    setFeedback('')
+    setAttachmentUrls((prev) => [...prev, u])
+    setImageUrlDraft('')
+    setFailedThumbUrls((prev) => {
+      const next = new Set(prev)
+      next.delete(u)
+      return next
+    })
+  }
+
   const handleImageUpload = async (e) => {
     const file = e.target.files?.[0]
     if (!file || !user?.id) return
     setUploading(true)
     setFeedback('')
+    setSuccessNotice(null)
     const { data, error } = await uploadOrderAttachment(file, user.id)
     setUploading(false)
     if (error) {
       setFeedback(error.message)
       return
     }
-    if (data) setAttachmentUrls((prev) => [...prev, data])
+    if (data) {
+      setAttachmentUrls((prev) => [...prev, data])
+      setFailedThumbUrls((prev) => {
+        const next = new Set(prev)
+        next.delete(data)
+        return next
+      })
+    }
     e.target.value = ''
   }
 
@@ -84,6 +126,7 @@ export default function Services() {
     }
     setSubmitting(true)
     setFeedback('')
+    setSuccessNotice(null)
     const { data, error } = await createOrder(user.id, {
       service_id: selectedId,
       message: message.trim() || null,
@@ -96,13 +139,14 @@ export default function Services() {
       setFeedback(error.message)
       return
     }
-    const msg = (isPersonalShopping || isRedirAssisted)
-      ? 'Pedido enviado! Em breve você receberá o orçamento para pré-pagamento. Acompanhe em Pedidos.'
-      : 'Pedido enviado! O admin irá aprovar em breve. Acompanhe em Pedidos.'
-    setFeedback(msg)
+    setSuccessNotice({
+      quoteFlow: !!(isPersonalShopping || isRedirAssisted),
+    })
     setSelectedId(null)
     setMessage('')
     setAttachmentUrls([])
+    setImageUrlDraft('')
+    setFailedThumbUrls(() => new Set())
   }
 
   return (
@@ -134,8 +178,11 @@ export default function Services() {
                     onClick={() => {
                       setSelectedId(s.id)
                       setFeedback('')
+                      setSuccessNotice(null)
                       setMessage('')
                       setAttachmentUrls([])
+                      setImageUrlDraft('')
+                      setFailedThumbUrls(() => new Set())
                       setAgreeProhibited(false)
                       setRedirModule('self_buy')
                     }}
@@ -197,6 +244,23 @@ export default function Services() {
                   </div>
                 </div>
 
+                {redirModule === 'self_buy' && (
+                  <div className="rounded-lg border border-earth-200 bg-earth-50 p-4 text-sm text-earth-800">
+                    <p>
+                      <strong>Documentação da compra:</strong> se você já tiver a{' '}
+                      <strong>nota fiscal (invoice)</strong> ou <strong>prints da tela da compra</strong> do produto,
+                      anexe por upload ou envie o link da imagem. Isso ajuda a identificar o que foi pedido quando o pacote
+                      chegar ao armazém.
+                    </p>
+                    <p className="mt-3">
+                      <strong>Cobrança de taxas:</strong> as taxas de serviço (por item) e o frete internacional{' '}
+                      <strong>só serão cobradas na etapa final</strong>, quando você solicitar o envio do(s) pacote(s) para o{' '}
+                      <strong>seu endereço</strong>. Neste passo você apenas descreve o que pretende enviar ao nosso endereço no
+                      Japão — sem cobrança dessas taxas agora.
+                    </p>
+                  </div>
+                )}
+
                 <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
                   <label className="flex cursor-pointer items-start gap-3">
                     <input
@@ -225,8 +289,10 @@ export default function Services() {
               </label>
               <p className="mt-1 text-xs text-earth-500">
                 {isPersonalShopping || isRedirAssisted
-                  ? 'Envie a lista de produtos, links e referências. Você pode anexar imagens abaixo.'
-                  : 'Informe loja, quantidade e descrição dos itens para facilitar o recebimento.'}
+                  ? 'Envie a lista de produtos, links e referências. Você pode anexar imagens ou links de imagem abaixo.'
+                  : isRedirStandard
+                    ? 'Informe loja, quantidade e descrição dos itens. Você pode anexar invoice, prints ou links de imagem abaixo (opcional).'
+                    : 'Informe loja, quantidade e descrição dos itens para facilitar o recebimento.'}
               </p>
               <textarea
                 id="message"
@@ -240,17 +306,36 @@ export default function Services() {
               />
             </div>
 
-            {(isPersonalShopping || isRedirAssisted) && (
+            {showImageAttachments && (
               <div>
                 <label className="block text-sm font-medium text-earth-700">
                   Imagens de referência (opcional)
                 </label>
                 <p className="mt-1 text-xs text-earth-500">
-                  Envie fotos dos produtos que deseja para facilitar o orçamento.
+                  Envie um arquivo de imagem do seu dispositivo ou cole a URL direta da imagem (http ou https).
                 </p>
-                <div className="mt-2 flex flex-wrap items-center gap-3">
-                  <label className="cursor-pointer rounded-lg border border-earth-300 bg-white px-3 py-2 text-sm font-medium text-earth-700 hover:bg-earth-50">
-                    {uploading ? 'Enviando...' : 'Enviar imagem'}
+                <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
+                  <div className="flex min-w-0 flex-1 flex-col gap-2 sm:max-w-md">
+                    <span className="text-xs font-medium text-earth-600">URL da imagem</span>
+                    <div className="flex flex-wrap gap-2">
+                      <input
+                        type="url"
+                        value={imageUrlDraft}
+                        onChange={(e) => setImageUrlDraft(e.target.value)}
+                        placeholder="https://..."
+                        className="min-w-0 flex-1 rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
+                      />
+                      <button
+                        type="button"
+                        onClick={addImageUrl}
+                        className="rounded-lg border border-earth-300 bg-white px-3 py-2 text-sm font-medium text-earth-700 hover:bg-earth-50"
+                      >
+                        Adicionar URL
+                      </button>
+                    </div>
+                  </div>
+                  <label className="inline-flex cursor-pointer rounded-lg border border-earth-300 bg-white px-3 py-2 text-sm font-medium text-earth-700 hover:bg-earth-50">
+                    {uploading ? 'Enviando...' : 'Enviar arquivo'}
                     <input
                       type="file"
                       accept="image/*"
@@ -259,37 +344,68 @@ export default function Services() {
                       onChange={handleImageUpload}
                     />
                   </label>
-                  {attachmentUrls.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {attachmentUrls.map((url, i) => (
-                        <div key={i} className="relative">
-                          <img src={url} alt="" className="h-16 w-16 rounded border border-earth-200 object-cover" />
-                          <button
-                            type="button"
-                            onClick={() => setAttachmentUrls((p) => p.filter((_, j) => j !== i))}
-                            className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white hover:bg-red-600"
-                            aria-label="Remover"
-                          >
-                            ×
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
                 </div>
+                {attachmentUrls.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {attachmentUrls.map((url, i) => (
+                      <div key={`${url}-${i}`} className="relative h-16 w-16 shrink-0 overflow-hidden rounded border border-earth-200 bg-earth-100">
+                        {failedThumbUrls.has(url) ? (
+                          <div className="flex h-full w-full items-center justify-center px-1 text-center text-[10px] font-medium leading-tight text-earth-600">
+                            {/^https?:\/\//i.test(url) ? 'Link' : 'Arquivo'}
+                          </div>
+                        ) : (
+                          <img
+                            src={url}
+                            alt=""
+                            className="h-full w-full object-cover"
+                            onError={() =>
+                              setFailedThumbUrls((prev) => {
+                                const next = new Set(prev)
+                                next.add(url)
+                                return next
+                              })
+                            }
+                          />
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setAttachmentUrls((p) => p.filter((_, j) => j !== i))}
+                          className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white hover:bg-red-600"
+                          aria-label="Remover"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
-            {feedback && (
-              <p
-                className={`rounded-lg px-4 py-2 text-sm ${
-                  feedback.includes('sucesso')
-                    ? 'bg-green-100 text-green-800'
-                    : 'bg-amber-100 text-amber-800'
-                }`}
-              >
-                {feedback}
+            {successNotice && (
+              <p className="rounded-lg bg-green-100 px-4 py-2 text-sm text-green-800">
+                {successNotice.quoteFlow ? (
+                  <>
+                    Pedido enviado! Em breve você receberá o orçamento para pré-pagamento. Acompanhe na página de{' '}
+                    <Link to="/app/lounge?tab=pedidos" className="font-semibold text-green-900 underline hover:no-underline">
+                      Pedidos
+                    </Link>
+                    .
+                  </>
+                ) : (
+                  <>
+                    Pedido enviado! O admin irá aprovar em breve. Acompanhe na página de{' '}
+                    <Link to="/app/lounge?tab=pedidos" className="font-semibold text-green-900 underline hover:no-underline">
+                      Pedidos
+                    </Link>
+                    .
+                  </>
+                )}
               </p>
+            )}
+
+            {feedback && (
+              <p className="rounded-lg bg-amber-100 px-4 py-2 text-sm text-amber-800">{feedback}</p>
             )}
 
             <button

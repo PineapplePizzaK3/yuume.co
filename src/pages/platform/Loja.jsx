@@ -10,6 +10,7 @@ import { addToCart } from '../../services/cartService'
 import { useAuth } from '../../hooks/useAuth'
 import { brlToJpy, formatBRL, formatJPY, jpyToBrl } from '../../lib/fx'
 import { getCardThumbnailUrl } from '../../lib/imageUtils'
+import LinkifyText from '../../components/LinkifyText'
 
 function formatPriceBrlAsJpy(brl) {
   const jpy = Math.round(brlToJpy(brl))
@@ -140,7 +141,9 @@ export default function Loja() {
                     <div className="p-3">
                       <h2 className="font-semibold text-earth-900 text-sm line-clamp-2">{p.name}</h2>
                       {p.description && (
-                        <p className="mt-0.5 line-clamp-2 whitespace-pre-wrap text-xs text-earth-600">{p.description}</p>
+                        <p className="mt-0.5 line-clamp-2 whitespace-pre-wrap text-xs text-earth-600">
+                          <LinkifyText text={p.description} />
+                        </p>
                       )}
                       {(() => {
                         const v = formatPriceBrlAsJpy(p.price)
@@ -281,7 +284,7 @@ export default function Loja() {
                 </h2>
                 {detailProduct.description && (
                   <p className="mt-2 whitespace-pre-wrap text-earth-600">
-                    {detailProduct.description}
+                    <LinkifyText text={detailProduct.description} />
                   </p>
                 )}
                 {(() => {

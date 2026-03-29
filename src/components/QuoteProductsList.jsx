@@ -4,12 +4,17 @@
  */
 import { parseQuoteMessage } from '../lib/quoteProducts'
 import { formatJPY } from '../lib/fx'
+import LinkifyText from './LinkifyText'
 
 export default function QuoteProductsList({ message, quoteCurrency = 'JPY', formatMoney }) {
   const parsed = parseQuoteMessage(message)
   if (!parsed) {
     if (message?.trim()) {
-      return <p className="mt-1 text-sm text-earth-500 italic">{message}</p>
+      return (
+        <p className="mt-1 text-sm text-earth-500 italic whitespace-pre-wrap">
+          <LinkifyText text={message} />
+        </p>
+      )
     }
     return null
   }
@@ -17,10 +22,18 @@ export default function QuoteProductsList({ message, quoteCurrency = 'JPY', form
   const { products, orderDescription } = parsed
   if (!products || products.length === 0) {
     if (orderDescription?.trim()) {
-      return <p className="mt-1 text-sm text-earth-500 italic">{orderDescription}</p>
+      return (
+        <p className="mt-1 text-sm text-earth-500 italic whitespace-pre-wrap">
+          <LinkifyText text={orderDescription} />
+        </p>
+      )
     }
     if (message?.trim()) {
-      return <p className="mt-1 text-sm text-earth-500 italic">{message}</p>
+      return (
+        <p className="mt-1 text-sm text-earth-500 italic whitespace-pre-wrap">
+          <LinkifyText text={message} />
+        </p>
+      )
     }
     return null
   }
@@ -35,8 +48,8 @@ export default function QuoteProductsList({ message, quoteCurrency = 'JPY', form
   return (
     <div className="mt-2 rounded-lg border border-earth-200 bg-white p-3">
       {orderDescription?.trim() && (
-        <p className="mb-3 border-b border-earth-200 pb-3 text-sm text-earth-600 italic">
-          {orderDescription}
+        <p className="mb-3 border-b border-earth-200 pb-3 text-sm text-earth-600 italic whitespace-pre-wrap">
+          <LinkifyText text={orderDescription} />
         </p>
       )}
       <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-earth-600">Itens do orçamento</p>
@@ -53,7 +66,9 @@ export default function QuoteProductsList({ message, quoteCurrency = 'JPY', form
               </span>
               <span className="text-earth-700">{fmt(lineTotal)}</span>
               {p.descricao && (
-                <span className="w-full text-xs text-earth-500">{p.descricao}</span>
+                <span className="w-full text-xs text-earth-500 whitespace-pre-wrap">
+                  <LinkifyText text={p.descricao} />
+                </span>
               )}
             </li>
           )

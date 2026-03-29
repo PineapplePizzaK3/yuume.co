@@ -9,6 +9,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { getMyInventory } from '../../services/inventoryService'
 import { cacheKey, readCache, writeCache } from '../../lib/cache'
 import { formatWeight } from '../../lib/fx'
+import LinkifyText from '../../components/LinkifyText'
 
 function daysSince(dateValue) {
   if (!dateValue) return null
@@ -233,9 +234,15 @@ export default function MeusProdutos() {
                                 {item.weight_kg != null && <span>Peso: {formatWeight(item.weight_kg)}</span>}
                               </div>
                               {item.products_description && (
-                                <p className="mt-3 line-clamp-3 whitespace-pre-wrap text-sm text-earth-700">{item.products_description}</p>
+                                <p className="mt-3 line-clamp-3 whitespace-pre-wrap text-sm text-earth-700">
+                                  <LinkifyText text={item.products_description} />
+                                </p>
                               )}
-                              {item.notes && <p className="mt-2 line-clamp-2 text-sm text-earth-600">{item.notes}</p>}
+                              {item.notes && (
+                                <p className="mt-2 line-clamp-2 text-sm text-earth-600">
+                                  <LinkifyText text={item.notes} />
+                                </p>
+                              )}
                               <div className="mt-3 flex flex-wrap gap-3">
                                 {item.video_url && (
                                   <a
@@ -322,13 +329,17 @@ export default function MeusProdutos() {
                   {detailItem.products_description && (
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-wide text-earth-500">Descrição</p>
-                      <p className="mt-1 whitespace-pre-wrap text-sm text-earth-800">{detailItem.products_description}</p>
+                      <p className="mt-1 whitespace-pre-wrap text-sm text-earth-800">
+                        <LinkifyText text={detailItem.products_description} />
+                      </p>
                     </div>
                   )}
                   {detailItem.notes && (
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-wide text-earth-500">Observações</p>
-                      <p className="mt-1 whitespace-pre-wrap text-sm text-earth-700">{detailItem.notes}</p>
+                      <p className="mt-1 whitespace-pre-wrap text-sm text-earth-700">
+                        <LinkifyText text={detailItem.notes} />
+                      </p>
                     </div>
                   )}
                   <div className="flex flex-wrap gap-3 pt-2">

@@ -151,7 +151,7 @@ export default function CompleteSocialProfile() {
               <p className="text-sm font-medium text-earth-800">Termos de Uso (texto integral)</p>
               <p className="mt-1 text-xs text-earth-600">Role até o final para habilitar o aceite.</p>
               <div
-                className="mt-2 max-h-[min(24rem,55vh)] overflow-y-auto rounded border border-earth-200 bg-earth-50 p-3"
+                className="mt-2 max-h-[min(14rem,38vh)] overflow-y-auto rounded border border-earth-200 bg-earth-50 p-3"
                 onScroll={(e) => unlockOnScrollEnd(e, setCanAgreeTerms)}
               >
                 <div className="space-y-6">
