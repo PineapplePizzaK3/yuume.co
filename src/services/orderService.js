@@ -203,14 +203,22 @@ export async function getOrderById(orderId, userId) {
 
 /**
  * Admin: lista todos os pedidos com dados do usuário.
+ * @param {number} limit
+ * @param {number} offset
+ * @param {string[]|null} statusFilter - Array of status to filter by (null = all)
  */
-export async function getAllOrdersAdmin(limit = 300, offset = 0) {
+export async function getAllOrdersAdmin(limit = 300, offset = 0, statusFilter = null) {
   try {
+    const rpcParams = {
+      p_limit: limit,
+      p_offset: offset,
+    }
+    if (Array.isArray(statusFilter) && statusFilter.length > 0) {
+      rpcParams.p_status_filter = statusFilter
+    }
+
     const { data, error } = await withDbTimeout(
-      supabase.rpc('admin_orders_with_users', {
-        p_limit: limit,
-        p_offset: offset,
-      })
+      supabase.rpc('admin_orders_with_users', rpcParams)
     )
     const orders = Array.isArray(data) ? data : []
     return { data: orders, error }

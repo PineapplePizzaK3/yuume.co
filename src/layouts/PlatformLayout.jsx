@@ -10,12 +10,12 @@ const LOJA_ITEMS = [
   { to: '/app/services', label: 'Serviços' },
   { to: '/app/grupo-de-compras', label: 'Grupo de Compras' },
   { to: '/app/loja', label: 'Loja Virtual' },
-  { to: '/app/cart', label: 'Central de Pagamentos' },
 ]
 
 const MINHA_CONTA_ITEMS = [
   { to: '/app/lounge', label: '⭐ Lounge' },
   { to: '/app/conta', label: 'Dados da conta' },
+  { to: '/app/cart', label: '🛒 Central de Pagamentos' },
 ]
 
 const NAV_ITEMS = [

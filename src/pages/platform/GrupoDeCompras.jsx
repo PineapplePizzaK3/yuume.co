@@ -9,7 +9,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { getPurchaseGroups } from '../../services/groupService'
 import { getPurchaseGroupProducts } from '../../services/productService'
 import { addToCart } from '../../services/cartService'
-import { brlToJpy, formatJPY } from '../../lib/fx'
+import { brlToJpy, formatBRL, formatJPY, jpyToBrl } from '../../lib/fx'
 import LinkifyText from '../../components/LinkifyText'
 
 function getGroupImages(g) {
@@ -34,6 +34,14 @@ export default function GrupoDeCompras() {
   const [modalFeedback, setModalFeedback] = useState('')
   const [detailGroup, setDetailGroup] = useState(null)
   const [detailImageIndex, setDetailImageIndex] = useState(0)
+  const [detailProduct, setDetailProduct] = useState(null)
+  const [detailProductImageIndex, setDetailProductImageIndex] = useState(0)
+
+  const formatPriceBrlAsJpy = (brl) => {
+    const jpy = Math.round(brlToJpy(brl))
+    const approxBrl = jpyToBrl(jpy)
+    return { jpy, approxBrl }
+  }
 
   useEffect(() => {
     if (!message) return
@@ -84,6 +92,13 @@ export default function GrupoDeCompras() {
   const openDetail = (g) => {
     setDetailGroup(g)
     setDetailImageIndex(0)
+    setDetailProduct(null)
+    setModalFeedback('')
+  }
+
+  const openProductDetail = (product) => {
+    setDetailProduct(product)
+    setDetailProductImageIndex(0)
     setModalFeedback('')
   }
 
@@ -92,6 +107,7 @@ export default function GrupoDeCompras() {
   }
 
   const isOutOfStock = (p) => p?.stock_quantity != null && Number(p.stock_quantity) <= 0
+  const detailProductImages = detailProduct ? getProductImages(detailProduct) : []
 
   const handleComprar = async (product) => {
     if (!user?.id) {
@@ -293,52 +309,52 @@ export default function GrupoDeCompras() {
                   {getGroupProducts(detailGroup).length === 0 ? (
                     <p className="mt-2 text-sm text-earth-600">Este grupo ainda não possui produtos vinculados.</p>
                   ) : (
-                    <div className="mt-3 overflow-x-auto rounded-lg border border-earth-200">
-                      <table className="min-w-full divide-y divide-earth-200 text-left text-sm">
-                        <thead>
-                          <tr className="bg-earth-100">
-                            <th className="px-4 py-3 font-medium text-earth-700 w-14"></th>
-                            <th className="px-4 py-3 font-medium text-earth-700">Nome</th>
-                            <th className="px-4 py-3 font-medium text-earth-700">Valor</th>
-                            <th className="px-4 py-3 font-medium text-earth-700 w-28"></th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-earth-200 bg-white">
-                          {getGroupProducts(detailGroup).map((p) => {
-                            const productImgs = getProductImages(p)
-                            const productMainImg = productImgs[0]
-                            return (
-                              <tr key={p.id} className="hover:bg-earth-50/50">
-                                <td className="px-4 py-3">
-                                  <div className="h-12 w-12 overflow-hidden rounded bg-earth-200">
-                                    {productMainImg ? (
-                                      <img
-                                        src={productMainImg}
-                                        alt={p.name}
-                                        className="h-full w-full object-cover"
-                                      />
-                                    ) : (
-                                      <div className="flex h-full w-full items-center justify-center text-earth-400 text-xs">—</div>
-                                    )}
-                                  </div>
-                                </td>
-                                <td className="px-4 py-3 font-medium text-earth-900">{p.name}</td>
-                                <td className="px-4 py-3 text-earth-700">{formatJPY(brlToJpy(p.price))}</td>
-                                <td className="px-4 py-3">
-                                  <button
-                                    type="button"
-                                    onClick={() => !isOutOfStock(p) && handleComprar(p)}
-                                    disabled={isOutOfStock(p)}
-                                    className="rounded-lg px-3 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-60 disabled:bg-earth-300 disabled:text-earth-600 bg-earth-900 text-white hover:bg-earth-800"
-                                  >
-                                    {isOutOfStock(p) ? 'Esgotado' : 'Adicionar ao carrinho'}
-                                  </button>
-                                </td>
-                              </tr>
-                            )
-                          })}
-                        </tbody>
-                      </table>
+                    <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                      {getGroupProducts(detailGroup).map((p) => {
+                        const productImgs = getProductImages(p)
+                        const productMainImg = productImgs[0]
+                        const v = formatPriceBrlAsJpy(p.price)
+                        return (
+                          <button
+                            key={p.id}
+                            type="button"
+                            onClick={() => openProductDetail(p)}
+                            className="overflow-hidden rounded-xl border border-earth-200 bg-earth-50 text-left shadow-sm transition hover:border-earth-400 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-earth-500"
+                          >
+                            {productMainImg ? (
+                              <img
+                                src={productMainImg}
+                                alt={p.name}
+                                className="h-32 w-full object-cover"
+                              />
+                            ) : (
+                              <div className="flex h-32 items-center justify-center bg-earth-200 text-earth-500 text-sm">
+                                Sem imagem
+                              </div>
+                            )}
+                            <div className="p-3">
+                              <h4 className="line-clamp-2 text-sm font-semibold text-earth-900">{p.name}</h4>
+                              <p className="mt-1 text-base font-bold text-earth-900">{formatJPY(v.jpy)}</p>
+                              <p className="text-xs text-earth-600">Aprox.: {formatBRL(v.approxBrl)}</p>
+                              <p className="mt-2 text-xs font-medium text-earth-500">Clique para ver detalhes</p>
+                              <div className="mt-3 flex gap-2">
+                                <span className="rounded-lg border border-earth-300 px-3 py-1.5 text-xs font-medium text-earth-700">
+                                  Ver produto
+                                </span>
+                                <span
+                                  className={`rounded-lg px-3 py-1.5 text-xs font-medium ${
+                                    isOutOfStock(p)
+                                      ? 'bg-earth-300 text-earth-600'
+                                      : 'bg-earth-900 text-white'
+                                  }`}
+                                >
+                                  {isOutOfStock(p) ? 'Esgotado' : 'Comprar'}
+                                </span>
+                              </div>
+                            </div>
+                          </button>
+                        )
+                      })}
                     </div>
                   )}
                 </div>
@@ -348,6 +364,121 @@ export default function GrupoDeCompras() {
                     type="button"
                     onClick={() => setDetailGroup(null)}
                     className="rounded-xl bg-earth-900 px-6 py-3 font-medium text-white hover:bg-earth-800"
+                  >
+                    Fechar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Sub-modal do produto (dentro do contexto do grupo) */}
+        {detailGroup && detailProduct && (
+          <div
+            className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 p-4"
+            onClick={() => setDetailProduct(null)}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="group-product-detail-title"
+          >
+            <div
+              className="relative flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-white shadow-xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="relative bg-earth-100">
+                {detailProductImages.length > 0 ? (
+                  <>
+                    <img
+                      src={detailProductImages[detailProductImageIndex]}
+                      alt={detailProduct.name}
+                      className="h-64 w-full object-contain sm:h-80"
+                    />
+                    {detailProductImages.length > 1 && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setDetailProductImageIndex((i) => (i === 0 ? detailProductImages.length - 1 : i - 1))
+                          }}
+                          className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow hover:bg-white"
+                          aria-label="Foto anterior"
+                        >
+                          <svg className="h-5 w-5 text-earth-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                          </svg>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setDetailProductImageIndex((i) => (i === detailProductImages.length - 1 ? 0 : i + 1))
+                          }}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow hover:bg-white"
+                          aria-label="Próxima foto"
+                        >
+                          <svg className="h-5 w-5 text-earth-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </button>
+                        <div className="flex justify-center gap-1 pb-2">
+                          {detailProductImages.map((_, i) => (
+                            <button
+                              key={i}
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setDetailProductImageIndex(i)
+                              }}
+                              className={`h-2 w-2 rounded-full ${i === detailProductImageIndex ? 'bg-earth-800' : 'bg-earth-300'}`}
+                              aria-label={`Foto ${i + 1}`}
+                            />
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </>
+                ) : (
+                  <div className="flex h-64 items-center justify-center bg-earth-200 text-earth-500 sm:h-80">
+                    Sem imagem
+                  </div>
+                )}
+              </div>
+
+              <div className="flex-1 min-h-0 overflow-y-auto p-5">
+                <h2 id="group-product-detail-title" className="text-xl font-bold text-earth-900">
+                  {detailProduct.name}
+                </h2>
+                {detailProduct.description && (
+                  <div className="mt-3 max-h-44 overflow-y-auto rounded-lg border border-earth-200 bg-earth-50 p-3 text-earth-600">
+                    <p className="whitespace-pre-wrap text-sm">
+                      <LinkifyText text={detailProduct.description} />
+                    </p>
+                  </div>
+                )}
+                {(() => {
+                  const v = formatPriceBrlAsJpy(detailProduct.price)
+                  return (
+                    <div className="mt-4">
+                      <p className="text-2xl font-bold text-earth-900">{formatJPY(v.jpy)}</p>
+                      <p className="text-sm text-earth-600">Aprox.: {formatBRL(v.approxBrl)}</p>
+                    </div>
+                  )
+                })()}
+                <div className="mt-6 flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    onClick={() => !isOutOfStock(detailProduct) && handleComprar(detailProduct)}
+                    disabled={isOutOfStock(detailProduct)}
+                    className="rounded-xl px-6 py-3 font-medium disabled:cursor-not-allowed disabled:opacity-60 disabled:bg-earth-300 disabled:text-earth-600 bg-earth-900 text-white hover:bg-earth-800"
+                  >
+                    {isOutOfStock(detailProduct) ? 'Esgotado' : 'Adicionar ao carrinho'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDetailProduct(null)}
+                    className="rounded-xl border border-earth-200 px-6 py-3 font-medium text-earth-600 hover:bg-earth-50"
                   >
                     Fechar
                   </button>

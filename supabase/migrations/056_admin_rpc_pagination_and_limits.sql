@@ -19,7 +19,8 @@ CREATE INDEX IF NOT EXISTS idx_user_inventory_status_updated_at
 -- Admin: orders list with pagination
 CREATE OR REPLACE FUNCTION public.admin_orders_with_users(
   p_limit INT DEFAULT 1000,
-  p_offset INT DEFAULT 0
+  p_offset INT DEFAULT 0,
+  p_status_filter TEXT[] DEFAULT NULL
 )
 RETURNS jsonb
 LANGUAGE plpgsql
@@ -41,6 +42,7 @@ BEGIN
       FROM public.orders o
       LEFT JOIN public.services s ON s.id = o.service_id
       LEFT JOIN public.profiles p ON p.id = o.user_id
+      WHERE (p_status_filter IS NULL OR p_status_filter = '{}'::TEXT[] OR o.status = ANY(p_status_filter))
       ORDER BY o.created_at DESC
       LIMIT v_limit
       OFFSET v_offset

@@ -386,6 +386,7 @@ export default function Orders() {
                         message={o.message}
                         quoteCurrency={o.quote_currency || 'JPY'}
                         formatMoney={(v, c) => formatByCurrency(v, c)}
+                        orderModule={o.order_module}
                       />
                     )}
                     {Array.isArray(o.attachment_urls) && o.attachment_urls.length > 0 && (

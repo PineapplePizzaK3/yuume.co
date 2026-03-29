@@ -652,62 +652,84 @@ function Cart() {
 
         {activeTab === 'checkout' && !loading && items.length > 0 && (
           <div className="mt-6 space-y-6">
-            <div className="space-y-4">
-              {items.map((item) => {
-                const p = item.products
-                if (!p) return null
-                const subtotal = Number(p.price) * (item.quantity || 1)
-                const unit = formatPriceBrlAsJpy(p.price)
-                const sub = formatPriceBrlAsJpy(subtotal)
-                return (
-                  <div
-                    key={item.id}
-                    className="flex flex-wrap items-center gap-4 rounded-xl border border-earth-200 bg-earth-50 p-4"
-                  >
-                    {p.image_url ? (
-                      <img src={p.image_url} alt={p.name} className="h-20 w-20 rounded-lg object-cover" />
-                    ) : (
-                      <div className="flex h-20 w-20 items-center justify-center rounded-lg bg-earth-200 text-earth-500 text-sm">
-                        Sem imagem
+            <section className="rounded-2xl border border-earth-200 bg-white p-4 sm:p-5">
+              <div className="mb-4 flex items-center justify-between gap-3 border-b border-earth-100 pb-3">
+                <div>
+                  <h2 className="text-lg font-semibold text-earth-900">Carrinho</h2>
+                  <p className="text-sm text-earth-600">
+                    Revise os itens antes de finalizar a compra.
+                  </p>
+                </div>
+                <span className="rounded-full bg-earth-100 px-3 py-1 text-xs font-semibold text-earth-700">
+                  {items.length} {items.length === 1 ? 'item' : 'itens'}
+                </span>
+              </div>
+              <div className="space-y-4">
+                {items.map((item) => {
+                  const p = item.products
+                  if (!p) return null
+                  const subtotal = Number(p.price) * (item.quantity || 1)
+                  const unit = formatPriceBrlAsJpy(p.price)
+                  const sub = formatPriceBrlAsJpy(subtotal)
+                  const sourceTag = p.purchase_group_id ? 'Grupo de Compras' : 'Loja Virtual'
+                  const sourceTagClass = p.purchase_group_id
+                    ? 'bg-amber-100 text-amber-800'
+                    : 'bg-sky-100 text-sky-800'
+                  return (
+                    <div
+                      key={item.id}
+                      className="flex flex-wrap items-center gap-4 rounded-xl border border-earth-200 bg-earth-50 p-4"
+                    >
+                      {p.image_url ? (
+                        <img src={p.image_url} alt={p.name} className="h-20 w-20 rounded-lg object-cover" />
+                      ) : (
+                        <div className="flex h-20 w-20 items-center justify-center rounded-lg bg-earth-200 text-earth-500 text-sm">
+                          Sem imagem
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <div className="mb-1">
+                          <span className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium ${sourceTagClass}`}>
+                            {sourceTag}
+                          </span>
+                        </div>
+                        <h3 className="font-semibold text-earth-900">{p.name}</h3>
+                        <p className="text-sm text-earth-600">
+                          {formatJPY(unit.jpy)} cada <span className="text-xs">({formatBRL(unit.approxBrl)} aprox.)</span>
+                        </p>
                       </div>
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <h3 className="font-semibold text-earth-900">{p.name}</h3>
-                      <p className="text-sm text-earth-600">
-                        {formatJPY(unit.jpy)} cada <span className="text-xs">({formatBRL(unit.approxBrl)} aprox.)</span>
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="number"
-                        min="1"
-                        max="99"
-                        value={qtyDrafts[item.product_id] ?? item.quantity}
-                        onChange={(e) =>
-                          setQtyDrafts((d) => ({ ...d, [item.product_id]: e.target.value }))
-                        }
-                        onBlur={(e) => handleUpdateQty(item.product_id, e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault()
-                            handleUpdateQty(item.product_id, e.currentTarget.value)
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="number"
+                          min="1"
+                          max="99"
+                          value={qtyDrafts[item.product_id] ?? item.quantity}
+                          onChange={(e) =>
+                            setQtyDrafts((d) => ({ ...d, [item.product_id]: e.target.value }))
                           }
-                        }}
-                        className="w-16 rounded border border-earth-300 px-2 py-1 text-center text-earth-900"
-                      />
-                      <span className="font-semibold text-earth-900">{formatJPY(sub.jpy)}</span>
-                      <button
-                        type="button"
-                        onClick={() => handleRemove(item.product_id)}
-                        className="text-sm text-red-600 hover:text-red-800"
-                      >
-                        Remover
-                      </button>
+                          onBlur={(e) => handleUpdateQty(item.product_id, e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault()
+                              handleUpdateQty(item.product_id, e.currentTarget.value)
+                            }
+                          }}
+                          className="w-16 rounded border border-earth-300 px-2 py-1 text-center text-earth-900"
+                        />
+                        <span className="font-semibold text-earth-900">{formatJPY(sub.jpy)}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemove(item.product_id)}
+                          className="text-sm text-red-600 hover:text-red-800"
+                        >
+                          Remover
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                )
-              })}
-            </div>
+                  )
+                })}
+              </div>
+            </section>
 
             <div className="rounded-xl border border-earth-200 bg-earth-50 p-6 space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center gap-3">
@@ -858,7 +880,32 @@ function Cart() {
                     const order = p.orders ?? p.order
                     const orderId = order?.id ?? p.order_id
                     const serviceName = order?.service?.name ?? order?.service?.[0]?.name ?? ''
-                    const paymentMethod = p.stripe_payment_id === 'wallet' ? 'Carteira' : (p.stripe_payment_id ? 'Cartão' : '—')
+                    const rawPaymentId = String(p?.stripe_payment_id || '').trim()
+                    const paymentId = rawPaymentId.toLowerCase()
+                    const paymentMethod = !rawPaymentId
+                      ? '—'
+                      : paymentId.startsWith('wallet')
+                        ? 'Carteira'
+                        : paymentId === 'referral_discount'
+                          ? 'Desconto'
+                          : paymentId.includes('pix')
+                            ? 'PIX'
+                            : (paymentId.startsWith('pi_') || paymentId.startsWith('cs_') || paymentId.startsWith('ch_'))
+                              ? 'Cartão'
+                              : paymentId.includes('manual')
+                                ? 'Manual'
+                                : 'Cartão'
+                    const paymentKind = paymentId === 'referral_discount'
+                      ? 'Desconto'
+                      : order?.order_source === 'store'
+                        ? 'Loja'
+                        : Number(order?.quote_amount) > 0
+                          ? 'Serviço'
+                          : Number(order?.shipping_cost) > 0
+                            ? 'Frete'
+                            : orderId
+                              ? 'Pedido'
+                              : 'Pagamento'
                     const paymentCurrency = String(p.currency || 'JPY').toUpperCase()
                     const amount = Number(p.amount) || 0
                     return (
@@ -883,10 +930,10 @@ function Cart() {
                               to={`/app/lounge?tab=pedidos&orderId=${encodeURIComponent(orderId)}`}
                               className="text-earth-900 underline decoration-earth-300 underline-offset-2 hover:decoration-earth-700"
                             >
-                              Frete · Pedido {String(orderId).slice(0, 8)}…
+                              {paymentKind} · Pedido {String(orderId).slice(0, 8)}…
                             </Link>
                           ) : (
-                            <span className="text-earth-900">Frete</span>
+                            <span className="text-earth-900">{paymentKind}</span>
                           )}
                           {serviceName && (
                             <p className="text-sm text-earth-500">{serviceName}</p>

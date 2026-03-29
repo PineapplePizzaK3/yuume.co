@@ -5,6 +5,7 @@
  */
 import { useEffect, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
+import ImageLightbox from '../../components/ImageLightbox'
 import {
   getWishlistLinks,
   addWishlistLink,
@@ -83,6 +84,7 @@ export default function ListaDesejos() {
   const [manualName, setManualName] = useState('')
   const [manualPrice, setManualPrice] = useState('')
   const [editingItemId, setEditingItemId] = useState(null)
+  const [lightbox, setLightbox] = useState({ open: false, src: '', alt: '' })
   const [editForm, setEditForm] = useState({
     url: '',
     product_name: '',
@@ -273,6 +275,11 @@ export default function ListaDesejos() {
 
   const hasItems = linkItems.length > 0
 
+  const openLightbox = (src, alt = 'Imagem do item') => {
+    if (!src) return
+    setLightbox({ open: true, src, alt })
+  }
+
   return (
     <>
       <Helmet>
@@ -403,7 +410,8 @@ export default function ListaDesejos() {
                         <img
                           src={item.image_url}
                           alt={item.product_name}
-                          className="h-20 w-20 rounded-lg object-cover"
+                          onClick={() => openLightbox(item.image_url, item.product_name)}
+                          className="h-20 w-20 rounded-lg object-cover cursor-zoom-in"
                         />
                       ) : (
                         <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-lg bg-earth-200 text-earth-500 text-xs">
@@ -530,6 +538,12 @@ export default function ListaDesejos() {
           </div>
         )}
       </div>
+      <ImageLightbox
+        open={lightbox.open}
+        src={lightbox.src}
+        alt={lightbox.alt}
+        onClose={() => setLightbox({ open: false, src: '', alt: '' })}
+      />
     </>
   )
 }

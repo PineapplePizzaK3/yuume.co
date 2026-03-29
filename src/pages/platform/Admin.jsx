@@ -138,10 +138,12 @@ export default function Admin() {
     orderDescription: '',
     products: [{ name: '', valor: '', quantidade: 1, descricao: '' }],
     currency: 'JPY',
+    orderModule: 'personal_shopping',
   })
   const [orderEditModal, setOrderEditModal] = useState({
     open: false,
     orderId: null,
+    order_module: null,
     service_id: '',
     status: ORDER_STATUS.PENDING_APPROVAL,
     message: '',
@@ -169,10 +171,9 @@ export default function Admin() {
   const [registerPackageModal, setRegisterPackageModal] = useState({
     open: false,
     user_id: '',
-    products_description: '',
-    items_count: '',
-    weight_kg: '',
+    products: [{ name: '', quantity: '', price: '' }],
     order_id: '',
+    weight_kg: '',
     photo_url: '',
     video_url: '',
   })
@@ -287,6 +288,7 @@ export default function Admin() {
   const [externalSearchError, setExternalSearchError] = useState('')
   const [ordersPage, setOrdersPage] = useState(0)
   const [ordersHasMore, setOrdersHasMore] = useState(false)
+  const [orderStatusFilter, setOrderStatusFilter] = useState([])
   const [productsPage, setProductsPage] = useState(0)
   const [productsHasMore, setProductsHasMore] = useState(false)
   const [usersPage, setUsersPage] = useState(0)
@@ -305,6 +307,29 @@ export default function Admin() {
   }
 
   const orderedTabs = normalizeTabOrder(tabOrder)
+
+  // Persist order status filter
+  useEffect(() => {
+    if (!user?.id) return
+    try {
+      const saved = localStorage.getItem(`admin_order_status_filter_v1_${user.id}`)
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        if (Array.isArray(parsed)) setOrderStatusFilter(parsed)
+      }
+    } catch (e) {
+      console.warn('Failed to load order status filter', e)
+    }
+  }, [user?.id])
+
+  useEffect(() => {
+    if (!user?.id) return
+    try {
+      localStorage.setItem(`admin_order_status_filter_v1_${user.id}`, JSON.stringify(orderStatusFilter))
+    } catch (e) {
+      console.warn('Failed to save order status filter', e)
+    }
+  }, [orderStatusFilter, user?.id])
 
   const handleTabReorder = (draggedId, targetId) => {
     if (!draggedId || !targetId || draggedId === targetId) return
@@ -343,7 +368,8 @@ export default function Admin() {
     try {
       const { data, error } = await getAllOrdersAdmin(
         ADMIN_PAGE_SIZE.orders,
-        page * ADMIN_PAGE_SIZE.orders
+        page * ADMIN_PAGE_SIZE.orders,
+        orderStatusFilter.length > 0 ? orderStatusFilter : null
       )
       if (!active()) return
       const list = data ?? []
@@ -382,7 +408,7 @@ export default function Admin() {
     return () => {
       isActive = false
     }
-  }, [ordersPage])
+  }, [ordersPage, orderStatusFilter])
 
   useEffect(() => {
     let isActive = true
@@ -752,6 +778,46 @@ export default function Admin() {
     setImageUploadError('')
     setNewImageUrl('')
     setProductReferenceId('')
+  }
+
+  const normalizeProductImageList = (list) => (Array.isArray(list) ? list.filter(Boolean) : [])
+
+  const setProductImages = (nextOrUpdater) => {
+    setForm((f) => {
+      const current = normalizeProductImageList(f.image_urls)
+      const nextRaw = typeof nextOrUpdater === 'function' ? nextOrUpdater(current) : nextOrUpdater
+      const next = normalizeProductImageList(nextRaw)
+      return {
+        ...f,
+        image_urls: next,
+        image_url: next[0] || '',
+      }
+    })
+  }
+
+  const addProductImage = (url) => {
+    const safeUrl = String(url || '').trim()
+    if (!safeUrl) return
+    setProductImages((prev) => [...prev, safeUrl])
+  }
+
+  const removeProductImageAt = (index) => {
+    setProductImages((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  const moveProductImage = (fromIndex, toIndex) => {
+    if (fromIndex === toIndex) return
+    setProductImages((prev) => {
+      if (fromIndex < 0 || fromIndex >= prev.length || toIndex < 0 || toIndex >= prev.length) return prev
+      const list = [...prev]
+      const [moved] = list.splice(fromIndex, 1)
+      list.splice(toIndex, 0, moved)
+      return list
+    })
+  }
+
+  const setProductCover = (index) => {
+    moveProductImage(index, 0)
   }
 
   const resetGroupForm = () => {
@@ -1332,15 +1398,45 @@ export default function Admin() {
     setMessage(error ? error.message : 'Orçamento definido. Cliente pode pagar em Pedidos.')
     if (!error) {
       logAdminAction('order_set_quote', 'order', quoteModal.orderId, { total, currency: 'JPY', productsCount: products.length })
-      setQuoteModal({ open: false, orderId: null, orderDescription: '', products: [{ name: '', valor: '', quantidade: 1, descricao: '' }], currency: 'JPY' })
+      setQuoteModal({ 
+        open: false, 
+        orderId: null, 
+        orderDescription: '', 
+        products: [{ name: '', valor: '', quantidade: 1, descricao: '' }], 
+        currency: 'JPY',
+        orderModule: 'personal_shopping'
+      })
       loadOrders()
     }
+  }
+
+  const openQuoteModalFromOrder = (order) => {
+    const parsed = parseQuoteMessage(order?.message)
+    const orderDescription = parsed?.orderDescription ?? (parsed ? '' : (order?.message?.trim() ?? ''))
+    const products = parsed?.products?.length
+      ? parsed.products.map((p) => ({
+        name: String(p.name ?? ''),
+        valor: p.valor != null ? String(p.valor) : '',
+        quantidade: p.quantidade != null ? String(p.quantidade) : '1',
+        descricao: String(p.descricao ?? ''),
+      }))
+      : [{ name: '', valor: '', quantidade: 1, descricao: '' }]
+
+    setQuoteModal({
+      open: true,
+      orderId: order?.id ?? null,
+      orderDescription,
+      products,
+      currency: 'JPY',
+      orderModule: order?.order_module || 'personal_shopping',
+    })
   }
 
   const openOrderEditModal = (order) => {
     setOrderEditModal({
       open: true,
       orderId: order.id,
+      order_module: order.order_module ?? null,
       service_id: order.service_id ?? '',
       status: order.status ?? ORDER_STATUS.PENDING_APPROVAL,
       message: order.message ?? '',
@@ -1356,6 +1452,7 @@ export default function Admin() {
     setOrderEditModal({
       open: false,
       orderId: null,
+      order_module: null,
       service_id: '',
     status: ORDER_STATUS.PENDING_APPROVAL,
     message: '',
@@ -1477,26 +1574,42 @@ export default function Admin() {
       setMessage('Selecione o usuário.')
       return
     }
-    const desc = registerPackageModal.products_description?.trim()
-    if (!desc) {
-      setMessage('Informe a descrição dos produtos do pacote.')
+
+    const validProducts = registerPackageModal.products.filter(p => p.name?.trim())
+    if (validProducts.length === 0) {
+      setMessage('Adicione pelo menos um produto.')
       return
     }
+
     setSubmitting(true)
     setMessage('')
     try {
       const { error } = await registerPackageAdmin(uid, {
-        products_description: desc,
-        items_count: registerPackageModal.items_count ? parseInt(registerPackageModal.items_count, 10) : null,
-        weight_kg: registerPackageModal.weight_kg ? parseFloat(registerPackageModal.weight_kg) : null,
+        products: validProducts.map(p => ({
+          name: p.name.trim(),
+          quantity: parseInt(p.quantity) || 1,
+          price: parseFloat(p.price) || 0,
+        })),
         order_id: registerPackageModal.order_id?.trim() || null,
+        weight_kg: registerPackageModal.weight_kg ? parseFloat(registerPackageModal.weight_kg) : null,
         photo_url: registerPackageModal.photo_url?.trim() || null,
         video_url: registerPackageModal.video_url?.trim() || null,
       })
       setMessage(error ? error.message : 'Pacote registrado na conta do usuário.')
       if (!error) {
-        logAdminAction('package_register', null, null, { user_id: registerPackageModal.user_id })
-        setRegisterPackageModal({ open: false, user_id: '', products_description: '', items_count: '', weight_kg: '', order_id: '', photo_url: '', video_url: '' })
+        logAdminAction('package_register', null, null, { 
+          user_id: registerPackageModal.user_id,
+          products_count: validProducts.length 
+        })
+        setRegisterPackageModal({ 
+          open: false, 
+          user_id: '', 
+          products: [{ name: '', quantity: '', price: '' }],
+          order_id: '',
+          weight_kg: '',
+          photo_url: '',
+          video_url: '',
+        })
       }
     } finally {
       setSubmitting(false)
@@ -1622,6 +1735,7 @@ export default function Admin() {
   const filteredFraudAffiliateOrders = (fraudQueue.affiliate_orders || []).filter((row) =>
     passesFraudFilters(row, ['id', 'order_id', 'affiliate_id'])
   )
+  const orderEditParsedQuote = parseQuoteMessage(orderEditModal.message)
 
   return (
     <>
@@ -1684,7 +1798,64 @@ export default function Admin() {
         {activeTab === 'pedidos' && (
         <section className="mt-0 rounded-b-xl border border-t-0 border-earth-200 bg-earth-50 p-6">
           <h2 className="text-lg font-semibold text-earth-900">Pedidos</h2>
-          <div className="mt-3 flex flex-wrap gap-2">
+
+          {/* Filtro de Status - Opção A: Chips multi-select */}
+          <div className="mt-4">
+            <div className="flex items-center gap-2 text-sm text-earth-500 mb-2">
+              <span>Filtrar por status:</span>
+              {orderStatusFilter.length > 0 && (
+                <button
+                  onClick={() => setOrderStatusFilter([])}
+                  className="text-xs text-earth-400 hover:text-earth-600 underline"
+                >
+                  Limpar filtro
+                </button>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setOrderStatusFilter([])}
+                className={`px-3 py-1 rounded-full text-xs font-medium transition-all border ${
+                  orderStatusFilter.length === 0
+                    ? 'bg-earth-900 text-white border-earth-900'
+                    : 'bg-white border-earth-200 hover:bg-earth-50 text-earth-700'
+                }`}
+              >
+                Todos
+              </button>
+
+              {Object.entries(ORDER_STATUS_LABELS).map(([key, label]) => {
+                const isSelected = orderStatusFilter.includes(key)
+                return (
+                  <button
+                    key={key}
+                    onClick={() => {
+                      if (isSelected) {
+                        setOrderStatusFilter(prev => prev.filter(s => s !== key))
+                      } else {
+                        setOrderStatusFilter(prev => [...prev, key])
+                      }
+                    }}
+                    className={`px-3 py-1 rounded-full text-xs font-medium transition-all border flex items-center gap-1 ${
+                      isSelected
+                        ? 'bg-earth-700 text-white border-earth-700'
+                        : 'bg-white border-earth-200 hover:bg-earth-50 text-earth-700'
+                    }`}
+                  >
+                    {label}
+                    {isSelected && <span className="text-[10px] opacity-75">✓</span>}
+                  </button>
+                )
+              })}
+            </div>
+            {orderStatusFilter.length > 0 && (
+              <p className="mt-2 text-xs text-earth-500">
+                Mostrando {orderStatusFilter.length} status selecionado{orderStatusFilter.length !== 1 ? 's' : ''}
+              </p>
+            )}
+          </div>
+
+          <div className="mt-6 flex flex-wrap gap-2">
             <button
               type="button"
               onClick={async () => {
@@ -1701,7 +1872,15 @@ export default function Admin() {
               onClick={async () => {
                 const { data } = await getUsersAdmin(2000, 0)
                 setUsers(data ?? [])
-                setRegisterPackageModal({ open: true, user_id: '', products_description: '', items_count: '', weight_kg: '', order_id: '', photo_url: '', video_url: '' })
+                setRegisterPackageModal({ 
+                  open: true, 
+                  user_id: '', 
+                  products: [{ name: '', quantity: '', price: '' }],
+                  order_id: '',
+                  weight_kg: '',
+                  photo_url: '',
+                  video_url: '',
+                })
               }}
               className="rounded-lg bg-amber-700 px-3 py-2 text-sm font-medium text-white hover:bg-amber-800"
             >
@@ -1742,6 +1921,7 @@ export default function Admin() {
                           message={o.message}
                           quoteCurrency={o.quote_currency || 'JPY'}
                           formatMoney={formatMoney}
+                          orderModule={o.order_module}
                         />
                       )}
                       {Array.isArray(o.attachment_urls) && o.attachment_urls.length > 0 && (
@@ -1767,19 +1947,7 @@ export default function Admin() {
                       {o.status === ORDER_STATUS.AWAITING_QUOTE && (
                         <button
                           type="button"
-                          onClick={() => {
-                          const parsed = parseQuoteMessage(o.message)
-                          const orderDescription = parsed?.orderDescription ?? (parsed ? '' : (o.message?.trim() ?? ''))
-                          const products = parsed?.products?.length
-                            ? parsed.products.map((p) => ({
-                                name: String(p.name ?? ''),
-                                valor: p.valor != null ? String(p.valor) : '',
-                                quantidade: p.quantidade != null ? String(p.quantidade) : '1',
-                                descricao: String(p.descricao ?? ''),
-                              }))
-                            : [{ name: '', valor: '', quantidade: 1, descricao: '' }]
-                          setQuoteModal({ open: true, orderId: o.id, orderDescription, products, currency: 'JPY' })
-                        }}
+                          onClick={() => openQuoteModalFromOrder(o)}
                           className="rounded bg-amber-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-amber-700"
                         >
                           Definir orçamento
@@ -1803,10 +1971,13 @@ export default function Admin() {
                             setRegisterPackageModal({
                               open: true,
                               user_id: o.user_id ?? '',
-                              products_description: o.message ?? '',
-                              items_count: '',
-                              weight_kg: '',
+                              products: [{ 
+                                name: o.message ? o.message.substring(0, 60) : 'Produto do pedido', 
+                                quantity: '1', 
+                                price: '' 
+                              }],
                               order_id: o.id ?? '',
+                              weight_kg: '',
                               photo_url: '',
                               video_url: '',
                             })
@@ -2101,12 +2272,25 @@ export default function Admin() {
                 className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl bg-white p-6 shadow-lg"
                 onClick={(e) => e.stopPropagation()}
               >
-                <h3 className="font-semibold text-earth-900">Definir orçamento (Personal Shopping)</h3>
-                <p className="mt-1 text-sm text-earth-600">Lista de produtos com nome, valor e descrição.</p>
-                <p className="mt-2 text-xs text-earth-600">
-                  Referência de precificação: <strong>25% sobre o valor dos produtos + ¥200 por unidade</strong> (some tudo em ienes
-                  ao valor total do orçamento, além do frete quando aplicável).
+                <h3 className="font-semibold text-earth-900">
+                  Definir orçamento 
+                  {quoteModal.orderModule === 'assisted_buy' ? '(Redirecionamento Assistido)' : '(Personal Shopping)'}
+                </h3>
+                <p className="mt-1 text-sm text-earth-600">
+                  {quoteModal.orderModule === 'assisted_buy' 
+                    ? 'Cliente solicitou redirecionamento assistido. Defina o orçamento total em ienes.'
+                    : 'Lista de produtos com nome, valor e descrição.'}
                 </p>
+                {quoteModal.orderModule === 'assisted_buy' ? (
+                  <p className="mt-2 text-xs text-amber-600">
+                    <strong>Referência de precificação:</strong> 15% sobre o valor dos produtos + ¥500 por item + frete.
+                  </p>
+                ) : (
+                  <p className="mt-2 text-xs text-earth-600">
+                    Referência de precificação: <strong>25% sobre o valor dos produtos + ¥200 por unidade</strong> (some tudo em ienes
+                    ao valor total do orçamento, além do frete quando aplicável).
+                  </p>
+                )}
                 <div className="mt-4 space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-earth-700">Descrição do pedido (aparece no topo do orçamento)</label>
@@ -2253,6 +2437,7 @@ export default function Admin() {
                         orderDescription: '',
                         products: [{ name: '', valor: '', quantidade: 1, descricao: '' }],
                         currency: 'JPY',
+                        orderModule: 'personal_shopping',
                       })
                     }
                     className="rounded-lg border border-earth-300 px-4 py-2 font-medium text-earth-700 hover:bg-earth-100"
@@ -2308,15 +2493,46 @@ export default function Admin() {
                   </div>
                 </div>
                 <div className="mt-3">
-                  <label className="block text-sm font-medium text-earth-700">Mensagem</label>
-                  <textarea
-                    value={orderEditModal.message}
-                    onChange={(e) =>
-                      setOrderEditModal((m) => ({ ...m, message: e.target.value }))
-                    }
-                    rows={3}
-                    className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
-                  />
+                  {orderEditParsedQuote ? (
+                    <>
+                      <label className="block text-sm font-medium text-earth-700">Orçamento</label>
+                      <QuoteProductsList
+                        message={orderEditModal.message}
+                        quoteCurrency="JPY"
+                        formatMoney={formatMoney}
+                        orderModule={orderEditModal.order_module}
+                      />
+                      <label className="mt-3 block text-sm font-medium text-earth-700">
+                        Descrição do pedido (topo do orçamento)
+                      </label>
+                      <textarea
+                        value={orderEditParsedQuote.orderDescription ?? ''}
+                        onChange={(e) =>
+                          setOrderEditModal((m) => ({
+                            ...m,
+                            message: serializeQuoteProducts(orderEditParsedQuote.products, e.target.value),
+                          }))
+                        }
+                        rows={3}
+                        className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                      />
+                      <p className="mt-1 text-xs text-earth-500">
+                        Para editar itens/valores do orçamento, use a ação "Definir orçamento".
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <label className="block text-sm font-medium text-earth-700">Mensagem</label>
+                      <textarea
+                        value={orderEditModal.message}
+                        onChange={(e) =>
+                          setOrderEditModal((m) => ({ ...m, message: e.target.value }))
+                        }
+                        rows={3}
+                        className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                      />
+                    </>
+                  )}
                 </div>
                 {(orderEditModal.status === 'item_received' || orderEditModal.status === 'stored') && (
                   <div className="mt-3">
@@ -2384,6 +2600,22 @@ export default function Admin() {
                   >
                     Salvar alterações
                   </button>
+                  {orderEditParsedQuote && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        openQuoteModalFromOrder({
+                          id: orderEditModal.orderId,
+                          message: orderEditModal.message,
+                          order_module: orderEditModal.order_module,
+                        })
+                        setOrderEditModal((m) => ({ ...m, open: false }))
+                      }}
+                      className="rounded-lg bg-amber-600 px-4 py-2 font-medium text-white hover:bg-amber-700"
+                    >
+                      Editar itens do orçamento
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={closeOrderEditModal}
@@ -2558,13 +2790,16 @@ export default function Admin() {
               className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
             >
               <div
-                className="w-full max-w-md rounded-xl bg-white p-6 shadow-lg max-h-[90vh] overflow-y-auto"
+                className="w-full max-w-2xl rounded-xl bg-white p-6 shadow-lg max-h-[90vh] overflow-y-auto"
                 onClick={(e) => e.stopPropagation()}
               >
                 <h3 className="font-semibold text-earth-900">Registrar pacote na conta do usuário</h3>
-                <div className="mt-4 space-y-3">
+                <p className="text-sm text-earth-500 mt-1">Adicione os produtos recebidos</p>
+
+                <div className="mt-6 space-y-6">
+                  {/* Usuário */}
                   <div>
-                    <label className="block text-sm font-medium text-earth-700">Usuário *</label>
+                    <label className="block text-sm font-medium text-earth-700 mb-1">Usuário *</label>
                     <select
                       required
                       value={registerPackageModal.user_id}
@@ -2573,7 +2808,7 @@ export default function Admin() {
                       }
                       className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
                     >
-                      <option value="">Selecione</option>
+                      <option value="">Selecione um usuário</option>
                       {users.map((u) => (
                         <option key={u.id} value={u.id}>
                           {u.name || u.email} {u.account_code ? `(${u.account_code})` : ''}
@@ -2581,34 +2816,89 @@ export default function Admin() {
                       ))}
                     </select>
                   </div>
+
+                  {/* Lista de Produtos */}
                   <div>
-                    <label className="block text-sm font-medium text-earth-700">Descrição dos produtos *</label>
-                    <textarea
-                      required
-                      value={registerPackageModal.products_description}
-                      onChange={(e) =>
-                        setRegisterPackageModal((m) => ({ ...m, products_description: e.target.value }))
-                      }
-                      rows={3}
-                      placeholder="Ex: 2 camisetas, 1 calça..."
-                      className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-sm font-medium text-earth-700">Quantidade de itens</label>
-                      <input
-                        type="number"
-                        min="0"
-                        value={registerPackageModal.items_count}
-                        onChange={(e) =>
-                          setRegisterPackageModal((m) => ({ ...m, items_count: e.target.value }))
-                        }
-                        className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
-                      />
+                    <div className="flex items-center justify-between mb-3">
+                      <label className="block text-sm font-medium text-earth-700">Produtos recebidos</label>
+                      <button
+                        type="button"
+                        onClick={() => setRegisterPackageModal(m => ({
+                          ...m,
+                          products: [...m.products, { name: '', quantity: '', price: '' }]
+                        }))}
+                        className="text-xs px-3 py-1 bg-earth-100 hover:bg-earth-200 rounded-full text-earth-700 flex items-center gap-1"
+                      >
+                        + Adicionar produto
+                      </button>
                     </div>
+
+                    <div className="space-y-3 max-h-80 overflow-y-auto pr-2">
+                      {registerPackageModal.products.map((product, index) => (
+                        <div key={index} className="flex gap-3 items-start bg-earth-50 p-4 rounded-xl">
+                          <div className="flex-1">
+                            <input
+                              type="text"
+                              placeholder="Nome do produto"
+                              value={product.name}
+                              onChange={(e) => {
+                                const newProducts = [...registerPackageModal.products]
+                                newProducts[index].name = e.target.value
+                                setRegisterPackageModal(m => ({ ...m, products: newProducts }))
+                              }}
+                              className="block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                            />
+                          </div>
+                          <div className="w-24">
+                            <input
+                              type="number"
+                              placeholder="Qtd"
+                              min="1"
+                              value={product.quantity}
+                              onChange={(e) => {
+                                const newProducts = [...registerPackageModal.products]
+                                newProducts[index].quantity = e.target.value
+                                setRegisterPackageModal(m => ({ ...m, products: newProducts }))
+                              }}
+                              className="block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900 text-center"
+                            />
+                          </div>
+                          <div className="w-28">
+                            <input
+                              type="number"
+                              placeholder="Preço"
+                              min="0"
+                              step="0.01"
+                              value={product.price}
+                              onChange={(e) => {
+                                const newProducts = [...registerPackageModal.products]
+                                newProducts[index].price = e.target.value
+                                setRegisterPackageModal(m => ({ ...m, products: newProducts }))
+                              }}
+                              className="block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900 text-right"
+                            />
+                          </div>
+                          {registerPackageModal.products.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const newProducts = registerPackageModal.products.filter((_, i) => i !== index)
+                                setRegisterPackageModal(m => ({ ...m, products: newProducts }))
+                              }}
+                              className="text-red-500 hover:text-red-700 p-2"
+                            >
+                              ✕
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Campos adicionais */}
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-earth-700">Peso (kg)</label>
+                      <label className="block text-sm font-medium text-earth-700 mb-1">Peso total (kg)</label>
                       <input
                         type="number"
                         step="0.001"
@@ -2617,57 +2907,64 @@ export default function Admin() {
                         onChange={(e) =>
                           setRegisterPackageModal((m) => ({ ...m, weight_kg: e.target.value }))
                         }
-                        className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                        className="block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-earth-700 mb-1">Pedido relacionado (opcional)</label>
+                      <input
+                        type="text"
+                        value={registerPackageModal.order_id}
+                        onChange={(e) =>
+                          setRegisterPackageModal((m) => ({ ...m, order_id: e.target.value }))
+                        }
+                        placeholder="ID do pedido"
+                        className="block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
                       />
                     </div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-earth-700">Pedido (ID) — opcional</label>
-                    <input
-                      type="text"
-                      value={registerPackageModal.order_id}
-                      onChange={(e) =>
-                        setRegisterPackageModal((m) => ({ ...m, order_id: e.target.value }))
-                      }
-                      placeholder="UUID do pedido"
-                      className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-earth-700">URL da foto</label>
-                    <input
-                      type="url"
-                      value={registerPackageModal.photo_url}
-                      onChange={(e) =>
-                        setRegisterPackageModal((m) => ({ ...m, photo_url: e.target.value }))
-                      }
-                      className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-earth-700">URL do vídeo</label>
-                    <input
-                      type="url"
-                      value={registerPackageModal.video_url}
-                      onChange={(e) =>
-                        setRegisterPackageModal((m) => ({ ...m, video_url: e.target.value }))
-                      }
-                      className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
-                    />
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-earth-700 mb-1">Foto (URL)</label>
+                      <input
+                        type="url"
+                        value={registerPackageModal.photo_url}
+                        onChange={(e) =>
+                          setRegisterPackageModal((m) => ({ ...m, photo_url: e.target.value }))
+                        }
+                        className="block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-earth-700 mb-1">Vídeo (URL)</label>
+                      <input
+                        type="url"
+                        value={registerPackageModal.video_url}
+                        onChange={(e) =>
+                          setRegisterPackageModal((m) => ({ ...m, video_url: e.target.value }))
+                        }
+                        className="block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                      />
+                    </div>
                   </div>
                 </div>
-                <div className="mt-6 flex gap-2">
+
+                <div className="mt-8 flex gap-3">
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="rounded-lg bg-amber-600 px-4 py-2 font-medium text-white hover:bg-amber-700 disabled:opacity-60"
+                    className="flex-1 rounded-lg bg-amber-600 px-4 py-3 font-medium text-white hover:bg-amber-700 disabled:opacity-60"
                   >
-                    {submitting ? 'Registrando...' : 'Registrar pacote'}
+                    {submitting ? 'Registrando pacote...' : 'Registrar pacote'}
                   </button>
                   <button
                     type="button"
-                    onClick={() => setRegisterPackageModal((m) => ({ ...m, open: false }))}
-                    className="rounded-lg border border-earth-300 px-4 py-2 font-medium text-earth-700 hover:bg-earth-100"
+                    onClick={() => setRegisterPackageModal((m) => ({ 
+                      ...m, 
+                      open: false 
+                    }))}
+                    className="rounded-lg border border-earth-300 px-8 py-3 font-medium text-earth-700 hover:bg-earth-100"
                   >
                     Cancelar
                   </button>
@@ -4275,14 +4572,123 @@ export default function Admin() {
                   placeholder="Ilimitado"
                   className="w-28 rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
                 />
-                <span className="text-sm font-medium text-earth-700">Imagem (URL)</span>
-                <input
-                  type="url"
-                  value={form.image_url}
-                  onChange={(e) => setForm((f) => ({ ...f, image_url: e.target.value }))}
-                  placeholder="https://..."
-                  className="min-w-[220px] flex-1 rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
-                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-earth-700">Imagens do produto</label>
+                <div className="mt-2 flex flex-wrap items-center gap-3">
+                  <label className="cursor-pointer rounded-lg border border-earth-300 bg-white px-3 py-2 text-sm font-medium text-earth-700 hover:bg-earth-50">
+                    {imageUploading ? 'Enviando...' : 'Enviar arquivo'}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="sr-only"
+                      disabled={imageUploading}
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0]
+                        if (!file) return
+                        setImageUploadError('')
+                        setImageUploading(true)
+                        try {
+                          const { data, error } = await uploadProductImage(file)
+                          if (error) {
+                            setImageUploadError(error.message || 'Falha no upload')
+                            return
+                          }
+                          if (data) {
+                            addProductImage(data)
+                          }
+                        } finally {
+                          setImageUploading(false)
+                          e.target.value = ''
+                        }
+                      }}
+                    />
+                  </label>
+
+                  <input
+                    type="url"
+                    value={newImageUrl}
+                    onChange={(e) => {
+                      setNewImageUrl(e.target.value)
+                      setImageUploadError('')
+                    }}
+                    placeholder="Cole a URL e pressione Enter"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        const url = newImageUrl?.trim()
+                        if (!url) return
+                        addProductImage(url)
+                        setNewImageUrl('')
+                      }
+                    }}
+                    className="min-w-[220px] flex-1 rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const url = newImageUrl?.trim()
+                      if (!url) return
+                      addProductImage(url)
+                      setNewImageUrl('')
+                    }}
+                    className="rounded-lg border border-earth-300 bg-white px-3 py-2 text-sm font-medium text-earth-700 hover:bg-earth-50"
+                  >
+                    Adicionar URL
+                  </button>
+                </div>
+
+                {imageUploadError && <p className="mt-2 text-sm text-red-600">{imageUploadError}</p>}
+
+                {form.image_urls?.length > 0 && (
+                  <div className="mt-3">
+                    <p className="mb-2 text-xs text-earth-600">
+                      Arraste para reordenar. A primeira imagem e a capa do produto.
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {(form.image_urls || []).filter(Boolean).map((url, i) => (
+                        <div
+                          key={i}
+                          draggable
+                          onDragStart={(e) => e.dataTransfer.setData('text/plain', String(i))}
+                          onDragOver={(e) => e.preventDefault()}
+                          onDrop={(e) => {
+                            e.preventDefault()
+                            const from = parseInt(e.dataTransfer.getData('text/plain'), 10)
+                            if (Number.isInteger(from)) moveProductImage(from, i)
+                          }}
+                          className="group relative inline-block cursor-grab active:cursor-grabbing"
+                        >
+                          <img src={url} alt="" className="h-20 w-20 rounded border border-earth-200 object-cover" />
+                          {i === 0 && (
+                            <span className="absolute left-1 top-1 rounded bg-earth-900 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                              Capa
+                            </span>
+                          )}
+                          {i > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => setProductCover(i)}
+                              className="absolute bottom-1 left-1 rounded bg-white/90 px-1.5 py-0.5 text-[10px] font-medium text-earth-800 hover:bg-white"
+                            >
+                              Definir capa
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => removeProductImageAt(i)}
+                            className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white hover:bg-red-600"
+                            aria-label="Remover foto"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="flex flex-wrap items-start gap-2">

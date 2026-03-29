@@ -48,6 +48,10 @@ export async function getMyPayments() {
             id,
             created_at,
             status,
+            order_source,
+            quote_amount,
+            total_amount,
+            shipping_cost,
             shipping_currency,
             service:services (name)
           )

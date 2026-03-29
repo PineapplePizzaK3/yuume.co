@@ -114,19 +114,46 @@ export async function createShipment(userId, inventoryIds, options = {}) {
 
 /**
  * Admin: registra pacote na conta do usuário (com dados completos).
+ * Suporta tanto o formato antigo (products_description) quanto o novo (products array).
  */
-export async function registerPackageAdmin(userId, { products_description, items_count, weight_kg, order_id, photo_url, video_url }) {
+export async function registerPackageAdmin(userId, payload) {
+  const {
+    products_description,
+    products,
+    items_count,
+    weight_kg,
+    order_id,
+    photo_url,
+    video_url
+  } = payload || {}
+
   try {
+    const rpcPayload = {
+      p_user_id: userId,
+      p_order_id: order_id || null,
+      p_weight_kg: weight_kg ?? null,
+      p_photo_url: photo_url || null,
+      p_video_url: video_url || null,
+    }
+
+    // Novo formato: array de produtos
+    if (Array.isArray(products) && products.length > 0) {
+      rpcPayload.p_products = products
+      rpcPayload.p_products_description = products.map(p => 
+        `${p.quantity || 1}x ${p.name} (${p.price || 0})`
+      ).join('; ')
+    } 
+    // Formato antigo (compatibilidade)
+    else if (products_description) {
+      rpcPayload.p_products_description = products_description
+    } else {
+      rpcPayload.p_products_description = 'Pacote registrado via admin'
+    }
+
+    if (items_count != null) rpcPayload.p_items_count = items_count
+
     const { data, error } = await withDbTimeout(
-      supabase.rpc('admin_register_package', {
-        p_user_id: userId,
-        p_products_description: products_description || '',
-        p_items_count: items_count ?? null,
-        p_weight_kg: weight_kg ?? null,
-        p_order_id: order_id || null,
-        p_photo_url: photo_url || null,
-        p_video_url: video_url || null,
-      })
+      supabase.rpc('admin_register_package', rpcPayload)
     )
     return { data: data ?? null, error }
   } catch (e) {

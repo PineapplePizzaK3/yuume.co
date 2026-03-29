@@ -6,7 +6,7 @@ import { parseQuoteMessage } from '../lib/quoteProducts'
 import { formatJPY } from '../lib/fx'
 import LinkifyText from './LinkifyText'
 
-export default function QuoteProductsList({ message, quoteCurrency = 'JPY', formatMoney }) {
+export default function QuoteProductsList({ message, quoteCurrency = 'JPY', formatMoney, orderModule = 'personal_shopping' }) {
   const parsed = parseQuoteMessage(message)
   if (!parsed) {
     if (message?.trim()) {
@@ -38,11 +38,22 @@ export default function QuoteProductsList({ message, quoteCurrency = 'JPY', form
     return null
   }
 
-  const total = products.reduce((s, p) => {
+  const baseTotal = products.reduce((s, p) => {
     const valor = Number(p.valor) || 0
     const qty = Math.max(1, parseInt(p.quantidade, 10) || 1)
     return s + valor * qty
   }, 0)
+
+  // Taxas diferentes por tipo de serviço
+  const isAssistedBuy = orderModule === 'assisted_buy' || orderModule === 'redir-assistido'
+  const servicePercent = isAssistedBuy ? 15 : 25
+  const feePerItem = isAssistedBuy ? 500 : 200
+  const totalItems = products.reduce((sum, p) => sum + Math.max(1, parseInt(p.quantidade, 10) || 1), 0)
+  
+  const serviceFeePercent = Math.round(baseTotal * (servicePercent / 100))
+  const serviceFeeFixed = feePerItem * totalItems
+  const grandTotal = baseTotal + serviceFeePercent + serviceFeeFixed
+
   const fmt = (v) => (formatMoney ? formatMoney(v, quoteCurrency) : formatJPY(v))
 
   return (
@@ -74,9 +85,28 @@ export default function QuoteProductsList({ message, quoteCurrency = 'JPY', form
           )
         })}
       </ul>
-      <p className="mt-3 border-t border-earth-200 pt-2 text-sm font-semibold text-earth-900">
-        Total: {fmt(total)}
-      </p>
+
+      {/* Detalhamento do Orçamento */}
+      <div className="mt-4 border-t border-earth-200 pt-3 text-sm">
+        <div className="space-y-1 text-earth-600">
+          <div className="flex justify-between">
+            <span>Base dos produtos:</span>
+            <span>{fmt(baseTotal)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>Taxa de serviço ({servicePercent}%):</span>
+            <span>{fmt(serviceFeePercent)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>Taxa por item (¥{feePerItem} × {totalItems}):</span>
+            <span>{fmt(serviceFeeFixed)}</span>
+          </div>
+        </div>
+        <div className="mt-3 border-t border-earth-900 pt-2 flex justify-between font-semibold text-earth-900">
+          <span>Total do orçamento:</span>
+          <span>{fmt(grandTotal)}</span>
+        </div>
+      </div>
     </div>
   )
 }

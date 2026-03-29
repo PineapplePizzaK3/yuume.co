@@ -45,9 +45,26 @@ export default function Payments() {
   }, [user?.id])
 
   const paymentMethod = (p) => {
-    if (p.stripe_payment_id === 'wallet') return 'Carteira'
-    if (p.stripe_payment_id) return 'Cartão'
+    const raw = String(p?.stripe_payment_id || '').trim()
+    if (!raw) return '—'
+    const id = raw.toLowerCase()
+    if (id.startsWith('wallet')) return 'Carteira'
+    if (id === 'referral_discount') return 'Desconto'
+    if (id.includes('pix')) return 'PIX'
+    if (id.startsWith('pi_') || id.startsWith('cs_') || id.startsWith('ch_')) return 'Cartão'
+    if (id.includes('manual')) return 'Manual'
+    if (raw) return 'Cartão'
     return '—'
+  }
+  const paymentKind = (p) => {
+    const o = order(p)
+    const id = String(p?.stripe_payment_id || '').toLowerCase()
+    if (id === 'referral_discount') return 'Desconto'
+    if (o?.order_source === 'store') return 'Loja'
+    if (Number(o?.quote_amount) > 0) return 'Serviço'
+    if (Number(o?.shipping_cost) > 0) return 'Frete'
+    if (p?.order_id) return 'Pedido'
+    return 'Pagamento'
   }
 
   const order = (p) => {
@@ -139,10 +156,10 @@ export default function Payments() {
                           to={`/app/lounge?tab=pedidos&orderId=${encodeURIComponent(orderId)}`}
                           className="text-earth-900 underline decoration-earth-300 underline-offset-2 hover:decoration-earth-700"
                         >
-                          Frete · Pedido {String(orderId).slice(0, 8)}…
+                          {paymentKind(p)} · Pedido {String(orderId).slice(0, 8)}…
                         </Link>
                       ) : (
-                        <span className="text-earth-900">Frete</span>
+                        <span className="text-earth-900">{paymentKind(p)}</span>
                       )}
                       {serviceName(p) && (
                         <p className="text-sm text-earth-500">{serviceName(p)}</p>
