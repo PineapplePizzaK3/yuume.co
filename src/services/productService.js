@@ -119,11 +119,18 @@ export async function uploadOrderAttachment(file, userId) {
   if (!file || !file.type?.startsWith('image/')) {
     return { data: null, error: { message: 'Selecione um arquivo de imagem.' } }
   }
-  if (!userId) return { data: null, error: { message: 'Usuário não identificado.' } }
   try {
+    const { data: userData, error: userErr } = await supabase.auth.getUser()
+    const sessionUserId = userData?.user?.id
+    if (userErr || !sessionUserId) {
+      return { data: null, error: { message: 'Sessão inválida. Faça login novamente.' } }
+    }
+    if (userId && userId !== sessionUserId) {
+      return { data: null, error: { message: 'Usuário da sessão não confere.' } }
+    }
     const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
     const safeName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
-    const path = `orders/${userId}/${safeName}`
+    const path = `orders/${sessionUserId}/${safeName}`
 
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from(PRODUCT_IMAGES_BUCKET)

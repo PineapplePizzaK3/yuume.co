@@ -3,7 +3,7 @@
  * Redirecionamento (Padrão ou Assistido): disclaimer → user cria pedido → admin aprova / orça.
  * Personal Shopping e Redirecionamento: anexos por arquivo ou URL; admin orça / aprova conforme o fluxo.
  */
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
@@ -18,6 +18,38 @@ const DESCRICOES_FIXAS = {
   Redirecionamento: 'Módulos: 📦 Redirecionamento Padrão | 🛍️ Redirecionamento Assistido + frete',
   'Personal Shopping':
     '25% do valor da compra + ¥200 por item + frete — ideal para quem precisa de ajuda para decidir o que comprar',
+}
+
+const DRAFT_STORAGE_PREFIX = 'platform_services_order_draft_v1:'
+
+function readServicesDraft(userId) {
+  if (!userId) return null
+  try {
+    const raw = localStorage.getItem(DRAFT_STORAGE_PREFIX + userId)
+    if (!raw) return null
+    const d = JSON.parse(raw)
+    return d && typeof d === 'object' ? d : null
+  } catch {
+    return null
+  }
+}
+
+function writeServicesDraft(userId, payload) {
+  if (!userId) return
+  try {
+    localStorage.setItem(DRAFT_STORAGE_PREFIX + userId, JSON.stringify(payload))
+  } catch {
+    // quota ou modo privado
+  }
+}
+
+function clearServicesDraft(userId) {
+  if (!userId) return
+  try {
+    localStorage.removeItem(DRAFT_STORAGE_PREFIX + userId)
+  } catch {
+    // ignore
+  }
 }
 
 export default function Services() {
@@ -35,6 +67,9 @@ export default function Services() {
   const [feedback, setFeedback] = useState('')
   const [successNotice, setSuccessNotice] = useState(null)
   const [failedThumbUrls, setFailedThumbUrls] = useState(() => new Set())
+  const [draftHydrated, setDraftHydrated] = useState(false)
+  const saveDebounceRef = useRef(null)
+  const draftLoadedRef = useRef(false)
 
   const selectedService = selectedId ? services.find((s) => s.id === selectedId) : null
   const isRedirecionamento = selectedService?.name === REDIRECIONAMENTO
@@ -65,6 +100,58 @@ export default function Services() {
   }, [])
 
   const oferta = services.filter((s) => SERVICOS_OFERTADOS.includes(s.name))
+
+  useEffect(() => {
+    draftLoadedRef.current = false
+    setDraftHydrated(false)
+  }, [user?.id])
+
+  useEffect(() => {
+    if (!user?.id || loading || oferta.length === 0) return
+    if (draftLoadedRef.current) return
+    draftLoadedRef.current = true
+    const d = readServicesDraft(user.id)
+    if (d) {
+      if (typeof d.message === 'string') setMessage(d.message)
+      if (d.redirModule === 'self_buy' || d.redirModule === 'assisted_buy') setRedirModule(d.redirModule)
+      if (typeof d.agreeProhibited === 'boolean') setAgreeProhibited(d.agreeProhibited)
+      if (Array.isArray(d.attachmentUrls)) {
+        setAttachmentUrls(d.attachmentUrls.filter((u) => typeof u === 'string' && u.trim()))
+      }
+      if (typeof d.imageUrlDraft === 'string') setImageUrlDraft(d.imageUrlDraft)
+      if (d.selectedId && oferta.some((s) => s.id === d.selectedId)) {
+        setSelectedId(d.selectedId)
+      }
+    }
+    setDraftHydrated(true)
+  }, [user?.id, loading, oferta.length])
+
+  useEffect(() => {
+    if (!user?.id || !draftHydrated) return
+    if (saveDebounceRef.current) clearTimeout(saveDebounceRef.current)
+    saveDebounceRef.current = setTimeout(() => {
+      writeServicesDraft(user.id, {
+        message,
+        selectedId,
+        redirModule,
+        agreeProhibited,
+        attachmentUrls,
+        imageUrlDraft,
+        updatedAt: Date.now(),
+      })
+    }, 450)
+    return () => {
+      if (saveDebounceRef.current) clearTimeout(saveDebounceRef.current)
+    }
+  }, [user?.id, draftHydrated, message, selectedId, redirModule, agreeProhibited, attachmentUrls, imageUrlDraft])
+
+  const clearLocalDraft = () => {
+    setMessage('')
+    setAttachmentUrls([])
+    setImageUrlDraft('')
+    setFailedThumbUrls(() => new Set())
+    clearServicesDraft(user?.id)
+  }
 
   const addImageUrl = () => {
     const raw = imageUrlDraft.trim()
@@ -142,6 +229,7 @@ export default function Services() {
     setSuccessNotice({
       quoteFlow: !!(isPersonalShopping || isRedirAssisted),
     })
+    clearServicesDraft(user.id)
     setSelectedId(null)
     setMessage('')
     setAttachmentUrls([])
@@ -179,10 +267,6 @@ export default function Services() {
                       setSelectedId(s.id)
                       setFeedback('')
                       setSuccessNotice(null)
-                      setMessage('')
-                      setAttachmentUrls([])
-                      setImageUrlDraft('')
-                      setFailedThumbUrls(() => new Set())
                       setAgreeProhibited(false)
                       setRedirModule('self_buy')
                     }}
@@ -294,6 +378,9 @@ export default function Services() {
                     ? 'Informe loja, quantidade e descrição dos itens. Você pode anexar invoice, prints ou links de imagem abaixo (opcional).'
                     : 'Informe loja, quantidade e descrição dos itens para facilitar o recebimento.'}
               </p>
+              <p className="mt-1 text-xs text-earth-600">
+                Seu texto e opções deste formulário são salvos automaticamente neste aparelho; se você sair da página, o rascunho volta ao retornar.
+              </p>
               <textarea
                 id="message"
                 value={message}
@@ -304,6 +391,15 @@ export default function Services() {
                 rows={4}
                 className="mt-2 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900 placeholder:text-earth-400"
               />
+              <div className="mt-2 flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={clearLocalDraft}
+                  className="text-xs font-medium text-earth-600 underline decoration-earth-300 hover:text-earth-900 hover:decoration-earth-600"
+                >
+                  Limpar rascunho salvo neste aparelho
+                </button>
+              </div>
             </div>
 
             {showImageAttachments && (
