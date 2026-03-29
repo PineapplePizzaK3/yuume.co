@@ -5,6 +5,13 @@ import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../hooks/useAuth'
 import { updateProfile, getOrCreateProfile } from '../../services/profileService'
 import { validatePassword, PASSWORD_PLACEHOLDER } from '../../lib/passwordValidation'
+import { LEGAL_CONFIG } from '../../data/legalConfig'
+import { TermsOfUsePtBrBody } from '../../legal/TermsOfUsePtBrBody'
+
+const TERMS_CFG = {
+  BUSINESS_NAME: LEGAL_CONFIG.BUSINESS_NAME,
+  SUPPORT_EMAIL: LEGAL_CONFIG.SUPPORT_EMAIL,
+}
 
 export default function CompleteSocialProfile() {
   const { user, refreshProfile, needsSocialOnboarding } = useAuth()
@@ -13,7 +20,7 @@ export default function CompleteSocialProfile() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [agreeTerms, setAgreeTerms] = useState(false)
-  const [agreePrivacy, setAgreePrivacy] = useState(false)
+  const [canAgreeTerms, setCanAgreeTerms] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -40,8 +47,12 @@ export default function CompleteSocialProfile() {
       setError('A confirmação de senha não confere.')
       return
     }
-    if (!agreeTerms || !agreePrivacy) {
-      setError('É necessário concordar com os Termos de Uso e com a Política de Privacidade para concluir o cadastro.')
+    if (!canAgreeTerms) {
+      setError('Role até o final dos Termos de Uso para liberar o aceite.')
+      return
+    }
+    if (!agreeTerms) {
+      setError('É necessário concordar com os Termos de Uso para concluir o cadastro.')
       return
     }
 
@@ -54,7 +65,6 @@ export default function CompleteSocialProfile() {
           name: fullName,
           social_onboarding_completed: true,
           accepted_terms: true,
-          accepted_privacy: true,
           accepted_terms_at: new Date().toISOString(),
         },
       })
@@ -83,12 +93,18 @@ export default function CompleteSocialProfile() {
     }
   }
 
+  const unlockOnScrollEnd = (event, unlock) => {
+    const el = event.currentTarget
+    const remaining = el.scrollHeight - el.scrollTop - el.clientHeight
+    if (remaining <= 8) unlock(true)
+  }
+
   return (
     <>
       <Helmet>
         <title>Complete seu cadastro | Plataforma</title>
       </Helmet>
-      <section className="mx-auto mt-8 max-w-md rounded-xl border border-earth-200 bg-white p-6 shadow-sm">
+      <section className="mx-auto mt-8 max-w-2xl rounded-xl border border-earth-200 bg-white p-6 shadow-sm">
         <h1 className="text-xl font-bold text-earth-900">Complete seu cadastro</h1>
         <p className="mt-2 text-sm text-earth-600">
           Para continuar, informe seu nome completo e crie uma senha para a conta.
@@ -131,40 +147,46 @@ export default function CompleteSocialProfile() {
             />
           </div>
           <div className="space-y-3">
-            <label className="flex items-start gap-3 cursor-pointer">
+            <div className="rounded-lg border border-earth-300 bg-white p-3">
+              <p className="text-sm font-medium text-earth-800">Termos de Uso (texto integral)</p>
+              <p className="mt-1 text-xs text-earth-600">Role até o final para habilitar o aceite.</p>
+              <div
+                className="mt-2 max-h-[min(24rem,55vh)] overflow-y-auto rounded border border-earth-200 bg-earth-50 p-3"
+                onScroll={(e) => unlockOnScrollEnd(e, setCanAgreeTerms)}
+              >
+                <div className="space-y-6">
+                  <TermsOfUsePtBrBody cfg={TERMS_CFG} compact />
+                </div>
+              </div>
+              <p className="mt-2 text-xs text-earth-600">
+                Versão também em{' '}
+                <Link to="/legal/terms" target="_blank" rel="noopener noreferrer" className="font-medium text-earth-900 underline hover:no-underline">
+                  /legal/terms
+                </Link>
+                .
+              </p>
+            </div>
+
+            <label className="flex cursor-pointer items-start gap-3">
               <input
                 type="checkbox"
                 checked={agreeTerms}
                 onChange={(e) => setAgreeTerms(e.target.checked)}
+                disabled={!canAgreeTerms}
                 className="mt-1 rounded border-earth-300 text-earth-900"
               />
               <span className="text-sm text-earth-700">
                 Li e concordo com os{' '}
                 <Link to="/legal/terms" target="_blank" rel="noopener noreferrer" className="font-medium text-earth-900 underline hover:no-underline">
                   Termos de Uso
-                </Link>
-                .
-              </span>
-            </label>
-            <label className="flex items-start gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={agreePrivacy}
-                onChange={(e) => setAgreePrivacy(e.target.checked)}
-                className="mt-1 rounded border-earth-300 text-earth-900"
-              />
-              <span className="text-sm text-earth-700">
-                Li e concordo com a{' '}
-                <Link to="/legal/privacy" target="_blank" rel="noopener noreferrer" className="font-medium text-earth-900 underline hover:no-underline">
-                  Política de Privacidade
-                </Link>
-                .
+                </Link>{' '}
+                acima.
               </span>
             </label>
           </div>
           <button
             type="submit"
-            disabled={loading || !agreeTerms || !agreePrivacy}
+            disabled={loading || !agreeTerms || !canAgreeTerms}
             className="w-full rounded-lg bg-earth-900 px-4 py-3 font-medium text-earth-50 hover:bg-earth-800 disabled:opacity-70"
           >
             {loading ? 'Salvando...' : 'Concluir cadastro'}
