@@ -63,6 +63,15 @@ export default function Orders() {
     const orderIdFromQuery = params.get('orderId')
     if (orderIdFromQuery) {
       setTargetOrderId(orderIdFromQuery)
+      setHasOpenedTargetOrder(false)
+      // Consome o deep-link para evitar reabrir automaticamente ao voltar para a página.
+      try {
+        const url = new URL(window.location.href)
+        url.searchParams.delete('orderId')
+        window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`)
+      } catch {
+        // noop
+      }
     }
   }, [])
 

@@ -10,7 +10,7 @@ import { getMyOrders } from '../../services/orderService'
 import { getWallet } from '../../services/walletService'
 import { getWishlistLinks } from '../../services/wishlistLinkService'
 import { getMyNotifications, markNotificationRead } from '../../services/notificationService'
-import { getMyShipments } from '../../services/inventoryService'
+import { getMyInventoryCount, getMyShipments } from '../../services/inventoryService'
 import { SHIPPING_ADDRESS_JAPAN } from '../../data/legalConfig'
 import { cacheKey, readCache, writeCache } from '../../lib/cache'
 import { getMyReferralOverview } from '../../services/referralService'
@@ -30,6 +30,7 @@ const DEFAULT_DASHBOARD_PREFS = {
   showCardWallet: true,
   showCardOrders: true,
   showCardWishlist: true,
+  showCardMyProducts: true,
 }
 
 function formatMoney(value, currency = 'BRL') {
@@ -104,6 +105,7 @@ export default function Dashboard() {
   const [wishlist, setWishlist] = useState([])
   const [deliveredAtHomeCount, setDeliveredAtHomeCount] = useState(0)
   const [shipmentsInProcessCount, setShipmentsInProcessCount] = useState(0)
+  const [inventoryCount, setInventoryCount] = useState(0)
   const [notifications, setNotifications] = useState([])
   const [referral, setReferral] = useState({
     code: null,
@@ -147,15 +149,17 @@ export default function Dashboard() {
         setWishlist(cached.wishlist ?? [])
         setDeliveredAtHomeCount(Number(cached.deliveredAtHomeCount) || 0)
         setShipmentsInProcessCount(Number(cached.shipmentsInProcessCount) || 0)
+        setInventoryCount(Number(cached.inventoryCount) || 0)
         setLoading(false)
       }
       try {
-        const [ordersRes, walletRes, wishlistLinksRes, deliveredRes, inProcessRes] = await Promise.all([
+        const [ordersRes, walletRes, wishlistLinksRes, deliveredRes, inProcessRes, inventoryRes] = await Promise.all([
           getMyOrders(user.id),
           getWallet(user.id),
           getWishlistLinks(user.id),
           getMyShipments(user.id, { limit: 200, offset: 0, statusIn: ['completed'] }),
           getMyShipments(user.id, { limit: 200, offset: 0, statusIn: SHIPMENT_IN_PROCESS_STATUSES }),
+          getMyInventoryCount(user.id),
         ])
         if (!isActive) return
         setOrders(ordersRes.data ?? [])
@@ -163,14 +167,17 @@ export default function Dashboard() {
         setWishlist(wishlistLinksRes.data ?? [])
         const deliveredN = (deliveredRes.data ?? []).length
         const processN = (inProcessRes.data ?? []).length
+        const inventoryN = Number(inventoryRes.data) || 0
         setDeliveredAtHomeCount(deliveredN)
         setShipmentsInProcessCount(processN)
+        setInventoryCount(inventoryN)
         writeCache(k, {
           orders: ordersRes.data ?? [],
           wallet: walletRes.data ?? null,
           wishlist: wishlistLinksRes.data ?? [],
           deliveredAtHomeCount: deliveredN,
           shipmentsInProcessCount: processN,
+          inventoryCount: inventoryN,
         })
       } catch {
         if (isActive) {
@@ -179,6 +186,7 @@ export default function Dashboard() {
           setWishlist([])
           setDeliveredAtHomeCount(0)
           setShipmentsInProcessCount(0)
+          setInventoryCount(0)
         }
       } finally {
         if (isActive) setLoading(false)
@@ -371,6 +379,15 @@ export default function Dashboard() {
                     />
                     Card Lista de desejos
                   </label>
+                  <label className="flex items-center gap-2 text-sm text-earth-700 sm:col-span-2">
+                    <input
+                      type="checkbox"
+                      checked={dashboardPrefs.showCardMyProducts}
+                      onChange={(e) => updateDashboardPref('showCardMyProducts', e.target.checked)}
+                      className="rounded border-earth-300"
+                    />
+                    Card Meus produtos
+                  </label>
                 </>
               )}
             </div>
@@ -560,6 +577,21 @@ export default function Dashboard() {
                 <span className="min-w-0 text-xs">
                   <span className="block font-medium text-earth-900">{wishlist.length} item(ns)</span>
                   <span className="block text-earth-500">Lista de desejos</span>
+                </span>
+              </Link>}
+              {dashboardPrefs.showCardMyProducts && <Link
+                to="/app/meus-produtos"
+                className="flex items-center gap-2 rounded-lg border border-earth-200 bg-white px-3 py-2 text-left transition hover:bg-earth-50"
+                title="Meus produtos"
+              >
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-earth-100 text-earth-600">
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8 4-8-4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                  </svg>
+                </span>
+                <span className="min-w-0 text-xs">
+                  <span className="block font-medium text-earth-900">{inventoryCount} item(ns)</span>
+                  <span className="block text-earth-500">Meus produtos</span>
                 </span>
               </Link>}
             </section>}

@@ -45,6 +45,26 @@ export async function getMyInventory(userId, options = {}) {
 }
 
 /**
+ * Quantidade de itens no inventário do usuário (stored + ready_for_shipment por padrão).
+ */
+export async function getMyInventoryCount(userId, options = {}) {
+  const statuses = Array.isArray(options?.statuses) && options.statuses.length > 0
+    ? options.statuses.filter(Boolean)
+    : ['stored', 'ready_for_shipment']
+  try {
+    let q = supabase
+      .from('user_inventory')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId)
+    if (statuses.length > 0) q = q.in('status', statuses)
+    const { count, error } = await withDbTimeout(q)
+    return { data: Number(count) || 0, error }
+  } catch (e) {
+    return { data: 0, error: toServiceError(e) }
+  }
+}
+
+/**
  * Cria solicitação de envio (consolidação) com os itens selecionados.
  * @param {string} userId
  * @param {string[]} inventoryIds
