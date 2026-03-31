@@ -67,6 +67,24 @@ export async function addWalletBalanceAdmin(userId, amount, description = null) 
 }
 
 /**
+ * Admin: remove saldo da carteira do usuário (ajuste manual).
+ */
+export async function removeWalletBalanceAdmin(userId, amount, description = null) {
+  try {
+    const { data, error } = await withDbTimeout(
+      supabase.rpc('admin_wallet_debit', {
+        p_user_id: userId,
+        p_amount: Number(amount),
+        p_description: description || null,
+      })
+    )
+    return { data: data ?? null, error }
+  } catch (e) {
+    return { data: null, error: toServiceError(e) }
+  }
+}
+
+/**
  * Criar solicitação de recarga via PIX (retorna request com amount_brl para QR).
  * amountBrl: valor em BRL para o QR (computado pelo frontend com jpyToBrl).
  */

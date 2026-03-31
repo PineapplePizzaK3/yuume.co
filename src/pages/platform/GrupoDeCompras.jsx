@@ -149,7 +149,7 @@ export default function GrupoDeCompras() {
           <div>
             <h1 className="text-2xl font-bold text-earth-900">Grupo de Compras</h1>
             <p className="mt-2 text-earth-600">
-              Veja grupos disponíveis e detalhes com fotos. Taxa de serviço: 20% sobre o valor dos produtos do grupo + ¥200 por
+              Veja grupos disponíveis e detalhes com fotos. Taxa de serviço: 20% sobre o valor dos produtos do grupo + ¥250 por
               unidade (no checkout a conversão para real segue a cotação configurada).
             </p>
           </div>

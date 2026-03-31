@@ -11,12 +11,12 @@ const LINHAS_VALORES = (percentual, porItem, freteTexto, formatarIene) => [
   { label: 'Frete internacional', valor: freteTexto },
 ]
 
-/** Padrão: escada por qtd. Assistido: 15% + ¥500/item. */
+/** Padrão: escada por qtd. Assistido: 15% + taxa por item igual ao padrão. */
 const LINHAS_REDIRECIONAMENTO = (formatarIene) => [
   {
     componente: 'Taxa de serviço',
     padrao: `1 item ${formatarIene(1000)} · 2–4 itens ${formatarIene(750)}/item · 5+ itens ${formatarIene(500)}/item`,
-    assistido: `15% sobre o valor da compra + ${formatarIene(500)}/item`,
+    assistido: `15% sobre o valor da compra + mesma taxa por item do Redirecionamento Padrão`,
   },
   {
     componente: 'Frete internacional',
@@ -242,7 +242,7 @@ function Servicos() {
             {servico.id === 'redirecionamento' && (
               <>
                 <p className="mt-6 text-sm text-earth-600">
-                  <strong>Como cobramos:</strong> Redirecionamento tem dois módulos — 📦 Redirecionamento Padrão (taxa por quantidade de itens, ver tabela) e 🛍️ Redirecionamento Assistido (15% sobre o valor da compra + ¥500 por item). Frete informado após consolidação.
+                  <strong>Como cobramos:</strong> Redirecionamento tem dois módulos — 📦 Redirecionamento Padrão (taxa por quantidade de itens, ver tabela) e 🛍️ Redirecionamento Assistido (15% sobre o valor da compra + taxa por item igual ao Padrão). Frete informado após consolidação.
                 </p>
                 <TabelaValores modoRedirecionamento />
               </>
@@ -251,11 +251,11 @@ function Servicos() {
             {servico.id === 'personal-shopping' && (
               <>
                 <p className="mt-6 text-sm text-earth-600">
-                  <strong>Como cobramos:</strong> 25% do valor da compra + ¥200 por item + frete. Este serviço inclui ajuda para decidir o que comprar.
+                  <strong>Como cobramos:</strong> 25% do valor da compra + ¥250 por item + frete. Este serviço inclui ajuda para decidir o que comprar.
                 </p>
                 <TabelaValores
                   percentual={25}
-                  porItem={200}
+                  porItem={250}
                   freteTexto="Informado após consolidação (Japan Post)"
                 />
               </>
@@ -264,11 +264,11 @@ function Servicos() {
             {servico.id === 'grupo-de-compras' && (
               <>
                 <p className="mt-6 text-sm text-earth-600">
-                  <strong>Como cobramos:</strong> 20% do valor da compra + ¥200 por unidade de produto + frete. Preços dos itens vêm do catálogo de cada grupo.
+                  <strong>Como cobramos:</strong> 20% do valor da compra + ¥250 por unidade de produto + frete. Preços dos itens vêm do catálogo de cada grupo.
                 </p>
                 <TabelaValores
                   percentual={20}
-                  porItem={200}
+                  porItem={250}
                   freteTexto="Informado após solicitar envio (Japan Post)"
                 />
               </>

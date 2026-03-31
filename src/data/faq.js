@@ -54,6 +54,6 @@ export const FAQ_ITEMS = [
     id: 'personal-shopping',
     pergunta: 'O que é o Personal Shopping?',
     resposta:
-      'É um serviço em que nossa equipe compra para você. Você envia a lista de produtos e links, e realizamos as compras nas lojas. A taxa de serviço segue a tabela publicada: 25% sobre o valor da compra mais ¥200 por item, além do frete. Ideal para quem não tem cartão internacional ou prefere não lidar com o processo de compra.',
+      'É um serviço em que nossa equipe compra para você. Você envia a lista de produtos e links, e realizamos as compras nas lojas. A taxa de serviço segue a tabela publicada: 25% sobre o valor da compra mais ¥250 por item, além do frete. Ideal para quem não tem cartão internacional ou prefere não lidar com o processo de compra.',
   },
 ]

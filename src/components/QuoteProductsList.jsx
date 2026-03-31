@@ -5,6 +5,12 @@
 import { parseQuoteMessage } from '../lib/quoteProducts'
 import { formatJPY } from '../lib/fx'
 import LinkifyText from './LinkifyText'
+import {
+  SERVICE_FEE_JPY_PER_ITEM,
+  REDIR_ASSISTIDO_FEE_PERCENT,
+  PERSONAL_SHOPPING_FEE_PERCENT,
+  computeRedirecionamentoPadraoFeeJpy,
+} from '../data/serviceFees'
 
 export default function QuoteProductsList({ message, quoteCurrency = 'JPY', formatMoney, orderModule = 'personal_shopping' }) {
   const parsed = parseQuoteMessage(message)
@@ -46,12 +52,13 @@ export default function QuoteProductsList({ message, quoteCurrency = 'JPY', form
 
   // Taxas diferentes por tipo de serviço
   const isAssistedBuy = orderModule === 'assisted_buy' || orderModule === 'redir-assistido'
-  const servicePercent = isAssistedBuy ? 15 : 25
-  const feePerItem = isAssistedBuy ? 500 : 200
+  const servicePercent = isAssistedBuy ? REDIR_ASSISTIDO_FEE_PERCENT : PERSONAL_SHOPPING_FEE_PERCENT
   const totalItems = products.reduce((sum, p) => sum + Math.max(1, parseInt(p.quantidade, 10) || 1), 0)
   
   const serviceFeePercent = Math.round(baseTotal * (servicePercent / 100))
-  const serviceFeeFixed = feePerItem * totalItems
+  const serviceFeeFixed = isAssistedBuy
+    ? computeRedirecionamentoPadraoFeeJpy(totalItems)
+    : SERVICE_FEE_JPY_PER_ITEM * totalItems
   const grandTotal = baseTotal + serviceFeePercent + serviceFeeFixed
 
   const fmt = (v) => (formatMoney ? formatMoney(v, quoteCurrency) : formatJPY(v))
@@ -98,7 +105,11 @@ export default function QuoteProductsList({ message, quoteCurrency = 'JPY', form
             <span>{fmt(serviceFeePercent)}</span>
           </div>
           <div className="flex justify-between">
-            <span>Taxa por item (¥{feePerItem} × {totalItems}):</span>
+            <span>
+              {isAssistedBuy
+                ? `Taxa por item (igual ao Redirecionamento Padrão, ${totalItems} item(ns))`
+                : `Taxa por item (¥${SERVICE_FEE_JPY_PER_ITEM} × ${totalItems})`}
+            </span>
             <span>{fmt(serviceFeeFixed)}</span>
           </div>
         </div>

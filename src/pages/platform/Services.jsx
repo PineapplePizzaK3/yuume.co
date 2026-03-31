@@ -17,7 +17,7 @@ const PERSONAL_SHOPPING = 'Personal Shopping'
 const DESCRICOES_FIXAS = {
   Redirecionamento: 'Módulos: 📦 Redirecionamento Padrão | 🛍️ Redirecionamento Assistido + frete',
   'Personal Shopping':
-    '25% do valor da compra + ¥200 por item + frete — ideal para quem precisa de ajuda para decidir o que comprar',
+    '25% do valor da compra + ¥250 por item + frete — ideal para quem precisa de ajuda para decidir o que comprar',
 }
 
 const DRAFT_STORAGE_PREFIX = 'platform_services_order_draft_v1:'
@@ -321,7 +321,7 @@ export default function Services() {
                       <div>
                         <span className="block font-semibold text-earth-900">🛍️ Redirecionamento Assistido</span>
                         <span className="block text-sm text-earth-600">
-                          15% sobre o valor da compra + ¥500 por item + frete. Você envia a lista e retornamos o orçamento para pré-pagamento.
+                          15% sobre o valor da compra + taxa por item igual ao Redirecionamento Padrão + frete. Você envia a lista e retornamos o orçamento para pré-pagamento.
                         </span>
                       </div>
                     </label>

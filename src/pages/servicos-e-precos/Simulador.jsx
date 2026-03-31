@@ -2,18 +2,11 @@ import { useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { calcularFreteEMS } from '../../data/tabelaFreteEMS'
 import { calcularFreteParcel, calcularFreteEPacket } from '../../data/fretesJPPost'
-import { SERVICE_FEE_JPY_PER_ITEM } from '../../data/serviceFees'
-
-/** Redirecionamento Padrão: 1 item→1000¥, 2–4→750¥/item, 5+→500¥/item. */
-function calcularTaxaRedirecionamentoPadrao(totalItens) {
-  if (totalItens <= 0) return 0
-  if (totalItens === 1) return 1000
-  if (totalItens <= 4) return 750 * totalItens
-  return 500 * totalItens
-}
-
-const REDIR_ASSISTIDO_PERCENTUAL = 15
-const REDIR_ASSISTIDO_IENE_POR_ITEM = 500
+import {
+  SERVICE_FEE_JPY_PER_ITEM,
+  computeRedirecionamentoPadraoFeeJpy,
+  REDIR_ASSISTIDO_FEE_PERCENT,
+} from '../../data/serviceFees'
 
 const SERVICOS = [
   { id: 'redirecionamento-padrao', label: '📦 Redirecionamento Padrão', tipo: 'redir-padrao' },
@@ -105,13 +98,13 @@ function Simulador() {
   let taxaServico = 0
   let labelTaxaServico = ''
   if (servico?.tipo === 'redir-padrao') {
-    taxaServico = calcularTaxaRedirecionamentoPadrao(totalItens)
+    taxaServico = computeRedirecionamentoPadraoFeeJpy(totalItens)
     labelTaxaServico = 'Taxa de serviço (Redirecionamento Padrão — por itens)'
   } else if (servico?.tipo === 'redir-assistido') {
     taxaServico =
-      totalProdutos * (REDIR_ASSISTIDO_PERCENTUAL / 100) +
-      REDIR_ASSISTIDO_IENE_POR_ITEM * totalItens
-    labelTaxaServico = `Taxa de serviço (Redirecionamento Assistido — ${REDIR_ASSISTIDO_PERCENTUAL}% + ¥${REDIR_ASSISTIDO_IENE_POR_ITEM}/item)`
+      totalProdutos * (REDIR_ASSISTIDO_FEE_PERCENT / 100) +
+      computeRedirecionamentoPadraoFeeJpy(totalItens)
+    labelTaxaServico = `Taxa de serviço (Redirecionamento Assistido — ${REDIR_ASSISTIDO_FEE_PERCENT}% + taxa por itens igual ao Redirecionamento Padrão)`
   } else if (servico?.tipo === 'percentual') {
     const pct = servico?.percentual ?? 25
     taxaServico = totalProdutos * (pct / 100) + totalItens * SERVICE_FEE_JPY_PER_ITEM

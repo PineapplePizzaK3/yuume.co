@@ -41,6 +41,7 @@ import {
 import { getUsersAdmin, getUserFullAdmin, updateProfileAdmin } from '../../services/profileService'
 import {
   addWalletBalanceAdmin,
+  removeWalletBalanceAdmin,
   getWalletTopupRequestsAdmin,
   approveWalletTopupAdmin,
   rejectWalletTopupAdmin,
@@ -260,6 +261,7 @@ export default function Admin() {
     loading: false,
     saving: false,
     walletSaving: false,
+    walletSavingAction: null,
   })
 
   const [userLogs, setUserLogs] = useState([])
@@ -293,6 +295,8 @@ export default function Admin() {
   const [ordersPage, setOrdersPage] = useState(0)
   const [ordersHasMore, setOrdersHasMore] = useState(false)
   const [orderStatusFilter, setOrderStatusFilter] = useState([])
+  const [orderStatusCounts, setOrderStatusCounts] = useState({})
+  const [ordersTotalCount, setOrdersTotalCount] = useState(0)
   const [productsPage, setProductsPage] = useState(0)
   const [productsHasMore, setProductsHasMore] = useState(false)
   const [storeProductsPage, setStoreProductsPage] = useState(0)
@@ -403,6 +407,18 @@ export default function Admin() {
       setOrders(list)
       setOrdersHasMore(list.length === ADMIN_PAGE_SIZE.orders)
       if (error) setMessage(error.message)
+      // Contagem global por status (independente do filtro atual) para exibir nos chips.
+      const { data: allOrders, error: allOrdersError } = await getAllOrdersAdmin(5000, 0, null)
+      if (active() && !allOrdersError) {
+        const counts = {}
+        for (const o of allOrders ?? []) {
+          const st = String(o?.status || '')
+          if (!st) continue
+          counts[st] = (counts[st] || 0) + 1
+        }
+        setOrderStatusCounts(counts)
+        setOrdersTotalCount((allOrders ?? []).length)
+      }
     } catch (e) {
       if (active()) setMessage(e?.message || 'Erro ao carregar pedidos')
     } finally {
@@ -511,7 +527,17 @@ export default function Admin() {
   }
 
   const openUserDetail = async (u) => {
-    setUserDetailModal((m) => ({ ...m, open: true, user: u, loading: true, profile: null, wallet: null, ordersCount: 0 }))
+    setUserDetailModal((m) => ({
+      ...m,
+      open: true,
+      user: u,
+      loading: true,
+      profile: null,
+      wallet: null,
+      ordersCount: 0,
+      walletSaving: false,
+      walletSavingAction: null,
+    }))
     try {
       const { data, error } = await getUserFullAdmin(u.id)
       if (error) {
@@ -535,6 +561,8 @@ export default function Admin() {
         },
         walletAmount: '',
         walletDesc: '',
+        walletSaving: false,
+        walletSavingAction: null,
       }))
     } catch (e) {
       setMessage(e?.message || 'Erro ao carregar usuário')
@@ -555,6 +583,7 @@ export default function Admin() {
       loading: false,
       saving: false,
       walletSaving: false,
+      walletSavingAction: null,
     })
   }
 
@@ -600,8 +629,8 @@ export default function Admin() {
     }
   }
 
-  const handleAddWalletBalance = async (e) => {
-    e.preventDefault()
+  const handleAdjustWalletBalance = async (mode = 'credit', e = null) => {
+    e?.preventDefault?.()
     const uid = userDetailModal.user?.id
     if (!uid) return
     const amount = parseFloat(userDetailModal.walletAmount)
@@ -609,29 +638,50 @@ export default function Admin() {
       setMessage('Informe um valor positivo.')
       return
     }
-    setUserDetailModal((m) => ({ ...m, walletSaving: true }))
+    setUserDetailModal((m) => ({ ...m, walletSaving: true, walletSavingAction: mode }))
     setMessage('')
     try {
-      const { error } = await addWalletBalanceAdmin(uid, amount, userDetailModal.walletDesc.trim() || null)
-      if (error) {
-        setMessage(error.message)
-        setUserDetailModal((m) => ({ ...m, walletSaving: false }))
+      const isDebit = mode === 'debit'
+      const currentBalance = Number(userDetailModal.wallet?.balance) || 0
+      if (isDebit && amount > currentBalance) {
+        setMessage('Saldo insuficiente para remoção.')
+        setUserDetailModal((m) => ({ ...m, walletSaving: false, walletSavingAction: null }))
         return
       }
-      logAdminAction('wallet_credit', 'profile', uid, { amount, description: userDetailModal.walletDesc })
+
+      const action = isDebit ? removeWalletBalanceAdmin : addWalletBalanceAdmin
+      const { error } = await action(uid, amount, userDetailModal.walletDesc.trim() || null)
+      if (error) {
+        setMessage(error.message)
+        setUserDetailModal((m) => ({ ...m, walletSaving: false, walletSavingAction: null }))
+        return
+      }
+      logAdminAction(isDebit ? 'wallet_debit' : 'wallet_credit', 'profile', uid, {
+        amount,
+        description: userDetailModal.walletDesc,
+      })
       const { data } = await getUserFullAdmin(uid)
       setUserDetailModal((m) => ({
         ...m,
         walletSaving: false,
+        walletSavingAction: null,
         wallet: data?.wallet ?? { balance: 0, currency: 'JPY' },
         walletAmount: '',
         walletDesc: '',
       }))
-      setMessage('Saldo adicionado com sucesso.')
+      setMessage(isDebit ? 'Saldo removido com sucesso.' : 'Saldo adicionado com sucesso.')
     } catch (e) {
-      setMessage(e?.message || 'Erro ao adicionar saldo')
-      setUserDetailModal((m) => ({ ...m, walletSaving: false }))
+      setMessage(e?.message || (mode === 'debit' ? 'Erro ao remover saldo' : 'Erro ao adicionar saldo'))
+      setUserDetailModal((m) => ({ ...m, walletSaving: false, walletSavingAction: null }))
     }
+  }
+
+  const handleAddWalletBalance = async (e) => {
+    await handleAdjustWalletBalance('credit', e)
+  }
+
+  const handleRemoveWalletBalance = async () => {
+    await handleAdjustWalletBalance('debit')
   }
 
   useEffect(() => {
@@ -1560,6 +1610,32 @@ export default function Admin() {
     }
   }
 
+  const openOrderFromAdminNotification = async (orderId) => {
+    if (!orderId) return false
+    const localOrder = (orders || []).find((o) => o.id === orderId)
+    if (localOrder) {
+      openOrderEditModal(localOrder)
+      return true
+    }
+    try {
+      const { data, error } = await getAllOrdersAdmin(5000, 0, null)
+      if (error) {
+        setMessage(error.message || 'Erro ao localizar pedido da notificação')
+        return false
+      }
+      const target = (data || []).find((o) => o.id === orderId)
+      if (!target) {
+        setMessage('Pedido da notificação não foi encontrado.')
+        return false
+      }
+      openOrderEditModal(target)
+      return true
+    } catch (e) {
+      setMessage(e?.message || 'Erro ao abrir pedido da notificação')
+      return false
+    }
+  }
+
   const openInventoryModal = (order) => {
     const name = order.message?.trim() || `Item do pedido ${order.id?.slice(0, 8)}`
     setInventoryModal({
@@ -1892,11 +1968,12 @@ export default function Admin() {
                     : 'bg-white border-earth-200 hover:bg-earth-50 text-earth-700'
                 }`}
               >
-                Todos
+                Todos ({ordersTotalCount})
               </button>
 
               {Object.entries(ORDER_STATUS_LABELS).map(([key, label]) => {
                 const isSelected = orderStatusFilter.includes(key)
+                const count = orderStatusCounts[key] || 0
                 return (
                   <button
                     key={key}
@@ -1913,7 +1990,7 @@ export default function Admin() {
                         : 'bg-white border-earth-200 hover:bg-earth-50 text-earth-700'
                     }`}
                   >
-                    {label}
+                    {label} ({count})
                     {isSelected && <span className="text-[10px] opacity-75">✓</span>}
                   </button>
                 )
@@ -2354,11 +2431,11 @@ export default function Admin() {
                 </p>
                 {quoteModal.orderModule === 'assisted_buy' ? (
                   <p className="mt-2 text-xs text-amber-600">
-                    <strong>Referência de precificação:</strong> 15% sobre o valor dos produtos + ¥500 por item + frete.
+                    <strong>Referência de precificação:</strong> 15% sobre o valor dos produtos + taxa por item igual ao Redirecionamento Padrão + frete.
                   </p>
                 ) : (
                   <p className="mt-2 text-xs text-earth-600">
-                    Referência de precificação: <strong>25% sobre o valor dos produtos + ¥200 por unidade</strong> (some tudo em ienes
+                    Referência de precificação: <strong>25% sobre o valor dos produtos + ¥250 por unidade</strong> (some tudo em ienes
                     ao valor total do orçamento, além do frete quando aplicável).
                   </p>
                 )}
@@ -3548,7 +3625,7 @@ export default function Admin() {
               <div className="mt-3 grid gap-3 md:grid-cols-2">
                 <label className="text-sm md:col-span-2">
                   <span className="text-earth-700">
-                    Cotação BRL por 1 JPY (fx_brl_per_jpy) — usada no servidor para converter ¥200/un. do Grupo de Compras
+                    Cotação BRL por 1 JPY (fx_brl_per_jpy) — usada no servidor para converter ¥250/un. do Grupo de Compras
                   </span>
                   <input
                     type="number"
@@ -3803,6 +3880,7 @@ export default function Admin() {
                   const isUnread = !n.read_at
                   const meta = n.meta || {}
                   const requesterLabel = meta.requester_name || meta.requester_email || meta.user_id || null
+                  const orderId = typeof meta.order_id === 'string' ? meta.order_id : null
                   const targetTab = n.type?.includes('topup')
                     ? 'recargas'
                     : (n.type?.includes('shipment') || n.type?.includes('ready_for_shipment'))
@@ -3844,11 +3922,16 @@ export default function Admin() {
                               setAdminNotifications((prev) => prev.map((x) => (
                                 x.id === n.id ? { ...x, read_at: x.read_at || new Date().toISOString() } : x
                               )))
+                              if (orderId) {
+                                setActiveTab('pedidos')
+                                await openOrderFromAdminNotification(orderId)
+                                return
+                              }
                               setActiveTab(targetTab)
                             }}
                             className="rounded-lg bg-earth-900 px-3 py-2 text-sm font-medium text-white hover:bg-earth-800"
                           >
-                            Abrir área
+                            {orderId ? 'Abrir pedido' : 'Abrir área'}
                           </button>
                           {isUnread && (
                             <button
@@ -5075,7 +5158,7 @@ export default function Admin() {
                       </p>
                       <form onSubmit={handleAddWalletBalance} className="flex flex-wrap items-end gap-3">
                         <div>
-                          <label className="block text-sm font-medium text-earth-700">Valor a adicionar (¥)</label>
+                          <label className="block text-sm font-medium text-earth-700">Valor (¥)</label>
                           <input
                             type="number"
                             step="1"
@@ -5105,7 +5188,19 @@ export default function Admin() {
                           disabled={userDetailModal.walletSaving}
                           className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-700 disabled:opacity-60"
                         >
-                          {userDetailModal.walletSaving ? 'Adicionando...' : 'Adicionar saldo'}
+                          {userDetailModal.walletSaving && userDetailModal.walletSavingAction === 'credit'
+                            ? 'Adicionando...'
+                            : 'Adicionar saldo'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleRemoveWalletBalance}
+                          disabled={userDetailModal.walletSaving}
+                          className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-60"
+                        >
+                          {userDetailModal.walletSaving && userDetailModal.walletSavingAction === 'debit'
+                            ? 'Removendo...'
+                            : 'Remover saldo'}
                         </button>
                       </form>
                     </div>
