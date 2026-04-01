@@ -189,6 +189,34 @@ async function jpyToBrlAmount(jpyAmount) {
   return n * fx
 }
 
+function extractParcelowOrderResponse(json) {
+  if (!json || typeof json !== 'object') {
+    return { checkoutUrl: null, parcelowOrderId: null }
+  }
+  if (json.success === false) {
+    const msg = json.message || json.error || json.error_description || 'Parcelow recusou criar o pedido'
+    throw new Error(msg)
+  }
+  let block = json.data
+  if (Array.isArray(block) && block.length > 0) {
+    block = block[0]
+  }
+  if (!block || typeof block !== 'object') {
+    block = json
+  }
+  const checkoutUrl =
+    block.url_checkout
+    || block.urlCheckout
+    || block.checkout_url
+    || block.checkoutUrl
+    || block.payment_url
+    || block.paymentUrl
+    || block.link
+    || (typeof block.url === 'string' && /^https?:\/\//i.test(block.url) ? block.url : null)
+  const parcelowOrderId = block.order_id ?? block.orderId ?? block.id ?? null
+  return { checkoutUrl, parcelowOrderId }
+}
+
 async function createParcelowOrderCheckout({
   orderId,
   user,
@@ -214,20 +242,25 @@ async function createParcelowOrderCheckout({
   }
 
   const customerName = String(profile?.name || user?.user_metadata?.name || user?.email || 'Cliente').trim()
+  const customerEmail = String(user?.email || profile?.email || '').trim()
+  if (!customerEmail) {
+    throw new Error('E-mail do cliente obrigatório para checkout Parcelow. Complete seu perfil ou conta.')
+  }
+
   const payload = {
     reference: `order_${orderId}`,
     partner_reference: String(orderId),
     client: {
       cpf: parseCpfCnpj(profile?.cpf_cnpj),
       name: customerName,
-      email: String(user?.email || profile?.email || '').trim() || undefined,
+      email: customerEmail,
       phone: parsePhone(profile?.phone),
     },
     items: [
       {
         reference: `item_${String(orderId).slice(0, 12)}`,
-        description: productName || `Pedido ${String(orderId).slice(0, 8)}`,
-        quantity: 1,
+        description: (productName || `Pedido ${String(orderId).slice(0, 8)}`).slice(0, 500),
+        quantity: '1',
         amount: amountCents,
       },
     ],
@@ -241,18 +274,35 @@ async function createParcelowOrderCheckout({
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      Accept: 'application/json',
       Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify(payload),
   })
-  const createData = await parseJsonSafe(createRes)
-  if (!createRes.ok) {
-    throw new Error(createData?.message || createData?.error || 'Falha ao criar checkout na Parcelow')
+  const rawText = await createRes.text()
+  let createData = null
+  try {
+    createData = rawText ? JSON.parse(rawText) : null
+  } catch {
+    createData = null
   }
-  const checkoutUrl = createData?.data?.url_checkout
-  const parcelowOrderId = createData?.data?.order_id
+
+  if (!createRes.ok) {
+    const hint = createData?.message || createData?.error || rawText?.slice(0, 280) || '(corpo vazio)'
+    throw new Error(`Falha ao criar pedido na Parcelow (HTTP ${createRes.status}): ${hint}`)
+  }
+  if (!createData) {
+    throw new Error(
+      `Parcelow retornou resposta não-JSON (HTTP ${createRes.status}). Início: ${String(rawText).slice(0, 200)}`
+    )
+  }
+
+  const { checkoutUrl, parcelowOrderId } = extractParcelowOrderResponse(createData)
   if (!checkoutUrl) {
-    throw new Error('Parcelow não retornou URL de checkout')
+    const preview = JSON.stringify(createData).slice(0, 500)
+    throw new Error(
+      `Parcelow não retornou URL de checkout. Corpo (trecho): ${preview}. Confirme com a Parcelow o formato da resposta de POST /api/orders/brl em produção.`
+    )
   }
 
   // Registro pendente para rastreio local antes do webhook.
