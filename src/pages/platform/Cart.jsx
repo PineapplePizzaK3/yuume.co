@@ -501,7 +501,7 @@ function Cart() {
     }
   }
 
-  const handlePayCard = async ({ forceWallet = false } = {}) => {
+  const handlePayWithGateway = async ({ provider = null, forceWallet = false } = {}) => {
     if (!payModal.order) return
     const accessToken = session?.access_token
     if (!accessToken) {
@@ -527,6 +527,7 @@ function Cart() {
         walletAmountJpy: shouldUseWallet ? walletAmountJpy : null,
         acquisitionMode,
         affiliateCode: null,
+        provider: provider || null,
       })
       if (result?.paid) {
         setPayModal({ open: false, order: null, useWallet: true })
@@ -1003,7 +1004,9 @@ function Cart() {
           >
             <div className="flex-1 min-h-0 overflow-y-auto p-6">
               <h3 className="font-semibold text-earth-900">Pagamento</h3>
-              <p className="mt-1 text-sm text-earth-600">Escolha a forma de pagamento.</p>
+              <p className="mt-1 text-sm text-earth-600">
+                Escolha o gateway (Parcelow ou Stripe). PIX manual é transferência fora desses sistemas.
+              </p>
 
               {(() => {
                 const {
@@ -1152,11 +1155,19 @@ function Cart() {
                     <div className="flex flex-wrap gap-2">
                       <button
                         type="button"
-                        onClick={() => handlePayCard({ forceWallet: false })}
+                        onClick={() => handlePayWithGateway({ provider: 'parcelow' })}
                         disabled={submitting || isFullyCovered || requiresReferralChoice}
                         className="rounded-lg border border-earth-300 bg-white px-4 py-2.5 font-medium text-earth-800 hover:bg-earth-50 disabled:opacity-60"
                       >
-                        Cartão
+                        Parcelow
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handlePayWithGateway({ provider: 'stripe' })}
+                        disabled={submitting || isFullyCovered || requiresReferralChoice}
+                        className="rounded-lg border border-earth-300 bg-white px-4 py-2.5 font-medium text-earth-800 hover:bg-earth-50 disabled:opacity-60"
+                      >
+                        Stripe
                       </button>
                       <button
                         type="button"
@@ -1165,15 +1176,18 @@ function Cart() {
                           setPixModal({ open: true, order: payModal.order, amountBrl: remainingBrl })
                         }}
                         disabled={submitting || isFullyCovered || requiresReferralChoice}
-                        className="rounded-lg border border-earth-300 bg-white px-4 py-2.5 font-medium text-earth-800 hover:bg-earth-50 disabled:opacity-60"
+                        className="rounded-lg border border-earth-300 bg-white px-4 py-2.5 text-sm font-medium text-earth-700 hover:bg-earth-50 disabled:opacity-60"
                       >
-                        PIX
+                        PIX manual
                       </button>
                     </div>
+                    <p className="text-xs text-earth-500">
+                      Parcelow costuma ser usado para checkout no Brasil; Stripe para cartão internacional.
+                    </p>
                     <div className="flex flex-wrap gap-2">
                       <button
                         type="button"
-                        onClick={() => handlePayCard({ forceWallet: isFullyCovered })}
+                        onClick={() => handlePayWithGateway({ forceWallet: isFullyCovered })}
                         disabled={submitting || requiresReferralChoice}
                         className="flex-1 min-w-0 rounded-lg bg-earth-900 px-6 py-2.5 font-medium text-earth-50 hover:bg-earth-800 disabled:opacity-60"
                       >

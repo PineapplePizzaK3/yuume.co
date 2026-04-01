@@ -4,7 +4,31 @@
 import { supabase } from '../lib/supabase'
 import { withDbTimeout, toServiceError } from '../lib/dbGuard'
 
-const API_BASE = import.meta.env.VITE_API_URL || '/api'
+/**
+ * Base da API no browser. Se VITE_API_URL for URL absoluta de outro host (ex.: *.vercel.app)
+ * e a página estiver em outro domínio (ex.: eiko-dls.com), fetch falha por CORS — usamos /api no mesmo host.
+ */
+function resolveApiBase() {
+  const raw = String(import.meta.env.VITE_API_URL || '/api').trim()
+  if (typeof window === 'undefined') {
+    return raw.replace(/\/$/, '') || '/api'
+  }
+  if (raw.startsWith('/')) {
+    return raw.replace(/\/$/, '') || '/api'
+  }
+  try {
+    const normalized = raw.endsWith('/') ? raw.slice(0, -1) : raw
+    const apiUrl = new URL(normalized)
+    if (apiUrl.origin === window.location.origin) {
+      return `${apiUrl.origin}${apiUrl.pathname}`.replace(/\/$/, '') || '/api'
+    }
+    return '/api'
+  } catch {
+    return '/api'
+  }
+}
+
+const API_BASE = resolveApiBase()
 
 async function parseApiPayload(res) {
   const contentType = (res.headers.get('content-type') || '').toLowerCase()
@@ -92,7 +116,10 @@ export async function createCheckoutSession(orderId, accessToken) {
     })
   } catch (err) {
     if (err?.message === 'Failed to fetch' || err?.name === 'TypeError') {
-      throw new Error('Não foi possível conectar à API. Use "npm run dev" para rodar o ambiente completo.')
+      throw new Error(
+        'Não foi possível conectar à API de pagamento. Em produção, defina VITE_API_URL=/api no build '
+        + '(mesmo domínio do site) para evitar CORS. Em dev, use npm run dev:full.'
+      )
     }
     throw err
   }

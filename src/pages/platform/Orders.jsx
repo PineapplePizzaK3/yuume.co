@@ -29,7 +29,7 @@ export default function Orders() {
   const [payingId, setPayingId] = useState(null)
   const [feedback, setFeedback] = useState('')
   const [payModal, setPayModal] = useState({ open: false, order: null, useWallet: true })
-  const [pixModal, setPixModal] = useState({ open: false, order: null })
+  const [pixModal, setPixModal] = useState({ open: false, order: null, amountBrl: null })
   const [extraServicesOrderId, setExtraServicesOrderId] = useState(null)
   const [extraServices, setExtraServices] = useState({ photos: false, video: false })
   const [detailsModal, setDetailsModal] = useState({ open: false, order: null })
@@ -203,7 +203,7 @@ export default function Orders() {
     writeCache(k, { orders: list, wallet: walletRes.data ?? null, hasMore: list.length === ORDERS_PAGE_SIZE })
   }
 
-  const handlePayShipping = async (order, { useWallet = false } = {}) => {
+  const handlePayShipping = async (order, { useWallet = false, provider = null } = {}) => {
     const payable = getPayableAmount(order)
     if (!payable) return
     setPayingId(order.id)
@@ -215,7 +215,7 @@ export default function Orders() {
         setPayingId(null)
         return
       }
-      const result = await createCheckoutSession(order.id, accessToken, { useWallet })
+      const result = await createCheckoutSession(order.id, accessToken, { useWallet, provider })
       if (result?.paid) {
         setFeedback('Pagamento realizado com sucesso!')
         await refreshOrders()
@@ -779,21 +779,27 @@ export default function Orders() {
 
       <PixManualModal
         open={pixModal.open}
-        onClose={() => setPixModal({ open: false, order: null })}
+        onClose={() => setPixModal({ open: false, order: null, amountBrl: null })}
         onBack={() => {
           if (pixModal.order) {
-            setPixModal({ open: false, order: null })
+            setPixModal({ open: false, order: null, amountBrl: null })
             setPayModal({ open: true, order: pixModal.order, useWallet: true })
           } else {
-            setPixModal({ open: false, order: null })
+            setPixModal({ open: false, order: null, amountBrl: null })
           }
         }}
         order={pixModal.order}
-        amountBrl={pixModal.order ? (() => {
-          const p = getPayableAmount(pixModal.order)
-          if (!p) return null
-          return (p.currency || '').toUpperCase() === 'BRL' ? p.amount : jpyToBrl(p.amount)
-        })() : null}
+        amountBrl={
+          pixModal.amountBrl != null
+            ? pixModal.amountBrl
+            : pixModal.order
+              ? (() => {
+                const p = getPayableAmount(pixModal.order)
+                if (!p) return null
+                return (p.currency || '').toUpperCase() === 'BRL' ? p.amount : jpyToBrl(p.amount)
+              })()
+              : null
+        }
         userId={user?.id}
       />
 
@@ -803,7 +809,7 @@ export default function Orders() {
             <div className="flex-1 min-h-0 overflow-y-auto p-6">
               <h3 className="font-semibold text-earth-900">Pagamento</h3>
               <p className="mt-1 text-sm text-earth-600">
-                Escolha como deseja pagar este pedido.
+                Escolha o gateway (Parcelow ou Stripe). PIX manual é fora desses sistemas.
               </p>
 
               {feedback && (
@@ -874,30 +880,43 @@ export default function Orders() {
                 const useWallet = !!payModal.useWallet && canUseWallet
                 const remainingJpy = totalJpy - (useWallet ? Math.min(balance, totalJpy) : 0)
                 const isFullyCovered = remainingJpy <= 0 && useWallet
+                const remainingBrl =
+                  remainingJpy > 0.0001 ? Math.round(jpyToBrl(remainingJpy) * 100) / 100 : 0
 
                 return (
                   <div className="flex flex-col gap-3">
                     <div className="flex flex-wrap gap-2">
                       <button
                         type="button"
-                        onClick={() => handlePayShipping(payModal.order, { useWallet })}
+                        onClick={() => handlePayShipping(payModal.order, { useWallet, provider: 'parcelow' })}
                         disabled={payingId === payModal.order.id || isFullyCovered}
                         className="rounded-lg border border-earth-300 bg-white px-4 py-2.5 font-medium text-earth-800 hover:bg-earth-50 disabled:opacity-60"
                       >
-                        Cartão
+                        Parcelow
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handlePayShipping(payModal.order, { useWallet, provider: 'stripe' })}
+                        disabled={payingId === payModal.order.id || isFullyCovered}
+                        className="rounded-lg border border-earth-300 bg-white px-4 py-2.5 font-medium text-earth-800 hover:bg-earth-50 disabled:opacity-60"
+                      >
+                        Stripe
                       </button>
                       <button
                         type="button"
                         onClick={() => {
                           setPayModal((m) => ({ ...m, open: false }))
-                          setPixModal({ open: true, order: payModal.order })
+                          setPixModal({ open: true, order: payModal.order, amountBrl: remainingBrl })
                         }}
                         disabled={payingId === payModal.order.id || isFullyCovered}
-                        className="rounded-lg border border-earth-300 bg-white px-4 py-2.5 font-medium text-earth-800 hover:bg-earth-50 disabled:opacity-60"
+                        className="rounded-lg border border-earth-300 bg-white px-4 py-2.5 text-sm font-medium text-earth-700 hover:bg-earth-50 disabled:opacity-60"
                       >
-                        PIX
+                        PIX manual
                       </button>
                     </div>
+                    <p className="text-xs text-earth-500">
+                      Parcelow: checkout Brasil. Stripe: cartão internacional.
+                    </p>
                     <div className="flex flex-wrap gap-2">
                       <button
                         type="button"
