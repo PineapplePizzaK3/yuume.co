@@ -167,7 +167,10 @@ async function getParcelowAccessToken() {
   })
   const payload = await parseJsonSafe(tokenRes)
   if (!tokenRes.ok) {
-    throw new Error(payload?.message || payload?.error || 'Falha ao autenticar na Parcelow')
+    const hint = payload?.message || payload?.error || payload?.error_description || JSON.stringify(payload || {})
+    throw new Error(
+      `Falha ao autenticar na Parcelow (HTTP ${tokenRes.status}): ${hint}. Confira se client_id/client_secret são do mesmo ambiente que PARCELOW_API_BASE_URL (staging vs produção).`
+    )
   }
   const accessToken = payload?.access_token
   const expiresIn = Number(payload?.expires_in) || 3600
