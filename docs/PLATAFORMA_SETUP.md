@@ -15,6 +15,10 @@ Copie `.env.example` para `.env` e preencha:
 **Apenas no servidor (Vercel Environment Variables):**
 - `STRIPE_SECRET_KEY` – nunca exponha no frontend
 - `STRIPE_WEBHOOK_SECRET` – para o webhook de pagamento
+- `PARCELOW_CLIENT_ID` – Client ID da API Parcelow
+- `PARCELOW_CLIENT_SECRET` – Client Secret da API Parcelow
+- `PARCELOW_API_BASE_URL` – URL base da API Parcelow (`https://staging.parcelow.com` no staging)
+- `PARCELOW_WEBHOOK_SECRET` – segredo compartilhado opcional para validar webhook Parcelow
 
 ## Supabase
 
@@ -36,6 +40,17 @@ Copie `.env.example` para `.env` e preencha:
 1. Crie conta em [stripe.com](https://stripe.com)
 2. Em API Keys, use a publishable key no frontend e a secret key no Vercel
 3. Configure o webhook em Developers > Webhooks: adicione endpoint para `checkout.session.completed`
+
+## Parcelow
+
+1. Solicite `client_id` e `client_secret` com a equipe Parcelow e cadastre a URL de webhook.
+2. Configure no Vercel:
+   - `PARCELOW_CLIENT_ID`
+   - `PARCELOW_CLIENT_SECRET`
+   - `PARCELOW_API_BASE_URL` (staging/produção)
+   - `PARCELOW_WEBHOOK_SECRET` (se adotarem segredo compartilhado via header)
+3. Configure endpoint de webhook para `POST /api/webhook-parcelow`.
+4. Parcelow será priorizado para pedidos BRL/loja; Stripe segue como fallback.
 
 ## Vercel
 

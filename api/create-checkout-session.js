@@ -12,6 +12,8 @@ globalThis.__checkoutRateLimitMap = rateLimitMemory
 const FX_REFRESH_MS = 1000 * 60 * 60 // 1h
 const fxRateCache = globalThis.__fxBrlPerJpyCache ?? { rate: null, updatedAt: 0 }
 globalThis.__fxBrlPerJpyCache = fxRateCache
+const parcelowTokenCache = globalThis.__parcelowAccessTokenCache ?? { token: null, expiresAt: 0 }
+globalThis.__parcelowAccessTokenCache = parcelowTokenCache
 
 function normalizeBrlPerJpy(rawRate) {
   const n = Number(rawRate)
@@ -72,6 +74,172 @@ function getSupabaseUser(accessToken) {
   return createClient(url, anon, {
     global: { headers: { Authorization: `Bearer ${accessToken}` } },
   })
+}
+
+function normalizeProvider(raw) {
+  const p = String(raw || '').trim().toLowerCase()
+  if (p === 'stripe' || p === 'parcelow') return p
+  return null
+}
+
+function shouldPreferParcelow(order, currency) {
+  const c = String(currency || '').trim().toLowerCase()
+  if (c === 'brl') return true
+  const source = String(order?.order_source || '').trim().toLowerCase()
+  return source === 'store'
+}
+
+function normalizeParcelowBaseUrl() {
+  const raw = process.env.PARCELOW_API_BASE_URL || 'https://staging.parcelow.com'
+  return String(raw).trim().replace(/\/$/, '')
+}
+
+function parsePhone(raw) {
+  const digits = String(raw || '').replace(/\D+/g, '')
+  return digits || undefined
+}
+
+function parseCpfCnpj(raw) {
+  const value = String(raw || '').trim()
+  if (!value) return undefined
+  return value
+}
+
+function getParcelowClientConfig() {
+  const clientIdRaw = process.env.PARCELOW_CLIENT_ID
+  const clientSecret = process.env.PARCELOW_CLIENT_SECRET
+  const clientId = Number(clientIdRaw)
+  if (!Number.isFinite(clientId) || clientId <= 0 || !clientSecret) return null
+  return {
+    clientId,
+    clientSecret: String(clientSecret),
+    baseUrl: normalizeParcelowBaseUrl(),
+  }
+}
+
+async function parseJsonSafe(res) {
+  try {
+    return await res.json()
+  } catch {
+    return null
+  }
+}
+
+async function getParcelowAccessToken() {
+  const cfg = getParcelowClientConfig()
+  if (!cfg) return null
+  const now = Date.now()
+  if (parcelowTokenCache.token && parcelowTokenCache.expiresAt - 60_000 > now) {
+    return parcelowTokenCache.token
+  }
+  const tokenRes = await fetch(`${cfg.baseUrl}/oauth/token`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      client_id: cfg.clientId,
+      client_secret: cfg.clientSecret,
+      grant_type: 'client_credentials',
+    }),
+  })
+  const payload = await parseJsonSafe(tokenRes)
+  if (!tokenRes.ok) {
+    throw new Error(payload?.message || payload?.error || 'Falha ao autenticar na Parcelow')
+  }
+  const accessToken = payload?.access_token
+  const expiresIn = Number(payload?.expires_in) || 3600
+  if (!accessToken) {
+    throw new Error('Parcelow retornou token inválido')
+  }
+  parcelowTokenCache.token = accessToken
+  parcelowTokenCache.expiresAt = now + expiresIn * 1000
+  return accessToken
+}
+
+async function jpyToBrlAmount(jpyAmount) {
+  const n = Number(jpyAmount) || 0
+  if (n <= 0) return 0
+  const fx = await getLiveFxBrlPerJpy()
+  return n * fx
+}
+
+async function createParcelowOrderCheckout({
+  orderId,
+  user,
+  profile,
+  remainingJpy,
+  productName,
+  baseUrl,
+  supabase,
+}) {
+  const cfg = getParcelowClientConfig()
+  if (!cfg) {
+    throw new Error('Parcelow não configurado no servidor')
+  }
+  const token = await getParcelowAccessToken()
+  if (!token) {
+    throw new Error('Token Parcelow indisponível')
+  }
+
+  const amountBrl = await jpyToBrlAmount(remainingJpy)
+  const amountCents = Math.round(amountBrl * 100)
+  if (!Number.isFinite(amountCents) || amountCents <= 0) {
+    throw new Error('Valor inválido para criar cobrança Parcelow')
+  }
+
+  const customerName = String(profile?.name || user?.user_metadata?.name || user?.email || 'Cliente').trim()
+  const payload = {
+    reference: `order_${orderId}`,
+    partner_reference: String(orderId),
+    client: {
+      cpf: parseCpfCnpj(profile?.cpf_cnpj),
+      name: customerName,
+      email: String(user?.email || profile?.email || '').trim() || undefined,
+      phone: parsePhone(profile?.phone),
+    },
+    items: [
+      {
+        reference: `item_${String(orderId).slice(0, 12)}`,
+        description: productName || `Pedido ${String(orderId).slice(0, 8)}`,
+        quantity: 1,
+        amount: amountCents,
+      },
+    ],
+    redirect: {
+      success: `${baseUrl}/app/cart?success=true`,
+      failed: `${baseUrl}/app/cart?canceled=true`,
+    },
+  }
+
+  const createRes = await fetch(`${cfg.baseUrl}/api/orders/brl`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  })
+  const createData = await parseJsonSafe(createRes)
+  if (!createRes.ok) {
+    throw new Error(createData?.message || createData?.error || 'Falha ao criar checkout na Parcelow')
+  }
+  const checkoutUrl = createData?.data?.url_checkout
+  const parcelowOrderId = createData?.data?.order_id
+  if (!checkoutUrl) {
+    throw new Error('Parcelow não retornou URL de checkout')
+  }
+
+  // Registro pendente para rastreio local antes do webhook.
+  if (supabase) {
+    await supabase.from('payments').insert({
+      order_id: orderId,
+      stripe_payment_id: parcelowOrderId ? `parcelow_order_${parcelowOrderId}` : `parcelow_order_${orderId}`,
+      status: 'pending',
+      amount: Number((amountBrl || 0).toFixed(2)),
+      currency: 'BRL',
+    }).then(() => null).catch(() => null)
+  }
+
+  return { url: checkoutUrl, provider: 'parcelow' }
 }
 
 function getFxBrlPerJpy() {
@@ -160,9 +328,6 @@ export default async function handler(req, res) {
   }
 
   const stripe = getStripeClient()
-  if (!stripe) {
-    return res.status(500).json({ error: 'Stripe not configured' })
-  }
 
   try {
     const body = req.body || {}
@@ -192,9 +357,17 @@ export default async function handler(req, res) {
     if (!baseUrl) {
       return res.status(500).json({ error: 'Configuração de URL inválida (VITE_SITE_URL/origin ausente)' })
     }
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('name, email, cpf_cnpj, phone')
+      .eq('id', user.id)
+      .maybeSingle()
 
     // Carrinho (produtos da loja)
     if (body.type === 'cart') {
+      if (!stripe) {
+        return res.status(500).json({ error: 'Stripe not configured' })
+      }
       const cartItems = body.items
       if (!Array.isArray(cartItems) || cartItems.length === 0) {
         return res.status(400).json({ error: 'Carrinho vazio' })
@@ -231,6 +404,9 @@ export default async function handler(req, res) {
 
     // Recarga de carteira (adicionar saldo)
     if (body.type === 'topup') {
+      if (!stripe) {
+        return res.status(500).json({ error: 'Stripe not configured' })
+      }
       const amountJpy = Math.round(Number(body.amountJpy) || 0)
       const minJpy = 500 // ¥500
       const maxJpy = 500000 // ¥500.000
@@ -404,6 +580,25 @@ export default async function handler(req, res) {
     // Centralizamos todos os pagamentos no carrinho/central de pagamentos.
     const successPath = '/app/cart'
     const cancelPath = '/app/cart'
+
+    const requestedProvider = normalizeProvider(body.provider)
+    const selectedProvider = requestedProvider || (shouldPreferParcelow(order, currency) ? 'parcelow' : 'stripe')
+
+    if (selectedProvider === 'parcelow') {
+      const parcelowCheckout = await createParcelowOrderCheckout({
+        orderId,
+        user,
+        profile,
+        remainingJpy,
+        productName,
+        baseUrl,
+        supabase,
+      })
+      return res.status(200).json(parcelowCheckout)
+    }
+    if (!stripe) {
+      return res.status(500).json({ error: 'Stripe not configured' })
+    }
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],

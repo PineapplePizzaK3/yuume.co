@@ -86,6 +86,7 @@ export async function createCheckoutSession(orderId, accessToken) {
         walletAmountJpy: options?.walletAmountJpy != null ? Number(options.walletAmountJpy) : null,
         acquisitionMode: options?.acquisitionMode || null,
         affiliateCode: options?.affiliateCode || null,
+        provider: options?.provider || null,
       }),
       credentials: 'include',
     })

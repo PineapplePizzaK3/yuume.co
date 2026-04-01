@@ -50,6 +50,7 @@ export default function Payments() {
     const id = raw.toLowerCase()
     if (id.startsWith('wallet')) return 'Carteira'
     if (id === 'referral_discount') return 'Desconto'
+    if (id.startsWith('parcelow')) return 'Parcelow'
     if (id.includes('pix')) return 'PIX'
     if (id.startsWith('pi_') || id.startsWith('cs_') || id.startsWith('ch_')) return 'Cartão'
     if (id.includes('manual')) return 'Manual'

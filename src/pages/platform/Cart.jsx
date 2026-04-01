@@ -888,6 +888,8 @@ function Cart() {
                         ? 'Carteira'
                         : paymentId === 'referral_discount'
                           ? 'Desconto'
+                          : paymentId.startsWith('parcelow')
+                            ? 'Parcelow'
                           : paymentId.includes('pix')
                             ? 'PIX'
                             : (paymentId.startsWith('pi_') || paymentId.startsWith('cs_') || paymentId.startsWith('ch_'))
