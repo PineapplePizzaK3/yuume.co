@@ -108,7 +108,7 @@ function parseCpfCnpj(raw) {
 function getParcelowClientConfig() {
   const clientIdRaw = process.env.PARCELOW_CLIENT_ID
   const clientSecret = process.env.PARCELOW_CLIENT_SECRET
-  const clientId = Number(clientIdRaw)
+  const clientId = Number(String(clientIdRaw ?? '').trim())
   if (!Number.isFinite(clientId) || clientId <= 0 || !clientSecret) return null
   return {
     clientId,
@@ -125,6 +125,30 @@ async function parseJsonSafe(res) {
   }
 }
 
+const PARCELOW_FETCH_TIMEOUT_MS = Math.min(
+  Math.max(Number(process.env.PARCELOW_FETCH_TIMEOUT_MS) || 28000, 5000),
+  55000
+)
+
+async function fetchParcelow(url, init = {}) {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), PARCELOW_FETCH_TIMEOUT_MS)
+  try {
+    return await fetch(url, { ...init, signal: controller.signal })
+  } catch (e) {
+    const name = e?.name || ''
+    const msg = e?.message || String(e)
+    if (name === 'AbortError' || /aborted/i.test(msg)) {
+      throw new Error(
+        `Timeout ao contatar Parcelow (${Math.round(PARCELOW_FETCH_TIMEOUT_MS / 1000)}s). Verifique PARCELOW_API_BASE_URL.`
+      )
+    }
+    throw new Error(`Erro de rede com Parcelow: ${msg}`)
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
 async function getParcelowAccessToken() {
   const cfg = getParcelowClientConfig()
   if (!cfg) return null
@@ -132,7 +156,7 @@ async function getParcelowAccessToken() {
   if (parcelowTokenCache.token && parcelowTokenCache.expiresAt - 60_000 > now) {
     return parcelowTokenCache.token
   }
-  const tokenRes = await fetch(`${cfg.baseUrl}/oauth/token`, {
+  const tokenRes = await fetchParcelow(`${cfg.baseUrl}/oauth/token`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -210,7 +234,7 @@ async function createParcelowOrderCheckout({
     },
   }
 
-  const createRes = await fetch(`${cfg.baseUrl}/api/orders/brl`, {
+  const createRes = await fetchParcelow(`${cfg.baseUrl}/api/orders/brl`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

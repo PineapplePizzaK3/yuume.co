@@ -5,30 +5,21 @@ import { supabase } from '../lib/supabase'
 import { withDbTimeout, toServiceError } from '../lib/dbGuard'
 
 /**
- * Base da API no browser. Se VITE_API_URL for URL absoluta de outro host (ex.: *.vercel.app)
- * e a página estiver em outro domínio (ex.: eiko-dls.com), fetch falha por CORS — usamos /api no mesmo host.
+ * Base das rotas serverless (/api/*) no browser.
+ * Sempre usa caminho relativo `/api` no mesmo host da página — evita CORS quando o build
+ * embute VITE_API_URL apontando para outro domínio (ex.: *.vercel.app vs eiko-dls.com).
+ * Split deploy: defina VITE_PAYMENTS_API_ORIGIN=https://seu-api.com (sem barra final).
  */
-function resolveApiBase() {
-  const raw = String(import.meta.env.VITE_API_URL || '/api').trim()
-  if (typeof window === 'undefined') {
-    return raw.replace(/\/$/, '') || '/api'
-  }
-  if (raw.startsWith('/')) {
-    return raw.replace(/\/$/, '') || '/api'
-  }
-  try {
-    const normalized = raw.endsWith('/') ? raw.slice(0, -1) : raw
-    const apiUrl = new URL(normalized)
-    if (apiUrl.origin === window.location.origin) {
-      return `${apiUrl.origin}${apiUrl.pathname}`.replace(/\/$/, '') || '/api'
+export function getPaymentsApiBase() {
+  const override = String(import.meta.env.VITE_PAYMENTS_API_ORIGIN || '').trim().replace(/\/$/, '')
+  if (typeof window !== 'undefined') {
+    if (override && /^https?:\/\//i.test(override)) {
+      return override
     }
     return '/api'
-  } catch {
-    return '/api'
   }
+  return String(import.meta.env.VITE_API_URL || '/api').trim().replace(/\/$/, '') || '/api'
 }
-
-const API_BASE = resolveApiBase()
 
 async function parseApiPayload(res) {
   const contentType = (res.headers.get('content-type') || '').toLowerCase()
@@ -101,7 +92,7 @@ export async function createCheckoutSession(orderId, accessToken) {
 
   let res
   try {
-    res = await fetch(`${API_BASE}/create-checkout-session`, {
+    res = await fetch(`${getPaymentsApiBase()}/create-checkout-session`, {
       method: 'POST',
       headers,
       body: JSON.stringify({
@@ -112,7 +103,7 @@ export async function createCheckoutSession(orderId, accessToken) {
         affiliateCode: options?.affiliateCode || null,
         provider: options?.provider || null,
       }),
-      credentials: 'include',
+      credentials: 'same-origin',
     })
   } catch (err) {
     if (err?.message === 'Failed to fetch' || err?.name === 'TypeError') {
@@ -143,11 +134,11 @@ export async function createCartCheckoutSession(items, accessToken) {
     headers['Authorization'] = `Bearer ${accessToken}`
   }
 
-  const res = await fetch(`${API_BASE}/create-checkout-session`, {
+  const res = await fetch(`${getPaymentsApiBase()}/create-checkout-session`, {
     method: 'POST',
     headers,
     body: JSON.stringify({ type: 'cart', items }),
-    credentials: 'include',
+    credentials: 'same-origin',
   })
 
   const data = await parseApiPayload(res)
@@ -185,11 +176,11 @@ export async function createTopUpCheckoutSession(amountJpy, accessToken) {
     headers['Authorization'] = `Bearer ${accessToken}`
   }
 
-  const res = await fetch(`${API_BASE}/create-checkout-session`, {
+  const res = await fetch(`${getPaymentsApiBase()}/create-checkout-session`, {
     method: 'POST',
     headers,
     body: JSON.stringify({ type: 'topup', amountJpy }),
-    credentials: 'include',
+    credentials: 'same-origin',
   })
 
   const data = await parseApiPayload(res)

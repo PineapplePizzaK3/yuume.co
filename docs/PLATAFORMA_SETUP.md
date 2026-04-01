@@ -9,7 +9,8 @@ Copie `.env.example` para `.env` e preencha:
 | `VITE_SUPABASE_URL` | URL do projeto Supabase | Supabase Dashboard > Settings > API |
 | `VITE_SUPABASE_ANON_KEY` | Chave anônima (pública) | Supabase Dashboard > Settings > API |
 | `VITE_STRIPE_PUBLISHABLE_KEY` | Chave pública Stripe | Stripe Dashboard > API Keys |
-| `VITE_API_URL` | Base URL da API | Use `/api` para mesmo domínio |
+| `VITE_API_URL` | Base da API (build) | Pode ficar `/api`; no browser o pagamento usa `/api` no mesmo host por padrão |
+| `VITE_PAYMENTS_API_ORIGIN` | (Opcional) API em outro domínio | Só se `/api` não estiver no mesmo site; requer CORS |
 | `VITE_SITE_URL` | URL do site em produção | Ex: `https://eiko-dls.com` |
 
 **Apenas no servidor (Vercel Environment Variables):**
