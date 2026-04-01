@@ -99,10 +99,67 @@ function parsePhone(raw) {
   return digits || undefined
 }
 
-function parseCpfCnpj(raw) {
-  const value = String(raw || '').trim()
-  if (!value) return undefined
-  return value
+/** Apenas dígitos; undefined se vazio. */
+function digitsOnly(raw) {
+  const s = String(raw || '').replace(/\D+/g, '')
+  return s || undefined
+}
+
+function isValidCpf(d) {
+  if (!d || d.length !== 11 || /^(\d)\1{10}$/.test(d)) return false
+  let sum = 0
+  for (let i = 0; i < 9; i++) sum += Number(d[i]) * (10 - i)
+  let r = (sum * 10) % 11
+  if (r === 10) r = 0
+  if (r !== Number(d[9])) return false
+  sum = 0
+  for (let i = 0; i < 10; i++) sum += Number(d[i]) * (11 - i)
+  r = (sum * 10) % 11
+  if (r === 10) r = 0
+  return r === Number(d[10])
+}
+
+function isValidCnpj(d) {
+  if (!d || d.length !== 14 || /^(\d)\1{13}$/.test(d)) return false
+  const w1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
+  const w2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
+  let sum = 0
+  for (let i = 0; i < 12; i++) sum += Number(d[i]) * w1[i]
+  let r = sum % 11
+  const d1 = r < 2 ? 0 : 11 - r
+  if (d1 !== Number(d[12])) return false
+  sum = 0
+  for (let i = 0; i < 13; i++) sum += Number(d[i]) * w2[i]
+  r = sum % 11
+  const d2 = r < 2 ? 0 : 11 - r
+  return d2 === Number(d[13])
+}
+
+/**
+ * CPF/CNPJ só com dígitos para APIs brasileiras (ex.: Parcelow rejeita máscara com 422).
+ */
+function normalizeBrazilTaxIdForApi(raw) {
+  const d = digitsOnly(raw)
+  if (!d) return undefined
+  if (d.length === 11) {
+    if (!isValidCpf(d)) {
+      throw new Error(
+        'CPF no perfil é inválido. Atualize em seus dados com 11 dígitos corretos (a Parcelow exige CPF válido para cobrança em BRL).'
+      )
+    }
+    return d
+  }
+  if (d.length === 14) {
+    if (!isValidCnpj(d)) {
+      throw new Error(
+        'CNPJ no perfil é inválido. Atualize em seus dados com 14 dígitos corretos.'
+      )
+    }
+    return d
+  }
+  throw new Error(
+    'CPF/CNPJ no perfil está incompleto. Use 11 dígitos (CPF) ou 14 (CNPJ), sem letras.'
+  )
 }
 
 function getParcelowClientConfig() {
@@ -251,7 +308,7 @@ async function createParcelowOrderCheckout({
     reference: `order_${orderId}`,
     partner_reference: String(orderId),
     client: {
-      cpf: parseCpfCnpj(profile?.cpf_cnpj),
+      cpf: normalizeBrazilTaxIdForApi(profile?.cpf_cnpj),
       name: customerName,
       email: customerEmail,
       phone: parsePhone(profile?.phone),
