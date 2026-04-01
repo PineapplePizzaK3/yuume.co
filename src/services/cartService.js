@@ -19,6 +19,9 @@ export async function getCart(userId) {
             id,
             name,
             price,
+            price_jpy,
+            price_usd,
+            price_brl,
             image_url,
             is_active,
             stock_quantity,
@@ -120,7 +123,7 @@ export async function getLatestPendingStoreOrder(userId) {
     const { data, error } = await withDbTimeout(
       supabase
         .from('orders')
-        .select('id, user_id, status, order_source, created_at, total_amount, quote_amount, quote_currency, shipping_cost, shipping_currency, wallet_applied_amount')
+        .select('id, user_id, status, order_source, created_at, total_amount, total_amount_usd, quote_amount, quote_currency, shipping_cost, shipping_currency, wallet_applied_amount')
         .eq('user_id', userId)
         .eq('order_source', 'store')
         .eq('status', 'awaiting_payment')

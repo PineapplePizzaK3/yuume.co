@@ -4,31 +4,22 @@
  */
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
+import { getExchangeRates } from './lib/exchangeRateService.js'
+import {
+  getPricingPercentsFromEnv,
+  pricingMultiplierFromPercents,
+  jpyToFinalUsd,
+  brlToJpyViaUsdPipeline,
+  jpyEquivalentFromFinalUsd,
+} from './lib/pricingEngine.js'
+import { ensureInvoiceForPaidOrder } from './lib/invoiceGenerator.js'
 
 const REQUEST_WINDOW_MS = 60 * 1000
 const MAX_REQUESTS_PER_WINDOW = 20
 const rateLimitMemory = globalThis.__checkoutRateLimitMap ?? new Map()
 globalThis.__checkoutRateLimitMap = rateLimitMemory
-const FX_REFRESH_MS = 1000 * 60 * 60 // 1h
-const fxRateCache = globalThis.__fxBrlPerJpyCache ?? { rate: null, updatedAt: 0 }
-globalThis.__fxBrlPerJpyCache = fxRateCache
 const parcelowTokenCache = globalThis.__parcelowAccessTokenCache ?? { token: null, expiresAt: 0 }
 globalThis.__parcelowAccessTokenCache = parcelowTokenCache
-
-function normalizeBrlPerJpy(rawRate) {
-  const n = Number(rawRate)
-  if (!Number.isFinite(n) || n <= 0) return null
-  if (n >= 0.002 && n <= 0.5) return n
-  if (n > 1) {
-    const inv = 1 / n
-    if (inv >= 0.002 && inv <= 0.5) return inv
-  }
-  return null
-}
-
-function getDayKey(ts = Date.now()) {
-  return new Date(ts).toISOString().slice(0, 10)
-}
 
 function getStripeClient() {
   const key = process.env.STRIPE_SECRET_KEY
@@ -239,13 +230,6 @@ async function getParcelowAccessToken() {
   return accessToken
 }
 
-async function jpyToBrlAmount(jpyAmount) {
-  const n = Number(jpyAmount) || 0
-  if (n <= 0) return 0
-  const fx = await getLiveFxBrlPerJpy()
-  return n * fx
-}
-
 function extractParcelowOrderResponse(json) {
   if (!json || typeof json !== 'object') {
     return { checkoutUrl: null, parcelowOrderId: null }
@@ -279,9 +263,14 @@ async function createParcelowOrderCheckout({
   user,
   profile,
   remainingJpy,
+  remainingUsd,
+  chargeJpyTotal,
+  totalUsdCharge,
   productName,
   baseUrl,
   supabase,
+  rates,
+  mult,
 }) {
   const cfg = getParcelowClientConfig()
   if (!cfg) {
@@ -292,10 +281,25 @@ async function createParcelowOrderCheckout({
     throw new Error('Token Parcelow indisponível')
   }
 
-  const amountBrl = await jpyToBrlAmount(remainingJpy)
-  const amountCents = Math.round(amountBrl * 100)
-  if (!Number.isFinite(amountCents) || amountCents <= 0) {
-    throw new Error('Valor inválido para criar cobrança Parcelow')
+  if (!rates?.jpy_usd || !rates?.usd_brl) {
+    throw new Error('Câmbio indisponível para cobrança Parcelow em USD')
+  }
+  const m = Number(mult) || pricingMultiplierFromPercents(getPricingPercentsFromEnv())
+
+  let amountUsd = Number(remainingUsd)
+  if (!Number.isFinite(amountUsd) || amountUsd <= 0) {
+    const rj = Number(remainingJpy) || 0
+    const cj = Number(chargeJpyTotal) || 0
+    const tu = Number(totalUsdCharge)
+    if (rj > 0 && cj > 0 && Number.isFinite(tu) && tu > 0) {
+      amountUsd = (rj / cj) * tu
+    } else {
+      amountUsd = jpyToFinalUsd(rj, rates.jpy_usd, m)
+    }
+  }
+  const amountUsdCents = Math.round(amountUsd * 100)
+  if (!Number.isFinite(amountUsdCents) || amountUsdCents <= 0) {
+    throw new Error('Valor inválido para criar cobrança Parcelow (USD)')
   }
 
   const customerName = String(profile?.name || user?.user_metadata?.name || user?.email || 'Cliente').trim()
@@ -304,9 +308,12 @@ async function createParcelowOrderCheckout({
     throw new Error('E-mail do cliente obrigatório para checkout Parcelow. Complete seu perfil ou conta.')
   }
 
+  const ordersPath = String(process.env.PARCELOW_ORDERS_PATH || '/api/orders/usd').trim() || '/api/orders/usd'
+
   const payload = {
     reference: `order_${orderId}`,
     partner_reference: String(orderId),
+    currency: 'USD',
     client: {
       cpf: normalizeBrazilTaxIdForApi(profile?.cpf_cnpj),
       name: customerName,
@@ -318,7 +325,8 @@ async function createParcelowOrderCheckout({
         reference: `item_${String(orderId).slice(0, 12)}`,
         description: (productName || `Pedido ${String(orderId).slice(0, 8)}`).slice(0, 500),
         quantity: '1',
-        amount: amountCents,
+        amount: amountUsdCents,
+        currency: 'USD',
       },
     ],
     redirect: {
@@ -327,7 +335,9 @@ async function createParcelowOrderCheckout({
     },
   }
 
-  const createRes = await fetchParcelow(`${cfg.baseUrl}/api/orders/brl`, {
+  const parcelowUrlBase = cfg.baseUrl.replace(/\/$/, '')
+  const parcelowPath = ordersPath.startsWith('/') ? ordersPath : `/${ordersPath}`
+  const createRes = await fetchParcelow(`${parcelowUrlBase}${parcelowPath}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -358,9 +368,11 @@ async function createParcelowOrderCheckout({
   if (!checkoutUrl) {
     const preview = JSON.stringify(createData).slice(0, 500)
     throw new Error(
-      `Parcelow não retornou URL de checkout. Corpo (trecho): ${preview}. Confirme com a Parcelow o formato da resposta de POST /api/orders/brl em produção.`
+      `Parcelow não retornou URL de checkout. Corpo (trecho): ${preview}. Confirme path ${ordersPath} e formato USD com a Parcelow.`
     )
   }
+
+  const brlDisplay = amountUsd * (rates.usd_brl || 0)
 
   // Registro pendente para rastreio local antes do webhook.
   if (supabase) {
@@ -368,71 +380,27 @@ async function createParcelowOrderCheckout({
       order_id: orderId,
       stripe_payment_id: parcelowOrderId ? `parcelow_order_${parcelowOrderId}` : `parcelow_order_${orderId}`,
       status: 'pending',
-      amount: Number((amountBrl || 0).toFixed(2)),
-      currency: 'BRL',
+      amount: Number(amountUsd.toFixed(2)),
+      currency: 'USD',
     }).then(() => null).catch(() => null)
   }
 
-  return { url: checkoutUrl, provider: 'parcelow' }
-}
-
-function getFxBrlPerJpy() {
-  const v = Number(process.env.FX_BRL_PER_JPY || process.env.VITE_FX_BRL_PER_JPY)
-  return normalizeBrlPerJpy(v) ?? 0.033
-}
-
-async function fetchBrlPerJpyFromProviders() {
-  const providers = [
-    {
-      url: 'https://api.frankfurter.app/latest?from=JPY&to=BRL',
-      read: (json) => Number(json?.rates?.BRL),
-    },
-    {
-      url: 'https://economia.awesomeapi.com.br/json/last/JPY-BRL',
-      read: (json) => Number(json?.JPYBRL?.bid),
-    },
-  ]
-  for (const provider of providers) {
-    try {
-      const res = await fetch(provider.url, { cache: 'no-store' })
-      if (!res.ok) continue
-      const data = await res.json()
-      const rate = normalizeBrlPerJpy(provider.read(data))
-      if (rate) return rate
-    } catch {
-      // try next provider
-    }
+  return {
+    url: checkoutUrl,
+    provider: 'parcelow',
+    chargeUsd: Number(amountUsd.toFixed(2)),
+    approxBrl: Number(brlDisplay.toFixed(2)),
   }
-  return null
 }
 
-async function getLiveFxBrlPerJpy() {
-  const now = Date.now()
-  const cached = normalizeBrlPerJpy(fxRateCache.rate)
-  const dayChanged = fxRateCache.updatedAt > 0 && getDayKey(now) !== getDayKey(fxRateCache.updatedAt)
-  if (cached && !dayChanged && now - fxRateCache.updatedAt < FX_REFRESH_MS) {
-    return cached
-  }
-  const fetched = normalizeBrlPerJpy(await fetchBrlPerJpyFromProviders())
-  if (fetched) {
-    fxRateCache.rate = fetched
-    fxRateCache.updatedAt = now
-    return fetched
-  }
-  const fallback = getFxBrlPerJpy()
-  fxRateCache.rate = fallback
-  fxRateCache.updatedAt = now
-  return fallback
-}
-
-async function toChargeAmountJpy(amount, currency) {
+function toChargeAmountJpyFromRates(amount, currency, rates, mult) {
   const c = (currency || 'jpy').toLowerCase()
   const n = Number(amount) || 0
   if (n <= 0) return 0
   if (c === 'jpy') return n
   if (c === 'brl') {
-    const fx = await getLiveFxBrlPerJpy()
-    return n / fx
+    if (!rates?.jpy_usd || !rates?.usd_brl) return 0
+    return brlToJpyViaUsdPipeline(n, rates.jpy_usd, rates.usd_brl, mult)
   }
   return n
 }
@@ -578,7 +546,7 @@ export default async function handler(req, res) {
 
     const { data: orderBase, error: orderError } = await supabase
       .from('orders')
-      .select('id, user_id, status, shipping_cost, shipping_currency, quote_amount, quote_currency, total_amount, wallet_applied_amount, order_source, ship_immediately, acquisition_mode, referral_discount_amount, affiliate_id, referral_id')
+      .select('id, user_id, status, shipping_cost, shipping_currency, quote_amount, quote_currency, total_amount, total_amount_usd, wallet_applied_amount, order_source, ship_immediately, acquisition_mode, referral_discount_amount, affiliate_id, referral_id')
       .eq('id', orderId)
       .single()
 
@@ -613,11 +581,17 @@ export default async function handler(req, res) {
 
     const { data: order } = await supabase
       .from('orders')
-      .select('id, user_id, status, shipping_cost, shipping_currency, quote_amount, quote_currency, total_amount, wallet_applied_amount, order_source, ship_immediately, acquisition_mode, referral_discount_amount, affiliate_id, referral_id')
+      .select('id, user_id, status, shipping_cost, shipping_currency, quote_amount, quote_currency, total_amount, total_amount_usd, wallet_applied_amount, order_source, ship_immediately, acquisition_mode, referral_discount_amount, affiliate_id, referral_id')
       .eq('id', orderId)
       .single()
 
-    let amount, currency, productName, productDesc
+    const rates = await getExchangeRates(supabase)
+    const mult = pricingMultiplierFromPercents(getPricingPercentsFromEnv())
+
+    let amount
+    let currency
+    let productName
+    let productDesc
     if (order.order_source === 'store') {
       amount = Number(order.total_amount)
       currency = 'brl'
@@ -639,21 +613,61 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Valor não definido para este pedido' })
     }
 
-    // Referral discount: configurado em BRL no painel e convertido quando necessário.
+    const origBrlStore =
+      order.order_source === 'store' ? Number(order.total_amount) : null
+
+    // Referral discount: BRL → JPY sempre via pipeline USD (nunca BRL/JPY direto).
     if (order.acquisition_mode === 'referral') {
       const referralDiscountBrl = Math.max(0, Number(order.referral_discount_amount) || 0)
       if (referralDiscountBrl > 0) {
         if (currency === 'brl') {
           amount = Math.max(0, Number(amount) - referralDiscountBrl)
-        } else {
-          const fx = await getLiveFxBrlPerJpy()
-          const discountJpy = referralDiscountBrl / fx
+        } else if (rates?.jpy_usd && rates?.usd_brl) {
+          const discountJpy = brlToJpyViaUsdPipeline(referralDiscountBrl, rates.jpy_usd, rates.usd_brl, mult)
           amount = Math.max(0, Number(amount) - discountJpy)
+        } else {
+          return res.status(503).json({
+            error: 'Câmbio indisponível para aplicar desconto de indicação. Configure FALLBACK_FX_* ou aguarde o cron.',
+          })
         }
       }
     }
 
-    const chargeJpy = await toChargeAmountJpy(amount, currency)
+    let chargeJpy = 0
+    let totalUsdCharge = null
+    const storeUsd = Number(order.total_amount_usd)
+    if (
+      order.order_source === 'store'
+      && Number.isFinite(storeUsd)
+      && storeUsd > 0
+      && rates?.jpy_usd
+      && rates?.usd_brl
+    ) {
+      let amountUsd = storeUsd
+      if (
+        origBrlStore != null
+        && origBrlStore > 0
+        && Number(amount) !== origBrlStore
+      ) {
+        amountUsd = storeUsd * (Number(amount) / origBrlStore)
+      }
+      totalUsdCharge = amountUsd
+      chargeJpy = jpyEquivalentFromFinalUsd(amountUsd, rates.jpy_usd, mult)
+    } else if (order.order_source === 'store') {
+      if (!rates?.jpy_usd || !rates?.usd_brl) {
+        return res.status(503).json({
+          error: 'Câmbio indisponível para calcular o pedido da loja. Aguarde ou configure FALLBACK_FX_JPY_USD / FALLBACK_FX_USD_BRL.',
+        })
+      }
+      chargeJpy = toChargeAmountJpyFromRates(amount, currency, rates, mult)
+    } else {
+      if (currency === 'brl' && (!rates?.jpy_usd || !rates?.usd_brl)) {
+        return res.status(503).json({
+          error: 'Câmbio indisponível para valores em BRL. Aguarde ou configure FALLBACK_FX_*.',
+        })
+      }
+      chargeJpy = toChargeAmountJpyFromRates(amount, currency, rates, mult)
+    }
     const alreadyAppliedJpy = Math.max(0, Number(order.wallet_applied_amount) || 0)
     let walletApplied = 0
     let remainingJpy = Math.max(0, (Number(chargeJpy) || 0) - alreadyAppliedJpy)
@@ -719,14 +733,23 @@ export default async function handler(req, res) {
     const selectedProvider = requestedProvider || (shouldPreferParcelow(order, currency) ? 'parcelow' : 'stripe')
 
     if (selectedProvider === 'parcelow') {
+      if (!rates?.jpy_usd || !rates?.usd_brl) {
+        return res.status(503).json({
+          error: 'Parcelow (USD) indisponível: cotações não carregadas. Use outro método ou aguarde.',
+        })
+      }
       const parcelowCheckout = await createParcelowOrderCheckout({
         orderId,
         user,
         profile,
         remainingJpy,
+        chargeJpyTotal: chargeJpy,
+        totalUsdCharge,
         productName,
         baseUrl,
         supabase,
+        rates,
+        mult,
       })
       return res.status(200).json(parcelowCheckout)
     }

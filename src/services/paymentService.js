@@ -191,3 +191,17 @@ export async function createTopUpCheckoutSession(amountJpy, accessToken) {
 
   return data
 }
+
+/**
+ * Cotações públicas (JPY/USD, USD/BRL) + effective_brl_per_jpy alinhado ao servidor.
+ */
+export async function fetchExchangeRates() {
+  const res = await fetch(`${getPaymentsApiBase()}/exchange-rates`, {
+    credentials: 'same-origin',
+  })
+  const data = await parseApiPayload(res)
+  if (!res.ok) {
+    return { ...data, ok: false }
+  }
+  return { ...data, ok: true }
+}

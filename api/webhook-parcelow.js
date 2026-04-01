@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { ensureInvoiceForPaidOrder } from './lib/invoiceGenerator.js'
 
 function getSupabaseAdmin() {
   const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
@@ -24,10 +25,10 @@ function parseJsonSafe(raw) {
   }
 }
 
-function parseMoneyBrl(value) {
+function parseMoneyAmount(value, { assumeCents = false } = {}) {
   const n = Number(value)
   if (!Number.isFinite(n) || n <= 0) return null
-  if (Number.isInteger(n) && n >= 1000) return Number((n / 100).toFixed(2))
+  if (assumeCents && Number.isInteger(n) && n >= 100) return Number((n / 100).toFixed(2))
   return Number(n.toFixed(2))
 }
 
@@ -120,11 +121,34 @@ export default async function handler(req, res) {
       || orderId
   ).trim()
   const paymentId = `parcelow_${externalId}`
-  const amount = parseMoneyBrl(
-    orderData?.total_brl
-      ?? payload?.total_brl
-      ?? orderData?.amount
-      ?? payload?.amount
+  const currencyRaw = String(
+    orderData?.currency
+      ?? payload?.currency
+      ?? orderData?.amount_currency
+      ?? ''
+  )
+    .trim()
+    .toUpperCase()
+  const isUsd = currencyRaw === 'USD'
+  const hasUsdField =
+    orderData?.total_usd != null
+    || orderData?.amount_usd != null
+    || payload?.total_usd != null
+    || payload?.amount_usd != null
+  const payCurrency = isUsd || hasUsdField ? 'USD' : 'BRL'
+  const amount = parseMoneyAmount(
+    payCurrency === 'USD'
+      ? orderData?.total_usd
+        ?? payload?.total_usd
+        ?? orderData?.amount_usd
+        ?? payload?.amount_usd
+        ?? orderData?.amount
+        ?? payload?.amount
+      : orderData?.total_brl
+        ?? payload?.total_brl
+        ?? orderData?.amount
+        ?? payload?.amount,
+    { assumeCents: true }
   )
 
   const { data: order } = await supabase
@@ -159,7 +183,7 @@ export default async function handler(req, res) {
           stripe_payment_id: paymentId,
           status: 'completed',
           amount: amount ?? undefined,
-          currency: 'BRL',
+          currency: payCurrency,
         })
         .eq('id', pendingRows[0].id)
     } else {
@@ -168,7 +192,7 @@ export default async function handler(req, res) {
         stripe_payment_id: paymentId,
         status: 'completed',
         amount: amount ?? null,
-        currency: 'BRL',
+        currency: payCurrency,
       })
     }
   }
@@ -190,6 +214,12 @@ export default async function handler(req, res) {
       p_order_id: orderId,
     })
     if (invErr) console.error('Parcelow webhook: inventory update failed:', invErr)
+  }
+
+  if (!updateOrderError && newStatus === 'paid') {
+    await ensureInvoiceForPaidOrder(supabase, orderId).catch((e) =>
+      console.error('ensureInvoice (parcelow webhook):', e?.message || e)
+    )
   }
 
   return res.status(200).json({ received: true })

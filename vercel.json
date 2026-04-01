@@ -4,5 +4,11 @@
   "framework": "vite",
   "rewrites": [
     { "source": "/((?!api/).*)", "destination": "/index.html" }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron-refresh-exchange-rates",
+      "schedule": "*/15 * * * *"
+    }
   ]
 }

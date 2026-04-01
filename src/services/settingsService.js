@@ -10,6 +10,12 @@ const SETTINGS_KEYS = [
   'service_fee_percent',
   'affiliate_payout_mode',
   'fx_brl_per_jpy',
+  'fx_jpy_usd',
+  'fx_usd_brl',
+  'pricing_margin_percent',
+  'pricing_platform_fee_percent',
+  'pricing_jpy_usd_buffer_percent',
+  'grupo_compras_fee_per_unit_usd',
 ]
 
 export async function getSystemSettings() {

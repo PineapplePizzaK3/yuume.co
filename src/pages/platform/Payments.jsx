@@ -7,7 +7,7 @@ import { Helmet } from 'react-helmet-async'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import { getMyPayments } from '../../services/paymentService'
-import { formatBRL, formatJPY, jpyToBrl } from '../../lib/fx'
+import { formatBRL, formatJPY, formatUSD, jpyToBrl } from '../../lib/fx'
 
 const STATUS_LABELS = {
   pending: 'Pendente',
@@ -78,19 +78,24 @@ export default function Payments() {
     const svc = o.service
     return (svc && (svc.name ?? (Array.isArray(svc) ? svc[0]?.name : null))) ?? ''
   }
-  // Diretriz de moeda: JPY é valor base; BRL é sempre derivado por conversão.
   const amountDisplay = (p) => {
     const amount = Number(p?.amount) || 0
     const currency = String(p?.currency || 'JPY').toUpperCase()
+    if (currency === 'USD') {
+      return {
+        primary: formatUSD(amount),
+        secondary: 'cobrança Parcelow (USD)',
+      }
+    }
     if (currency === 'BRL') {
       return {
         primary: formatBRL(amount),
-        secondary: 'registro legado em BRL',
+        secondary: 'registro em BRL',
       }
     }
     return {
       primary: formatJPY(amount),
-      secondary: `${formatBRL(jpyToBrl(amount))} convertido`,
+      secondary: `${formatBRL(jpyToBrl(amount))} referência`,
     }
   }
 

@@ -9,12 +9,18 @@ import { createPortal } from 'react-dom'
 import { useAuth } from '../../hooks/useAuth'
 import { getCart, updateCartItem, removeFromCart, createStoreOrder, getLatestPendingStoreOrder } from '../../services/cartService'
 import { validateCoupon } from '../../services/couponService'
-import { createCheckoutSession, getMyPayments } from '../../services/paymentService'
+import { createCheckoutSession, fetchExchangeRates, getMyPayments } from '../../services/paymentService'
 import { getMyOrders, ORDER_STATUS_LABELS } from '../../services/orderService'
 import PixManualModal from '../../components/PixManualModal'
 import { getWallet } from '../../services/walletService'
-import { computeGrupoComprasFeeBrl, SERVICE_FEE_JPY_PER_ITEM, GRUPO_COMPRAS_FEE_PERCENT } from '../../data/serviceFees'
-import { brlToJpy, formatBRL, formatJPY, jpyToBrl, getFxBrlPerJpy } from '../../lib/fx'
+import {
+  computeGrupoComprasFeeBrl,
+  computeGrupoComprasFeeDisplayBrl,
+  SERVICE_FEE_JPY_PER_ITEM,
+  GRUPO_COMPRAS_FEE_PERCENT,
+  GRUPO_COMPRAS_FEE_PER_UNIT_USD,
+} from '../../data/serviceFees'
+import { brlToJpy, formatBRL, formatJPY, formatUSD, jpyToBrl, getFxBrlPerJpy } from '../../lib/fx'
 import { getSystemSettings } from '../../services/settingsService'
 import { supabase } from '../../lib/supabase'
 
@@ -61,6 +67,7 @@ function Cart() {
   const [couponLoading, setCouponLoading] = useState(false)
   const [draggingTabId, setDraggingTabId] = useState('')
   const [tabOrder, setTabOrder] = useState(CART_TABS.map((tab) => tab.id))
+  const [exchangeSnapshot, setExchangeSnapshot] = useState(null)
 
   const success = searchParams.get('success') === 'true'
   const canceled = searchParams.get('canceled') === 'true'
@@ -180,6 +187,22 @@ function Cart() {
   }, [user?.id])
 
   useEffect(() => {
+    let active = true
+    ;(async () => {
+      try {
+        const r = await fetchExchangeRates()
+        if (!active || !r?.ok || !r?.jpy_usd) return
+        setExchangeSnapshot(r)
+      } catch {
+        // mantém fallback fx.js
+      }
+    })()
+    return () => {
+      active = false
+    }
+  }, [])
+
+  useEffect(() => {
     setQtyDrafts((prev) => {
       const next = {}
       for (const item of items) {
@@ -275,34 +298,59 @@ function Cart() {
   }, [payModal.open, pixModal.open])
 
   const { productSubtotalBrl, grupoFeeBrl, grupoQty } = useMemo(() => {
-    let loja = 0
-    let grupo = 0
+    let lojaBrl = 0
+    let grupoBrl = 0
+    let grupoUsd = 0
     let q = 0
     for (const i of items) {
       const p = i.products
       if (!p) continue
-      const line = Number(p.price ?? 0) * (i.quantity || 1)
+      const qty = Number(i.quantity) || 1
+      const jpyUnit = Number(p.price_jpy ?? p.price) || 0
+      const brlUnit = Number(p.price_brl)
+      const usdUnit = Number(p.price_usd)
+      const lineBrl = Number.isFinite(brlUnit) && brlUnit > 0 ? brlUnit * qty : jpyToBrl(jpyUnit) * qty
+      const lineUsd = Number.isFinite(usdUnit) && usdUnit > 0 ? usdUnit * qty : 0
       if (p.purchase_group_id) {
-        grupo += line
-        q += Number(i.quantity) || 1
+        grupoBrl += lineBrl
+        grupoUsd += lineUsd
+        q += qty
       } else {
-        loja += line
+        lojaBrl += lineBrl
       }
     }
-    const fxRaw = Number(systemSettings?.fx_brl_per_jpy?.amount)
-    const fx = Number.isFinite(fxRaw) && fxRaw > 0 ? fxRaw : getFxBrlPerJpy()
-    const fee = computeGrupoComprasFeeBrl(grupo, q, fx)
+    const usdBrl = Number(exchangeSnapshot?.usd_brl)
+    const fee =
+      usdBrl > 0 && grupoUsd > 0
+        ? computeGrupoComprasFeeDisplayBrl(grupoUsd, q, usdBrl)
+        : (() => {
+            const fxRaw = Number(systemSettings?.fx_brl_per_jpy?.amount)
+            const fx = Number.isFinite(fxRaw) && fxRaw > 0 ? fxRaw : getFxBrlPerJpy()
+            let grupoJpy = 0
+            for (const i of items) {
+              const p = i.products
+              if (!p?.purchase_group_id) continue
+              grupoJpy += (Number(p.price_jpy ?? p.price) || 0) * (Number(i.quantity) || 1)
+            }
+            return computeGrupoComprasFeeBrl(grupoJpy, q, fx)
+          })()
     return {
-      productSubtotalBrl: loja + grupo,
+      productSubtotalBrl: lojaBrl + grupoBrl,
       grupoFeeBrl: fee,
       grupoQty: q,
     }
-  }, [items, systemSettings])
+  }, [items, systemSettings, exchangeSnapshot])
 
   const totalBrl = productSubtotalBrl + grupoFeeBrl
   const discountBrl = couponApplied?.discount_brl ?? 0
   const totalAfterDiscountBrl = Math.max(0, totalBrl - discountBrl)
-  const totalJpy = Math.round(brlToJpy(totalAfterDiscountBrl))
+  const effBrlPerJpyCheckout =
+    Number(exchangeSnapshot?.effective_brl_per_jpy) > 0
+      ? Number(exchangeSnapshot.effective_brl_per_jpy)
+      : getFxBrlPerJpy()
+  const totalJpy = Math.round(totalAfterDiscountBrl / effBrlPerJpyCheckout)
+  const totalUsdEstimate =
+    exchangeSnapshot?.usd_brl > 0 ? totalAfterDiscountBrl / Number(exchangeSnapshot.usd_brl) : null
 
   const handleApplyCoupon = async () => {
     const code = couponInput.trim()
@@ -441,14 +489,26 @@ function Cart() {
     const referralDiscountBrl = acquisitionMode === 'referral'
       ? Math.max(0, Number(systemSettings?.referral_discount_value?.amount) || 0)
       : 0
+    const effBrlPerJpy =
+      Number(exchangeSnapshot?.effective_brl_per_jpy) > 0
+        ? Number(exchangeSnapshot.effective_brl_per_jpy)
+        : getFxBrlPerJpy()
 
     if (currency === 'BRL') {
-      const discountedBrl = Math.max(0, (Number(payable.amount) || 0) - referralDiscountBrl)
-      return { jpy: brlToJpy(discountedBrl), approxBrl: discountedBrl, label: payable.label }
+      const baseBrl = Number(payable.amount) || 0
+      const discountedBrl = Math.max(0, baseBrl - referralDiscountBrl)
+      const jpy = Math.round(discountedBrl / effBrlPerJpy)
+      const totalUsd = Number(order?.total_amount_usd)
+      let chargeUsd = null
+      if (order?.order_source === 'store' && Number.isFinite(totalUsd) && totalUsd > 0 && baseBrl > 0) {
+        chargeUsd = totalUsd * (discountedBrl / baseBrl)
+      }
+      return { jpy, approxBrl: discountedBrl, chargeUsd, label: payable.label }
     }
-    const jpyFromDiscount = referralDiscountBrl > 0 ? brlToJpy(referralDiscountBrl) : 0
+    const jpyFromDiscount = referralDiscountBrl > 0 ? referralDiscountBrl / effBrlPerJpy : 0
     const discountedJpy = Math.max(0, (Number(payable.amount) || 0) - jpyFromDiscount)
-    return { jpy: discountedJpy, approxBrl: jpyToBrl(discountedJpy), label: payable.label }
+    const jpy = Math.round(discountedJpy)
+    return { jpy, approxBrl: jpy * effBrlPerJpy, chargeUsd: null, label: payable.label }
   }
 
   const parseWalletAmountJpy = (rawValue) => {
@@ -481,12 +541,20 @@ function Cart() {
       ? Math.min(balance, remainingAfterAlreadyApplied, Math.max(0, requestedWalletJpy))
       : 0
     const walletApplied = alreadyAppliedJpy + walletAppliedAdditional
-    const remainingJpy = Math.max(0, totalJpy - walletApplied)
+    let remainingJpy = Math.max(0, totalJpy - walletApplied)
 
-    // Evita mostrar "resto" ínfimo por diferenças de conversão/precisão.
+    // Evita mostrar "resto" ínfimo por diferenças de conversão/precisão e frações < ¥1
+    // (BRL→JPY é float; a carteira aplica inteiros — sobra poeira que o formatador arredonda a ¥1).
     const EPS_JPY = 0.0001
+    if (remainingJpy <= EPS_JPY) remainingJpy = 0
+    else if (remainingJpy > 0 && remainingJpy < 1) remainingJpy = 0
+
+    const effBrlPerJpy =
+      Number(exchangeSnapshot?.effective_brl_per_jpy) > 0
+        ? Number(exchangeSnapshot.effective_brl_per_jpy)
+        : getFxBrlPerJpy()
     const remainingBrl =
-      remainingJpy > EPS_JPY ? Math.round(jpyToBrl(remainingJpy) * 100) / 100 : 0
+      remainingJpy > EPS_JPY ? Math.round(remainingJpy * effBrlPerJpy * 100) / 100 : 0
     return {
       charge,
       balance,
@@ -774,8 +842,8 @@ function Cart() {
                 <div className="rounded-lg border border-earth-200 bg-white px-3 py-2 text-sm text-earth-700">
                   <p className="font-medium text-earth-900">Taxa Grupo de Compras</p>
                   <p className="mt-1">
-                    {GRUPO_COMPRAS_FEE_PERCENT}% sobre o subtotal dos itens do grupo + {formatJPY(SERVICE_FEE_JPY_PER_ITEM)} por
-                    unidade ({grupoQty} un.) — {formatBRL(grupoFeeBrl)} no total do pedido.
+                    {GRUPO_COMPRAS_FEE_PERCENT}% sobre o subtotal USD dos itens do grupo + {formatUSD(GRUPO_COMPRAS_FEE_PER_UNIT_USD)} por
+                    unidade ({grupoQty} un., referência ¥{SERVICE_FEE_JPY_PER_ITEM}/un.) — {formatBRL(grupoFeeBrl)} no total do pedido.
                   </p>
                 </div>
               )}
@@ -790,8 +858,15 @@ function Cart() {
                       </>
                     )}
                   </p>
-                  <p className="text-xl font-bold text-earth-900">Total: {formatJPY(totalJpy)}</p>
-                  <p className="text-sm text-earth-600">Aprox.: {formatBRL(jpyToBrl(totalJpy))}</p>
+                  <p className="text-xl font-bold text-earth-900">Total: {formatBRL(totalAfterDiscountBrl)}</p>
+                  <p className="text-sm text-earth-600">
+                    Preço no Japão: {formatJPY(totalJpy)}
+                    {totalUsdEstimate != null && Number.isFinite(totalUsdEstimate) && (
+                      <span className="block mt-0.5">
+                        Cobrança (Parcelow) em USD ≈ {formatUSD(totalUsdEstimate)}
+                      </span>
+                    )}
+                  </p>
                   {discountBrl > 0 && (
                     <p className="text-sm text-green-600 mt-0.5">Subtotal {formatBRL(totalBrl)} − desconto {formatBRL(discountBrl)}</p>
                   )}
@@ -1018,6 +1093,18 @@ function Cart() {
                   remainingJpy,
                 } = getPaymentBreakdown(payModal.order, payModal.useWallet, walletApplyMode, walletCustomAmount)
                 const useWallet = !!payModal.useWallet && canUseWallet
+                const ch = getOrderChargeJpy(payModal.order)
+                const ratioPay = totalJpy > 0 ? remainingJpy / totalJpy : 0
+                const remainingUsdParcelow =
+                  ch?.chargeUsd != null && Number.isFinite(ch.chargeUsd)
+                    ? ch.chargeUsd * ratioPay
+                    : null
+                const remainingBrlUi =
+                  remainingJpy > 0
+                    ? (Number(exchangeSnapshot?.effective_brl_per_jpy) > 0
+                        ? remainingJpy * Number(exchangeSnapshot.effective_brl_per_jpy)
+                        : jpyToBrl(remainingJpy))
+                    : 0
 
                 return (
                   <div className="mt-4 space-y-4">
@@ -1035,11 +1122,19 @@ function Cart() {
                             </div>
                           )}
                           <div className="flex justify-between pt-2 border-t border-earth-200 font-medium">
-                            <span className="text-earth-800">Total a pagar</span>
+                            <span className="text-earth-800">Total a pagar (carteira)</span>
                             <span className="text-earth-900">{formatJPY(remainingJpy)}</span>
                           </div>
+                          <p className="text-sm font-semibold text-earth-900 mt-2">
+                            Total: {formatBRL(remainingBrlUi)}
+                          </p>
+                          {remainingUsdParcelow != null && remainingUsdParcelow > 0 && (
+                            <p className="text-sm text-earth-700">
+                              Cobrança Parcelow em USD: {formatUSD(remainingUsdParcelow)}
+                            </p>
+                          )}
                           <p className="text-xs text-earth-500 mt-1">
-                            Aprox. em BRL: {formatBRL(remainingJpy > 0 ? jpyToBrl(remainingJpy) : 0)}
+                            O valor em BRL é referência (USD × cotação). O banco pode cobrar um BRL ligeiramente diferente.
                           </p>
                         </>
                       )}
@@ -1182,7 +1277,7 @@ function Cart() {
                       </button>
                     </div>
                     <p className="text-xs text-earth-500">
-                      Parcelow costuma ser usado para checkout no Brasil; Stripe para cartão internacional.
+                      Parcelow: cobrança em dólar (USD). Stripe segue em ienes (JPY) neste fluxo.
                     </p>
                     <div className="flex flex-wrap gap-2">
                       <button

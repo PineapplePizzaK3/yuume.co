@@ -137,6 +137,10 @@ export function formatBRL(v) {
   return Number(v)?.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) ?? '—'
 }
 
+export function formatUSD(v) {
+  return Number(v)?.toLocaleString('en-US', { style: 'currency', currency: 'USD' }) ?? '—'
+}
+
 /** Formata peso em kg para exibição (usa g se < 1 kg). */
 export function formatWeight(weightKg) {
   const kg = Number(weightKg)

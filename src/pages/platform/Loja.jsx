@@ -8,7 +8,7 @@ import { Link } from 'react-router-dom'
 import { getProducts } from '../../services/productService'
 import { addToCart } from '../../services/cartService'
 import { useAuth } from '../../hooks/useAuth'
-import { brlToJpy, formatBRL, formatJPY, jpyToBrl } from '../../lib/fx'
+import { brlToJpy, formatBRL, formatJPY, formatUSD, jpyToBrl } from '../../lib/fx'
 import { getCardThumbnailUrl } from '../../lib/imageUtils'
 import LinkifyText from '../../components/LinkifyText'
 
@@ -16,6 +16,33 @@ function formatPriceBrlAsJpy(brl) {
   const jpy = Math.round(brlToJpy(brl))
   const approxBrl = jpyToBrl(jpy)
   return { jpy, approxBrl }
+}
+
+/** BRL em destaque, USD secundário, JPY contextual (origem). */
+function ProductPriceBlock({ product: p, variant = 'card' }) {
+  const jpy = Number(p.price_jpy ?? p.price) || 0
+  const brl = Number(p.price_brl)
+  const usd = Number(p.price_usd)
+  const hasDeriv = Number.isFinite(brl) && brl > 0 && Number.isFinite(usd) && usd > 0
+  const mainCls = variant === 'modal' ? 'text-2xl' : 'text-base'
+  if (hasDeriv) {
+    return (
+      <div className="mt-1.5 space-y-0.5">
+        <span className={`block font-bold text-earth-900 ${mainCls}`}>{formatBRL(brl)}</span>
+        <span className="block text-sm text-earth-600">≈ {formatUSD(usd)}</span>
+        <span className="block text-xs text-earth-500">Preço no Japão: {formatJPY(jpy)}</span>
+      </div>
+    )
+  }
+  const v = formatPriceBrlAsJpy(p.price)
+  return (
+    <div className="mt-1.5 space-y-0.5">
+      <span className={`block font-bold text-earth-900 ${mainCls}`}>{formatJPY(v.jpy)}</span>
+      <span className="block text-sm text-earth-600">
+        Ref. BRL (até atualizar cotação): {formatBRL(v.approxBrl)}
+      </span>
+    </div>
+  )
 }
 
 /** Produto tem controle de estoque e está esgotado */
@@ -145,15 +172,7 @@ export default function Loja() {
                           <LinkifyText text={p.description} />
                         </p>
                       )}
-                      {(() => {
-                        const v = formatPriceBrlAsJpy(p.price)
-                        return (
-                          <div className="mt-1.5">
-                            <span className="block text-base font-bold text-earth-900">{formatJPY(v.jpy)}</span>
-                            <span className="block text-xs text-earth-600">Aprox.: {formatBRL(v.approxBrl)}</span>
-                          </div>
-                        )
-                      })()}
+                      <ProductPriceBlock product={p} />
                     </div>
                   </button>
                   <div className="flex gap-2 px-3 pb-3" onClick={(e) => e.stopPropagation()}>
@@ -287,15 +306,9 @@ export default function Loja() {
                     <LinkifyText text={detailProduct.description} />
                   </p>
                 )}
-                {(() => {
-                  const v = formatPriceBrlAsJpy(detailProduct.price)
-                  return (
-                    <div className="mt-4">
-                      <p className="text-2xl font-bold text-earth-900">{formatJPY(v.jpy)}</p>
-                      <p className="text-sm text-earth-600">Aprox.: {formatBRL(v.approxBrl)}</p>
-                    </div>
-                  )
-                })()}
+                <div className="mt-4">
+                  <ProductPriceBlock product={detailProduct} variant="modal" />
+                </div>
                 <div className="mt-6 flex flex-wrap gap-3">
                   <button
                     type="button"
