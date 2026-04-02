@@ -1,0 +1,27 @@
+name: Refresh Exchange Rates
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+jobs:
+  call-api-cron-endpoint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger exchange-rate refresh endpoint
+        env:
+          SITE_URL: ${{ secrets.CRON_SITE_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$SITE_URL" ] || [ -z "$CRON_SECRET" ]; then
+            echo "Missing required secrets: CRON_SITE_URL and/or CRON_SECRET"
+            exit 1
+          fi
+
+          URL="${SITE_URL%/}/api/cron-refresh-exchange-rates"
+          echo "Calling $URL"
+
+          curl --fail --show-error --silent \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            "$URL"
