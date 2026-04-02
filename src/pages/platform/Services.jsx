@@ -9,6 +9,13 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import { getServices, createOrder } from '../../services/orderService'
 import { uploadOrderAttachment } from '../../services/productService'
+import { getWallet } from '../../services/walletService'
+import { supabase } from '../../lib/supabase'
+import { formatJPY } from '../../lib/fx'
+import {
+  REDIR_ASSISTIDO_FEE_PERCENT,
+  REDIRECIONAMENTO_ITEM_FEE_SUMMARY,
+} from '../../data/serviceFees'
 
 const SERVICOS_OFERTADOS = ['Redirecionamento', 'Personal Shopping']
 const REDIRECIONAMENTO = 'Redirecionamento'
@@ -69,6 +76,8 @@ export default function Services() {
   const [failedThumbUrls, setFailedThumbUrls] = useState(() => new Set())
   const [draftHydrated, setDraftHydrated] = useState(false)
   const [earlyPrepaymentRequested, setEarlyPrepaymentRequested] = useState(false)
+  const [earlyPrepaymentWalletInput, setEarlyPrepaymentWalletInput] = useState('')
+  const [walletPreview, setWalletPreview] = useState(null)
   const saveDebounceRef = useRef(null)
   const draftLoadedRef = useRef(false)
 
@@ -121,6 +130,7 @@ export default function Services() {
       }
       if (typeof d.imageUrlDraft === 'string') setImageUrlDraft(d.imageUrlDraft)
       if (typeof d.earlyPrepaymentRequested === 'boolean') setEarlyPrepaymentRequested(d.earlyPrepaymentRequested)
+      if (typeof d.earlyPrepaymentWalletInput === 'string') setEarlyPrepaymentWalletInput(d.earlyPrepaymentWalletInput)
       if (d.selectedId && oferta.some((s) => s.id === d.selectedId)) {
         setSelectedId(d.selectedId)
       }
@@ -140,19 +150,37 @@ export default function Services() {
         attachmentUrls,
         imageUrlDraft,
         earlyPrepaymentRequested,
+        earlyPrepaymentWalletInput,
         updatedAt: Date.now(),
       })
     }, 450)
     return () => {
       if (saveDebounceRef.current) clearTimeout(saveDebounceRef.current)
     }
-  }, [user?.id, draftHydrated, message, selectedId, redirModule, agreeProhibited, attachmentUrls, imageUrlDraft, earlyPrepaymentRequested])
+  }, [user?.id, draftHydrated, message, selectedId, redirModule, agreeProhibited, attachmentUrls, imageUrlDraft, earlyPrepaymentRequested, earlyPrepaymentWalletInput])
+
+  useEffect(() => {
+    if (!user?.id || !isRedirAssisted) {
+      setWalletPreview(null)
+      return
+    }
+    let active = true
+    ;(async () => {
+      const { data } = await getWallet(user.id)
+      if (!active) return
+      setWalletPreview(data)
+    })()
+    return () => {
+      active = false
+    }
+  }, [user?.id, isRedirAssisted])
 
   const clearLocalDraft = () => {
     setMessage('')
     setAttachmentUrls([])
     setImageUrlDraft('')
     setEarlyPrepaymentRequested(false)
+    setEarlyPrepaymentWalletInput('')
     setFailedThumbUrls(() => new Set())
     clearServicesDraft(user?.id)
   }
@@ -215,6 +243,25 @@ export default function Services() {
       setFeedback('Selecione um serviço')
       return
     }
+    const earlyWalletJpy =
+      isRedirAssisted && earlyPrepaymentRequested
+        ? Math.floor(Math.max(0, Number(earlyPrepaymentWalletInput) || 0))
+        : 0
+    if (isRedirAssisted && earlyPrepaymentRequested) {
+      if (!earlyWalletJpy || earlyWalletJpy < 1) {
+        setFeedback('Informe quanto deseja pagar pela carteira (mínimo ¥1).')
+        return
+      }
+      const { data: wBal } = await getWallet(user.id)
+      const bal = Math.floor(Number(wBal?.balance) || 0)
+      if (earlyWalletJpy > bal) {
+        setFeedback(
+          `Saldo na carteira: ${formatJPY(bal)}. Reduza o valor ou recarregue em Carteira.`
+        )
+        return
+      }
+    }
+
     setSubmitting(true)
     setFeedback('')
     setSuccessNotice(null)
@@ -225,14 +272,33 @@ export default function Services() {
       service_name: selectedService?.name,
       order_module: isRedirecionamento ? redirModule : null,
       early_prepayment_requested: isRedirAssisted && earlyPrepaymentRequested,
+      early_prepayment_wallet_jpy:
+        isRedirAssisted && earlyPrepaymentRequested && earlyWalletJpy > 0 ? earlyWalletJpy : null,
     })
-    setSubmitting(false)
     if (error) {
+      setSubmitting(false)
       setFeedback(error.message)
       return
     }
+
+    let walletEarlyPayError = null
+    if (isRedirAssisted && earlyPrepaymentRequested && earlyWalletJpy > 0 && data?.id) {
+      const { error: wErr } = await supabase.rpc('apply_early_prepayment_wallet_jpy', {
+        p_order_id: data.id,
+      })
+      if (wErr) {
+        walletEarlyPayError = wErr.message || 'Erro ao debitar a carteira'
+      }
+    }
+
+    setSubmitting(false)
     setSuccessNotice({
       quoteFlow: !!(isPersonalShopping || isRedirAssisted),
+      walletAppliedJpy:
+        !walletEarlyPayError && isRedirAssisted && earlyPrepaymentRequested && earlyWalletJpy > 0
+          ? earlyWalletJpy
+          : null,
+      walletEarlyPayError,
     })
     clearServicesDraft(user.id)
     setSelectedId(null)
@@ -240,6 +306,7 @@ export default function Services() {
     setAttachmentUrls([])
     setImageUrlDraft('')
     setEarlyPrepaymentRequested(false)
+    setEarlyPrepaymentWalletInput('')
     setFailedThumbUrls(() => new Set())
   }
 
@@ -276,6 +343,7 @@ export default function Services() {
                       setAgreeProhibited(false)
                       setRedirModule('self_buy')
                       setEarlyPrepaymentRequested(false)
+                      setEarlyPrepaymentWalletInput('')
                     }}
                     className={`rounded-xl border-2 p-5 text-left transition ${
                       selectedId === s.id
@@ -299,6 +367,26 @@ export default function Services() {
 
             {isRedirecionamento && (
               <div className="space-y-4">
+                <div className="rounded-xl border border-earth-200 bg-gradient-to-b from-sky-50/80 to-white p-4 sm:p-5">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-earth-500">
+                    Taxa por item — Padrão e Assistido
+                  </p>
+                  <p className="mt-2 text-sm font-medium text-earth-900">{REDIRECIONAMENTO_ITEM_FEE_SUMMARY}</p>
+                  <div className="mt-4 space-y-2 rounded-lg border border-earth-200/80 bg-white/90 px-3 py-3 text-sm text-earth-800">
+                    <p>
+                      <span className="font-semibold text-earth-900">Quando essa taxa vale:</span>{' '}
+                      nos dois módulos abaixo a cobrança da taxa por item (e do frete internacional){' '}
+                      <strong>só ocorre na etapa do envio final</strong>, quando você solicitar o envio do pacote{' '}
+                      <strong>para o seu endereço</strong>. Neste formulário você apenas abre o pedido; não há cobrança
+                      dessas taxas agora.
+                    </p>
+                    <p className="text-earth-600">
+                      No <strong>Assistido</strong>, o orçamento pode incluir pré-pagamento da compra no Japão; isso é
+                      separado da taxa por item acima, que continua ligada ao envio final para você.
+                    </p>
+                  </div>
+                </div>
+
                 <div className="rounded-lg border border-earth-200 bg-white p-4">
                   <p className="text-sm font-medium text-earth-800">Modalidade de redirecionamento</p>
                   <div className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -310,13 +398,15 @@ export default function Services() {
                         onChange={() => {
                           setRedirModule('self_buy')
                           setEarlyPrepaymentRequested(false)
+                          setEarlyPrepaymentWalletInput('')
                         }}
                         className="mt-1"
                       />
                       <div>
-                        <span className="block font-semibold text-earth-900">📦 Redirecionamento Padrão</span>
-                        <span className="block text-sm text-earth-600">
-                          Taxa: 1 item ¥1.000 | 2–4 itens ¥750/item | 5+ itens ¥500/item + frete. Você compra nas lojas japonesas e envia para nosso endereço.
+                        <span className="block font-semibold text-earth-900">Redirecionamento Padrão</span>
+                        <span className="mt-1 block text-sm text-earth-600">
+                          Você compra nas lojas japonesas e envia para o nosso endereço. A taxa por item segue a tabela
+                          acima; o frete entra no envio final para o seu endereço.
                         </span>
                       </div>
                     </label>
@@ -329,9 +419,11 @@ export default function Services() {
                         className="mt-1"
                       />
                       <div>
-                        <span className="block font-semibold text-earth-900">🛍️ Redirecionamento Assistido</span>
-                        <span className="block text-sm text-earth-600">
-                          15% sobre o valor da compra + taxa por item igual ao Redirecionamento Padrão + frete. Você envia a lista e retornamos o orçamento para pré-pagamento.
+                        <span className="block font-semibold text-earth-900">Redirecionamento Assistido</span>
+                        <span className="mt-1 block text-sm text-earth-600">
+                          {REDIR_ASSISTIDO_FEE_PERCENT}% sobre o valor da compra, mais a{' '}
+                          <strong>mesma taxa por item</strong> da tabela acima, mais frete no envio final. Você envia a
+                          lista; retornamos orçamento para pré-pagamento quando aplicável.
                         </span>
                       </div>
                     </label>
@@ -345,12 +437,6 @@ export default function Services() {
                       <strong>nota fiscal (invoice)</strong> ou <strong>prints da tela da compra</strong> do produto,
                       anexe por upload ou envie o link da imagem. Isso ajuda a identificar o que foi pedido quando o pacote
                       chegar ao armazém.
-                    </p>
-                    <p className="mt-3">
-                      <strong>Cobrança de taxas:</strong> as taxas de serviço (por item) e o frete internacional{' '}
-                      <strong>só serão cobradas na etapa final</strong>, quando você solicitar o envio do(s) pacote(s) para o{' '}
-                      <strong>seu endereço</strong>. Neste passo você apenas descreve o que pretende enviar ao nosso endereço no
-                      Japão — sem cobrança dessas taxas agora.
                     </p>
                   </div>
                 )}
@@ -382,7 +468,11 @@ export default function Services() {
                     <input
                       type="checkbox"
                       checked={earlyPrepaymentRequested}
-                      onChange={(e) => setEarlyPrepaymentRequested(e.target.checked)}
+                      onChange={(e) => {
+                        const on = e.target.checked
+                        setEarlyPrepaymentRequested(on)
+                        if (!on) setEarlyPrepaymentWalletInput('')
+                      }}
                       className="mt-1 rounded border-earth-300"
                     />
                     <span className="text-sm text-earth-800">
@@ -395,9 +485,34 @@ export default function Services() {
                     </span>
                   </label>
                   <p className="mt-3 text-xs text-earth-600">
-                    O valor exato continua sendo definido no orçamento oficial; esta opção apenas indica urgência de
-                    pré-pagamento por causa do risco de esgotamento.
+                    O valor total da compra continua no orçamento oficial; o valor abaixo é só o que você quer{' '}
+                    <strong>adiantar agora pela carteira</strong> (em ienes) para reforçar a intenção de pré-pagamento.
                   </p>
+                  {earlyPrepaymentRequested && (
+                    <div className="mt-4 rounded-lg border border-emerald-300/60 bg-white/90 px-3 py-3">
+                      <label htmlFor="early-prepay-wallet" className="block text-sm font-medium text-earth-800">
+                        Valor a debitar da carteira (JPY)
+                      </label>
+                      <p className="mt-1 text-xs text-earth-600">
+                        O débito ocorre ao enviar o pedido. Saldo disponível:{' '}
+                        {walletPreview != null ? formatJPY(Math.floor(walletPreview.balance || 0)) : '…'}{' '}
+                        <Link to="/app/wallet" className="font-medium text-earth-800 underline hover:no-underline">
+                          Carteira
+                        </Link>
+                      </p>
+                      <input
+                        id="early-prepay-wallet"
+                        type="number"
+                        min={1}
+                        step={1}
+                        inputMode="numeric"
+                        value={earlyPrepaymentWalletInput}
+                        onChange={(e) => setEarlyPrepaymentWalletInput(e.target.value)}
+                        placeholder="Ex: 5000"
+                        className="mt-2 w-full max-w-xs rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
+                      />
+                    </div>
+                  )}
                 </div>
               )}
               <label htmlFor="message" className="block text-sm font-medium text-earth-700">
@@ -513,25 +628,41 @@ export default function Services() {
             )}
 
             {successNotice && (
-              <p className="rounded-lg bg-green-100 px-4 py-2 text-sm text-green-800">
+              <div className="space-y-2 rounded-lg bg-green-100 px-4 py-3 text-sm text-green-800">
                 {successNotice.quoteFlow ? (
-                  <>
+                  <p>
                     Pedido enviado! Em breve você receberá o orçamento para pré-pagamento. Acompanhe na página de{' '}
                     <Link to="/app/lounge?tab=pedidos" className="font-semibold text-green-900 underline hover:no-underline">
                       Pedidos
                     </Link>
                     .
-                  </>
+                  </p>
                 ) : (
-                  <>
+                  <p>
                     Pedido enviado! O admin irá aprovar em breve. Acompanhe na página de{' '}
                     <Link to="/app/lounge?tab=pedidos" className="font-semibold text-green-900 underline hover:no-underline">
                       Pedidos
                     </Link>
                     .
-                  </>
+                  </p>
                 )}
-              </p>
+                {successNotice.walletAppliedJpy != null && successNotice.walletAppliedJpy > 0 && (
+                  <p className="font-medium text-green-900">
+                    {formatJPY(successNotice.walletAppliedJpy)} debitados da sua carteira como adiantamento do
+                    pré-pagamento.
+                  </p>
+                )}
+                {successNotice.walletEarlyPayError && (
+                  <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-amber-900">
+                    O pedido foi registrado, mas não foi possível debitar a carteira: {successNotice.walletEarlyPayError}.
+                    Acompanhe em{' '}
+                    <Link to="/app/lounge?tab=pedidos" className="font-semibold underline hover:no-underline">
+                      Pedidos
+                    </Link>{' '}
+                    ou recarregue a carteira e fale com o suporte se precisar.
+                  </p>
+                )}
+              </div>
             )}
 
             {feedback && (

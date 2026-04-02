@@ -13,6 +13,7 @@ import { cacheKey, readCache, writeCache } from '../../lib/cache'
 import { brlToJpy, formatBRL, formatJPY, jpyToBrl } from '../../lib/fx'
 import QuoteProductsList from '../../components/QuoteProductsList'
 import OrderAttachments from '../../components/OrderAttachments'
+import { downloadInvoicePdfByOrder, getInvoiceByOrder } from '../../services/invoiceService'
 
 const ORDERS_PAGE_SIZE = 12
 const ORDER_FILTERS = {
@@ -58,6 +59,8 @@ export default function Orders() {
   const [ordersFilter, setOrdersFilter] = useState(ORDER_FILTERS.OPEN)
   const [targetOrderId, setTargetOrderId] = useState(null)
   const [hasOpenedTargetOrder, setHasOpenedTargetOrder] = useState(false)
+  const [invoiceByOrderId, setInvoiceByOrderId] = useState({})
+  const [invoiceLoadingByOrderId, setInvoiceLoadingByOrderId] = useState({})
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -173,6 +176,15 @@ export default function Orders() {
       isActive = false
     }
   }, [user?.id, ordersPage, ordersFilter])
+
+  useEffect(() => {
+    if (!session?.access_token || !Array.isArray(orders) || orders.length === 0) return
+    const candidates = orders.filter((o) => isOrderInvoiceEligible(o))
+    if (candidates.length === 0) return
+    for (const order of candidates) {
+      void ensureOrderInvoiceLoaded(order.id)
+    }
+  }, [orders, session?.access_token])
 
   const getPayableAmount = (order) => {
     if (order.status !== 'awaiting_payment') return null
@@ -303,6 +315,33 @@ export default function Orders() {
     return 'JPY'
   }
 
+  const isOrderInvoiceEligible = (order) => {
+    const st = String(order?.status || '').toLowerCase()
+    return ['paid', 'products_paid', 'shipped', 'completed'].includes(st)
+  }
+
+  const ensureOrderInvoiceLoaded = async (orderId) => {
+    if (!orderId || !session?.access_token) return
+    if (invoiceByOrderId[orderId] || invoiceLoadingByOrderId[orderId]) return
+    setInvoiceLoadingByOrderId((prev) => ({ ...prev, [orderId]: true }))
+    const { data, error } = await getInvoiceByOrder(session.access_token, orderId)
+    setInvoiceLoadingByOrderId((prev) => ({ ...prev, [orderId]: false }))
+    if (!error && data?.id) {
+      setInvoiceByOrderId((prev) => ({ ...prev, [orderId]: data }))
+    }
+  }
+
+  const handleDownloadOrderInvoice = async (order) => {
+    if (!order?.id || !session?.access_token) return
+    try {
+      const existing = invoiceByOrderId[order.id]
+      const filename = `${existing?.invoice_number || `invoice-${String(order.id).slice(0, 8)}`}.pdf`
+      await downloadInvoicePdfByOrder(session.access_token, order.id, filename)
+    } catch (e) {
+      setFeedback(e?.message || 'Não foi possível baixar a fatura deste pedido.')
+    }
+  }
+
   const handleRequestExtraServices = async (order) => {
     if (order.status !== 'item_received') return
     const toSend = getExtraServicesForOrder(order)
@@ -346,6 +385,12 @@ export default function Orders() {
       // noop
     }
   }
+
+  useEffect(() => {
+    const order = detailsModal?.order
+    if (!detailsModal.open || !order?.id || !isOrderInvoiceEligible(order)) return
+    void ensureOrderInvoiceLoaded(order.id)
+  }, [detailsModal.open, detailsModal.order?.id, detailsModal.order?.status, session?.access_token])
 
   return (
     <>
@@ -524,6 +569,21 @@ export default function Orders() {
                         </div>
                       )
                     })()}
+                    {isOrderInvoiceEligible(o) && (
+                      <div className="mt-2">
+                        {invoiceByOrderId[o.id] ? (
+                          <p className="text-xs text-earth-600">
+                            Fatura anexada ao pedido: <span className="font-medium text-earth-800">{invoiceByOrderId[o.id].invoice_number}</span>
+                          </p>
+                        ) : (
+                          <p className="text-xs text-earth-500">
+                            {invoiceLoadingByOrderId[o.id]
+                              ? 'Carregando fatura do pedido...'
+                              : 'Fatura será anexada automaticamente ao pedido após confirmação do pagamento.'}
+                          </p>
+                        )}
+                      </div>
+                    )}
                     {o.status === 'item_received' && (
                       <div className="mt-3 rounded-lg border border-earth-200 bg-white p-3">
                         <p className="text-sm font-medium text-earth-800">Serviços extras</p>
@@ -711,6 +771,44 @@ export default function Orders() {
                     Você solicitou antecipar o pré-pagamento para reduzir o risco de o item esgotar antes da compra
                     (ex.: flea market).
                   </p>
+                  {detailsModal.order.early_prepayment_wallet_jpy != null &&
+                    Number(detailsModal.order.early_prepayment_wallet_jpy) > 0 && (
+                      <p className="mt-2 text-sm text-earth-800">
+                        Valor que você pediu para adiantar pela carteira ao registrar o pedido:{' '}
+                        <span className="font-semibold text-earth-900">
+                          {formatJPY(Number(detailsModal.order.early_prepayment_wallet_jpy))}
+                        </span>
+                        .
+                      </p>
+                    )}
+                </div>
+              )}
+              {isOrderInvoiceEligible(detailsModal.order) && (
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-wide text-earth-500">Fatura</p>
+                  {invoiceByOrderId[detailsModal.order.id] ? (
+                    <div className="mt-1 rounded-md border border-earth-200 bg-earth-50 px-3 py-2">
+                      <p className="text-sm text-earth-800">
+                        {invoiceByOrderId[detailsModal.order.id].invoice_number}
+                        {invoiceByOrderId[detailsModal.order.id].created_at
+                          ? ` • ${new Date(invoiceByOrderId[detailsModal.order.id].created_at).toLocaleString('pt-BR')}`
+                          : ''}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => handleDownloadOrderInvoice(detailsModal.order)}
+                        className="mt-2 rounded border border-earth-300 bg-white px-3 py-1.5 text-sm font-medium text-earth-700 hover:bg-earth-100"
+                      >
+                        Baixar PDF da fatura
+                      </button>
+                    </div>
+                  ) : (
+                    <p className="mt-1 text-sm text-earth-600">
+                      {invoiceLoadingByOrderId[detailsModal.order.id]
+                        ? 'Carregando fatura...'
+                        : 'A fatura é anexada automaticamente ao pedido após confirmação do pagamento.'}
+                    </p>
+                  )}
                 </div>
               )}
               {detailsModal.order.message && (

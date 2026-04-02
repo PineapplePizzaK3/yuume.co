@@ -16,7 +16,6 @@ const MINHA_CONTA_ITEMS = [
   { to: '/app/lounge', label: '⭐ Lounge' },
   { to: '/app/conta', label: 'Dados da conta' },
   { to: '/app/cart', label: '🛒 Central de Pagamentos' },
-  { to: '/app/invoices', label: '📄 Faturas' },
 ]
 
 const NAV_ITEMS = [
@@ -88,15 +87,11 @@ export function PlatformLayout() {
   }
 
   const isActive = (path) => {
-    if (path === '/app/invoices') {
-      return location.pathname === path || location.pathname.startsWith('/app/invoices/')
-    }
     return location.pathname === path
   }
   const isInLoja = LOJA_ITEMS.some((i) => i.to === location.pathname)
   const isInConta =
-    MINHA_CONTA_ITEMS.some((i) => i.to === location.pathname) ||
-    location.pathname.startsWith('/app/invoices/')
+    MINHA_CONTA_ITEMS.some((i) => i.to === location.pathname)
 
   const orderedNavItems = menuOrder.nav
     .map((to) => NAV_ITEMS.find((i) => i.to === to))

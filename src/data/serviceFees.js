@@ -8,6 +8,10 @@ export const GRUPO_COMPRAS_FEE_PERCENT = 20
 export const PERSONAL_SHOPPING_FEE_PERCENT = 25
 export const REDIR_ASSISTIDO_FEE_PERCENT = 15
 
+/** Texto único da escada de taxa por item (Padrão e Assistido usam a mesma tabela). */
+export const REDIRECIONAMENTO_ITEM_FEE_SUMMARY =
+  '1 item: ¥1.000 · 2 a 4 itens: ¥750 por item · 5 ou mais itens: ¥500 por item'
+
 /**
  * Redirecionamento Padrão por quantidade de itens:
  * 1 item → ¥1000

@@ -216,7 +216,7 @@ export default async function handler(req, res) {
     if (invErr) console.error('Parcelow webhook: inventory update failed:', invErr)
   }
 
-  if (!updateOrderError && newStatus === 'paid') {
+  if (!updateOrderError && (newStatus === 'paid' || newStatus === 'products_paid')) {
     await ensureInvoiceForPaidOrder(supabase, orderId).catch((e) =>
       console.error('ensureInvoice (parcelow webhook):', e?.message || e)
     )

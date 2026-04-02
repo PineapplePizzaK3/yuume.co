@@ -35,8 +35,6 @@ const Conta = lazy(() => import('./pages/platform/Conta'))
 const Loja = lazy(() => import('./pages/platform/Loja'))
 const LojaMirror = lazy(() => import('./pages/LojaMirror'))
 const Cart = lazy(() => import('./pages/platform/Cart'))
-const Invoices = lazy(() => import('./pages/platform/Invoices'))
-const InvoiceDetail = lazy(() => import('./pages/platform/InvoiceDetail'))
 const GrupoDeCompras = lazy(() => import('./pages/platform/GrupoDeCompras'))
 const Admin = lazy(() => import('./pages/platform/Admin'))
 const Lounge = lazy(() => import('./pages/platform/Lounge'))
@@ -141,8 +139,8 @@ function App() {
               <Route path="meus-produtos" element={<Navigate to="/app/lounge" replace />} />
               <Route path="loja" element={<Loja />} />
               <Route path="cart" element={<Cart />} />
-              <Route path="invoices" element={<Invoices />} />
-              <Route path="invoices/:id" element={<InvoiceDetail />} />
+              <Route path="invoices" element={<Navigate to="/app/lounge?tab=pedidos" replace />} />
+              <Route path="invoices/:id" element={<Navigate to="/app/lounge?tab=pedidos" replace />} />
               <Route path="grupo-de-compras" element={<GrupoDeCompras />} />
               <Route path="affiliate" element={<Navigate to="/app/dashboard" replace />} />
               <Route path="lista-desejos" element={<Navigate to="/app/lounge?tab=desejos" replace />} />

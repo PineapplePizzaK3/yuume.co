@@ -1,7 +1,7 @@
 /**
  * Gera snapshot de fatura (JSON) e persiste em public.invoices.
  * Idempotente: não duplica fatura para o mesmo pedido (invoice_kind = invoice).
- * Só emite quando orders.status = 'paid' (não products_paid).
+ * Emite quando orders.status estiver em estado de pagamento confirmado.
  */
 import { randomUUID } from 'crypto'
 import { getExchangeRates } from './exchangeRateService.js'
@@ -135,8 +135,9 @@ export async function ensureInvoiceForPaidOrder(supabaseAdmin, orderId) {
     return { ok: false, skipped: true, reason: 'order_not_found', error: orderErr?.message }
   }
 
-  if (order.status !== 'paid') {
-    return { ok: false, skipped: true, reason: 'not_paid_status' }
+  const status = String(order.status || '').toLowerCase()
+  if (!['paid', 'products_paid'].includes(status)) {
+    return { ok: false, skipped: true, reason: 'not_eligible_status' }
   }
 
   const { data: profile } = await supabaseAdmin

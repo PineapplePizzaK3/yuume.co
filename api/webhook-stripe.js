@@ -116,7 +116,7 @@ export default async function handler(req, res) {
         currency: currency.toUpperCase(),
       })
 
-      if (!error && newStatus === 'paid') {
+      if (!error && (newStatus === 'paid' || newStatus === 'products_paid')) {
         await ensureInvoiceForPaidOrder(supabase, orderId).catch((e) =>
           console.error('ensureInvoice (stripe webhook):', e?.message || e)
         )

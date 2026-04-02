@@ -705,6 +705,9 @@ export default async function handler(req, res) {
     }
 
     // Aplicar carteira (JPY) como parte do pagamento, quando solicitado.
+    // A RPC wallet_apply_to_order_jpy espera p_total_amount_jpy = cobrança total do pedido em JPY (autoritativa no servidor),
+    // e opcionalmente p_amount_jpy = teto desta aplicação. Antes passávamos só o restante como p_total, o que
+    // duplicava a subtração de wallet_applied e podia marcar "pago" ou deixar resto errado → redirecionava a Stripe/Parcelow.
     if (body.useWallet) {
       const accessToken = authHeader.replace('Bearer ', '')
       const supabaseUser = getSupabaseUser(accessToken)
@@ -714,15 +717,20 @@ export default async function handler(req, res) {
         })
       }
 
-      const requestedWalletAmount = Math.floor(Number(body.walletAmountJpy) || 0)
-      const totalForWalletApply = requestedWalletAmount > 0
-        ? Math.min(remainingJpy, requestedWalletAmount)
-        : remainingJpy
+      const chargeJpyInt = Math.max(0, Math.round(Number(chargeJpy) || 0))
+      const rawWallet = body.walletAmountJpy
+      const requestedWalletAmount =
+        rawWallet != null && rawWallet !== '' ? Math.floor(Number(rawWallet) || 0) : null
+      const pAmountJpy =
+        requestedWalletAmount != null && requestedWalletAmount > 0
+          ? Math.min(Math.max(0, Math.round(remainingJpy)), requestedWalletAmount)
+          : null
 
       const { data: applyData, error: applyErr } = await supabaseUser.rpc('wallet_apply_to_order_jpy', {
         p_order_id: orderId,
         p_user_id: user.id,
-        p_total_amount_jpy: totalForWalletApply,
+        p_total_amount_jpy: chargeJpyInt,
+        p_amount_jpy: pAmountJpy,
       })
       if (applyErr) throw new Error(applyErr.message || 'Erro ao aplicar carteira')
       walletApplied = Number(applyData?.applied_amount) || 0
@@ -733,7 +741,7 @@ export default async function handler(req, res) {
           .select('status')
           .eq('id', orderId)
           .maybeSingle()
-        if (stAfterWallet?.status === 'paid') {
+        if (stAfterWallet?.status === 'paid' || stAfterWallet?.status === 'products_paid') {
           await ensureInvoiceForPaidOrder(supabase, orderId).catch((e) =>
             console.error('ensureInvoice (checkout wallet):', e?.message || e)
           )
@@ -759,7 +767,7 @@ export default async function handler(req, res) {
         amount: 0,
         currency: 'JPY',
       })
-      if (newStatus === 'paid') {
+      if (newStatus === 'paid' || newStatus === 'products_paid') {
         await ensureInvoiceForPaidOrder(supabase, orderId).catch((e) =>
           console.error('ensureInvoice (checkout zero remainder):', e?.message || e)
         )

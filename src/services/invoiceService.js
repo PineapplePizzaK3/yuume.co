@@ -37,10 +37,41 @@ export async function getInvoice(accessToken, invoiceId) {
   return { data, error: null }
 }
 
+export async function getInvoiceByOrder(accessToken, orderId) {
+  const base = getPaymentsApiBase()
+  const res = await fetch(`${base}/invoices?orderId=${encodeURIComponent(orderId)}`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  })
+  const data = await parseJson(res)
+  if (!res.ok) {
+    return { data: null, error: data?.error || res.statusText }
+  }
+  return { data, error: null }
+}
+
 export async function downloadInvoicePdf(accessToken, invoiceId, filename) {
   const base = getPaymentsApiBase()
   const res = await fetch(
     `${base}/invoices?id=${encodeURIComponent(invoiceId)}&format=pdf`,
+    { headers: { Authorization: `Bearer ${accessToken}` } }
+  )
+  if (!res.ok) {
+    const err = await parseJson(res)
+    throw new Error(err?.error || 'Falha ao gerar PDF')
+  }
+  const blob = await res.blob()
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename || 'invoice.pdf'
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+export async function downloadInvoicePdfByOrder(accessToken, orderId, filename) {
+  const base = getPaymentsApiBase()
+  const res = await fetch(
+    `${base}/invoices?orderId=${encodeURIComponent(orderId)}&format=pdf`,
     { headers: { Authorization: `Bearer ${accessToken}` } }
   )
   if (!res.ok) {

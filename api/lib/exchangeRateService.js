@@ -1,6 +1,11 @@
 /**
  * Cotações comerciais JPY→USD e USD→BRL, cache 15 min, fallback a último valor (memória / env / Supabase).
+ *
+ * Quando Frankfurter responde, gravamos sempre em system_settings com service role (quando configurado),
+ * para o “fallback” do banco acompanhar a última cotação — mesmo se quem chamou getExchangeRates for só leitura (anon).
  */
+
+import { createClient } from '@supabase/supabase-js'
 
 const TTL_MS = Math.min(Math.max(Number(process.env.EXCHANGE_RATE_TTL_MS) || 900000, 60000), 3600000)
 
@@ -78,6 +83,17 @@ async function loadRatesFromSupabase(supabase) {
   }
 }
 
+function getSupabaseServiceRoleClient() {
+  const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!url || !key) return null
+  try {
+    return createClient(url, key)
+  } catch {
+    return null
+  }
+}
+
 export async function persistRatesToSupabase(supabase, rates) {
   if (!supabase || !rates?.jpy_usd || !rates?.usd_brl) return
   const ts = rates.updated_at || new Date().toISOString()
@@ -91,6 +107,21 @@ export async function persistRatesToSupabase(supabase, rates) {
       { key: row.key, value: row.value, updated_at: new Date().toISOString() },
       { onConflict: 'key' }
     )
+  }
+}
+
+/**
+ * Grava cotações no Supabase: prefere service role (RLS exige admin para escrita em system_settings).
+ */
+export async function persistRatesToSupabasePreferAdmin(supabase, rates) {
+  if (!rates?.jpy_usd || !rates?.usd_brl) return
+  const admin = getSupabaseServiceRoleClient()
+  const client = admin || supabase
+  if (!client) return
+  try {
+    await persistRatesToSupabase(client, rates)
+  } catch (e) {
+    console.error('persistRatesToSupabase:', e?.message || e)
   }
 }
 
@@ -121,7 +152,7 @@ export async function getExchangeRates(supabase, opts = {}) {
     g.usd_brl = live.usd_brl
     g.updatedAt = Date.now()
     g.source = live.source
-    if (supabase) await persistRatesToSupabase(supabase, live).catch(() => null)
+    await persistRatesToSupabasePreferAdmin(supabase, live)
     return live
   }
 

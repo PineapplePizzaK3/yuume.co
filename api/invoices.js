@@ -1,7 +1,9 @@
 /**
  * GET /api/invoices — lista faturas do usuário (admin: todas, ?userId= opcional).
  * GET /api/invoices?id=<uuid> — JSON da fatura (autorizado).
+ * GET /api/invoices?orderId=<uuid> — fatura do pedido (autorizado).
  * GET /api/invoices?id=<uuid>&format=pdf — download PDF.
+ * GET /api/invoices?orderId=<uuid>&format=pdf — download PDF por pedido.
  */
 import { createClient } from '@supabase/supabase-js'
 import { buildInvoicePdfBuffer } from './lib/invoicePdf.js'
@@ -55,14 +57,25 @@ export default async function handler(req, res) {
 
   const admin = await isAdmin(supabaseAdmin, auth.user.id)
   const id = typeof req.query?.id === 'string' ? req.query.id.trim() : ''
+  const orderId = typeof req.query?.orderId === 'string' ? req.query.orderId.trim() : ''
   const format = typeof req.query?.format === 'string' ? req.query.format.trim().toLowerCase() : ''
 
-  if (id) {
-    const { data: row, error } = await supabaseAdmin
+  if (id || orderId) {
+    let query = supabaseAdmin
       .from('invoices')
       .select('id, order_id, user_id, invoice_number, data_json, invoice_kind, created_at')
-      .eq('id', id)
-      .maybeSingle()
+      .eq('invoice_kind', 'invoice')
+
+    if (id) {
+      query = query.eq('id', id)
+    } else {
+      query = query
+        .eq('order_id', orderId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+    }
+
+    const { data: row, error } = await query.maybeSingle()
 
     if (error || !row) {
       return res.status(404).json({ error: 'Invoice not found' })

@@ -65,7 +65,7 @@ export async function getServices() {
  * - assisted_buy (Redirecionamento Assistido, pré-pagamento): status awaiting_quote (admin define orçamento)
  * Personal Shopping: status awaiting_quote.
  */
-export async function createOrder(userId, { service_id, message, attachment_urls, service_name, order_module, early_prepayment_requested }) {
+export async function createOrder(userId, { service_id, message, attachment_urls, service_name, order_module, early_prepayment_requested, early_prepayment_wallet_jpy }) {
   const isPersonalShopping = service_name === 'Personal Shopping'
   const isRedirecionamento = service_name === 'Redirecionamento'
   const module = order_module || null
@@ -73,6 +73,10 @@ export async function createOrder(userId, { service_id, message, attachment_urls
   const status = (isPersonalShopping || isAssistedBuy) ? ORDER_STATUS.AWAITING_QUOTE : ORDER_STATUS.PENDING_APPROVAL
   const urls = Array.isArray(attachment_urls) ? attachment_urls.filter(Boolean) : []
   const earlyPrepay = Boolean(isAssistedBuy && early_prepayment_requested)
+  const walletJpy =
+    earlyPrepay && early_prepayment_wallet_jpy != null && Number(early_prepayment_wallet_jpy) > 0
+      ? Math.floor(Number(early_prepayment_wallet_jpy))
+      : null
   try {
     const { data, error } = await withDbTimeout(
       supabase
@@ -86,6 +90,7 @@ export async function createOrder(userId, { service_id, message, attachment_urls
           order_module: module,
           status,
           early_prepayment_requested: earlyPrepay,
+          early_prepayment_wallet_jpy: walletJpy,
         })
         .select()
         .single()

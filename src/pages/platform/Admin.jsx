@@ -60,7 +60,7 @@ import { getUserLogs, getAuthLogs, logAdminAction } from '../../services/logServ
 import { getMyAdminNotifications, markNotificationRead } from '../../services/notificationService'
 import { getFraudReviewQueue, decideFraudCase } from '../../services/fraudService'
 import { searchCatalogAdmin } from '../../services/catalogSearchService'
-import { brlToJpy, jpyToBrl, formatJPY, formatWeight } from '../../lib/fx'
+import { brlToJpy, formatJPY, formatWeight } from '../../lib/fx'
 import { parseQuoteMessage, serializeQuoteProducts } from '../../lib/quoteProducts'
 import QuoteProductsList from '../../components/QuoteProductsList'
 import OrderAttachments from '../../components/OrderAttachments'
@@ -83,6 +83,11 @@ function formatOrderModuleLabel(order) {
   if (order.order_module === 'self_buy') return 'Redirecionamento · Padrão'
   if (order.order_module === 'assisted_buy') return 'Redirecionamento · Assistido'
   return null
+}
+
+function getProductBasePriceJpy(product) {
+  const jpy = Number(product?.price_jpy ?? product?.price)
+  return Number.isFinite(jpy) && jpy > 0 ? jpy : 0
 }
 
 function PaginationControls({ page, hasMore, loading, onPrev, onNext }) {
@@ -969,7 +974,8 @@ export default function Admin() {
     return {
       name: groupProductForm.name.trim(),
       description: groupProductForm.description?.trim() || '',
-      price: jpyToBrl(price),
+      // Persistimos preço base em JPY no catálogo.
+      price,
       image_url: imageUrls[0] || groupProductForm.image_url || '',
       image_urls: imageUrls,
       weight_kg: weightKg,
@@ -1031,7 +1037,7 @@ export default function Admin() {
     const useG = kg > 0 && kg < 1
     setGroupProductForm({
       name: p.name ?? '',
-      price: String(Math.round(brlToJpy(Number(p.price ?? 0)))),
+      price: String(Math.round(getProductBasePriceJpy(p))),
       description: p.description ?? '',
       image_url: p.image_url ?? '',
       image_urls: Array.isArray(p.image_urls) ? p.image_urls : (p.image_url ? [p.image_url] : []),
@@ -1058,7 +1064,7 @@ export default function Admin() {
     const useG = kg > 0 && kg < 1
     setGroupProductForm({
       name: item.name ?? '',
-      price: String(Math.round(brlToJpy(Number(item.price ?? 0)))),
+      price: String(Math.round(getProductBasePriceJpy(item))),
       description: item.description ?? '',
       image_url: item.image_url ?? '',
       image_urls: Array.isArray(item.image_urls) ? item.image_urls : (item.image_url ? [item.image_url] : []),
@@ -1214,7 +1220,7 @@ export default function Admin() {
       ...prev,
       name: refProduct.name ?? prev.name,
       description: refProduct.description ?? prev.description,
-      price: String(Math.round(brlToJpy(Number(refProduct.price ?? 0)))),
+      price: String(Math.round(getProductBasePriceJpy(refProduct))),
       weight_kg: useG ? String(Math.round(kg * 1000)) : String(kg || ''),
       weight_unit: useG ? 'g' : 'kg',
       stock_quantity: refProduct.stock_quantity != null ? String(refProduct.stock_quantity) : prev.stock_quantity,
@@ -1233,7 +1239,7 @@ export default function Admin() {
       ...prev,
       name: refProduct.name ?? prev.name,
       description: refProduct.description ?? prev.description,
-      price: String(Math.round(brlToJpy(Number(refProduct.price ?? 0)))),
+      price: String(Math.round(getProductBasePriceJpy(refProduct))),
       image_url: refProduct.image_url ?? urls[0] ?? '',
       image_urls: urls,
       weight_kg: useG ? String(Math.round(kg * 1000)) : String(kg || '0'),
@@ -1249,8 +1255,7 @@ export default function Admin() {
     setForm({
       name: p.name,
       description: p.description ?? '',
-      // UI do admin em JPY (mantemos persistência em BRL no banco)
-      price: String(Math.round(brlToJpy(Number(p.price ?? 0)))),
+      price: String(Math.round(getProductBasePriceJpy(p))),
       weight_kg: useG ? String(Math.round(kg * 1000)) : String(kg),
       weight_unit: useG ? 'g' : 'kg',
       stock_quantity: p.stock_quantity != null ? String(p.stock_quantity) : '',
@@ -1278,8 +1283,8 @@ export default function Admin() {
       return
     }
     const weightKg = form.weight_unit === 'g' ? weightVal / 1000 : weightVal
-    // Converter JPY (UI) -> BRL (banco), já que o projeto salva preços da loja em BRL.
-    const price = jpyToBrl(priceJpy)
+    // Persistimos preço base em JPY no catálogo.
+    const price = priceJpy
     const imageUrls = Array.isArray(form.image_urls) && form.image_urls.length > 0
       ? form.image_urls.filter(Boolean)
       : (form.image_url ? [form.image_url] : [])
@@ -2078,8 +2083,14 @@ export default function Admin() {
                       )}
                       {o.early_prepayment_requested && (
                         <p className="mt-1">
-                          <span className="inline-flex items-center rounded bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-900">
-                            Cliente pediu pré-pagamento antecipado (ex.: flea market / item único)
+                          <span className="inline-flex flex-wrap items-center gap-x-1 rounded bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-900">
+                            <span>Pré-pagamento antecipado (ex.: flea market)</span>
+                            {o.early_prepayment_wallet_jpy != null &&
+                              Number(o.early_prepayment_wallet_jpy) > 0 && (
+                                <span className="text-emerald-950">
+                                  · carteira {formatJPY(Number(o.early_prepayment_wallet_jpy))}
+                                </span>
+                              )}
                           </span>
                         </p>
                       )}
@@ -3236,7 +3247,7 @@ export default function Admin() {
                     {groupProducts.map((p) => (
                       <li key={p.id} className="flex items-center justify-between rounded-lg border border-earth-200 bg-white px-3 py-2">
                         <span className="text-sm text-earth-800">
-                          {p.name} — {formatJPY(brlToJpy(p.price))}
+                          {p.name} — {formatJPY(getProductBasePriceJpy(p))}
                           {Number(p.weight_kg ?? 0) > 0 ? ` • ${formatWeight(p.weight_kg)}` : ''}
                           {` • Estoque: ${p.stock_quantity != null ? p.stock_quantity : 'ilimitado'}`}
                         </span>
@@ -3257,7 +3268,7 @@ export default function Admin() {
                     {pendingGroupProducts.map((p, i) => (
                       <li key={p.id} className="flex items-center justify-between rounded-lg border border-earth-200 bg-white px-3 py-2">
                         <span className="text-sm text-earth-800">
-                          {p.name} — {formatJPY(brlToJpy(p.price))}
+                          {p.name} — {formatJPY(getProductBasePriceJpy(p))}
                           {Number(p.weight_kg ?? 0) > 0 ? ` • ${formatWeight(p.weight_kg)}` : ''}
                           {` • Estoque: ${p.stock_quantity != null ? p.stock_quantity : 'ilimitado'}`}
                         </span>
@@ -4442,7 +4453,7 @@ export default function Admin() {
                       <div className="min-w-0">
                         <p className="truncate text-sm font-medium text-earth-900">{p.name}</p>
                         <p className="text-xs text-earth-600">
-                          {formatJPY(brlToJpy(p.price))} • {p.stock_quantity != null ? `Estoque ${p.stock_quantity}` : 'Estoque ilimitado'}
+                          {formatJPY(getProductBasePriceJpy(p))} • {p.stock_quantity != null ? `Estoque ${p.stock_quantity}` : 'Estoque ilimitado'}
                         </p>
                       </div>
                       <button
@@ -4481,7 +4492,7 @@ export default function Admin() {
                           )}
                           <div>
                             <span className="font-medium text-earth-900">{p.name}</span>
-                            <span className="ml-2 text-sm text-earth-600">{formatJPY(brlToJpy(p.price))}</span>
+                            <span className="ml-2 text-sm text-earth-600">{formatJPY(getProductBasePriceJpy(p))}</span>
                             <span className="ml-2 text-xs text-earth-500">
                               {Number(p.weight_kg ?? 0) > 0 ? `• ${formatWeight(p.weight_kg)}` : '• peso não definido'}
                             </span>
@@ -4981,7 +4992,7 @@ export default function Admin() {
                           {!p.purchase_group_id && p.store_linked ? 'Sim' : 'Não'}
                         </td>
                         <td className="px-3 py-2 text-earth-700">
-                          {formatJPY(brlToJpy(p.price))}
+                          {formatJPY(getProductBasePriceJpy(p))}
                         </td>
                         <td className="px-3 py-2 text-earth-700">
                           {p.stock_quantity != null ? p.stock_quantity : 'Ilimitado'}

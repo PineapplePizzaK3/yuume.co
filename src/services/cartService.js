@@ -123,7 +123,22 @@ export async function getLatestPendingStoreOrder(userId) {
     const { data, error } = await withDbTimeout(
       supabase
         .from('orders')
-        .select('id, user_id, status, order_source, created_at, total_amount, total_amount_usd, quote_amount, quote_currency, shipping_cost, shipping_currency, wallet_applied_amount')
+        .select(`
+          id,
+          user_id,
+          status,
+          order_source,
+          created_at,
+          total_amount,
+          total_amount_usd,
+          quote_amount,
+          quote_currency,
+          shipping_cost,
+          shipping_currency,
+          wallet_applied_amount,
+          discount_amount,
+          order_items(quantity, price_at_purchase)
+        `)
         .eq('user_id', userId)
         .eq('order_source', 'store')
         .eq('status', 'awaiting_payment')

@@ -68,7 +68,7 @@ function Cart() {
   const [paymentsLoading, setPaymentsLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [wallet, setWallet] = useState(null)
-  const [payModal, setPayModal] = useState({ open: false, order: null, useWallet: true })
+  const [payModal, setPayModal] = useState({ open: false, order: null, useWallet: false })
   const [walletApplyMode, setWalletApplyMode] = useState('full')
   const [walletCustomAmount, setWalletCustomAmount] = useState('')
   const [selectedGateway, setSelectedGateway] = useState('parcelow')
@@ -281,7 +281,7 @@ function Cart() {
     if (!payOrderId || pendingLoading || payModal.open) return
     const target = pendingOrders.find((o) => o.id === payOrderId)
     if (!target) return
-    setPayModal({ open: true, order: target, useWallet: true })
+    setPayModal({ open: true, order: target, useWallet: false })
     setFeedback('')
   }, [payOrderId, pendingLoading, pendingOrders, payModal.open])
 
@@ -311,16 +311,18 @@ function Cart() {
     }
   }, [payModal.open])
 
-  const { productSubtotalBrl, grupoFeeBrl, grupoQty } = useMemo(() => {
+  const { productSubtotalBrl, grupoFeeBrl, grupoQty, cartSubtotalJpy } = useMemo(() => {
     let lojaBrl = 0
     let grupoBrl = 0
     let grupoUsd = 0
     let q = 0
+    let cartJpy = 0
     for (const i of items) {
       const p = i.products
       if (!p) continue
       const qty = Number(i.quantity) || 1
       const jpyUnit = Number(p.price_jpy ?? p.price) || 0
+      cartJpy += jpyUnit * qty
       const brlUnit = Number(p.price_brl)
       const usdUnit = Number(p.price_usd)
       const lineBrl = Number.isFinite(brlUnit) && brlUnit > 0 ? brlUnit * qty : jpyToBrl(jpyUnit) * qty
@@ -352,6 +354,7 @@ function Cart() {
       productSubtotalBrl: lojaBrl + grupoBrl,
       grupoFeeBrl: fee,
       grupoQty: q,
+      cartSubtotalJpy: cartJpy,
     }
   }, [items, systemSettings, exchangeSnapshot])
 
@@ -362,7 +365,24 @@ function Cart() {
     Number(exchangeSnapshot?.effective_brl_per_jpy) > 0
       ? Number(exchangeSnapshot.effective_brl_per_jpy)
       : getFxBrlPerJpy()
-  const totalJpy = Math.round(totalAfterDiscountBrl / effBrlPerJpyCheckout)
+  /** Iene do resumo = soma dos ¥ dos itens (+ taxa grupo na mesma taxa implícita BRL/¥ do carrinho), depois cupom — não inverter só com cotação Frankfurter (diverge do price_brl do servidor). */
+  const impliedBrlPerJpyFromCart =
+    cartSubtotalJpy > 0 && productSubtotalBrl > 0
+      ? productSubtotalBrl / cartSubtotalJpy
+      : null
+  const feeJpyConversionRate =
+    impliedBrlPerJpyFromCart != null && impliedBrlPerJpyFromCart > 0
+      ? impliedBrlPerJpyFromCart
+      : effBrlPerJpyCheckout
+  const grupoFeeJpy =
+    grupoFeeBrl > 0 && feeJpyConversionRate > 0
+      ? Math.round(grupoFeeBrl / feeJpyConversionRate)
+      : 0
+  const totalJpyBeforeCoupon = Math.round(cartSubtotalJpy + grupoFeeJpy)
+  const totalJpy =
+    cartSubtotalJpy > 0 && totalBrl > 0
+      ? Math.max(0, Math.round(totalJpyBeforeCoupon * (totalAfterDiscountBrl / totalBrl)))
+      : Math.round(totalAfterDiscountBrl / effBrlPerJpyCheckout)
   const totalUsdEstimate =
     exchangeSnapshot?.usd_brl > 0 ? totalAfterDiscountBrl / Number(exchangeSnapshot.usd_brl) : null
 
@@ -438,7 +458,7 @@ function Cart() {
       }
 
       if (latestPendingStoreOrder?.id) {
-        setPayModal({ open: true, order: latestPendingStoreOrder, useWallet: true })
+        setPayModal({ open: true, order: latestPendingStoreOrder, useWallet: false })
         setFeedback('')
         return
       }
@@ -479,13 +499,19 @@ function Cart() {
           null
       }
 
+      // RPC create_store_order devolve só a linha do pedido; a lista traz order_items (¥ coerente no modal).
+      if (orderToPay?.id && Array.isArray(pendingList)) {
+        const enriched = pendingList.find((o) => o.id === orderToPay.id)
+        if (enriched) orderToPay = enriched
+      }
+
       if (!orderToPay?.id) {
         setFeedback('Pedido criado, mas não foi possível abrir o modal automaticamente. Use "Pagamentos pendentes" abaixo.')
         return
       }
 
       // Pedido criado: abre modal de pagamento (gateway + carteira).
-      setPayModal({ open: true, order: orderToPay, useWallet: true })
+      setPayModal({ open: true, order: orderToPay, useWallet: false })
       setCouponApplied(null)
       setCouponInput('')
       setFeedback('')
@@ -511,7 +537,27 @@ function Cart() {
     if (currency === 'BRL') {
       const baseBrl = Number(payable.amount) || 0
       const discountedBrl = Math.max(0, baseBrl - referralDiscountBrl)
-      const jpy = Math.round(discountedBrl / effBrlPerJpy)
+      const orderItems = order?.order_items
+      let jpy
+      if (
+        order?.order_source === 'store'
+        && Array.isArray(orderItems)
+        && orderItems.length > 0
+      ) {
+        const itemsJpySum = orderItems.reduce((sum, it) => {
+          const unit = Number(it.price_at_purchase) || 0
+          const q = Number(it.quantity) || 0
+          return sum + unit * q
+        }, 0)
+        const fullBrl = baseBrl + (Number(order.discount_amount) || 0)
+        if (itemsJpySum > 0 && fullBrl > 0) {
+          jpy = Math.round(itemsJpySum * (discountedBrl / fullBrl))
+        } else {
+          jpy = Math.round(discountedBrl / effBrlPerJpy)
+        }
+      } else {
+        jpy = Math.round(discountedBrl / effBrlPerJpy)
+      }
       const totalUsd = Number(order?.total_amount_usd)
       let chargeUsd = null
       if (order?.order_source === 'store' && Number.isFinite(totalUsd) && totalUsd > 0 && baseBrl > 0) {
@@ -597,22 +643,32 @@ function Cart() {
       walletApplyMode,
       walletCustomAmount
     )
-    const walletAmountJpy = forceWallet
-      ? Math.floor(Math.max(0, breakdown.remainingAfterAlreadyApplied))
-      : Math.floor(Math.max(0, breakdown.requestedWalletJpy))
-    const shouldUseWallet = forceWallet || (!!payModal.useWallet && walletAmountJpy > 0)
+    const balanceOk = (wallet?.balance ?? 0) > 0 && (wallet?.currency || 'JPY') === 'JPY'
+    const customJpy = parseWalletAmountJpy(walletCustomAmount)
+    const shouldUseWallet =
+      forceWallet ||
+      (!!payModal.useWallet &&
+        balanceOk &&
+        (walletApplyMode === 'full' || customJpy > 0))
+    // null = API aplica o máximo possível da carteira até cobrir o restante (valor oficial em JPY no servidor).
+    const walletAmountJpyForApi =
+      !shouldUseWallet
+        ? null
+        : forceWallet || walletApplyMode === 'full'
+          ? null
+          : Math.floor(Math.max(0, customJpy))
     try {
       setSubmitting(true)
       setFeedback('')
       const result = await createCheckoutSession(orderId, accessToken, {
         useWallet: shouldUseWallet,
-        walletAmountJpy: shouldUseWallet ? walletAmountJpy : null,
+        walletAmountJpy: walletAmountJpyForApi,
         acquisitionMode,
         affiliateCode: null,
         provider: provider || null,
       })
       if (result?.paid) {
-        setPayModal({ open: false, order: null, useWallet: true })
+        setPayModal({ open: false, order: null, useWallet: false })
         setFeedback('Pagamento realizado com carteira.')
         await loadCart()
         await loadPendingOrders()
@@ -629,7 +685,7 @@ function Cart() {
   }
 
   const closePayModal = () => {
-    setPayModal({ open: false, order: null, useWallet: true })
+    setPayModal({ open: false, order: null, useWallet: false })
     const next = new URLSearchParams(searchParams)
     if (next.has('payOrderId')) {
       next.delete('payOrderId')
@@ -957,7 +1013,7 @@ function Cart() {
                       </div>
                       <button
                         type="button"
-                        onClick={() => setPayModal({ open: true, order, useWallet: true })}
+                        onClick={() => setPayModal({ open: true, order, useWallet: false })}
                         className="rounded-lg bg-earth-900 px-4 py-2 text-sm font-medium text-white hover:bg-earth-800"
                       >
                         Pagar agora
@@ -1114,10 +1170,16 @@ function Cart() {
             <div className="flex-1 min-h-0 overflow-y-auto p-6">
               <h3 className="font-semibold text-earth-900">Pagamento</h3>
               <p className="mt-1 text-sm text-earth-600">
-                Escolha a forma de pagamento e conclua com segurança.
+                Escolha se deseja usar a carteira e a forma de pagamento do restante, quando houver.
               </p>
 
               {(() => {
+                const breakdown = getPaymentBreakdown(
+                  payModal.order,
+                  payModal.useWallet,
+                  walletApplyMode,
+                  walletCustomAmount
+                )
                 const {
                   charge,
                   balance,
@@ -1125,7 +1187,8 @@ function Cart() {
                   totalJpy,
                   walletApplied,
                   remainingJpy,
-                } = getPaymentBreakdown(payModal.order, payModal.useWallet, walletApplyMode, walletCustomAmount)
+                  isFullyCovered,
+                } = breakdown
                 const useWallet = !!payModal.useWallet && canUseWallet
                 const ch = getOrderChargeJpy(payModal.order)
                 const ratioPay = totalJpy > 0 ? remainingJpy / totalJpy : 0
@@ -1231,6 +1294,7 @@ function Cart() {
                         )}
                       </div>
                     </label>
+                    {!isFullyCovered && (
                     <div className="rounded-lg border border-earth-200 bg-white p-4">
                       <p className="font-medium text-earth-900">Forma de pagamento</p>
                       <select
@@ -1257,6 +1321,7 @@ function Cart() {
                         )
                       })()}
                     </div>
+                    )}
                     {referralEligibility && (
                       <div className="rounded-lg border border-earth-200 bg-white p-4">
                         <p className="text-sm font-medium text-earth-900">Indicação</p>
@@ -1304,12 +1369,24 @@ function Cart() {
                   walletCustomAmount
                 )
                 const requiresReferralChoice = referralEligibility && acquisitionMode === 'none'
+                const customWalletInvalid =
+                  !!payModal.useWallet &&
+                  walletApplyMode === 'custom' &&
+                  parseWalletAmountJpy(walletCustomAmount) <= 0 &&
+                  (wallet?.balance ?? 0) > 0
 
                 return (
                   <div className="flex flex-col gap-3">
-                    <p className="text-xs text-earth-500">
-                      Parcelow: cobrança em dólar (USD). Stripe segue em ienes (JPY) neste fluxo.
-                    </p>
+                    {!isFullyCovered && (
+                      <p className="text-xs text-earth-500">
+                        Parcelow: cobrança em dólar (USD). Stripe segue em ienes (JPY) neste fluxo.
+                      </p>
+                    )}
+                    {customWalletInvalid && (
+                      <p className="text-xs text-amber-700">
+                        Informe quanto deseja usar da carteira (JPY) ou marque &quot;Usar saldo máximo possível&quot;.
+                      </p>
+                    )}
                     <div className="flex flex-wrap gap-2">
                       <button
                         type="button"
@@ -1319,10 +1396,14 @@ function Cart() {
                             forceWallet: isFullyCovered,
                           })
                         }
-                        disabled={submitting || requiresReferralChoice}
+                        disabled={submitting || requiresReferralChoice || customWalletInvalid}
                         className="flex-1 min-w-0 rounded-lg bg-earth-900 px-6 py-2.5 font-medium text-earth-50 hover:bg-earth-800 disabled:opacity-60"
                       >
-                        {submitting ? 'Processando...' : 'Pagar com método selecionado'}
+                        {submitting
+                          ? 'Processando...'
+                          : isFullyCovered
+                            ? 'Concluir com carteira'
+                            : 'Pagar com método selecionado'}
                       </button>
                       <button
                         type="button"
