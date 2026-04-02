@@ -1,10 +1,10 @@
 import { createClient } from '@supabase/supabase-js'
-import { getExchangeRates } from './lib/exchangeRateService.js'
+import { getExchangeRates } from './exchangeRateService.js'
 import {
   effectiveBrlPerJpy,
   getPricingPercentsFromEnv,
   pricingMultiplierFromPercents,
-} from './lib/pricingEngine.js'
+} from './pricingEngine.js'
 
 function getSupabaseAnon() {
   const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
@@ -13,7 +13,7 @@ function getSupabaseAnon() {
   return createClient(url, key)
 }
 
-export default async function handler(req, res) {
+export async function handleExchangeRatesGet(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' })
   }

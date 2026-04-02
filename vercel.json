@@ -3,6 +3,14 @@
   "outputDirectory": "dist",
   "framework": "vite",
   "rewrites": [
+    {
+      "source": "/api/exchange-rates",
+      "destination": "/api/create-checkout-session?x_dispatch=exchange-rates"
+    },
+    {
+      "source": "/api/cron-refresh-exchange-rates",
+      "destination": "/api/create-checkout-session?x_dispatch=cron-refresh-exchange-rates"
+    },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ],
   "crons": [

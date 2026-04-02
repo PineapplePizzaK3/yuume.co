@@ -13,6 +13,8 @@ import {
   jpyEquivalentFromFinalUsd,
 } from './lib/pricingEngine.js'
 import { ensureInvoiceForPaidOrder } from './lib/invoiceGenerator.js'
+import { handleExchangeRatesGet } from './lib/exchangeRatesHttp.js'
+import { handleCronRefreshExchangeRates } from './lib/cronRefreshHttp.js'
 
 const REQUEST_WINDOW_MS = 60 * 1000
 const MAX_REQUESTS_PER_WINDOW = 20
@@ -424,7 +426,22 @@ function getBaseUrl(req) {
   return null
 }
 
+function readDispatchQuery(req) {
+  const raw = req.query?.x_dispatch
+  if (typeof raw === 'string') return raw
+  if (Array.isArray(raw) && raw.length) return String(raw[0])
+  return ''
+}
+
 export default async function handler(req, res) {
+  const dispatch = readDispatchQuery(req)
+  if (dispatch === 'exchange-rates') {
+    return handleExchangeRatesGet(req, res)
+  }
+  if (dispatch === 'cron-refresh-exchange-rates') {
+    return handleCronRefreshExchangeRates(req, res)
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
@@ -674,6 +691,16 @@ export default async function handler(req, res) {
 
     // Se o pedido já foi integralmente coberto por carteira anteriormente, não deve haver nova cobrança.
     if (remainingJpy <= 0) {
+      const { data: stExisting } = await supabase
+        .from('orders')
+        .select('status')
+        .eq('id', orderId)
+        .maybeSingle()
+      if (stExisting?.status === 'paid') {
+        await ensureInvoiceForPaidOrder(supabase, orderId).catch((e) =>
+          console.error('ensureInvoice (checkout already covered):', e?.message || e)
+        )
+      }
       return res.status(200).json({ paid: true, walletApplied: 0, alreadyPaidByWallet: alreadyAppliedJpy })
     }
 
@@ -701,6 +728,16 @@ export default async function handler(req, res) {
       walletApplied = Number(applyData?.applied_amount) || 0
       remainingJpy = Number(applyData?.remaining_amount) || 0
       if (applyData?.paid === true || remainingJpy <= 0) {
+        const { data: stAfterWallet } = await supabase
+          .from('orders')
+          .select('status')
+          .eq('id', orderId)
+          .maybeSingle()
+        if (stAfterWallet?.status === 'paid') {
+          await ensureInvoiceForPaidOrder(supabase, orderId).catch((e) =>
+            console.error('ensureInvoice (checkout wallet):', e?.message || e)
+          )
+        }
         return res.status(200).json({ paid: true, walletApplied })
       }
     }
@@ -722,6 +759,11 @@ export default async function handler(req, res) {
         amount: 0,
         currency: 'JPY',
       })
+      if (newStatus === 'paid') {
+        await ensureInvoiceForPaidOrder(supabase, orderId).catch((e) =>
+          console.error('ensureInvoice (checkout zero remainder):', e?.message || e)
+        )
+      }
       return res.status(200).json({ paid: true, walletApplied, discounted: true })
     }
 

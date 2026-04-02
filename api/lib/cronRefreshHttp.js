@@ -1,14 +1,11 @@
 import { createClient } from '@supabase/supabase-js'
-import {
-  fetchCommercialRatesFromApis,
-  persistRatesToSupabase,
-} from './lib/exchangeRateService.js'
+import { fetchCommercialRatesFromApis, persistRatesToSupabase } from './exchangeRateService.js'
 import {
   getPricingPercentsFromEnv,
   pricingMultiplierFromPercents,
   jpyToFinalUsd,
   usdToBrlDisplay,
-} from './lib/pricingEngine.js'
+} from './pricingEngine.js'
 
 function getSupabaseAdmin() {
   const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
@@ -26,7 +23,7 @@ function authorizeCron(req) {
   return bearer === secret || header === secret
 }
 
-export default async function handler(req, res) {
+export async function handleCronRefreshExchangeRates(req, res) {
   if (req.method !== 'GET' && req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
