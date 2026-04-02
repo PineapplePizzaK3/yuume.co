@@ -5,7 +5,13 @@
  */
 import { randomUUID } from 'crypto'
 import { getExchangeRates } from './exchangeRateService.js'
-import { jpyToFinalUsd, usdToBrlDisplay } from './pricingEngine.js'
+import {
+  chargeJpyUsdRate,
+  jpyEquivalentFromFinalUsd,
+  jpyToFinalUsd,
+  usdToBrlDisplay,
+} from './pricingEngine.js'
+import { resolveWiseWithdrawalMarkupPercent } from './wiseWithdrawalMarkup.js'
 
 const SCHEMA_VERSION = 1
 const BRL_NOTE =
@@ -28,14 +34,14 @@ function roundJpy(x) {
   return Math.round(num(x) * 100) / 100
 }
 
-function paymentsTotalUsd(payments, jpyUsd, usdBrl) {
+function paymentsTotalUsd(payments, jpyUsd, usdBrl, wiseMarkup) {
   let s = 0
   for (const p of payments) {
     const cur = String(p.currency || 'JPY').toUpperCase()
     const amt = num(p.amount)
     if (cur === 'USD') s += amt
     else if (cur === 'BRL') s += amt / usdBrl
-    else s += jpyToFinalUsd(amt, jpyUsd)
+    else s += jpyToFinalUsd(amt, jpyUsd, wiseMarkup)
   }
   return roundUsd(s)
 }
@@ -134,6 +140,7 @@ export async function ensureInvoiceForPaidOrder(supabaseAdmin, orderId) {
   const rates = await getExchangeRates(supabaseAdmin)
   const jpyUsd = num(rates?.jpy_usd, 0.0066)
   const usdBrl = num(rates?.usd_brl, 5.5)
+  const wiseMarkup = await resolveWiseWithdrawalMarkupPercent(supabaseAdmin)
 
   const payClass = classifyPayments(payments)
   const paymentDates = payments.map((p) => p.created_at).filter(Boolean)
@@ -153,7 +160,7 @@ export async function ensureInvoiceForPaidOrder(supabaseAdmin, orderId) {
       const jpyUnit = roundJpy(line.price_at_purchase ?? p.price_jpy ?? p.price ?? 0)
       const usdCatalog = num(p.price_usd, 0)
       const usdUnit =
-        usdCatalog > 0 ? roundUsd(usdCatalog) : roundUsd(jpyToFinalUsd(jpyUnit, jpyUsd))
+        usdCatalog > 0 ? roundUsd(usdCatalog) : roundUsd(jpyToFinalUsd(jpyUnit, jpyUsd, wiseMarkup))
       const brlUnit = roundBrl(usdToBrlDisplay(usdUnit, usdBrl))
       subtotalUsdFromLines += usdUnit * qty
       items.push({
@@ -178,10 +185,10 @@ export async function ensureInvoiceForPaidOrder(supabaseAdmin, orderId) {
       if (qc === 'BRL') {
         brlU = roundBrl(q)
         usdU = roundUsd(brlU / usdBrl)
-        jpyU = roundJpy(usdU / jpyUsd)
+        jpyU = roundJpy(jpyEquivalentFromFinalUsd(usdU, jpyUsd, wiseMarkup))
       } else {
         jpyU = roundJpy(q)
-        usdU = roundUsd(jpyToFinalUsd(jpyU, jpyUsd))
+        usdU = roundUsd(jpyToFinalUsd(jpyU, jpyUsd, wiseMarkup))
         brlU = roundBrl(usdToBrlDisplay(usdU, usdBrl))
       }
     } else if (order.shipping_cost != null && num(order.shipping_cost) > 0) {
@@ -191,10 +198,10 @@ export async function ensureInvoiceForPaidOrder(supabaseAdmin, orderId) {
       if (sc === 'BRL') {
         brlU = roundBrl(s)
         usdU = roundUsd(brlU / usdBrl)
-        jpyU = roundJpy(usdU / jpyUsd)
+        jpyU = roundJpy(jpyEquivalentFromFinalUsd(usdU, jpyUsd, wiseMarkup))
       } else {
         jpyU = roundJpy(s)
-        usdU = roundUsd(jpyToFinalUsd(jpyU, jpyUsd))
+        usdU = roundUsd(jpyToFinalUsd(jpyU, jpyUsd, wiseMarkup))
         brlU = roundBrl(usdToBrlDisplay(usdU, usdBrl))
       }
     } else {
@@ -205,7 +212,7 @@ export async function ensureInvoiceForPaidOrder(supabaseAdmin, orderId) {
           const amt = num(pay.amount)
           if (cur === 'USD') usdU += amt
           else if (cur === 'BRL') usdU += amt / usdBrl
-          else usdU += jpyToFinalUsd(amt, jpyUsd)
+          else usdU += jpyToFinalUsd(amt, jpyUsd, wiseMarkup)
         }
         usdU = roundUsd(usdU)
       }
@@ -224,7 +231,7 @@ export async function ensureInvoiceForPaidOrder(supabaseAdmin, orderId) {
 
   subtotalUsdFromLines = roundUsd(subtotalUsdFromLines)
 
-  const fromPaymentsUsd = paymentsTotalUsd(payments, jpyUsd, usdBrl)
+  const fromPaymentsUsd = paymentsTotalUsd(payments, jpyUsd, usdBrl, wiseMarkup)
   let totalPaidUsd = roundUsd(order.total_amount_usd)
   if (!totalPaidUsd || totalPaidUsd <= 0) {
     totalPaidUsd = fromPaymentsUsd > 0 ? fromPaymentsUsd : subtotalUsdFromLines
@@ -243,7 +250,7 @@ export async function ensureInvoiceForPaidOrder(supabaseAdmin, orderId) {
   if (shipC > 0) {
     const scur = String(order.shipping_currency || 'JPY').toUpperCase()
     if (scur === 'BRL') shippingUsd = roundUsd(shipC / usdBrl)
-    else shippingUsd = roundUsd(jpyToFinalUsd(shipC, jpyUsd))
+    else shippingUsd = roundUsd(jpyToFinalUsd(shipC, jpyUsd, wiseMarkup))
   }
 
   let serviceFeeUsd = roundUsd(totalPaidUsd - subtotalUsdFromLines - shippingUsd)
@@ -296,6 +303,8 @@ export async function ensureInvoiceForPaidOrder(supabaseAdmin, orderId) {
     currency_info: {
       exchange_rate_usd_brl: usdBrl,
       exchange_rate_jpy_usd: jpyUsd,
+      exchange_rate_jpy_usd_charge: chargeJpyUsdRate(jpyUsd, wiseMarkup),
+      wise_usd_jpy_withdrawal_markup_percent: wiseMarkup,
       rates_source: rates?.source || 'unknown',
       rates_captured_at: rates?.updated_at || issueDate,
       note: BRL_NOTE,

@@ -178,7 +178,7 @@ export async function createTopUpCheckoutSession(amountJpy, accessToken) {
 }
 
 /**
- * Cotações públicas (JPY/USD, USD/BRL) + effective_brl_per_jpy alinhado ao servidor.
+ * Cotações: jpy_usd spot, jpy_usd_charge (com markup Wise), effective_brl_per_jpy, wise_usd_jpy_withdrawal_markup_percent.
  */
 export async function fetchExchangeRates() {
   const res = await fetch(`${getPaymentsApiBase()}/exchange-rates`, {

@@ -13,6 +13,7 @@ import {
 import { ensureInvoiceForPaidOrder } from '../server-lib/invoiceGenerator.js'
 import { handleExchangeRatesGet } from '../server-lib/exchangeRatesHttp.js'
 import { handleCronRefreshExchangeRates } from '../server-lib/cronRefreshHttp.js'
+import { resolveWiseWithdrawalMarkupPercent } from '../server-lib/wiseWithdrawalMarkup.js'
 
 const REQUEST_WINDOW_MS = 60 * 1000
 const MAX_REQUESTS_PER_WINDOW = 20
@@ -284,6 +285,7 @@ async function createParcelowOrderCheckout({
   baseUrl,
   supabase,
   rates,
+  wiseMarkup,
 }) {
   const cfg = getParcelowClientConfig()
   if (!cfg) {
@@ -298,7 +300,7 @@ async function createParcelowOrderCheckout({
     throw new Error('Câmbio indisponível para cobrança Parcelow em USD')
   }
   const rj = Math.max(0, Number(remainingJpy) || 0)
-  const amountUsd = jpyToFinalUsd(rj, rates.jpy_usd)
+  const amountUsd = jpyToFinalUsd(rj, rates.jpy_usd, wiseMarkup)
   const amountUsdCents = Math.round(amountUsd * 100)
   if (!Number.isFinite(amountUsdCents) || amountUsdCents <= 0) {
     throw new Error('Valor inválido para criar cobrança Parcelow (USD)')
@@ -399,14 +401,14 @@ async function createParcelowOrderCheckout({
   }
 }
 
-function toChargeAmountJpyFromRates(amount, currency, rates) {
+function toChargeAmountJpyFromRates(amount, currency, rates, wiseMarkup) {
   const c = (currency || 'jpy').toLowerCase()
   const n = Number(amount) || 0
   if (n <= 0) return 0
   if (c === 'jpy') return n
   if (c === 'brl') {
     if (!rates?.jpy_usd || !rates?.usd_brl) return 0
-    return brlToJpyViaUsdPipeline(n, rates.jpy_usd, rates.usd_brl)
+    return brlToJpyViaUsdPipeline(n, rates.jpy_usd, rates.usd_brl, wiseMarkup)
   }
   return n
 }
@@ -607,6 +609,7 @@ export default async function handler(req, res) {
       .single()
 
     const rates = await getExchangeRates(supabase)
+    const wiseMarkup = await resolveWiseWithdrawalMarkupPercent(supabase)
 
     let amount
     let currency
@@ -643,7 +646,7 @@ export default async function handler(req, res) {
         if (currency === 'brl') {
           amount = Math.max(0, Number(amount) - referralDiscountBrl)
         } else if (rates?.jpy_usd && rates?.usd_brl) {
-          const discountJpy = brlToJpyViaUsdPipeline(referralDiscountBrl, rates.jpy_usd, rates.usd_brl)
+          const discountJpy = brlToJpyViaUsdPipeline(referralDiscountBrl, rates.jpy_usd, rates.usd_brl, wiseMarkup)
           amount = Math.max(0, Number(amount) - discountJpy)
         } else {
           return res.status(503).json({
@@ -672,7 +675,7 @@ export default async function handler(req, res) {
         ) {
           amountUsd = storeUsd * (Number(amount) / origBrlStore)
         }
-        usdBasedJpy = Math.round(jpyEquivalentFromFinalUsd(amountUsd, rates.jpy_usd))
+        usdBasedJpy = Math.round(jpyEquivalentFromFinalUsd(amountUsd, rates.jpy_usd, wiseMarkup))
       }
       // Grupo de compras: taxa em BRL não vira linha em order_items → soma ¥ só de produtos subestima.
       if (lineChargeJpy != null && usdBasedJpy != null && usdBasedJpy > 0) {
@@ -691,14 +694,14 @@ export default async function handler(req, res) {
           error: 'Câmbio indisponível para calcular o pedido da loja. Aguarde ou configure FALLBACK_FX_JPY_USD / FALLBACK_FX_USD_BRL.',
         })
       }
-      chargeJpy = toChargeAmountJpyFromRates(amount, currency, rates)
+      chargeJpy = toChargeAmountJpyFromRates(amount, currency, rates, wiseMarkup)
     } else if (order.order_source !== 'store') {
       if (currency === 'brl' && (!rates?.jpy_usd || !rates?.usd_brl)) {
         return res.status(503).json({
           error: 'Câmbio indisponível para valores em BRL. Aguarde ou configure FALLBACK_FX_*.',
         })
       }
-      chargeJpy = toChargeAmountJpyFromRates(amount, currency, rates)
+      chargeJpy = toChargeAmountJpyFromRates(amount, currency, rates, wiseMarkup)
     }
     const alreadyAppliedJpy = Math.max(0, Number(order.wallet_applied_amount) || 0)
     let walletApplied = 0
@@ -812,6 +815,7 @@ export default async function handler(req, res) {
         baseUrl,
         supabase,
         rates,
+        wiseMarkup,
       })
       return res.status(200).json(parcelowCheckout)
     }

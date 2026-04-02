@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { getExchangeRates } from './exchangeRateService.js'
-import { effectiveBrlPerJpy } from './pricingEngine.js'
+import { chargeJpyUsdRate, effectiveBrlPerJpy } from './pricingEngine.js'
+import { resolveWiseWithdrawalMarkupPercent } from './wiseWithdrawalMarkup.js'
 
 function getSupabaseAnon() {
   const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
@@ -24,12 +25,16 @@ export async function handleExchangeRatesGet(req, res) {
         updated_at: null,
       })
     }
-    const effective_brl_per_jpy = effectiveBrlPerJpy(rates.jpy_usd, rates.usd_brl)
+    const wiseMarkup = await resolveWiseWithdrawalMarkupPercent(supabase)
+    const jpy_usd_charge = chargeJpyUsdRate(rates.jpy_usd, wiseMarkup)
+    const effective_brl_per_jpy = effectiveBrlPerJpy(rates.jpy_usd, rates.usd_brl, wiseMarkup)
     return res.status(200).json({
       jpy_usd: rates.jpy_usd,
+      jpy_usd_charge: jpy_usd_charge || null,
       usd_brl: rates.usd_brl,
       updated_at: rates.updated_at,
       source: rates.source,
+      wise_usd_jpy_withdrawal_markup_percent: wiseMarkup,
       effective_brl_per_jpy: effective_brl_per_jpy || null,
     })
   } catch (e) {
