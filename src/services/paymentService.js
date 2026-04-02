@@ -120,6 +120,17 @@ export async function createCheckoutSession(orderId, accessToken) {
     throw new Error(data?.error || `Erro ao criar sessão de pagamento (HTTP ${res.status})`)
   }
 
+  // Após sucesso o app redireciona para Parcelow; a aba Network pode “sumir” a linha do POST.
+  // Marque Preserve log e filtre por create-checkout-session, ou veja o objeto aqui no Console.
+  if (data?.debug) {
+    console.info('[create-checkout-session] debug (Parcelow):', data.debug)
+  } else if (data?.url && /parcelow/i.test(String(data.url))) {
+    console.warn(
+      '[create-checkout-session] Resposta Parcelow sem campo `debug`. '
+      + 'Confira se o deploy de `api/create-checkout-session` está na versão que inclui debug.'
+    )
+  }
+
   return data
 }
 
