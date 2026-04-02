@@ -1047,6 +1047,18 @@ function Cart() {
               {pendingOrders.map((order) => {
                 const payable = getPayableAmount(order)
                 const charge = getOrderChargeJpy(order)
+                const breakdown = getPaymentBreakdown(order, false, 'full', '')
+                const pendingJpy = breakdown.remainingJpy
+                const pendingBrl = breakdown.remainingBrl
+                const totalJpy = breakdown.totalJpy
+                const jpyUsdRate = Number(exchangeSnapshot?.jpy_usd_charge ?? exchangeSnapshot?.jpy_usd)
+                const pendingUsd =
+                  Number.isFinite(jpyUsdRate) && jpyUsdRate > 0
+                    ? pendingJpy * jpyUsdRate
+                    : (charge?.chargeUsd != null && Number.isFinite(charge.chargeUsd) && totalJpy > 0
+                        ? charge.chargeUsd * (pendingJpy / totalJpy)
+                        : NaN)
+                const alreadyAppliedJpy = Math.max(0, Number(order?.wallet_applied_amount) || 0)
                 return (
                   <div key={order.id} className="rounded-xl border border-earth-200 bg-earth-50 p-4">
                     <div className="flex flex-wrap items-center justify-between gap-3">
@@ -1066,15 +1078,16 @@ function Cart() {
                         {charge && (
                           <div className="mt-2">
                             <TriCurrencyDisplay
-                              brl={charge.approxBrl}
-                              jpy={charge.jpy}
-                              usd={
-                                charge.chargeUsd != null && Number.isFinite(charge.chargeUsd)
-                                  ? charge.chargeUsd
-                                  : NaN
-                              }
+                              brl={pendingBrl}
+                              jpy={pendingJpy}
+                              usd={pendingUsd}
                               variant="compact"
                             />
+                            {alreadyAppliedJpy > 0 && (
+                              <p className="mt-1 text-xs text-green-700">
+                                Carteira já aplicada anteriormente: -{formatJPY(alreadyAppliedJpy)}
+                              </p>
+                            )}
                           </div>
                         )}
                       </div>
@@ -1258,11 +1271,13 @@ function Cart() {
                 } = breakdown
                 const useWallet = !!payModal.useWallet && canUseWallet
                 const ch = getOrderChargeJpy(payModal.order)
-                const ratioPay = totalJpy > 0 ? remainingJpy / totalJpy : 0
+                const jpyUsdRate = Number(exchangeSnapshot?.jpy_usd_charge ?? exchangeSnapshot?.jpy_usd)
                 const remainingUsdParcelow =
-                  ch?.chargeUsd != null && Number.isFinite(ch.chargeUsd)
-                    ? ch.chargeUsd * ratioPay
-                    : null
+                  Number.isFinite(jpyUsdRate) && jpyUsdRate > 0
+                    ? remainingJpy * jpyUsdRate
+                    : (ch?.chargeUsd != null && Number.isFinite(ch.chargeUsd) && totalJpy > 0
+                        ? ch.chargeUsd * (remainingJpy / totalJpy)
+                        : null)
                 const remainingBrlUi =
                   remainingJpy > 0
                     ? (Number(exchangeSnapshot?.effective_brl_per_jpy) > 0
