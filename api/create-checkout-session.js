@@ -6,8 +6,6 @@ import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 import { getExchangeRates } from '../server-lib/exchangeRateService.js'
 import {
-  getPricingPercentsFromEnv,
-  pricingMultiplierFromPercents,
   jpyToFinalUsd,
   brlToJpyViaUsdPipeline,
   jpyEquivalentFromFinalUsd,
@@ -272,7 +270,6 @@ async function createParcelowOrderCheckout({
   baseUrl,
   supabase,
   rates,
-  mult,
 }) {
   const cfg = getParcelowClientConfig()
   if (!cfg) {
@@ -286,8 +283,6 @@ async function createParcelowOrderCheckout({
   if (!rates?.jpy_usd || !rates?.usd_brl) {
     throw new Error('Câmbio indisponível para cobrança Parcelow em USD')
   }
-  const m = Number(mult) || pricingMultiplierFromPercents(getPricingPercentsFromEnv())
-
   let amountUsd = Number(remainingUsd)
   if (!Number.isFinite(amountUsd) || amountUsd <= 0) {
     const rj = Number(remainingJpy) || 0
@@ -296,7 +291,7 @@ async function createParcelowOrderCheckout({
     if (rj > 0 && cj > 0 && Number.isFinite(tu) && tu > 0) {
       amountUsd = (rj / cj) * tu
     } else {
-      amountUsd = jpyToFinalUsd(rj, rates.jpy_usd, m)
+      amountUsd = jpyToFinalUsd(rj, rates.jpy_usd)
     }
   }
   const amountUsdCents = Math.round(amountUsd * 100)
@@ -395,14 +390,14 @@ async function createParcelowOrderCheckout({
   }
 }
 
-function toChargeAmountJpyFromRates(amount, currency, rates, mult) {
+function toChargeAmountJpyFromRates(amount, currency, rates) {
   const c = (currency || 'jpy').toLowerCase()
   const n = Number(amount) || 0
   if (n <= 0) return 0
   if (c === 'jpy') return n
   if (c === 'brl') {
     if (!rates?.jpy_usd || !rates?.usd_brl) return 0
-    return brlToJpyViaUsdPipeline(n, rates.jpy_usd, rates.usd_brl, mult)
+    return brlToJpyViaUsdPipeline(n, rates.jpy_usd, rates.usd_brl)
   }
   return n
 }
@@ -603,7 +598,6 @@ export default async function handler(req, res) {
       .single()
 
     const rates = await getExchangeRates(supabase)
-    const mult = pricingMultiplierFromPercents(getPricingPercentsFromEnv())
 
     let amount
     let currency
@@ -640,7 +634,7 @@ export default async function handler(req, res) {
         if (currency === 'brl') {
           amount = Math.max(0, Number(amount) - referralDiscountBrl)
         } else if (rates?.jpy_usd && rates?.usd_brl) {
-          const discountJpy = brlToJpyViaUsdPipeline(referralDiscountBrl, rates.jpy_usd, rates.usd_brl, mult)
+          const discountJpy = brlToJpyViaUsdPipeline(referralDiscountBrl, rates.jpy_usd, rates.usd_brl)
           amount = Math.max(0, Number(amount) - discountJpy)
         } else {
           return res.status(503).json({
@@ -669,21 +663,21 @@ export default async function handler(req, res) {
         amountUsd = storeUsd * (Number(amount) / origBrlStore)
       }
       totalUsdCharge = amountUsd
-      chargeJpy = jpyEquivalentFromFinalUsd(amountUsd, rates.jpy_usd, mult)
+      chargeJpy = jpyEquivalentFromFinalUsd(amountUsd, rates.jpy_usd)
     } else if (order.order_source === 'store') {
       if (!rates?.jpy_usd || !rates?.usd_brl) {
         return res.status(503).json({
           error: 'Câmbio indisponível para calcular o pedido da loja. Aguarde ou configure FALLBACK_FX_JPY_USD / FALLBACK_FX_USD_BRL.',
         })
       }
-      chargeJpy = toChargeAmountJpyFromRates(amount, currency, rates, mult)
+      chargeJpy = toChargeAmountJpyFromRates(amount, currency, rates)
     } else {
       if (currency === 'brl' && (!rates?.jpy_usd || !rates?.usd_brl)) {
         return res.status(503).json({
           error: 'Câmbio indisponível para valores em BRL. Aguarde ou configure FALLBACK_FX_*.',
         })
       }
-      chargeJpy = toChargeAmountJpyFromRates(amount, currency, rates, mult)
+      chargeJpy = toChargeAmountJpyFromRates(amount, currency, rates)
     }
     const alreadyAppliedJpy = Math.max(0, Number(order.wallet_applied_amount) || 0)
     let walletApplied = 0
@@ -799,7 +793,6 @@ export default async function handler(req, res) {
         baseUrl,
         supabase,
         rates,
-        mult,
       })
       return res.status(200).json(parcelowCheckout)
     }

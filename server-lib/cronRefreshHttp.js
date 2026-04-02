@@ -1,11 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { fetchCommercialRatesFromApis, persistRatesToSupabase } from './exchangeRateService.js'
-import {
-  getPricingPercentsFromEnv,
-  pricingMultiplierFromPercents,
-  jpyToFinalUsd,
-  usdToBrlDisplay,
-} from './pricingEngine.js'
+import { jpyToFinalUsd, usdToBrlDisplay } from './pricingEngine.js'
 
 function getSupabaseAdmin() {
   const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
@@ -62,7 +57,6 @@ export async function handleCronRefreshExchangeRates(req, res) {
       return res.status(500).json({ ok: false, error: 'No exchange rates available' })
     }
 
-    const mult = pricingMultiplierFromPercents(getPricingPercentsFromEnv())
     const pageSize = 500
     let offset = 0
     let updated = 0
@@ -77,7 +71,7 @@ export async function handleCronRefreshExchangeRates(req, res) {
       for (const row of batch) {
         const jpy = Number(row.price_jpy ?? row.price) || 0
         if (jpy <= 0) continue
-        const usd = jpyToFinalUsd(jpy, rates.jpy_usd, mult)
+        const usd = jpyToFinalUsd(jpy, rates.jpy_usd)
         const brl = usdToBrlDisplay(usd, rates.usd_brl)
         await supabase
           .from('products')

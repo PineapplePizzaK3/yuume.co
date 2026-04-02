@@ -1,10 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { getExchangeRates } from './exchangeRateService.js'
-import {
-  effectiveBrlPerJpy,
-  getPricingPercentsFromEnv,
-  pricingMultiplierFromPercents,
-} from './pricingEngine.js'
+import { effectiveBrlPerJpy } from './pricingEngine.js'
 
 function getSupabaseAnon() {
   const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
@@ -28,8 +24,7 @@ export async function handleExchangeRatesGet(req, res) {
         updated_at: null,
       })
     }
-    const mult = pricingMultiplierFromPercents(getPricingPercentsFromEnv())
-    const effective_brl_per_jpy = effectiveBrlPerJpy(rates.jpy_usd, rates.usd_brl, mult)
+    const effective_brl_per_jpy = effectiveBrlPerJpy(rates.jpy_usd, rates.usd_brl)
     return res.status(200).json({
       jpy_usd: rates.jpy_usd,
       usd_brl: rates.usd_brl,
