@@ -18,7 +18,8 @@ Copie `.env.example` para `.env` e preencha:
 - `STRIPE_WEBHOOK_SECRET` – para o webhook de pagamento
 - `PARCELOW_CLIENT_ID` – Client ID da API Parcelow
 - `PARCELOW_CLIENT_SECRET` – Client Secret da API Parcelow
-- `PARCELOW_API_BASE_URL` – URL base da API Parcelow (`https://staging.parcelow.com` no staging)
+- `PARCELOW_API_BASE_URL` – URL base da API Parcelow (`https://staging.parcelow.com` no staging; sem `/api` no final, a menos que a Parcelow indique)
+- `PARCELOW_ORDERS_PATH` – opcional; padrão `POST /api/orders` (moeda USD no JSON; o path `/api/orders/usd` foi descontinuado na API atual)
 - `PARCELOW_WEBHOOK_SECRET` – segredo compartilhado opcional para validar webhook Parcelow
 
 ## Supabase

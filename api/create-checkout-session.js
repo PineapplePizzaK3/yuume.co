@@ -305,7 +305,8 @@ async function createParcelowOrderCheckout({
     throw new Error('E-mail do cliente obrigatório para checkout Parcelow. Complete seu perfil ou conta.')
   }
 
-  const ordersPath = String(process.env.PARCELOW_ORDERS_PATH || '/api/orders/usd').trim() || '/api/orders/usd'
+  // Parcelow: rota única POST /api/orders; moeda em JSON (currency/items), não mais /api/orders/usd.
+  const ordersPath = String(process.env.PARCELOW_ORDERS_PATH || '/api/orders').trim() || '/api/orders'
 
   const payload = {
     reference: `order_${orderId}`,
@@ -333,7 +334,10 @@ async function createParcelowOrderCheckout({
   }
 
   const parcelowUrlBase = cfg.baseUrl.replace(/\/$/, '')
-  const parcelowPath = ordersPath.startsWith('/') ? ordersPath : `/${ordersPath}`
+  let parcelowPath = ordersPath.startsWith('/') ? ordersPath : `/${ordersPath}`
+  if (/\/api$/i.test(parcelowUrlBase) && /^\/api\//i.test(parcelowPath)) {
+    parcelowPath = parcelowPath.replace(/^\/api/i, '')
+  }
   const createRes = await fetchParcelow(`${parcelowUrlBase}${parcelowPath}`, {
     method: 'POST',
     headers: {
