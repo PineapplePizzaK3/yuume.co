@@ -8,7 +8,6 @@ import { Helmet } from 'react-helmet-async'
 import { useAuth } from '../../hooks/useAuth'
 import { deleteMyOrder, getMyOrders, getOrderById, requestOrderExtraServices, ORDER_STATUS_LABELS } from '../../services/orderService'
 import { createCheckoutSession } from '../../services/paymentService'
-import PixManualModal from '../../components/PixManualModal'
 import { getWallet } from '../../services/walletService'
 import { cacheKey, readCache, writeCache } from '../../lib/cache'
 import { brlToJpy, formatBRL, formatJPY, jpyToBrl } from '../../lib/fx'
@@ -20,6 +19,20 @@ const ORDER_FILTERS = {
   OPEN: 'open',
   COMPLETED: 'completed',
 }
+const GATEWAY_OPTIONS = [
+  {
+    id: 'parcelow',
+    label: 'Parcelow',
+    icon: '🇧🇷',
+    details: 'Cartão até 21x, PIX, TED',
+  },
+  {
+    id: 'stripe',
+    label: 'Stripe',
+    icon: '🌐',
+    details: 'Cartão internacional',
+  },
+]
 
 export default function Orders() {
   const { user, session } = useAuth()
@@ -29,8 +42,14 @@ export default function Orders() {
   const [payingId, setPayingId] = useState(null)
   const [feedback, setFeedback] = useState('')
   const [payModal, setPayModal] = useState({ open: false, order: null, useWallet: true })
-  const [pixModal, setPixModal] = useState({ open: false, order: null, amountBrl: null })
+  const [selectedGateway, setSelectedGateway] = useState('parcelow')
   const [extraServicesOrderId, setExtraServicesOrderId] = useState(null)
+  useEffect(() => {
+    if (!payModal.open) {
+      setSelectedGateway('parcelow')
+    }
+  }, [payModal.open])
+
   const [extraServices, setExtraServices] = useState({ photos: false, video: false })
   const [detailsModal, setDetailsModal] = useState({ open: false, order: null })
   const [deletingId, setDeletingId] = useState(null)
@@ -685,6 +704,15 @@ export default function Orders() {
                   <p className="text-sm text-earth-800">{detailsModal.order.service.name}</p>
                 </div>
               )}
+              {detailsModal.order.early_prepayment_requested && (
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-wide text-earth-500">Pré-pagamento</p>
+                  <p className="mt-1 rounded-md bg-emerald-50 px-2 py-1.5 text-sm text-emerald-900">
+                    Você solicitou antecipar o pré-pagamento para reduzir o risco de o item esgotar antes da compra
+                    (ex.: flea market).
+                  </p>
+                </div>
+              )}
               {detailsModal.order.message && (
                 <div>
                   <p className="text-xs font-medium uppercase tracking-wide text-earth-500 mb-1">Solicitação do pedido</p>
@@ -777,39 +805,13 @@ export default function Orders() {
         </div>
       )}
 
-      <PixManualModal
-        open={pixModal.open}
-        onClose={() => setPixModal({ open: false, order: null, amountBrl: null })}
-        onBack={() => {
-          if (pixModal.order) {
-            setPixModal({ open: false, order: null, amountBrl: null })
-            setPayModal({ open: true, order: pixModal.order, useWallet: true })
-          } else {
-            setPixModal({ open: false, order: null, amountBrl: null })
-          }
-        }}
-        order={pixModal.order}
-        amountBrl={
-          pixModal.amountBrl != null
-            ? pixModal.amountBrl
-            : pixModal.order
-              ? (() => {
-                const p = getPayableAmount(pixModal.order)
-                if (!p) return null
-                return (p.currency || '').toUpperCase() === 'BRL' ? p.amount : jpyToBrl(p.amount)
-              })()
-              : null
-        }
-        userId={user?.id}
-      />
-
       {payModal.open && payModal.order && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="flex w-full max-w-lg max-h-[90vh] flex-col rounded-xl bg-white shadow-lg">
             <div className="flex-1 min-h-0 overflow-y-auto p-6">
               <h3 className="font-semibold text-earth-900">Pagamento</h3>
               <p className="mt-1 text-sm text-earth-600">
-                Escolha o gateway (Parcelow ou Stripe). PIX manual é fora desses sistemas.
+                Escolha a forma de pagamento e conclua com segurança.
               </p>
 
               {feedback && (
@@ -825,7 +827,8 @@ export default function Orders() {
                 const totalJpy = p?.amountJpy ?? 0
                 const useWallet = !!payModal.useWallet && canUseWallet
                 const walletApplied = useWallet ? Math.min(balance, totalJpy) : 0
-                const remainingJpy = totalJpy - walletApplied
+                let remainingJpy = Math.max(0, totalJpy - walletApplied)
+                if (remainingJpy > 0 && remainingJpy < 1) remainingJpy = 0
 
                 return (
                   <div className="mt-4 space-y-4">
@@ -844,7 +847,7 @@ export default function Orders() {
                           )}
                           <div className="flex justify-between pt-2 border-t border-earth-200 font-medium">
                             <span className="text-earth-800">Total a pagar</span>
-                            <span className="text-earth-900">{formatJPY(Math.max(0, remainingJpy))}</span>
+                            <span className="text-earth-900">{formatJPY(remainingJpy)}</span>
                           </div>
                           <p className="text-xs text-earth-500 mt-1">Aprox. em BRL: {formatBRL(useWallet && remainingJpy > 0 ? jpyToBrl(remainingJpy) : (p?.approxBrl ?? 0))}</p>
                         </>
@@ -866,6 +869,32 @@ export default function Orders() {
                         </p>
                       </div>
                     </label>
+                    <div className="rounded-lg border border-earth-200 bg-white p-4">
+                      <p className="font-medium text-earth-900">Forma de pagamento</p>
+                      <select
+                        value={selectedGateway}
+                        onChange={(e) => setSelectedGateway(e.target.value)}
+                        className="mt-2 w-full rounded border border-earth-300 bg-white px-3 py-2 text-sm text-earth-900"
+                      >
+                        {GATEWAY_OPTIONS.map((option) => (
+                          <option key={option.id} value={option.id}>
+                            {option.icon} {option.label}
+                          </option>
+                        ))}
+                      </select>
+                      {(() => {
+                        const option = GATEWAY_OPTIONS.find((entry) => entry.id === selectedGateway) || GATEWAY_OPTIONS[0]
+                        return (
+                          <div className="mt-3 rounded-md border border-earth-100 bg-earth-50 px-3 py-2">
+                            <p className="text-sm font-medium text-earth-900">
+                              <span className="mr-1">{option.icon}</span>
+                              {option.label}
+                            </p>
+                            <p className="text-xs text-earth-600">{option.details}</p>
+                          </div>
+                        )
+                      })()}
+                    </div>
                   </div>
                 )
               })()}
@@ -878,53 +907,28 @@ export default function Orders() {
                 const canUseWallet = balance > 0 && (wallet?.currency || 'JPY') === 'JPY'
                 const totalJpy = p?.amountJpy ?? 0
                 const useWallet = !!payModal.useWallet && canUseWallet
-                const remainingJpy = totalJpy - (useWallet ? Math.min(balance, totalJpy) : 0)
+                let remainingJpy = Math.max(0, totalJpy - (useWallet ? Math.min(balance, totalJpy) : 0))
+                if (remainingJpy > 0 && remainingJpy < 1) remainingJpy = 0
                 const isFullyCovered = remainingJpy <= 0 && useWallet
-                const remainingBrl =
-                  remainingJpy > 0.0001 ? Math.round(jpyToBrl(remainingJpy) * 100) / 100 : 0
 
                 return (
                   <div className="flex flex-col gap-3">
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        onClick={() => handlePayShipping(payModal.order, { useWallet, provider: 'parcelow' })}
-                        disabled={payingId === payModal.order.id || isFullyCovered}
-                        className="rounded-lg border border-earth-300 bg-white px-4 py-2.5 font-medium text-earth-800 hover:bg-earth-50 disabled:opacity-60"
-                      >
-                        Parcelow
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handlePayShipping(payModal.order, { useWallet, provider: 'stripe' })}
-                        disabled={payingId === payModal.order.id || isFullyCovered}
-                        className="rounded-lg border border-earth-300 bg-white px-4 py-2.5 font-medium text-earth-800 hover:bg-earth-50 disabled:opacity-60"
-                      >
-                        Stripe
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setPayModal((m) => ({ ...m, open: false }))
-                          setPixModal({ open: true, order: payModal.order, amountBrl: remainingBrl })
-                        }}
-                        disabled={payingId === payModal.order.id || isFullyCovered}
-                        className="rounded-lg border border-earth-300 bg-white px-4 py-2.5 text-sm font-medium text-earth-700 hover:bg-earth-50 disabled:opacity-60"
-                      >
-                        PIX manual
-                      </button>
-                    </div>
                     <p className="text-xs text-earth-500">
                       Parcelow: checkout Brasil. Stripe: cartão internacional.
                     </p>
                     <div className="flex flex-wrap gap-2">
                       <button
                         type="button"
-                        onClick={() => handlePayShipping(payModal.order, { useWallet: isFullyCovered ? true : useWallet })}
+                        onClick={() =>
+                          handlePayShipping(payModal.order, {
+                            useWallet: isFullyCovered ? true : useWallet,
+                            provider: selectedGateway,
+                          })
+                        }
                         disabled={payingId === payModal.order.id}
                         className="flex-1 min-w-0 rounded-lg bg-earth-900 px-6 py-2.5 font-medium text-earth-50 hover:bg-earth-800 disabled:opacity-60"
                       >
-                        {payingId === payModal.order.id ? 'Processando...' : 'Finalizar compra'}
+                        {payingId === payModal.order.id ? 'Processando...' : 'Pagar com método selecionado'}
                       </button>
                       <button
                         type="button"

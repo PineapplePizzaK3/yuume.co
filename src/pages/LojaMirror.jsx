@@ -7,15 +7,9 @@ import { useEffect, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Link } from 'react-router-dom'
 import { getProducts } from '../services/productService'
-import { formatBRL, formatJPY } from '../lib/fx'
-import { brlToJpy, jpyToBrl } from '../lib/fx'
+import { jpyToBrl } from '../lib/fx'
 import { getCardThumbnailUrl } from '../lib/imageUtils'
-
-function formatPriceBrlAsJpy(brl) {
-  const jpy = Math.round(brlToJpy(brl))
-  const approxBrl = jpyToBrl(jpy)
-  return { jpy, approxBrl }
-}
+import { TriCurrencyDisplay } from '../components/TriCurrencyDisplay'
 
 function getProductImages(p) {
   if (Array.isArray(p?.image_urls) && p.image_urls.length > 0) {
@@ -113,11 +107,23 @@ export default function LojaMirror() {
                           <p className="mt-0.5 line-clamp-2 whitespace-pre-wrap text-xs text-earth-600">{p.description}</p>
                         )}
                         {(() => {
-                          const v = formatPriceBrlAsJpy(p.price)
+                          const jpy = Number(p.price_jpy ?? p.price) || 0
+                          const brl = Number(p.price_brl)
+                          const usd = Number(p.price_usd)
+                          const hasDeriv = Number.isFinite(brl) && brl > 0 && Number.isFinite(usd) && usd > 0
                           return (
                             <div className="mt-1.5">
-                              <span className="block text-base font-bold text-earth-900">{formatJPY(v.jpy)}</span>
-                              <span className="block text-xs text-earth-600">Aprox.: {formatBRL(v.approxBrl)}</span>
+                              {hasDeriv ? (
+                                <TriCurrencyDisplay brl={brl} jpy={jpy} usd={usd} variant="card" />
+                              ) : (
+                                <TriCurrencyDisplay
+                                  brl={jpyToBrl(jpy)}
+                                  jpy={jpy}
+                                  usd={NaN}
+                                  variant="card"
+                                  footnote="Cotação BRL/USD em atualização — valor em dólar após refresh."
+                                />
+                              )}
                             </div>
                           )
                         })()}
@@ -214,11 +220,24 @@ export default function LojaMirror() {
                     <p className="mt-2 whitespace-pre-wrap text-earth-600">{detailProduct.description}</p>
                   )}
                   {(() => {
-                    const v = formatPriceBrlAsJpy(detailProduct.price)
+                    const p = detailProduct
+                    const jpy = Number(p.price_jpy ?? p.price) || 0
+                    const brl = Number(p.price_brl)
+                    const usd = Number(p.price_usd)
+                    const hasDeriv = Number.isFinite(brl) && brl > 0 && Number.isFinite(usd) && usd > 0
                     return (
                       <div className="mt-4">
-                        <p className="text-2xl font-bold text-earth-900">{formatJPY(v.jpy)}</p>
-                        <p className="text-sm text-earth-600">Aprox.: {formatBRL(v.approxBrl)}</p>
+                        {hasDeriv ? (
+                          <TriCurrencyDisplay brl={brl} jpy={jpy} usd={usd} variant="modal" />
+                        ) : (
+                          <TriCurrencyDisplay
+                            brl={jpyToBrl(jpy)}
+                            jpy={jpy}
+                            usd={NaN}
+                            variant="modal"
+                            footnote="Cotação BRL/USD em atualização — valor em dólar após refresh."
+                          />
+                        )}
                       </div>
                     )
                   })()}

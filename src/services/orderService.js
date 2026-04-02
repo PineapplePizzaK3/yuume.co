@@ -65,13 +65,14 @@ export async function getServices() {
  * - assisted_buy (Redirecionamento Assistido, pré-pagamento): status awaiting_quote (admin define orçamento)
  * Personal Shopping: status awaiting_quote.
  */
-export async function createOrder(userId, { service_id, message, attachment_urls, service_name, order_module }) {
+export async function createOrder(userId, { service_id, message, attachment_urls, service_name, order_module, early_prepayment_requested }) {
   const isPersonalShopping = service_name === 'Personal Shopping'
   const isRedirecionamento = service_name === 'Redirecionamento'
   const module = order_module || null
   const isAssistedBuy = isRedirecionamento && module === 'assisted_buy'
   const status = (isPersonalShopping || isAssistedBuy) ? ORDER_STATUS.AWAITING_QUOTE : ORDER_STATUS.PENDING_APPROVAL
   const urls = Array.isArray(attachment_urls) ? attachment_urls.filter(Boolean) : []
+  const earlyPrepay = Boolean(isAssistedBuy && early_prepayment_requested)
   try {
     const { data, error } = await withDbTimeout(
       supabase
@@ -84,6 +85,7 @@ export async function createOrder(userId, { service_id, message, attachment_urls
           attachment_urls: urls,
           order_module: module,
           status,
+          early_prepayment_requested: earlyPrepay,
         })
         .select()
         .single()

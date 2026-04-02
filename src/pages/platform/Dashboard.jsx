@@ -15,6 +15,7 @@ import { SHIPPING_ADDRESS_JAPAN } from '../../data/legalConfig'
 import { cacheKey, readCache, writeCache } from '../../lib/cache'
 import { getMyReferralOverview } from '../../services/referralService'
 import { getSystemSettings } from '../../services/settingsService'
+import { listInvoices } from '../../services/invoiceService'
 import { brlToJpy, formatJPY } from '../../lib/fx'
 
 /** Mesmos status da aba "Envios em processo" em Lounge → Envios. */
@@ -99,7 +100,7 @@ function CopyAddressButton({ address }) {
 }
 
 export default function Dashboard() {
-  const { user, profile, isAdmin } = useAuth()
+  const { user, profile, isAdmin, session } = useAuth()
   const [orders, setOrders] = useState([])
   const [wallet, setWallet] = useState(null)
   const [wishlist, setWishlist] = useState([])
@@ -118,6 +119,7 @@ export default function Dashboard() {
   const [referralRefreshing, setReferralRefreshing] = useState(false)
   const [loading, setLoading] = useState(true)
   const [notifsLoading, setNotifsLoading] = useState(true)
+  const [invoiceCount, setInvoiceCount] = useState(0)
   const [showCustomizer, setShowCustomizer] = useState(false)
   const [dashboardPrefs, setDashboardPrefs] = useState(DEFAULT_DASHBOARD_PREFS)
 
@@ -195,6 +197,22 @@ export default function Dashboard() {
     run()
     return () => { isActive = false }
   }, [user?.id])
+
+  useEffect(() => {
+    let active = true
+    async function run() {
+      if (!session?.access_token) {
+        if (active) setInvoiceCount(0)
+        return
+      }
+      const { data } = await listInvoices(session.access_token)
+      if (active) setInvoiceCount((data || []).length)
+    }
+    run()
+    return () => {
+      active = false
+    }
+  }, [session?.access_token])
 
   useEffect(() => {
     let isActive = true
@@ -564,6 +582,26 @@ export default function Dashboard() {
                   <span className="block text-earth-500">Pedidos</span>
                 </span>
               </Link>}
+              <Link
+                to="/app/invoices"
+                className="flex items-center gap-2 rounded-lg border border-earth-200 bg-white px-3 py-2 text-left transition hover:bg-earth-50"
+                title="Faturas de pedidos pagos"
+              >
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-earth-100 text-earth-600">
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    />
+                  </svg>
+                </span>
+                <span className="min-w-0 text-xs">
+                  <span className="block font-medium text-earth-900">{invoiceCount} fatura(s)</span>
+                  <span className="block text-earth-500">Faturas (PDF)</span>
+                </span>
+              </Link>
               {dashboardPrefs.showCardWishlist && <Link
                 to="/app/lista-desejos"
                 className="flex items-center gap-2 rounded-lg border border-earth-200 bg-white px-3 py-2 text-left transition hover:bg-earth-50"

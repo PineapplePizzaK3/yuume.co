@@ -7,7 +7,8 @@ import { Helmet } from 'react-helmet-async'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import { getMyPayments } from '../../services/paymentService'
-import { formatBRL, formatJPY, formatUSD, jpyToBrl } from '../../lib/fx'
+import { brlToJpy, jpyToBrl } from '../../lib/fx'
+import { TriCurrencyDisplay } from '../../components/TriCurrencyDisplay'
 
 const STATUS_LABELS = {
   pending: 'Pendente',
@@ -78,25 +79,50 @@ export default function Payments() {
     const svc = o.service
     return (svc && (svc.name ?? (Array.isArray(svc) ? svc[0]?.name : null))) ?? ''
   }
-  const amountDisplay = (p) => {
+  /**
+   * Tenta montar BRL (destaque), JPY (base) e USD (cobrança) a partir do registro do pagamento + pedido.
+   */
+  const paymentTriValues = (p) => {
+    const o = order(p)
     const amount = Number(p?.amount) || 0
-    const currency = String(p?.currency || 'JPY').toUpperCase()
-    if (currency === 'USD') {
+    const cur = String(p?.currency || 'JPY').toUpperCase()
+    const totalUsd = Number(o?.total_amount_usd)
+    const totalBrl = Number(o?.total_amount)
+    const isStore = o?.order_source === 'store'
+    const canScaleUsd =
+      isStore && Number.isFinite(totalUsd) && totalUsd > 0 && Number.isFinite(totalBrl) && totalBrl > 0
+
+    if (cur === 'USD') {
+      const usd = amount
+      let brl = NaN
+      let jpy = NaN
+      if (canScaleUsd) {
+        const ratio = amount / totalUsd
+        brl = totalBrl * ratio
+        jpy = Math.round(brlToJpy(brl))
+      }
       return {
-        primary: formatUSD(amount),
-        secondary: 'cobrança Parcelow (USD)',
+        brl,
+        jpy,
+        usd,
+        footnote: Number.isFinite(brl) ? null : 'Cobrança em dólar (Parcelow). BRL/¥ são referência quando o pedido tem totais.',
       }
     }
-    if (currency === 'BRL') {
-      return {
-        primary: formatBRL(amount),
-        secondary: 'registro em BRL',
-      }
+    if (cur === 'BRL') {
+      const brl = amount
+      const jpy = Math.round(brlToJpy(brl))
+      let usd = NaN
+      if (canScaleUsd) usd = totalUsd * (amount / totalBrl)
+      return { brl, jpy, usd, footnote: null }
     }
-    return {
-      primary: formatJPY(amount),
-      secondary: `${formatBRL(jpyToBrl(amount))} referência`,
+    const jpy = Math.round(amount)
+    const brl = jpyToBrl(jpy)
+    let usd = NaN
+    if (canScaleUsd) {
+      const jpyRef = Math.round(brlToJpy(totalBrl))
+      if (jpyRef > 0) usd = totalUsd * (jpy / jpyRef)
     }
+    return { brl, jpy, usd, footnote: null }
   }
 
   return (
@@ -139,7 +165,7 @@ export default function Payments() {
               {payments.map((p) => {
                 const o = order(p)
                 const orderId = o?.id ?? p.order_id
-                const display = amountDisplay(p)
+                const tri = paymentTriValues(p)
                 return (
                   <li
                     key={p.id}
@@ -171,9 +197,14 @@ export default function Payments() {
                         <p className="text-sm text-earth-500">{serviceName(p)}</p>
                       )}
                     </div>
-                    <div className="w-full font-medium text-earth-900 sm:col-span-2 sm:w-auto">
-                      <div>{display.primary}</div>
-                      <p className="text-xs font-normal text-earth-500">{display.secondary}</p>
+                    <div className="w-full sm:col-span-2 sm:w-auto">
+                      <TriCurrencyDisplay
+                        brl={tri.brl}
+                        jpy={tri.jpy}
+                        usd={tri.usd}
+                        variant="compact"
+                        footnote={tri.footnote}
+                      />
                     </div>
                     <div className="w-full text-earth-600 sm:col-span-2 sm:w-auto">
                       {paymentMethod(p)}

@@ -9,8 +9,9 @@ import { useAuth } from '../../hooks/useAuth'
 import { getPurchaseGroups } from '../../services/groupService'
 import { getPurchaseGroupProducts } from '../../services/productService'
 import { addToCart } from '../../services/cartService'
-import { brlToJpy, formatBRL, formatJPY, jpyToBrl } from '../../lib/fx'
+import { jpyToBrl } from '../../lib/fx'
 import LinkifyText from '../../components/LinkifyText'
+import { TriCurrencyDisplay } from '../../components/TriCurrencyDisplay'
 
 function getGroupImages(g) {
   if (Array.isArray(g?.image_urls) && g.image_urls.length > 0) return g.image_urls.filter(Boolean)
@@ -36,12 +37,6 @@ export default function GrupoDeCompras() {
   const [detailImageIndex, setDetailImageIndex] = useState(0)
   const [detailProduct, setDetailProduct] = useState(null)
   const [detailProductImageIndex, setDetailProductImageIndex] = useState(0)
-
-  const formatPriceBrlAsJpy = (brl) => {
-    const jpy = Math.round(brlToJpy(brl))
-    const approxBrl = jpyToBrl(jpy)
-    return { jpy, approxBrl }
-  }
 
   useEffect(() => {
     if (!message) return
@@ -313,7 +308,10 @@ export default function GrupoDeCompras() {
                       {getGroupProducts(detailGroup).map((p) => {
                         const productImgs = getProductImages(p)
                         const productMainImg = productImgs[0]
-                        const v = formatPriceBrlAsJpy(p.price)
+                        const jpy = Number(p.price_jpy ?? p.price) || 0
+                        const brl = Number(p.price_brl)
+                        const usd = Number(p.price_usd)
+                        const hasDeriv = Number.isFinite(brl) && brl > 0 && Number.isFinite(usd) && usd > 0
                         return (
                           <button
                             key={p.id}
@@ -334,8 +332,19 @@ export default function GrupoDeCompras() {
                             )}
                             <div className="p-3">
                               <h4 className="line-clamp-2 text-sm font-semibold text-earth-900">{p.name}</h4>
-                              <p className="mt-1 text-base font-bold text-earth-900">{formatJPY(v.jpy)}</p>
-                              <p className="text-xs text-earth-600">Aprox.: {formatBRL(v.approxBrl)}</p>
+                              <div className="mt-1">
+                                {hasDeriv ? (
+                                  <TriCurrencyDisplay brl={brl} jpy={jpy} usd={usd} variant="card" />
+                                ) : (
+                                  <TriCurrencyDisplay
+                                    brl={jpyToBrl(jpy)}
+                                    jpy={jpy}
+                                    usd={NaN}
+                                    variant="card"
+                                    footnote="Cotação BRL/USD em atualização — valor em dólar após refresh."
+                                  />
+                                )}
+                              </div>
                               <p className="mt-2 text-xs font-medium text-earth-500">Clique para ver detalhes</p>
                               <div className="mt-3 flex gap-2">
                                 <span className="rounded-lg border border-earth-300 px-3 py-1.5 text-xs font-medium text-earth-700">
@@ -458,11 +467,24 @@ export default function GrupoDeCompras() {
                   </div>
                 )}
                 {(() => {
-                  const v = formatPriceBrlAsJpy(detailProduct.price)
+                  const p = detailProduct
+                  const jpy = Number(p.price_jpy ?? p.price) || 0
+                  const brl = Number(p.price_brl)
+                  const usd = Number(p.price_usd)
+                  const hasDeriv = Number.isFinite(brl) && brl > 0 && Number.isFinite(usd) && usd > 0
                   return (
                     <div className="mt-4">
-                      <p className="text-2xl font-bold text-earth-900">{formatJPY(v.jpy)}</p>
-                      <p className="text-sm text-earth-600">Aprox.: {formatBRL(v.approxBrl)}</p>
+                      {hasDeriv ? (
+                        <TriCurrencyDisplay brl={brl} jpy={jpy} usd={usd} variant="modal" />
+                      ) : (
+                        <TriCurrencyDisplay
+                          brl={jpyToBrl(jpy)}
+                          jpy={jpy}
+                          usd={NaN}
+                          variant="modal"
+                          footnote="Cotação BRL/USD em atualização — valor em dólar após refresh."
+                        />
+                      )}
                     </div>
                   )
                 })()}

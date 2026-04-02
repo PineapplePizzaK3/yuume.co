@@ -65,6 +65,7 @@ import { parseQuoteMessage, serializeQuoteProducts } from '../../lib/quoteProduc
 import QuoteProductsList from '../../components/QuoteProductsList'
 import OrderAttachments from '../../components/OrderAttachments'
 import { getSystemSettings, saveSystemSettingsAdmin } from '../../services/settingsService'
+import { getPaymentsApiBase } from '../../services/paymentService'
 
 function formatMoney(v, currency = 'BRL') {
   return Number(v)?.toLocaleString('pt-BR', { style: 'currency', currency }) ?? '—'
@@ -111,7 +112,7 @@ function PaginationControls({ page, hasMore, loading, onPrev, onNext }) {
 }
 
 export default function Admin() {
-  const { user, profile } = useAuth()
+  const { user, profile, session } = useAuth()
   const [products, setProducts] = useState([])
   const [storeProducts, setStoreProducts] = useState([])
   const [orders, setOrders] = useState([])
@@ -1391,6 +1392,17 @@ export default function Admin() {
     if (!error) {
       logAdminAction('order_status_update', 'order', orderId, { status })
       loadOrders()
+      if (status === 'paid' && session?.access_token) {
+        const base = getPaymentsApiBase()
+        void fetch(`${base}/invoices/ensure`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ orderId }),
+        }).catch(() => null)
+      }
     }
   }
 
@@ -2061,6 +2073,13 @@ export default function Admin() {
                         <p className="mt-1">
                           <span className="inline-flex items-center rounded bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900">
                             {formatOrderModuleLabel(o)}
+                          </span>
+                        </p>
+                      )}
+                      {o.early_prepayment_requested && (
+                        <p className="mt-1">
+                          <span className="inline-flex items-center rounded bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-900">
+                            Cliente pediu pré-pagamento antecipado (ex.: flea market / item único)
                           </span>
                         </p>
                       )}

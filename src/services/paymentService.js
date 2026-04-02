@@ -66,6 +66,7 @@ export async function getMyPayments() {
             order_source,
             quote_amount,
             total_amount,
+            total_amount_usd,
             shipping_cost,
             shipping_currency,
             service:services (name)
@@ -148,22 +149,6 @@ export async function createCartCheckoutSession(items, accessToken) {
   }
 
   return data
-}
-
-/**
- * Envia comprovante PIX para um pedido (pagamento manual).
- */
-export async function submitPixComprovante(orderId, comprovanteUrl) {
-  try {
-    const { data, error } = await supabase.rpc('submit_pix_comprovante', {
-      p_order_id: orderId,
-      p_comprovante_url: comprovanteUrl,
-    })
-    if (error) throw error
-    return { data, error: null }
-  } catch (e) {
-    return { data: null, error: e }
-  }
 }
 
 /**

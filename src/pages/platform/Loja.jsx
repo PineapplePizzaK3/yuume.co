@@ -8,39 +8,35 @@ import { Link } from 'react-router-dom'
 import { getProducts } from '../../services/productService'
 import { addToCart } from '../../services/cartService'
 import { useAuth } from '../../hooks/useAuth'
-import { brlToJpy, formatBRL, formatJPY, formatUSD, jpyToBrl } from '../../lib/fx'
+import { jpyToBrl } from '../../lib/fx'
 import { getCardThumbnailUrl } from '../../lib/imageUtils'
 import LinkifyText from '../../components/LinkifyText'
+import { TriCurrencyDisplay } from '../../components/TriCurrencyDisplay'
 
-function formatPriceBrlAsJpy(brl) {
-  const jpy = Math.round(brlToJpy(brl))
-  const approxBrl = jpyToBrl(jpy)
-  return { jpy, approxBrl }
-}
-
-/** BRL em destaque, USD secundário, JPY contextual (origem). */
+/** BRL em destaque; JPY e USD na mesma hierarquia visual, com bandeiras. */
 function ProductPriceBlock({ product: p, variant = 'card' }) {
   const jpy = Number(p.price_jpy ?? p.price) || 0
   const brl = Number(p.price_brl)
   const usd = Number(p.price_usd)
   const hasDeriv = Number.isFinite(brl) && brl > 0 && Number.isFinite(usd) && usd > 0
-  const mainCls = variant === 'modal' ? 'text-2xl' : 'text-base'
+  const approxBrlFallback = jpyToBrl(jpy)
+  const triVariant = variant === 'modal' ? 'modal' : 'card'
   if (hasDeriv) {
     return (
-      <div className="mt-1.5 space-y-0.5">
-        <span className={`block font-bold text-earth-900 ${mainCls}`}>{formatBRL(brl)}</span>
-        <span className="block text-sm text-earth-600">≈ {formatUSD(usd)}</span>
-        <span className="block text-xs text-earth-500">Preço no Japão: {formatJPY(jpy)}</span>
+      <div className="mt-1.5">
+        <TriCurrencyDisplay brl={brl} jpy={jpy} usd={usd} variant={triVariant} />
       </div>
     )
   }
-  const v = formatPriceBrlAsJpy(p.price)
   return (
-    <div className="mt-1.5 space-y-0.5">
-      <span className={`block font-bold text-earth-900 ${mainCls}`}>{formatJPY(v.jpy)}</span>
-      <span className="block text-sm text-earth-600">
-        Ref. BRL (até atualizar cotação): {formatBRL(v.approxBrl)}
-      </span>
+    <div className="mt-1.5">
+      <TriCurrencyDisplay
+        brl={approxBrlFallback}
+        jpy={jpy}
+        usd={NaN}
+        variant={triVariant}
+        footnote="Cotação BRL/USD em atualização — valor em dólar aparece após o próximo refresh."
+      />
     </div>
   )
 }

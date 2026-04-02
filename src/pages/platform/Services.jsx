@@ -68,6 +68,7 @@ export default function Services() {
   const [successNotice, setSuccessNotice] = useState(null)
   const [failedThumbUrls, setFailedThumbUrls] = useState(() => new Set())
   const [draftHydrated, setDraftHydrated] = useState(false)
+  const [earlyPrepaymentRequested, setEarlyPrepaymentRequested] = useState(false)
   const saveDebounceRef = useRef(null)
   const draftLoadedRef = useRef(false)
 
@@ -119,6 +120,7 @@ export default function Services() {
         setAttachmentUrls(d.attachmentUrls.filter((u) => typeof u === 'string' && u.trim()))
       }
       if (typeof d.imageUrlDraft === 'string') setImageUrlDraft(d.imageUrlDraft)
+      if (typeof d.earlyPrepaymentRequested === 'boolean') setEarlyPrepaymentRequested(d.earlyPrepaymentRequested)
       if (d.selectedId && oferta.some((s) => s.id === d.selectedId)) {
         setSelectedId(d.selectedId)
       }
@@ -137,18 +139,20 @@ export default function Services() {
         agreeProhibited,
         attachmentUrls,
         imageUrlDraft,
+        earlyPrepaymentRequested,
         updatedAt: Date.now(),
       })
     }, 450)
     return () => {
       if (saveDebounceRef.current) clearTimeout(saveDebounceRef.current)
     }
-  }, [user?.id, draftHydrated, message, selectedId, redirModule, agreeProhibited, attachmentUrls, imageUrlDraft])
+  }, [user?.id, draftHydrated, message, selectedId, redirModule, agreeProhibited, attachmentUrls, imageUrlDraft, earlyPrepaymentRequested])
 
   const clearLocalDraft = () => {
     setMessage('')
     setAttachmentUrls([])
     setImageUrlDraft('')
+    setEarlyPrepaymentRequested(false)
     setFailedThumbUrls(() => new Set())
     clearServicesDraft(user?.id)
   }
@@ -220,6 +224,7 @@ export default function Services() {
       attachment_urls: attachmentUrls,
       service_name: selectedService?.name,
       order_module: isRedirecionamento ? redirModule : null,
+      early_prepayment_requested: isRedirAssisted && earlyPrepaymentRequested,
     })
     setSubmitting(false)
     if (error) {
@@ -234,6 +239,7 @@ export default function Services() {
     setMessage('')
     setAttachmentUrls([])
     setImageUrlDraft('')
+    setEarlyPrepaymentRequested(false)
     setFailedThumbUrls(() => new Set())
   }
 
@@ -269,6 +275,7 @@ export default function Services() {
                       setSuccessNotice(null)
                       setAgreeProhibited(false)
                       setRedirModule('self_buy')
+                      setEarlyPrepaymentRequested(false)
                     }}
                     className={`rounded-xl border-2 p-5 text-left transition ${
                       selectedId === s.id
@@ -300,7 +307,10 @@ export default function Services() {
                         type="radio"
                         name="redirModule"
                         checked={redirModule === 'self_buy'}
-                        onChange={() => setRedirModule('self_buy')}
+                        onChange={() => {
+                          setRedirModule('self_buy')
+                          setEarlyPrepaymentRequested(false)
+                        }}
                         className="mt-1"
                       />
                       <div>
@@ -366,6 +376,30 @@ export default function Services() {
             )}
 
             <div>
+              {isRedirAssisted && (
+                <div className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50/90 p-4">
+                  <label className="flex cursor-pointer items-start gap-3">
+                    <input
+                      type="checkbox"
+                      checked={earlyPrepaymentRequested}
+                      onChange={(e) => setEarlyPrepaymentRequested(e.target.checked)}
+                      className="mt-1 rounded border-earth-300"
+                    />
+                    <span className="text-sm text-earth-800">
+                      <span className="font-semibold text-earth-900">Quero antecipar o pré-pagamento</span>
+                      <span className="mt-1 block font-normal">
+                        Marque se os itens vêm de <strong>flea market</strong> ou anúncios únicos (Mercari, Yahoo
+                        Auctions/Fleamarket, Rakuma, etc.). Assim a equipe pode priorizar o envio do orçamento e da
+                        cobrança para tentar comprar antes que outra pessoa leve o produto.
+                      </span>
+                    </span>
+                  </label>
+                  <p className="mt-3 text-xs text-earth-600">
+                    O valor exato continua sendo definido no orçamento oficial; esta opção apenas indica urgência de
+                    pré-pagamento por causa do risco de esgotamento.
+                  </p>
+                </div>
+              )}
               <label htmlFor="message" className="block text-sm font-medium text-earth-700">
                 {isPersonalShopping || isRedirAssisted
                   ? 'Descreva o que deseja comprar (links, lojas, quantidade)'

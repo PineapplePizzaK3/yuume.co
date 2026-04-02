@@ -11,7 +11,6 @@ import { getCart, updateCartItem, removeFromCart, createStoreOrder, getLatestPen
 import { validateCoupon } from '../../services/couponService'
 import { createCheckoutSession, fetchExchangeRates, getMyPayments } from '../../services/paymentService'
 import { getMyOrders, ORDER_STATUS_LABELS } from '../../services/orderService'
-import PixManualModal from '../../components/PixManualModal'
 import { getWallet } from '../../services/walletService'
 import {
   computeGrupoComprasFeeBrl,
@@ -21,6 +20,7 @@ import {
   GRUPO_COMPRAS_FEE_PER_UNIT_USD,
 } from '../../data/serviceFees'
 import { brlToJpy, formatBRL, formatJPY, formatUSD, jpyToBrl, getFxBrlPerJpy } from '../../lib/fx'
+import { TriCurrencyDisplay } from '../../components/TriCurrencyDisplay'
 import { getSystemSettings } from '../../services/settingsService'
 import { supabase } from '../../lib/supabase'
 
@@ -41,6 +41,20 @@ const CART_TABS = [
   { id: 'checkout', label: 'Pagamento' },
   { id: 'history', label: 'Histórico' },
 ]
+const GATEWAY_OPTIONS = [
+  {
+    id: 'parcelow',
+    label: 'Parcelow',
+    icon: '🇧🇷',
+    details: 'Cartão até 21x, PIX, TED',
+  },
+  {
+    id: 'stripe',
+    label: 'Stripe',
+    icon: '🌐',
+    details: 'Cartão internacional',
+  },
+]
 
 function Cart() {
   const { user, session } = useAuth()
@@ -57,7 +71,7 @@ function Cart() {
   const [payModal, setPayModal] = useState({ open: false, order: null, useWallet: true })
   const [walletApplyMode, setWalletApplyMode] = useState('full')
   const [walletCustomAmount, setWalletCustomAmount] = useState('')
-  const [pixModal, setPixModal] = useState({ open: false, order: null })
+  const [selectedGateway, setSelectedGateway] = useState('parcelow')
   const [feedback, setFeedback] = useState('')
   const [systemSettings, setSystemSettings] = useState(null)
   const [referralEligibility, setReferralEligibility] = useState(false)
@@ -281,21 +295,21 @@ function Cart() {
   }, [payModal.open, referralEligibility])
 
   useEffect(() => {
-    const modalOpen = payModal.open || pixModal.open
-    if (!modalOpen) return
+    if (!payModal.open) return
     const prevOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     return () => {
       document.body.style.overflow = prevOverflow
     }
-  }, [payModal.open, pixModal.open])
+  }, [payModal.open])
 
   useEffect(() => {
-    if (!payModal.open && !pixModal.open) {
+    if (!payModal.open) {
       setWalletApplyMode('full')
       setWalletCustomAmount('')
+      setSelectedGateway('parcelow')
     }
-  }, [payModal.open, pixModal.open])
+  }, [payModal.open])
 
   const { productSubtotalBrl, grupoFeeBrl, grupoQty } = useMemo(() => {
     let lojaBrl = 0
@@ -470,7 +484,7 @@ function Cart() {
         return
       }
 
-      // Pedido criado: abre modal de pagamento (Stripe / PIX / carteira).
+      // Pedido criado: abre modal de pagamento (gateway + carteira).
       setPayModal({ open: true, order: orderToPay, useWallet: true })
       setCouponApplied(null)
       setCouponInput('')
@@ -639,21 +653,6 @@ function Cart() {
       <Helmet>
         <title>Central de Pagamentos | Plataforma</title>
       </Helmet>
-      <PixManualModal
-        open={pixModal.open}
-        onClose={() => setPixModal({ open: false, order: null })}
-        onBack={() => {
-          if (pixModal.order) {
-            setPixModal({ open: false, order: null })
-            setPayModal({ open: true, order: pixModal.order, useWallet: true })
-          } else {
-            setPixModal({ open: false, order: null })
-          }
-        }}
-        order={pixModal.order}
-        amountBrl={pixModal.amountBrl ?? (getOrderChargeJpy(pixModal.order)?.approxBrl ?? null)}
-        userId={user?.id}
-      />
       <div>
         <h1 className="text-2xl font-bold text-earth-900">Central de Pagamentos</h1>
         <p className="mt-2 text-earth-600">
@@ -701,7 +700,7 @@ function Cart() {
           })}
         </div>
 
-        {feedback && !payModal.open && !pixModal.open && (
+        {feedback && !payModal.open && (
           <p
             className={`mt-4 rounded-lg px-4 py-2 text-sm ${
               feedback.includes('sucesso') ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
@@ -737,9 +736,17 @@ function Cart() {
                 {items.map((item) => {
                   const p = item.products
                   if (!p) return null
-                  const subtotal = Number(p.price) * (item.quantity || 1)
-                  const unit = formatPriceBrlAsJpy(p.price)
-                  const sub = formatPriceBrlAsJpy(subtotal)
+                  const qty = Math.max(1, Number(item.quantity) || 1)
+                  const jpyUnit = Number(p.price_jpy ?? p.price) || 0
+                  const brlUnit = Number(p.price_brl)
+                  const usdUnit = Number(p.price_usd)
+                  const hasTri =
+                    Number.isFinite(brlUnit) && brlUnit > 0 && Number.isFinite(usdUnit) && usdUnit > 0
+                  const unitBrl = hasTri ? brlUnit : jpyToBrl(jpyUnit)
+                  const unitUsd = hasTri ? usdUnit : NaN
+                  const lineJpy = jpyUnit * qty
+                  const lineBrl = unitBrl * qty
+                  const lineUsd = hasTri ? usdUnit * qty : NaN
                   const sourceTag = p.purchase_group_id ? 'Grupo de Compras' : 'Loja Virtual'
                   const sourceTagClass = p.purchase_group_id
                     ? 'bg-amber-100 text-amber-800'
@@ -747,7 +754,7 @@ function Cart() {
                   return (
                     <div
                       key={item.id}
-                      className="flex flex-wrap items-center gap-4 rounded-xl border border-earth-200 bg-earth-50 p-4"
+                      className="flex flex-wrap items-start gap-4 rounded-xl border border-earth-200 bg-earth-50 p-4"
                     >
                       {p.image_url ? (
                         <img src={p.image_url} alt={p.name} className="h-20 w-20 rounded-lg object-cover" />
@@ -763,11 +770,18 @@ function Cart() {
                           </span>
                         </div>
                         <h3 className="font-semibold text-earth-900">{p.name}</h3>
-                        <p className="text-sm text-earth-600">
-                          {formatJPY(unit.jpy)} cada <span className="text-xs">({formatBRL(unit.approxBrl)} aprox.)</span>
+                        <p className="mt-1 text-[11px] font-medium uppercase tracking-wide text-earth-500">
+                          Unitário
                         </p>
+                        <TriCurrencyDisplay
+                          brl={unitBrl}
+                          jpy={jpyUnit}
+                          usd={unitUsd}
+                          variant="compact"
+                          footnote={hasTri ? null : 'Dólar após atualizar cotações no servidor.'}
+                        />
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-col items-end gap-2 sm:flex-row sm:items-center">
                         <input
                           type="number"
                           min="1"
@@ -785,11 +799,16 @@ function Cart() {
                           }}
                           className="w-16 rounded border border-earth-300 px-2 py-1 text-center text-earth-900"
                         />
-                        <span className="font-semibold text-earth-900">{formatJPY(sub.jpy)}</span>
+                        <div className="text-right">
+                          <p className="text-[11px] font-medium uppercase tracking-wide text-earth-500">
+                            Subtotal ({qty} un.)
+                          </p>
+                          <TriCurrencyDisplay brl={lineBrl} jpy={lineJpy} usd={lineUsd} variant="compact" />
+                        </div>
                         <button
                           type="button"
                           onClick={() => handleRemove(item.product_id)}
-                          className="text-sm text-red-600 hover:text-red-800"
+                          className="text-sm text-red-600 hover:text-red-800 sm:ml-1"
                         >
                           Remover
                         </button>
@@ -847,29 +866,35 @@ function Cart() {
                   </p>
                 </div>
               )}
-              <div className="flex items-center justify-between pt-2 border-t border-earth-200">
-                <div>
+              <div className="flex flex-col gap-4 border-t border-earth-200 pt-4 sm:flex-row sm:items-end sm:justify-between">
+                <div className="min-w-0 flex-1 space-y-2">
                   <p className="text-sm text-earth-600">
-                    Subtotal produtos: {formatBRL(productSubtotalBrl)}
-                    {grupoFeeBrl > 0 && (
-                      <>
-                        {' '}
-                        + taxa grupo: {formatBRL(grupoFeeBrl)}
-                      </>
-                    )}
-                  </p>
-                  <p className="text-xl font-bold text-earth-900">Total: {formatBRL(totalAfterDiscountBrl)}</p>
-                  <p className="text-sm text-earth-600">
-                    Preço no Japão: {formatJPY(totalJpy)}
-                    {totalUsdEstimate != null && Number.isFinite(totalUsdEstimate) && (
-                      <span className="block mt-0.5">
-                        Cobrança (Parcelow) em USD ≈ {formatUSD(totalUsdEstimate)}
+                    Composição: subtotal produtos {formatBRL(productSubtotalBrl)}
+                    {grupoFeeBrl > 0 && <> + taxa grupo {formatBRL(grupoFeeBrl)}</>}
+                    {discountBrl > 0 && (
+                      <span className="block text-green-700">
+                        Cupom: −{formatBRL(discountBrl)}
                       </span>
                     )}
                   </p>
-                  {discountBrl > 0 && (
-                    <p className="text-sm text-green-600 mt-0.5">Subtotal {formatBRL(totalBrl)} − desconto {formatBRL(discountBrl)}</p>
-                  )}
+                  <p className="text-xs font-medium uppercase tracking-wide text-earth-500">
+                    Total do pedido
+                  </p>
+                  <TriCurrencyDisplay
+                    brl={totalAfterDiscountBrl}
+                    jpy={totalJpy}
+                    usd={
+                      totalUsdEstimate != null && Number.isFinite(totalUsdEstimate)
+                        ? totalUsdEstimate
+                        : NaN
+                    }
+                    variant="checkout"
+                    footnote={
+                      totalUsdEstimate != null && Number.isFinite(totalUsdEstimate)
+                        ? 'Real em destaque para leitura; iene = base Japão; dólar = cobrança (ex.: Parcelow).'
+                        : 'Dólar de cobrança aparece quando a cotação e os produtos estiverem atualizados no servidor.'
+                    }
+                  />
                 </div>
                 <button
                   type="button"
@@ -916,9 +941,18 @@ function Cart() {
                           {payable?.label ? ` - ${payable.label}` : ''}
                         </p>
                         {charge && (
-                          <p className="mt-1 text-sm text-earth-700">
-                            {formatJPY(charge.jpy)} <span className="text-earth-500">({formatBRL(charge.approxBrl)} aprox.)</span>
-                          </p>
+                          <div className="mt-2">
+                            <TriCurrencyDisplay
+                              brl={charge.approxBrl}
+                              jpy={charge.jpy}
+                              usd={
+                                charge.chargeUsd != null && Number.isFinite(charge.chargeUsd)
+                                  ? charge.chargeUsd
+                                  : NaN
+                              }
+                              variant="compact"
+                            />
+                          </div>
                         )}
                       </div>
                       <button
@@ -1080,7 +1114,7 @@ function Cart() {
             <div className="flex-1 min-h-0 overflow-y-auto p-6">
               <h3 className="font-semibold text-earth-900">Pagamento</h3>
               <p className="mt-1 text-sm text-earth-600">
-                Escolha o gateway (Parcelow ou Stripe). PIX manual é transferência fora desses sistemas.
+                Escolha a forma de pagamento e conclua com segurança.
               </p>
 
               {(() => {
@@ -1197,6 +1231,32 @@ function Cart() {
                         )}
                       </div>
                     </label>
+                    <div className="rounded-lg border border-earth-200 bg-white p-4">
+                      <p className="font-medium text-earth-900">Forma de pagamento</p>
+                      <select
+                        value={selectedGateway}
+                        onChange={(e) => setSelectedGateway(e.target.value)}
+                        className="mt-2 w-full rounded border border-earth-300 bg-white px-3 py-2 text-sm text-earth-900"
+                      >
+                        {GATEWAY_OPTIONS.map((option) => (
+                          <option key={option.id} value={option.id}>
+                            {option.icon} {option.label}
+                          </option>
+                        ))}
+                      </select>
+                      {(() => {
+                        const option = GATEWAY_OPTIONS.find((entry) => entry.id === selectedGateway) || GATEWAY_OPTIONS[0]
+                        return (
+                          <div className="mt-3 rounded-md border border-earth-100 bg-earth-50 px-3 py-2">
+                            <p className="text-sm font-medium text-earth-900">
+                              <span className="mr-1">{option.icon}</span>
+                              {option.label}
+                            </p>
+                            <p className="text-xs text-earth-600">{option.details}</p>
+                          </div>
+                        )
+                      })()}
+                    </div>
                     {referralEligibility && (
                       <div className="rounded-lg border border-earth-200 bg-white p-4">
                         <p className="text-sm font-medium text-earth-900">Indicação</p>
@@ -1237,7 +1297,7 @@ function Cart() {
 
             <div className="shrink-0 border-t border-earth-200 bg-earth-50 p-4">
               {(() => {
-                const { isFullyCovered, remainingBrl } = getPaymentBreakdown(
+                const { isFullyCovered } = getPaymentBreakdown(
                   payModal.order,
                   payModal.useWallet,
                   walletApplyMode,
@@ -1247,46 +1307,22 @@ function Cart() {
 
                 return (
                   <div className="flex flex-col gap-3">
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        onClick={() => handlePayWithGateway({ provider: 'parcelow' })}
-                        disabled={submitting || isFullyCovered || requiresReferralChoice}
-                        className="rounded-lg border border-earth-300 bg-white px-4 py-2.5 font-medium text-earth-800 hover:bg-earth-50 disabled:opacity-60"
-                      >
-                        Parcelow
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handlePayWithGateway({ provider: 'stripe' })}
-                        disabled={submitting || isFullyCovered || requiresReferralChoice}
-                        className="rounded-lg border border-earth-300 bg-white px-4 py-2.5 font-medium text-earth-800 hover:bg-earth-50 disabled:opacity-60"
-                      >
-                        Stripe
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setPayModal((m) => ({ ...m, open: false }))
-                          setPixModal({ open: true, order: payModal.order, amountBrl: remainingBrl })
-                        }}
-                        disabled={submitting || isFullyCovered || requiresReferralChoice}
-                        className="rounded-lg border border-earth-300 bg-white px-4 py-2.5 text-sm font-medium text-earth-700 hover:bg-earth-50 disabled:opacity-60"
-                      >
-                        PIX manual
-                      </button>
-                    </div>
                     <p className="text-xs text-earth-500">
                       Parcelow: cobrança em dólar (USD). Stripe segue em ienes (JPY) neste fluxo.
                     </p>
                     <div className="flex flex-wrap gap-2">
                       <button
                         type="button"
-                        onClick={() => handlePayWithGateway({ forceWallet: isFullyCovered })}
+                        onClick={() =>
+                          handlePayWithGateway({
+                            provider: selectedGateway,
+                            forceWallet: isFullyCovered,
+                          })
+                        }
                         disabled={submitting || requiresReferralChoice}
                         className="flex-1 min-w-0 rounded-lg bg-earth-900 px-6 py-2.5 font-medium text-earth-50 hover:bg-earth-800 disabled:opacity-60"
                       >
-                        {submitting ? 'Processando...' : 'Finalizar pagamento'}
+                        {submitting ? 'Processando...' : 'Pagar com método selecionado'}
                       </button>
                       <button
                         type="button"

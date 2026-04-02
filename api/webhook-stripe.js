@@ -8,6 +8,7 @@
  */
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
+import { ensureInvoiceForPaidOrder } from './lib/invoiceGenerator.js'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '')
 
@@ -114,6 +115,12 @@ export default async function handler(req, res) {
         amount,
         currency: currency.toUpperCase(),
       })
+
+      if (!error && newStatus === 'paid') {
+        await ensureInvoiceForPaidOrder(supabase, orderId).catch((e) =>
+          console.error('ensureInvoice (stripe webhook):', e?.message || e)
+        )
+      }
 
       // Loja: se ship_immediately=false, adiciona produtos ao inventário
       if (order?.order_source === 'store' && !order?.ship_immediately && !error) {
