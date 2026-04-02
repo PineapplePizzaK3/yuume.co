@@ -526,8 +526,14 @@ function Cart() {
     const payable = getPayableAmount(order)
     if (!payable) return null
     const currency = (payable.currency || 'JPY').toUpperCase()
-    const referralDiscountBrl = acquisitionMode === 'referral'
-      ? Math.max(0, Number(systemSettings?.referral_discount_value?.amount) || 0)
+    // Autoritativo: o pedido no banco (igual create-checkout-session). Não usar acquisitionMode da UI —
+    // senão o modal mostra USD/¥ do total “cheio” e a Parcelow cobra o restante já com referral aplicado.
+    const isOrderReferral = String(order?.acquisition_mode || '').toLowerCase() === 'referral'
+    const referralDiscountBrl = isOrderReferral
+      ? Math.max(
+          0,
+          Number(order?.referral_discount_amount) || Number(systemSettings?.referral_discount_value?.amount) || 0
+        )
       : 0
     const effBrlPerJpy =
       Number(exchangeSnapshot?.effective_brl_per_jpy) > 0
