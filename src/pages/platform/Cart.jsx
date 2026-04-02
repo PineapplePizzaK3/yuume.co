@@ -22,7 +22,6 @@ import {
 import { brlToJpy, formatBRL, formatJPY, formatUSD, jpyToBrl, getFxBrlPerJpy } from '../../lib/fx'
 import { TriCurrencyDisplay } from '../../components/TriCurrencyDisplay'
 import { getSystemSettings } from '../../services/settingsService'
-import { supabase } from '../../lib/supabase'
 
 function formatPriceBrlAsJpy(brl) {
   const jpy = Math.round(brlToJpy(brl))
@@ -55,6 +54,57 @@ const GATEWAY_OPTIONS = [
     details: 'Cartão internacional',
   },
 ]
+const buildBadgeSrc = (label, { bg = '#ffffff', fg = '#1f2937', stroke = '#d1d5db' } = {}) =>
+  `data:image/svg+xml;utf8,${encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="112" height="40" viewBox="0 0 112 40">
+      <rect x="1" y="1" width="110" height="38" rx="10" fill="${bg}" stroke="${stroke}" />
+      <text x="56" y="25" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="${fg}">
+        ${label}
+      </text>
+    </svg>`
+  )}`
+
+const PIX_BADGE_SRC = `data:image/svg+xml;utf8,${encodeURIComponent(
+  `<svg xmlns="http://www.w3.org/2000/svg" width="112" height="40" viewBox="0 0 112 40">
+    <rect x="1" y="1" width="110" height="38" rx="10" fill="#f0fdf9" stroke="#9ae6cc" />
+    <g transform="translate(14 9)" fill="none" stroke="#00b388" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M8 0 14 6 8 12 2 6Z" />
+      <path d="M20 0 26 6 20 12 14 6Z" />
+      <path d="M14 6 20 12 14 18 8 12Z" />
+    </g>
+    <text x="78" y="25" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#047857">PIX</text>
+  </svg>`
+)}`
+const TED_BADGE_SRC = buildBadgeSrc('TED', { bg: '#f8fafc', fg: '#0f172a', stroke: '#cbd5e1' })
+const PAYMENT_METHOD_GROUP_LABELS = {
+  card: 'Cartão',
+  pix: 'PIX',
+  transfer: 'Transferência',
+}
+
+const PAYMENT_METHODS_BY_GATEWAY = {
+  parcelow: [
+    { id: 'pix', label: 'PIX', group: 'pix', src: PIX_BADGE_SRC },
+    { id: 'ted', label: 'TED', group: 'transfer', src: TED_BADGE_SRC },
+    { id: 'visa', label: 'Visa', group: 'card', src: buildBadgeSrc('VISA', { bg: '#e6f0ff', fg: '#1a3fa3', stroke: '#8fb5ff' }) },
+    { id: 'mastercard', label: 'Mastercard', group: 'card', src: buildBadgeSrc('MASTERCARD', { bg: '#fff4e6', fg: '#b45309', stroke: '#f7c58a' }) },
+    { id: 'elo', label: 'Elo', group: 'card', src: buildBadgeSrc('ELO', { bg: '#faf5ff', fg: '#7c3aed', stroke: '#d8b4fe' }) },
+    { id: 'amex', label: 'American Express', group: 'card', src: buildBadgeSrc('AMEX', { bg: '#e0f2fe', fg: '#075985', stroke: '#93c5fd' }) },
+    { id: 'hipercard', label: 'Hipercard', group: 'card', src: buildBadgeSrc('HIPERCARD', { bg: '#fff1f2', fg: '#be123c', stroke: '#fda4af' }) },
+    { id: 'diners', label: 'Diners Club', group: 'card', src: buildBadgeSrc('DINERS', { bg: '#eff6ff', fg: '#1d4ed8', stroke: '#93c5fd' }) },
+    { id: 'discover', label: 'Discover', group: 'card', src: buildBadgeSrc('DISCOVER', { bg: '#fff7ed', fg: '#c2410c', stroke: '#fdba74' }) },
+    { id: 'jcb', label: 'JCB', group: 'card', src: buildBadgeSrc('JCB', { bg: '#ecfdf3', fg: '#166534', stroke: '#86efac' }) },
+    { id: 'hiper', label: 'Hiper', group: 'card', src: buildBadgeSrc('HIPER', { bg: '#fef3c7', fg: '#92400e', stroke: '#fcd34d' }) },
+  ],
+  stripe: [
+    { id: 'visa', label: 'Visa', group: 'card', src: buildBadgeSrc('VISA', { bg: '#e6f0ff', fg: '#1a3fa3', stroke: '#8fb5ff' }) },
+    { id: 'mastercard', label: 'Mastercard', group: 'card', src: buildBadgeSrc('MASTERCARD', { bg: '#fff4e6', fg: '#b45309', stroke: '#f7c58a' }) },
+    { id: 'amex', label: 'American Express', group: 'card', src: buildBadgeSrc('AMEX', { bg: '#e0f2fe', fg: '#075985', stroke: '#93c5fd' }) },
+    { id: 'discover', label: 'Discover', group: 'card', src: buildBadgeSrc('DISCOVER', { bg: '#fff7ed', fg: '#c2410c', stroke: '#fdba74' }) },
+    { id: 'jcb', label: 'JCB', group: 'card', src: buildBadgeSrc('JCB', { bg: '#ecfdf3', fg: '#166534', stroke: '#86efac' }) },
+    { id: 'diners', label: 'Diners Club', group: 'card', src: buildBadgeSrc('DINERS', { bg: '#eff6ff', fg: '#1d4ed8', stroke: '#93c5fd' }) },
+  ],
+}
 
 function Cart() {
   const { user, session } = useAuth()
@@ -72,10 +122,9 @@ function Cart() {
   const [walletApplyMode, setWalletApplyMode] = useState('full')
   const [walletCustomAmount, setWalletCustomAmount] = useState('')
   const [selectedGateway, setSelectedGateway] = useState('parcelow')
+  const [selectedMethodGroup, setSelectedMethodGroup] = useState('card')
   const [feedback, setFeedback] = useState('')
   const [systemSettings, setSystemSettings] = useState(null)
-  const [referralEligibility, setReferralEligibility] = useState(false)
-  const [acquisitionMode, setAcquisitionMode] = useState('none')
   const [couponInput, setCouponInput] = useState('')
   const [couponApplied, setCouponApplied] = useState(null)
   const [couponLoading, setCouponLoading] = useState(false)
@@ -251,27 +300,22 @@ function Cart() {
   }, [user?.id])
 
   useEffect(() => {
+    if (!success && !canceled) return
     if (success) setFeedback('Pagamento realizado com sucesso!')
-    if (canceled) setFeedback('Pagamento cancelado.')
-  }, [success, canceled])
+    else if (canceled) setFeedback('Pagamento cancelado.')
+    const next = new URLSearchParams(searchParams)
+    next.delete('success')
+    next.delete('canceled')
+    setSearchParams(next, { replace: true })
+  }, [success, canceled, searchParams, setSearchParams])
 
   useEffect(() => {
     let isActive = true
     const run = async () => {
       if (!user?.id) return
-      const [settingsRes, referralRes] = await Promise.all([
-        getSystemSettings(),
-        supabase
-          .from('referrals')
-          .select('id')
-          .eq('referred_id', user.id)
-          .eq('reward_given', false)
-          .in('status', ['pending', 'qualified'])
-          .limit(1),
-      ])
+      const settingsRes = await getSystemSettings()
       if (!isActive) return
       setSystemSettings(settingsRes.data || null)
-      setReferralEligibility((referralRes.data ?? []).length > 0)
     }
     run()
     return () => { isActive = false }
@@ -286,13 +330,20 @@ function Cart() {
   }, [payOrderId, pendingLoading, pendingOrders, payModal.open])
 
   useEffect(() => {
-    if (!payModal.open) {
-      setAcquisitionMode('none')
-      return
-    }
-    if (referralEligibility) setAcquisitionMode('referral')
-    else setAcquisitionMode('none')
-  }, [payModal.open, referralEligibility])
+    if (!payModal.open) return
+    // Volta do gateway (cancel/success) deixa feedback preso no overlay do modal; limpar ao abrir.
+    setFeedback((prev) => {
+      const t = String(prev || '').trim()
+      if (
+        t === 'Pagamento cancelado.' ||
+        t === 'Pagamento realizado com sucesso!' ||
+        t === 'Pagamento realizado com carteira.'
+      ) {
+        return ''
+      }
+      return prev
+    })
+  }, [payModal.open])
 
   useEffect(() => {
     if (!payModal.open) return
@@ -308,8 +359,17 @@ function Cart() {
       setWalletApplyMode('full')
       setWalletCustomAmount('')
       setSelectedGateway('parcelow')
+      setSelectedMethodGroup('card')
     }
   }, [payModal.open])
+
+  useEffect(() => {
+    const methods = PAYMENT_METHODS_BY_GATEWAY[selectedGateway] || []
+    const groups = Array.from(new Set(methods.map((m) => m.group || 'card')))
+    if (groups.length > 0 && !groups.includes(selectedMethodGroup)) {
+      setSelectedMethodGroup(groups[0])
+    }
+  }, [selectedGateway, selectedMethodGroup])
 
   const { productSubtotalBrl, grupoFeeBrl, grupoQty, cartSubtotalJpy } = useMemo(() => {
     let lojaBrl = 0
@@ -526,15 +586,6 @@ function Cart() {
     const payable = getPayableAmount(order)
     if (!payable) return null
     const currency = (payable.currency || 'JPY').toUpperCase()
-    // Autoritativo: o pedido no banco (igual create-checkout-session). Não usar acquisitionMode da UI —
-    // senão o modal mostra USD/¥ do total “cheio” e a Parcelow cobra o restante já com referral aplicado.
-    const isOrderReferral = String(order?.acquisition_mode || '').toLowerCase() === 'referral'
-    const referralDiscountBrl = isOrderReferral
-      ? Math.max(
-          0,
-          Number(order?.referral_discount_amount) || Number(systemSettings?.referral_discount_value?.amount) || 0
-        )
-      : 0
     const effBrlPerJpy =
       Number(exchangeSnapshot?.effective_brl_per_jpy) > 0
         ? Number(exchangeSnapshot.effective_brl_per_jpy)
@@ -542,7 +593,6 @@ function Cart() {
 
     if (currency === 'BRL') {
       const baseBrl = Number(payable.amount) || 0
-      const discountedBrl = Math.max(0, baseBrl - referralDiscountBrl)
       const orderItems = order?.order_items
       let jpy
       if (
@@ -557,12 +607,12 @@ function Cart() {
         }, 0)
         const fullBrl = baseBrl + (Number(order.discount_amount) || 0)
         if (itemsJpySum > 0 && fullBrl > 0) {
-          jpy = Math.round(itemsJpySum * (discountedBrl / fullBrl))
+          jpy = Math.round(itemsJpySum * (baseBrl / fullBrl))
         } else {
-          jpy = Math.round(discountedBrl / effBrlPerJpy)
+          jpy = Math.round(baseBrl / effBrlPerJpy)
         }
       } else {
-        jpy = Math.round(discountedBrl / effBrlPerJpy)
+        jpy = Math.round(baseBrl / effBrlPerJpy)
       }
       const totalUsd = Number(order?.total_amount_usd)
       let chargeUsd = null
@@ -572,7 +622,7 @@ function Cart() {
         )
         if (Number.isFinite(jpyUsd) && jpyUsd > 0) {
           if (Number.isFinite(totalUsd) && totalUsd > 0 && baseBrl > 0) {
-            const amountUsd = totalUsd * (discountedBrl / baseBrl)
+            const amountUsd = totalUsd
             const usdBasedJpy = Math.round(amountUsd / jpyUsd)
             if (usdBasedJpy > 0 && jpy / usdBasedJpy < 0.92) {
               jpy = usdBasedJpy
@@ -580,14 +630,12 @@ function Cart() {
           }
           chargeUsd = jpy * jpyUsd
         } else if (Number.isFinite(totalUsd) && totalUsd > 0 && baseBrl > 0) {
-          chargeUsd = totalUsd * (discountedBrl / baseBrl)
+          chargeUsd = totalUsd
         }
       }
-      return { jpy, approxBrl: discountedBrl, chargeUsd, label: payable.label }
+      return { jpy, approxBrl: baseBrl, chargeUsd, label: payable.label }
     }
-    const jpyFromDiscount = referralDiscountBrl > 0 ? referralDiscountBrl / effBrlPerJpy : 0
-    const discountedJpy = Math.max(0, (Number(payable.amount) || 0) - jpyFromDiscount)
-    const jpy = Math.round(discountedJpy)
+    const jpy = Math.round(Number(payable.amount) || 0)
     return { jpy, approxBrl: jpy * effBrlPerJpy, chargeUsd: null, label: payable.label }
   }
 
@@ -683,8 +731,6 @@ function Cart() {
       const result = await createCheckoutSession(orderId, accessToken, {
         useWallet: shouldUseWallet,
         walletAmountJpy: walletAmountJpyForApi,
-        acquisitionMode,
-        affiliateCode: null,
         provider: provider || null,
       })
       if (result?.paid) {
@@ -706,11 +752,12 @@ function Cart() {
 
   const closePayModal = () => {
     setPayModal({ open: false, order: null, useWallet: false })
+    setFeedback('')
     const next = new URLSearchParams(searchParams)
-    if (next.has('payOrderId')) {
-      next.delete('payOrderId')
-      setSearchParams(next, { replace: true })
-    }
+    next.delete('payOrderId')
+    next.delete('success')
+    next.delete('canceled')
+    setSearchParams(next, { replace: true })
   }
 
 
@@ -1317,63 +1364,87 @@ function Cart() {
                     {!isFullyCovered && (
                     <div className="rounded-lg border border-earth-200 bg-white p-4">
                       <p className="font-medium text-earth-900">Forma de pagamento</p>
-                      <select
-                        value={selectedGateway}
-                        onChange={(e) => setSelectedGateway(e.target.value)}
-                        className="mt-2 w-full rounded border border-earth-300 bg-white px-3 py-2 text-sm text-earth-900"
-                      >
-                        {GATEWAY_OPTIONS.map((option) => (
-                          <option key={option.id} value={option.id}>
-                            {option.icon} {option.label}
-                          </option>
-                        ))}
-                      </select>
                       {(() => {
                         const option = GATEWAY_OPTIONS.find((entry) => entry.id === selectedGateway) || GATEWAY_OPTIONS[0]
+                        const methods = PAYMENT_METHODS_BY_GATEWAY[option.id] || []
+                        const groups = Array.from(new Set(methods.map((method) => method.group || 'card')))
+                        const visibleMethods = methods.filter((method) => (method.group || 'card') === selectedMethodGroup)
                         return (
-                          <div className="mt-3 rounded-md border border-earth-100 bg-earth-50 px-3 py-2">
-                            <p className="text-sm font-medium text-earth-900">
-                              <span className="mr-1">{option.icon}</span>
-                              {option.label}
-                            </p>
-                            <p className="text-xs text-earth-600">{option.details}</p>
-                          </div>
+                          <>
+                            <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                              {GATEWAY_OPTIONS.map((entry) => {
+                                const active = entry.id === option.id
+                                return (
+                                  <button
+                                    key={entry.id}
+                                    type="button"
+                                    onClick={() => setSelectedGateway(entry.id)}
+                                    className={`rounded-md border px-3 py-2 text-left transition ${
+                                      active
+                                        ? 'border-earth-400 bg-earth-100'
+                                        : 'border-earth-200 bg-white hover:bg-earth-50'
+                                    }`}
+                                  >
+                                    <p className="text-sm font-medium text-earth-900">
+                                      <span className="mr-1">{entry.icon}</span>
+                                      {entry.label}
+                                    </p>
+                                    <p className="text-xs text-earth-600">{entry.details}</p>
+                                  </button>
+                                )
+                              })}
+                            </div>
+                            <div className="mt-3 rounded-md border border-earth-100 bg-earth-50 px-3 py-2">
+                              <p className="text-sm font-medium text-earth-900">
+                                <span className="mr-1">{option.icon}</span>
+                                {option.label}
+                              </p>
+                              <p className="text-xs text-earth-600">{option.details}</p>
+                              <p className="mt-2 text-xs font-medium uppercase tracking-wide text-earth-500">
+                                Formas aceitas
+                              </p>
+                              {groups.length > 1 && (
+                                <div className="mt-2 flex flex-wrap gap-1">
+                                  {groups.map((group) => {
+                                    const activeGroup = group === selectedMethodGroup
+                                    return (
+                                      <button
+                                        key={group}
+                                        type="button"
+                                        onClick={() => setSelectedMethodGroup(group)}
+                                        className={`rounded-full border px-2.5 py-1 text-xs font-medium transition ${
+                                          activeGroup
+                                            ? 'border-earth-400 bg-earth-200 text-earth-900'
+                                            : 'border-earth-200 bg-white text-earth-600 hover:bg-earth-100'
+                                        }`}
+                                      >
+                                        {PAYMENT_METHOD_GROUP_LABELS[group] || group}
+                                      </button>
+                                    )
+                                  })}
+                                </div>
+                              )}
+                              <div className="mt-2 flex flex-wrap gap-2">
+                                {visibleMethods.map((method) => (
+                                  <div
+                                    key={method.id}
+                                    className="inline-flex items-center gap-2 rounded-md border border-earth-200 bg-white px-2 py-1"
+                                  >
+                                    <img
+                                      src={method.src}
+                                      alt={`Bandeira ${method.label}`}
+                                      className="h-7 w-auto rounded"
+                                      loading="lazy"
+                                    />
+                                    <span className="text-xs font-medium text-earth-700">{method.label}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </>
                         )
                       })()}
                     </div>
-                    )}
-                    {referralEligibility && (
-                      <div className="rounded-lg border border-earth-200 bg-white p-4">
-                        <p className="text-sm font-medium text-earth-900">Indicação</p>
-                        <p className="mt-1 text-xs text-earth-600">
-                          Você entrou com código de indicação. Pode aplicar o desconto de primeira compra ou pagar o valor integral.
-                        </p>
-                        <div className="mt-3 space-y-2">
-                          <label className="flex items-center gap-2 text-sm text-earth-700">
-                            <input
-                              type="radio"
-                              name="acquisition-mode"
-                              checked={acquisitionMode === 'none'}
-                              onChange={() => setAcquisitionMode('none')}
-                            />
-                            <span>Não aplicar desconto de indicação</span>
-                          </label>
-                          <label className="flex items-center gap-2 text-sm text-earth-700">
-                            <input
-                              type="radio"
-                              name="acquisition-mode"
-                              checked={acquisitionMode === 'referral'}
-                              onChange={() => setAcquisitionMode('referral')}
-                            />
-                            <span>
-                              Aplicar desconto de indicação
-                              <span className="ml-1 text-earth-500">
-                                (-{formatJPY(Math.round(brlToJpy(systemSettings?.referral_discount_value?.amount || 0)))})
-                              </span>
-                            </span>
-                          </label>
-                        </div>
-                      </div>
                     )}
                   </div>
                 )
@@ -1388,7 +1459,6 @@ function Cart() {
                   walletApplyMode,
                   walletCustomAmount
                 )
-                const requiresReferralChoice = referralEligibility && acquisitionMode === 'none'
                 const customWalletInvalid =
                   !!payModal.useWallet &&
                   walletApplyMode === 'custom' &&
@@ -1416,7 +1486,7 @@ function Cart() {
                             forceWallet: isFullyCovered,
                           })
                         }
-                        disabled={submitting || requiresReferralChoice || customWalletInvalid}
+                        disabled={submitting || customWalletInvalid}
                         className="flex-1 min-w-0 rounded-lg bg-earth-900 px-6 py-2.5 font-medium text-earth-50 hover:bg-earth-800 disabled:opacity-60"
                       >
                         {submitting

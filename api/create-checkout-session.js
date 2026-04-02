@@ -583,25 +583,6 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Este pedido não está aguardando pagamento' })
     }
 
-    // Escolha manual entre referral e affiliate (ou none).
-    const requestedAcquisitionMode = typeof body.acquisitionMode === 'string'
-      ? body.acquisitionMode.trim().toLowerCase()
-      : null
-    if (requestedAcquisitionMode && ['none', 'referral', 'affiliate'].includes(requestedAcquisitionMode)) {
-      const { data: applyData, error: applyErr } = await supabase.rpc('apply_order_acquisition', {
-        p_order_id: orderId,
-        p_user_id: user.id,
-        p_mode: requestedAcquisitionMode,
-        p_affiliate_code: body.affiliateCode || null,
-      })
-      if (applyErr) {
-        return res.status(400).json({ error: applyErr.message || 'Erro ao aplicar origem da aquisição' })
-      }
-      if (applyData?.ok === false) {
-        return res.status(400).json({ error: applyData?.error || 'Aquisição não elegível' })
-      }
-    }
-
     const { data: order } = await supabase
       .from('orders')
       .select('id, user_id, status, shipping_cost, shipping_currency, quote_amount, quote_currency, total_amount, total_amount_usd, discount_amount, wallet_applied_amount, order_source, ship_immediately, acquisition_mode, referral_discount_amount, affiliate_id, referral_id')
@@ -638,23 +619,6 @@ export default async function handler(req, res) {
 
     const origBrlStore =
       order.order_source === 'store' ? Number(order.total_amount) : null
-
-    // Referral discount: BRL → JPY sempre via pipeline USD (nunca BRL/JPY direto).
-    if (order.acquisition_mode === 'referral') {
-      const referralDiscountBrl = Math.max(0, Number(order.referral_discount_amount) || 0)
-      if (referralDiscountBrl > 0) {
-        if (currency === 'brl') {
-          amount = Math.max(0, Number(amount) - referralDiscountBrl)
-        } else if (rates?.jpy_usd && rates?.usd_brl) {
-          const discountJpy = brlToJpyViaUsdPipeline(referralDiscountBrl, rates.jpy_usd, rates.usd_brl, wiseMarkup)
-          amount = Math.max(0, Number(amount) - discountJpy)
-        } else {
-          return res.status(503).json({
-            error: 'Câmbio indisponível para aplicar desconto de indicação. Configure FALLBACK_FX_* ou aguarde o cron.',
-          })
-        }
-      }
-    }
 
     let chargeJpy = 0
     const storeUsd = Number(order.total_amount_usd)
