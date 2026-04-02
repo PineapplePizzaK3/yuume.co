@@ -259,6 +259,48 @@ function extractParcelowOrderResponse(json) {
   return { checkoutUrl, parcelowOrderId }
 }
 
+function normalizeAmountToCents(value) {
+  const n = Number(value)
+  if (!Number.isFinite(n) || n <= 0) return null
+  // Inteiro normalmente já vem em centavos; decimal normalmente vem em unidade (USD).
+  if (Number.isInteger(n)) return Math.round(n)
+  return Math.round(n * 100)
+}
+
+function extractParcelowEchoAmount(json) {
+  if (!json || typeof json !== 'object') return { currency: null, amountCents: null }
+  let block = json.data
+  if (Array.isArray(block) && block.length > 0) block = block[0]
+  if (!block || typeof block !== 'object') block = json
+
+  const currency = String(
+    block.currency
+      ?? block.amount_currency
+      ?? block.total_currency
+      ?? block?.items?.[0]?.currency
+      ?? json.currency
+      ?? ''
+  ).trim().toUpperCase() || null
+
+  const amountCandidates = [
+    block?.items?.[0]?.amount,
+    block.amount,
+    block.total_amount,
+    block.total,
+    block.amount_usd,
+    block.total_usd,
+    json.amount,
+    json.total_amount,
+    json.amount_usd,
+    json.total_usd,
+  ]
+  for (const raw of amountCandidates) {
+    const cents = normalizeAmountToCents(raw)
+    if (cents != null) return { currency, amountCents: cents }
+  }
+  return { currency, amountCents: null }
+}
+
 /**
  * Pedido loja em BRL: mesmo JPY que o Cart.jsx (soma ¥ das linhas × cupom × BRL a pagar após indicação).
  * Evita usar total_amount_usd do Postgres na conversão → Parcelow/Stripe alinhados ao site (spot jpy_usd).
@@ -379,10 +421,21 @@ async function createParcelowOrderCheckout({
   }
 
   const { checkoutUrl, parcelowOrderId } = extractParcelowOrderResponse(createData)
+  const echoed = extractParcelowEchoAmount(createData)
   if (!checkoutUrl) {
     const preview = JSON.stringify(createData).slice(0, 500)
     throw new Error(
       `Parcelow não retornou URL de checkout. Corpo (trecho): ${preview}. Confirme path ${ordersPath} e formato USD com a Parcelow.`
+    )
+  }
+  if (echoed.currency && echoed.currency !== 'USD') {
+    throw new Error(
+      `Parcelow respondeu moeda divergente (${echoed.currency}) para cobrança em USD. Revise mapeamento de conta/path.`
+    )
+  }
+  if (echoed.amountCents != null && Math.abs(echoed.amountCents - amountUsdCents) > 1) {
+    throw new Error(
+      `Parcelow respondeu valor divergente (enviado ${amountUsdCents} cents, retornado ${echoed.amountCents} cents).`
     )
   }
 
@@ -401,6 +454,7 @@ async function createParcelowOrderCheckout({
       wiseMarkupPercent: Number((Number(wiseMarkup) || 0).toFixed(4)),
       usdBrl: Number((Number(rates?.usd_brl) || 0).toFixed(6)),
     },
+    responseEcho: echoed,
     pricingContext: debugContext || null,
   }
   console.info('Parcelow checkout debug', JSON.stringify(debugPayload))
