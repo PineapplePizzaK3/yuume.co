@@ -53,11 +53,22 @@ function extractOrderData(payload) {
 function extractOrderId(payload, orderData) {
   const value = orderData?.order_id
     ?? orderData?.id
+    ?? orderData?.partner_reference
+    ?? orderData?.partnerReference
+    ?? orderData?.reference
     ?? payload?.order_id
     ?? payload?.id
+    ?? payload?.partner_reference
+    ?? payload?.partnerReference
+    ?? payload?.reference
     ?? payload?.data?.order_id
+    ?? payload?.data?.partner_reference
+    ?? payload?.data?.partnerReference
+    ?? payload?.data?.reference
   if (value == null) return null
-  return String(value).trim()
+  const normalized = String(value).trim()
+  const uuidMatch = normalized.match(/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/i)
+  return uuidMatch ? uuidMatch[0] : normalized
 }
 
 function isPaidEvent(eventName, payload, orderData) {

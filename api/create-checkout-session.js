@@ -363,8 +363,10 @@ async function createParcelowOrderCheckout({
   // Parcelow: rota única POST /api/orders; moeda em JSON (currency/items), não mais /api/orders/usd.
   const ordersPath = String(process.env.PARCELOW_ORDERS_PATH || '/api/orders').trim() || '/api/orders'
 
+  const checkoutReference = `order_${String(orderId).slice(0, 12)}_${Date.now()}`
   const payload = {
-    reference: `order_${orderId}`,
+    // Reference único por tentativa evita reuso de checkout antigo no parceiro.
+    reference: checkoutReference,
     partner_reference: String(orderId),
     currency: 'USD',
     client: {
@@ -445,6 +447,8 @@ async function createParcelowOrderCheckout({
     orderId,
     endpoint,
     request: {
+      reference: payload.reference,
+      partnerReference: payload.partner_reference,
       currency: payload.currency,
       itemCurrency: payload.items?.[0]?.currency,
       itemAmountCents: payload.items?.[0]?.amount,
