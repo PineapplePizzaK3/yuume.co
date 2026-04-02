@@ -287,6 +287,7 @@ async function createParcelowOrderCheckout({
   supabase,
   rates,
   wiseMarkup,
+  debugContext,
 }) {
   const cfg = getParcelowClientConfig()
   if (!cfg) {
@@ -386,6 +387,23 @@ async function createParcelowOrderCheckout({
   }
 
   const brlDisplay = amountUsd * (rates.usd_brl || 0)
+  const endpoint = `${parcelowUrlBase}${parcelowPath}`
+  const debugPayload = {
+    orderId,
+    endpoint,
+    request: {
+      currency: payload.currency,
+      itemCurrency: payload.items?.[0]?.currency,
+      itemAmountCents: payload.items?.[0]?.amount,
+      amountUsd: Number(amountUsd.toFixed(4)),
+      remainingJpy: Number(rj.toFixed(2)),
+      jpyUsdSpot: Number((Number(rates?.jpy_usd) || 0).toFixed(8)),
+      wiseMarkupPercent: Number((Number(wiseMarkup) || 0).toFixed(4)),
+      usdBrl: Number((Number(rates?.usd_brl) || 0).toFixed(6)),
+    },
+    pricingContext: debugContext || null,
+  }
+  console.info('Parcelow checkout debug', JSON.stringify(debugPayload))
 
   // Não gravar linha em `payments` ao só abrir o checkout: isso polui histórico e parece
   // "cobrança" antes do cliente pagar. O webhook Parcelow insere/atualiza ao confirmar.
@@ -395,6 +413,7 @@ async function createParcelowOrderCheckout({
     provider: 'parcelow',
     chargeUsd: Number(amountUsd.toFixed(2)),
     approxBrl: Number(brlDisplay.toFixed(2)),
+    debug: debugPayload,
   }
 }
 
@@ -787,6 +806,15 @@ export default async function handler(req, res) {
         supabase,
         rates,
         wiseMarkup,
+        debugContext: {
+          orderSource: order?.order_source || null,
+          totalAmountBrl: Number(order?.total_amount) || 0,
+          totalAmountUsd: Number(order?.total_amount_usd) || 0,
+          chargeJpy: Number(chargeJpy) || 0,
+          walletAppliedExistingJpy: Number(alreadyAppliedJpy) || 0,
+          remainingJpy: Number(remainingJpy) || 0,
+          amountUsdOverride: Number(amountUsdOverride) || 0,
+        },
       })
       return res.status(200).json(parcelowCheckout)
     }
