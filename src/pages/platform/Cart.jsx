@@ -751,8 +751,16 @@ function Cart() {
         await loadPayments()
         return
       }
-      if (result?.url) window.location.href = result.url
-      else setFeedback('Erro ao redirecionar para pagamento.')
+      if (result?.url) {
+        try {
+          if (result?.debug) {
+            sessionStorage.setItem('parcelow_checkout_debug_last', JSON.stringify(result.debug))
+          }
+        } catch {
+          // noop
+        }
+        window.location.href = result.url
+      } else setFeedback('Erro ao redirecionar para pagamento.')
     } catch (err) {
       setFeedback(err.message || 'Erro ao processar pagamento.')
     } finally {

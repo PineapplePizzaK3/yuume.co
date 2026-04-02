@@ -124,6 +124,11 @@ export async function createCheckoutSession(orderId, accessToken) {
   // Marque Preserve log e filtre por create-checkout-session, ou veja o objeto aqui no Console.
   if (data?.debug) {
     console.info('[create-checkout-session] debug (Parcelow):', data.debug)
+    try {
+      console.info('[create-checkout-session] debug JSON:', JSON.stringify(data.debug))
+    } catch {
+      // noop
+    }
   } else if (data?.url && /parcelow/i.test(String(data.url))) {
     console.warn(
       '[create-checkout-session] Resposta Parcelow sem campo `debug`. '
