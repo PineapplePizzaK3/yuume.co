@@ -281,6 +281,7 @@ async function createParcelowOrderCheckout({
   user,
   profile,
   remainingJpy,
+  amountUsdOverride,
   productName,
   baseUrl,
   supabase,
@@ -300,7 +301,11 @@ async function createParcelowOrderCheckout({
     throw new Error('Câmbio indisponível para cobrança Parcelow em USD')
   }
   const rj = Math.max(0, Number(remainingJpy) || 0)
-  const amountUsd = jpyToFinalUsd(rj, rates.jpy_usd, wiseMarkup)
+  const overrideUsd = Number(amountUsdOverride)
+  const amountUsd =
+    Number.isFinite(overrideUsd) && overrideUsd > 0
+      ? overrideUsd
+      : jpyToFinalUsd(rj, rates.jpy_usd, wiseMarkup)
   const amountUsdCents = Math.round(amountUsd * 100)
   if (!Number.isFinite(amountUsdCents) || amountUsdCents <= 0) {
     throw new Error('Valor inválido para criar cobrança Parcelow (USD)')
@@ -762,11 +767,21 @@ export default async function handler(req, res) {
           error: 'Parcelow (USD) indisponível: cotações não carregadas. Use outro método ou aguarde.',
         })
       }
+      const storeUsd = Number(order?.total_amount_usd)
+      const amountUsdOverride =
+        order?.order_source === 'store' &&
+        Number.isFinite(storeUsd) &&
+        storeUsd > 0 &&
+        Number.isFinite(chargeJpy) &&
+        chargeJpy > 0
+          ? storeUsd * (Math.max(0, Number(remainingJpy) || 0) / chargeJpy)
+          : null
       const parcelowCheckout = await createParcelowOrderCheckout({
         orderId,
         user,
         profile,
         remainingJpy,
+        amountUsdOverride,
         productName,
         baseUrl,
         supabase,

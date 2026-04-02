@@ -1063,11 +1063,16 @@ function Cart() {
                 const totalJpy = breakdown.totalJpy
                 const jpyUsdRate = Number(exchangeSnapshot?.jpy_usd_charge ?? exchangeSnapshot?.jpy_usd)
                 const pendingUsd =
-                  Number.isFinite(jpyUsdRate) && jpyUsdRate > 0
-                    ? pendingJpy * jpyUsdRate
-                    : (charge?.chargeUsd != null && Number.isFinite(charge.chargeUsd) && totalJpy > 0
-                        ? charge.chargeUsd * (pendingJpy / totalJpy)
-                        : NaN)
+                  order?.order_source === 'store' &&
+                  Number.isFinite(Number(order?.total_amount_usd)) &&
+                  Number(order?.total_amount_usd) > 0 &&
+                  totalJpy > 0
+                    ? Number(order.total_amount_usd) * (pendingJpy / totalJpy)
+                    : (Number.isFinite(jpyUsdRate) && jpyUsdRate > 0
+                        ? pendingJpy * jpyUsdRate
+                        : (charge?.chargeUsd != null && Number.isFinite(charge.chargeUsd) && totalJpy > 0
+                            ? charge.chargeUsd * (pendingJpy / totalJpy)
+                            : NaN))
                 const alreadyAppliedJpy = Math.max(0, Number(order?.wallet_applied_amount) || 0)
                 return (
                   <div key={order.id} className="rounded-xl border border-earth-200 bg-earth-50 p-4">
@@ -1282,12 +1287,18 @@ function Cart() {
                 const useWallet = !!payModal.useWallet && canUseWallet
                 const ch = getOrderChargeJpy(payModal.order)
                 const jpyUsdRate = Number(exchangeSnapshot?.jpy_usd_charge ?? exchangeSnapshot?.jpy_usd)
+                const storeTotalUsd = Number(payModal.order?.total_amount_usd)
                 const remainingUsdParcelow =
-                  Number.isFinite(jpyUsdRate) && jpyUsdRate > 0
-                    ? remainingJpy * jpyUsdRate
-                    : (ch?.chargeUsd != null && Number.isFinite(ch.chargeUsd) && totalJpy > 0
-                        ? ch.chargeUsd * (remainingJpy / totalJpy)
-                        : null)
+                  payModal.order?.order_source === 'store' &&
+                  Number.isFinite(storeTotalUsd) &&
+                  storeTotalUsd > 0 &&
+                  totalJpy > 0
+                    ? storeTotalUsd * (remainingJpy / totalJpy)
+                    : (Number.isFinite(jpyUsdRate) && jpyUsdRate > 0
+                        ? remainingJpy * jpyUsdRate
+                        : (ch?.chargeUsd != null && Number.isFinite(ch.chargeUsd) && totalJpy > 0
+                            ? ch.chargeUsd * (remainingJpy / totalJpy)
+                            : null))
                 const remainingBrlUi =
                   remainingJpy > 0
                     ? (Number(exchangeSnapshot?.effective_brl_per_jpy) > 0
