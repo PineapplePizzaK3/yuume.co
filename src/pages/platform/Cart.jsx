@@ -560,8 +560,20 @@ function Cart() {
       }
       const totalUsd = Number(order?.total_amount_usd)
       let chargeUsd = null
-      if (order?.order_source === 'store' && Number.isFinite(totalUsd) && totalUsd > 0 && baseBrl > 0) {
-        chargeUsd = totalUsd * (discountedBrl / baseBrl)
+      if (order?.order_source === 'store' && jpy > 0) {
+        const jpyUsd = Number(exchangeSnapshot?.jpy_usd)
+        if (Number.isFinite(jpyUsd) && jpyUsd > 0) {
+          if (Number.isFinite(totalUsd) && totalUsd > 0 && baseBrl > 0) {
+            const amountUsd = totalUsd * (discountedBrl / baseBrl)
+            const usdBasedJpy = Math.round(amountUsd / jpyUsd)
+            if (usdBasedJpy > 0 && jpy / usdBasedJpy < 0.92) {
+              jpy = usdBasedJpy
+            }
+          }
+          chargeUsd = jpy * jpyUsd
+        } else if (Number.isFinite(totalUsd) && totalUsd > 0 && baseBrl > 0) {
+          chargeUsd = totalUsd * (discountedBrl / baseBrl)
+        }
       }
       return { jpy, approxBrl: discountedBrl, chargeUsd, label: payable.label }
     }

@@ -258,14 +258,28 @@ function extractParcelowOrderResponse(json) {
   return { checkoutUrl, parcelowOrderId }
 }
 
+/**
+ * Pedido loja em BRL: mesmo JPY que o Cart.jsx (soma ¥ das linhas × cupom × BRL a pagar após indicação).
+ * Evita usar total_amount_usd do Postgres na conversão → Parcelow/Stripe alinhados ao site (spot jpy_usd).
+ */
+function chargeJpyStoreBrlFromLineItems(order, orderItems, payableBrlAfterReferral) {
+  const postCouponBrl = Number(order.total_amount) || 0
+  const discBrl = Math.max(0, Number(order.discount_amount) || 0)
+  const fullBrl = postCouponBrl + discBrl
+  let sumJpy = 0
+  for (const it of orderItems || []) {
+    sumJpy += Number(it.price_at_purchase) * Number(it.quantity)
+  }
+  if (sumJpy <= 0 || fullBrl <= 0) return null
+  const pay = Math.max(0, Number(payableBrlAfterReferral) || 0)
+  return Math.round(sumJpy * (pay / fullBrl))
+}
+
 async function createParcelowOrderCheckout({
   orderId,
   user,
   profile,
   remainingJpy,
-  remainingUsd,
-  chargeJpyTotal,
-  totalUsdCharge,
   productName,
   baseUrl,
   supabase,
@@ -283,17 +297,8 @@ async function createParcelowOrderCheckout({
   if (!rates?.jpy_usd || !rates?.usd_brl) {
     throw new Error('Câmbio indisponível para cobrança Parcelow em USD')
   }
-  let amountUsd = Number(remainingUsd)
-  if (!Number.isFinite(amountUsd) || amountUsd <= 0) {
-    const rj = Number(remainingJpy) || 0
-    const cj = Number(chargeJpyTotal) || 0
-    const tu = Number(totalUsdCharge)
-    if (rj > 0 && cj > 0 && Number.isFinite(tu) && tu > 0) {
-      amountUsd = (rj / cj) * tu
-    } else {
-      amountUsd = jpyToFinalUsd(rj, rates.jpy_usd)
-    }
-  }
+  const rj = Math.max(0, Number(remainingJpy) || 0)
+  const amountUsd = jpyToFinalUsd(rj, rates.jpy_usd)
   const amountUsdCents = Math.round(amountUsd * 100)
   if (!Number.isFinite(amountUsdCents) || amountUsdCents <= 0) {
     throw new Error('Valor inválido para criar cobrança Parcelow (USD)')
@@ -562,7 +567,7 @@ export default async function handler(req, res) {
 
     const { data: orderBase, error: orderError } = await supabase
       .from('orders')
-      .select('id, user_id, status, shipping_cost, shipping_currency, quote_amount, quote_currency, total_amount, total_amount_usd, wallet_applied_amount, order_source, ship_immediately, acquisition_mode, referral_discount_amount, affiliate_id, referral_id')
+      .select('id, user_id, status, shipping_cost, shipping_currency, quote_amount, quote_currency, total_amount, total_amount_usd, discount_amount, wallet_applied_amount, order_source, ship_immediately, acquisition_mode, referral_discount_amount, affiliate_id, referral_id')
       .eq('id', orderId)
       .single()
 
@@ -597,7 +602,7 @@ export default async function handler(req, res) {
 
     const { data: order } = await supabase
       .from('orders')
-      .select('id, user_id, status, shipping_cost, shipping_currency, quote_amount, quote_currency, total_amount, total_amount_usd, wallet_applied_amount, order_source, ship_immediately, acquisition_mode, referral_discount_amount, affiliate_id, referral_id')
+      .select('id, user_id, status, shipping_cost, shipping_currency, quote_amount, quote_currency, total_amount, total_amount_usd, discount_amount, wallet_applied_amount, order_source, ship_immediately, acquisition_mode, referral_discount_amount, affiliate_id, referral_id')
       .eq('id', orderId)
       .single()
 
@@ -649,33 +654,45 @@ export default async function handler(req, res) {
     }
 
     let chargeJpy = 0
-    let totalUsdCharge = null
     const storeUsd = Number(order.total_amount_usd)
-    if (
-      order.order_source === 'store'
-      && Number.isFinite(storeUsd)
-      && storeUsd > 0
-      && rates?.jpy_usd
-      && rates?.usd_brl
-    ) {
-      let amountUsd = storeUsd
-      if (
-        origBrlStore != null
-        && origBrlStore > 0
-        && Number(amount) !== origBrlStore
-      ) {
-        amountUsd = storeUsd * (Number(amount) / origBrlStore)
+    if (order.order_source === 'store' && currency === 'brl' && rates?.jpy_usd && rates?.usd_brl) {
+      const { data: oiRows } = await supabase
+        .from('order_items')
+        .select('quantity, price_at_purchase')
+        .eq('order_id', orderId)
+
+      const lineChargeJpy = chargeJpyStoreBrlFromLineItems(order, oiRows || [], amount)
+      let usdBasedJpy = null
+      if (Number.isFinite(storeUsd) && storeUsd > 0) {
+        let amountUsd = storeUsd
+        if (
+          origBrlStore != null
+          && origBrlStore > 0
+          && Number(amount) !== origBrlStore
+        ) {
+          amountUsd = storeUsd * (Number(amount) / origBrlStore)
+        }
+        usdBasedJpy = Math.round(jpyEquivalentFromFinalUsd(amountUsd, rates.jpy_usd))
       }
-      totalUsdCharge = amountUsd
-      chargeJpy = jpyEquivalentFromFinalUsd(amountUsd, rates.jpy_usd)
-    } else if (order.order_source === 'store') {
+      // Grupo de compras: taxa em BRL não vira linha em order_items → soma ¥ só de produtos subestima.
+      if (lineChargeJpy != null && usdBasedJpy != null && usdBasedJpy > 0) {
+        const ratio = lineChargeJpy / usdBasedJpy
+        chargeJpy = ratio < 0.92 ? usdBasedJpy : lineChargeJpy
+      } else if (lineChargeJpy != null) {
+        chargeJpy = lineChargeJpy
+      } else if (usdBasedJpy != null) {
+        chargeJpy = usdBasedJpy
+      }
+    }
+
+    if (order.order_source === 'store' && (!chargeJpy || chargeJpy <= 0)) {
       if (!rates?.jpy_usd || !rates?.usd_brl) {
         return res.status(503).json({
           error: 'Câmbio indisponível para calcular o pedido da loja. Aguarde ou configure FALLBACK_FX_JPY_USD / FALLBACK_FX_USD_BRL.',
         })
       }
       chargeJpy = toChargeAmountJpyFromRates(amount, currency, rates)
-    } else {
+    } else if (order.order_source !== 'store') {
       if (currency === 'brl' && (!rates?.jpy_usd || !rates?.usd_brl)) {
         return res.status(503).json({
           error: 'Câmbio indisponível para valores em BRL. Aguarde ou configure FALLBACK_FX_*.',
@@ -791,8 +808,6 @@ export default async function handler(req, res) {
         user,
         profile,
         remainingJpy,
-        chargeJpyTotal: chargeJpy,
-        totalUsdCharge,
         productName,
         baseUrl,
         supabase,
