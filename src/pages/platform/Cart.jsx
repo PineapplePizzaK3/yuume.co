@@ -594,7 +594,8 @@ function Cart() {
     if (currency === 'BRL') {
       const baseBrl = Number(payable.amount) || 0
       const orderItems = order?.order_items
-      let jpy
+      const brlBasedJpy = Math.round(baseBrl / effBrlPerJpy)
+      let lineBasedJpy = null
       if (
         order?.order_source === 'store'
         && Array.isArray(orderItems)
@@ -607,31 +608,40 @@ function Cart() {
         }, 0)
         const fullBrl = baseBrl + (Number(order.discount_amount) || 0)
         if (itemsJpySum > 0 && fullBrl > 0) {
-          jpy = Math.round(itemsJpySum * (baseBrl / fullBrl))
-        } else {
-          jpy = Math.round(baseBrl / effBrlPerJpy)
+          lineBasedJpy = Math.round(itemsJpySum * (baseBrl / fullBrl))
         }
-      } else {
-        jpy = Math.round(baseBrl / effBrlPerJpy)
       }
+      let jpy = brlBasedJpy
       const totalUsd = Number(order?.total_amount_usd)
       let chargeUsd = null
       if (order?.order_source === 'store' && jpy > 0) {
         const jpyUsd = Number(
           exchangeSnapshot?.jpy_usd_charge ?? exchangeSnapshot?.jpy_usd
         )
+        let usdBasedJpy = null
         if (Number.isFinite(jpyUsd) && jpyUsd > 0) {
           if (Number.isFinite(totalUsd) && totalUsd > 0 && baseBrl > 0) {
             const amountUsd = totalUsd
-            const usdBasedJpy = Math.round(amountUsd / jpyUsd)
-            if (usdBasedJpy > 0 && jpy / usdBasedJpy < 0.92) {
-              jpy = usdBasedJpy
-            }
+            usdBasedJpy = Math.round(amountUsd / jpyUsd)
+          }
+          const candidates = [brlBasedJpy, lineBasedJpy, usdBasedJpy]
+            .map((n) => Number(n))
+            .filter((n) => Number.isFinite(n) && n > 0)
+          if (candidates.length > 0) {
+            jpy = Math.max(...candidates)
           }
           chargeUsd = jpy * jpyUsd
         } else if (Number.isFinite(totalUsd) && totalUsd > 0 && baseBrl > 0) {
           chargeUsd = totalUsd
+          const candidates = [brlBasedJpy, lineBasedJpy]
+            .map((n) => Number(n))
+            .filter((n) => Number.isFinite(n) && n > 0)
+          if (candidates.length > 0) {
+            jpy = Math.max(...candidates)
+          }
         }
+      } else if (lineBasedJpy != null && lineBasedJpy > jpy) {
+        jpy = lineBasedJpy
       }
       return { jpy, approxBrl: baseBrl, chargeUsd, label: payable.label }
     }

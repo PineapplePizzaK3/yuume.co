@@ -382,16 +382,8 @@ async function createParcelowOrderCheckout({
 
   const brlDisplay = amountUsd * (rates.usd_brl || 0)
 
-  // Registro pendente para rastreio local antes do webhook.
-  if (supabase) {
-    await supabase.from('payments').insert({
-      order_id: orderId,
-      stripe_payment_id: parcelowOrderId ? `parcelow_order_${parcelowOrderId}` : `parcelow_order_${orderId}`,
-      status: 'pending',
-      amount: Number(amountUsd.toFixed(2)),
-      currency: 'USD',
-    }).then(() => null).catch(() => null)
-  }
+  // Não gravar linha em `payments` ao só abrir o checkout: isso polui histórico e parece
+  // "cobrança" antes do cliente pagar. O webhook Parcelow insere/atualiza ao confirmar.
 
   return {
     url: checkoutUrl,
@@ -641,14 +633,14 @@ export default async function handler(req, res) {
         }
         usdBasedJpy = Math.round(jpyEquivalentFromFinalUsd(amountUsd, rates.jpy_usd, wiseMarkup))
       }
-      // Grupo de compras: taxa em BRL não vira linha em order_items → soma ¥ só de produtos subestima.
-      if (lineChargeJpy != null && usdBasedJpy != null && usdBasedJpy > 0) {
-        const ratio = lineChargeJpy / usdBasedJpy
-        chargeJpy = ratio < 0.92 ? usdBasedJpy : lineChargeJpy
-      } else if (lineChargeJpy != null) {
-        chargeJpy = lineChargeJpy
-      } else if (usdBasedJpy != null) {
-        chargeJpy = usdBasedJpy
+      const brlBasedJpy = Math.round(toChargeAmountJpyFromRates(amount, currency, rates, wiseMarkup))
+      // Ordem de segurança: nunca subcobrar quando order_items vier sem taxas/itens completos.
+      // Ex.: grupo de compras/taxas em BRL podem não virar linha no order_items.
+      const candidates = [lineChargeJpy, usdBasedJpy, brlBasedJpy]
+        .map((n) => Number(n))
+        .filter((n) => Number.isFinite(n) && n > 0)
+      if (candidates.length > 0) {
+        chargeJpy = Math.max(...candidates)
       }
     }
 
