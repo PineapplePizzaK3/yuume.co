@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import { ensureInvoiceForPaidOrder } from './lib/invoiceGenerator.js'
+import { ensureInvoiceForPaidOrder } from '../server-lib/invoiceGenerator.js'
 
 function getSupabaseAdmin() {
   const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL

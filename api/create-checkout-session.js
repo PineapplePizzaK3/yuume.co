@@ -4,17 +4,17 @@
  */
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
-import { getExchangeRates } from './lib/exchangeRateService.js'
+import { getExchangeRates } from '../server-lib/exchangeRateService.js'
 import {
   getPricingPercentsFromEnv,
   pricingMultiplierFromPercents,
   jpyToFinalUsd,
   brlToJpyViaUsdPipeline,
   jpyEquivalentFromFinalUsd,
-} from './lib/pricingEngine.js'
-import { ensureInvoiceForPaidOrder } from './lib/invoiceGenerator.js'
-import { handleExchangeRatesGet } from './lib/exchangeRatesHttp.js'
-import { handleCronRefreshExchangeRates } from './lib/cronRefreshHttp.js'
+} from '../server-lib/pricingEngine.js'
+import { ensureInvoiceForPaidOrder } from '../server-lib/invoiceGenerator.js'
+import { handleExchangeRatesGet } from '../server-lib/exchangeRatesHttp.js'
+import { handleCronRefreshExchangeRates } from '../server-lib/cronRefreshHttp.js'
 
 const REQUEST_WINDOW_MS = 60 * 1000
 const MAX_REQUESTS_PER_WINDOW = 20

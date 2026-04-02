@@ -6,7 +6,7 @@
  * GET /api/invoices?orderId=<uuid>&format=pdf — download PDF por pedido.
  */
 import { createClient } from '@supabase/supabase-js'
-import { buildInvoicePdfBuffer } from './lib/invoicePdf.js'
+import { buildInvoicePdfBuffer } from '../server-lib/invoicePdf.js'
 
 function getSupabaseAdmin() {
   const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
