@@ -349,11 +349,11 @@ async function createParcelowOrderCheckout({
     Number.isFinite(overrideUsd) && overrideUsd > 0
       ? overrideUsd
       : jpyToFinalUsd(rj, rates.jpy_usd, wiseMarkup)
-  const amountMode = String(process.env.PARCELOW_USD_AMOUNT_MODE || 'brl_cents').trim().toLowerCase()
+  const amountMode = String(process.env.PARCELOW_USD_AMOUNT_MODE || 'usd_cents').trim().toLowerCase()
   const amountUsdCents = Math.round(amountUsd * 100)
   const amountBrlCents = Math.round(amountUsd * (Number(rates.usd_brl) || 0) * 100)
-  // Em algumas contas Parcelow, o campo amount é interpretado como centavos de BRL mesmo com currency=USD.
-  // Defaultamos para brl_cents para evitar subcobrança (ex.: 94.74 -> 18.34).
+  // Padrão: enviar centavos em USD reais. Use brl_cents apenas se a conta Parcelow
+  // estiver configurada para interpretar amount em base BRL.
   const parcelowAmountCents = amountMode === 'usd_cents' ? amountUsdCents : amountBrlCents
   if (!Number.isFinite(parcelowAmountCents) || parcelowAmountCents <= 0) {
     throw new Error('Valor inválido para criar cobrança Parcelow (USD)')

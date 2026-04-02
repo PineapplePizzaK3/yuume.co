@@ -1313,7 +1313,6 @@ function Cart() {
                         ? remainingJpy * Number(exchangeSnapshot.effective_brl_per_jpy)
                         : jpyToBrl(remainingJpy))
                     : 0
-
                 return (
                   <div className="mt-4 space-y-4">
                     <div className="rounded-lg border border-earth-200 bg-earth-50 p-4 space-y-2">
