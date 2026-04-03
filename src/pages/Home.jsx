@@ -12,7 +12,7 @@ const stepFinalizarPedido = '/home/step-finalizar-pedido.png'
 /** Hero da primeira seção: uma variante por refresh (full page load). */
 const HERO_VARIANTS = [
   { src: '/voando.png?v=2', alt: 'Apresentação da loja' },
-  { src: '/home/hero-cloud-br.png?v=2', alt: 'Entrega rápida — ilustração da loja' },
+  { src: '/home/hero-cloud-br.png?v=3', alt: 'Entrega rápida — ilustração da loja' },
 ]
 
 /**
