@@ -11,9 +11,17 @@ import { createCheckoutSession } from '../../services/paymentService'
 import { getWallet } from '../../services/walletService'
 import { cacheKey, readCache, writeCache } from '../../lib/cache'
 import { brlToJpy, formatBRL, formatJPY, jpyToBrl } from '../../lib/fx'
+import { TriCurrencyDisplay } from '../../components/TriCurrencyDisplay'
 import QuoteProductsList from '../../components/QuoteProductsList'
 import OrderAttachments from '../../components/OrderAttachments'
 import { downloadInvoicePdfByOrder, getInvoiceByOrder } from '../../services/invoiceService'
+import { parseQuoteMessage } from '../../lib/quoteProducts'
+import {
+  SERVICE_FEE_JPY_PER_ITEM,
+  REDIR_ASSISTIDO_FEE_PERCENT,
+  PERSONAL_SHOPPING_FEE_PERCENT,
+  computeRedirecionamentoPadraoFeeJpy,
+} from '../../data/serviceFees'
 
 const ORDERS_PAGE_SIZE = 12
 const ORDER_FILTERS = {
@@ -209,6 +217,57 @@ export default function Orders() {
     return { amountJpy: roundedJpy, approxBrl: jpyToBrl(roundedJpy), label: p.label }
   }
 
+  const toTriValues = (order, amount, currency = 'JPY') => {
+    const n = Number(amount)
+    if (!Number.isFinite(n) || n <= 0) return null
+
+    const totalBrl = Number(order?.total_amount)
+    const totalUsd = Number(order?.total_amount_usd)
+    const hasStoreRefs =
+      order?.order_source === 'store' &&
+      Number.isFinite(totalBrl) &&
+      totalBrl > 0 &&
+      Number.isFinite(totalUsd) &&
+      totalUsd > 0
+
+    const cur = String(currency || 'JPY').toUpperCase()
+    if (cur === 'BRL') {
+      const brl = n
+      const jpy = Math.round(brlToJpy(brl))
+      const usd = hasStoreRefs ? totalUsd * (brl / totalBrl) : NaN
+      return { brl, jpy, usd }
+    }
+    if (cur === 'USD') {
+      const usd = n
+      if (!hasStoreRefs) return { brl: NaN, jpy: NaN, usd }
+      const brl = totalBrl * (usd / totalUsd)
+      const jpy = Math.round(brlToJpy(brl))
+      return { brl, jpy, usd }
+    }
+
+    const jpy = Math.round(n)
+    const brl = jpyToBrl(jpy)
+    const usd = hasStoreRefs ? totalUsd * (brl / totalBrl) : NaN
+    return { brl, jpy, usd }
+  }
+
+  const getChargeTriValues = (order) => {
+    const payable = getPayableAmount(order)
+    if (!payable) return null
+    const effectivePayable =
+      payable.label === 'Orçamento'
+        ? (getDisplayedOrderTotal(order) ?? payable)
+        : payable
+    const tri = toTriValues(order, effectivePayable.amount, effectivePayable.currency || 'JPY')
+    if (!tri) return null
+    return {
+      label: effectivePayable.label,
+      brl: tri.brl,
+      jpy: tri.jpy,
+      usd: tri.usd,
+    }
+  }
+
   const shouldShowEditDelete = (order) => {
     // Após pagamento, removemos os botões (pedido entra em execução operacional).
     return !['paid', 'products_paid', 'shipped', 'completed'].includes(order.status)
@@ -306,6 +365,58 @@ export default function Orders() {
   const formatByCurrency = (value, currency = 'JPY') => {
     const normalized = String(currency || 'JPY').toUpperCase()
     return normalized === 'BRL' ? formatBRL(value) : formatJPY(value)
+  }
+
+  const getQuoteGrandTotalFromMessage = (order) => {
+    const parsed = parseQuoteMessage(order?.message)
+    const products = parsed?.products
+    if (!Array.isArray(products) || products.length === 0) return null
+
+    const baseTotal = products.reduce((sum, p) => {
+      const value = Number(p?.valor) || 0
+      const qty = Math.max(1, parseInt(p?.quantidade, 10) || 1)
+      return sum + value * qty
+    }, 0)
+
+    const totalItems = products.reduce(
+      (sum, p) => sum + Math.max(1, parseInt(p?.quantidade, 10) || 1),
+      0
+    )
+    const isAssistedBuy = order?.order_module === 'assisted_buy' || order?.order_module === 'redir-assistido'
+    const servicePercent = isAssistedBuy ? REDIR_ASSISTIDO_FEE_PERCENT : PERSONAL_SHOPPING_FEE_PERCENT
+    const serviceFeePercent = Math.round(baseTotal * (servicePercent / 100))
+    const serviceFeeFixed = isAssistedBuy
+      ? computeRedirecionamentoPadraoFeeJpy(totalItems)
+      : SERVICE_FEE_JPY_PER_ITEM * totalItems
+
+    const grandTotal = baseTotal + serviceFeePercent + serviceFeeFixed
+    return Number.isFinite(grandTotal) && grandTotal > 0 ? grandTotal : null
+  }
+
+  const getDisplayedOrderTotal = (order) => {
+    const quoteGrandTotal = getQuoteGrandTotalFromMessage(order)
+    if (quoteGrandTotal != null) {
+      return {
+        amount: quoteGrandTotal,
+        currency: order.quote_currency || 'JPY',
+        label: 'Total (orçamento)',
+      }
+    }
+    if (order?.quote_amount != null && Number(order.quote_amount) > 0) {
+      return {
+        amount: Number(order.quote_amount),
+        currency: order.quote_currency || 'JPY',
+        label: 'Total (orçamento)',
+      }
+    }
+    if (order?.total_amount != null && Number(order.total_amount) > 0) {
+      return {
+        amount: Number(order.total_amount),
+        currency: 'BRL',
+        label: 'Total',
+      }
+    }
+    return null
   }
 
   const getRequestedItemsCurrency = (order) => {
@@ -484,11 +595,12 @@ export default function Orders() {
                         </div>
                         {(() => {
                           const items = getRequestedItems(o)
+                          const displayedTotal = getDisplayedOrderTotal(o)
                           if (items.length === 0) {
                             return (
                               <p className="text-sm text-earth-600">
-                                {Number(o.total_amount) > 0
-                                  ? `Total: ${formatBRL(o.total_amount)}`
+                                {displayedTotal
+                                  ? `${displayedTotal.label}: ${formatByCurrency(displayedTotal.amount, displayedTotal.currency)}`
                                   : 'Itens do pedido indisponíveis no momento.'}
                               </p>
                             )
@@ -522,10 +634,12 @@ export default function Orders() {
                                 ))}
                               </ul>
                               <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
-                                {o.total_amount != null && Number(o.total_amount) > 0 && (
+                                {displayedTotal && (
                                   <p>
                                     <span className="text-earth-600">Total: </span>
-                                    <span className="font-semibold text-earth-900">{formatBRL(o.total_amount)}</span>
+                                    <span className="font-semibold text-earth-900">
+                                      {formatByCurrency(displayedTotal.amount, displayedTotal.currency)}
+                                    </span>
                                   </p>
                                 )}
                                 {o.discount_amount != null && Number(o.discount_amount) > 0 && (
@@ -557,15 +671,16 @@ export default function Orders() {
                       <OrderAttachments urls={o.attachment_urls} />
                     )}
                     {(() => {
-                      const c = getChargeJpy(o)
-                      return c && (
+                      const tri = getChargeTriValues(o)
+                      return tri && (
                         <div className="mt-2">
-                          <p className="text-lg font-semibold text-earth-900">
-                            {c.label}: {formatJPY(c.amountJpy)}
-                          </p>
-                          <p className="text-xs text-earth-600">
-                            Aproximado em BRL: {formatBRL(c.approxBrl)}
-                          </p>
+                          <p className="mb-1 text-sm font-semibold text-earth-800">{tri.label}</p>
+                          <TriCurrencyDisplay
+                            brl={tri.brl}
+                            jpy={tri.jpy}
+                            usd={tri.usd}
+                            variant="compact"
+                          />
                         </div>
                       )
                     })()}
@@ -738,23 +853,38 @@ export default function Orders() {
                       <span className="text-sm text-earth-700">Frete cobrado em etapa separada (armazenagem)</span>
                     )}
                   </div>
-                  {detailsModal.order.total_amount != null && Number(detailsModal.order.total_amount) > 0 && (
-                    <p className="mt-2 text-sm text-earth-800">
-                      <span className="text-earth-600">Total do pedido (produtos): </span>
-                      <span className="font-semibold">{formatBRL(detailsModal.order.total_amount)}</span>
+                  {getDisplayedOrderTotal(detailsModal.order) && (
+                    <div className="mt-2">
+                      <p className="mb-1 text-sm text-earth-600">
+                        {getDisplayedOrderTotal(detailsModal.order)?.label === 'Total (orçamento)'
+                          ? 'Total do pedido (orçamento):'
+                          : 'Total do pedido (produtos):'}
+                      </p>
+                      {(() => {
+                        const displayedTotal = getDisplayedOrderTotal(detailsModal.order)
+                        if (!displayedTotal) return null
+                        const tri = toTriValues(detailsModal.order, displayedTotal.amount, displayedTotal.currency)
+                        if (!tri) return null
+                        return <TriCurrencyDisplay brl={tri.brl} jpy={tri.jpy} usd={tri.usd} variant="compact" />
+                      })()}
                       {detailsModal.order.discount_amount != null &&
                         Number(detailsModal.order.discount_amount) > 0 && (
-                          <span className="ml-2 text-green-700">
-                            (−{formatBRL(detailsModal.order.discount_amount)} desconto)
-                          </span>
+                          <p className="mt-1 text-sm text-green-700">
+                            Desconto: −{formatBRL(detailsModal.order.discount_amount)}
+                          </p>
                         )}
-                    </p>
+                    </div>
                   )}
                   {detailsModal.order.wallet_applied_amount != null &&
                     Number(detailsModal.order.wallet_applied_amount) > 0 && (
-                      <p className="mt-1 text-sm text-earth-700">
-                        Carteira aplicada: {formatJPY(detailsModal.order.wallet_applied_amount)}
-                      </p>
+                      <div className="mt-2">
+                        <p className="mb-1 text-sm text-earth-700">Carteira aplicada:</p>
+                        {(() => {
+                          const tri = toTriValues(detailsModal.order, detailsModal.order.wallet_applied_amount, 'JPY')
+                          if (!tri) return null
+                          return <TriCurrencyDisplay brl={tri.brl} jpy={tri.jpy} usd={tri.usd} variant="compact" />
+                        })()}
+                      </div>
                     )}
                 </div>
               )}
@@ -873,20 +1003,30 @@ export default function Orders() {
                   <OrderAttachments urls={detailsModal.order.attachment_urls} />
                 </div>
               )}
-              {detailsModal.order.quote_amount != null && (
+              {getDisplayedOrderTotal(detailsModal.order)?.label === 'Total (orçamento)' && (
                 <div>
                   <p className="text-xs font-medium uppercase tracking-wide text-earth-500">Orçamento total</p>
-                  <p className="text-sm font-medium text-earth-800">
-                    {formatByCurrency(detailsModal.order.quote_amount, detailsModal.order.quote_currency || 'JPY')}
-                  </p>
+                  {(() => {
+                    const displayedTotal = getDisplayedOrderTotal(detailsModal.order)
+                    if (!displayedTotal) return <p className="text-sm text-earth-700">—</p>
+                    const tri = toTriValues(detailsModal.order, displayedTotal.amount, displayedTotal.currency)
+                    if (!tri) return <p className="text-sm text-earth-700">—</p>
+                    return <TriCurrencyDisplay brl={tri.brl} jpy={tri.jpy} usd={tri.usd} variant="compact" />
+                  })()}
                 </div>
               )}
               {detailsModal.order.shipping_cost != null && (
                 <div>
                   <p className="text-xs font-medium uppercase tracking-wide text-earth-500">Frete</p>
-                  <p className="text-sm text-earth-800">
-                    {formatByCurrency(detailsModal.order.shipping_cost, detailsModal.order.shipping_currency || 'JPY')}
-                  </p>
+                  {(() => {
+                    const tri = toTriValues(
+                      detailsModal.order,
+                      detailsModal.order.shipping_cost,
+                      detailsModal.order.shipping_currency || 'JPY'
+                    )
+                    if (!tri) return <p className="text-sm text-earth-700">—</p>
+                    return <TriCurrencyDisplay brl={tri.brl} jpy={tri.jpy} usd={tri.usd} variant="compact" />
+                  })()}
                 </div>
               )}
             </div>

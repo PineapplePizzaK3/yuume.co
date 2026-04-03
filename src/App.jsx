@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import WhatsAppFloating from './components/WhatsAppFloating'
+import CookieConsentBanner from './components/CookieConsentBanner'
 import { recordAffiliateClick } from './services/affiliateService'
 const Home = lazy(() => import('./pages/Home'))
 const Contact = lazy(() => import('./pages/Contact'))
@@ -172,6 +173,7 @@ function App() {
         </Suspense>
       </main>
       <Footer />
+      <CookieConsentBanner />
       <WhatsAppFloating />
     </div>
   )
