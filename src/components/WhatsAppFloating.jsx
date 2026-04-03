@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useLocation } from 'react-router-dom'
+import { createPortal } from 'react-dom'
 import { CONTATOS_DIRETOS } from '../data/contatoDireto'
 
 const FAB_SIZE = 56
@@ -41,7 +41,6 @@ function getBottomRightDefault() {
  */
 function WhatsAppFloating() {
   const whatsapp = CONTATOS_DIRETOS.find((c) => c.nome === 'WhatsApp')
-  const location = useLocation()
   const [position, setPosition] = useState(() => {
     if (typeof window === 'undefined') return { x: 0, y: 0 }
     return getBottomRightDefault()
@@ -79,22 +78,16 @@ function WhatsAppFloating() {
   }, [])
 
   useEffect(() => {
-    try {
-      if (localStorage.getItem(STORAGE_KEY)) return
-      const place = () => setPosition(getBottomRightDefault())
-      place()
-      requestAnimationFrame(() => requestAnimationFrame(place))
-    } catch {
-      // ignore
-    }
-  }, [location.pathname])
-
-  useEffect(() => {
     const onResize = () => {
       setPosition((prev) => clampPosition(prev.x, prev.y))
     }
     window.addEventListener('resize', onResize)
-    return () => window.removeEventListener('resize', onResize)
+    const vv = window.visualViewport
+    if (vv) vv.addEventListener('resize', onResize)
+    return () => {
+      window.removeEventListener('resize', onResize)
+      if (vv) vv.removeEventListener('resize', onResize)
+    }
   }, [])
 
   if (!whatsapp) return null
@@ -131,10 +124,12 @@ function WhatsAppFloating() {
     if (dragDataRef.current.pointerId !== event.pointerId) return
     const finalPosition = clampPosition(positionRef.current.x, positionRef.current.y)
     setPosition(finalPosition)
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(finalPosition))
-    } catch {
-      // ignore
+    if (dragDataRef.current.dragged) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(finalPosition))
+      } catch {
+        // ignore
+      }
     }
     dragDataRef.current.pointerId = null
     setTimeout(() => {
@@ -142,12 +137,12 @@ function WhatsAppFloating() {
     }, 0)
   }
 
-  return (
+  const fab = (
     <a
       href={whatsapp.url}
       target="_blank"
       rel="noopener noreferrer"
-      className="fixed z-[60] flex h-14 w-14 cursor-grab items-center justify-center rounded-full bg-[#25D366] text-white shadow-lg transition hover:scale-105 hover:bg-[#20BD5A] hover:shadow-xl active:cursor-grabbing"
+      className="fixed z-[60] flex h-14 w-14 cursor-grab items-center justify-center rounded-full bg-[#25D366] text-white shadow-lg transition-[transform,box-shadow,background-color] hover:scale-105 hover:bg-[#20BD5A] hover:shadow-xl active:cursor-grabbing"
       style={{ left: `${position.x}px`, top: `${position.y}px`, touchAction: 'none' }}
       aria-label="Chamar no WhatsApp"
       title={whatsapp.texto}
@@ -170,6 +165,8 @@ function WhatsAppFloating() {
       </svg>
     </a>
   )
+
+  return typeof document !== 'undefined' ? createPortal(fab, document.body) : null
 }
 
 export default WhatsAppFloating
