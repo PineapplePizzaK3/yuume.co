@@ -98,7 +98,31 @@ export function TermsOfUsePtBrBody({ cfg, compact = false }) {
         <P>Os detalhes das taxas são exibidos na página de cada serviço.</P>
       </LegalSection>
 
-      <LegalSection title="Art. 6º (Produtos proibidos)" compact={compact}>
+      <LegalSection title="Art. 6º (Recebimento, conferência e armazenamento)" compact={compact}>
+        <P>
+          Após o recebimento dos itens no Japão, o {c.BUSINESS_NAME} realiza conferência visual limitada conforme estes
+          Termos e procede ao armazenamento.
+        </P>
+        <P>
+          O armazenamento gratuito é de <strong>60 dias corridos</strong> a partir da data em que o item é recebido e
+          registrado na plataforma, em <strong>qualquer modalidade de serviço</strong> (Redirecionamento de Compras,
+          Redirecionamento Assistido, Personal Shopping, Grupos de Compras e Loja).
+        </P>
+        <P>
+          Após o término desse período, será cobrada taxa de <strong>JPY 50 por item/dia</strong> (ou valor vigente na
+          tabela pública da plataforma), até que o cliente solicite o envio e seja concluído o pagamento necessário para
+          postagem.
+        </P>
+        <P>
+          O {c.BUSINESS_NAME} poderá abrir embalagens externas para conferência e otimização do armazenamento, salvo
+          solicitação prévia expressa do cliente em sentido contrário.
+        </P>
+        <P>
+          O {c.BUSINESS_NAME} não se responsabiliza por erro de endereço preenchido pelo cliente junto ao fornecedor.
+        </P>
+      </LegalSection>
+
+      <LegalSection title="Art. 7º (Produtos proibidos)" compact={compact}>
         <P>Os seguintes produtos não podem ser tratados:</P>
         <Ul
           items={[
@@ -112,7 +136,7 @@ export function TermsOfUsePtBrBody({ cfg, compact = false }) {
         <P>O Serviço pode recusar outros produtos que considerar inadequados.</P>
       </LegalSection>
 
-      <LegalSection title="Art. 7º (Envio)" compact={compact}>
+      <LegalSection title="Art. 8º (Envio)" compact={compact}>
         <P>Os produtos são enviados para o endereço indicado pelo usuário.</P>
         <P>
           Atrasos no envio, desembaraço aduaneiro e impostos de importação dependem da transportadora e das regulamentações
@@ -121,12 +145,12 @@ export function TermsOfUsePtBrBody({ cfg, compact = false }) {
         <P>O usuário é responsável por arcar com impostos de importação e tarifas.</P>
       </LegalSection>
 
-      <LegalSection title="Art. 8º (Devolução e cancelamento)" compact={compact}>
+      <LegalSection title="Art. 9º (Devolução e cancelamento)" compact={compact}>
         <P>Devido à natureza dos produtos, o cancelamento após a confirmação do pedido não é aceito em princípio.</P>
         <P>Devoluções e reembolsos são tratados conforme a política do vendedor e as circunstâncias.</P>
       </LegalSection>
 
-      <LegalSection title="Art. 9º (Limitação de responsabilidade)" compact={compact}>
+      <LegalSection title="Art. 10º (Limitação de responsabilidade)" compact={compact}>
         <P>O Serviço não se responsabiliza por:</P>
         <Ul
           items={[
@@ -139,16 +163,16 @@ export function TermsOfUsePtBrBody({ cfg, compact = false }) {
         <P>A responsabilidade do Serviço limita-se ao permitido por lei.</P>
       </LegalSection>
 
-      <LegalSection title="Art. 10º (Alterações no serviço)" compact={compact}>
+      <LegalSection title="Art. 11º (Alterações no serviço)" compact={compact}>
         <P>O Serviço pode alterar ou interromper o conteúdo do serviço sem aviso prévio.</P>
       </LegalSection>
 
-      <LegalSection title="Art. 11º (Alterações nos Termos)" compact={compact}>
+      <LegalSection title="Art. 12º (Alterações nos Termos)" compact={compact}>
         <P>O Serviço pode alterar estes Termos quando necessário.</P>
         <P>Os Termos alterados entram em vigor a partir da publicação no site.</P>
       </LegalSection>
 
-      <LegalSection title="Art. 12º (Lei aplicável)" compact={compact}>
+      <LegalSection title="Art. 13º (Lei aplicável)" compact={compact}>
         <P>Estes Termos são interpretados conforme a lei japonesa.</P>
         <P>Disputas relacionadas ao Serviço serão submetidas exclusivamente aos tribunais do Japão.</P>
       </LegalSection>

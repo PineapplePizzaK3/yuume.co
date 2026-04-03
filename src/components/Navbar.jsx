@@ -9,7 +9,7 @@ import { useAuth } from '../hooks/useAuth'
  * Responsiva: menu hamburger no mobile, links completos no desktop.
  */
 function Navbar() {
-  const { isAuthenticated, user, profile } = useAuth()
+  const { isAuthenticated, user, profile, signOut } = useAuth()
   const [menuAberto, setMenuAberto] = useState(false)
   const location = useLocation()
 
@@ -63,7 +63,7 @@ function Navbar() {
               to="/faq"
               className={isAtivo('/faq', false) ? linkAtivo : linkNormal}
             >
-              FAQ
+              Dúvidas
             </Link>
             <Link
               to="/contact"
@@ -120,15 +120,38 @@ function Navbar() {
           {/* Ação do usuário no mobile (sempre visível no header) */}
           <div className="flex items-center gap-2 lg:hidden">
             {isAuthenticated ? (
-              <Link
-                to="/app/dashboard"
-                className="inline-flex items-center justify-center gap-2 rounded-lg bg-earth-800 px-3 py-2 text-sm font-medium text-earth-50 transition hover:bg-earth-700"
-              >
-                <span className="h-2 w-2 rounded-full bg-green-400" aria-hidden />
-                <span className="max-w-[10rem] truncate">
-                  {profile?.name || user?.email?.split('@')[0] || 'Conta'}
-                </span>
-              </Link>
+              <>
+                <Link
+                  to="/app/cart"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-earth-100 text-earth-700 transition hover:bg-earth-200 hover:text-earth-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-earth-400"
+                  aria-label="Central de Pagamentos"
+                  title="Central de Pagamentos"
+                >
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.75 7.5h16.5a1.5 1.5 0 011.5 1.5v6a1.5 1.5 0 01-1.5 1.5H3.75a1.5 1.5 0 01-1.5-1.5V9a1.5 1.5 0 011.5-1.5zM2.25 11.25h19.5M6.75 14.25h3.75" />
+                  </svg>
+                </Link>
+                <Link
+                  to="/app/dashboard"
+                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-earth-800 px-3 py-2 text-sm font-medium text-earth-50 transition hover:bg-earth-700"
+                >
+                  <span className="h-2 w-2 rounded-full bg-green-400" aria-hidden />
+                  <span className="max-w-[7.5rem] truncate">
+                    {profile?.name || user?.email?.split('@')[0] || 'Conta'}
+                  </span>
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => signOut()}
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-earth-100 text-earth-700 transition hover:bg-earth-200 hover:text-earth-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-earth-400"
+                  aria-label="Sair"
+                  title="Sair"
+                >
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.5 4.5H8.25A2.25 2.25 0 006 6.75v10.5A2.25 2.25 0 008.25 19.5h5.25M12 12h9m0 0l-3-3m3 3l-3 3" />
+                  </svg>
+                </button>
+              </>
             ) : (
               <Link
                 to="/login"
@@ -189,7 +212,7 @@ function Navbar() {
                 onClick={fecharMenu}
                 className={`rounded-lg px-4 py-3 ${isAtivo('/faq', false) ? 'bg-earth-100 font-semibold text-earth-900' : 'text-earth-600 hover:bg-earth-50 hover:text-earth-900'}`}
               >
-                FAQ
+                Dúvidas
               </Link>
               <Link
                 to="/contact"

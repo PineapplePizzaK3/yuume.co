@@ -32,7 +32,7 @@ function Footer() {
                 Serviços e Preços
               </Link>
               <Link to="/faq" className={linkClasse('/faq', false)}>
-                FAQ
+                Dúvidas
               </Link>
               <Link to="/onde-comprar" className={linkClasse('/onde-comprar')}>
                 Aonde comprar

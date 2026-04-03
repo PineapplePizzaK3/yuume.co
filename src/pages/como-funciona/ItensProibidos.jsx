@@ -9,7 +9,7 @@ function ItensProibidos() {
   return (
     <>
       <Helmet>
-        <title>Itens proibidos | FAQ | Delivery</title>
+        <title>Itens proibidos | Dúvidas | Delivery</title>
         <meta
           name="description"
           content="Itens proibidos na importação: perfume, spray, bebidas, cigarros eletrônicos, power banks e mais. Evite apreensão na alfândega."

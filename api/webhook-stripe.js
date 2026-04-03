@@ -80,6 +80,58 @@ export default async function handler(req, res) {
       return res.status(200).json({ received: true })
     }
 
+    const checkoutIntentId = session.metadata?.storeCheckoutIntentId
+    if (checkoutIntentId && supabase) {
+      const { data: realOrderId, error: finErr } = await supabase.rpc(
+        'service_finalize_store_checkout_intent_as_paid',
+        { p_intent_id: checkoutIntentId }
+      )
+      if (finErr) {
+        console.error('Stripe webhook: finalize store checkout intent failed:', finErr)
+        return res.status(200).json({ received: true })
+      }
+      const payOrderId = realOrderId || session.metadata?.orderId
+      if (!payOrderId) {
+        return res.status(200).json({ received: true })
+      }
+
+      const payKey = session.payment_intent || session.id
+      const { data: dup } = await supabase
+        .from('payments')
+        .select('id')
+        .eq('order_id', payOrderId)
+        .eq('status', 'completed')
+        .eq('stripe_payment_id', payKey)
+        .limit(1)
+      if (!dup?.length) {
+        const currency = (session.currency || 'jpy').toLowerCase()
+        const amount = session.amount_total
+          ? currency === 'brl'
+            ? session.amount_total / 100
+            : session.amount_total
+          : null
+        await supabase.from('payments').insert({
+          order_id: payOrderId,
+          stripe_payment_id: payKey,
+          status: 'completed',
+          amount,
+          currency: currency.toUpperCase(),
+        })
+      }
+
+      const { data: ordRow } = await supabase
+        .from('orders')
+        .select('status, order_source, ship_immediately')
+        .eq('id', payOrderId)
+        .maybeSingle()
+      if (ordRow?.status === 'paid' || ordRow?.status === 'products_paid') {
+        await ensureInvoiceForPaidOrder(supabase, payOrderId).catch((e) =>
+          console.error('ensureInvoice (stripe webhook intent):', e?.message || e)
+        )
+      }
+      return res.status(200).json({ received: true })
+    }
+
     const orderId = session.metadata?.orderId
     if (orderId && supabase) {
       const { data: order } = await supabase

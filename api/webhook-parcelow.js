@@ -162,17 +162,38 @@ export default async function handler(req, res) {
     { assumeCents: true }
   )
 
-  const { data: order } = await supabase
+  let resolvedOrderId = orderId
+  let finalizedFromIntent = false
+
+  let { data: order } = await supabase
     .from('orders')
     .select('id, order_source, ship_immediately, status')
     .eq('id', orderId)
     .maybeSingle()
-  if (!order) return res.status(200).json({ received: true })
+
+  if (!order) {
+    const { data: realOid, error: finErr } = await supabase.rpc(
+      'service_finalize_store_checkout_intent_as_paid',
+      { p_intent_id: orderId }
+    )
+    if (finErr || !realOid) {
+      return res.status(200).json({ received: true })
+    }
+    resolvedOrderId = realOid
+    finalizedFromIntent = true
+    const { data: order2 } = await supabase
+      .from('orders')
+      .select('id, order_source, ship_immediately, status')
+      .eq('id', resolvedOrderId)
+      .maybeSingle()
+    order = order2
+    if (!order) return res.status(200).json({ received: true })
+  }
 
   const { data: existingCompleted } = await supabase
     .from('payments')
     .select('id')
-    .eq('order_id', orderId)
+    .eq('order_id', resolvedOrderId)
     .eq('status', 'completed')
     .eq('stripe_payment_id', paymentId)
     .limit(1)
@@ -181,7 +202,7 @@ export default async function handler(req, res) {
     const { data: pendingRows } = await supabase
       .from('payments')
       .select('id')
-      .eq('order_id', orderId)
+      .eq('order_id', resolvedOrderId)
       .eq('status', 'pending')
       .like('stripe_payment_id', 'parcelow_order_%')
       .order('created_at', { ascending: true })
@@ -199,7 +220,7 @@ export default async function handler(req, res) {
         .eq('id', pendingRows[0].id)
     } else {
       await supabase.from('payments').insert({
-        order_id: orderId,
+        order_id: resolvedOrderId,
         stripe_payment_id: paymentId,
         status: 'completed',
         amount: amount ?? null,
@@ -208,13 +229,22 @@ export default async function handler(req, res) {
     }
   }
 
+  if (finalizedFromIntent) {
+    if (order.status === 'paid' || order.status === 'products_paid') {
+      await ensureInvoiceForPaidOrder(supabase, resolvedOrderId).catch((e) =>
+        console.error('ensureInvoice (parcelow webhook intent):', e?.message || e)
+      )
+    }
+    return res.status(200).json({ received: true })
+  }
+
   const newStatus = order.order_source === 'store' && order.ship_immediately
     ? 'products_paid'
     : 'paid'
   const { error: updateOrderError } = await supabase
     .from('orders')
     .update({ status: newStatus })
-    .eq('id', orderId)
+    .eq('id', resolvedOrderId)
     .eq('status', 'awaiting_payment')
   if (updateOrderError) {
     console.error('Parcelow webhook: failed to update order status:', updateOrderError)
@@ -222,13 +252,13 @@ export default async function handler(req, res) {
 
   if (order.order_source === 'store' && !order.ship_immediately && !updateOrderError) {
     const { error: invErr } = await supabase.rpc('store_order_add_to_inventory', {
-      p_order_id: orderId,
+      p_order_id: resolvedOrderId,
     })
     if (invErr) console.error('Parcelow webhook: inventory update failed:', invErr)
   }
 
   if (!updateOrderError && (newStatus === 'paid' || newStatus === 'products_paid')) {
-    await ensureInvoiceForPaidOrder(supabase, orderId).catch((e) =>
+    await ensureInvoiceForPaidOrder(supabase, resolvedOrderId).catch((e) =>
       console.error('ensureInvoice (parcelow webhook):', e?.message || e)
     )
   }

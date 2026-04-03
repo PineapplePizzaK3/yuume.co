@@ -97,7 +97,9 @@ export async function createCheckoutSession(orderId, accessToken) {
       method: 'POST',
       headers,
       body: JSON.stringify({
-        orderId,
+        orderId: orderId || null,
+        cartCheckout: !!options?.cartCheckout,
+        cartParams: options?.cartParams && typeof options.cartParams === 'object' ? options.cartParams : null,
         useWallet: !!options?.useWallet,
         walletAmountJpy: options?.walletAmountJpy != null ? Number(options.walletAmountJpy) : null,
         provider: options?.provider || null,

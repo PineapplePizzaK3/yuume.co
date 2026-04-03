@@ -1,7 +1,7 @@
 import { Outlet, Link, useLocation } from 'react-router-dom'
 
 /**
- * Layout para FAQ e sub-páginas.
+ * Layout para Dúvidas (rotas /faq) e sub-páginas.
  */
 function FaqLayout() {
   const location = useLocation()
@@ -10,7 +10,7 @@ function FaqLayout() {
     <section className="px-4 pt-24 pb-16">
       <div className="mx-auto max-w-6xl">
         <h1 className="mb-8 text-3xl font-bold tracking-tight text-earth-900 sm:text-4xl">
-          FAQ
+          Dúvidas
         </h1>
 
         <nav className="mb-10 border-b border-earth-200">

@@ -1,4 +1,39 @@
+import { useEffect, useRef, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { CONTATOS_DIRETOS } from '../data/contatoDireto'
+
+const FAB_SIZE = 56
+const EDGE_PADDING = 12
+const ABOVE_NAV_GAP = 12
+const STORAGE_KEY = 'whatsapp_fab_position_v2'
+
+function clampPosition(x, y) {
+  const maxX = Math.max(EDGE_PADDING, window.innerWidth - FAB_SIZE - EDGE_PADDING)
+  const maxY = Math.max(EDGE_PADDING, window.innerHeight - FAB_SIZE - EDGE_PADDING)
+  return {
+    x: Math.min(Math.max(x, EDGE_PADDING), maxX),
+    y: Math.min(Math.max(y, EDGE_PADDING), maxY),
+  }
+}
+
+function getBottomRightDefault() {
+  const w = window.innerWidth
+  const h = window.innerHeight
+  const defaultX = w - FAB_SIZE - EDGE_PADDING
+
+  const onAppMobile =
+    window.location.pathname.startsWith('/app') &&
+    window.matchMedia('(max-width: 1023px)').matches
+  const nav = document.getElementById('platform-mobile-bottom-nav')
+  let defaultY
+  if (onAppMobile && nav) {
+    const navTop = nav.getBoundingClientRect().top
+    defaultY = navTop - FAB_SIZE - ABOVE_NAV_GAP
+  } else {
+    defaultY = h - FAB_SIZE - 24
+  }
+  return clampPosition(defaultX, defaultY)
+}
 
 /**
  * Botão flutuante do WhatsApp no canto inferior direito.
@@ -6,16 +41,124 @@ import { CONTATOS_DIRETOS } from '../data/contatoDireto'
  */
 function WhatsAppFloating() {
   const whatsapp = CONTATOS_DIRETOS.find((c) => c.nome === 'WhatsApp')
+  const location = useLocation()
+  const [position, setPosition] = useState(() => {
+    if (typeof window === 'undefined') return { x: 0, y: 0 }
+    return getBottomRightDefault()
+  })
+  const dragDataRef = useRef({
+    pointerId: null,
+    originX: 0,
+    originY: 0,
+    startX: 0,
+    startY: 0,
+    dragged: false,
+  })
+  const suppressClickRef = useRef(false)
+  const positionRef = useRef(position)
+  positionRef.current = position
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY)
+      if (!raw) {
+        const place = () => setPosition(getBottomRightDefault())
+        place()
+        requestAnimationFrame(() => requestAnimationFrame(place))
+        return
+      }
+      const saved = JSON.parse(raw)
+      if (typeof saved?.x !== 'number' || typeof saved?.y !== 'number') {
+        setPosition(getBottomRightDefault())
+        return
+      }
+      setPosition(clampPosition(saved.x, saved.y))
+    } catch {
+      setPosition(getBottomRightDefault())
+    }
+  }, [])
+
+  useEffect(() => {
+    try {
+      if (localStorage.getItem(STORAGE_KEY)) return
+      const place = () => setPosition(getBottomRightDefault())
+      place()
+      requestAnimationFrame(() => requestAnimationFrame(place))
+    } catch {
+      // ignore
+    }
+  }, [location.pathname])
+
+  useEffect(() => {
+    const onResize = () => {
+      setPosition((prev) => clampPosition(prev.x, prev.y))
+    }
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
+
   if (!whatsapp) return null
+
+  const handlePointerDown = (event) => {
+    event.preventDefault()
+    dragDataRef.current = {
+      pointerId: event.pointerId,
+      originX: event.clientX,
+      originY: event.clientY,
+      startX: position.x,
+      startY: position.y,
+      dragged: false,
+    }
+    event.currentTarget.setPointerCapture(event.pointerId)
+  }
+
+  const handlePointerMove = (event) => {
+    if (dragDataRef.current.pointerId !== event.pointerId) return
+    const deltaX = event.clientX - dragDataRef.current.originX
+    const deltaY = event.clientY - dragDataRef.current.originY
+    if (Math.abs(deltaX) > 4 || Math.abs(deltaY) > 4) {
+      dragDataRef.current.dragged = true
+      suppressClickRef.current = true
+    }
+    const next = clampPosition(
+      dragDataRef.current.startX + deltaX,
+      dragDataRef.current.startY + deltaY
+    )
+    setPosition(next)
+  }
+
+  const handlePointerUp = (event) => {
+    if (dragDataRef.current.pointerId !== event.pointerId) return
+    const finalPosition = clampPosition(positionRef.current.x, positionRef.current.y)
+    setPosition(finalPosition)
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(finalPosition))
+    } catch {
+      // ignore
+    }
+    dragDataRef.current.pointerId = null
+    setTimeout(() => {
+      suppressClickRef.current = false
+    }, 0)
+  }
 
   return (
     <a
       href={whatsapp.url}
       target="_blank"
       rel="noopener noreferrer"
-      className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-lg transition hover:scale-105 hover:bg-[#20BD5A] hover:shadow-xl"
+      className="fixed z-[60] flex h-14 w-14 cursor-grab items-center justify-center rounded-full bg-[#25D366] text-white shadow-lg transition hover:scale-105 hover:bg-[#20BD5A] hover:shadow-xl active:cursor-grabbing"
+      style={{ left: `${position.x}px`, top: `${position.y}px`, touchAction: 'none' }}
       aria-label="Chamar no WhatsApp"
       title={whatsapp.texto}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerUp}
+      onClick={(event) => {
+        if (!suppressClickRef.current) return
+        event.preventDefault()
+      }}
     >
       <svg
         className="h-8 w-8"

@@ -7,7 +7,7 @@ import { Helmet } from 'react-helmet-async'
 import { Link, useSearchParams } from 'react-router-dom'
 import { createPortal } from 'react-dom'
 import { useAuth } from '../../hooks/useAuth'
-import { getCart, updateCartItem, removeFromCart, createStoreOrder, getLatestPendingStoreOrder } from '../../services/cartService'
+import { getCart, updateCartItem, removeFromCart, getLatestPendingStoreOrder } from '../../services/cartService'
 import { validateCoupon } from '../../services/couponService'
 import { createCheckoutSession, fetchExchangeRates, getMyPayments } from '../../services/paymentService'
 import { getMyOrders, ORDER_STATUS_LABELS } from '../../services/orderService'
@@ -118,7 +118,7 @@ function Cart() {
   const [paymentsLoading, setPaymentsLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [wallet, setWallet] = useState(null)
-  const [payModal, setPayModal] = useState({ open: false, order: null, useWallet: false })
+  const [payModal, setPayModal] = useState({ open: false, order: null, useWallet: false, cartCheckout: false })
   const [walletApplyMode, setWalletApplyMode] = useState('full')
   const [walletCustomAmount, setWalletCustomAmount] = useState('')
   const [selectedGateway, setSelectedGateway] = useState('parcelow')
@@ -325,7 +325,7 @@ function Cart() {
     if (!payOrderId || pendingLoading || payModal.open) return
     const target = pendingOrders.find((o) => o.id === payOrderId)
     if (!target) return
-    setPayModal({ open: true, order: target, useWallet: false })
+    setPayModal({ open: true, order: target, useWallet: false, cartCheckout: false })
     setFeedback('')
   }, [payOrderId, pendingLoading, pendingOrders, payModal.open])
 
@@ -518,62 +518,35 @@ function Cart() {
       }
 
       if (latestPendingStoreOrder?.id) {
-        setPayModal({ open: true, order: latestPendingStoreOrder, useWallet: false })
+        setPayModal({ open: true, order: latestPendingStoreOrder, useWallet: false, cartCheckout: false })
         setFeedback('')
         return
       }
 
-      const { data: order, error } = await createStoreOrder(
-        user.id,
-        false,
-        null,
-        null,
-        couponApplied ? couponInput.trim() : null
-      )
-      if (error) {
-        setFeedback(error.message || 'Erro ao criar pedido')
-        setSubmitting(false)
-        return
-      }
-      const pendingList = await loadPendingOrders()
-      let orderToPay = order && typeof order === 'object' ? order : null
+      const orderItemsPreview = items
+        .map((i) => {
+          const p = i.products
+          if (!p) return null
+          const qty = Math.max(1, Number(i.quantity) || 1)
+          const jpyUnit = Number(p.price_jpy ?? p.price) || 0
+          return { quantity: qty, price_at_purchase: jpyUnit }
+        })
+        .filter(Boolean)
 
-      if (!orderToPay?.id) {
-        const maybeOrderId =
-          (typeof order === 'string' && order) ||
-          order?.id ||
-          order?.order_id ||
-          order?.orderId ||
-          null
-
-        if (maybeOrderId) {
-          orderToPay = (pendingList ?? []).find((o) => o.id === maybeOrderId) ?? null
-        }
+      const orderToPay = {
+        id: null,
+        status: 'awaiting_payment',
+        order_source: 'store',
+        ship_immediately: false,
+        total_amount: totalAfterDiscountBrl,
+        total_amount_usd:
+          totalUsdEstimate != null && Number.isFinite(totalUsdEstimate) ? totalUsdEstimate : null,
+        discount_amount: discountBrl > 0 ? discountBrl : null,
+        wallet_applied_amount: 0,
+        order_items: orderItemsPreview,
       }
 
-      // Fallback: abre a pendência de pagamento mais recente.
-      if (!orderToPay?.id) {
-        orderToPay =
-          (pendingList ?? []).find((o) => o.order_source === 'store') ||
-          (pendingList ?? [])[0] ||
-          null
-      }
-
-      // RPC create_store_order devolve só a linha do pedido; a lista traz order_items (¥ coerente no modal).
-      if (orderToPay?.id && Array.isArray(pendingList)) {
-        const enriched = pendingList.find((o) => o.id === orderToPay.id)
-        if (enriched) orderToPay = enriched
-      }
-
-      if (!orderToPay?.id) {
-        setFeedback('Pedido criado, mas não foi possível abrir o modal automaticamente. Use "Pagamentos pendentes" abaixo.')
-        return
-      }
-
-      // Pedido criado: abre modal de pagamento (gateway + carteira).
-      setPayModal({ open: true, order: orderToPay, useWallet: false })
-      setCouponApplied(null)
-      setCouponInput('')
+      setPayModal({ open: true, order: orderToPay, useWallet: false, cartCheckout: true })
       setFeedback('')
     } catch (e) {
       setFeedback(e?.message || 'Erro ao processar')
@@ -738,14 +711,27 @@ function Cart() {
     try {
       setSubmitting(true)
       setFeedback('')
-      const result = await createCheckoutSession(orderId, accessToken, {
-        useWallet: shouldUseWallet,
-        walletAmountJpy: walletAmountJpyForApi,
-        provider: provider || null,
-      })
+      const result = await createCheckoutSession(
+        payModal.cartCheckout ? null : orderId,
+        accessToken,
+        {
+          cartCheckout: !!payModal.cartCheckout,
+          cartParams: payModal.cartCheckout
+            ? {
+                couponCode: couponApplied ? couponInput.trim() : null,
+                shipImmediately: false,
+              }
+            : null,
+          useWallet: shouldUseWallet,
+          walletAmountJpy: walletAmountJpyForApi,
+          provider: provider || null,
+        }
+      )
       if (result?.paid) {
-        setPayModal({ open: false, order: null, useWallet: false })
+        setPayModal({ open: false, order: null, useWallet: false, cartCheckout: false })
         setFeedback('Pagamento realizado com carteira.')
+        setCouponApplied(null)
+        setCouponInput('')
         await loadCart()
         await loadPendingOrders()
         await loadPayments()
@@ -769,7 +755,7 @@ function Cart() {
   }
 
   const closePayModal = () => {
-    setPayModal({ open: false, order: null, useWallet: false })
+    setPayModal({ open: false, order: null, useWallet: false, cartCheckout: false })
     setFeedback('')
     const next = new URLSearchParams(searchParams)
     next.delete('payOrderId')
@@ -1116,7 +1102,7 @@ function Cart() {
                       </div>
                       <button
                         type="button"
-                        onClick={() => setPayModal({ open: true, order, useWallet: false })}
+                        onClick={() => setPayModal({ open: true, order, useWallet: false, cartCheckout: false })}
                         className="rounded-lg bg-earth-900 px-4 py-2 text-sm font-medium text-white hover:bg-earth-800"
                       >
                         Pagar agora

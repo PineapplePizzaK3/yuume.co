@@ -554,6 +554,38 @@ function readDispatchQuery(req) {
   return ''
 }
 
+/** Pedido “virtual” a partir de store_checkout_intents (checkout sem pedido prévio). */
+function orderLikeFromIntentRow(ir) {
+  if (!ir?.id) return null
+  return {
+    id: ir.id,
+    user_id: ir.user_id,
+    status: 'awaiting_payment',
+    shipping_cost: ir.shipping_cost_jpy,
+    shipping_currency: ir.shipping_currency,
+    quote_amount: null,
+    quote_currency: null,
+    total_amount: Number(ir.total_amount),
+    total_amount_usd: Number(ir.total_amount_usd),
+    discount_amount: ir.discount_amount != null ? Number(ir.discount_amount) : null,
+    wallet_applied_amount: 0,
+    order_source: 'store',
+    ship_immediately: !!ir.ship_immediately,
+    acquisition_mode: 'none',
+    referral_discount_amount: null,
+    affiliate_id: null,
+    referral_id: null,
+  }
+}
+
+function intentLineItemsAsOiRows(lineItemsJson) {
+  const arr = Array.isArray(lineItemsJson) ? lineItemsJson : []
+  return arr.map((row) => ({
+    quantity: Number(row?.quantity) || 1,
+    price_at_purchase: Number(row?.price_jpy) || 0,
+  }))
+}
+
 export default async function handler(req, res) {
   const dispatch = readDispatchQuery(req)
   if (dispatch === 'exchange-rates') {
@@ -676,33 +708,206 @@ export default async function handler(req, res) {
       return res.status(200).json({ url: session.url })
     }
 
-    // Pagamento de frete (pedido)
-    const orderId = body.orderId
+    // Pagamento de frete (pedido) ou loja via intenção (sem pedido até pagar)
+    let orderId = body.orderId
+    const accessToken = authHeader.replace('Bearer ', '')
+    const supabaseUser = getSupabaseUser(accessToken)
+    let intentCheckoutId = null
+
+    if (body.cartCheckout === true && !orderId) {
+      if (!supabaseUser) {
+        return res.status(500).json({ error: 'Configuração incompleta para checkout da loja' })
+      }
+      const cp = body.cartParams && typeof body.cartParams === 'object' ? body.cartParams : {}
+      const couponRaw = cp.couponCode != null ? String(cp.couponCode).trim() : ''
+      const { data: intentSummary, error: intentRpcErr } = await supabaseUser.rpc('create_store_checkout_intent', {
+        p_user_id: user.id,
+        p_ship_immediately: !!cp.shipImmediately,
+        p_shipping_cost: cp.shippingCostJpy != null ? Number(cp.shippingCostJpy) : null,
+        p_shipping_currency: 'JPY',
+        p_shipping_address_id: cp.shippingAddressId || null,
+        p_coupon_code: couponRaw || null,
+      })
+      if (intentRpcErr) {
+        return res.status(400).json({ error: intentRpcErr.message || 'Não foi possível iniciar o checkout' })
+      }
+      const newIntentId = intentSummary?.intent_id
+      if (!newIntentId) {
+        return res.status(500).json({ error: 'Resposta inválida ao criar intenção de checkout' })
+      }
+      const { data: ir, error: irErr } = await supabase
+        .from('store_checkout_intents')
+        .select('*')
+        .eq('id', newIntentId)
+        .maybeSingle()
+      if (irErr || !ir) {
+        return res.status(500).json({ error: 'Intenção de checkout não encontrada após criação' })
+      }
+
+      intentCheckoutId = newIntentId
+      const syntheticOiRows = intentLineItemsAsOiRows(ir.line_items)
+
+      const ratesEarly = await getExchangeRates(supabase)
+      const wiseEarly = await resolveWiseWithdrawalMarkupPercent(supabase)
+      const orderEarly = orderLikeFromIntentRow(ir)
+      const amountEarly = Number(orderEarly.total_amount)
+      const currencyEarly = 'brl'
+      const storeUsdEarly = Number(orderEarly.total_amount_usd)
+      let chargeJpyEarly = 0
+      if (ratesEarly?.jpy_usd && ratesEarly?.usd_brl) {
+        const lineChargeJpy = chargeJpyStoreBrlFromLineItems(
+          orderEarly,
+          syntheticOiRows,
+          amountEarly
+        )
+        let usdBasedJpy = null
+        if (Number.isFinite(storeUsdEarly) && storeUsdEarly > 0) {
+          usdBasedJpy = Math.round(
+            jpyEquivalentFromFinalUsd(storeUsdEarly, ratesEarly.jpy_usd, wiseEarly)
+          )
+        }
+        const brlBasedJpy = Math.round(
+          toChargeAmountJpyFromRates(amountEarly, currencyEarly, ratesEarly, wiseEarly)
+        )
+        const candidates = [lineChargeJpy, usdBasedJpy, brlBasedJpy]
+          .map((n) => Number(n))
+          .filter((n) => Number.isFinite(n) && n > 0)
+        if (candidates.length > 0) chargeJpyEarly = Math.max(...candidates)
+      }
+      if (!chargeJpyEarly || chargeJpyEarly <= 0) {
+        await supabase.from('store_checkout_intents').delete().eq('id', newIntentId)
+        return res.status(503).json({
+          error:
+            'Câmbio indisponível para calcular o pedido da loja. Aguarde ou configure FALLBACK_FX_JPY_USD / FALLBACK_FX_USD_BRL.',
+        })
+      }
+
+      const alreadyAppliedJpyEarly = 0
+      let walletAppliedEarly = 0
+      let remainingJpyEarly = Math.max(0, (Number(chargeJpyEarly) || 0) - alreadyAppliedJpyEarly)
+
+      if (body.useWallet) {
+        const chargeJpyIntEarly = Math.max(0, Math.round(Number(chargeJpyEarly) || 0))
+        const rawWalletEarly = body.walletAmountJpy
+        const requestedWalletEarly =
+          rawWalletEarly != null && rawWalletEarly !== ''
+            ? Math.floor(Number(rawWalletEarly) || 0)
+            : null
+        const pAmountJpyEarly =
+          requestedWalletEarly != null && requestedWalletEarly > 0
+            ? Math.min(Math.max(0, Math.round(remainingJpyEarly)), requestedWalletEarly)
+            : null
+
+        const { data: wbal } = await supabase
+          .from('wallets')
+          .select('balance, currency')
+          .eq('user_id', user.id)
+          .maybeSingle()
+        const bal = Number(wbal?.balance) || 0
+        const cur = String(wbal?.currency || 'JPY').toUpperCase()
+        const canWallet = bal > 0 && cur === 'JPY'
+        let simApply = 0
+        const remEarly = Math.max(0, chargeJpyIntEarly - alreadyAppliedJpyEarly)
+        if (canWallet) {
+          simApply =
+            pAmountJpyEarly != null && pAmountJpyEarly > 0
+              ? Math.min(remEarly, bal, pAmountJpyEarly)
+              : Math.min(remEarly, bal)
+        }
+        remainingJpyEarly = Math.max(0, remEarly - simApply)
+        walletAppliedEarly = simApply
+      }
+
+      const EPS_J = 0.0001
+      if (body.useWallet && remainingJpyEarly <= EPS_J) {
+        const { data: wp, error: wpe } = await supabaseUser.rpc('wallet_pay_store_checkout_intent', {
+          p_intent_id: newIntentId,
+        })
+        if (wpe) {
+          return res.status(400).json({ error: wpe.message || 'Erro ao pagar com a carteira' })
+        }
+        const paidOid = wp?.order_id
+        if (paidOid) {
+          await ensureInvoiceForPaidOrder(supabase, paidOid).catch((e) =>
+            console.error('ensureInvoice (cart wallet intent):', e?.message || e)
+          )
+        }
+        return res.status(200).json({
+          paid: true,
+          walletApplied: Number(wp?.wallet_applied) || 0,
+        })
+      }
+
+      if (body.useWallet && remainingJpyEarly > EPS_J) {
+        await supabase.from('store_checkout_intents').delete().eq('id', newIntentId)
+        const { data: createdOrder, error: coErr } = await supabaseUser.rpc('create_store_order', {
+          p_user_id: user.id,
+          p_ship_immediately: !!cp.shipImmediately,
+          p_shipping_cost: cp.shippingCostJpy != null ? Number(cp.shippingCostJpy) : null,
+          p_shipping_currency: 'JPY',
+          p_shipping_address_id: cp.shippingAddressId || null,
+          p_coupon_code: couponRaw || null,
+        })
+        if (coErr) {
+          return res.status(400).json({ error: coErr.message || 'Erro ao criar pedido para checkout misto' })
+        }
+        const oid = createdOrder && typeof createdOrder === 'object' ? createdOrder.id : null
+        if (!oid) {
+          return res.status(500).json({ error: 'Pedido não retornado após criação' })
+        }
+        orderId = oid
+        intentCheckoutId = null
+      } else {
+        orderId = newIntentId
+      }
+    }
+
     if (!orderId) {
       return res.status(400).json({ error: 'orderId ou type topup com amountCents é obrigatório' })
     }
 
-    const { data: orderBase, error: orderError } = await supabase
-      .from('orders')
-      .select('id, user_id, status, shipping_cost, shipping_currency, quote_amount, quote_currency, total_amount, total_amount_usd, discount_amount, wallet_applied_amount, order_source, ship_immediately, acquisition_mode, referral_discount_amount, affiliate_id, referral_id')
-      .eq('id', orderId)
-      .single()
-
-    if (orderError || !orderBase) {
-      return res.status(404).json({ error: 'Pedido não encontrado' })
-    }
-    if (orderBase.user_id !== user.id) {
-      return res.status(403).json({ error: 'Este pedido não pertence a você' })
-    }
-    if (orderBase.status !== 'awaiting_payment') {
-      return res.status(400).json({ error: 'Este pedido não está aguardando pagamento' })
+    let orderBase = null
+    let orderError = null
+    if (!intentCheckoutId) {
+      const ob = await supabase
+        .from('orders')
+        .select('id, user_id, status, shipping_cost, shipping_currency, quote_amount, quote_currency, total_amount, total_amount_usd, discount_amount, wallet_applied_amount, order_source, ship_immediately, acquisition_mode, referral_discount_amount, affiliate_id, referral_id')
+        .eq('id', orderId)
+        .single()
+      orderBase = ob.data
+      orderError = ob.error
     }
 
-    const { data: order } = await supabase
-      .from('orders')
-      .select('id, user_id, status, shipping_cost, shipping_currency, quote_amount, quote_currency, total_amount, total_amount_usd, discount_amount, wallet_applied_amount, order_source, ship_immediately, acquisition_mode, referral_discount_amount, affiliate_id, referral_id')
-      .eq('id', orderId)
-      .single()
+    let order
+    let oiRowsOverride = null
+
+    if (intentCheckoutId) {
+      const { data: ir2 } = await supabase
+        .from('store_checkout_intents')
+        .select('*')
+        .eq('id', intentCheckoutId)
+        .maybeSingle()
+      if (!ir2) {
+        return res.status(400).json({ error: 'Intenção de checkout inválida ou expirada' })
+      }
+      const ol = orderLikeFromIntentRow(ir2)
+      if (!ol || ol.user_id !== user.id) {
+        return res.status(403).json({ error: 'Esta intenção não pertence a você' })
+      }
+      order = ol
+      oiRowsOverride = intentLineItemsAsOiRows(ir2.line_items)
+    } else {
+      if (orderError || !orderBase) {
+        return res.status(404).json({ error: 'Pedido não encontrado' })
+      }
+      if (orderBase.user_id !== user.id) {
+        return res.status(403).json({ error: 'Este pedido não pertence a você' })
+      }
+      if (orderBase.status !== 'awaiting_payment') {
+        return res.status(400).json({ error: 'Este pedido não está aguardando pagamento' })
+      }
+      order = orderBase
+    }
 
     const rates = await getExchangeRates(supabase)
     const wiseMarkup = await resolveWiseWithdrawalMarkupPercent(supabase)
@@ -738,12 +943,16 @@ export default async function handler(req, res) {
     let chargeJpy = 0
     const storeUsd = Number(order.total_amount_usd)
     if (order.order_source === 'store' && currency === 'brl' && rates?.jpy_usd && rates?.usd_brl) {
-      const { data: oiRows } = await supabase
-        .from('order_items')
-        .select('quantity, price_at_purchase')
-        .eq('order_id', orderId)
+      let oiForCharge = oiRowsOverride
+      if (!oiForCharge) {
+        const { data: oiRows } = await supabase
+          .from('order_items')
+          .select('quantity, price_at_purchase')
+          .eq('order_id', orderId)
+        oiForCharge = oiRows || []
+      }
 
-      const lineChargeJpy = chargeJpyStoreBrlFromLineItems(order, oiRows || [], amount)
+      const lineChargeJpy = chargeJpyStoreBrlFromLineItems(order, oiForCharge, amount)
       let usdBasedJpy = null
       if (Number.isFinite(storeUsd) && storeUsd > 0) {
         let amountUsd = storeUsd
@@ -788,6 +997,9 @@ export default async function handler(req, res) {
 
     // Se o pedido já foi integralmente coberto por carteira anteriormente, não deve haver nova cobrança.
     if (remainingJpy <= 0) {
+      if (intentCheckoutId) {
+        return res.status(400).json({ error: 'Valor a cobrar inválido para este checkout' })
+      }
       const { data: stExisting } = await supabase
         .from('orders')
         .select('status')
@@ -849,6 +1061,9 @@ export default async function handler(req, res) {
 
     const unitAmount = Math.round(remainingJpy) // JPY sem casas decimais
     if (!unitAmount || unitAmount <= 0) {
+      if (intentCheckoutId) {
+        return res.status(400).json({ error: 'Nada a cobrar no gateway para este checkout' })
+      }
       const newStatus = order?.order_source === 'store' && order?.ship_immediately
         ? 'products_paid'
         : 'paid'
@@ -941,6 +1156,7 @@ export default async function handler(req, res) {
       cancel_url: `${baseUrl}${cancelPath}?canceled=true`,
       metadata: {
         orderId,
+        ...(intentCheckoutId ? { storeCheckoutIntentId: String(intentCheckoutId) } : {}),
         orderSource: order.order_source || 'service',
         walletApplied: String(walletApplied || 0),
         acquisitionMode: order.acquisition_mode || 'none',

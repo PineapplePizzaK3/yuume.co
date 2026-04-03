@@ -78,7 +78,21 @@ const CONTENT = {
           <P>料金の詳細は各サービスページに表示されます。</P>
         </LegalSection>
 
-        <LegalSection title="第6条（禁止商品）">
+        <LegalSection title="第6条（受領・確認・保管）">
+          <P>商品が日本で受領された後、当サービスは本規約に従い外観上の確認を行い、保管します。</P>
+          <P>
+            無料保管期間は、商品の受領およびプラットフォーム上での登録日から起算して60日間です。これはすべてのサービス形態（購入代行・転送、補助付き転送、パーソナルショッピング、共同購入、および当サービス店舗での販売）に適用されます。
+          </P>
+          <P>
+            上記期間経過後は、発送の依頼および発送に必要な支払いが完了するまで、1商品あたり1日あたり50円（またはプラットフォームに掲示する料金表に従う）の保管料が発生します。
+          </P>
+          <P>
+            ユーザーが事前に別途申し出しない限り、確認および保管の効率化のため外装箱を開封する場合があります。
+          </P>
+          <P>ユーザーが販売者に提供した住所の誤りについて、当サービスは責任を負いません。</P>
+        </LegalSection>
+
+        <LegalSection title="第7条（禁止商品）">
           <P>以下の商品は取り扱うことができません。</P>
           <Ul items={[
             '違法な商品',
@@ -90,18 +104,18 @@ const CONTENT = {
           <P>その他、当サービスが不適切と判断した商品についても取り扱いを拒否する場合があります。</P>
         </LegalSection>
 
-        <LegalSection title="第7条（配送）">
+        <LegalSection title="第8条（配送）">
           <P>商品はユーザーの指定した住所へ発送されます。</P>
           <P>配送中の遅延、通関、輸入税などについては配送業者および各国の規制に依存します。</P>
           <P>ユーザーは輸入税および関税を負担する責任があります。</P>
         </LegalSection>
 
-        <LegalSection title="第8条（返品およびキャンセル）">
+        <LegalSection title="第9条（返品およびキャンセル）">
           <P>商品の性質上、注文確定後のキャンセルは原則として受け付けていません。</P>
           <P>返品および返金は、販売元のポリシーおよび状況に応じて対応します。</P>
         </LegalSection>
 
-        <LegalSection title="第9条（責任の制限）">
+        <LegalSection title="第10条（責任の制限）">
           <P>当サービスは以下について責任を負いません。</P>
           <Ul items={[
             '販売者が提供する商品情報の正確性',
@@ -112,16 +126,16 @@ const CONTENT = {
           <P>当サービスの責任は、法律で認められる範囲内に限定されます。</P>
         </LegalSection>
 
-        <LegalSection title="第10条（サービスの変更）">
+        <LegalSection title="第11条（サービスの変更）">
           <P>当サービスは、事前通知なくサービス内容を変更または停止する場合があります。</P>
         </LegalSection>
 
-        <LegalSection title="第11条（規約の変更）">
+        <LegalSection title="第12条（規約の変更）">
           <P>当サービスは必要に応じて本規約を変更することがあります。</P>
           <P>変更後の規約はサイトに掲載された時点で効力を持ちます。</P>
         </LegalSection>
 
-        <LegalSection title="第12条（準拠法）">
+        <LegalSection title="第13条（準拠法）">
           <P>本規約は日本法に基づいて解釈されます。</P>
           <P>本サービスに関する紛争は、日本の裁判所を専属的合意管轄とします。</P>
         </LegalSection>
@@ -183,7 +197,29 @@ const CONTENT = {
           <P>Fee details are displayed on each service page.</P>
         </LegalSection>
 
-        <LegalSection title="Article 6 (Prohibited products)">
+        <LegalSection title="Article 6 (Receipt, inspection and storage)">
+          <P>
+            After items are received in Japan, the Service performs limited visual inspection as described in these
+            Terms and stores the items.
+          </P>
+          <P>
+            Free storage is <strong>60 calendar days</strong> from the date the item is received and registered on the
+            platform, for <strong>all service types</strong> (purchase redirection, assisted redirection, personal
+            shopping, group purchases, and shop sales).
+          </P>
+          <P>
+            After that period, a fee of <strong>JPY 50 per item per day</strong> applies (or the rate on the
+            platform&apos;s public fee schedule) until the customer requests shipment and payment required for posting
+            is completed.
+          </P>
+          <P>
+            The Service may open outer packaging for inspection and efficient storage unless the customer requests
+            otherwise in advance in writing or through the platform.
+          </P>
+          <P>The Service is not responsible for address errors the customer provided to the seller.</P>
+        </LegalSection>
+
+        <LegalSection title="Article 7 (Prohibited products)">
           <P>The following products cannot be handled:</P>
           <Ul items={[
             'Illegal products',
@@ -195,18 +231,18 @@ const CONTENT = {
           <P>The Service may refuse other products it deems inappropriate.</P>
         </LegalSection>
 
-        <LegalSection title="Article 7 (Shipping)">
+        <LegalSection title="Article 8 (Shipping)">
           <P>Products are shipped to the address specified by the user.</P>
           <P>Delivery delays, customs clearance, and import taxes depend on the carrier and each country&apos;s regulations.</P>
           <P>Users are responsible for import taxes and duties.</P>
         </LegalSection>
 
-        <LegalSection title="Article 8 (Returns and cancellation)">
+        <LegalSection title="Article 9 (Returns and cancellation)">
           <P>Due to the nature of the products, cancellations after order confirmation are generally not accepted.</P>
           <P>Returns and refunds are handled according to the seller&apos;s policy and circumstances.</P>
         </LegalSection>
 
-        <LegalSection title="Article 9 (Limitation of liability)">
+        <LegalSection title="Article 10 (Limitation of liability)">
           <P>The Service is not responsible for:</P>
           <Ul items={[
             'Accuracy of product information provided by the seller',
@@ -217,16 +253,16 @@ const CONTENT = {
           <P>The Service&apos;s liability is limited to the extent permitted by law.</P>
         </LegalSection>
 
-        <LegalSection title="Article 10 (Service changes)">
+        <LegalSection title="Article 11 (Service changes)">
           <P>The Service may change or discontinue service content without prior notice.</P>
         </LegalSection>
 
-        <LegalSection title="Article 11 (Terms changes)">
+        <LegalSection title="Article 12 (Terms changes)">
           <P>The Service may change these Terms when necessary.</P>
           <P>Revised Terms take effect upon publication on the site.</P>
         </LegalSection>
 
-        <LegalSection title="Article 12 (Governing law)">
+        <LegalSection title="Article 13 (Governing law)">
           <P>These Terms are interpreted in accordance with Japanese law.</P>
           <P>Disputes related to the Service shall be subject to the exclusive jurisdiction of the courts of Japan.</P>
         </LegalSection>

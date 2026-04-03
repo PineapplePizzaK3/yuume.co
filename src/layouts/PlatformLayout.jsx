@@ -131,19 +131,75 @@ export function PlatformLayout() {
     })
   }
 
-  const allMobileItems = [
-    ...orderedNavItems,
-    ...orderedContaItems,
-    ...orderedLojaItems,
-    ...(isAdmin ? [{ to: '/app/admin', label: 'Admin' }] : []),
+  const mobileTabs = [
+    {
+      id: 'services',
+      to: '/app/services',
+      label: 'Serviços',
+      active: isActive('/app/services'),
+      icon: (
+        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.5 9.75h15M4.5 14.25h15M8.25 5.25h7.5M8.25 18.75h7.5" />
+        </svg>
+      ),
+    },
+    {
+      id: 'grupo-compras',
+      to: '/app/grupo-de-compras',
+      label: 'Grupos',
+      active: isActive('/app/grupo-de-compras'),
+      icon: (
+        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.25 8.25a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zM11.25 9.75a3 3 0 11-6 0 3 3 0 016 0zM3.75 18a4.5 4.5 0 019 0M12.75 18a3.75 3.75 0 017.5 0" />
+        </svg>
+      ),
+    },
+    {
+      id: 'lounge',
+      to: '/app/lounge',
+      label: 'Lounge',
+      active: isActive('/app/lounge'),
+      icon: (
+        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.813 15.904L9 19.5l3-1.8 3 1.8-.813-3.596L17 13.5l-3.688-.318L12 9.75l-1.312 3.432L7 13.5l2.813 2.404z" />
+        </svg>
+      ),
+    },
+    {
+      id: 'loja-virtual',
+      to: '/app/loja',
+      label: 'Loja',
+      active: isActive('/app/loja'),
+      icon: (
+        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7.5h18M5.25 7.5l1.5 12a1.5 1.5 0 001.49 1.313h7.52a1.5 1.5 0 001.49-1.313l1.5-12M9 11.25h.008v.008H9v-.008zm6 0h.008v.008H15v-.008z" />
+        </svg>
+      ),
+    },
+    {
+      id: 'minha-conta',
+      to: '/app/conta',
+      label: 'Conta',
+      active: isActive('/app/conta'),
+      icon: (
+        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.75 7.5a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.118a8.25 8.25 0 0115 0" />
+        </svg>
+      ),
+    },
   ]
 
-  const showReferralBanner = !referralBannerDismissed
+  // Banner de indicação só na página inicial da plataforma (Resumo da conta).
+  const isPlatformHome = location.pathname === '/app/dashboard'
+  const showReferralBanner = isPlatformHome && !referralBannerDismissed
 
   return (
     <div className="flex min-h-screen flex-col pt-16 lg:flex-row">
       {showReferralBanner && (
-        <div className="fixed left-0 right-0 top-16 z-30 flex items-center gap-2 bg-green-600 py-2 pl-4 pr-2 text-sm font-medium text-white">
+        <div
+          id="platform-referral-banner"
+          className="fixed left-0 right-0 top-16 z-30 flex items-center gap-2 bg-green-600 py-2 pl-4 pr-2 text-sm font-medium text-white"
+        >
           <div className="min-w-0 flex-1">
             <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-2 text-center">
               <span>Convide um amigo e vocês dois ganham</span>
@@ -167,70 +223,52 @@ export function PlatformLayout() {
           </button>
         </div>
       )}
-      {/* Mobile: menu horizontal em uma linha */}
-      <aside className={`border-b border-earth-200 bg-earth-100 lg:hidden ${showReferralBanner ? 'mt-9' : 'mt-0'}`}>
-        <div className="flex gap-2 overflow-x-auto px-4 py-3">
-          {allMobileItems.map((item) => (
+      {/* Mobile: bottom menu fixo com 5 atalhos */}
+      <nav
+        id="platform-mobile-bottom-nav"
+        className="fixed bottom-0 left-0 right-0 z-40 border-t border-earth-200 bg-earth-50/98 backdrop-blur lg:hidden"
+      >
+        <div className="mx-auto grid max-w-5xl grid-cols-5 px-1 pb-[calc(env(safe-area-inset-bottom)+0.2rem)] pt-0.5">
+          {mobileTabs.map((tab) => (
             <Link
-              key={item.to}
-              to={item.to}
-              draggable={!item.to.startsWith('/app/admin')}
-              onDragStart={(e) => {
-                if (item.to === '/app/admin') return
-                const section = NAV_ITEMS.some((x) => x.to === item.to)
-                  ? 'nav'
-                  : MINHA_CONTA_ITEMS.some((x) => x.to === item.to)
-                    ? 'conta'
-                    : 'loja'
-                setDraggingItem({ section, to: item.to })
-                e.dataTransfer.effectAllowed = 'move'
-              }}
-              onDragOver={(e) => {
-                if (!draggingItem || item.to === '/app/admin') return
-                const section = NAV_ITEMS.some((x) => x.to === item.to)
-                  ? 'nav'
-                  : MINHA_CONTA_ITEMS.some((x) => x.to === item.to)
-                    ? 'conta'
-                    : 'loja'
-                if (draggingItem.section !== section || draggingItem.to === item.to) return
-                e.preventDefault()
-              }}
-              onDrop={(e) => {
-                if (!draggingItem || item.to === '/app/admin') return
-                const section = NAV_ITEMS.some((x) => x.to === item.to)
-                  ? 'nav'
-                  : MINHA_CONTA_ITEMS.some((x) => x.to === item.to)
-                    ? 'conta'
-                    : 'loja'
-                if (draggingItem.section !== section) return
-                e.preventDefault()
-                handleReorder(section, draggingItem.to, item.to)
-              }}
-              onDragEnd={() => setDraggingItem(null)}
-              className={`shrink-0 rounded-lg px-4 py-2 font-medium transition whitespace-nowrap ${
-                item.featured ? 'text-base' : 'text-sm'
-              } ${
-                isActive(item.to)
-                  ? item.featured
-                    ? 'bg-amber-500 text-white'
-                    : 'bg-earth-900 text-earth-50'
-                  : item.featured
-                    ? 'bg-amber-50 text-amber-800 hover:bg-amber-100'
-                    : 'bg-earth-50 text-earth-700 hover:bg-earth-200'
+              key={tab.id}
+              to={tab.to}
+              className={`flex min-h-[3.35rem] flex-col items-center justify-center px-1 text-[0.62rem] font-medium transition ${
+                tab.id === 'lounge'
+                  ? 'relative -translate-y-1'
+                  : `rounded-lg ${
+                      tab.active
+                        ? 'bg-earth-900 text-earth-50'
+                        : 'text-earth-600 hover:bg-earth-100'
+                    }`
               }`}
+              aria-current={tab.active ? 'page' : undefined}
             >
-              {item.label}
+              {tab.id === 'lounge' ? (
+                <>
+                  <span
+                    className={`flex h-[4rem] w-[4rem] flex-col items-center justify-center rounded-full shadow-lg ${
+                      tab.active
+                        ? 'bg-earth-900 text-earth-50 ring-2 ring-earth-50'
+                        : 'bg-earth-200 text-earth-700'
+                    }`}
+                  >
+                    {tab.icon}
+                    <span className="mt-0.5 text-[.6rem] leading-none font-semibold">
+                      {tab.label}
+                    </span>
+                  </span>
+                </>
+              ) : (
+                <>
+                  {tab.icon}
+                  <span className="mt-1 truncate">{tab.label}</span>
+                </>
+              )}
             </Link>
           ))}
-          <button
-            type="button"
-            onClick={() => signOut()}
-            className="shrink-0 rounded-lg bg-earth-50 px-4 py-2 text-sm font-medium text-earth-600 transition hover:bg-earth-200 whitespace-nowrap"
-          >
-            Sair
-          </button>
         </div>
-      </aside>
+      </nav>
 
       {/* Desktop: sidebar com grupos */}
       <aside
@@ -400,7 +438,7 @@ export function PlatformLayout() {
           </button>
         </div>
       </aside>
-      <main className={`flex-1 p-4 ${showReferralBanner ? 'pt-32' : 'pt-20'}`}>
+      <main className={`flex-1 p-4 pb-24 lg:pb-4 ${showReferralBanner ? 'pt-32' : 'pt-20'}`}>
         <div className={`mx-auto ${location.pathname === '/app/loja' ? 'max-w-6xl' : 'max-w-4xl'}`}>
           <Outlet />
         </div>

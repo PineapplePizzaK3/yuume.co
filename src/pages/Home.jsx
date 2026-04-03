@@ -332,7 +332,7 @@ function Home() {
         </div>
       </section>
 
-      {/* FAQ */}
+      {/* Dúvidas */}
       <section className="border-t border-earth-200 bg-earth-50 px-4 py-16">
         <div className="mx-auto max-w-6xl">
           <h2 className="text-center text-2xl font-bold text-earth-900 sm:text-3xl">
@@ -347,12 +347,12 @@ function Home() {
                 <span className="text-4xl" aria-hidden>❓</span>
               </div>
               <div className="flex flex-1 flex-col p-6">
-                <h3 className="font-semibold text-earth-900">FAQ</h3>
+                <h3 className="font-semibold text-earth-900">Dúvidas</h3>
                 <p className="mt-2 text-sm text-earth-600">
                   Tire suas dúvidas sobre envios, taxas, prazos e como funciona nosso serviço.
                 </p>
                 <span className="mt-4 text-sm font-medium text-earth-900 group-hover:underline">
-                  Ver perguntas frequentes →
+                  Ver dúvidas →
                 </span>
               </div>
             </Link>
