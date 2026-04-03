@@ -9,11 +9,20 @@ const stepRegistrar = '/home/step-registrar.png'
 const stepSelecionarServico = '/home/step-selecionar-servico.png'
 const stepFinalizarPedido = '/home/step-finalizar-pedido.png'
 
+/** Hero da primeira seção: uma variante por refresh (full page load). */
+const HERO_VARIANTS = [
+  { src: '/voando.png?v=2', alt: 'Apresentação da loja' },
+  { src: '/home/hero-cloud-br.png', alt: 'Entrega rápida — ilustração da loja' },
+]
+
 /**
  * Página inicial dividida em seções.
  * Primeira div: apresentação da loja com frase de efeito e imagem.
  */
 function Home() {
+  const [heroVariant] = useState(
+    () => HERO_VARIANTS[Math.floor(Math.random() * HERO_VARIANTS.length)] ?? HERO_VARIANTS[0]
+  )
   const [catIndex, setCatIndex] = useState(0)
   const [lightbox, setLightbox] = useState({ open: false, src: '', alt: '' })
   const rec = RECOMENDACOES_QUICK_ACCESS[catIndex] ?? RECOMENDACOES_QUICK_ACCESS[0]
@@ -64,10 +73,10 @@ function Home() {
           {/* Imagem com animação de voar */}
           <div className="w-full shrink-0 lg:max-w-md">
             <img
-              src="/voando.png?v=2"
-              alt="Apresentação da loja"
+              src={heroVariant.src}
+              alt={heroVariant.alt}
               className="w-full animate-voar rounded-lg object-contain cursor-zoom-in"
-              onClick={(e) => openLightbox('/voando.png?v=2', 'Apresentação da loja', e)}
+              onClick={(e) => openLightbox(heroVariant.src, heroVariant.alt, e)}
             />
           </div>
         </div>
