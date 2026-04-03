@@ -19,6 +19,15 @@ function authorizeCron(req) {
   return bearer === secret || header === secret
 }
 
+function readForceExternal(req) {
+  const h = String(req.headers?.['x-cron-force-external'] || '').trim().toLowerCase()
+  if (h === '1' || h === 'true' || h === 'yes') return true
+  const q = req.query?.force_external
+  const raw = Array.isArray(q) ? q[0] : q
+  const s = String(raw ?? '').trim().toLowerCase()
+  return s === '1' || s === 'true' || s === 'yes'
+}
+
 export async function handleCronRefreshExchangeRates(req, res) {
   if (req.method !== 'GET' && req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
@@ -33,7 +42,10 @@ export async function handleCronRefreshExchangeRates(req, res) {
   }
 
   try {
-    const rates = await refreshExchangeRatesJob(supabase)
+    const secretConfigured = String(process.env.CRON_SECRET || '').trim()
+    const forceExternal =
+      !!secretConfigured && authorizeCron(req) && readForceExternal(req)
+    const rates = await refreshExchangeRatesJob(supabase, { forceExternal })
 
     if (!rates) {
       return res.status(500).json({ ok: false, error: 'No exchange rates available' })

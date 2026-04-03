@@ -217,16 +217,22 @@ export async function persistRatesToSupabasePreferAdmin(supabase, rates) {
 
 /**
  * Atualiza cotações (uso no job/cron). Em caso de falha, mantém último valor disponível.
+ * @param {import('@supabase/supabase-js').SupabaseClient} supabase
+ * @param {{ forceExternal?: boolean }} opts — forceExternal: ignora janela mínima e chama provedores (útil para teste manual do cron).
  */
-export async function refreshExchangeRatesJob(supabase) {
+export async function refreshExchangeRatesJob(supabase, opts = {}) {
+  const forceExternal = !!opts.forceExternal
   const current = getMemoryCache() || await loadRatesFromSupabase(supabase)
-  if (current) {
+  if (current && !forceExternal) {
     setMemoryCache(current)
     const updatedAtMs = Date.parse(current.updated_at) || 0
     const ageMs = updatedAtMs > 0 ? (Date.now() - updatedAtMs) : Number.POSITIVE_INFINITY
     if (ageMs >= 0 && ageMs < MIN_REFRESH_INTERVAL_MS) {
       return normalizeRates({ ...current, source: `${current.source}_within_refresh_window` })
     }
+  }
+  if (current && forceExternal) {
+    setMemoryCache(current)
   }
 
   const live = await fetchCommercialRatesFromApis()

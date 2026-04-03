@@ -23,6 +23,14 @@ jobs:
           URL="${SITE_URL%/}/api/cron-refresh-exchange-rates"
           echo "Calling $URL"
 
-          curl --fail --show-error --silent \
-            -H "Authorization: Bearer $CRON_SECRET" \
-            "$URL"
+          # workflow_dispatch: força chamada aos provedores (senão a janela de 4h pode pular a API).
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            curl --fail --show-error --silent \
+              -H "Authorization: Bearer $CRON_SECRET" \
+              -H "X-Cron-Force-External: 1" \
+              "$URL"
+          else
+            curl --fail --show-error --silent \
+              -H "Authorization: Bearer $CRON_SECRET" \
+              "$URL"
+          fi
