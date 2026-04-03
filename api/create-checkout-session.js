@@ -301,6 +301,45 @@ function extractParcelowEchoAmount(json) {
   return { currency, amountCents: null }
 }
 
+async function fetchParcelowOrderByReference({ baseUrl, token, reference }) {
+  const ref = String(reference || '').trim()
+  if (!ref) return null
+  const url = `${String(baseUrl || '').replace(/\/$/, '')}/api/orders/reference/${encodeURIComponent(ref)}`
+  const res = await fetchParcelow(url, {
+    method: 'GET',
+    headers: {
+      Accept: 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+  })
+  const text = await res.text()
+  let json = null
+  try {
+    json = text ? JSON.parse(text) : null
+  } catch {
+    json = null
+  }
+  if (!res.ok || !json || json.success === false) {
+    return { ok: false, status: res.status, body: json || text?.slice(0, 400) || null }
+  }
+  const arr = Array.isArray(json?.data) ? json.data : []
+  const first = arr[0] || null
+  return {
+    ok: true,
+    status: res.status,
+    order: first
+      ? {
+          id: first.id ?? null,
+          reference: first.reference ?? null,
+          total_usd: first.total_usd ?? null,
+          total_brl: first.total_brl ?? null,
+          order_amount: first.order_amount ?? null,
+          status_text: first.status_text ?? null,
+        }
+      : null,
+  }
+}
+
 /**
  * Pedido loja em BRL: mesmo JPY que o Cart.jsx (soma ¥ das linhas × cupom × BRL a pagar após indicação).
  * Evita usar total_amount_usd do Postgres na conversão → Parcelow/Stripe alinhados ao site (spot jpy_usd).
@@ -368,11 +407,6 @@ async function createParcelowOrderCheckout({
     // Reference único por tentativa evita reuso de checkout antigo no parceiro.
     reference: checkoutReference,
     partner_reference: String(orderId),
-    // A documentação da Parcelow expõe "Order Type USD/BRL" no create order.
-    // Enviamos ambos para reforçar o modo USD no backend deles.
-    type: 'USD',
-    order_type: 'USD',
-    currency: 'USD',
     client: {
       cpf: normalizeBrazilTaxIdForApi(profile?.cpf_cnpj),
       name: customerName,
@@ -385,7 +419,6 @@ async function createParcelowOrderCheckout({
         description: (productName || `Pedido ${String(orderId).slice(0, 8)}`).slice(0, 500),
         quantity: '1',
         amount: amountUsdCents,
-        currency: 'USD',
       },
     ],
     redirect: {
@@ -434,11 +467,6 @@ async function createParcelowOrderCheckout({
       `Parcelow não retornou URL de checkout. Corpo (trecho): ${preview}. Confirme path ${ordersPath} e formato USD com a Parcelow.`
     )
   }
-  if (echoed.currency && echoed.currency !== 'USD') {
-    throw new Error(
-      `Parcelow respondeu moeda divergente (${echoed.currency}) para cobrança em USD. Revise mapeamento de conta/path.`
-    )
-  }
   if (echoed.amountCents != null && Math.abs(echoed.amountCents - amountUsdCents) > 1) {
     throw new Error(
       `Parcelow respondeu valor divergente (enviado ${amountUsdCents} cents, retornado ${echoed.amountCents} cents).`
@@ -447,15 +475,22 @@ async function createParcelowOrderCheckout({
 
   const brlDisplay = amountUsd * (rates.usd_brl || 0)
   const endpoint = `${parcelowUrlBase}${parcelowPath}`
+  let byReference = null
+  try {
+    byReference = await fetchParcelowOrderByReference({
+      baseUrl: parcelowUrlBase,
+      token,
+      reference: payload.reference,
+    })
+  } catch {
+    byReference = null
+  }
   const debugPayload = {
     orderId,
     endpoint,
     request: {
       reference: payload.reference,
       partnerReference: payload.partner_reference,
-      orderType: payload.type,
-      currency: payload.currency,
-      itemCurrency: payload.items?.[0]?.currency,
       itemAmountCentsSent: payload.items?.[0]?.amount,
       amountUsd: Number(amountUsd.toFixed(4)),
       remainingJpy: Number(rj.toFixed(2)),
@@ -464,6 +499,7 @@ async function createParcelowOrderCheckout({
       usdBrl: Number((Number(rates?.usd_brl) || 0).toFixed(6)),
     },
     responseEcho: echoed,
+    orderByReference: byReference,
     pricingContext: debugContext || null,
   }
   console.info('Parcelow checkout debug', JSON.stringify(debugPayload))
