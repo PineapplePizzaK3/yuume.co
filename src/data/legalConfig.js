@@ -8,6 +8,8 @@ export const LEGAL_CONFIG = {
   BUSINESS_OWNER_PT: 'Aoki Shimada Jonathan',
   BUSINESS_OWNER_EN: 'Aoki Shimada Jonathan',
   SUPPORT_EMAIL: 'support@eiko-dls.com',
+  /** Telefone de contato (Japão), exibido nos termos e páginas legais. */
+  SUPPORT_PHONE: '+81 90 3863-9518',
 }
 
 /**

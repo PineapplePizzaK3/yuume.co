@@ -9,7 +9,7 @@ import { LegalLanguageProvider, useLegalLanguage } from '../contexts/LegalLangua
 const LEGAL_LINKS = [
   { to: '/legal/commercial-disclosure', labelJa: '特定商取引法に基づく表記', labelPt: 'Divulgação Comercial', labelEn: 'Commercial Disclosure' },
   { to: '/legal/privacy', labelJa: 'プライバシーポリシー', labelPt: 'Política de Privacidade', labelEn: 'Privacy Policy' },
-  { to: '/legal/terms', labelJa: '利用規約', labelPt: 'Termos de Uso', labelEn: 'Terms of Service' },
+  { to: '/legal/terms', labelJa: '利用規約', labelPt: 'Termos de Uso e Serviços', labelEn: 'Terms of Use & Services' },
 ]
 
 function LegalLayoutInner() {

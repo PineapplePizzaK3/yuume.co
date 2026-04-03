@@ -14,6 +14,7 @@ import { TermsOfUsePtBrBody } from '../../legal/TermsOfUsePtBrBody'
 const TERMS_CFG = {
   BUSINESS_NAME: LEGAL_CONFIG.BUSINESS_NAME,
   SUPPORT_EMAIL: LEGAL_CONFIG.SUPPORT_EMAIL,
+  SUPPORT_PHONE: LEGAL_CONFIG.SUPPORT_PHONE,
 }
 
 export default function Register() {
@@ -45,11 +46,11 @@ export default function Register() {
     e.preventDefault()
     setError('')
     if (!canAgreeTerms) {
-      setError('Role até o final dos Termos de Uso para liberar o aceite.')
+      setError('Role até o final dos Termos de Uso e Serviços para liberar o aceite.')
       return
     }
     if (!agreeTerms) {
-      setError('É necessário concordar com os Termos de Uso para se cadastrar.')
+      setError('É necessário concordar com os Termos de Uso e Serviços para se cadastrar.')
       return
     }
     const { valid, message } = validatePassword(password)
@@ -242,7 +243,7 @@ export default function Register() {
             </div>
             <div className="space-y-3">
               <div className="rounded-lg border border-earth-300 bg-white p-3">
-                <p className="text-sm font-medium text-earth-800">Termos de Uso (texto integral)</p>
+                <p className="text-sm font-medium text-earth-800">Termos de Uso e Serviços (texto integral)</p>
                 <p className="mt-1 text-xs text-earth-600">Role até o final para habilitar o aceite.</p>
                 <div
                   className="mt-2 max-h-[min(14rem,38vh)] overflow-y-auto rounded border border-earth-200 bg-earth-50 p-3"
@@ -272,7 +273,7 @@ export default function Register() {
                 <span className="text-sm text-earth-700">
                   Li e concordo com os{' '}
                   <Link to="/legal/terms" target="_blank" rel="noopener noreferrer" className="font-medium text-earth-900 underline hover:no-underline">
-                    Termos de Uso
+                    Termos de Uso e Serviços
                   </Link>{' '}
                   acima.
                 </span>

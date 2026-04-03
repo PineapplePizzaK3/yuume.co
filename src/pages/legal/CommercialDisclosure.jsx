@@ -124,7 +124,7 @@ const CONTENT = {
     content: (c) => (
       <>
         <P>Esta página apresenta informações sobre o serviço, conforme a Lei Japonesa de Transações Comerciais Especificadas.</P>
-        <P>Os Termos de Uso e regulamentos relacionados têm o japonês como idioma oficial; as traduções em outros idiomas são fornecidas apenas como referência.</P>
+        <P>Os Termos de Uso e Serviços e regulamentos relacionados têm o japonês como idioma oficial; as traduções em outros idiomas são fornecidas apenas como referência.</P>
 
         <LegalSection title="Vendedor">
           <P>{c.BUSINESS_NAME}</P>
@@ -200,8 +200,8 @@ const CONTENT = {
         </LegalSection>
 
         <LegalSection title="Demais informações">
-          <P>As condições de uso deste serviço seguem os Termos de Uso.</P>
-          <P>Ao utilizar o serviço, considera-se que o usuário concorda com os Termos de Uso.</P>
+          <P>As condições de uso deste serviço seguem os Termos de Uso e Serviços.</P>
+          <P>Ao utilizar o serviço, considera-se que o usuário concorda com os Termos de Uso e Serviços.</P>
         </LegalSection>
       </>
     ),
@@ -211,7 +211,7 @@ const CONTENT = {
     content: (c) => (
       <>
         <P>This page provides information about the service in accordance with Japan&apos;s Specified Commercial Transactions Act.</P>
-        <P>The Terms of Use and related regulations have Japanese as the official language; translations into other languages are provided for reference only.</P>
+        <P>The Terms of Use and Services and related regulations have Japanese as the official language; translations into other languages are provided for reference only.</P>
 
         <LegalSection title="Seller">
           <P>{c.BUSINESS_NAME}</P>
@@ -287,8 +287,8 @@ const CONTENT = {
         </LegalSection>
 
         <LegalSection title="Other">
-          <P>The terms of use for this service follow the Terms of Use.</P>
-          <P>By using the service, you are deemed to have agreed to the Terms of Use.</P>
+          <P>The terms of use for this service follow the Terms of Use and Services.</P>
+          <P>By using the service, you are deemed to have agreed to the Terms of Use and Services.</P>
         </LegalSection>
       </>
     ),

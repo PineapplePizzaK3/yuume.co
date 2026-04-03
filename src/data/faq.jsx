@@ -98,7 +98,7 @@ export const FAQ_ITEMS = [
     id: 'cadastro',
     pergunta: 'Preciso me cadastrar antes de usar o serviço?',
     resposta:
-      'Sim. O cadastro é necessário para receber o endereço no Japão, acompanhar pedidos e aceitar os Termos de Uso. É preciso ter pelo menos 18 anos e manter dados verdadeiros e atualizados. Use Login / Registro no menu.',
+      'Sim. O cadastro é necessário para receber o endereço no Japão, acompanhar pedidos e aceitar os Termos de Uso e Serviços. É preciso ter pelo menos 18 anos e manter dados verdadeiros e atualizados. Use Login / Registro no menu.',
   },
   {
     id: 'armazenamento',

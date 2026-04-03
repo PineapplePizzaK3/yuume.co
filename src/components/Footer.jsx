@@ -51,7 +51,7 @@ function Footer() {
                 Política de Privacidade
               </Link>
               <Link to="/legal/terms" className={linkClasse('/legal/terms')}>
-                Termos de Uso
+                Termos de uso e serviços
               </Link>
               <Link to="/legal/commercial-disclosure" className={linkClasse('/legal/commercial-disclosure')}>
                 特定商取引法に基づく表記
