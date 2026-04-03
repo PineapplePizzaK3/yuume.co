@@ -349,13 +349,8 @@ async function createParcelowOrderCheckout({
     Number.isFinite(overrideUsd) && overrideUsd > 0
       ? overrideUsd
       : jpyToFinalUsd(rj, rates.jpy_usd, wiseMarkup)
-  const amountMode = String(process.env.PARCELOW_USD_AMOUNT_MODE || 'usd_cents').trim().toLowerCase()
   const amountUsdCents = Math.round(amountUsd * 100)
-  const amountBrlCents = Math.round(amountUsd * (Number(rates.usd_brl) || 0) * 100)
-  // Padrão: enviar centavos em USD reais. Use brl_cents apenas se a conta Parcelow
-  // estiver configurada para interpretar amount em base BRL.
-  const parcelowAmountCents = amountMode === 'usd_cents' ? amountUsdCents : amountBrlCents
-  if (!Number.isFinite(parcelowAmountCents) || parcelowAmountCents <= 0) {
+  if (!Number.isFinite(amountUsdCents) || amountUsdCents <= 0) {
     throw new Error('Valor inválido para criar cobrança Parcelow (USD)')
   }
 
@@ -373,6 +368,10 @@ async function createParcelowOrderCheckout({
     // Reference único por tentativa evita reuso de checkout antigo no parceiro.
     reference: checkoutReference,
     partner_reference: String(orderId),
+    // A documentação da Parcelow expõe "Order Type USD/BRL" no create order.
+    // Enviamos ambos para reforçar o modo USD no backend deles.
+    type: 'USD',
+    order_type: 'USD',
     currency: 'USD',
     client: {
       cpf: normalizeBrazilTaxIdForApi(profile?.cpf_cnpj),
@@ -385,7 +384,7 @@ async function createParcelowOrderCheckout({
         reference: `item_${String(orderId).slice(0, 12)}`,
         description: (productName || `Pedido ${String(orderId).slice(0, 8)}`).slice(0, 500),
         quantity: '1',
-        amount: parcelowAmountCents,
+        amount: amountUsdCents,
         currency: 'USD',
       },
     ],
@@ -440,9 +439,9 @@ async function createParcelowOrderCheckout({
       `Parcelow respondeu moeda divergente (${echoed.currency}) para cobrança em USD. Revise mapeamento de conta/path.`
     )
   }
-  if (echoed.amountCents != null && Math.abs(echoed.amountCents - parcelowAmountCents) > 1) {
+  if (echoed.amountCents != null && Math.abs(echoed.amountCents - amountUsdCents) > 1) {
     throw new Error(
-      `Parcelow respondeu valor divergente (enviado ${parcelowAmountCents} cents, retornado ${echoed.amountCents} cents).`
+      `Parcelow respondeu valor divergente (enviado ${amountUsdCents} cents, retornado ${echoed.amountCents} cents).`
     )
   }
 
@@ -454,12 +453,10 @@ async function createParcelowOrderCheckout({
     request: {
       reference: payload.reference,
       partnerReference: payload.partner_reference,
-      amountMode,
+      orderType: payload.type,
       currency: payload.currency,
       itemCurrency: payload.items?.[0]?.currency,
       itemAmountCentsSent: payload.items?.[0]?.amount,
-      itemAmountCentsUsd: amountUsdCents,
-      itemAmountCentsBrl: amountBrlCents,
       amountUsd: Number(amountUsd.toFixed(4)),
       remainingJpy: Number(rj.toFixed(2)),
       jpyUsdSpot: Number((Number(rates?.jpy_usd) || 0).toFixed(8)),
