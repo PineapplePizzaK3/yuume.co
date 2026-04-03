@@ -29,6 +29,8 @@ export async function handleExchangeRatesGet(req, res) {
     const jpy_usd_charge = chargeJpyUsdRate(rates.jpy_usd, wiseMarkup)
     const effective_brl_per_jpy = effectiveBrlPerJpy(rates.jpy_usd, rates.usd_brl, wiseMarkup)
     return res.status(200).json({
+      USD_JPY: rates.usd_jpy,
+      USD_BRL: rates.usd_brl,
       jpy_usd: rates.jpy_usd,
       jpy_usd_charge: jpy_usd_charge || null,
       usd_brl: rates.usd_brl,

@@ -2,7 +2,8 @@ name: Refresh Exchange Rates
 
 on:
   schedule:
-    - cron: '*/15 * * * *'
+    # A cada 4 horas (~180 chamadas/mês), abaixo do limite de 300 do plano free.
+    - cron: '0 */4 * * *'
   workflow_dispatch:
 
 jobs:

@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import { fetchCommercialRatesFromApis, persistRatesToSupabase } from './exchangeRateService.js'
+import { refreshExchangeRatesJob } from './exchangeRateService.js'
 import { jpyToFinalUsd, usdToBrlDisplay } from './pricingEngine.js'
 import { resolveWiseWithdrawalMarkupPercent } from './wiseWithdrawalMarkup.js'
 
@@ -33,26 +33,7 @@ export async function handleCronRefreshExchangeRates(req, res) {
   }
 
   try {
-    let rates = await fetchCommercialRatesFromApis()
-    if (!rates) {
-      const { data: rows } = await supabase
-        .from('system_settings')
-        .select('key, value')
-        .in('key', ['fx_jpy_usd', 'fx_usd_brl'])
-      const map = Object.fromEntries((rows || []).map((r) => [r.key, r.value]))
-      const jpy_usd = Number(map.fx_jpy_usd?.amount)
-      const usd_brl = Number(map.fx_usd_brl?.amount)
-      if (Number.isFinite(jpy_usd) && jpy_usd > 0 && Number.isFinite(usd_brl) && usd_brl > 0) {
-        rates = {
-          jpy_usd,
-          usd_brl,
-          updated_at: new Date().toISOString(),
-          source: 'supabase_stale',
-        }
-      }
-    } else {
-      await persistRatesToSupabase(supabase, rates)
-    }
+    const rates = await refreshExchangeRatesJob(supabase)
 
     if (!rates) {
       return res.status(500).json({ ok: false, error: 'No exchange rates available' })
@@ -91,7 +72,14 @@ export async function handleCronRefreshExchangeRates(req, res) {
 
     return res.status(200).json({
       ok: true,
-      rates: { jpy_usd: rates.jpy_usd, usd_brl: rates.usd_brl },
+      rates: {
+        USD_JPY: rates.usd_jpy,
+        USD_BRL: rates.usd_brl,
+        jpy_usd: rates.jpy_usd,
+        usd_brl: rates.usd_brl,
+      },
+      updated_at: rates.updated_at,
+      source: rates.source,
       products_updated: updated,
     })
   } catch (e) {
