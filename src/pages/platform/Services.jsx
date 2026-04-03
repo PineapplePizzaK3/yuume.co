@@ -476,11 +476,10 @@ export default function Services() {
                       className="mt-1 rounded border-earth-300"
                     />
                     <span className="text-sm text-earth-800">
-                      <span className="font-semibold text-earth-900">Quero antecipar o pré-pagamento</span>
+                      <span className="font-semibold text-earth-900">Quero fazer o pré-pagamento</span>
                       <span className="mt-1 block font-normal">
-                        Marque se os itens vêm de <strong>flea market</strong> ou anúncios únicos (Mercari, Yahoo
-                        Auctions/Fleamarket, Rakuma, etc.). Assim a equipe pode priorizar o envio do orçamento e da
-                        cobrança para tentar comprar antes que outra pessoa leve o produto.
+                        É comum em <strong>flea market</strong> ou anúncios únicos (Mercari, Yahoo
+                        Auctions/Fleamarket, Rakuma, etc.) que os produtos sejam vendidos rapidamente pela alta rotatividade, se deseja fazer o pré-pagamento, podemos comprar o produto o quanto antes, assim diminuimos a chance de o produto ser vendido antes de você pagar.
                       </span>
                     </span>
                   </label>
