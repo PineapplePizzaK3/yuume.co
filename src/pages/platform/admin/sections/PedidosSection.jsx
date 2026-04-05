@@ -494,6 +494,9 @@ export default function PedidosSection() {
               </div>
                 <div>
                   <label className="block text-sm font-medium text-earth-700">Taxa de redirecionamento por item (¥)</label>
+                  <p className="mt-1 text-xs text-earth-500">
+                    Valor inicial pela quantidade de itens: 1 → ¥1.000; 2–4 → ¥750; 5+ → ¥500 (editável). Com orçamento já salvo no pedido, reabre com os valores gravados.
+                  </p>
                   <input
                     type="number"
                     step="0.01"

@@ -63,6 +63,7 @@ import { getFraudReviewQueue, decideFraudCase } from '../../../services/fraudSer
 import { searchCatalogAdmin } from '../../../services/catalogSearchService'
 import { brlToJpy, formatJPY, formatWeight } from '../../../lib/fx'
 import { parseQuoteMessage, serializeQuoteProducts } from '../../../lib/quoteProducts'
+import { getDefaultRedirectFeePerItem } from '../../../lib/shippingRedirectFee'
 import QuoteProductsList from '../../../components/QuoteProductsList'
 import OrderAttachments from '../../../components/OrderAttachments'
 import { getSystemSettings, saveSystemSettingsAdmin } from '../../../services/settingsService'
@@ -1463,7 +1464,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       redirectFeePerItem:
         savedBreakdown?.redirect_fee_per_item != null
           ? String(savedBreakdown.redirect_fee_per_item)
-          : '',
+          : String(getDefaultRedirectFeePerItem(itemsCount)),
       shippingBufferPercent:
         savedBreakdown?.shipping_buffer_percent != null
           ? String(savedBreakdown.shipping_buffer_percent)

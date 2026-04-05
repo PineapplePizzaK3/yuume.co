@@ -54,6 +54,8 @@ function WhatsAppFloating() {
     dragged: false,
   })
   const suppressClickRef = useRef(false)
+  /** Se false, o usuário definiu posição (arraste); no resize só limitamos à viewport. Se true, seguimos o canto padrão. */
+  const followDefaultCornerRef = useRef(true)
   const positionRef = useRef(position)
   positionRef.current = position
 
@@ -61,6 +63,7 @@ function WhatsAppFloating() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY)
       if (!raw) {
+        followDefaultCornerRef.current = true
         const place = () => setPosition(getBottomRightDefault())
         place()
         requestAnimationFrame(() => requestAnimationFrame(place))
@@ -68,23 +71,36 @@ function WhatsAppFloating() {
       }
       const saved = JSON.parse(raw)
       if (typeof saved?.x !== 'number' || typeof saved?.y !== 'number') {
+        followDefaultCornerRef.current = true
         setPosition(getBottomRightDefault())
         return
       }
+      followDefaultCornerRef.current = false
       setPosition(clampPosition(saved.x, saved.y))
     } catch {
+      followDefaultCornerRef.current = true
       setPosition(getBottomRightDefault())
     }
   }, [])
 
   useEffect(() => {
+    let rafId = 0
     const onResize = () => {
-      setPosition((prev) => clampPosition(prev.x, prev.y))
+      if (rafId) cancelAnimationFrame(rafId)
+      rafId = requestAnimationFrame(() => {
+        rafId = 0
+        if (followDefaultCornerRef.current) {
+          setPosition(getBottomRightDefault())
+        } else {
+          setPosition((prev) => clampPosition(prev.x, prev.y))
+        }
+      })
     }
     window.addEventListener('resize', onResize)
     const vv = window.visualViewport
     if (vv) vv.addEventListener('resize', onResize)
     return () => {
+      if (rafId) cancelAnimationFrame(rafId)
       window.removeEventListener('resize', onResize)
       if (vv) vv.removeEventListener('resize', onResize)
     }
@@ -125,6 +141,7 @@ function WhatsAppFloating() {
     const finalPosition = clampPosition(positionRef.current.x, positionRef.current.y)
     setPosition(finalPosition)
     if (dragDataRef.current.dragged) {
+      followDefaultCornerRef.current = false
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(finalPosition))
       } catch {
