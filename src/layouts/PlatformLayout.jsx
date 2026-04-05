@@ -5,6 +5,7 @@
 import { useState, useEffect } from 'react'
 import { Link, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
+import { useCartCount } from '../hooks/useCartCount'
 
 const LOJA_ITEMS = [
   { to: '/app/services', label: 'Serviços' },
@@ -74,6 +75,9 @@ function writeMenuOrder(userId, menuOrder) {
 export function PlatformLayout() {
   const { user, isAdmin, signOut } = useAuth()
   const location = useLocation()
+  const cartCount = useCartCount(user?.id)
+  const hasCartItems = cartCount > 0
+  const cartBadgeLabel = cartCount > 99 ? '99+' : String(cartCount)
   const [lojaOpen, setLojaOpen] = useState(true)
   const [contaOpen, setContaOpen] = useState(true)
   const [menuOrder, setMenuOrder] = useState(DEFAULT_MENU_ORDER)
@@ -352,13 +356,20 @@ export function PlatformLayout() {
                         e.dataTransfer.effectAllowed = 'move'
                       }}
                       onDragEnd={() => setDraggingItem(null)}
-                      className={`block cursor-grab rounded-lg px-3 py-2 text-sm transition active:cursor-grabbing ${
-                        isActive(item.to)
-                          ? 'font-medium text-earth-900 bg-earth-200'
-                          : 'text-earth-600 hover:bg-earth-100 hover:text-earth-800'
+                      className={`relative flex cursor-grab items-center justify-between rounded-lg px-3 py-2 text-sm transition active:cursor-grabbing ${
+                        item.to === '/app/cart' && hasCartItems
+                          ? 'font-semibold bg-amber-100 text-amber-900 ring-1 ring-amber-300 hover:bg-amber-200'
+                          : isActive(item.to)
+                            ? 'font-medium text-earth-900 bg-earth-200'
+                            : 'text-earth-600 hover:bg-earth-100 hover:text-earth-800'
                       }`}
                     >
-                      {item.label}
+                      <span>{item.label}</span>
+                      {item.to === '/app/cart' && hasCartItems && (
+                        <span className="ml-2 min-w-[1.25rem] rounded-full bg-red-600 px-1 text-center text-[0.65rem] font-bold leading-5 text-white shadow-sm">
+                          {cartBadgeLabel}
+                        </span>
+                      )}
                     </Link>
                   </div>
                 ))}

@@ -12,6 +12,8 @@ import { jpyToBrl } from '../../lib/fx'
 import { getCardThumbnailUrl } from '../../lib/imageUtils'
 import LinkifyText from '../../components/LinkifyText'
 import { TriCurrencyDisplay } from '../../components/TriCurrencyDisplay'
+import ImageLightbox from '../../components/ImageLightbox'
+import { getProductConditionMeta } from '../../lib/productCondition'
 
 /** BRL em destaque; JPY e USD na mesma hierarquia visual, com bandeiras. */
 function ProductPriceBlock({ product: p, variant = 'card' }) {
@@ -63,6 +65,7 @@ export default function Loja() {
   const [modalFeedback, setModalFeedback] = useState('')
   const [detailProduct, setDetailProduct] = useState(null)
   const [detailImageIndex, setDetailImageIndex] = useState(0)
+  const [lightbox, setLightbox] = useState({ open: false, src: '', alt: '' })
 
   useEffect(() => {
     if (!message) return
@@ -116,6 +119,13 @@ export default function Loja() {
   }
 
   const images = detailProduct ? getProductImages(detailProduct) : []
+  const openLightbox = (src, alt, event) => {
+    if (event) {
+      event.preventDefault()
+      event.stopPropagation()
+    }
+    setLightbox({ open: true, src, alt })
+  }
 
   return (
     <>
@@ -138,6 +148,7 @@ export default function Loja() {
               const imgs = getProductImages(p)
               const mainImg = imgs[0]
               const thumbUrl = mainImg ? getCardThumbnailUrl(mainImg) : null
+              const condition = getProductConditionMeta(p.item_condition)
               return (
                 <div
                   key={p.id}
@@ -152,9 +163,10 @@ export default function Loja() {
                       <img
                         src={thumbUrl || mainImg}
                         alt={p.name}
-                        className="h-36 w-full object-cover"
+                        className="h-36 w-full cursor-zoom-in object-cover"
                         loading="lazy"
                         onError={(e) => { if (e.target.src !== mainImg) e.target.src = mainImg }}
+                        onClick={(e) => openLightbox(mainImg, p.name, e)}
                       />
                     ) : (
                       <div className="flex h-36 items-center justify-center bg-earth-200 text-earth-500 text-sm">
@@ -163,6 +175,9 @@ export default function Loja() {
                     )}
                     <div className="p-3">
                       <h2 className="font-semibold text-earth-900 text-sm line-clamp-2">{p.name}</h2>
+                      <span className={`mt-1 inline-flex rounded border px-2 py-0.5 text-[11px] font-medium ${condition.className}`}>
+                        {condition.label}
+                      </span>
                       {p.description && (
                         <p className="mt-0.5 line-clamp-2 whitespace-pre-wrap text-xs text-earth-600">
                           <LinkifyText text={p.description} />
@@ -240,7 +255,8 @@ export default function Loja() {
                     <img
                       src={images[detailImageIndex]}
                       alt={detailProduct.name}
-                      className="h-64 w-full object-contain sm:h-80"
+                      className="h-64 w-full cursor-zoom-in object-contain sm:h-80"
+                      onClick={(e) => openLightbox(images[detailImageIndex], detailProduct.name, e)}
                     />
                     {images.length > 1 && (
                       <>
@@ -294,6 +310,14 @@ export default function Loja() {
                 )}
               </div>
               <div className="flex-1 min-h-0 overflow-y-auto p-5">
+                {(() => {
+                  const condition = getProductConditionMeta(detailProduct.item_condition)
+                  return (
+                    <span className={`mb-2 inline-flex rounded border px-2 py-0.5 text-xs font-medium ${condition.className}`}>
+                      {condition.label}
+                    </span>
+                  )
+                })()}
                 <h2 id="product-detail-title" className="text-xl font-bold text-earth-900">
                   {detailProduct.name}
                 </h2>
@@ -334,6 +358,12 @@ export default function Loja() {
             </div>
           </div>
         )}
+        <ImageLightbox
+          open={lightbox.open}
+          src={lightbox.src}
+          alt={lightbox.alt}
+          onClose={() => setLightbox({ open: false, src: '', alt: '' })}
+        />
         </div>
       </div>
     </>

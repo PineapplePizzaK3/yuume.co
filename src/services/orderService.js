@@ -260,8 +260,14 @@ export async function updateOrderStatusAdmin(orderId, status) {
 
 /**
  * Admin: define o custo do frete e marca como aguardando pagamento.
+ * Pode receber um breakdown auditável (JSON) da composição do valor.
  */
-export async function setShippingAndAwaitPaymentAdmin(orderId, shippingCost, currency = 'JPY') {
+export async function setShippingAndAwaitPaymentAdmin(
+  orderId,
+  shippingCost,
+  currency = 'JPY',
+  breakdown = null
+) {
   const cost = parseFloat(shippingCost)
   if (isNaN(cost) || cost < 0) {
     return { data: null, error: { message: 'Valor do frete inválido' } }
@@ -273,6 +279,10 @@ export async function setShippingAndAwaitPaymentAdmin(orderId, shippingCost, cur
         p_order_id: orderId,
         p_shipping_cost: cost,
         p_currency: currency || 'JPY',
+        p_breakdown:
+          breakdown && typeof breakdown === 'object'
+            ? breakdown
+            : null,
       })
     )
     return { data: data ?? null, error }

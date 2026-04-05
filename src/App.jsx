@@ -37,7 +37,19 @@ const Loja = lazy(() => import('./pages/platform/Loja'))
 const LojaMirror = lazy(() => import('./pages/LojaMirror'))
 const Cart = lazy(() => import('./pages/platform/Cart'))
 const GrupoDeCompras = lazy(() => import('./pages/platform/GrupoDeCompras'))
-const Admin = lazy(() => import('./pages/platform/Admin'))
+const AdminLayout = lazy(() => import('./pages/platform/admin/AdminLayout'))
+const AdminPedidosTab = lazy(() => import('./pages/platform/admin/tabs/PedidosTab'))
+const AdminUsuariosTab = lazy(() => import('./pages/platform/admin/tabs/UsuariosTab'))
+const AdminEnviosTab = lazy(() => import('./pages/platform/admin/tabs/EnviosTab'))
+const AdminProdutosTab = lazy(() => import('./pages/platform/admin/tabs/ProdutosTab'))
+const AdminCatalogoProdutosTab = lazy(() => import('./pages/platform/admin/tabs/CatalogoProdutosTab'))
+const AdminBuscaCatalogoTab = lazy(() => import('./pages/platform/admin/tabs/BuscaCatalogoTab'))
+const AdminGruposTab = lazy(() => import('./pages/platform/admin/tabs/GruposTab'))
+const AdminMarketingTab = lazy(() => import('./pages/platform/admin/tabs/MarketingTab'))
+const AdminFraudeTab = lazy(() => import('./pages/platform/admin/tabs/FraudeTab'))
+const AdminNotificacoesTab = lazy(() => import('./pages/platform/admin/tabs/NotificacoesTab'))
+const AdminRecargasTab = lazy(() => import('./pages/platform/admin/tabs/RecargasTab'))
+const AdminLogsTab = lazy(() => import('./pages/platform/admin/tabs/LogsTab'))
 const Lounge = lazy(() => import('./pages/platform/Lounge'))
 /**
  * Componente principal da aplicação.
@@ -148,9 +160,23 @@ function App() {
               <Route path="envios" element={<Navigate to="/app/lounge" replace />} />
               <Route path="admin" element={
                 <AdminRoute>
-                  <Admin />
+                  <AdminLayout />
                 </AdminRoute>
-              } />
+              }>
+                <Route index element={<Navigate to="/app/admin/pedidos" replace />} />
+                <Route path="pedidos" element={<AdminPedidosTab />} />
+                <Route path="usuarios" element={<AdminUsuariosTab />} />
+                <Route path="envios" element={<AdminEnviosTab />} />
+                <Route path="produtos" element={<AdminProdutosTab />} />
+                <Route path="catalogo-produtos" element={<AdminCatalogoProdutosTab />} />
+                <Route path="busca-catalogo" element={<AdminBuscaCatalogoTab />} />
+                <Route path="grupos" element={<AdminGruposTab />} />
+                <Route path="marketing" element={<AdminMarketingTab />} />
+                <Route path="fraude" element={<AdminFraudeTab />} />
+                <Route path="notificacoes" element={<AdminNotificacoesTab />} />
+                <Route path="recargas" element={<AdminRecargasTab />} />
+                <Route path="logs" element={<AdminLogsTab />} />
+              </Route>
             </Route>
             <Route path="/faq" element={<FaqLayout />}>
               <Route index element={<Faq />} />

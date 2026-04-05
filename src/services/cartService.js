@@ -4,6 +4,13 @@
 import { supabase } from '../lib/supabase'
 import { withDbTimeout, toServiceError } from '../lib/dbGuard'
 
+export const CART_UPDATED_EVENT = 'cart:updated'
+
+function emitCartUpdated(userId) {
+  if (typeof window === 'undefined') return
+  window.dispatchEvent(new CustomEvent(CART_UPDATED_EVENT, { detail: { userId } }))
+}
+
 export async function getCart(userId) {
   try {
     const { data, error } = await withDbTimeout(
@@ -50,6 +57,7 @@ export async function addToCart(userId, productId, quantity = 1) {
         .select()
         .single()
     )
+    if (!error) emitCartUpdated(userId)
     return { data, error }
   } catch (e) {
     return { data: null, error: toServiceError(e) }
@@ -68,6 +76,7 @@ export async function updateCartItem(userId, productId, quantity) {
         .select()
         .single()
     )
+    if (!error) emitCartUpdated(userId)
     return { data, error }
   } catch (e) {
     return { data: null, error: toServiceError(e) }
@@ -83,6 +92,7 @@ export async function removeFromCart(userId, productId) {
         .eq('user_id', userId)
         .eq('product_id', productId)
     )
+    if (!error) emitCartUpdated(userId)
     return { error }
   } catch (e) {
     return { error: toServiceError(e) }
@@ -94,6 +104,7 @@ export async function clearCart(userId) {
     const { error } = await withDbTimeout(
       supabase.from('cart_items').delete().eq('user_id', userId)
     )
+    if (!error) emitCartUpdated(userId)
     return { error }
   } catch (e) {
     return { error: toServiceError(e) }
@@ -112,6 +123,7 @@ export async function createStoreOrder(userId, shipImmediately, shippingCostJpy 
         p_coupon_code: couponCode && String(couponCode).trim() ? String(couponCode).trim() : null,
       })
     )
+    if (!error) emitCartUpdated(userId)
     return { data: data ?? null, error }
   } catch (e) {
     return { data: null, error: toServiceError(e) }

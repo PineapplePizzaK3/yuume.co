@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { REDES_SOCIAIS } from '../data/redesSociais'
 import { useAuth } from '../hooks/useAuth'
+import { useCartCount } from '../hooks/useCartCount'
+import { useUnreadNotifications } from '../hooks/useUnreadNotifications'
 
 /**
  * Navbar fixa no topo com links de navegação.
@@ -9,9 +11,14 @@ import { useAuth } from '../hooks/useAuth'
  * Responsiva: menu hamburger no mobile, links completos no desktop.
  */
 function Navbar() {
-  const { isAuthenticated, user, profile, signOut } = useAuth()
+  const { isAuthenticated, user, profile, isAdmin, signOut } = useAuth()
   const [menuAberto, setMenuAberto] = useState(false)
   const location = useLocation()
+  const cartCount = useCartCount(user?.id)
+  const unreadNotifications = useUnreadNotifications(user?.id, 20)
+  const hasCartItems = cartCount > 0
+  const cartBadgeLabel = cartCount > 99 ? '99+' : String(cartCount)
+  const hasUnreadNotifications = unreadNotifications > 0
 
   const fecharMenu = () => setMenuAberto(false)
 
@@ -86,8 +93,11 @@ function Navbar() {
             {isAuthenticated ? (
               <Link
                 to="/app/dashboard"
-                className="flex items-center gap-2 rounded-lg bg-earth-800 px-4 py-2 text-sm font-medium text-earth-50 transition hover:bg-earth-700"
+                className="relative flex items-center gap-2 rounded-lg bg-earth-800 px-4 py-2 text-sm font-medium text-earth-50 transition hover:bg-earth-700"
               >
+                {hasUnreadNotifications && (
+                  <span className="absolute -right-1 -top-1 inline-block h-2.5 w-2.5 rounded-full bg-red-600 ring-2 ring-earth-50" aria-hidden />
+                )}
                 <span className="h-2 w-2 rounded-full bg-green-400" aria-hidden />
                 {profile?.name || user?.email?.split('@')[0] || 'Minha conta'}
               </Link>
@@ -123,23 +133,47 @@ function Navbar() {
               <>
                 <Link
                   to="/app/cart"
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-earth-100 text-earth-700 transition hover:bg-earth-200 hover:text-earth-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-earth-400"
+                  className={`relative inline-flex h-10 w-10 items-center justify-center rounded-lg transition focus:outline-none focus-visible:ring-2 focus-visible:ring-earth-400 ${
+                    hasCartItems
+                      ? 'bg-amber-100 text-amber-800 ring-2 ring-amber-300 hover:bg-amber-200'
+                      : 'bg-earth-100 text-earth-700 hover:bg-earth-200 hover:text-earth-900'
+                  }`}
                   aria-label="Central de Pagamentos"
                   title="Central de Pagamentos"
                 >
                   <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.75 7.5h16.5a1.5 1.5 0 011.5 1.5v6a1.5 1.5 0 01-1.5 1.5H3.75a1.5 1.5 0 01-1.5-1.5V9a1.5 1.5 0 011.5-1.5zM2.25 11.25h19.5M6.75 14.25h3.75" />
                   </svg>
+                  {hasCartItems && (
+                    <span className="absolute -right-1.5 -top-1.5 min-w-[1.15rem] rounded-full bg-red-600 px-1 text-center text-[0.65rem] font-bold leading-5 text-white shadow-md">
+                      {cartBadgeLabel}
+                    </span>
+                  )}
                 </Link>
                 <Link
                   to="/app/dashboard"
-                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-earth-800 px-3 py-2 text-sm font-medium text-earth-50 transition hover:bg-earth-700"
+                  className="relative inline-flex items-center justify-center gap-2 rounded-lg bg-earth-800 px-3 py-2 text-sm font-medium text-earth-50 transition hover:bg-earth-700"
                 >
+                  {hasUnreadNotifications && (
+                    <span className="absolute -right-1 -top-1 inline-block h-2.5 w-2.5 rounded-full bg-red-600 ring-2 ring-earth-50" aria-hidden />
+                  )}
                   <span className="h-2 w-2 rounded-full bg-green-400" aria-hidden />
                   <span className="max-w-[7.5rem] truncate">
                     {profile?.name || user?.email?.split('@')[0] || 'Conta'}
                   </span>
                 </Link>
+                {isAdmin && (
+                  <Link
+                    to="/app/admin"
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100 text-amber-800 transition hover:bg-amber-200 hover:text-amber-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+                    aria-label="Painel Admin"
+                    title="Painel Admin"
+                  >
+                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3l7.5 3v5.25c0 4.244-2.66 7.912-6.405 9.402a3.09 3.09 0 01-2.19 0C7.16 19.162 4.5 15.494 4.5 11.25V6L12 3z" />
+                    </svg>
+                  </Link>
+                )}
                 <button
                   type="button"
                   onClick={() => signOut()}

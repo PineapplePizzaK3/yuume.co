@@ -105,6 +105,7 @@ export async function createProduct(product) {
       image_url: product.image_url ?? (imageUrls[0] || ''),
       image_urls: imageUrls,
       is_active: product.is_active ?? true,
+      ...(Object.prototype.hasOwnProperty.call(product, 'item_condition') && { item_condition: product.item_condition }),
       ...(product.hasOwnProperty('stock_quantity') && { stock_quantity: product.stock_quantity ?? null }),
     }
     const { data, error } = await withDbTimeout(
@@ -128,6 +129,7 @@ export async function updateProduct(id, product) {
       image_url: product.image_url ?? (imageUrls[0] || ''),
       image_urls: imageUrls,
       is_active: product.is_active ?? true,
+      ...(Object.prototype.hasOwnProperty.call(product, 'item_condition') && { item_condition: product.item_condition }),
       ...(product.hasOwnProperty('stock_quantity') && { stock_quantity: product.stock_quantity ?? null }),
     }
     const { data, error } = await withDbTimeout(
