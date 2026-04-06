@@ -4,28 +4,21 @@
  * Personal Shopping e Redirecionamento: anexos por arquivo ou URL; admin orça / aprova conforme o fluxo.
  */
 import { useEffect, useRef, useState } from 'react'
-import { Helmet } from 'react-helmet-async'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../hooks/useAuth'
+import { useLocalizedPath } from '../../hooks/useLocalizedPath'
+import { useFormatPrice } from '../../hooks/useFormatPrice'
+import { PageSeo } from '../../components/PageSeo'
 import { getServices, createOrder } from '../../services/orderService'
 import { uploadOrderAttachment } from '../../services/productService'
 import { getWallet } from '../../services/walletService'
 import { supabase } from '../../lib/supabase'
-import { formatJPY } from '../../lib/fx'
-import {
-  REDIR_ASSISTIDO_FEE_PERCENT,
-  REDIRECIONAMENTO_ITEM_FEE_SUMMARY,
-} from '../../data/serviceFees'
+import { REDIR_ASSISTIDO_FEE_PERCENT } from '../../data/serviceFees'
 
 const SERVICOS_OFERTADOS = ['Redirecionamento', 'Personal Shopping']
 const REDIRECIONAMENTO = 'Redirecionamento'
 const PERSONAL_SHOPPING = 'Personal Shopping'
-
-const DESCRICOES_FIXAS = {
-  Redirecionamento: 'Módulos: 📦 Redirecionamento Padrão | 🛍️ Redirecionamento Assistido + frete',
-  'Personal Shopping':
-    '25% do valor da compra + ¥250 por item + frete — ideal para quem precisa de ajuda para decidir o que comprar',
-}
 
 const DRAFT_STORAGE_PREFIX = 'platform_services_order_draft_v1:'
 
@@ -60,7 +53,10 @@ function clearServicesDraft(userId) {
 }
 
 export default function Services() {
+  const { t } = useTranslation()
+  const fp = useFormatPrice()
   const { user } = useAuth()
+  const lp = useLocalizedPath()
   const [services, setServices] = useState([])
   const [selectedId, setSelectedId] = useState(null)
   const [message, setMessage] = useState('')
@@ -89,6 +85,12 @@ export default function Services() {
   const showImageAttachments = isPersonalShopping || isRedirAssisted || isRedirStandard
   const canSubmit = !isRedirecionamento || agreeProhibited
 
+  const serviceUiDescription = (s) => {
+    if (s.name === REDIRECIONAMENTO) return t('platform.services.descForwarding')
+    if (s.name === PERSONAL_SHOPPING) return t('platform.services.descPersonalShopping')
+    return s.description
+  }
+
   useEffect(() => {
     let isActive = true
     const run = async () => {
@@ -98,7 +100,7 @@ export default function Services() {
         setServices(data ?? [])
         if (error) setFeedback(error.message)
       } catch (e) {
-        if (isActive) setFeedback(e?.message || 'Erro ao carregar serviços')
+        if (isActive) setFeedback(e?.message || t('platform.services.loadError'))
       } finally {
         if (isActive) setLoading(false)
       }
@@ -107,7 +109,7 @@ export default function Services() {
     return () => {
       isActive = false
     }
-  }, [])
+  }, [t])
 
   const oferta = services.filter((s) => SERVICOS_OFERTADOS.includes(s.name))
 
@@ -190,17 +192,17 @@ export default function Services() {
     if (!raw) return
     let u = raw
     if (!/^https?:\/\//i.test(u)) {
-      setFeedback('Use uma URL completa começando com http:// ou https://')
+      setFeedback(t('platform.services.urlMustBeHttp'))
       return
     }
     try {
       const parsed = new URL(u)
       if (!parsed.protocol.startsWith('http')) {
-        setFeedback('Use uma URL http ou https.')
+        setFeedback(t('platform.services.urlHttpOnly'))
         return
       }
     } catch {
-      setFeedback('URL inválida. Verifique o endereço.')
+      setFeedback(t('platform.services.urlInvalid'))
       return
     }
     setSuccessNotice(null)
@@ -240,7 +242,7 @@ export default function Services() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!selectedId) {
-      setFeedback('Selecione um serviço')
+      setFeedback(t('platform.services.selectService'))
       return
     }
     const earlyWalletJpy =
@@ -249,15 +251,13 @@ export default function Services() {
         : 0
     if (isRedirAssisted && earlyPrepaymentRequested) {
       if (!earlyWalletJpy || earlyWalletJpy < 1) {
-        setFeedback('Informe quanto deseja pagar pela carteira (mínimo ¥1).')
+        setFeedback(t('platform.services.prepayMinJpy'))
         return
       }
       const { data: wBal } = await getWallet(user.id)
       const bal = Math.floor(Number(wBal?.balance) || 0)
       if (earlyWalletJpy > bal) {
-        setFeedback(
-          `Saldo na carteira: ${formatJPY(bal)}. Reduza o valor ou recarregue em Carteira.`
-        )
+        setFeedback(t('platform.services.walletBalanceShort', { balance: fp.jpy(bal) }))
         return
       }
     }
@@ -287,7 +287,7 @@ export default function Services() {
         p_order_id: data.id,
       })
       if (wErr) {
-        walletEarlyPayError = wErr.message || 'Erro ao debitar a carteira'
+        walletEarlyPayError = wErr.message || t('platform.services.walletDebitError')
       }
     }
 
@@ -312,25 +312,26 @@ export default function Services() {
 
   return (
     <>
-      <Helmet>
-        <title>Serviços | Plataforma</title>
-      </Helmet>
+      <PageSeo
+        routeKey="appServices"
+        title={t('meta.appServices.title')}
+        description={t('meta.appServices.description')}
+        noindex
+      />
       <div>
-        <h1 className="text-2xl font-bold text-earth-900">Contratar serviço</h1>
-        <p className="mt-2 text-earth-600">
-          Escolha Redirecionamento ou Personal Shopping e envie seu pedido. Recomendamos informar o que você irá pedir para enviar ao nosso endereço (ex.: loja, quantidade, descrição dos itens).
-        </p>
+        <h1 className="text-2xl font-bold text-earth-900">{t('platform.services.pageTitle')}</h1>
+        <p className="mt-2 text-earth-600">{t('platform.services.intro')}</p>
 
-        {loading && <p className="mt-6 text-earth-600">Carregando...</p>}
+        {loading && <p className="mt-6 text-earth-600">{t('platform.services.loading')}</p>}
 
         {!loading && oferta.length === 0 && (
-          <p className="mt-6 text-earth-600">Nenhum serviço disponível no momento.</p>
+          <p className="mt-6 text-earth-600">{t('platform.services.noServices')}</p>
         )}
 
         {!loading && oferta.length > 0 && (
           <form onSubmit={handleSubmit} className="mt-6 space-y-6">
             <div>
-              <h2 className="mb-3 text-sm font-medium text-earth-700">Escolha o serviço</h2>
+              <h2 className="mb-3 text-sm font-medium text-earth-700">{t('platform.services.chooseService')}</h2>
               <div className="grid gap-4 sm:grid-cols-2">
                 {oferta.map((s) => (
                   <button
@@ -352,12 +353,10 @@ export default function Services() {
                     }`}
                   >
                     <h3 className="font-semibold text-earth-900">{s.name}</h3>
-                    <p className="mt-1 text-sm text-earth-600">
-                      {DESCRICOES_FIXAS[s.name] ?? s.description}
-                    </p>
+                    <p className="mt-1 text-sm text-earth-600">{serviceUiDescription(s)}</p>
                     {selectedId === s.id && (
                       <span className="mt-2 inline-block text-sm font-medium text-earth-700">
-                        ✓ Selecionado
+                        {t('platform.services.selected')}
                       </span>
                     )}
                   </button>
@@ -369,26 +368,20 @@ export default function Services() {
               <div className="space-y-4">
                 <div className="rounded-xl border border-earth-200 bg-gradient-to-b from-sky-50/80 to-white p-4 sm:p-5">
                   <p className="text-xs font-semibold uppercase tracking-wide text-earth-500">
-                    Taxa por item — Padrão e Assistido
+                    {t('platform.services.itemFeeTitle')}
                   </p>
-                  <p className="mt-2 text-sm font-medium text-earth-900">{REDIRECIONAMENTO_ITEM_FEE_SUMMARY}</p>
+                  <p className="mt-2 text-sm font-medium text-earth-900">{t('platform.services.itemFeeTable')}</p>
                   <div className="mt-4 space-y-2 rounded-lg border border-earth-200/80 bg-white/90 px-3 py-3 text-sm text-earth-800">
                     <p>
-                      <span className="font-semibold text-earth-900">Quando essa taxa vale:</span>{' '}
-                      nos dois módulos abaixo a cobrança da taxa por item (e do frete internacional){' '}
-                      <strong>só ocorre na etapa do envio final</strong>, quando você solicitar o envio do pacote{' '}
-                      <strong>para o seu endereço</strong>. Neste formulário você apenas abre o pedido; não há cobrança
-                      dessas taxas agora.
+                      <span className="font-semibold text-earth-900">{t('platform.services.itemFeeWhenLead')}</span>{' '}
+                      {t('platform.services.itemFeeWhenP1')}
                     </p>
-                    <p className="text-earth-600">
-                      No <strong>Assistido</strong>, o orçamento pode incluir pré-pagamento da compra no Japão; isso é
-                      separado da taxa por item acima, que continua ligada ao envio final para você.
-                    </p>
+                    <p className="text-earth-600">{t('platform.services.itemFeeWhenP2')}</p>
                   </div>
                 </div>
 
                 <div className="rounded-lg border border-earth-200 bg-white p-4">
-                  <p className="text-sm font-medium text-earth-800">Modalidade de redirecionamento</p>
+                  <p className="text-sm font-medium text-earth-800">{t('platform.services.redirModalityTitle')}</p>
                   <div className="mt-3 grid gap-3 sm:grid-cols-2">
                     <label className={`flex cursor-pointer items-start gap-3 rounded-lg border p-4 ${redirModule === 'self_buy' ? 'border-earth-900 bg-earth-50' : 'border-earth-200 bg-white hover:bg-earth-50'}`}>
                       <input
@@ -403,11 +396,8 @@ export default function Services() {
                         className="mt-1"
                       />
                       <div>
-                        <span className="block font-semibold text-earth-900">Redirecionamento Padrão</span>
-                        <span className="mt-1 block text-sm text-earth-600">
-                          Você compra nas lojas japonesas e envia para o nosso endereço. A taxa por item segue a tabela
-                          acima; o frete entra no envio final para o seu endereço.
-                        </span>
+                        <span className="block font-semibold text-earth-900">{t('platform.services.standardTitle')}</span>
+                        <span className="mt-1 block text-sm text-earth-600">{t('platform.services.standardBody')}</span>
                       </div>
                     </label>
                     <label className={`flex cursor-pointer items-start gap-3 rounded-lg border p-4 ${redirModule === 'assisted_buy' ? 'border-earth-900 bg-earth-50' : 'border-earth-200 bg-white hover:bg-earth-50'}`}>
@@ -419,11 +409,9 @@ export default function Services() {
                         className="mt-1"
                       />
                       <div>
-                        <span className="block font-semibold text-earth-900">Redirecionamento Assistido</span>
+                        <span className="block font-semibold text-earth-900">{t('platform.services.assistedTitle')}</span>
                         <span className="mt-1 block text-sm text-earth-600">
-                          {REDIR_ASSISTIDO_FEE_PERCENT}% sobre o valor da compra, mais a{' '}
-                          <strong>mesma taxa por item</strong> da tabela acima, mais frete no envio final. Você envia a
-                          lista; retornamos orçamento para pré-pagamento quando aplicável.
+                          {t('platform.services.assistedBody', { percent: REDIR_ASSISTIDO_FEE_PERCENT })}
                         </span>
                       </div>
                     </label>
@@ -433,10 +421,7 @@ export default function Services() {
                 {redirModule === 'self_buy' && (
                   <div className="rounded-lg border border-earth-200 bg-earth-50 p-4 text-sm text-earth-800">
                     <p>
-                      <strong>Documentação da compra:</strong> se você já tiver a{' '}
-                      <strong>nota fiscal (invoice)</strong> ou <strong>prints da tela da compra</strong> do produto,
-                      anexe por upload ou envie o link da imagem. Isso ajuda a identificar o que foi pedido quando o pacote
-                      chegar ao armazém.
+                      <strong>{t('platform.services.purchaseDocsTitle')}</strong> {t('platform.services.purchaseDocsBody')}
                     </p>
                   </div>
                 )}
@@ -450,11 +435,11 @@ export default function Services() {
                       className="mt-1 rounded border-earth-300"
                     />
                     <span className="text-sm text-earth-800">
-                      Li a lista de{' '}
-                      <Link to="/faq/itens-proibidos" target="_blank" rel="noopener noreferrer" className="font-medium text-earth-900 underline hover:no-underline">
-                        itens proibidos
-                      </Link>
-                      {' '}e confirmo que não enviarei nenhum item proibido na importação. O envio de itens proibidos pode resultar em apreensão, sem reembolso.
+                      {t('platform.services.prohibitedLead')}{' '}
+                      <Link to={lp('faqProhibited')} target="_blank" rel="noopener noreferrer" className="font-medium text-earth-900 underline hover:no-underline">
+                        {t('platform.services.prohibitedLink')}
+                      </Link>{' '}
+                      {t('platform.services.prohibitedTail')}
                     </span>
                   </label>
                 </div>
@@ -476,27 +461,23 @@ export default function Services() {
                       className="mt-1 rounded border-earth-300"
                     />
                     <span className="text-sm text-earth-800">
-                      <span className="font-semibold text-earth-900">Quero fazer o pré-pagamento</span>
-                      <span className="mt-1 block font-normal">
-                        É comum em <strong>flea market</strong> ou anúncios únicos (Mercari, Yahoo
-                        Auctions/Fleamarket, Rakuma, etc.) que os produtos sejam vendidos rapidamente pela alta rotatividade, se deseja fazer o pré-pagamento, podemos comprar o produto o quanto antes, assim diminuimos a chance de o produto ser vendido antes de você pagar.
-                      </span>
+                      <span className="font-semibold text-earth-900">{t('platform.services.earlyPrepayHeading')}</span>
+                      <span className="mt-1 block font-normal">{t('platform.services.earlyPrepayDesc')}</span>
                     </span>
                   </label>
-                  <p className="mt-3 text-xs text-earth-600">
-                    O valor total da compra continua no orçamento oficial; o valor abaixo é só o que você quer{' '}
-                    <strong>adiantar agora pela carteira</strong> (em ienes) para reforçar a intenção de pré-pagamento.
-                  </p>
+                  <p className="mt-3 text-xs text-earth-600">{t('platform.services.earlyPrepayHint')}</p>
                   {earlyPrepaymentRequested && (
                     <div className="mt-4 rounded-lg border border-emerald-300/60 bg-white/90 px-3 py-3">
                       <label htmlFor="early-prepay-wallet" className="block text-sm font-medium text-earth-800">
-                        Valor a debitar da carteira (JPY)
+                        {t('platform.services.earlyPrepayLabel')}
                       </label>
                       <p className="mt-1 text-xs text-earth-600">
-                        O débito ocorre ao enviar o pedido. Saldo disponível:{' '}
-                        {walletPreview != null ? formatJPY(Math.floor(walletPreview.balance || 0)) : '…'}{' '}
-                        <Link to="/app/wallet" className="font-medium text-earth-800 underline hover:no-underline">
-                          Carteira
+                        {t('platform.services.earlyPrepayBalance', {
+                          balance:
+                            walletPreview != null ? fp.jpy(Math.floor(walletPreview.balance || 0)) : '…',
+                        })}{' '}
+                        <Link to={lp('appLounge')} className="font-medium text-earth-800 underline hover:no-underline">
+                          {t('platform.lounge.wallet')}
                         </Link>
                       </p>
                       <input
@@ -507,7 +488,7 @@ export default function Services() {
                         inputMode="numeric"
                         value={earlyPrepaymentWalletInput}
                         onChange={(e) => setEarlyPrepaymentWalletInput(e.target.value)}
-                        placeholder="Ex: 5000"
+                        placeholder={t('platform.services.earlyPrepayPlaceholder')}
                         className="mt-2 w-full max-w-xs rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
                       />
                     </div>
@@ -516,26 +497,26 @@ export default function Services() {
               )}
               <label htmlFor="message" className="block text-sm font-medium text-earth-700">
                 {isPersonalShopping || isRedirAssisted
-                  ? 'Descreva o que deseja comprar (links, lojas, quantidade)'
-                  : 'O que você irá pedir para enviar ao nosso endereço? (recomendado)'}
+                  ? t('platform.services.messageLabelShopping')
+                  : t('platform.services.messageLabelRedir')}
               </label>
               <p className="mt-1 text-xs text-earth-500">
                 {isPersonalShopping || isRedirAssisted
-                  ? 'Envie a lista de produtos, links e referências. Você pode anexar imagens ou links de imagem abaixo.'
+                  ? t('platform.services.hintShopping')
                   : isRedirStandard
-                    ? 'Informe loja, quantidade e descrição dos itens. Você pode anexar invoice, prints ou links de imagem abaixo (opcional).'
-                    : 'Informe loja, quantidade e descrição dos itens para facilitar o recebimento.'}
+                    ? t('platform.services.hintStandard')
+                    : t('platform.services.hintAssisted')}
               </p>
-              <p className="mt-1 text-xs text-earth-600">
-                Seu texto e opções deste formulário são salvos automaticamente neste aparelho; se você sair da página, o rascunho volta ao retornar.
-              </p>
+              <p className="mt-1 text-xs text-earth-600">{t('platform.services.draftNote')}</p>
               <textarea
                 id="message"
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                placeholder={isPersonalShopping || isRedirAssisted
-                  ? 'Ex: Loja X – link do produto, tamanho M, cor azul. Ou: quero este modelo (anexe imagem).'
-                  : 'Ex: Amazon JP – 2 livros; Rakuten – 1 figura.'}
+                placeholder={
+                  isPersonalShopping || isRedirAssisted
+                    ? t('platform.services.placeholderShopping')
+                    : t('platform.services.placeholderRedir')
+                }
                 rows={4}
                 className="mt-2 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900 placeholder:text-earth-400"
               />
@@ -545,22 +526,18 @@ export default function Services() {
                   onClick={clearLocalDraft}
                   className="text-xs font-medium text-earth-600 underline decoration-earth-300 hover:text-earth-900 hover:decoration-earth-600"
                 >
-                  Limpar rascunho salvo neste aparelho
+                  {t('platform.services.clearDraft')}
                 </button>
               </div>
             </div>
 
             {showImageAttachments && (
               <div>
-                <label className="block text-sm font-medium text-earth-700">
-                  Imagens de referência (opcional)
-                </label>
-                <p className="mt-1 text-xs text-earth-500">
-                  Envie um arquivo de imagem do seu dispositivo ou cole a URL direta da imagem (http ou https).
-                </p>
+                <label className="block text-sm font-medium text-earth-700">{t('platform.services.refImagesTitle')}</label>
+                <p className="mt-1 text-xs text-earth-500">{t('platform.services.refImagesHint')}</p>
                 <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
                   <div className="flex min-w-0 flex-1 flex-col gap-2 sm:max-w-md">
-                    <span className="text-xs font-medium text-earth-600">URL da imagem</span>
+                    <span className="text-xs font-medium text-earth-600">{t('platform.services.imageUrlLabel')}</span>
                     <div className="flex flex-wrap gap-2">
                       <input
                         type="url"
@@ -574,12 +551,12 @@ export default function Services() {
                         onClick={addImageUrl}
                         className="rounded-lg border border-earth-300 bg-white px-3 py-2 text-sm font-medium text-earth-700 hover:bg-earth-50"
                       >
-                        Adicionar URL
+                        {t('platform.services.addUrl')}
                       </button>
                     </div>
                   </div>
                   <label className="inline-flex cursor-pointer rounded-lg border border-earth-300 bg-white px-3 py-2 text-sm font-medium text-earth-700 hover:bg-earth-50">
-                    {uploading ? 'Enviando...' : 'Enviar arquivo'}
+                    {uploading ? t('platform.services.uploading') : t('platform.services.uploadFile')}
                     <input
                       type="file"
                       accept="image/*"
@@ -595,7 +572,7 @@ export default function Services() {
                       <div key={`${url}-${i}`} className="relative h-16 w-16 shrink-0 overflow-hidden rounded border border-earth-200 bg-earth-100">
                         {failedThumbUrls.has(url) ? (
                           <div className="flex h-full w-full items-center justify-center px-1 text-center text-[10px] font-medium leading-tight text-earth-600">
-                            {/^https?:\/\//i.test(url) ? 'Link' : 'Arquivo'}
+                            {/^https?:\/\//i.test(url) ? t('platform.services.thumbLink') : t('platform.services.thumbFile')}
                           </div>
                         ) : (
                           <img
@@ -615,7 +592,7 @@ export default function Services() {
                           type="button"
                           onClick={() => setAttachmentUrls((p) => p.filter((_, j) => j !== i))}
                           className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white hover:bg-red-600"
-                          aria-label="Remover"
+                          aria-label={t('platform.services.removeThumb')}
                         >
                           ×
                         </button>
@@ -630,35 +607,36 @@ export default function Services() {
               <div className="space-y-2 rounded-lg bg-green-100 px-4 py-3 text-sm text-green-800">
                 {successNotice.quoteFlow ? (
                   <p>
-                    Pedido enviado! Em breve você receberá o orçamento para pré-pagamento. Acompanhe na página de{' '}
-                    <Link to="/app/lounge?tab=pedidos" className="font-semibold text-green-900 underline hover:no-underline">
-                      Pedidos
+                    {t('platform.services.successQuoteBefore')}
+                    <Link to={lp('appLounge', '?tab=pedidos')} className="font-semibold text-green-900 underline hover:no-underline">
+                      {t('platform.orders.pageTitle')}
                     </Link>
-                    .
+                    {t('platform.services.successQuoteAfter')}
                   </p>
                 ) : (
                   <p>
-                    Pedido enviado! O admin irá aprovar em breve. Acompanhe na página de{' '}
-                    <Link to="/app/lounge?tab=pedidos" className="font-semibold text-green-900 underline hover:no-underline">
-                      Pedidos
+                    {t('platform.services.successApproveBefore')}
+                    <Link to={lp('appLounge', '?tab=pedidos')} className="font-semibold text-green-900 underline hover:no-underline">
+                      {t('platform.orders.pageTitle')}
                     </Link>
-                    .
+                    {t('platform.services.successApproveAfter')}
                   </p>
                 )}
                 {successNotice.walletAppliedJpy != null && successNotice.walletAppliedJpy > 0 && (
                   <p className="font-medium text-green-900">
-                    {formatJPY(successNotice.walletAppliedJpy)} debitados da sua carteira como adiantamento do
-                    pré-pagamento.
+                    {t('platform.services.walletDebited', {
+                      amount: fp.jpy(successNotice.walletAppliedJpy),
+                    })}
                   </p>
                 )}
                 {successNotice.walletEarlyPayError && (
                   <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-amber-900">
-                    O pedido foi registrado, mas não foi possível debitar a carteira: {successNotice.walletEarlyPayError}.
-                    Acompanhe em{' '}
-                    <Link to="/app/lounge?tab=pedidos" className="font-semibold underline hover:no-underline">
-                      Pedidos
+                    {t('platform.services.walletErrorBefore')} {successNotice.walletEarlyPayError}.{' '}
+                    {t('platform.services.walletErrorMiddle')}{' '}
+                    <Link to={lp('appLounge', '?tab=pedidos')} className="font-semibold underline hover:no-underline">
+                      {t('platform.orders.pageTitle')}
                     </Link>{' '}
-                    ou recarregue a carteira e fale com o suporte se precisar.
+                    {t('platform.services.walletErrorAfter')}
                   </p>
                 )}
               </div>
@@ -673,7 +651,7 @@ export default function Services() {
               disabled={submitting || !selectedId || !canSubmit}
               className="rounded-lg bg-earth-900 px-6 py-3 font-medium text-earth-50 hover:bg-earth-800 disabled:opacity-60 disabled:hover:bg-earth-900"
             >
-              {submitting ? 'Enviando...' : 'Enviar pedido'}
+              {submitting ? t('platform.services.submitSending') : t('platform.services.submitSend')}
             </button>
           </form>
         )}

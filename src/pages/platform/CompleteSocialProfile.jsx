@@ -1,12 +1,15 @@
 import { useState } from 'react'
-import { Helmet } from 'react-helmet-async'
-import { Link, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+import { useNavigate, useLocation } from 'react-router-dom'
+import { LocalizedLink } from '../../components/LocalizedLink'
+import { PageSeo } from '../../components/PageSeo'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../hooks/useAuth'
 import { updateProfile, getOrCreateProfile } from '../../services/profileService'
-import { validatePassword, PASSWORD_PLACEHOLDER } from '../../lib/passwordValidation'
+import { validatePassword } from '../../lib/passwordValidation'
 import { LEGAL_CONFIG } from '../../data/legalConfig'
 import { TermsOfUsePtBrBody } from '../../legal/TermsOfUsePtBrBody'
+import { getLocaleFromPathname, localizedPath } from '../../lib/localeRoutes'
 
 const TERMS_CFG = {
   BUSINESS_NAME: LEGAL_CONFIG.BUSINESS_NAME,
@@ -15,8 +18,11 @@ const TERMS_CFG = {
 }
 
 export default function CompleteSocialProfile() {
+  const { t } = useTranslation()
   const { user, refreshProfile, needsSocialOnboarding } = useAuth()
   const navigate = useNavigate()
+  const { pathname } = useLocation()
+  const locale = getLocaleFromPathname(pathname)
   const [name, setName] = useState(user?.user_metadata?.name || '')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -27,7 +33,7 @@ export default function CompleteSocialProfile() {
 
   if (!user) return null
   if (!needsSocialOnboarding) {
-    navigate('/app/dashboard', { replace: true })
+    navigate(localizedPath('appDashboard', locale), { replace: true })
     return null
   }
 
@@ -36,7 +42,7 @@ export default function CompleteSocialProfile() {
     setError('')
     const fullName = name.trim()
     if (!fullName) {
-      setError('Informe seu nome completo.')
+      setError(t('auth.nameRequired'))
       return
     }
     const { valid, message } = validatePassword(password)
@@ -45,15 +51,15 @@ export default function CompleteSocialProfile() {
       return
     }
     if (password !== confirmPassword) {
-      setError('A confirmação de senha não confere.')
+      setError(t('auth.confirmMismatch'))
       return
     }
     if (!canAgreeTerms) {
-      setError('Role até o final dos Termos de Uso e Serviços para liberar o aceite.')
+      setError(t('auth.mustScrollTerms'))
       return
     }
     if (!agreeTerms) {
-      setError('É necessário concordar com os Termos de Uso e Serviços para concluir o cadastro.')
+      setError(t('auth.mustAgreeTermsComplete'))
       return
     }
 
@@ -70,7 +76,7 @@ export default function CompleteSocialProfile() {
         },
       })
       if (authErr) {
-        setError(authErr.message || 'Erro ao definir senha.')
+        setError(authErr.message || t('auth.setPasswordError'))
         setLoading(false)
         return
       }
@@ -79,16 +85,16 @@ export default function CompleteSocialProfile() {
       if (existing) {
         const { error: profileErr } = await updateProfile(user.id, { name: fullName })
         if (profileErr) {
-          setError(profileErr.message || 'Erro ao salvar nome no perfil.')
+          setError(profileErr.message || t('auth.profileNameError'))
           setLoading(false)
           return
         }
       }
 
       await refreshProfile()
-      navigate('/app/dashboard', { replace: true })
+      navigate(localizedPath('appDashboard', locale), { replace: true })
     } catch (e2) {
-      setError(e2?.message || 'Erro ao concluir cadastro.')
+      setError(e2?.message || t('auth.completeError'))
     } finally {
       setLoading(false)
     }
@@ -102,55 +108,56 @@ export default function CompleteSocialProfile() {
 
   return (
     <>
-      <Helmet>
-        <title>Complete seu cadastro | Plataforma</title>
-      </Helmet>
+      <PageSeo
+        routeKey="appCompleteSocial"
+        title={t('meta.completeSocial.title')}
+        description={t('meta.completeSocial.description')}
+        noindex
+      />
       <section className="mx-auto mt-8 max-w-2xl rounded-xl border border-earth-200 bg-white p-6 shadow-sm">
-        <h1 className="text-xl font-bold text-earth-900">Complete seu cadastro</h1>
-        <p className="mt-2 text-sm text-earth-600">
-          Para continuar, informe seu nome completo e crie uma senha para a conta.
-        </p>
+        <h1 className="text-xl font-bold text-earth-900">{t('auth.completeTitle')}</h1>
+        <p className="mt-2 text-sm text-earth-600">{t('auth.completeSubtitle')}</p>
         {error && (
           <p className="mt-4 rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700">{error}</p>
         )}
         <form onSubmit={handleSubmit} className="mt-5 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-earth-700">Nome completo</label>
+            <label className="block text-sm font-medium text-earth-700">{t('auth.fullName')}</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
-              placeholder="Seu nome completo"
+              placeholder={t('auth.fullNamePlaceholder')}
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-earth-700">Senha</label>
+            <label className="block text-sm font-medium text-earth-700">{t('auth.password')}</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
-              placeholder={PASSWORD_PLACEHOLDER}
+              placeholder={t('auth.passwordValidation.placeholder')}
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-earth-700">Confirmar senha</label>
+            <label className="block text-sm font-medium text-earth-700">{t('auth.confirmPasswordShort')}</label>
             <input
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
-              placeholder="Repita a senha"
+              placeholder={t('auth.repeatPasswordPlaceholder')}
               required
             />
           </div>
           <div className="space-y-3">
             <div className="rounded-lg border border-earth-300 bg-white p-3">
-              <p className="text-sm font-medium text-earth-800">Termos de Uso e Serviços (texto integral)</p>
-              <p className="mt-1 text-xs text-earth-600">Role até o final para habilitar o aceite.</p>
+              <p className="text-sm font-medium text-earth-800">{t('auth.termsFullTitle')}</p>
+              <p className="mt-1 text-xs text-earth-600">{t('auth.termsScrollHint')}</p>
               <div
                 className="mt-2 max-h-[min(14rem,38vh)] overflow-y-auto rounded border border-earth-200 bg-earth-50 p-3"
                 onScroll={(e) => unlockOnScrollEnd(e, setCanAgreeTerms)}
@@ -160,10 +167,10 @@ export default function CompleteSocialProfile() {
                 </div>
               </div>
               <p className="mt-2 text-xs text-earth-600">
-                Versão também em{' '}
-                <Link to="/legal/terms" target="_blank" rel="noopener noreferrer" className="font-medium text-earth-900 underline hover:no-underline">
+                {t('auth.termsAlsoAt')}{' '}
+                <LocalizedLink toRoute="legalTerms" target="_blank" rel="noopener noreferrer" className="font-medium text-earth-900 underline hover:no-underline">
                   /legal/terms
-                </Link>
+                </LocalizedLink>
                 .
               </p>
             </div>
@@ -177,11 +184,11 @@ export default function CompleteSocialProfile() {
                 className="mt-1 rounded border-earth-300 text-earth-900"
               />
               <span className="text-sm text-earth-700">
-                Li e concordo com os{' '}
-                <Link to="/legal/terms" target="_blank" rel="noopener noreferrer" className="font-medium text-earth-900 underline hover:no-underline">
-                  Termos de Uso e Serviços
-                </Link>{' '}
-                acima.
+                {t('auth.agreeTermsBefore')}{' '}
+                <LocalizedLink toRoute="legalTerms" target="_blank" rel="noopener noreferrer" className="font-medium text-earth-900 underline hover:no-underline">
+                  {t('auth.agreeTermsLink')}
+                </LocalizedLink>{' '}
+                {t('auth.agreeTermsAfter')}
               </span>
             </label>
           </div>
@@ -190,7 +197,7 @@ export default function CompleteSocialProfile() {
             disabled={loading || !agreeTerms || !canAgreeTerms}
             className="w-full rounded-lg bg-earth-900 px-4 py-3 font-medium text-earth-50 hover:bg-earth-800 disabled:opacity-70"
           >
-            {loading ? 'Salvando...' : 'Concluir cadastro'}
+            {loading ? t('auth.completeSaving') : t('auth.completeSubmit')}
           </button>
         </form>
       </section>

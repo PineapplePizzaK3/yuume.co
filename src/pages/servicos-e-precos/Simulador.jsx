@@ -1,5 +1,9 @@
-import { useState } from 'react'
-import { Helmet } from 'react-helmet-async'
+import { useState, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
+import { PageSeo } from '../../components/PageSeo'
+import { useSiteLocale } from '../../hooks/useSiteLocale'
+import { LOCALE_EN } from '../../lib/localeRoutes'
+import { formatJpyForSite } from '../../lib/moneyDisplay'
 import { calcularFreteEMS } from '../../data/tabelaFreteEMS'
 import { calcularFreteParcel, calcularFreteEPacket } from '../../data/fretesJPPost'
 import {
@@ -8,29 +12,65 @@ import {
   REDIR_ASSISTIDO_FEE_PERCENT,
 } from '../../data/serviceFees'
 
-const SERVICOS = [
-  { id: 'redirecionamento-padrao', label: '📦 Redirecionamento Padrão', tipo: 'redir-padrao' },
-  { id: 'redirecionamento-assistido', label: '🛍️ Redirecionamento Assistido', tipo: 'redir-assistido' },
-  { id: 'personal-shopping', label: 'Personal shopping', tipo: 'percentual', percentual: 25 },
-  { id: 'grupo-compras', label: 'Grupo de Compras', tipo: 'percentual', percentual: 20 },
-]
-const TIPOS_FRETE = [
-  { id: 'ems', label: 'EMS', prazo: '5–10 dias úteis' },
-  { id: 'parcel-aereo', label: 'Parcel Post (via aérea)', prazo: '7–15 dias' },
-  { id: 'epacket', label: 'ePacket Light (até 2 kg)', prazo: '5–21 dias úteis' },
-]
-
-/**
- * Formata valor para exibição (com separador de milhar).
- */
-function formatarValor(valor, moeda = '¥') {
-  return `${moeda} ${Number(valor).toLocaleString('pt-BR')}`
-}
-
 /**
  * Simulador de pedidos - sub-página de Serviços e Preços.
  */
 function Simulador() {
+  const { t } = useTranslation()
+  const siteLocale = useSiteLocale()
+  const numberLocale = siteLocale === LOCALE_EN ? 'en-US' : 'pt-BR'
+
+  const formatarValor = (valor) => formatJpyForSite(siteLocale, valor, null)
+
+  const SERVICOS = useMemo(
+    () => [
+      {
+        id: 'redirecionamento-padrao',
+        label: t('publicSimulador.svcRedirPadrao'),
+        tipo: 'redir-padrao',
+      },
+      {
+        id: 'redirecionamento-assistido',
+        label: t('publicSimulador.svcRedirAssistido'),
+        tipo: 'redir-assistido',
+      },
+      {
+        id: 'personal-shopping',
+        label: t('publicSimulador.svcPS'),
+        tipo: 'percentual',
+        percentual: 25,
+      },
+      {
+        id: 'grupo-compras',
+        label: t('publicSimulador.svcGrupo'),
+        tipo: 'percentual',
+        percentual: 20,
+      },
+    ],
+    [t],
+  )
+
+  const TIPOS_FRETE = useMemo(
+    () => [
+      {
+        id: 'ems',
+        label: t('publicSimulador.shipEms'),
+        prazo: t('publicSimulador.shipEmsEta'),
+      },
+      {
+        id: 'parcel-aereo',
+        label: t('publicSimulador.shipParcel'),
+        prazo: t('publicSimulador.shipParcelEta'),
+      },
+      {
+        id: 'epacket',
+        label: t('publicSimulador.shipEpacket'),
+        prazo: t('publicSimulador.shipEpacketEta'),
+      },
+    ],
+    [t],
+  )
+
   const [produtos, setProdutos] = useState([])
   const [servicoId, setServicoId] = useState('redirecionamento-padrao')
   const [tipoFrete, setTipoFrete] = useState('ems')
@@ -67,30 +107,33 @@ function Simulador() {
 
   const totalProdutos = produtos.reduce(
     (acc, p) => acc + p.quantidade * p.valor,
-    0
+    0,
   )
   const pesoTotalGramas = produtos.reduce(
     (acc, p) => acc + p.quantidade * p.peso,
-    0
+    0,
   )
 
   const tiposFreteDisponiveis =
     pesoTotalGramas > 2000
-      ? TIPOS_FRETE.filter((t) => t.id !== 'epacket')
+      ? TIPOS_FRETE.filter((tf) => tf.id !== 'epacket')
       : TIPOS_FRETE
-  const tipoFreteEfetivo = tiposFreteDisponiveis.some((t) => t.id === tipoFrete)
+  const tipoFreteEfetivo = tiposFreteDisponiveis.some((tf) => tf.id === tipoFrete)
     ? tipoFrete
     : 'ems'
 
   const obterFrete = () => {
     if (tipoFreteEfetivo === 'ems') return calcularFreteEMS(pesoTotalGramas)
-    if (tipoFreteEfetivo === 'parcel-aereo') return calcularFreteParcel(pesoTotalGramas, 'aereo')
+    if (tipoFreteEfetivo === 'parcel-aereo')
+      return calcularFreteParcel(pesoTotalGramas, 'aereo')
     if (tipoFreteEfetivo === 'epacket') return calcularFreteEPacket(pesoTotalGramas)
     return calcularFreteEMS(pesoTotalGramas)
   }
   const frete = obterFrete()
-  const tipoFreteSelecionado = tiposFreteDisponiveis.find((t) => t.id === tipoFreteEfetivo)
-  const freteLabel = tipoFreteSelecionado?.label ?? 'EMS'
+  const tipoFreteSelecionado = tiposFreteDisponiveis.find(
+    (tf) => tf.id === tipoFreteEfetivo,
+  )
+  const freteLabel = tipoFreteSelecionado?.label ?? t('publicSimulador.shipEms')
   const prazoEntrega = tipoFreteSelecionado?.prazo ?? ''
   const totalItens = produtos.reduce((acc, p) => acc + p.quantidade, 0)
   const servico = SERVICOS.find((s) => s.id === servicoId)
@@ -99,46 +142,45 @@ function Simulador() {
   let labelTaxaServico = ''
   if (servico?.tipo === 'redir-padrao') {
     taxaServico = computeRedirecionamentoPadraoFeeJpy(totalItens)
-    labelTaxaServico = 'Taxa de serviço (Redirecionamento Padrão — por itens)'
+    labelTaxaServico = t('publicSimulador.labelFeeRedirPadrao')
   } else if (servico?.tipo === 'redir-assistido') {
     taxaServico =
       totalProdutos * (REDIR_ASSISTIDO_FEE_PERCENT / 100) +
       computeRedirecionamentoPadraoFeeJpy(totalItens)
-    labelTaxaServico = `Taxa de serviço (Redirecionamento Assistido — ${REDIR_ASSISTIDO_FEE_PERCENT}% + taxa por itens igual ao Redirecionamento Padrão)`
+    labelTaxaServico = t('publicSimulador.labelFeeRedirAssistido', {
+      pct: REDIR_ASSISTIDO_FEE_PERCENT,
+    })
   } else if (servico?.tipo === 'percentual') {
     const pct = servico?.percentual ?? 25
     taxaServico = totalProdutos * (pct / 100) + totalItens * SERVICE_FEE_JPY_PER_ITEM
-    labelTaxaServico = `Taxa de serviço (${pct}% + ¥${SERVICE_FEE_JPY_PER_ITEM}/item)`
+    labelTaxaServico = t('publicSimulador.labelFeePercent', {
+      pct,
+      perItem: SERVICE_FEE_JPY_PER_ITEM,
+    })
   }
 
   const totalFinal = totalProdutos + frete + taxaServico
 
   return (
     <>
-      <Helmet>
-        <title>Simulador de pedidos | Serviços e Preços | Delivery</title>
-        <meta
-          name="description"
-          content="Simule o valor final do seu pedido com frete EMS e taxa de serviço."
-        />
-      </Helmet>
+      <PageSeo
+        routeKey="servicosSimulador"
+        title={t('meta.simulador.title')}
+        description={t('meta.simulador.description')}
+      />
 
       <div className="pt-8">
         <h2 className="text-2xl font-bold text-earth-900 sm:text-3xl">
-          Simulador de pedidos
+          {t('publicSimulador.title')}
         </h2>
-        <p className="mt-2 text-earth-600">
-          Adicione produtos para calcular o valor total. Escolha o serviço e o
-          tipo de frete nas seções abaixo.
-        </p>
+        <p className="mt-2 text-earth-600">{t('publicSimulador.subtitle')}</p>
 
-        {/* Formulário para adicionar produto */}
         <form
           onSubmit={adicionarProduto}
           className="mt-8 rounded-lg border border-earth-200 bg-earth-100 p-4 sm:p-6"
         >
           <h3 className="mb-4 text-lg font-semibold text-earth-900">
-            Adicionar produto
+            {t('publicSimulador.addProduct')}
           </h3>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
             <div className="sm:col-span-2">
@@ -146,7 +188,7 @@ function Simulador() {
                 htmlFor="nome"
                 className="block text-sm font-medium text-earth-700"
               >
-                Nome do produto
+                {t('publicSimulador.productName')}
               </label>
               <input
                 type="text"
@@ -154,7 +196,7 @@ function Simulador() {
                 value={nome}
                 onChange={(e) => setNome(e.target.value)}
                 className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 shadow-sm focus:border-earth-900 focus:outline-none focus:ring-1 focus:ring-earth-900"
-                placeholder="Ex: Tênis Nike"
+                placeholder={t('publicSimulador.productNamePh')}
               />
             </div>
             <div>
@@ -162,7 +204,7 @@ function Simulador() {
                 htmlFor="quantidade"
                 className="block text-sm font-medium text-earth-700"
               >
-                Quantidade
+                {t('publicSimulador.qty')}
               </label>
               <input
                 type="number"
@@ -182,7 +224,7 @@ function Simulador() {
                 htmlFor="peso"
                 className="block text-sm font-medium text-earth-700"
               >
-                Peso (g)
+                {t('publicSimulador.weightG')}
               </label>
               <input
                 type="text"
@@ -191,7 +233,7 @@ function Simulador() {
                 value={peso}
                 onChange={(e) => setPeso(e.target.value.replace(/[^0-9,.]/g, ''))}
                 className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 shadow-sm focus:border-earth-900 focus:outline-none focus:ring-1 focus:ring-earth-900"
-                placeholder="Ex: 350"
+                placeholder={t('publicSimulador.weightPh')}
               />
             </div>
             <div>
@@ -199,7 +241,7 @@ function Simulador() {
                 htmlFor="valor"
                 className="block text-sm font-medium text-earth-700"
               >
-                Valor (¥)
+                {t('publicSimulador.valueYen')}
               </label>
               <input
                 type="text"
@@ -210,7 +252,7 @@ function Simulador() {
                   setValor(e.target.value.replace(/[^0-9,.]/g, ''))
                 }
                 className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 shadow-sm focus:border-earth-900 focus:outline-none focus:ring-1 focus:ring-earth-900"
-                placeholder="Ex: 5000"
+                placeholder={t('publicSimulador.valuePh')}
               />
             </div>
           </div>
@@ -218,34 +260,33 @@ function Simulador() {
             type="submit"
             className="mt-4 w-full rounded-lg bg-earth-900 px-4 py-3 font-medium text-earth-50 transition hover:bg-earth-800 sm:w-auto sm:min-w-[140px]"
           >
-            Adicionar produto
+            {t('publicSimulador.addBtn')}
           </button>
         </form>
 
-        {/* Lista de produtos */}
         {produtos.length > 0 && (
           <div className="mt-8">
             <h3 className="mb-4 text-lg font-semibold text-earth-900">
-              Produtos ({produtos.length})
+              {t('publicSimulador.productsHeading', { count: produtos.length })}
             </h3>
             <div className="overflow-x-auto rounded-lg border border-earth-200">
               <table className="min-w-full divide-y divide-earth-200">
                 <thead className="bg-earth-100">
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-medium uppercase text-earth-600">
-                      Produto
+                      {t('publicSimulador.thProduct')}
                     </th>
                     <th className="px-4 py-3 text-right text-xs font-medium uppercase text-earth-600">
-                      Qtd
+                      {t('publicSimulador.thQty')}
                     </th>
                     <th className="hidden px-4 py-3 text-right text-xs font-medium uppercase text-earth-600 sm:table-cell">
-                      Peso (g)
+                      {t('publicSimulador.thWeight')}
                     </th>
                     <th className="hidden px-4 py-3 text-right text-xs font-medium uppercase text-earth-600 sm:table-cell">
-                      Valor (¥)
+                      {t('publicSimulador.thValue')}
                     </th>
                     <th className="px-4 py-3 text-right text-xs font-medium uppercase text-earth-600">
-                      Subtotal
+                      {t('publicSimulador.thSubtotal')}
                     </th>
                     <th className="w-10 px-2 py-3" />
                   </tr>
@@ -260,7 +301,7 @@ function Simulador() {
                         {p.quantidade}
                       </td>
                       <td className="hidden px-4 py-3 text-right text-sm text-earth-700 sm:table-cell">
-                        {p.peso.toLocaleString('pt-BR')}g
+                        {p.peso.toLocaleString(numberLocale)}g
                       </td>
                       <td className="hidden px-4 py-3 text-right text-sm text-earth-700 sm:table-cell">
                         {formatarValor(p.valor)}
@@ -273,7 +314,7 @@ function Simulador() {
                           type="button"
                           onClick={() => removerProduto(p.id)}
                           className="rounded p-2 text-earth-500 transition hover:bg-red-50 hover:text-red-600"
-                          aria-label={`Remover ${p.nome}`}
+                          aria-label={t('publicSimulador.removeAria', { name: p.nome })}
                         >
                           <svg
                             className="h-5 w-5"
@@ -296,15 +337,14 @@ function Simulador() {
               </table>
             </div>
 
-            {/* Área separada: Frete (estimativa) */}
             <div className="mt-8 rounded-lg border border-earth-200 bg-earth-50 p-6 shadow-sm">
               <h3 className="mb-4 text-lg font-semibold text-earth-900">
-                Frete
+                {t('publicSimulador.shippingTitle')}
               </h3>
 
               <div>
                 <label htmlFor="tipoFrete" className="block text-sm font-medium text-earth-700">
-                  Tipo de frete
+                  {t('publicSimulador.shippingType')}
                 </label>
                 <select
                   id="tipoFrete"
@@ -312,9 +352,9 @@ function Simulador() {
                   onChange={(e) => setTipoFrete(e.target.value)}
                   className="mt-1 block w-full max-w-xs rounded-lg border border-earth-300 px-3 py-2 shadow-sm focus:border-earth-900 focus:outline-none focus:ring-1 focus:ring-earth-900"
                 >
-                  {tiposFreteDisponiveis.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.label}
+                  {tiposFreteDisponiveis.map((tf) => (
+                    <option key={tf.id} value={tf.id}>
+                      {tf.label}
                     </option>
                   ))}
                 </select>
@@ -325,7 +365,7 @@ function Simulador() {
                   {formatarValor(frete)}
                 </span>
                 <span className="text-sm text-earth-600">
-                  ({freteLabel} • {pesoTotalGramas.toLocaleString('pt-BR')}g)
+                  ({freteLabel} • {pesoTotalGramas.toLocaleString(numberLocale)}g)
                 </span>
                 {prazoEntrega && (
                   <span className="text-sm text-earth-600">• {prazoEntrega}</span>
@@ -334,20 +374,20 @@ function Simulador() {
 
               <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4">
                 <p className="text-sm text-amber-900">
-                  <strong>Estimativa.</strong> Este valor é apenas uma estimativa. O valor real do frete só poderá ser descoberto após a consolidação do pedido, pois varia de acordo com o peso real e o peso volumétrico da caixa utilizada no envio.
+                  <strong>{t('publicSimulador.estimateBold')}</strong>{' '}
+                  {t('publicSimulador.estimateRest')}
                 </p>
               </div>
             </div>
 
-            {/* Valores finais */}
             <div className="mt-6 rounded-lg border border-earth-200 bg-earth-100 p-6 shadow-sm">
               <h3 className="mb-4 text-lg font-semibold text-earth-900">
-                Valores finais
+                {t('publicSimulador.totalsTitle')}
               </h3>
 
               <div className="mb-6">
                 <label htmlFor="servico" className="block text-sm font-medium text-earth-700">
-                  Serviço
+                  {t('publicSimulador.serviceLabel')}
                 </label>
                 <select
                   id="servico"
@@ -366,11 +406,11 @@ function Simulador() {
 
               <div className="space-y-3">
                 <div className="flex justify-between text-earth-700">
-                  <span>Subtotal dos produtos</span>
+                  <span>{t('publicSimulador.subtotalProducts')}</span>
                   <span>{formatarValor(totalProdutos)}</span>
                 </div>
                 <div className="flex justify-between text-earth-700">
-                  <span>Frete (estimativa — ver seção acima)</span>
+                  <span>{t('publicSimulador.shippingLine')}</span>
                   <span>{formatarValor(frete)}</span>
                 </div>
                 <div className="flex justify-between text-earth-700">
@@ -378,7 +418,7 @@ function Simulador() {
                   <span>{formatarValor(taxaServico)}</span>
                 </div>
                 <div className="flex justify-between border-t border-earth-200 pt-4 text-lg font-bold text-earth-900">
-                  <span>Total</span>
+                  <span>{t('publicSimulador.total')}</span>
                   <span>{formatarValor(totalFinal)}</span>
                 </div>
               </div>
@@ -388,8 +428,7 @@ function Simulador() {
 
         {produtos.length === 0 && (
           <p className="mt-8 rounded-lg border border-dashed border-earth-300 bg-earth-100 p-8 text-center text-earth-600">
-            Nenhum produto adicionado. Preencha o formulário acima para
-            começar a simular.
+            {t('publicSimulador.empty')}
           </p>
         )}
       </div>

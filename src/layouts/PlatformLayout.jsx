@@ -1,40 +1,66 @@
 /**
  * PlatformLayout - Layout for authenticated platform pages.
- * Sidebar navigation with grouped items: Minha Conta, Loja.
+ * Menu order is stored by stable route keys (locale-independent).
  */
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { Link, Outlet, useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../hooks/useAuth'
 import { useCartCount } from '../hooks/useCartCount'
+import { useLocalizedPath } from '../hooks/useLocalizedPath'
 
-const LOJA_ITEMS = [
-  { to: '/app/services', label: 'Serviços' },
-  { to: '/app/grupo-de-compras', label: 'Grupo de Compras' },
-  { to: '/app/loja', label: 'Loja Virtual' },
-]
+const NAV_ROUTE_KEYS = ['appDashboard']
+const CONTA_ROUTE_KEYS = ['appLounge', 'appConta', 'appCart']
+const LOJA_ROUTE_KEYS = ['appServices', 'appGrupoCompras', 'appLoja']
 
-const MINHA_CONTA_ITEMS = [
-  { to: '/app/lounge', label: '⭐ Lounge' },
-  { to: '/app/conta', label: 'Dados da conta' },
-  { to: '/app/cart', label: '🛒 Central de Pagamentos' },
-]
+const ALL_MENU_KEYS = [...NAV_ROUTE_KEYS, ...CONTA_ROUTE_KEYS, ...LOJA_ROUTE_KEYS]
 
-const NAV_ITEMS = [
-  { to: '/app/dashboard', label: 'Resumo da Conta' },
-]
+/** Migrate saved paths from older builds to route keys */
+const LEGACY_PATH_TO_KEY = {
+  '/app/dashboard': 'appDashboard',
+  '/en/app/dashboard': 'appDashboard',
+  '/app/lounge': 'appLounge',
+  '/en/app/lounge': 'appLounge',
+  '/app/conta': 'appConta',
+  '/en/app/account': 'appConta',
+  '/app/cart': 'appCart',
+  '/en/app/cart': 'appCart',
+  '/app/services': 'appServices',
+  '/en/app/services': 'appServices',
+  '/app/grupo-de-compras': 'appGrupoCompras',
+  '/en/app/group-buying': 'appGrupoCompras',
+  '/app/loja': 'appLoja',
+  '/en/app/store': 'appLoja',
+}
 
-const MENU_ORDER_STORAGE_KEY = 'platform_menu_order_v1'
+const LABEL_KEY_BY_ROUTE = {
+  appDashboard: 'platform.navSummary',
+  appLounge: 'platform.navLounge',
+  appConta: 'platform.navAccountData',
+  appCart: 'platform.navPayments',
+  appServices: 'platform.navServices',
+  appGrupoCompras: 'platform.navGroupBuy',
+  appLoja: 'platform.navVirtualStore',
+}
+
+const MENU_ORDER_STORAGE_KEY = 'platform_menu_order_v2'
+
 const DEFAULT_MENU_ORDER = {
-  nav: NAV_ITEMS.map((i) => i.to),
-  conta: MINHA_CONTA_ITEMS.map((i) => i.to),
-  loja: LOJA_ITEMS.map((i) => i.to),
+  nav: [...NAV_ROUTE_KEYS],
+  conta: [...CONTA_ROUTE_KEYS],
+  loja: [...LOJA_ROUTE_KEYS],
 }
 
 function normalizeSectionOrder(value, allowed) {
   const raw = Array.isArray(value) ? value : []
-  const safe = raw.filter((to) => allowed.includes(to))
-  for (const to of allowed) {
-    if (!safe.includes(to)) safe.push(to)
+  const migrated = raw.map((item) => {
+    if (typeof item !== 'string') return null
+    if (ALL_MENU_KEYS.includes(item)) return item
+    return LEGACY_PATH_TO_KEY[item] || null
+  }).filter(Boolean)
+  const safe = migrated.filter((k) => allowed.includes(k))
+  for (const k of allowed) {
+    if (!safe.includes(k)) safe.push(k)
   }
   return safe
 }
@@ -42,9 +68,9 @@ function normalizeSectionOrder(value, allowed) {
 function normalizeMenuOrder(raw) {
   const value = raw && typeof raw === 'object' ? raw : {}
   return {
-    nav: normalizeSectionOrder(value.nav, DEFAULT_MENU_ORDER.nav),
-    conta: normalizeSectionOrder(value.conta, DEFAULT_MENU_ORDER.conta),
-    loja: normalizeSectionOrder(value.loja, DEFAULT_MENU_ORDER.loja),
+    nav: normalizeSectionOrder(value.nav, NAV_ROUTE_KEYS),
+    conta: normalizeSectionOrder(value.conta, CONTA_ROUTE_KEYS),
+    loja: normalizeSectionOrder(value.loja, LOJA_ROUTE_KEYS),
   }
 }
 
@@ -73,6 +99,8 @@ function writeMenuOrder(userId, menuOrder) {
 }
 
 export function PlatformLayout() {
+  const { t } = useTranslation()
+  const path = useLocalizedPath()
   const { user, isAdmin, signOut } = useAuth()
   const location = useLocation()
   const cartCount = useCartCount(user?.id)
@@ -82,29 +110,41 @@ export function PlatformLayout() {
   const [contaOpen, setContaOpen] = useState(true)
   const [menuOrder, setMenuOrder] = useState(DEFAULT_MENU_ORDER)
   const [draggingItem, setDraggingItem] = useState(null)
-  // Banner é descartado apenas durante a sessão logada atual.
-  // Ao sair e entrar novamente, ele reaparece.
   const [referralBannerDismissed, setReferralBannerDismissed] = useState(false)
 
   const dismissReferralBanner = () => {
     setReferralBannerDismissed(true)
   }
 
-  const isActive = (path) => {
-    return location.pathname === path
-  }
-  const isInLoja = LOJA_ITEMS.some((i) => i.to === location.pathname)
-  const isInConta =
-    MINHA_CONTA_ITEMS.some((i) => i.to === location.pathname)
+  const p = path
+
+  const isActive = useCallback((routeKey) => location.pathname === p(routeKey), [location.pathname, p])
+
+  const isInLoja = useMemo(
+    () => LOJA_ROUTE_KEYS.some((k) => p(k) === location.pathname),
+    [location.pathname, p]
+  )
+  const isInConta = useMemo(
+    () => CONTA_ROUTE_KEYS.some((k) => p(k) === location.pathname),
+    [location.pathname, p]
+  )
+
+  const navItemsByKey = useMemo(() => {
+    const map = new Map()
+    for (const k of ALL_MENU_KEYS) {
+      map.set(k, { routeKey: k, to: p(k), label: t(LABEL_KEY_BY_ROUTE[k]) })
+    }
+    return map
+  }, [p, t])
 
   const orderedNavItems = menuOrder.nav
-    .map((to) => NAV_ITEMS.find((i) => i.to === to))
+    .map((k) => navItemsByKey.get(k))
     .filter(Boolean)
   const orderedContaItems = menuOrder.conta
-    .map((to) => MINHA_CONTA_ITEMS.find((i) => i.to === to))
+    .map((k) => navItemsByKey.get(k))
     .filter(Boolean)
   const orderedLojaItems = menuOrder.loja
-    .map((to) => LOJA_ITEMS.find((i) => i.to === to))
+    .map((k) => navItemsByKey.get(k))
     .filter(Boolean)
 
   useEffect(() => {
@@ -122,80 +162,88 @@ export function PlatformLayout() {
     writeMenuOrder(user?.id, menuOrder)
   }, [user?.id, menuOrder])
 
-  const handleReorder = (section, draggedTo, targetTo) => {
-    if (!section || !draggedTo || !targetTo || draggedTo === targetTo) return
+  const handleReorder = (section, draggedKey, targetKey) => {
+    if (!section || !draggedKey || !targetKey || draggedKey === targetKey) return
     setMenuOrder((prev) => {
       const current = Array.isArray(prev?.[section]) ? [...prev[section]] : []
-      const draggedIndex = current.indexOf(draggedTo)
-      const targetIndex = current.indexOf(targetTo)
+      const draggedIndex = current.indexOf(draggedKey)
+      const targetIndex = current.indexOf(targetKey)
       if (draggedIndex < 0 || targetIndex < 0) return prev
       current.splice(draggedIndex, 1)
-      current.splice(targetIndex, 0, draggedTo)
+      current.splice(targetIndex, 0, draggedKey)
       return { ...prev, [section]: current }
     })
   }
 
-  const mobileTabs = [
-    {
-      id: 'services',
-      to: '/app/services',
-      label: 'Serviços',
-      active: isActive('/app/services'),
-      icon: (
-        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.5 9.75h15M4.5 14.25h15M8.25 5.25h7.5M8.25 18.75h7.5" />
-        </svg>
-      ),
-    },
-    {
-      id: 'grupo-compras',
-      to: '/app/grupo-de-compras',
-      label: 'Grupos',
-      active: isActive('/app/grupo-de-compras'),
-      icon: (
-        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.25 8.25a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zM11.25 9.75a3 3 0 11-6 0 3 3 0 016 0zM3.75 18a4.5 4.5 0 019 0M12.75 18a3.75 3.75 0 017.5 0" />
-        </svg>
-      ),
-    },
-    {
-      id: 'lounge',
-      to: '/app/lounge',
-      label: 'Lounge',
-      active: isActive('/app/lounge'),
-      icon: (
-        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.813 15.904L9 19.5l3-1.8 3 1.8-.813-3.596L17 13.5l-3.688-.318L12 9.75l-1.312 3.432L7 13.5l2.813 2.404z" />
-        </svg>
-      ),
-    },
-    {
-      id: 'loja-virtual',
-      to: '/app/loja',
-      label: 'Loja',
-      active: isActive('/app/loja'),
-      icon: (
-        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7.5h18M5.25 7.5l1.5 12a1.5 1.5 0 001.49 1.313h7.52a1.5 1.5 0 001.49-1.313l1.5-12M9 11.25h.008v.008H9v-.008zm6 0h.008v.008H15v-.008z" />
-        </svg>
-      ),
-    },
-    {
-      id: 'minha-conta',
-      to: '/app/conta',
-      label: 'Conta',
-      active: isActive('/app/conta'),
-      icon: (
-        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.75 7.5a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.118a8.25 8.25 0 0115 0" />
-        </svg>
-      ),
-    },
-  ]
+  const dashboardPath = p('appDashboard')
+  const adminBase = p('appAdmin')
 
-  // Banner de indicação só na página inicial da plataforma (Resumo da conta).
-  const isPlatformHome = location.pathname === '/app/dashboard'
+  const mobileTabs = useMemo(
+    () => [
+      {
+        id: 'services',
+        routeKey: 'appServices',
+        label: t('platform.mobileServices'),
+        active: isActive('appServices'),
+        icon: (
+          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.5 9.75h15M4.5 14.25h15M8.25 5.25h7.5M8.25 18.75h7.5" />
+          </svg>
+        ),
+      },
+      {
+        id: 'grupo-compras',
+        routeKey: 'appGrupoCompras',
+        label: t('platform.mobileGroups'),
+        active: isActive('appGrupoCompras'),
+        icon: (
+          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.25 8.25a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zM11.25 9.75a3 3 0 11-6 0 3 3 0 016 0zM3.75 18a4.5 4.5 0 019 0M12.75 18a3.75 3.75 0 017.5 0" />
+          </svg>
+        ),
+      },
+      {
+        id: 'lounge',
+        routeKey: 'appLounge',
+        label: t('platform.mobileLounge'),
+        active: isActive('appLounge'),
+        icon: (
+          <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.813 15.904L9 19.5l3-1.8 3 1.8-.813-3.596L17 13.5l-3.688-.318L12 9.75l-1.312 3.432L7 13.5l2.813 2.404z" />
+          </svg>
+        ),
+      },
+      {
+        id: 'loja-virtual',
+        routeKey: 'appLoja',
+        label: t('platform.mobileStore'),
+        active: isActive('appLoja'),
+        icon: (
+          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7.5h18M5.25 7.5l1.5 12a1.5 1.5 0 001.49 1.313h7.52a1.5 1.5 0 001.49-1.313l1.5-12M9 11.25h.008v.008H9v-.008zm6 0h.008v.008H15v-.008z" />
+          </svg>
+        ),
+      },
+      {
+        id: 'minha-conta',
+        routeKey: 'appConta',
+        label: t('platform.mobileAccount'),
+        active: isActive('appConta'),
+        icon: (
+          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.75 7.5a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.118a8.25 8.25 0 0115 0" />
+          </svg>
+        ),
+      },
+    ],
+    [isActive, t]
+  )
+
+  const isPlatformHome = location.pathname === dashboardPath
   const showReferralBanner = isPlatformHome && !referralBannerDismissed
+
+  const adminActive =
+    location.pathname === adminBase || location.pathname.startsWith(`${adminBase}/`)
 
   return (
     <div className="flex min-h-screen flex-col pt-16 lg:flex-row">
@@ -206,12 +254,12 @@ export function PlatformLayout() {
         >
           <div className="min-w-0 flex-1">
             <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-2 text-center">
-              <span>Convide um amigo e vocês dois ganham</span>
+              <span>{t('platform.referralBanner')}</span>
               <Link
-                to="/app/dashboard#referral-section"
+                to={`${dashboardPath}#referral-section`}
                 className="rounded border border-white/70 px-2.5 py-0.5 text-xs font-semibold text-white hover:bg-white/10"
               >
-                Ver meu código
+                {t('platform.referralCta')}
               </Link>
             </div>
           </div>
@@ -219,7 +267,7 @@ export function PlatformLayout() {
             type="button"
             onClick={dismissReferralBanner}
             className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-white hover:bg-white/15 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
-            aria-label="Fechar aviso de indicação"
+            aria-label={t('platform.referralClose')}
           >
             <span className="text-lg leading-none" aria-hidden>
               ×
@@ -227,7 +275,6 @@ export function PlatformLayout() {
           </button>
         </div>
       )}
-      {/* Mobile: bottom menu fixo com 5 atalhos */}
       <nav
         id="platform-mobile-bottom-nav"
         className="fixed bottom-0 left-0 right-0 z-40 border-t border-earth-200 bg-earth-50/98 backdrop-blur lg:hidden"
@@ -236,7 +283,7 @@ export function PlatformLayout() {
           {mobileTabs.map((tab) => (
             <Link
               key={tab.id}
-              to={tab.to}
+              to={p(tab.routeKey)}
               className={`flex min-h-[3.35rem] flex-col items-center justify-center px-1 text-[0.62rem] font-medium transition ${
                 tab.id === 'lounge'
                   ? 'relative -translate-y-1'
@@ -274,22 +321,21 @@ export function PlatformLayout() {
         </div>
       </nav>
 
-      {/* Desktop: sidebar com grupos */}
       <aside
         className={`hidden w-56 shrink-0 border-r border-earth-200 bg-earth-100 lg:block lg:min-h-screen ${showReferralBanner ? 'mt-9' : 'mt-0'}`}
       >
         <div className="flex flex-col gap-0 p-4">
           {orderedNavItems.map((item) => (
             <div
-              key={item.to}
+              key={item.routeKey}
               onDragOver={(e) => {
-                if (!draggingItem || draggingItem.section !== 'nav' || draggingItem.to === item.to) return
+                if (!draggingItem || draggingItem.section !== 'nav' || draggingItem.key === item.routeKey) return
                 e.preventDefault()
               }}
               onDrop={(e) => {
                 if (!draggingItem || draggingItem.section !== 'nav') return
                 e.preventDefault()
-                handleReorder('nav', draggingItem.to, item.to)
+                handleReorder('nav', draggingItem.key, item.routeKey)
               }}
               className="mb-1"
             >
@@ -297,20 +343,14 @@ export function PlatformLayout() {
                 to={item.to}
                 draggable
                 onDragStart={(e) => {
-                  setDraggingItem({ section: 'nav', to: item.to })
+                  setDraggingItem({ section: 'nav', key: item.routeKey })
                   e.dataTransfer.effectAllowed = 'move'
                 }}
                 onDragEnd={() => setDraggingItem(null)}
                 className={`block cursor-grab rounded-lg px-4 py-2 font-medium transition active:cursor-grabbing ${
-                  item.featured ? 'text-base' : 'text-sm'
-                } ${
-                  isActive(item.to)
-                    ? item.featured
-                      ? 'bg-amber-500 text-white'
-                      : 'bg-earth-900 text-earth-50'
-                    : item.featured
-                      ? 'bg-amber-50 text-amber-800 hover:bg-amber-100'
-                      : 'text-earth-700 hover:bg-earth-200'
+                  isActive(item.routeKey)
+                    ? 'bg-earth-900 text-earth-50'
+                    : 'text-earth-700 hover:bg-earth-200'
                 }`}
               >
                 {item.label}
@@ -318,7 +358,6 @@ export function PlatformLayout() {
             </div>
           ))}
 
-          {/* Grupo Minha Conta */}
           <div className="mt-2 w-full">
             <button
               type="button"
@@ -327,7 +366,7 @@ export function PlatformLayout() {
                 isInConta ? 'bg-earth-800 text-earth-50' : 'text-earth-700 hover:bg-earth-200'
               }`}
             >
-              Minha Conta
+              {t('platform.groupMyAccount')}
               <svg className={`h-4 w-4 transition-transform ${contaOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
@@ -336,15 +375,15 @@ export function PlatformLayout() {
               <div className="mt-1 ml-3 space-y-0.5 border-l-2 border-earth-300 pl-3">
                 {orderedContaItems.map((item) => (
                   <div
-                    key={item.to}
+                    key={item.routeKey}
                     onDragOver={(e) => {
-                      if (!draggingItem || draggingItem.section !== 'conta' || draggingItem.to === item.to) return
+                      if (!draggingItem || draggingItem.section !== 'conta' || draggingItem.key === item.routeKey) return
                       e.preventDefault()
                     }}
                     onDrop={(e) => {
                       if (!draggingItem || draggingItem.section !== 'conta') return
                       e.preventDefault()
-                      handleReorder('conta', draggingItem.to, item.to)
+                      handleReorder('conta', draggingItem.key, item.routeKey)
                     }}
                     className=""
                   >
@@ -352,20 +391,20 @@ export function PlatformLayout() {
                       to={item.to}
                       draggable
                       onDragStart={(e) => {
-                        setDraggingItem({ section: 'conta', to: item.to })
+                        setDraggingItem({ section: 'conta', key: item.routeKey })
                         e.dataTransfer.effectAllowed = 'move'
                       }}
                       onDragEnd={() => setDraggingItem(null)}
                       className={`relative flex cursor-grab items-center justify-between rounded-lg px-3 py-2 text-sm transition active:cursor-grabbing ${
-                        item.to === '/app/cart' && hasCartItems
+                        item.routeKey === 'appCart' && hasCartItems
                           ? 'font-semibold bg-amber-100 text-amber-900 ring-1 ring-amber-300 hover:bg-amber-200'
-                          : isActive(item.to)
+                          : isActive(item.routeKey)
                             ? 'font-medium text-earth-900 bg-earth-200'
                             : 'text-earth-600 hover:bg-earth-100 hover:text-earth-800'
                       }`}
                     >
                       <span>{item.label}</span>
-                      {item.to === '/app/cart' && hasCartItems && (
+                      {item.routeKey === 'appCart' && hasCartItems && (
                         <span className="ml-2 min-w-[1.25rem] rounded-full bg-red-600 px-1 text-center text-[0.65rem] font-bold leading-5 text-white shadow-sm">
                           {cartBadgeLabel}
                         </span>
@@ -377,7 +416,6 @@ export function PlatformLayout() {
             )}
           </div>
 
-          {/* Grupo Loja */}
           <div className="w-full">
             <button
               type="button"
@@ -386,7 +424,7 @@ export function PlatformLayout() {
                 isInLoja ? 'bg-earth-800 text-earth-50' : 'text-earth-700 hover:bg-earth-200'
               }`}
             >
-              Loja
+              {t('platform.groupStore')}
               <svg className={`h-4 w-4 transition-transform ${lojaOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
@@ -395,15 +433,15 @@ export function PlatformLayout() {
               <div className="mt-1 ml-3 space-y-0.5 border-l-2 border-earth-300 pl-3">
                 {orderedLojaItems.map((item) => (
                   <div
-                    key={item.to}
+                    key={item.routeKey}
                     onDragOver={(e) => {
-                      if (!draggingItem || draggingItem.section !== 'loja' || draggingItem.to === item.to) return
+                      if (!draggingItem || draggingItem.section !== 'loja' || draggingItem.key === item.routeKey) return
                       e.preventDefault()
                     }}
                     onDrop={(e) => {
                       if (!draggingItem || draggingItem.section !== 'loja') return
                       e.preventDefault()
-                      handleReorder('loja', draggingItem.to, item.to)
+                      handleReorder('loja', draggingItem.key, item.routeKey)
                     }}
                     className=""
                   >
@@ -411,12 +449,12 @@ export function PlatformLayout() {
                       to={item.to}
                       draggable
                       onDragStart={(e) => {
-                        setDraggingItem({ section: 'loja', to: item.to })
+                        setDraggingItem({ section: 'loja', key: item.routeKey })
                         e.dataTransfer.effectAllowed = 'move'
                       }}
                       onDragEnd={() => setDraggingItem(null)}
                       className={`block cursor-grab rounded-lg px-3 py-2 text-sm transition active:cursor-grabbing ${
-                        isActive(item.to)
+                        isActive(item.routeKey)
                           ? 'font-medium text-earth-900 bg-earth-200'
                           : 'text-earth-600 hover:bg-earth-100 hover:text-earth-800'
                       }`}
@@ -430,14 +468,14 @@ export function PlatformLayout() {
           </div>
           {isAdmin && (
             <Link
-              to="/app/admin"
+              to={adminBase}
               className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
-                isActive('/app/admin')
+                adminActive
                   ? 'bg-amber-600 text-white'
                   : 'text-amber-800 hover:bg-amber-100'
               }`}
             >
-              Admin
+              {t('platform.navAdmin')}
             </Link>
           )}
           <button
@@ -445,12 +483,12 @@ export function PlatformLayout() {
             onClick={() => signOut()}
             className="mt-4 rounded-lg px-4 py-2 text-left text-sm font-medium text-earth-600 hover:bg-earth-200 lg:mt-auto"
           >
-            Sair
+            {t('platform.navSignOut')}
           </button>
         </div>
       </aside>
       <main className={`flex-1 p-4 pb-24 lg:pb-4 ${showReferralBanner ? 'pt-32' : 'pt-20'}`}>
-        <div className={`mx-auto ${location.pathname === '/app/loja' ? 'max-w-6xl' : 'max-w-4xl'}`}>
+        <div className={`mx-auto ${location.pathname === p('appLoja') ? 'max-w-6xl' : 'max-w-4xl'}`}>
           <Outlet />
         </div>
       </main>

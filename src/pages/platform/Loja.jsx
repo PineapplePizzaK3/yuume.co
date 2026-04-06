@@ -3,8 +3,10 @@
  * Usuário vê apenas produtos ativos. Clique no card abre modal com detalhes e botão Adicionar ao carrinho.
  */
 import { useEffect, useState } from 'react'
-import { Helmet } from 'react-helmet-async'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+import { useLocalizedPath } from '../../hooks/useLocalizedPath'
+import { PageSeo } from '../../components/PageSeo'
 import { getProducts } from '../../services/productService'
 import { addToCart } from '../../services/cartService'
 import { useAuth } from '../../hooks/useAuth'
@@ -17,6 +19,7 @@ import { getProductConditionMeta } from '../../lib/productCondition'
 
 /** BRL em destaque; JPY e USD na mesma hierarquia visual, com bandeiras. */
 function ProductPriceBlock({ product: p, variant = 'card' }) {
+  const { t } = useTranslation()
   const jpy = Number(p.price_jpy ?? p.price) || 0
   const brl = Number(p.price_brl)
   const usd = Number(p.price_usd)
@@ -37,7 +40,7 @@ function ProductPriceBlock({ product: p, variant = 'card' }) {
         jpy={jpy}
         usd={NaN}
         variant={triVariant}
-        footnote="Cotação BRL/USD em atualização — valor em dólar aparece após o próximo refresh."
+        footnote={t('platform.store.triUpdatingFootnote')}
       />
     </div>
   )
@@ -58,6 +61,8 @@ function getProductImages(p) {
 }
 
 export default function Loja() {
+  const { t } = useTranslation()
+  const lp = useLocalizedPath()
   const { user } = useAuth()
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
@@ -88,7 +93,7 @@ export default function Loja() {
         setProducts(data ?? [])
         if (error) setMessage(error.message)
       } catch (e) {
-        if (isActive) setMessage(e?.message || 'Erro ao carregar produtos')
+        if (isActive) setMessage(e?.message || t('platform.store.loadError'))
       } finally {
         if (isActive) setLoading(false)
       }
@@ -97,7 +102,7 @@ export default function Loja() {
     return () => {
       isActive = false
     }
-  }, [])
+  }, [t])
 
   const openDetail = (p) => {
     setDetailProduct(p)
@@ -110,12 +115,12 @@ export default function Loja() {
     const { error } = await addToCart(user.id, p.id, 1)
     const inModal = !!detailProduct
     if (error) {
-      if (inModal) setModalFeedback(error.message || 'Erro ao adicionar ao carrinho')
+      if (inModal) setModalFeedback(error.message || t('platform.store.addError'))
       else setMessage(error.message)
       return
     }
-    if (inModal) setModalFeedback('Produto adicionado ao carrinho!')
-    else setMessage('Produto adicionado ao carrinho!')
+    if (inModal) setModalFeedback(t('platform.store.added'))
+    else setMessage(t('platform.store.added'))
   }
 
   const images = detailProduct ? getProductImages(detailProduct) : []
@@ -129,18 +134,21 @@ export default function Loja() {
 
   return (
     <>
-      <Helmet>
-        <title>Loja Virtual | Plataforma</title>
-      </Helmet>
+      <PageSeo
+        routeKey="appLoja"
+        title={t('meta.appStore.title')}
+        description={t('meta.appStore.description')}
+        noindex
+      />
       <div className="px-4 pt-24 pb-12">
         <div className="mx-auto max-w-6xl">
-        <h1 className="text-2xl font-bold text-earth-900">Loja Virtual</h1>
+        <h1 className="text-2xl font-bold text-earth-900">{t('platform.store.pageTitle')}</h1>
         {message && !detailProduct && (
           <p className="mt-4 rounded-lg bg-earth-100 px-4 py-2 text-sm text-earth-800">{message}</p>
         )}
-        {loading && <p className="mt-6 text-earth-600">Carregando...</p>}
+        {loading && <p className="mt-6 text-earth-600">{t('platform.store.loading')}</p>}
         {!loading && products.length === 0 && (
-          <p className="mt-6 text-earth-600">Nenhum produto disponível no momento.</p>
+          <p className="mt-6 text-earth-600">{t('platform.store.empty')}</p>
         )}
         {!loading && products.length > 0 && (
           <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -149,6 +157,9 @@ export default function Loja() {
               const mainImg = imgs[0]
               const thumbUrl = mainImg ? getCardThumbnailUrl(mainImg) : null
               const condition = getProductConditionMeta(p.item_condition)
+              const condLabel = t(`platform.productCondition.${condition.value}`, {
+                defaultValue: condition.label,
+              })
               return (
                 <div
                   key={p.id}
@@ -170,13 +181,13 @@ export default function Loja() {
                       />
                     ) : (
                       <div className="flex h-36 items-center justify-center bg-earth-200 text-earth-500 text-sm">
-                        Sem imagem
+                        {t('platform.store.noImage')}
                       </div>
                     )}
                     <div className="p-3">
                       <h2 className="font-semibold text-earth-900 text-sm line-clamp-2">{p.name}</h2>
                       <span className={`mt-1 inline-flex rounded border px-2 py-0.5 text-[11px] font-medium ${condition.className}`}>
-                        {condition.label}
+                        {condLabel}
                       </span>
                       {p.description && (
                         <p className="mt-0.5 line-clamp-2 whitespace-pre-wrap text-xs text-earth-600">
@@ -193,14 +204,14 @@ export default function Loja() {
                       disabled={isOutOfStock(p)}
                       className="flex-1 rounded-lg px-3 py-2 text-xs font-medium disabled:cursor-not-allowed disabled:opacity-60 disabled:bg-earth-300 disabled:text-earth-600 bg-earth-900 text-white hover:bg-earth-800"
                     >
-                      {isOutOfStock(p) ? 'Esgotado' : 'Adicionar ao carrinho'}
+                      {isOutOfStock(p) ? t('platform.store.outOfStock') : t('platform.store.addToCart')}
                     </button>
                     {isOutOfStock(p) && (
                       <Link
-                        to="/app/services"
+                        to={lp('appServices')}
                         className="rounded-lg border border-earth-300 bg-white px-3 py-2 text-xs font-medium text-earth-700 hover:bg-earth-100"
                       >
-                        Pedir encomenda
+                        {t('platform.store.requestOrder')}
                       </Link>
                     )}
                   </div>
@@ -212,14 +223,12 @@ export default function Loja() {
 
         {!loading && (
           <div className="mt-10 rounded-xl border border-earth-200 bg-earth-50 p-5 sm:p-6">
-            <p className="text-sm text-earth-700 sm:text-base">
-              Nao encontrou o que procurava na loja virtual? A gente encomenda para voce no Japao.
-            </p>
+            <p className="text-sm text-earth-700 sm:text-base">{t('platform.store.ctaBody')}</p>
             <Link
-              to="/app/services"
+              to={lp('appServices')}
               className="mt-3 inline-flex rounded-lg bg-earth-900 px-4 py-2 text-sm font-medium text-white hover:bg-earth-800"
             >
-              Solicitar encomenda
+              {t('platform.store.ctaButton')}
             </Link>
           </div>
         )}
@@ -239,11 +248,13 @@ export default function Loja() {
             >
               {modalFeedback && (
                 <div className="absolute inset-0 z-[60] flex items-center justify-center pointer-events-none">
-                  <p className={`rounded-lg px-4 py-2 text-sm ${
-                    modalFeedback.toLowerCase().includes('erro')
-                      ? 'bg-red-100 text-red-800'
-                      : 'bg-green-100 text-green-800'
-                  }`}>
+                  <p
+                    className={`rounded-lg px-4 py-2 text-sm ${
+                      modalFeedback === t('platform.store.added')
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-red-100 text-red-800'
+                    }`}
+                  >
                     {modalFeedback}
                   </p>
                 </div>
@@ -267,7 +278,7 @@ export default function Loja() {
                             setDetailImageIndex((i) => (i === 0 ? images.length - 1 : i - 1))
                           }}
                           className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow hover:bg-white"
-                          aria-label="Foto anterior"
+                          aria-label={t('platform.store.prevPhoto')}
                         >
                           <svg className="h-5 w-5 text-earth-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -280,7 +291,7 @@ export default function Loja() {
                             setDetailImageIndex((i) => (i === images.length - 1 ? 0 : i + 1))
                           }}
                           className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow hover:bg-white"
-                          aria-label="Próxima foto"
+                          aria-label={t('platform.store.nextPhoto')}
                         >
                           <svg className="h-5 w-5 text-earth-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -296,7 +307,7 @@ export default function Loja() {
                                 setDetailImageIndex(i)
                               }}
                               className={`h-2 w-2 rounded-full ${i === detailImageIndex ? 'bg-earth-800' : 'bg-earth-300'}`}
-                              aria-label={`Foto ${i + 1}`}
+                              aria-label={t('platform.store.photoDot', { n: i + 1 })}
                             />
                           ))}
                         </div>
@@ -305,16 +316,19 @@ export default function Loja() {
                   </>
                 ) : (
                   <div className="flex h-64 items-center justify-center bg-earth-200 text-earth-500 sm:h-80">
-                    Sem imagem
+                    {t('platform.store.noImage')}
                   </div>
                 )}
               </div>
               <div className="flex-1 min-h-0 overflow-y-auto p-5">
                 {(() => {
                   const condition = getProductConditionMeta(detailProduct.item_condition)
+                  const condLabel = t(`platform.productCondition.${condition.value}`, {
+                    defaultValue: condition.label,
+                  })
                   return (
                     <span className={`mb-2 inline-flex rounded border px-2 py-0.5 text-xs font-medium ${condition.className}`}>
-                      {condition.label}
+                      {condLabel}
                     </span>
                   )
                 })()}
@@ -336,14 +350,16 @@ export default function Loja() {
                     disabled={isOutOfStock(detailProduct)}
                     className="rounded-xl px-6 py-3 font-medium disabled:cursor-not-allowed disabled:opacity-60 disabled:bg-earth-300 disabled:text-earth-600 bg-earth-900 text-white hover:bg-earth-800"
                   >
-                    {isOutOfStock(detailProduct) ? 'Esgotado' : 'Adicionar ao carrinho'}
+                    {isOutOfStock(detailProduct)
+                      ? t('platform.store.outOfStock')
+                      : t('platform.store.addToCart')}
                   </button>
                   {isOutOfStock(detailProduct) && (
                     <Link
-                      to="/app/services"
+                      to={lp('appServices')}
                       className="rounded-xl border border-earth-300 bg-white px-6 py-3 font-medium text-earth-700 hover:bg-earth-50"
                     >
-                      Pedir encomenda
+                      {t('platform.store.requestOrder')}
                     </Link>
                   )}
                   <button
@@ -351,7 +367,7 @@ export default function Loja() {
                     onClick={() => setDetailProduct(null)}
                     className="rounded-xl border border-earth-200 px-6 py-3 font-medium text-earth-600 hover:bg-earth-50"
                   >
-                    Fechar
+                    {t('platform.store.close')}
                   </button>
                 </div>
               </div>

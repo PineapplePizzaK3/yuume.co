@@ -3,9 +3,11 @@
  * Usado quando AAL nextLevel é aal2 mas currentLevel é aal1.
  */
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 
 export function MFAGate({ onVerified }) {
+  const { t } = useTranslation()
   const [verifyCode, setVerifyCode] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -21,7 +23,7 @@ export function MFAGate({ onVerified }) {
 
       const totpFactor = factors.data?.totp?.[0]
       if (!totpFactor) {
-        setError('Nenhum fator de autenticação configurado.')
+        setError(t('platform.mfaGate.noFactor'))
         setLoading(false)
         return
       }
@@ -38,7 +40,7 @@ export function MFAGate({ onVerified }) {
 
       onVerified?.()
     } catch (err) {
-      setError(err?.message || 'Código inválido. Tente novamente.')
+      setError(err?.message || t('platform.mfaGate.invalidCode'))
     } finally {
       setLoading(false)
     }
@@ -47,17 +49,15 @@ export function MFAGate({ onVerified }) {
   return (
     <div className="flex min-h-[calc(100vh-12rem)] items-center justify-center px-4 py-16">
       <div className="w-full max-w-sm rounded-lg border border-earth-200 bg-earth-100 p-6 shadow-sm">
-        <h1 className="text-xl font-bold text-earth-900">Verificação em duas etapas</h1>
-        <p className="mt-2 text-sm text-earth-600">
-          Digite o código de 6 dígitos do seu app autenticador (Google Authenticator, etc).
-        </p>
+        <h1 className="text-xl font-bold text-earth-900">{t('platform.mfaGate.title')}</h1>
+        <p className="mt-2 text-sm text-earth-600">{t('platform.mfaGate.intro')}</p>
         {error && (
           <p className="mt-4 rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700">{error}</p>
         )}
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <div>
             <label htmlFor="mfa-code" className="block text-sm font-medium text-earth-700">
-              Código
+              {t('platform.mfaGate.codeLabel')}
             </label>
             <input
               id="mfa-code"
@@ -76,7 +76,7 @@ export function MFAGate({ onVerified }) {
             disabled={loading || verifyCode.length !== 6}
             className="w-full rounded-lg bg-earth-900 px-4 py-3 font-medium text-earth-50 hover:bg-earth-800 disabled:opacity-70"
           >
-            {loading ? 'Verificando...' : 'Verificar'}
+            {loading ? t('platform.mfaGate.verifying') : t('platform.mfaGate.verify')}
           </button>
         </form>
       </div>

@@ -1,6 +1,7 @@
 import { isValidElement, useEffect, useMemo, useState } from 'react'
-import { Helmet } from 'react-helmet-async'
+import { useTranslation } from 'react-i18next'
 import { FAQ_ITEMS } from '../data/faq'
+import { PageSeo } from '../components/PageSeo'
 
 /** Concatena texto visível de strings, arrays e elementos React (para busca nas respostas). */
 function textoParaBusca(node) {
@@ -60,6 +61,7 @@ function FaqItem({ item, isOpen, onToggle }) {
  * Página Dúvidas (perguntas frequentes).
  */
 function Faq() {
+  const { t } = useTranslation()
   const [aberto, setAberto] = useState(null)
   const [busca, setBusca] = useState('')
 
@@ -82,25 +84,23 @@ function Faq() {
 
   return (
     <>
-      <Helmet>
-        <title>Dúvidas | Delivery</title>
-        <meta
-          name="description"
-          content="Dúvidas sobre redirecionamento, personal shopping, grupos, loja, armazenamento, pagamento, frete e alfândega."
-        />
-      </Helmet>
+      <PageSeo
+        routeKey="faqIndex"
+        title={t('meta.faqIndex.title')}
+        description={t('meta.faqIndex.description')}
+      />
 
       <div className="max-w-3xl">
         <h2 className="text-2xl font-bold tracking-tight text-earth-900 sm:text-3xl">
-          Perguntas frequentes
+          {t('faqPage.heading')}
         </h2>
         <p className="mt-2 text-earth-600">
-          Redirecionamento, compra assistida, personal shopping, grupos, loja, armazenamento, pagamentos e envio do Japão.
+          {t('faqPage.intro')}
         </p>
 
         <div className="relative mt-8">
           <label htmlFor="faq-busca" className="sr-only">
-            Buscar nas dúvidas
+            {t('faqPage.searchLabel')}
           </label>
           <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-earth-400" aria-hidden>
             <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -117,7 +117,7 @@ function Faq() {
             type="search"
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
-            placeholder="Buscar nas dúvidas…"
+            placeholder={t('faqPage.searchPlaceholder')}
             autoComplete="off"
             className={`w-full rounded-lg border border-earth-200 bg-white py-3 pl-11 text-earth-900 shadow-sm placeholder:text-earth-400 focus:border-earth-400 focus:outline-none focus:ring-2 focus:ring-earth-300 ${busca.trim() ? 'pr-24' : 'pr-4'}`}
           />
@@ -126,23 +126,23 @@ function Faq() {
               type="button"
               onClick={() => setBusca('')}
               className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md px-2 py-1 text-sm text-earth-500 hover:bg-earth-100 hover:text-earth-800"
-              aria-label="Limpar busca"
+              aria-label={t('faqPage.clearSearch')}
             >
-              Limpar
+              {t('faqPage.clearShort')}
             </button>
           ) : null}
         </div>
 
         <p className="mt-3 text-sm text-earth-500" aria-live="polite">
           {itensFiltrados.length === FAQ_ITEMS.length
-            ? `${FAQ_ITEMS.length} dúvidas`
-            : `${itensFiltrados.length} de ${FAQ_ITEMS.length} dúvidas`}
+            ? t('faqPage.countAll', { count: FAQ_ITEMS.length })
+            : t('faqPage.countSome', { filtered: itensFiltrados.length, total: FAQ_ITEMS.length })}
         </p>
 
         <div className="mt-6 divide-y divide-earth-200 rounded-lg border border-earth-200 bg-earth-100 shadow-sm">
           {itensFiltrados.length === 0 ? (
             <p className="px-5 py-10 text-center text-earth-600">
-              Nenhuma dúvida encontrada para &quot;{busca.trim()}&quot;. Tente outras palavras ou limpe a busca.
+              {t('faqPage.emptySearch', { query: busca.trim() })}
             </p>
           ) : (
             itensFiltrados.map((item) => (

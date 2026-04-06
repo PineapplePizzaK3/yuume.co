@@ -2,9 +2,11 @@
  * Admin - Painel de administraÃ§Ã£o da plataforma.
  * Inclui gestÃ£o de produtos e pedidos.
  */
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { useNavigate } from 'react-router-dom'
+import { useSiteLocale } from '../../../hooks/useSiteLocale'
+import { localizedPath } from '../../../lib/localeRoutes'
 import { useAuth } from '../../../hooks/useAuth'
 import {
   getProductsAdmin,
@@ -61,7 +63,8 @@ import { getUserLogs, getAuthLogs, logAdminAction } from '../../../services/logS
 import { getMyAdminNotifications, markNotificationRead } from '../../../services/notificationService'
 import { getFraudReviewQueue, decideFraudCase } from '../../../services/fraudService'
 import { searchCatalogAdmin } from '../../../services/catalogSearchService'
-import { brlToJpy, formatJPY, formatWeight } from '../../../lib/fx'
+import { brlToJpy, formatWeight } from '../../../lib/fx'
+import { formatJpyForSite } from '../../../lib/moneyDisplay'
 import { parseQuoteMessage, serializeQuoteProducts } from '../../../lib/quoteProducts'
 import { getDefaultRedirectFeePerItem } from '../../../lib/shippingRedirectFee'
 import QuoteProductsList from '../../../components/QuoteProductsList'
@@ -137,6 +140,8 @@ function PaginationControls({ page, hasMore, loading, onPrev, onNext }) {
 export default function Admin({ routeTabId = 'pedidos' }) {
   const { user, profile, session } = useAuth()
   const navigate = useNavigate()
+  const siteLocale = useSiteLocale()
+  const formatJpyAdmin = useCallback((v) => formatJpyForSite(siteLocale, v, null), [siteLocale])
   const [products, setProducts] = useState([])
   const [storeProducts, setStoreProducts] = useState([])
   const [orders, setOrders] = useState([])
@@ -344,7 +349,9 @@ export default function Admin({ routeTabId = 'pedidos' }) {
   const setActiveTab = (nextTabId) => {
     const safeId = normalizeAdminTabId(nextTabId)
     setActiveTabState(safeId)
-    const nextPath = `/app/admin/${adminTabPathFromId(safeId)}`
+    const base = localizedPath('appAdmin', siteLocale)
+    const seg = adminTabPathFromId(safeId, siteLocale)
+    const nextPath = `${base}/${seg}`
     if (typeof window !== 'undefined' && window.location.pathname !== nextPath) {
       navigate(nextPath)
     }
@@ -2062,7 +2069,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     PaginationControls,
     getProductBasePriceJpy,
     getProductConditionMeta,
-    formatJPY,
+    formatJPY: formatJpyAdmin,
     formatWeight,
     resetForm,
     setCatalogCreateOpen,

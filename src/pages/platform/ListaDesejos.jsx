@@ -4,7 +4,8 @@
  * Preços são atualizáveis para detectar promoções.
  */
 import { useEffect, useState } from 'react'
-import { Helmet } from 'react-helmet-async'
+import { useTranslation } from 'react-i18next'
+import { PageSeo } from '../../components/PageSeo'
 import ImageLightbox from '../../components/ImageLightbox'
 import {
   getWishlistLinks,
@@ -14,29 +15,10 @@ import {
   scrapeProductUrl,
 } from '../../services/wishlistLinkService'
 import { useAuth } from '../../hooks/useAuth'
+import { useSiteLocale } from '../../hooks/useSiteLocale'
+import { LOCALE_EN } from '../../lib/localeRoutes'
+import { formatBrlForSite, formatJpyForSite } from '../../lib/moneyDisplay'
 import { cacheKey, readCache, writeCache } from '../../lib/cache'
-
-function formatMoney(v, currency = 'JPY') {
-  if (v == null) return '—'
-  const curr = currency === 'BRL' ? 'BRL' : 'JPY'
-  return Number(v).toLocaleString('pt-BR', {
-    style: 'currency',
-    currency: curr,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  })
-}
-
-function formatDate(d) {
-  if (!d) return '—'
-  return new Date(d).toLocaleString('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-}
 
 function parsePriceInput(value) {
   if (value == null) return null
@@ -72,7 +54,27 @@ function parsePriceInput(value) {
 }
 
 export default function ListaDesejos() {
+  const { t } = useTranslation()
+  const siteLocale = useSiteLocale()
+  const numberLocale = siteLocale === LOCALE_EN ? 'en-US' : 'pt-BR'
   const { user } = useAuth()
+
+  const formatMoney = (v, currency = 'JPY') => {
+    if (v == null) return '—'
+    if (currency === 'BRL') return formatBrlForSite(siteLocale, v)
+    return formatJpyForSite(siteLocale, v, null)
+  }
+
+  const formatDate = (d) => {
+    if (!d) return '—'
+    return new Date(d).toLocaleString(numberLocale, {
+      day: '2-digit',
+      month: '2-digit',
+      year: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+  }
   const [urlInput, setUrlInput] = useState('')
   const [linkItems, setLinkItems] = useState([])
   const [loading, setLoading] = useState(true)
@@ -110,9 +112,9 @@ export default function ListaDesejos() {
       if (!active()) return
       setLinkItems(data ?? [])
       writeCache(k, data ?? [])
-      if (error) setMessage(error.message || 'Erro ao carregar lista')
+      if (error) setMessage(error.message || t('platform.wishlist.loadError'))
     } catch (e) {
-      if (active()) setMessage(e?.message || 'Erro ao carregar lista')
+      if (active()) setMessage(e?.message || t('platform.wishlist.loadError'))
     } finally {
       if (active()) setLoading(false)
     }
@@ -127,25 +129,25 @@ export default function ListaDesejos() {
     return () => {
       isActive = false
     }
-  }, [user?.id])
+  }, [user?.id, t])
 
   const doAddItem = async (url, product_name, price, currency = 'JPY', image_url = null) => {
     if (!user?.id) {
-      setMessage('Faça login para adicionar itens.')
+      setMessage(t('platform.wishlist.loginToAdd'))
       return
     }
     setAdding(true)
     setMessage('')
     const { error } = await addWishlistLink(user.id, {
       url,
-      product_name: product_name || 'Produto',
+      product_name: product_name || t('platform.wishlist.productDefault'),
       price: parsePriceInput(price),
       currency: currency || 'JPY',
       image_url: image_url || null,
     })
     setAdding(false)
     if (error) {
-      setMessage(error.message || 'Erro ao adicionar')
+      setMessage(error.message || t('platform.wishlist.addError'))
       return
     }
     setUrlInput('')
@@ -153,7 +155,7 @@ export default function ListaDesejos() {
     setManualName('')
     setManualPrice('')
     setShowManual(false)
-    setMessage('Item adicionado!')
+    setMessage(t('platform.wishlist.added'))
     load()
   }
 
@@ -166,7 +168,7 @@ export default function ListaDesejos() {
     setShowManual(false)
     const { data, error } = await scrapeProductUrl(url)
     if (error) {
-      setMessage(error.message || 'Erro ao obter dados do produto')
+      setMessage(error.message || t('platform.wishlist.scrapeError'))
       setShowManual(true)
       setManualUrl(url)
       setAdding(false)
@@ -174,7 +176,7 @@ export default function ListaDesejos() {
     }
     await doAddItem(
       url,
-      data.name || 'Produto',
+      data.name || t('platform.wishlist.productDefault'),
       data.price,
       data.currency || 'JPY',
       data.imageUrl || null
@@ -191,7 +193,7 @@ export default function ListaDesejos() {
     setMessage('')
     const { data, error } = await scrapeProductUrl(item.url)
     if (error) {
-      setMessage(error.message || 'Erro ao atualizar. Use "Editar preço" para atualizar manualmente.')
+      setMessage(error.message || t('platform.wishlist.updateScrapeError'))
       setUpdatingId(null)
       return
     }
@@ -206,10 +208,10 @@ export default function ListaDesejos() {
     })
     setUpdatingId(null)
     if (updateErr) {
-      setMessage(updateErr.message || 'Erro ao atualizar')
+      setMessage(updateErr.message || t('platform.wishlist.updateError'))
       return
     }
-    setMessage('Preço atualizado!')
+    setMessage(t('platform.wishlist.priceUpdated'))
     load()
   }
 
@@ -228,16 +230,16 @@ export default function ListaDesejos() {
     const trimmedName = editForm.product_name.trim()
     const trimmedUrl = editForm.url.trim()
     if (!trimmedName) {
-      setMessage('Informe o nome do produto.')
+      setMessage(t('platform.wishlist.needName'))
       return
     }
     if (!trimmedUrl) {
-      setMessage('Informe o link do produto.')
+      setMessage(t('platform.wishlist.needUrl'))
       return
     }
     const newPrice = editForm.price.trim() ? parsePriceInput(editForm.price) : null
     if (newPrice == null && editForm.price.trim()) {
-      setMessage('Preço inválido')
+      setMessage(t('platform.wishlist.invalidPrice'))
       return
     }
     setMessage('')
@@ -252,16 +254,16 @@ export default function ListaDesejos() {
     setEditingItemId(null)
     setEditForm({ url: '', product_name: '', price: '', currency: 'JPY', image_url: '' })
     if (error) {
-      setMessage(error.message || 'Erro ao atualizar')
+      setMessage(error.message || t('platform.wishlist.updateError'))
       return
     }
-    setMessage('Preço atualizado!')
+    setMessage(t('platform.wishlist.priceUpdated'))
     load()
   }
 
   const handleRemoveLink = async (id) => {
     const { error } = await removeWishlistLink(user.id, id)
-    setMessage(error ? error.message : 'Removido')
+    setMessage(error ? error.message : t('platform.wishlist.removed'))
     if (!error) load()
   }
 
@@ -275,27 +277,30 @@ export default function ListaDesejos() {
 
   const hasItems = linkItems.length > 0
 
-  const openLightbox = (src, alt = 'Imagem do item') => {
+  const openLightbox = (src, alt = t('platform.wishlist.imageAlt')) => {
     if (!src) return
     setLightbox({ open: true, src, alt })
   }
 
   return (
     <>
-      <Helmet>
-        <title>Lista de Desejos | Plataforma</title>
-      </Helmet>
+      <PageSeo
+        routeKey="appLounge"
+        title={t('meta.appWishlist.title')}
+        description={t('meta.appWishlist.description')}
+        noindex
+      />
       <div>
-        <h1 className="text-2xl font-bold text-earth-900">Lista de Desejos</h1>
+        <h1 className="text-2xl font-bold text-earth-900">{t('platform.wishlist.pageTitle')}</h1>
         <p className="mt-2 text-earth-600">
-          Adicione itens pelo link e acompanhe os preços. Apenas links de produtos externos — para comprar itens da loja, use a Central de Pagamentos.
+          {t('platform.wishlist.intro')}
         </p>
 
         {/* Adicionar por link */}
         <div className="mt-6 space-y-4">
           <form onSubmit={handleAddByUrl}>
             <label htmlFor="url" className="block text-sm font-medium text-earth-700">
-              Adicionar item (cole o link do produto)
+              {t('platform.wishlist.addLabel')}
             </label>
             <div className="mt-2 flex gap-2">
               <input
@@ -303,7 +308,7 @@ export default function ListaDesejos() {
                 type="url"
                 value={urlInput}
                 onChange={(e) => setUrlInput(e.target.value)}
-                placeholder="https://..."
+                placeholder={t('platform.wishlist.urlPlaceholder')}
                 className="flex-1 rounded-lg border border-earth-300 px-3 py-2 text-earth-900 placeholder:text-earth-400"
               />
               <button
@@ -311,7 +316,7 @@ export default function ListaDesejos() {
                 disabled={adding}
                 className="rounded-lg bg-earth-900 px-4 py-2 font-medium text-earth-50 hover:bg-earth-800 disabled:opacity-60"
               >
-                {adding ? 'Buscando...' : 'Buscar e adicionar'}
+                {adding ? t('platform.wishlist.searching') : t('platform.wishlist.searchAdd')}
               </button>
             </div>
           </form>
@@ -320,42 +325,42 @@ export default function ListaDesejos() {
             onClick={() => (showManual ? setShowManual(false) : handleOpenManual())}
             className="text-sm text-earth-600 hover:text-earth-900 underline"
           >
-            {showManual ? 'Ocultar' : 'Ou adicionar manualmente (link, nome e preço)'}
+            {showManual ? t('platform.wishlist.toggleManualHide') : t('platform.wishlist.toggleManualShow')}
           </button>
           {showManual && (
             <div className="rounded-lg border border-earth-200 bg-earth-50 p-4">
-              <p className="mb-3 text-sm font-medium text-earth-800">Adicionar manualmente:</p>
+              <p className="mb-3 text-sm font-medium text-earth-800">{t('platform.wishlist.manualTitle')}</p>
               <p className="mb-3 text-xs text-earth-600">
-                Os itens entram na sua lista abaixo. Você pode ter quantos itens quiser e atualizar o preço quando quiser.
+                {t('platform.wishlist.manualHint')}
               </p>
               <div className="space-y-3">
                 <div>
-                  <label className="block text-xs font-medium text-earth-700">Link do produto *</label>
+                  <label className="block text-xs font-medium text-earth-700">{t('platform.wishlist.manualLink')}</label>
                   <input
                     type="url"
                     value={manualUrl}
                     onChange={(e) => setManualUrl(e.target.value)}
-                    placeholder="https://..."
+                    placeholder={t('platform.wishlist.urlPlaceholder')}
                     className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-earth-700">Nome do produto *</label>
+                  <label className="block text-xs font-medium text-earth-700">{t('platform.wishlist.manualName')}</label>
                   <input
                     type="text"
                     value={manualName}
                     onChange={(e) => setManualName(e.target.value)}
-                    placeholder="Ex: Tênis Nike Air Max"
+                    placeholder={t('platform.wishlist.manualNamePh')}
                     className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-earth-700">Preço (opcional)</label>
+                  <label className="block text-xs text-earth-700">{t('platform.wishlist.manualPrice')}</label>
                   <input
                     type="text"
                     value={manualPrice}
                     onChange={(e) => setManualPrice(e.target.value)}
-                    placeholder="Ex: 15000"
+                    placeholder={t('platform.wishlist.manualPricePh')}
                     className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
                   />
                 </div>
@@ -364,11 +369,11 @@ export default function ListaDesejos() {
                   onClick={() => {
                     const url = manualUrl.trim()
                     if (!url) {
-                      setMessage('Informe o link do produto.')
+                      setMessage(t('platform.wishlist.needUrl'))
                       return
                     }
                     if (!manualName.trim()) {
-                      setMessage('Informe o nome do produto.')
+                      setMessage(t('platform.wishlist.needName'))
                       return
                     }
                     doAddItem(url, manualName.trim(), manualPrice.trim())
@@ -376,7 +381,7 @@ export default function ListaDesejos() {
                   disabled={adding}
                   className="rounded-lg bg-earth-800 px-4 py-2 text-sm font-medium text-earth-50 hover:bg-earth-700 disabled:opacity-60"
                 >
-                  Adicionar à lista
+                  {t('platform.wishlist.addToList')}
                 </button>
               </div>
             </div>
@@ -387,10 +392,10 @@ export default function ListaDesejos() {
           <p className="mt-4 rounded-lg bg-earth-100 px-4 py-2 text-sm text-earth-800">{message}</p>
         )}
 
-        {loading && <p className="mt-6 text-earth-600">Carregando...</p>}
+        {loading && <p className="mt-6 text-earth-600">{t('platform.wishlist.loading')}</p>}
 
         {!loading && !hasItems && (
-          <p className="mt-6 text-earth-600">Sua lista de desejos está vazia. Cole um link acima para começar.</p>
+          <p className="mt-6 text-earth-600">{t('platform.wishlist.empty')}</p>
         )}
 
         {!loading && hasItems && (
@@ -398,7 +403,7 @@ export default function ListaDesejos() {
             {linkItems.length > 0 && (
               <section>
                 <h2 className="mb-3 text-sm font-medium text-earth-700">
-                  Sua lista ({linkItems.length} {linkItems.length === 1 ? 'item' : 'itens'})
+                  {t('platform.wishlist.listHeading', { count: linkItems.length })}
                 </h2>
                 <div className="space-y-4">
                   {linkItems.map((item) => (
@@ -415,7 +420,7 @@ export default function ListaDesejos() {
                         />
                       ) : (
                         <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-lg bg-earth-200 text-earth-500 text-xs">
-                          Sem imagem
+                          {t('platform.wishlist.noImage')}
                         </div>
                       )}
                       <div className="min-w-0 flex-1">
@@ -436,21 +441,21 @@ export default function ListaDesejos() {
                                   type="text"
                                   value={editForm.product_name}
                                   onChange={(e) => setEditForm((f) => ({ ...f, product_name: e.target.value }))}
-                                  placeholder="Nome do produto"
+                                  placeholder={t('platform.wishlist.editNamePh')}
                                   className="rounded border border-earth-300 px-2 py-1 text-sm sm:col-span-2"
                                 />
                                 <input
                                   type="url"
                                   value={editForm.url}
                                   onChange={(e) => setEditForm((f) => ({ ...f, url: e.target.value }))}
-                                  placeholder="Link do produto"
+                                  placeholder={t('platform.wishlist.editUrlPh')}
                                   className="rounded border border-earth-300 px-2 py-1 text-sm sm:col-span-2"
                                 />
                                 <input
                                   type="text"
                                   value={editForm.price}
                                   onChange={(e) => setEditForm((f) => ({ ...f, price: e.target.value }))}
-                                  placeholder="Preço"
+                                  placeholder={t('platform.wishlist.editPricePh')}
                                   className="rounded border border-earth-300 px-2 py-1 text-sm"
                                 />
                                 <select
@@ -465,7 +470,7 @@ export default function ListaDesejos() {
                                   type="url"
                                   value={editForm.image_url}
                                   onChange={(e) => setEditForm((f) => ({ ...f, image_url: e.target.value }))}
-                                  placeholder="URL da imagem (opcional)"
+                                  placeholder={t('platform.wishlist.editImagePh')}
                                   className="rounded border border-earth-300 px-2 py-1 text-sm sm:col-span-2"
                                 />
                               </div>
@@ -475,7 +480,7 @@ export default function ListaDesejos() {
                                   onClick={() => handleSaveEditItem(item)}
                                   className="text-sm font-medium text-earth-700 hover:underline"
                                 >
-                                  Salvar
+                                  {t('platform.wishlist.save')}
                                 </button>
                                 <button
                                   type="button"
@@ -485,7 +490,7 @@ export default function ListaDesejos() {
                                   }}
                                   className="text-sm text-earth-600 hover:underline"
                                 >
-                                  Cancelar
+                                  {t('platform.wishlist.cancel')}
                                 </button>
                               </div>
                             </div>
@@ -496,11 +501,11 @@ export default function ListaDesejos() {
                               </span>
                               {getDesconto(item) != null && (
                                 <span className="rounded bg-green-200 px-2 py-0.5 text-xs font-medium text-green-800">
-                                  {getDesconto(item)}% de desconto
+                                  {t('platform.wishlist.discount', { pct: getDesconto(item) })}
                                 </span>
                               )}
                               <span className="text-xs text-earth-500">
-                                Atualizado: {formatDate(item.last_checked_at)}
+                                {t('platform.wishlist.updated')} {formatDate(item.last_checked_at)}
                               </span>
                             </>
                           )}
@@ -513,21 +518,21 @@ export default function ListaDesejos() {
                           disabled={updatingId === item.id}
                           className="rounded-lg border border-earth-300 px-3 py-1.5 text-sm font-medium text-earth-700 hover:bg-earth-100 disabled:opacity-60"
                         >
-                          {updatingId === item.id ? 'Atualizando...' : 'Atualizar preço'}
+                          {updatingId === item.id ? t('platform.wishlist.updating') : t('platform.wishlist.refreshPrice')}
                         </button>
                         <button
                           type="button"
                           onClick={() => handleEditItem(item)}
                           className="rounded-lg border border-earth-300 px-3 py-1.5 text-sm font-medium text-earth-700 hover:bg-earth-100"
                         >
-                          Editar item
+                          {t('platform.wishlist.editItem')}
                         </button>
                         <button
                           type="button"
                           onClick={() => handleRemoveLink(item.id)}
                           className="rounded-lg border border-earth-300 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50"
                         >
-                          Remover
+                          {t('platform.wishlist.remove')}
                         </button>
                       </div>
                     </div>

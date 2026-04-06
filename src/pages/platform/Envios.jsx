@@ -2,72 +2,86 @@
  * Envios — acompanhamento + solicitação de envio.
  */
 import { useEffect, useMemo, useState } from 'react'
-import { Helmet } from 'react-helmet-async'
 import { Link, useSearchParams } from 'react-router-dom'
 import { createPortal } from 'react-dom'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../hooks/useAuth'
+import { useLocalizedPath } from '../../hooks/useLocalizedPath'
+import { useSiteLocale } from '../../hooks/useSiteLocale'
+import { useFormatPrice } from '../../hooks/useFormatPrice'
+import { PageSeo } from '../../components/PageSeo'
 import { getAddresses } from '../../services/addressService'
 import { getMyInventory, getMyShipments, cancelShipment, createShipment, getShipmentItems } from '../../services/inventoryService'
 import CustomsDeclarationForm from '../../components/CustomsDeclarationForm'
 import { cacheKey, readCache, writeCache } from '../../lib/cache'
-import { formatBRL, formatJPY, formatWeight, jpyToBrl } from '../../lib/fx'
+import { formatBRL, formatWeight, jpyToBrl } from '../../lib/fx'
+import LoungeShippingOrdersSection from './LoungeShippingOrdersSection'
 
-const SHIPMENT_STATUS_LABELS = {
-  requested: 'Solicitado',
-  awaiting_payment: 'Aguardando pagamento do frete',
-  paid: 'Frete pago',
-  shipped: 'Enviado',
-  completed: 'Entregue',
-}
 /** Em andamento até o cliente receber em casa (exclui finalizado). */
 const SHIPMENT_IN_PROCESS_STATUSES = ['requested', 'awaiting_payment', 'paid', 'shipped']
 const SHIPMENTS_PAGE_SIZE = 12
 const REQUEST_INVENTORY_PAGE_SIZE = 200
 
-/** Sub-abas: ?tab=envios&envSub=recebidos */
-const ENVIOS_SUB_TABS = [
-  { id: 'processo', label: 'Envios em processo' },
-  { id: 'recebidos', label: 'Recebidos em casa' },
+const EXTRA_SERVICE_DEFS = [
+  {
+    categoryId: 'visual',
+    items: [
+      { id: 'photos', precoJpy: 500 },
+      { id: 'video', precoJpy: 800 },
+    ],
+  },
+  {
+    categoryId: 'packaging',
+    items: [
+      { id: 'remove_packaging', precoJpy: 0 },
+      { id: 'bubble_wrap_inside', precoJpy: 300 },
+      { id: 'bubble_wrap_outside', precoJpy: 300 },
+    ],
+  },
+  {
+    categoryId: 'urgent',
+    items: [
+      { id: 'urgent_priority_queue', precoJpy: 1500 },
+      { id: 'urgent_dispatch_48h', precoJpy: 3000 },
+    ],
+  },
 ]
 
-const REQUEST_STEPS = [
-  { id: 1, title: 'Seleção de produtos' },
-  { id: 2, title: 'Declaração aduaneira' },
-  { id: 3, title: 'Serviços extras' },
-  { id: 4, title: 'Confirmação' },
-]
-
-const EXTRA_SERVICES = [
-  {
-    categoria: 'Registro visual',
-    itens: [
-      { id: 'photos', nome: 'Fotos', precoJpy: 500 },
-      { id: 'video', nome: 'Vídeo', precoJpy: 800 },
-    ],
-  },
-  {
-    categoria: 'Embalagem',
-    itens: [
-      { id: 'remove_packaging', nome: 'Remover embalagens', precoJpy: 0 },
-      { id: 'bubble_wrap_inside', nome: 'Plástico bolha extra dentro', precoJpy: 300 },
-      { id: 'bubble_wrap_outside', nome: 'Plástico bolha extra fora', precoJpy: 300 },
-    ],
-  },
-  {
-    categoria: 'Envio urgente',
-    itens: [
-      { id: 'urgent_priority_queue', nome: 'Fila prioritária', precoJpy: 1500 },
-      { id: 'urgent_dispatch_48h', nome: 'Despacho em até 48h úteis', precoJpy: 3000 },
-    ],
-  },
-]
+function shipmentStatusLabel(t, status) {
+  if (!status) return '—'
+  return t(`platform.shipments.status.${status}`, { defaultValue: status })
+}
 
 export default function Envios() {
+  const { t } = useTranslation()
+  const siteLocale = useSiteLocale()
+  const fp = useFormatPrice()
+  const dateLocale = siteLocale === 'en' ? 'en-US' : 'pt-BR'
+  const lp = useLocalizedPath()
   const { user } = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
   const envSubRaw = searchParams.get('envSub')
+
+  const enviosSubTabs = useMemo(
+    () => [
+      { id: 'processo', label: t('platform.shipments.subTabProcess') },
+      { id: 'recebidos', label: t('platform.shipments.subTabDelivered') },
+    ],
+    [t],
+  )
+
+  const requestSteps = useMemo(
+    () => [
+      { id: 1, title: t('platform.shipments.step1Title') },
+      { id: 2, title: t('platform.shipments.step2Title') },
+      { id: 3, title: t('platform.shipments.step3Title') },
+      { id: 4, title: t('platform.shipments.step4Title') },
+    ],
+    [t],
+  )
+
   const activeSubTab =
-    ENVIOS_SUB_TABS.some((t) => t.id === envSubRaw) && envSubRaw ? envSubRaw : 'processo'
+    enviosSubTabs.some((tab) => tab.id === envSubRaw) && envSubRaw ? envSubRaw : 'processo'
 
   const [shipments, setShipments] = useState([])
   const [loadingShipments, setLoadingShipments] = useState(true)
@@ -115,10 +129,10 @@ export default function Envios() {
   )
   const selectedExtraItems = useMemo(
     () =>
-      EXTRA_SERVICES.flatMap((c) =>
-        c.itens.filter((i) => extraServices[i.id]).map((i) => ({ ...i, categoria: c.categoria }))
+      EXTRA_SERVICE_DEFS.flatMap((c) =>
+        c.items.filter((i) => extraServices[i.id]).map((i) => ({ ...i, categoryId: c.categoryId })),
       ),
-    [extraServices]
+    [extraServices],
   )
   const requestExtrasTotalJpy = selectedExtraItems.reduce((sum, i) => sum + Number(i.precoJpy || 0), 0)
   const selectedUnits = selectedInventoryItems.reduce((sum, i) => sum + Number(i.items_count || 1), 0)
@@ -131,13 +145,13 @@ export default function Envios() {
         const qty = Number(row.quantity || 0)
         return {
           inventoryId: it.id,
-          itemName: row.item_description || it.name || 'Item',
+          itemName: row.item_description || it.name || t('platform.shipments.itemFallback'),
           unitValue: Number.isFinite(unit) ? unit : 0,
           quantity: Number.isFinite(qty) ? qty : 0,
           subtotal: (Number.isFinite(unit) ? unit : 0) * (Number.isFinite(qty) ? qty : 0),
         }
       }),
-    [selectedInventoryItems, customsDeclarations]
+    [selectedInventoryItems, customsDeclarations, t],
   )
   const declaredProductsTotal = declaredProductRows.reduce((sum, row) => sum + row.subtotal, 0)
   const declarationList = useMemo(
@@ -179,7 +193,7 @@ export default function Envios() {
         if (error) setFeedback(error.message)
         writeCache(k, { shipments: list, hasMore: list.length === SHIPMENTS_PAGE_SIZE })
       } catch (e) {
-        if (isActive) setFeedback(e?.message || 'Erro ao carregar entregas')
+        if (isActive) setFeedback(e?.message || t('platform.shipments.loadDeliveredError'))
       } finally {
         if (isActive) setLoadingDelivered(false)
       }
@@ -188,7 +202,7 @@ export default function Envios() {
     return () => {
       isActive = false
     }
-  }, [user?.id, deliveredPage, activeSubTab])
+  }, [user?.id, deliveredPage, activeSubTab, t])
 
   useEffect(() => {
     let isActive = true
@@ -218,7 +232,7 @@ export default function Envios() {
         if (error) setFeedback(error.message)
         writeCache(k, { shipments: list, hasMore: list.length === SHIPMENTS_PAGE_SIZE })
       } catch (e) {
-        if (isActive) setFeedback(e?.message || 'Erro ao carregar envios')
+        if (isActive) setFeedback(e?.message || t('platform.shipments.loadProcessError'))
       } finally {
         if (isActive) setLoadingShipments(false)
       }
@@ -227,7 +241,7 @@ export default function Envios() {
     return () => {
       isActive = false
     }
-  }, [user?.id, shipmentsPage, activeSubTab])
+  }, [user?.id, shipmentsPage, activeSubTab, t])
 
   useEffect(() => {
     setCustomsDeclarations((prev) => {
@@ -303,11 +317,11 @@ export default function Envios() {
       getAddresses(user.id),
     ])
     setInventoryForRequest(invRes.data ?? [])
-    if (invRes.error) setFeedback(invRes.error.message || 'Erro ao carregar itens para solicitação')
+    if (invRes.error) setFeedback(invRes.error.message || t('platform.shipments.loadInventoryError'))
     const addrList = addrRes.data ?? []
     setAddresses(addrList)
     setSelectedAddressId(addrList[0]?.id || '')
-    if (addrRes.error) setFeedback(addrRes.error.message || 'Erro ao carregar endereços')
+    if (addrRes.error) setFeedback(addrRes.error.message || t('platform.shipments.loadAddressesError'))
     setInventoryLoading(false)
     setAddressesLoading(false)
   }
@@ -360,7 +374,7 @@ export default function Envios() {
   const submitShipmentRequest = async () => {
     if (!user?.id || selectedInventoryIds.size === 0) return
     if (!canAdvanceRequestStep(4)) {
-      setFeedback('Revise os dados da solicitação e confirme para continuar.')
+      setFeedback(t('platform.shipments.reviewRequest'))
       return
     }
     setRequestSubmitting(true)
@@ -409,10 +423,10 @@ export default function Envios() {
         },
       })
       if (error) {
-        setFeedback(error.message || 'Erro ao solicitar envio')
+        setFeedback(error.message || t('platform.shipments.requestError'))
         return
       }
-      setFeedback('Solicitação enviada! A equipe vai revisar e calcular o valor final do frete + taxas de serviço.')
+      setFeedback(t('platform.shipments.requestSent'))
       closeRequestModal()
       await refreshShipments()
     } finally {
@@ -427,10 +441,10 @@ export default function Envios() {
     const { error } = await cancelShipment(user.id, s.id)
     setCancellingId(null)
     if (error) {
-      setFeedback(error.message || 'Erro ao cancelar envio')
+      setFeedback(error.message || t('platform.shipments.cancelError'))
       return
     }
-    setFeedback('Envio cancelado.')
+    setFeedback(t('platform.shipments.cancelled'))
     await Promise.all([refreshShipments(), refreshDelivered()])
   }
 
@@ -447,14 +461,14 @@ export default function Envios() {
     const { data, error } = await getShipmentItems(shipmentId)
     setDetailsLoadingId(null)
     if (error) {
-      setFeedback(error.message || 'Erro ao carregar detalhes do envio')
+      setFeedback(error.message || t('platform.shipments.detailsError'))
       return
     }
     setDetailsByShipmentId((prev) => ({ ...prev, [shipmentId]: data ?? [] }))
   }
 
   const renderShipmentCard = (s, { allowCancel }) => {
-    const statusLabel = SHIPMENT_STATUS_LABELS[s.status] || s.status || '—'
+    const statusLabel = shipmentStatusLabel(t, s.status)
     const currency = (s.shipping_currency || 'JPY').toUpperCase()
     const cost = s.shipping_cost != null ? Number(s.shipping_cost) : null
     const isOpen = detailsOpenId === s.id
@@ -464,9 +478,12 @@ export default function Envios() {
       <section key={s.id} className="rounded-xl border border-earth-200 bg-white p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h3 className="text-base font-semibold text-earth-900">Envio {String(s.id).slice(0, 8)}</h3>
+            <h3 className="text-base font-semibold text-earth-900">
+              {t('platform.shipments.shipmentId', { id: String(s.id).slice(0, 8) })}
+            </h3>
             <p className="mt-1 text-sm text-earth-600">
-              Status: <span className="font-medium text-earth-800">{statusLabel}</span>
+              {t('platform.shipments.statusLine')}{' '}
+              <span className="font-medium text-earth-800">{statusLabel}</span>
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
@@ -475,7 +492,7 @@ export default function Envios() {
               onClick={() => toggleDetails(s.id)}
               className="rounded-lg border border-earth-300 bg-white px-3 py-1.5 text-sm font-medium text-earth-800 hover:bg-earth-50"
             >
-              {isOpen ? 'Ocultar detalhes' : 'Ver detalhes'}
+              {isOpen ? t('platform.shipments.hideDetails') : t('platform.shipments.showDetails')}
             </button>
             {allowCancel && s.status === 'requested' && (
               <button
@@ -484,23 +501,25 @@ export default function Envios() {
                 disabled={cancellingId === s.id}
                 className="rounded-lg border border-red-300 bg-red-50 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-100 disabled:opacity-60"
               >
-                {cancellingId === s.id ? 'Cancelando...' : 'Cancelar envio'}
+                {cancellingId === s.id ? t('platform.shipments.cancelling') : t('platform.shipments.cancelShipment')}
               </button>
             )}
             {cost != null && cost > 0 && (
               <p className="text-sm font-medium text-earth-700">
-                Frete: {currency === 'BRL' ? formatBRL(cost) : formatJPY(cost)}
+                {t('platform.shipments.freight')} {fp.byCurrency(cost, currency)}
               </p>
             )}
             {cost != null && cost > 0 && currency !== 'BRL' && (
-              <p className="text-xs text-earth-600">Aproximado em BRL: {formatBRL(jpyToBrl(cost))}</p>
+              <p className="text-xs text-earth-600">
+                {t('platform.shipments.approxBrl')} {formatBRL(jpyToBrl(cost))}
+              </p>
             )}
           </div>
         </div>
 
         {s.tracking_code && (
           <div className="mt-3 rounded-lg border border-earth-100 bg-earth-50 p-3">
-            <p className="text-sm font-medium text-earth-800">Rastreio</p>
+            <p className="text-sm font-medium text-earth-800">{t('platform.shipments.tracking')}</p>
             <p className="mt-1 text-sm text-earth-600">{s.tracking_code}</p>
           </div>
         )}
@@ -508,10 +527,14 @@ export default function Envios() {
         {s.extra_services && (
           <div className="mt-3 flex flex-wrap gap-2">
             {s.extra_services.photos && (
-              <span className="rounded bg-earth-100 px-2 py-0.5 text-xs text-earth-700">Fotos</span>
+              <span className="rounded bg-earth-100 px-2 py-0.5 text-xs text-earth-700">
+                {t('platform.shipments.extra.photos')}
+              </span>
             )}
             {s.extra_services.video && (
-              <span className="rounded bg-earth-100 px-2 py-0.5 text-xs text-earth-700">Vídeo</span>
+              <span className="rounded bg-earth-100 px-2 py-0.5 text-xs text-earth-700">
+                {t('platform.shipments.extra.video')}
+              </span>
             )}
           </div>
         )}
@@ -519,24 +542,27 @@ export default function Envios() {
         {isOpen && (
           <div className="mt-4 rounded-lg border border-earth-100 bg-earth-50 p-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="text-sm font-semibold text-earth-900">Detalhes do envio</p>
+              <p className="text-sm font-semibold text-earth-900">{t('platform.shipments.detailsTitle')}</p>
               <p className="text-xs text-earth-600">
-                Criado em: {s.created_at ? new Date(s.created_at).toLocaleString('pt-BR') : '—'}
+                {t('platform.shipments.createdAt')}{' '}
+                {s.created_at ? new Date(s.created_at).toLocaleString(dateLocale) : '—'}
                 {s.updated_at && s.status === 'completed' ? (
                   <>
-                    {' '}
-                    · Finalizado: {new Date(s.updated_at).toLocaleString('pt-BR')}
+                    {t('platform.shipments.finishedAt')}{' '}
+                    {new Date(s.updated_at).toLocaleString(dateLocale)}
                   </>
                 ) : null}
               </p>
             </div>
 
-            {detailsLoadingId === s.id && <p className="mt-3 text-sm text-earth-600">Carregando itens...</p>}
+            {detailsLoadingId === s.id && (
+              <p className="mt-3 text-sm text-earth-600">{t('platform.shipments.loadingItems')}</p>
+            )}
 
             {detailsLoadingId !== s.id && items && (
               <>
                 {items.length === 0 ? (
-                  <p className="mt-3 text-sm text-earth-600">Nenhum item encontrado neste envio.</p>
+                  <p className="mt-3 text-sm text-earth-600">{t('platform.shipments.noItemsInShipment')}</p>
                 ) : (
                   <ul className="mt-3 space-y-2">
                     {items.map((row) => {
@@ -547,10 +573,16 @@ export default function Envios() {
                           className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-earth-200 bg-white px-3 py-2"
                         >
                           <div className="min-w-0">
-                            <p className="truncate text-sm font-medium text-earth-900">{it?.name || 'Item'}</p>
+                            <p className="truncate text-sm font-medium text-earth-900">
+                              {it?.name || t('platform.shipments.itemFallback')}
+                            </p>
                             <p className="mt-0.5 text-xs text-earth-600">
-                              {it?.items_count != null ? `Itens: ${it.items_count}` : 'Itens: —'}
-                              {it?.weight_kg != null ? ` • Peso: ${formatWeight(it.weight_kg)}` : ''}
+                              {it?.items_count != null
+                                ? t('platform.shipments.itemsCount', { count: it.items_count })
+                                : t('platform.shipments.itemsDash')}
+                              {it?.weight_kg != null
+                                ? t('platform.shipments.weightDot', { w: formatWeight(it.weight_kg) })
+                                : ''}
                             </p>
                           </div>
                           <span className="rounded bg-earth-100 px-2 py-0.5 text-xs text-earth-700">
@@ -573,10 +605,10 @@ export default function Envios() {
     return (
       <div className="py-8">
         <p className="text-earth-600">
-          <Link to="/login" className="font-medium text-earth-900 underline">
-            Faça login
-          </Link>{' '}
-          para acessar seus envios.
+          <Link to={lp('login')} className="font-medium text-earth-900 underline">
+            {t('platform.shipments.loginLink')}
+          </Link>
+          {t('platform.shipments.loginSuffix')}
         </p>
       </div>
     )
@@ -584,83 +616,82 @@ export default function Envios() {
 
   return (
     <>
-      <Helmet>
-        <title>Envios | Plataforma</title>
-      </Helmet>
+      <PageSeo
+        routeKey="appLounge"
+        title={t('meta.appShipments.title')}
+        description={t('meta.appShipments.description')}
+        noindex
+      />
 
       <div>
-        <h1 className="text-2xl font-bold text-earth-900">Envios</h1>
-        <p className="mt-2 text-earth-600">
-          Acompanhe envios em andamento até chegarem aí, e o histórico dos que você já recebeu em casa.
-        </p>
+        <h1 className="text-2xl font-bold text-earth-900">{t('platform.shipments.pageTitle')}</h1>
+        <p className="mt-2 text-earth-600">{t('platform.shipments.intro')}</p>
 
         {feedback && (
           <p className="mt-4 rounded-lg bg-amber-100 px-4 py-2 text-sm text-amber-800">{feedback}</p>
         )}
 
         <div className="mt-6 flex flex-wrap gap-2 rounded-xl border border-earth-200 bg-earth-50 p-3">
-          {ENVIOS_SUB_TABS.map((t) => (
+          {enviosSubTabs.map((tab) => (
             <button
-              key={t.id}
+              key={tab.id}
               type="button"
               onClick={() => {
                 const next = new URLSearchParams(searchParams)
                 next.set('tab', 'envios')
-                if (t.id === 'processo') next.delete('envSub')
-                else next.set('envSub', t.id)
+                if (tab.id === 'processo') next.delete('envSub')
+                else next.set('envSub', tab.id)
                 setSearchParams(next, { replace: true })
               }}
               className={`rounded-lg px-3 py-1.5 text-sm font-medium ${
-                activeSubTab === t.id
+                activeSubTab === tab.id
                   ? 'bg-earth-900 text-white'
                   : 'bg-white text-earth-700 hover:bg-earth-100'
               }`}
             >
-              {t.label}
+              {tab.label}
             </button>
           ))}
         </div>
 
         {activeSubTab === 'processo' && (
-          <section className="mt-4 rounded-xl border border-sky-300 bg-gradient-to-r from-sky-50 to-blue-50 p-4">
+          <section className="mt-6 rounded-xl border border-sky-300 bg-gradient-to-r from-sky-50 to-blue-50 p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="text-sm font-semibold text-sky-900">Pronto para enviar seus itens?</p>
-                <p className="mt-1 text-xs text-sky-800">
-                  Inicie uma nova solicitação para a equipe revisar, consolidar e calcular frete + taxas.
-                </p>
+                <p className="text-sm font-semibold text-sky-900">{t('platform.shipments.ctaTitle')}</p>
+                <p className="mt-1 text-xs text-sky-800">{t('platform.shipments.ctaBody')}</p>
               </div>
               <button
                 type="button"
                 onClick={openRequestModal}
                 className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700"
               >
-                Solicitar novo envio
+                {t('platform.shipments.ctaButton')}
               </button>
             </div>
           </section>
         )}
 
+        {activeSubTab === 'processo' && <LoungeShippingOrdersSection />}
+
         {activeSubTab === 'recebidos' && (
           <section className="mt-6">
-            <h2 className="text-lg font-semibold text-earth-900">Recebidos em casa</h2>
-            <p className="mt-1 text-sm text-earth-600">
-              Envios internacionais já finalizados — pacotes que chegaram ao seu endereço.
-            </p>
+            <h2 className="text-lg font-semibold text-earth-900">{t('platform.shipments.deliveredHeading')}</h2>
+            <p className="mt-1 text-sm text-earth-600">{t('platform.shipments.deliveredIntro')}</p>
 
-            {loadingDelivered && <p className="mt-4 text-earth-600">Carregando...</p>}
+            {loadingDelivered && <p className="mt-4 text-earth-600">{t('platform.shipments.loading')}</p>}
 
             {!loadingDelivered && deliveredShipments.length === 0 && (
-              <p className="mt-4 text-earth-600">
-                Você ainda não tem envios marcados como entregues. Quando um envio for finalizado, ele aparece aqui.
-              </p>
+              <p className="mt-4 text-earth-600">{t('platform.shipments.deliveredEmpty')}</p>
             )}
 
             {!loadingDelivered && deliveredShipments.length > 0 && (
               <div className="mt-4 space-y-4">
                 {deliveredShipments.map((s) => renderShipmentCard(s, { allowCancel: false }))}
                 <div className="flex items-center justify-between gap-3 rounded-lg border border-earth-200 bg-white px-3 py-2">
-                  <p className="text-xs text-earth-600">Página {deliveredPage + 1}</p>
+                  <p className="text-xs text-earth-600">
+                    {t('platform.shipments.pageIndicator', { page: deliveredPage + 1 })}
+                  </p>
                   <div className="flex gap-2">
                     <button
                       type="button"
@@ -668,7 +699,7 @@ export default function Envios() {
                       disabled={loadingDelivered || deliveredPage <= 0}
                       className="rounded border border-earth-300 px-3 py-1.5 text-sm font-medium text-earth-700 hover:bg-earth-100 disabled:opacity-50"
                     >
-                      Anterior
+                      {t('platform.shipments.paginationPrev')}
                     </button>
                     <button
                       type="button"
@@ -676,7 +707,7 @@ export default function Envios() {
                       disabled={loadingDelivered || !deliveredHasMore}
                       className="rounded border border-earth-300 px-3 py-1.5 text-sm font-medium text-earth-700 hover:bg-earth-100 disabled:opacity-50"
                     >
-                      Próxima
+                      {t('platform.shipments.paginationNext')}
                     </button>
                   </div>
                 </div>
@@ -687,22 +718,22 @@ export default function Envios() {
 
         {activeSubTab === 'processo' && (
           <section className="mt-6">
-            <h2 className="text-lg font-semibold text-earth-900">Envios em processo</h2>
-            <p className="mt-1 text-sm text-earth-600">
-              Do pedido de envio até o pacote sair do Japão.
-            </p>
+            <h2 className="text-lg font-semibold text-earth-900">{t('platform.shipments.processHeading')}</h2>
+            <p className="mt-1 text-sm text-earth-600">{t('platform.shipments.processIntro')}</p>
 
-            {loadingShipments && <p className="mt-4 text-earth-600">Carregando...</p>}
+            {loadingShipments && <p className="mt-4 text-earth-600">{t('platform.shipments.loading')}</p>}
 
             {!loadingShipments && shipments.length === 0 && (
-              <p className="mt-4 text-earth-600">Nenhum envio em andamento.</p>
+              <p className="mt-4 text-earth-600">{t('platform.shipments.processEmpty')}</p>
             )}
 
             {!loadingShipments && shipments.length > 0 && (
               <div className="mt-4 space-y-4">
                 {shipments.map((s) => renderShipmentCard(s, { allowCancel: true }))}
                 <div className="flex items-center justify-between gap-3 rounded-lg border border-earth-200 bg-white px-3 py-2">
-                  <p className="text-xs text-earth-600">Página {shipmentsPage + 1}</p>
+                  <p className="text-xs text-earth-600">
+                    {t('platform.shipments.pageIndicator', { page: shipmentsPage + 1 })}
+                  </p>
                   <div className="flex gap-2">
                     <button
                       type="button"
@@ -710,7 +741,7 @@ export default function Envios() {
                       disabled={loadingShipments || shipmentsPage <= 0}
                       className="rounded border border-earth-300 px-3 py-1.5 text-sm font-medium text-earth-700 hover:bg-earth-100 disabled:opacity-50"
                     >
-                      Anterior
+                      {t('platform.shipments.paginationPrev')}
                     </button>
                     <button
                       type="button"
@@ -718,7 +749,7 @@ export default function Envios() {
                       disabled={loadingShipments || !shipmentsHasMore}
                       className="rounded border border-earth-300 px-3 py-1.5 text-sm font-medium text-earth-700 hover:bg-earth-100 disabled:opacity-50"
                     >
-                      Próxima
+                      {t('platform.shipments.paginationNext')}
                     </button>
                   </div>
                 </div>
@@ -738,19 +769,21 @@ export default function Envios() {
               aria-labelledby="shipment-request-title"
             >
               <div className="border-b border-earth-200 px-6 py-4">
-                <h2 id="shipment-request-title" className="text-lg font-semibold text-earth-900">Solicitar envio</h2>
-                <p className="mt-1 text-sm text-earth-600">Fluxo em 4 etapas</p>
+                <h2 id="shipment-request-title" className="text-lg font-semibold text-earth-900">
+                  {t('platform.shipments.requestModalTitle')}
+                </h2>
+                <p className="mt-1 text-sm text-earth-600">{t('platform.shipments.requestModalSubtitle')}</p>
                 <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                  {REQUEST_STEPS.map((s) => (
+                  {requestSteps.map((step) => (
                     <button
-                      key={s.id}
+                      key={step.id}
                       type="button"
-                      onClick={() => setRequestStep(s.id)}
+                      onClick={() => setRequestStep(step.id)}
                       className={`rounded-lg px-2 py-1.5 text-xs font-medium sm:text-sm ${
-                        requestStep === s.id ? 'bg-earth-900 text-white' : 'bg-earth-100 text-earth-700 hover:bg-earth-200'
+                        requestStep === step.id ? 'bg-earth-900 text-white' : 'bg-earth-100 text-earth-700 hover:bg-earth-200'
                       }`}
                     >
-                      {s.title}
+                      {step.title}
                     </button>
                   ))}
                 </div>
@@ -760,7 +793,7 @@ export default function Envios() {
                 {requestStep === 1 && (
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-semibold text-earth-800">Seleção dos produtos para envio</h3>
+                      <h3 className="text-sm font-semibold text-earth-800">{t('platform.shipments.step1Heading')}</h3>
                       <label className="flex items-center gap-2 text-sm text-earth-700">
                         <input
                           type="checkbox"
@@ -768,12 +801,14 @@ export default function Envios() {
                           onChange={toggleSelectAllInventory}
                           className="rounded border-earth-300"
                         />
-                        Selecionar todos
+                        {t('platform.shipments.selectAll')}
                       </label>
                     </div>
-                    {inventoryLoading && <p className="text-sm text-earth-600">Carregando inventário...</p>}
+                    {inventoryLoading && (
+                      <p className="text-sm text-earth-600">{t('platform.shipments.loadingInventory')}</p>
+                    )}
                     {!inventoryLoading && inventoryForRequest.length === 0 && (
-                      <p className="text-sm text-earth-600">Você não possui itens disponíveis para solicitar envio.</p>
+                      <p className="text-sm text-earth-600">{t('platform.shipments.noInventory')}</p>
                     )}
                     {!inventoryLoading && inventoryForRequest.length > 0 && (
                       <ul className="space-y-2">
@@ -787,10 +822,16 @@ export default function Envios() {
                                 className="mt-1 rounded border-earth-300"
                               />
                               <div className="min-w-0">
-                                <p className="truncate text-sm font-medium text-earth-900">{it.name || 'Item'}</p>
+                                <p className="truncate text-sm font-medium text-earth-900">
+                                  {it.name || t('platform.shipments.itemFallback')}
+                                </p>
                                 <p className="text-xs text-earth-600">
-                                  {it.items_count != null ? `Unidades: ${it.items_count}` : 'Unidades: —'}
-                                  {it.weight_kg != null ? ` • Peso: ${formatWeight(it.weight_kg)}` : ''}
+                                  {it.items_count != null
+                                    ? t('platform.shipments.unitsCount', { count: it.items_count })
+                                    : t('platform.shipments.unitsDash')}
+                                  {it.weight_kg != null
+                                    ? t('platform.shipments.weightDot', { w: formatWeight(it.weight_kg) })
+                                    : ''}
                                 </p>
                               </div>
                             </label>
@@ -799,17 +840,19 @@ export default function Envios() {
                       </ul>
                     )}
                     <p className="text-xs text-earth-600">
-                      Selecionados: {selectedInventoryItems.length} item(ns) • {selectedUnits} unidade(s) • {formatWeight(selectedWeightKg)}
+                      {t('platform.shipments.selectedSummary', {
+                        items: selectedInventoryItems.length,
+                        units: selectedUnits,
+                        weight: formatWeight(selectedWeightKg),
+                      })}
                     </p>
                   </div>
                 )}
 
                 {requestStep === 2 && (
                   <div className="space-y-4">
-                    <h3 className="text-sm font-semibold text-earth-800">Declaração aduaneira</h3>
-                    <p className="text-xs text-earth-600">
-                      Os itens selecionados na etapa 1 aparecem abaixo para declaração.
-                    </p>
+                    <h3 className="text-sm font-semibold text-earth-800">{t('platform.shipments.step2Heading')}</h3>
+                    <p className="text-xs text-earth-600">{t('platform.shipments.step2Hint')}</p>
                     <div className="space-y-2 rounded-lg border border-earth-200 bg-earth-50 p-3">
                       <label className="flex items-start gap-2 text-sm text-earth-800">
                         <input
@@ -820,7 +863,7 @@ export default function Envios() {
                           onChange={(e) => setCustomsMode(e.target.value)}
                           className="mt-0.5"
                         />
-                        Quero que a equipe preencha a declaração aduaneira.
+                        {t('platform.shipments.customsTeamFill')}
                       </label>
                       <label className="flex items-start gap-2 text-sm text-earth-800">
                         <input
@@ -831,7 +874,7 @@ export default function Envios() {
                           onChange={(e) => setCustomsMode(e.target.value)}
                           className="mt-0.5"
                         />
-                        Vou preencher a declaração agora.
+                        {t('platform.shipments.customsSelfFill')}
                       </label>
                     </div>
                     {customsMode === 'self_fill' && (
@@ -840,24 +883,27 @@ export default function Envios() {
                           <article
                             key={it.id}
                             className="overflow-hidden rounded-xl border-2 border-sky-200 bg-white shadow-sm"
-                            aria-label={`Formulário de declaração do item ${idx + 1}`}
+                            aria-label={t('platform.shipments.declarationFormAria', { n: idx + 1 })}
                           >
                             <header className="flex items-center justify-between border-b border-sky-100 bg-sky-50 px-3 py-2">
                               <div>
                                 <p className="text-xs font-medium uppercase tracking-wide text-sky-700">
-                                  Declaracao aduaneira
+                                  {t('platform.shipments.declarationHeader')}
                                 </p>
                                 <p className="text-sm font-semibold text-sky-900">
-                                  Item {idx + 1}: {it.name || 'Item'}
+                                  {t('platform.shipments.itemNumberName', {
+                                    n: idx + 1,
+                                    name: it.name || t('platform.shipments.itemFallback'),
+                                  })}
                                 </p>
                               </div>
                               <span className="rounded bg-white px-2 py-0.5 text-[11px] font-medium text-sky-700 ring-1 ring-sky-200">
-                                Preencher
+                                {t('platform.shipments.fillInBadge')}
                               </span>
                             </header>
                             <div className="p-3">
                               <p className="mb-2 text-xs text-earth-600">
-                                Informe descricao, valor unitario e quantidade deste item especificamente.
+                                {t('platform.shipments.declarationPerItemHint')}
                               </p>
                             <CustomsDeclarationForm
                               value={customsDeclarations[it.id] || getDefaultDeclaration(it)}
@@ -876,11 +922,13 @@ export default function Envios() {
 
                 {requestStep === 3 && (
                   <div className="space-y-6">
-                    {EXTRA_SERVICES.map((cat) => (
-                      <div key={cat.categoria}>
-                        <h3 className="mb-2 text-sm font-semibold text-earth-700">{cat.categoria}</h3>
+                    {EXTRA_SERVICE_DEFS.map((cat) => (
+                      <div key={cat.categoryId}>
+                        <h3 className="mb-2 text-sm font-semibold text-earth-700">
+                          {t(`platform.shipments.extraCat.${cat.categoryId}`)}
+                        </h3>
                         <div className="space-y-1.5">
-                          {cat.itens.map((item) => (
+                          {cat.items.map((item) => (
                             <label
                               key={item.id}
                               className="flex cursor-pointer items-center justify-between gap-3 rounded-lg border border-earth-200 px-4 py-3 hover:bg-earth-50"
@@ -892,56 +940,84 @@ export default function Envios() {
                                   onChange={(e) => setExtraServices((s) => ({ ...s, [item.id]: e.target.checked }))}
                                   className="rounded border-earth-300"
                                 />
-                                <span className="text-sm font-medium text-earth-900">{item.nome}</span>
+                                <span className="text-sm font-medium text-earth-900">
+                                  {t(`platform.shipments.extra.${item.id}`)}
+                                </span>
                               </div>
-                              <span className="text-sm font-medium text-earth-600">{formatJPY(item.precoJpy)}</span>
+                              <span className="text-sm font-medium text-earth-600">{fp.jpy(item.precoJpy)}</span>
                             </label>
                           ))}
                         </div>
                       </div>
                     ))}
                     <div className="rounded-lg border border-earth-200 bg-earth-50 px-3 py-2 text-sm text-earth-700">
-                      Total extras: {formatJPY(requestExtrasTotalJpy)}
+                      {t('platform.shipments.step3TotalExtras')} {fp.jpy(requestExtrasTotalJpy)}
                     </div>
                   </div>
                 )}
 
                 {requestStep === 4 && (
                   <div className="space-y-4">
-                    <h3 className="text-sm font-semibold text-earth-800">Confirmação da solicitação</h3>
+                    <h3 className="text-sm font-semibold text-earth-800">{t('platform.shipments.step4Heading')}</h3>
                     <div className="rounded-lg border border-earth-200 bg-earth-50 p-3 text-sm text-earth-700">
-                      <p><strong>Itens selecionados:</strong> {selectedInventoryItems.length}</p>
-                      <p><strong>Unidades:</strong> {selectedUnits}</p>
-                      <p><strong>Peso total:</strong> {formatWeight(selectedWeightKg)}</p>
-                      <p><strong>Declaração aduaneira:</strong> {customsMode === 'self_fill' ? 'Preenchida por você' : 'Preenchimento pela equipe'}</p>
-                      <p><strong>Serviços extras:</strong> {selectedExtraItems.length > 0 ? selectedExtraItems.map((x) => x.nome).join(', ') : 'Nenhum'}</p>
-                      <p><strong>Total extras:</strong> {formatJPY(requestExtrasTotalJpy)}</p>
+                      <p>
+                        <strong>{t('platform.shipments.confirmSelectedCount')}</strong> {selectedInventoryItems.length}
+                      </p>
+                      <p>
+                        <strong>{t('platform.shipments.confirmUnits')}</strong> {selectedUnits}
+                      </p>
+                      <p>
+                        <strong>{t('platform.shipments.confirmWeight')}</strong> {formatWeight(selectedWeightKg)}
+                      </p>
+                      <p>
+                        <strong>{t('platform.shipments.confirmCustoms')}</strong>{' '}
+                        {customsMode === 'self_fill'
+                          ? t('platform.shipments.customsFilledByYou')
+                          : t('platform.shipments.customsFilledByTeam')}
+                      </p>
+                      <p>
+                        <strong>{t('platform.shipments.confirmExtras')}</strong>{' '}
+                        {selectedExtraItems.length > 0
+                          ? selectedExtraItems.map((x) => t(`platform.shipments.extra.${x.id}`)).join(', ')
+                          : t('platform.shipments.confirmExtrasNone')}
+                      </p>
+                      <p>
+                        <strong>{t('platform.shipments.confirmExtrasTotal')}</strong> {fp.jpy(requestExtrasTotalJpy)}
+                      </p>
                       {customsMode === 'self_fill' ? (
                         <>
-                          <p className="mt-2"><strong>Valores dos produtos declarados:</strong></p>
+                          <p className="mt-2">
+                            <strong>{t('platform.shipments.declaredValuesTitle')}</strong>
+                          </p>
                           <ul className="mt-1 space-y-1 text-xs">
                             {declaredProductRows.map((row) => (
                               <li key={row.inventoryId}>
-                                {row.itemName}: {formatJPY(row.unitValue)} x {row.quantity} = {formatJPY(row.subtotal)}
+                                {row.itemName}: {fp.jpy(row.unitValue)} x {row.quantity} = {fp.jpy(row.subtotal)}
                               </li>
                             ))}
                           </ul>
-                          <p className="mt-1"><strong>Total declarado dos produtos:</strong> {formatJPY(declaredProductsTotal)}</p>
+                          <p className="mt-1">
+                            <strong>{t('platform.shipments.declaredTotal')}</strong> {fp.jpy(declaredProductsTotal)}
+                          </p>
                         </>
                       ) : (
-                        <p className="mt-1 text-xs text-earth-600">
-                          Valores dos produtos serão informados pela equipe no preenchimento da declaração.
-                        </p>
+                        <p className="mt-1 text-xs text-earth-600">{t('platform.shipments.teamWillDeclareValues')}</p>
                       )}
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-earth-700">Endereço de destino</label>
+                      <label className="block text-sm font-medium text-earth-700">
+                        {t('platform.shipments.destinationAddress')}
+                      </label>
                       {addressesLoading ? (
-                        <p className="mt-2 text-sm text-earth-600">Carregando endereços...</p>
+                        <p className="mt-2 text-sm text-earth-600">{t('platform.shipments.loadingAddresses')}</p>
                       ) : addresses.length === 0 ? (
                         <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-                          Nenhum endereço cadastrado. Cadastre em <Link to="/app/conta" className="font-medium underline">Dados da conta</Link>.
+                          {t('platform.shipments.noAddressesBefore')}{' '}
+                          <Link to={lp('appConta')} className="font-medium underline">
+                            {t('platform.shipments.accountDataLink')}
+                          </Link>
+                          .
                         </div>
                       ) : (
                         <select
@@ -951,7 +1027,12 @@ export default function Envios() {
                         >
                           {addresses.map((a) => (
                             <option key={a.id} value={a.id}>
-                              {(a.label || 'Endereço')} - {a.recipient_name} - {a.city}/{a.state}
+                              {t('platform.shipments.addressOption', {
+                                label: a.label || t('platform.shipments.defaultAddressLabel'),
+                                name: a.recipient_name,
+                                city: a.city,
+                                state: a.state,
+                              })}
                             </option>
                           ))}
                         </select>
@@ -968,18 +1049,21 @@ export default function Envios() {
                         <p>
                           {selectedAddress.neighborhood} - {selectedAddress.city}/{selectedAddress.state}
                         </p>
-                        <p>{selectedAddress.postal_code} - {selectedAddress.country || 'Brasil'}</p>
+                        <p>
+                          {selectedAddress.postal_code} -{' '}
+                          {selectedAddress.country || t('platform.shipments.defaultCountry')}
+                        </p>
                       </div>
                     )}
 
                     <label className="block text-sm">
-                      <span className="text-earth-700">Observações (opcional)</span>
+                      <span className="text-earth-700">{t('platform.shipments.notesOptional')}</span>
                       <textarea
                         rows={3}
                         value={requestNotes}
                         onChange={(e) => setRequestNotes(e.target.value)}
                         className="mt-1 w-full rounded border border-earth-300 px-3 py-2 text-earth-900"
-                        placeholder="Ex.: priorizar proteção de itens frágeis"
+                        placeholder={t('platform.shipments.notesPlaceholder')}
                       />
                     </label>
 
@@ -990,7 +1074,7 @@ export default function Envios() {
                         onChange={(e) => setAgreeRequestConfirmation(e.target.checked)}
                         className="mt-0.5"
                       />
-                      Confirmo os dados desta solicitação. A equipe revisará e calculará o valor final (frete + taxas de serviço).
+                      {t('platform.shipments.confirmCheckbox')}
                     </label>
                   </div>
                 )}
@@ -1002,7 +1086,7 @@ export default function Envios() {
                   onClick={() => (requestStep > 1 ? setRequestStep((s) => s - 1) : closeRequestModal())}
                   className="rounded-lg border border-earth-300 px-4 py-2 text-sm font-medium text-earth-700 hover:bg-earth-100"
                 >
-                  {requestStep === 1 ? 'Cancelar' : 'Voltar'}
+                  {requestStep === 1 ? t('platform.shipments.wizardCancel') : t('platform.shipments.wizardBack')}
                 </button>
                 {requestStep < 4 ? (
                   <button
@@ -1011,7 +1095,7 @@ export default function Envios() {
                     disabled={!canAdvanceRequestStep(requestStep)}
                     className="rounded-lg bg-earth-900 px-4 py-2 text-sm font-medium text-white hover:bg-earth-800 disabled:opacity-60"
                   >
-                    Próximo
+                    {t('platform.shipments.wizardNext')}
                   </button>
                 ) : (
                   <button
@@ -1020,7 +1104,7 @@ export default function Envios() {
                     disabled={requestSubmitting || !canAdvanceRequestStep(4)}
                     className="rounded-lg bg-earth-900 px-4 py-2 text-sm font-medium text-white hover:bg-earth-800 disabled:opacity-60"
                   >
-                    {requestSubmitting ? 'Enviando...' : 'Solicitar envio'}
+                    {requestSubmitting ? t('platform.shipments.submitting') : t('platform.shipments.submitRequest')}
                   </button>
                 )}
               </div>

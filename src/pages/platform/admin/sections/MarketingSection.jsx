@@ -1,8 +1,11 @@
-﻿import { brlToJpy, formatJPY } from '../../../../lib/fx'
+﻿import { useSiteLocale } from '../../../../hooks/useSiteLocale'
+import { brlToJpy } from '../../../../lib/fx'
+import { formatJpyForSite } from '../../../../lib/moneyDisplay'
 import { saveSystemSettingsAdmin } from '../../../../services/settingsService'
 import { useAdminContext } from '../AdminContext'
 
 export default function MarketingSection() {
+  const siteLocale = useSiteLocale()
   const {
     activeTab,
     marketingLoading,
@@ -29,8 +32,8 @@ export default function MarketingSection() {
       </div>
 
       <p className="text-sm text-earth-600">
-        O desconto ({formatJPY(Math.round(brlToJpy(Number(settingsForm.referral_discount_value) || 0)))}) aplica-se no checkout do indicado
-        quando ele usa o benefício. O crédito ao indicador ({formatJPY(Math.round(brlToJpy(Number(settingsForm.referral_credit_value) || 0)))}) é
+        O desconto ({formatJpyForSite(siteLocale, Math.round(brlToJpy(Number(settingsForm.referral_discount_value) || 0)), null)}) aplica-se no checkout do indicado
+        quando ele usa o benefício. O crédito ao indicador ({formatJpyForSite(siteLocale, Math.round(brlToJpy(Number(settingsForm.referral_credit_value) || 0)), null)}) é
         lançado quando o pedido do indicado (com referral aplicado) atinge status <strong>enviado</strong> ou{' '}
         <strong>concluído</strong>.
       </p>

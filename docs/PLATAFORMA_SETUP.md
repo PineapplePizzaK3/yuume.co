@@ -32,7 +32,14 @@ Copie `.env.example` para `.env` e preencha:
    - `supabase/migrations/003_confirm_email_and_profile_trigger.sql`
 3. Ative Auth > Providers (Email habilitado por padrão)
 4. Configure Site URL e Redirect URLs em Auth > URL Configuration
-5. **Conta admin:** cadastre-se em `/register` e depois execute:
+5. **URLs em inglês (SEO):** o site também expõe autenticação sob `/en/...`. Inclua na lista de **Redirect URLs** (e quaisquer allowlists de OAuth) as variantes em inglês, espelhando as rotas em português, por exemplo:
+   - `https://SEU_DOMINIO/en/login`
+   - `https://SEU_DOMINIO/en/register`
+   - `https://SEU_DOMINIO/en/forgot-password`
+   - `https://SEU_DOMINIO/en/reset-password`
+   - `https://SEU_DOMINIO/en/app/dashboard` (e demais destinos pós-login que você usar em `redirectTo` / fluxos OAuth)
+   O **Site URL** continua sendo a raiz do domínio (ex.: `https://eiko-dls.com`); o que muda é apenas o cadastro das rotas adicionais acima para links de email e provedores sociais não caírem em URL bloqueada.
+6. **Conta admin:** cadastre-se em `/register` e depois execute:
    ```sql
    UPDATE profiles SET role = 'admin' WHERE email = 'seu-email@exemplo.com';
    ```

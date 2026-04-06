@@ -2,11 +2,13 @@
  * Profile - User profile management.
  */
 import { useEffect, useState } from 'react'
-import { Helmet } from 'react-helmet-async'
+import { useTranslation } from 'react-i18next'
+import { PageSeo } from '../../components/PageSeo'
 import { useAuth } from '../../hooks/useAuth'
 import { getProfile, updateProfile } from '../../services/profileService'
 
 export default function Profile() {
+  const { t } = useTranslation()
   const { user } = useAuth()
   const [profile, setProfile] = useState(null)
   const [name, setName] = useState('')
@@ -26,9 +28,9 @@ export default function Profile() {
         if (!isActive) return
         setProfile(data ?? null)
         setName(data?.name ?? '')
-        if (error) setMessage(error.message || 'Erro ao carregar perfil')
+        if (error) setMessage(error.message || t('platform.profile.loadError'))
       } catch (e) {
-        if (isActive) setMessage(e?.message || 'Erro ao carregar perfil')
+        if (isActive) setMessage(e?.message || t('platform.profile.loadError'))
       } finally {
         if (isActive) setLoading(false)
       }
@@ -37,7 +39,7 @@ export default function Profile() {
     return () => {
       isActive = false
     }
-  }, [user?.id])
+  }, [user?.id, t])
 
   const handleSave = async (e) => {
     e.preventDefault()
@@ -45,25 +47,28 @@ export default function Profile() {
     setMessage('')
     const { error } = await updateProfile(user.id, { name })
     setSaving(false)
-    setMessage(error ? error.message : 'Perfil atualizado')
+    setMessage(error ? error.message : t('platform.profile.saved'))
   }
 
   return (
     <>
-      <Helmet>
-        <title>Perfil | Plataforma</title>
-      </Helmet>
+      <PageSeo
+        routeKey="appProfile"
+        title={t('meta.appProfile.title')}
+        description={t('meta.appProfile.description')}
+        noindex
+      />
       <div>
-        <h1 className="text-2xl font-bold text-earth-900">Perfil</h1>
+        <h1 className="text-2xl font-bold text-earth-900">{t('platform.profile.pageTitle')}</h1>
         <p className="mt-2 text-earth-600">
-          Gerencie suas informações
+          {t('platform.profile.subtitle')}
         </p>
-        {loading && <p className="mt-6 text-earth-600">Carregando...</p>}
+        {loading && <p className="mt-6 text-earth-600">{t('platform.profile.loading')}</p>}
         {!loading && (
           <form onSubmit={handleSave} className="mt-6 max-w-md space-y-4">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-earth-700">
-                Email
+                {t('platform.profile.email')}
               </label>
               <input
                 id="email"
@@ -75,7 +80,7 @@ export default function Profile() {
             </div>
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-earth-700">
-                Nome
+                {t('platform.profile.name')}
               </label>
               <input
                 id="name"
@@ -93,7 +98,7 @@ export default function Profile() {
               disabled={saving}
               className="rounded-lg bg-earth-900 px-4 py-2 font-medium text-earth-50 hover:bg-earth-800 disabled:opacity-70"
             >
-              {saving ? 'Salvando...' : 'Salvar'}
+              {saving ? t('platform.profile.saving') : t('platform.profile.save')}
             </button>
           </form>
         )}

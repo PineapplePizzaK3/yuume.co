@@ -3,14 +3,20 @@
  * Fluxo: pedido → pagamento do pedido → recebimento (serviços extras) →
  * consolidamos e definimos frete → cliente paga frete → enviamos.
  */
-import { useEffect, useState } from 'react'
-import { Helmet } from 'react-helmet-async'
+import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { useNavigate } from 'react-router-dom'
+import { PageSeo } from '../../components/PageSeo'
 import { useAuth } from '../../hooks/useAuth'
+import { useLocalizedPath } from '../../hooks/useLocalizedPath'
+import { useSiteLocale } from '../../hooks/useSiteLocale'
+import { useFormatPrice } from '../../hooks/useFormatPrice'
+import { LOCALE_EN } from '../../lib/localeRoutes'
 import { deleteMyOrder, getMyOrders, getOrderById, requestOrderExtraServices, ORDER_STATUS_LABELS } from '../../services/orderService'
 import { createCheckoutSession } from '../../services/paymentService'
 import { getWallet } from '../../services/walletService'
 import { cacheKey, readCache, writeCache } from '../../lib/cache'
-import { brlToJpy, formatBRL, formatJPY, jpyToBrl } from '../../lib/fx'
+import { brlToJpy, jpyToBrl } from '../../lib/fx'
 import { TriCurrencyDisplay } from '../../components/TriCurrencyDisplay'
 import QuoteProductsList from '../../components/QuoteProductsList'
 import OrderAttachments from '../../components/OrderAttachments'
@@ -28,23 +34,44 @@ const ORDER_FILTERS = {
   OPEN: 'open',
   COMPLETED: 'completed',
 }
-const GATEWAY_OPTIONS = [
-  {
-    id: 'parcelow',
-    label: 'Parcelow',
-    icon: '🇧🇷',
-    details: 'Cartão até 21x, PIX, TED',
-  },
-  {
-    id: 'stripe',
-    label: 'Stripe',
-    icon: '🌐',
-    details: 'Cartão internacional',
-  },
-]
 
 export default function Orders() {
+  const { t } = useTranslation()
+  const navigate = useNavigate()
+  const lp = useLocalizedPath()
+  const siteLocale = useSiteLocale()
+  const fp = useFormatPrice()
+  const dateLocale = siteLocale === LOCALE_EN ? 'en-US' : 'pt-BR'
   const { user, session } = useAuth()
+
+  const gatewayOptions = useMemo(
+    () => [
+      { id: 'parcelow', label: 'Parcelow', icon: '🇧🇷', details: t('platform.orders.gateway.parcelow') },
+      { id: 'stripe', label: 'Stripe', icon: '🌐', details: t('platform.orders.gateway.stripe') },
+    ],
+    [t]
+  )
+
+  const orderStatusLabel = (status) =>
+    t(`platform.orders.status.${status}`, { defaultValue: ORDER_STATUS_LABELS[status] ?? status })
+
+  const payableKindLabel = (kind) => {
+    if (!kind) return ''
+    const keys = {
+      quote: 'platform.orders.payable.quote',
+      product_total: 'platform.orders.payable.productTotal',
+      shipping: 'platform.orders.payable.shipping',
+      quote_total: 'platform.orders.payable.quoteTotal',
+    }
+    return t(keys[kind] || '')
+  }
+
+  const feedbackBannerClass = (msg) => {
+    const s = (msg || '').toLowerCase()
+    if (s.includes('sucesso') || s.includes('success')) return 'bg-green-100 text-green-800'
+    if (s.includes('cancelado') || s.includes('cancelled') || s.includes('canceled')) return 'bg-amber-100 text-amber-800'
+    return 'bg-red-100 text-red-800'
+  }
   const [orders, setOrders] = useState([])
   const [wallet, setWallet] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -83,11 +110,11 @@ export default function Orders() {
       }
     }
     if (params.get('success') === 'true') {
-      setFeedback('Pagamento realizado com sucesso!')
+      setFeedback(t('platform.orders.paySuccess'))
       clearPaymentParams()
     }
     if (params.get('canceled') === 'true') {
-      setFeedback('Pagamento cancelado.')
+      setFeedback(t('platform.orders.payCanceled'))
       clearPaymentParams()
     }
     const orderIdFromQuery = params.get('orderId')
@@ -103,7 +130,7 @@ export default function Orders() {
         // noop
       }
     }
-  }, [])
+  }, [t])
 
   useEffect(() => {
     setOrdersPage(0)
@@ -125,7 +152,7 @@ export default function Orders() {
       const { data, error } = await getOrderById(targetOrderId, user.id)
       if (!isActive) return
       if (error || !data) {
-        setFeedback('Nao foi possivel localizar o pedido selecionado.')
+        setFeedback(t('platform.orders.orderNotFound'))
         setHasOpenedTargetOrder(true)
         return
       }
@@ -138,7 +165,7 @@ export default function Orders() {
     return () => {
       isActive = false
     }
-  }, [user?.id, targetOrderId, hasOpenedTargetOrder, orders])
+  }, [user?.id, targetOrderId, hasOpenedTargetOrder, orders, t])
 
   useEffect(() => {
     let isActive = true
@@ -147,7 +174,8 @@ export default function Orders() {
         if (isActive) setLoading(false)
         return
       }
-      const k = cacheKey(user.id, `orders_page_v1_p${ordersPage}`)
+      const cacheScope = ordersFilter === ORDER_FILTERS.COMPLETED ? 'finalizados' : 'andamento'
+      const k = cacheKey(user.id, `orders_page_v2_${cacheScope}_p${ordersPage}`)
       const cached = readCache(k, 1000 * 60 * 30)
       if (cached && isActive) {
         setOrders(cached.orders ?? [])
@@ -174,7 +202,7 @@ export default function Orders() {
         if (ordersRes.error) setFeedback(ordersRes.error.message)
         writeCache(k, { orders: list, wallet: walletRes.data ?? null, hasMore: list.length === ORDERS_PAGE_SIZE })
       } catch (e) {
-        if (isActive) setFeedback(e?.message || 'Erro ao carregar pedidos')
+        if (isActive) setFeedback(e?.message || t('platform.orders.loadError'))
       } finally {
         if (isActive) setLoading(false)
       }
@@ -183,7 +211,7 @@ export default function Orders() {
     return () => {
       isActive = false
     }
-  }, [user?.id, ordersPage, ordersFilter])
+  }, [user?.id, ordersPage, ordersFilter, t])
 
   useEffect(() => {
     if (!session?.access_token || !Array.isArray(orders) || orders.length === 0) return
@@ -197,13 +225,13 @@ export default function Orders() {
   const getPayableAmount = (order) => {
     if (order.status !== 'awaiting_payment') return null
     if (order.quote_amount != null && Number(order.quote_amount) > 0) {
-      return { amount: Number(order.quote_amount), currency: order.quote_currency || 'JPY', label: 'Orçamento' }
+      return { amount: Number(order.quote_amount), currency: order.quote_currency || 'JPY', kind: 'quote' }
     }
     if (order.total_amount != null && Number(order.total_amount) > 0) {
-      return { amount: Number(order.total_amount), currency: 'BRL', label: 'Total' }
+      return { amount: Number(order.total_amount), currency: 'BRL', kind: 'product_total' }
     }
     if (order.shipping_cost != null && Number(order.shipping_cost) > 0) {
-      return { amount: Number(order.shipping_cost), currency: order.shipping_currency || 'JPY', label: 'Frete' }
+      return { amount: Number(order.shipping_cost), currency: order.shipping_currency || 'JPY', kind: 'shipping' }
     }
     return null
   }
@@ -214,7 +242,7 @@ export default function Orders() {
     const c = (p.currency || 'JPY').toUpperCase()
     const amountJpy = c === 'BRL' ? brlToJpy(p.amount) : p.amount
     const roundedJpy = Math.round(Number(amountJpy) || 0)
-    return { amountJpy: roundedJpy, approxBrl: jpyToBrl(roundedJpy), label: p.label }
+    return { amountJpy: roundedJpy, approxBrl: jpyToBrl(roundedJpy), kind: p.kind }
   }
 
   const toTriValues = (order, amount, currency = 'JPY') => {
@@ -255,13 +283,11 @@ export default function Orders() {
     const payable = getPayableAmount(order)
     if (!payable) return null
     const effectivePayable =
-      payable.label === 'Orçamento'
-        ? (getDisplayedOrderTotal(order) ?? payable)
-        : payable
+      payable.kind === 'quote' ? (getDisplayedOrderTotal(order) ?? payable) : payable
     const tri = toTriValues(order, effectivePayable.amount, effectivePayable.currency || 'JPY')
     if (!tri) return null
     return {
-      label: effectivePayable.label,
+      kind: effectivePayable.kind,
       brl: tri.brl,
       jpy: tri.jpy,
       usd: tri.usd,
@@ -289,7 +315,8 @@ export default function Orders() {
     setOrders(list)
     setOrdersHasMore(list.length === ORDERS_PAGE_SIZE)
     setWallet(walletRes.data ?? null)
-    const k = cacheKey(user.id, `orders_page_v1_p${ordersPage}`)
+    const cacheScope = ordersFilter === ORDER_FILTERS.COMPLETED ? 'finalizados' : 'andamento'
+    const k = cacheKey(user.id, `orders_page_v2_${cacheScope}_p${ordersPage}`)
     writeCache(k, { orders: list, wallet: walletRes.data ?? null, hasMore: list.length === ORDERS_PAGE_SIZE })
   }
 
@@ -301,22 +328,22 @@ export default function Orders() {
     try {
       const accessToken = session?.access_token
       if (!accessToken) {
-        setFeedback('Faça login novamente para pagar')
+        setFeedback(t('platform.orders.loginToPay'))
         setPayingId(null)
         return
       }
       const result = await createCheckoutSession(order.id, accessToken, { useWallet, provider })
       if (result?.paid) {
-        setFeedback('Pagamento realizado com sucesso!')
+        setFeedback(t('platform.orders.paySuccess'))
         await refreshOrders()
         setPayModal({ open: false, order: null, useWallet: true })
         return
       }
       const url = result?.url
       if (url) window.location.href = url
-      else setFeedback('Erro ao criar sessão de pagamento')
+      else setFeedback(t('platform.orders.checkoutSessionError'))
     } catch (err) {
-      setFeedback(err.message || 'Erro ao processar pagamento')
+      setFeedback(err.message || t('platform.orders.payProcessError'))
     } finally {
       setPayingId(null)
     }
@@ -350,7 +377,9 @@ export default function Orders() {
       const pid = it?.product_id
       const name =
         it?.product?.name ||
-        (pid ? `Produto (${String(pid).slice(0, 8)}…)` : `Item ${index + 1}`)
+        (pid
+          ? t('platform.orders.productFallback', { id: String(pid).slice(0, 8) })
+          : t('platform.orders.itemFallback', { n: index + 1 }))
       return {
         id: it?.id || `${name}-${index}`,
         name,
@@ -362,10 +391,7 @@ export default function Orders() {
     })
   }
 
-  const formatByCurrency = (value, currency = 'JPY') => {
-    const normalized = String(currency || 'JPY').toUpperCase()
-    return normalized === 'BRL' ? formatBRL(value) : formatJPY(value)
-  }
+  const formatByCurrency = (value, currency = 'JPY') => fp.byCurrency(value, currency)
 
   const getQuoteGrandTotalFromMessage = (order) => {
     const parsed = parseQuoteMessage(order?.message)
@@ -399,21 +425,21 @@ export default function Orders() {
       return {
         amount: quoteGrandTotal,
         currency: order.quote_currency || 'JPY',
-        label: 'Total (orçamento)',
+        kind: 'quote_total',
       }
     }
     if (order?.quote_amount != null && Number(order.quote_amount) > 0) {
       return {
         amount: Number(order.quote_amount),
         currency: order.quote_currency || 'JPY',
-        label: 'Total (orçamento)',
+        kind: 'quote_total',
       }
     }
     if (order?.total_amount != null && Number(order.total_amount) > 0) {
       return {
         amount: Number(order.total_amount),
         currency: 'BRL',
-        label: 'Total',
+        kind: 'product_total',
       }
     }
     return null
@@ -449,7 +475,7 @@ export default function Orders() {
       const filename = `${existing?.invoice_number || `invoice-${String(order.id).slice(0, 8)}`}.pdf`
       await downloadInvoicePdfByOrder(session.access_token, order.id, filename)
     } catch (e) {
-      setFeedback(e?.message || 'Não foi possível baixar a fatura deste pedido.')
+      setFeedback(e?.message || t('platform.orders.invoiceDownloadError'))
     }
   }
 
@@ -457,28 +483,22 @@ export default function Orders() {
     if (order.status !== 'item_received') return
     const toSend = getExtraServicesForOrder(order)
     if (!toSend.photos && !toSend.video) {
-      setFeedback('Marque pelo menos uma opção (fotos ou vídeo).')
+      setFeedback(t('platform.orders.extraPickOne'))
       return
     }
     setFeedback('')
     try {
       const { error } = await requestOrderExtraServices(order.id, toSend)
       if (error) {
-        setFeedback(error.message || 'Erro ao solicitar serviços')
+        setFeedback(error.message || t('platform.orders.extraRequestError'))
         return
       }
-      setFeedback('Solicitação de serviços extras enviada!')
-      const { data: ordersData } = await getMyOrders(user.id, {
-        limit: ORDERS_PAGE_SIZE,
-        offset: ordersPage * ORDERS_PAGE_SIZE,
-      })
-      const list = ordersData ?? []
-      setOrders(list)
-      setOrdersHasMore(list.length === ORDERS_PAGE_SIZE)
+      setFeedback(t('platform.orders.extraRequestSent'))
+      await refreshOrders()
       setExtraServicesOrderId(null)
       setExtraServices({ photos: false, video: false })
     } catch (err) {
-      setFeedback(err?.message || 'Erro ao solicitar')
+      setFeedback(err?.message || t('platform.orders.extraRequestFailed'))
     }
   }
 
@@ -505,13 +525,16 @@ export default function Orders() {
 
   return (
     <>
-      <Helmet>
-        <title>Pedidos | Plataforma</title>
-      </Helmet>
+      <PageSeo
+        routeKey="appLounge"
+        title={t('meta.appOrders.title')}
+        description={t('meta.appOrders.description')}
+        noindex
+      />
       <div>
-        <h1 className="text-2xl font-bold text-earth-900">Pedidos</h1>
+        <h1 className="text-2xl font-bold text-earth-900">{t('platform.orders.pageTitle')}</h1>
         <p className="mt-2 text-earth-600">
-          Acompanhe seus pedidos: criação → aguardando chegada → item recebido → armazenado → pronto para envio → aguardando pagamento do frete → enviado → finalizado. Os pagamentos foram centralizados em Central de Pagamentos.
+          {t('platform.orders.intro')}
         </p>
         <div className="mt-4 inline-flex rounded-lg border border-earth-200 bg-earth-50 p-1">
           <button
@@ -523,7 +546,7 @@ export default function Orders() {
                 : 'text-earth-700 hover:bg-earth-100'
             }`}
           >
-            Em andamento
+            {t('platform.orders.filterOpen')}
           </button>
           <button
             type="button"
@@ -534,31 +557,23 @@ export default function Orders() {
                 : 'text-earth-700 hover:bg-earth-100'
             }`}
           >
-            Finalizados
+            {t('platform.orders.filterCompleted')}
           </button>
         </div>
 
         {feedback && (
-          <p
-            className={`mt-4 rounded-lg px-4 py-2 text-sm ${
-              feedback.includes('sucesso')
-                ? 'bg-green-100 text-green-800'
-                : feedback.includes('cancelado')
-                  ? 'bg-amber-100 text-amber-800'
-                  : 'bg-red-100 text-red-800'
-            }`}
-          >
+          <p className={`mt-4 rounded-lg px-4 py-2 text-sm ${feedbackBannerClass(feedback)}`}>
             {feedback}
           </p>
         )}
 
-        {loading && <p className="mt-6 text-earth-600">Carregando pedidos...</p>}
+        {loading && <p className="mt-6 text-earth-600">{t('platform.orders.loading')}</p>}
 
         {!loading && orders.length === 0 && (
           <p className="mt-6 text-earth-600">
             {ordersFilter === ORDER_FILTERS.COMPLETED
-              ? 'Você ainda não tem pedidos finalizados.'
-              : 'Você ainda não tem pedidos em andamento.'}
+              ? t('platform.orders.emptyCompleted')
+              : t('platform.orders.emptyOpen')}
           </p>
         )}
 
@@ -572,24 +587,24 @@ export default function Orders() {
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div>
                     <span className="font-medium text-earth-900">
-                      Pedido {o.id?.slice(0, 8)}…
+                      {t('platform.orders.orderPrefix', { id: o.id?.slice(0, 8) })}
                     </span>
                     <span className="ml-2 rounded bg-earth-200 px-2 py-0.5 text-xs text-earth-700">
-                      {ORDER_STATUS_LABELS[o.status] ?? o.status}
+                      {orderStatusLabel(o.status)}
                     </span>
                     {o.order_source === 'store' && (
                       <div className="mt-2 space-y-2">
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="rounded-md bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900">
-                            Loja virtual
+                            {t('platform.orders.storeBadge')}
                           </span>
                           {o.ship_immediately ? (
                             <span className="rounded-md bg-blue-50 px-2 py-0.5 text-xs text-blue-800">
-                              Envio após o pagamento dos produtos
+                              {t('platform.orders.shipAfterPay')}
                             </span>
                           ) : (
                             <span className="rounded-md bg-earth-100 px-2 py-0.5 text-xs text-earth-800">
-                              Frete pago depois (armazenagem)
+                              {t('platform.orders.shipLaterStorage')}
                             </span>
                           )}
                         </div>
@@ -600,8 +615,8 @@ export default function Orders() {
                             return (
                               <p className="text-sm text-earth-600">
                                 {displayedTotal
-                                  ? `${displayedTotal.label}: ${formatByCurrency(displayedTotal.amount, displayedTotal.currency)}`
-                                  : 'Itens do pedido indisponíveis no momento.'}
+                                  ? `${payableKindLabel(displayedTotal.kind)}: ${formatByCurrency(displayedTotal.amount, displayedTotal.currency)}`
+                                  : t('platform.orders.itemsUnavailable')}
                               </p>
                             )
                           }
@@ -636,18 +651,20 @@ export default function Orders() {
                               <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
                                 {displayedTotal && (
                                   <p>
-                                    <span className="text-earth-600">Total: </span>
+                                    <span className="text-earth-600">{t('platform.orders.totalField')} </span>
                                     <span className="font-semibold text-earth-900">
                                       {formatByCurrency(displayedTotal.amount, displayedTotal.currency)}
                                     </span>
                                   </p>
                                 )}
                                 {o.discount_amount != null && Number(o.discount_amount) > 0 && (
-                                  <p className="text-green-700">Desconto: −{formatBRL(o.discount_amount)}</p>
+                                  <p className="text-green-700">
+                                    {t('platform.orders.discount')} −{fp.brl(o.discount_amount)}
+                                  </p>
                                 )}
                                 {o.wallet_applied_amount != null && Number(o.wallet_applied_amount) > 0 && (
                                   <p className="text-earth-700">
-                                    Carteira aplicada: {formatJPY(o.wallet_applied_amount)}
+                                    {t('platform.orders.walletApplied')} {fp.jpy(o.wallet_applied_amount)}
                                   </p>
                                 )}
                               </div>
@@ -674,7 +691,7 @@ export default function Orders() {
                       const tri = getChargeTriValues(o)
                       return tri && (
                         <div className="mt-2">
-                          <p className="mb-1 text-sm font-semibold text-earth-800">{tri.label}</p>
+                          <p className="mb-1 text-sm font-semibold text-earth-800">{payableKindLabel(tri.kind)}</p>
                           <TriCurrencyDisplay
                             brl={tri.brl}
                             jpy={tri.jpy}
@@ -688,22 +705,23 @@ export default function Orders() {
                       <div className="mt-2">
                         {invoiceByOrderId[o.id] ? (
                           <p className="text-xs text-earth-600">
-                            Fatura anexada ao pedido: <span className="font-medium text-earth-800">{invoiceByOrderId[o.id].invoice_number}</span>
+                            {t('platform.orders.invoiceAttached')}{' '}
+                            <span className="font-medium text-earth-800">{invoiceByOrderId[o.id].invoice_number}</span>
                           </p>
                         ) : (
                           <p className="text-xs text-earth-500">
                             {invoiceLoadingByOrderId[o.id]
-                              ? 'Carregando fatura do pedido...'
-                              : 'Fatura será anexada automaticamente ao pedido após confirmação do pagamento.'}
+                              ? t('platform.orders.invoiceLoading')
+                              : t('platform.orders.invoicePending')}
                           </p>
                         )}
                       </div>
                     )}
                     {o.status === 'item_received' && (
                       <div className="mt-3 rounded-lg border border-earth-200 bg-white p-3">
-                        <p className="text-sm font-medium text-earth-800">Serviços extras</p>
+                        <p className="text-sm font-medium text-earth-800">{t('platform.orders.extrasTitle')}</p>
                         <p className="mt-1 text-xs text-earth-600">
-                          Solicite fotos e/ou vídeo do produto recebido.
+                          {t('platform.orders.extrasHint')}
                         </p>
                         <div className="mt-2 flex flex-wrap gap-3">
                           <label className="flex items-center gap-2">
@@ -720,7 +738,7 @@ export default function Orders() {
                               }}
                               className="rounded border-earth-300"
                             />
-                            <span className="text-sm text-earth-700">Fotos</span>
+                            <span className="text-sm text-earth-700">{t('platform.orders.photos')}</span>
                           </label>
                           <label className="flex items-center gap-2">
                             <input
@@ -736,7 +754,7 @@ export default function Orders() {
                               }}
                               className="rounded border-earth-300"
                             />
-                            <span className="text-sm text-earth-700">Vídeo</span>
+                            <span className="text-sm text-earth-700">{t('platform.orders.video')}</span>
                           </label>
                           <button
                             type="button"
@@ -744,7 +762,7 @@ export default function Orders() {
                             disabled={!(getExtraServicesForOrder(o).photos || getExtraServicesForOrder(o).video)}
                             className="rounded bg-earth-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-earth-800 disabled:opacity-50"
                           >
-                            Solicitar
+                            {t('platform.orders.requestExtras')}
                           </button>
                         </div>
                       </div>
@@ -756,38 +774,38 @@ export default function Orders() {
                       onClick={() => setDetailsModal({ open: true, order: o })}
                       className="rounded-lg border border-earth-300 bg-white px-4 py-2.5 font-medium text-earth-800 hover:bg-earth-50"
                     >
-                      Mostrar detalhes
+                      {t('platform.orders.showDetails')}
                     </button>
                     {shouldShowEditDelete(o) && (
                       <button
                         type="button"
                         onClick={async () => {
-                          if (!confirm('Remover este pedido?')) return
+                          if (!confirm(t('platform.orders.confirmRemove'))) return
                           setDeletingId(o.id)
                           setFeedback('')
                           const { error } = await deleteMyOrder(user.id, o.id)
                           setDeletingId(null)
-                          if (error) setFeedback(error.message || 'Erro ao remover pedido')
+                          if (error) setFeedback(error.message || t('platform.orders.removeError'))
                           else {
-                            setFeedback('Pedido removido.')
+                            setFeedback(t('platform.orders.removed'))
                             await refreshOrders()
                           }
                         }}
                         disabled={deletingId === o.id}
                         className="rounded-lg border border-red-300 bg-white px-4 py-2.5 font-medium text-red-700 hover:bg-red-50 disabled:opacity-60"
                       >
-                        {deletingId === o.id ? 'Removendo...' : 'Remover'}
+                        {deletingId === o.id ? t('platform.orders.removing') : t('platform.orders.remove')}
                       </button>
                     )}
                     {getPayableAmount(o) && (
                       <button
                         type="button"
                         onClick={() => {
-                          window.location.href = `/app/cart?payOrderId=${encodeURIComponent(o.id)}`
+                          navigate(lp('appCart', `?payOrderId=${encodeURIComponent(o.id)}`))
                         }}
                         className="rounded-lg bg-earth-900 px-4 py-2.5 font-medium text-earth-50 hover:bg-earth-800 disabled:opacity-60"
                       >
-                        Ir para pagamento
+                        {t('platform.orders.goToPayment')}
                       </button>
                     )}
                   </div>
@@ -795,7 +813,9 @@ export default function Orders() {
               </div>
             ))}
             <div className="flex items-center justify-between gap-3 rounded-lg border border-earth-200 bg-white px-3 py-2">
-              <p className="text-xs text-earth-600">Página {ordersPage + 1}</p>
+              <p className="text-xs text-earth-600">
+                {t('platform.orders.pageIndicator', { page: ordersPage + 1 })}
+              </p>
               <div className="flex gap-2">
                 <button
                   type="button"
@@ -803,7 +823,7 @@ export default function Orders() {
                   disabled={loading || ordersPage <= 0}
                   className="rounded border border-earth-300 px-3 py-1.5 text-sm font-medium text-earth-700 hover:bg-earth-100 disabled:opacity-50"
                 >
-                  Anterior
+                  {t('platform.orders.prevPage')}
                 </button>
                 <button
                   type="button"
@@ -811,7 +831,7 @@ export default function Orders() {
                   disabled={loading || !ordersHasMore}
                   className="rounded border border-earth-300 px-3 py-1.5 text-sm font-medium text-earth-700 hover:bg-earth-100 disabled:opacity-50"
                 >
-                  Próxima
+                  {t('platform.orders.nextPage')}
                 </button>
               </div>
             </div>
@@ -828,37 +848,37 @@ export default function Orders() {
             className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-xl bg-white p-6 shadow-lg"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="font-semibold text-earth-900">Detalhes do pedido</h3>
+            <h3 className="font-semibold text-earth-900">{t('platform.orders.detailsTitle')}</h3>
             <div className="mt-4 space-y-4">
               <div>
-                <p className="text-xs font-medium uppercase tracking-wide text-earth-500">ID</p>
+                <p className="text-xs font-medium uppercase tracking-wide text-earth-500">{t('platform.orders.labelId')}</p>
                 <p className="text-sm text-earth-800 font-mono">{detailsModal.order.id}</p>
               </div>
               <div>
-                <p className="text-xs font-medium uppercase tracking-wide text-earth-500">Status</p>
+                <p className="text-xs font-medium uppercase tracking-wide text-earth-500">{t('platform.orders.labelStatus')}</p>
                 <p className="text-sm text-earth-800">
-                  {ORDER_STATUS_LABELS[detailsModal.order.status] ?? detailsModal.order.status}
+                  {orderStatusLabel(detailsModal.order.status)}
                 </p>
               </div>
               {detailsModal.order.order_source === 'store' && (
                 <div>
-                  <p className="text-xs font-medium uppercase tracking-wide text-earth-500">Origem</p>
+                  <p className="text-xs font-medium uppercase tracking-wide text-earth-500">{t('platform.orders.labelOrigin')}</p>
                   <div className="mt-1 flex flex-wrap items-center gap-2">
                     <span className="rounded-md bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900">
-                      Loja virtual
+                      {t('platform.orders.storeBadge')}
                     </span>
                     {detailsModal.order.ship_immediately ? (
-                      <span className="text-sm text-earth-700">Envio após o pagamento dos produtos</span>
+                      <span className="text-sm text-earth-700">{t('platform.orders.shipAfterPay')}</span>
                     ) : (
-                      <span className="text-sm text-earth-700">Frete cobrado em etapa separada (armazenagem)</span>
+                      <span className="text-sm text-earth-700">{t('platform.orders.shipSeparate')}</span>
                     )}
                   </div>
                   {getDisplayedOrderTotal(detailsModal.order) && (
                     <div className="mt-2">
                       <p className="mb-1 text-sm text-earth-600">
-                        {getDisplayedOrderTotal(detailsModal.order)?.label === 'Total (orçamento)'
-                          ? 'Total do pedido (orçamento):'
-                          : 'Total do pedido (produtos):'}
+                        {getDisplayedOrderTotal(detailsModal.order)?.kind === 'quote_total'
+                          ? t('platform.orders.totalLineQuote')
+                          : t('platform.orders.totalLineProducts')}
                       </p>
                       {(() => {
                         const displayedTotal = getDisplayedOrderTotal(detailsModal.order)
@@ -870,7 +890,7 @@ export default function Orders() {
                       {detailsModal.order.discount_amount != null &&
                         Number(detailsModal.order.discount_amount) > 0 && (
                           <p className="mt-1 text-sm text-green-700">
-                            Desconto: −{formatBRL(detailsModal.order.discount_amount)}
+                            {t('platform.orders.discount')} −{fp.brl(detailsModal.order.discount_amount)}
                           </p>
                         )}
                     </div>
@@ -878,7 +898,7 @@ export default function Orders() {
                   {detailsModal.order.wallet_applied_amount != null &&
                     Number(detailsModal.order.wallet_applied_amount) > 0 && (
                       <div className="mt-2">
-                        <p className="mb-1 text-sm text-earth-700">Carteira aplicada:</p>
+                        <p className="mb-1 text-sm text-earth-700">{t('platform.orders.walletApplied')}</p>
                         {(() => {
                           const tri = toTriValues(detailsModal.order, detailsModal.order.wallet_applied_amount, 'JPY')
                           if (!tri) return null
@@ -890,23 +910,22 @@ export default function Orders() {
               )}
               {detailsModal.order.service?.name && (
                 <div>
-                  <p className="text-xs font-medium uppercase tracking-wide text-earth-500">Serviço</p>
+                  <p className="text-xs font-medium uppercase tracking-wide text-earth-500">{t('platform.orders.labelService')}</p>
                   <p className="text-sm text-earth-800">{detailsModal.order.service.name}</p>
                 </div>
               )}
               {detailsModal.order.early_prepayment_requested && (
                 <div>
-                  <p className="text-xs font-medium uppercase tracking-wide text-earth-500">Pré-pagamento</p>
+                  <p className="text-xs font-medium uppercase tracking-wide text-earth-500">{t('platform.orders.prepayTitle')}</p>
                   <p className="mt-1 rounded-md bg-emerald-50 px-2 py-1.5 text-sm text-emerald-900">
-                    Você solicitou antecipar o pré-pagamento para reduzir o risco de o item esgotar antes da compra
-                    (ex.: flea market).
+                    {t('platform.orders.prepayNote')}
                   </p>
                   {detailsModal.order.early_prepayment_wallet_jpy != null &&
                     Number(detailsModal.order.early_prepayment_wallet_jpy) > 0 && (
                       <p className="mt-2 text-sm text-earth-800">
-                        Valor que você pediu para adiantar pela carteira ao registrar o pedido:{' '}
+                        {t('platform.orders.prepayWalletLine')}{' '}
                         <span className="font-semibold text-earth-900">
-                          {formatJPY(Number(detailsModal.order.early_prepayment_wallet_jpy))}
+                          {fp.jpy(Number(detailsModal.order.early_prepayment_wallet_jpy))}
                         </span>
                         .
                       </p>
@@ -915,13 +934,13 @@ export default function Orders() {
               )}
               {isOrderInvoiceEligible(detailsModal.order) && (
                 <div>
-                  <p className="text-xs font-medium uppercase tracking-wide text-earth-500">Fatura</p>
+                  <p className="text-xs font-medium uppercase tracking-wide text-earth-500">{t('platform.orders.labelInvoice')}</p>
                   {invoiceByOrderId[detailsModal.order.id] ? (
                     <div className="mt-1 rounded-md border border-earth-200 bg-earth-50 px-3 py-2">
                       <p className="text-sm text-earth-800">
                         {invoiceByOrderId[detailsModal.order.id].invoice_number}
                         {invoiceByOrderId[detailsModal.order.id].created_at
-                          ? ` • ${new Date(invoiceByOrderId[detailsModal.order.id].created_at).toLocaleString('pt-BR')}`
+                          ? ` • ${new Date(invoiceByOrderId[detailsModal.order.id].created_at).toLocaleString(dateLocale)}`
                           : ''}
                       </p>
                       <button
@@ -929,21 +948,21 @@ export default function Orders() {
                         onClick={() => handleDownloadOrderInvoice(detailsModal.order)}
                         className="mt-2 rounded border border-earth-300 bg-white px-3 py-1.5 text-sm font-medium text-earth-700 hover:bg-earth-100"
                       >
-                        Baixar PDF da fatura
+                        {t('platform.orders.downloadInvoicePdf')}
                       </button>
                     </div>
                   ) : (
                     <p className="mt-1 text-sm text-earth-600">
                       {invoiceLoadingByOrderId[detailsModal.order.id]
-                        ? 'Carregando fatura...'
-                        : 'A fatura é anexada automaticamente ao pedido após confirmação do pagamento.'}
+                        ? t('platform.orders.invoiceLoadingShort')
+                        : t('platform.orders.invoiceAutoNote')}
                     </p>
                   )}
                 </div>
               )}
               {detailsModal.order.message && (
                 <div>
-                  <p className="text-xs font-medium uppercase tracking-wide text-earth-500 mb-1">Solicitação do pedido</p>
+                  <p className="text-xs font-medium uppercase tracking-wide text-earth-500 mb-1">{t('platform.orders.requestBlockTitle')}</p>
                   <QuoteProductsList
                     message={detailsModal.order.message}
                     quoteCurrency={detailsModal.order.quote_currency || 'JPY'}
@@ -959,7 +978,7 @@ export default function Orders() {
                 const itemsCurrency = getRequestedItemsCurrency(detailsModal.order)
                 return (
                   <div>
-                    <p className="text-xs font-medium uppercase tracking-wide text-earth-500 mb-2">Itens solicitados</p>
+                    <p className="text-xs font-medium uppercase tracking-wide text-earth-500 mb-2">{t('platform.orders.requestedItemsTitle')}</p>
                     <div className="rounded-lg border border-earth-200 bg-earth-50 p-3">
                       <ul className="space-y-2">
                         {requestedItems.map((item) => (
@@ -978,20 +997,22 @@ export default function Orders() {
                               )}
                               <div className="min-w-0">
                                 <p className="font-medium text-earth-900">{item.name}</p>
-                                <p className="text-xs text-earth-600">Quantidade: {item.qty}</p>
+                                <p className="text-xs text-earth-600">{t('platform.orders.qty', { n: item.qty })}</p>
                               </div>
                             </div>
                             <div className="text-right shrink-0">
                               <p className="text-earth-700">{formatByCurrency(item.lineTotal, itemsCurrency)}</p>
                               {item.qty > 1 && (
-                                <p className="text-xs text-earth-500">{formatByCurrency(item.unitPrice, itemsCurrency)} cada</p>
+                                <p className="text-xs text-earth-500">
+                                  {t('platform.orders.each', { price: formatByCurrency(item.unitPrice, itemsCurrency) })}
+                                </p>
                               )}
                             </div>
                           </li>
                         ))}
                       </ul>
                       <p className="mt-3 border-t border-earth-200 pt-2 text-sm font-semibold text-earth-900">
-                        Total dos itens: {formatByCurrency(totalRequested, itemsCurrency)}
+                        {t('platform.orders.itemsTotal')} {formatByCurrency(totalRequested, itemsCurrency)}
                       </p>
                     </div>
                   </div>
@@ -999,13 +1020,13 @@ export default function Orders() {
               })()}
               {Array.isArray(detailsModal.order.attachment_urls) && detailsModal.order.attachment_urls.length > 0 && (
                 <div>
-                  <p className="text-xs font-medium uppercase tracking-wide text-earth-500 mb-2">Imagens</p>
+                  <p className="text-xs font-medium uppercase tracking-wide text-earth-500 mb-2">{t('platform.orders.imagesTitle')}</p>
                   <OrderAttachments urls={detailsModal.order.attachment_urls} />
                 </div>
               )}
-              {getDisplayedOrderTotal(detailsModal.order)?.label === 'Total (orçamento)' && (
+              {getDisplayedOrderTotal(detailsModal.order)?.kind === 'quote_total' && (
                 <div>
-                  <p className="text-xs font-medium uppercase tracking-wide text-earth-500">Orçamento total</p>
+                  <p className="text-xs font-medium uppercase tracking-wide text-earth-500">{t('platform.orders.quoteTotalTitle')}</p>
                   {(() => {
                     const displayedTotal = getDisplayedOrderTotal(detailsModal.order)
                     if (!displayedTotal) return <p className="text-sm text-earth-700">—</p>
@@ -1017,7 +1038,7 @@ export default function Orders() {
               )}
               {detailsModal.order.shipping_cost != null && (
                 <div>
-                  <p className="text-xs font-medium uppercase tracking-wide text-earth-500">Frete</p>
+                  <p className="text-xs font-medium uppercase tracking-wide text-earth-500">{t('platform.orders.shippingTitle')}</p>
                   {(() => {
                     const tri = toTriValues(
                       detailsModal.order,
@@ -1036,7 +1057,7 @@ export default function Orders() {
                 onClick={closeDetailsModal}
                 className="rounded-lg border border-earth-300 px-4 py-2 font-medium text-earth-700 hover:bg-earth-100"
               >
-                Fechar
+                {t('platform.orders.close')}
               </button>
             </div>
           </div>
@@ -1047,13 +1068,17 @@ export default function Orders() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="flex w-full max-w-lg max-h-[90vh] flex-col rounded-xl bg-white shadow-lg">
             <div className="flex-1 min-h-0 overflow-y-auto p-6">
-              <h3 className="font-semibold text-earth-900">Pagamento</h3>
+              <h3 className="font-semibold text-earth-900">{t('platform.orders.paymentTitle')}</h3>
               <p className="mt-1 text-sm text-earth-600">
-                Escolha a forma de pagamento e conclua com segurança.
+                {t('platform.orders.paymentSubtitle')}
               </p>
 
               {feedback && (
-                <p className={`mt-3 rounded-lg px-3 py-2 text-sm ${feedback.includes('Erro') || feedback.includes('erro') ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
+                <p
+                  className={`mt-3 rounded-lg px-3 py-2 text-sm ${
+                    /erro|error/i.test(feedback) ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
+                  }`}
+                >
                   {feedback}
                 </p>
               )}
@@ -1074,20 +1099,23 @@ export default function Orders() {
                       {p && (
                         <>
                           <div className="flex justify-between text-sm">
-                            <span className="text-earth-600">{p.label}</span>
-                            <span className="font-medium text-earth-900">{formatJPY(totalJpy)}</span>
+                            <span className="text-earth-600">{payableKindLabel(p.kind)}</span>
+                            <span className="font-medium text-earth-900">{fp.jpy(totalJpy)}</span>
                           </div>
                           {useWallet && walletApplied > 0 && (
                             <div className="flex justify-between text-sm text-green-700">
-                              <span>Carteira aplicada</span>
-                              <span>-{formatJPY(walletApplied)}</span>
+                              <span>{t('platform.orders.walletAppliedLine')}</span>
+                              <span>-{fp.jpy(walletApplied)}</span>
                             </div>
                           )}
                           <div className="flex justify-between pt-2 border-t border-earth-200 font-medium">
-                            <span className="text-earth-800">Total a pagar</span>
-                            <span className="text-earth-900">{formatJPY(remainingJpy)}</span>
+                            <span className="text-earth-800">{t('platform.orders.totalToPay')}</span>
+                            <span className="text-earth-900">{fp.jpy(remainingJpy)}</span>
                           </div>
-                          <p className="text-xs text-earth-500 mt-1">Aprox. em BRL: {formatBRL(useWallet && remainingJpy > 0 ? jpyToBrl(remainingJpy) : (p?.approxBrl ?? 0))}</p>
+                          <p className="text-xs text-earth-500 mt-1">
+                            {t('platform.orders.approxBrl')}{' '}
+                            {fp.brl(useWallet && remainingJpy > 0 ? jpyToBrl(remainingJpy) : (p?.approxBrl ?? 0))}
+                          </p>
                         </>
                       )}
                     </div>
@@ -1101,27 +1129,28 @@ export default function Orders() {
                         className="mt-1"
                       />
                       <div>
-                        <p className="font-medium text-earth-900">Usar saldo da carteira</p>
+                        <p className="font-medium text-earth-900">{t('platform.orders.useWalletTitle')}</p>
                         <p className="text-sm text-earth-600">
-                          Saldo disponível: {formatJPY(balance)}
+                          {t('platform.orders.walletAvailable')} {fp.jpy(balance)}
                         </p>
                       </div>
                     </label>
                     <div className="rounded-lg border border-earth-200 bg-white p-4">
-                      <p className="font-medium text-earth-900">Forma de pagamento</p>
+                      <p className="font-medium text-earth-900">{t('platform.orders.payMethodTitle')}</p>
                       <select
                         value={selectedGateway}
                         onChange={(e) => setSelectedGateway(e.target.value)}
                         className="mt-2 w-full rounded border border-earth-300 bg-white px-3 py-2 text-sm text-earth-900"
                       >
-                        {GATEWAY_OPTIONS.map((option) => (
+                        {gatewayOptions.map((option) => (
                           <option key={option.id} value={option.id}>
                             {option.icon} {option.label}
                           </option>
                         ))}
                       </select>
                       {(() => {
-                        const option = GATEWAY_OPTIONS.find((entry) => entry.id === selectedGateway) || GATEWAY_OPTIONS[0]
+                        const option =
+                          gatewayOptions.find((entry) => entry.id === selectedGateway) || gatewayOptions[0]
                         return (
                           <div className="mt-3 rounded-md border border-earth-100 bg-earth-50 px-3 py-2">
                             <p className="text-sm font-medium text-earth-900">
@@ -1152,7 +1181,7 @@ export default function Orders() {
                 return (
                   <div className="flex flex-col gap-3">
                     <p className="text-xs text-earth-500">
-                      Parcelow: checkout Brasil. Stripe: cartão internacional.
+                      {t('platform.orders.payFooterHint')}
                     </p>
                     <div className="flex flex-wrap gap-2">
                       <button
@@ -1166,14 +1195,16 @@ export default function Orders() {
                         disabled={payingId === payModal.order.id}
                         className="flex-1 min-w-0 rounded-lg bg-earth-900 px-6 py-2.5 font-medium text-earth-50 hover:bg-earth-800 disabled:opacity-60"
                       >
-                        {payingId === payModal.order.id ? 'Processando...' : 'Pagar com método selecionado'}
+                        {payingId === payModal.order.id
+                          ? t('platform.orders.processing')
+                          : t('platform.orders.payWithSelected')}
                       </button>
                       <button
                         type="button"
                         onClick={() => setPayModal({ open: false, order: null, useWallet: true })}
                         className="rounded-lg border border-earth-300 px-4 py-2.5 font-medium text-earth-700 hover:bg-earth-100"
                       >
-                        Cancelar
+                        {t('platform.orders.cancel')}
                       </button>
                     </div>
                   </div>

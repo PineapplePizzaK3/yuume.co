@@ -13,11 +13,13 @@
     "@stripe/stripe-js": "^8.9.0",
     "@supabase/supabase-js": "^2.99.0",
     "buffer": "^6.0.3",
+    "i18next": "^26.0.3",
     "pdfkit": "^0.15.0",
     "qrcode-pix": "5.0.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-helmet-async": "^2.0.4",
+    "react-i18next": "^17.0.2",
     "react-router-dom": "^6.26.2",
     "stripe": "^20.4.1"
   },

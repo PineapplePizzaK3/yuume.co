@@ -6,6 +6,7 @@
 import { useEffect, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Link } from 'react-router-dom'
+import { useLocalizedPath } from '../hooks/useLocalizedPath'
 import { getProducts } from '../services/productService'
 import { jpyToBrl } from '../lib/fx'
 import { getCardThumbnailUrl } from '../lib/imageUtils'
@@ -22,6 +23,7 @@ function getProductImages(p) {
 }
 
 export default function LojaMirror() {
+  const lp = useLocalizedPath()
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
@@ -71,8 +73,8 @@ export default function LojaMirror() {
           <h1 className="text-2xl font-bold text-earth-900">Loja Virtual</h1>
           <div className="mt-3 rounded-lg bg-amber-50 border border-amber-200 px-4 py-3">
             <p className="text-sm text-amber-900">
-              Faça <Link to="/login" className="font-semibold underline hover:text-amber-700">login</Link> ou{' '}
-              <Link to="/register" className="font-semibold underline hover:text-amber-700">cadastre-se</Link> para comprar.
+              Faça <Link to={lp('login')} className="font-semibold underline hover:text-amber-700">login</Link> ou{' '}
+              <Link to={lp('register')} className="font-semibold underline hover:text-amber-700">cadastre-se</Link> para comprar.
             </p>
           </div>
           {message && (
@@ -146,7 +148,7 @@ export default function LojaMirror() {
                     </button>
                     <div className="px-3 pb-3">
                       <Link
-                        to="/login"
+                        to={lp('login')}
                         className="block w-full rounded-lg border border-earth-300 bg-white px-3 py-2 text-center text-xs font-medium text-earth-700 hover:bg-earth-50"
                       >
                         Entre para comprar
@@ -267,7 +269,7 @@ export default function LojaMirror() {
                   })()}
                   <div className="mt-6 flex flex-wrap gap-3">
                     <Link
-                      to="/login"
+                      to={lp('login')}
                       className="rounded-xl bg-earth-900 px-6 py-3 font-medium text-white hover:bg-earth-800"
                     >
                       Entre para comprar

@@ -3,13 +3,16 @@
  * Com confirmação por email: usuário deve clicar no link recebido antes de acessar.
  */
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { Helmet } from 'react-helmet-async'
+import { useNavigate, useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+import { LocalizedLink } from '../../components/LocalizedLink'
+import { PageSeo } from '../../components/PageSeo'
 import { useAuth } from '../../hooks/useAuth'
 import { getOrCreateProfile } from '../../services/profileService'
-import { validatePassword, PASSWORD_PLACEHOLDER } from '../../lib/passwordValidation'
+import { validatePassword } from '../../lib/passwordValidation'
 import { LEGAL_CONFIG } from '../../data/legalConfig'
 import { TermsOfUsePtBrBody } from '../../legal/TermsOfUsePtBrBody'
+import { getLocaleFromPathname, localizedPath } from '../../lib/localeRoutes'
 
 const TERMS_CFG = {
   BUSINESS_NAME: LEGAL_CONFIG.BUSINESS_NAME,
@@ -17,7 +20,14 @@ const TERMS_CFG = {
   SUPPORT_PHONE: LEGAL_CONFIG.SUPPORT_PHONE,
 }
 
+function oauthProviderLabel(provider) {
+  if (provider === 'google') return 'Google'
+  if (provider === 'facebook') return 'Facebook'
+  return provider
+}
+
 export default function Register() {
+  const { t } = useTranslation()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
@@ -30,27 +40,34 @@ export default function Register() {
   const [needsConfirmation, setNeedsConfirmation] = useState(false)
   const { signUp, signInWithOAuth, isAuthenticated, needsSocialOnboarding } = useAuth()
   const navigate = useNavigate()
+  const { pathname } = useLocation()
+  const locale = getLocaleFromPathname(pathname)
 
   if (isAuthenticated) {
-    navigate(needsSocialOnboarding ? '/app/complete-social-profile' : '/app/dashboard', { replace: true })
+    navigate(
+      needsSocialOnboarding
+        ? localizedPath('appCompleteSocial', locale)
+        : localizedPath('appDashboard', locale),
+      { replace: true },
+    )
     return null
   }
 
   const handleOAuth = async (provider) => {
     setError('')
     const { error: err } = await signInWithOAuth(provider)
-    if (err) setError(err.message || `Erro ao conectar com ${provider}`)
+    if (err) setError(err.message || t('auth.oauthError', { provider: oauthProviderLabel(provider) }))
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
     if (!canAgreeTerms) {
-      setError('Role até o final dos Termos de Uso e Serviços para liberar o aceite.')
+      setError(t('auth.mustScrollTerms'))
       return
     }
     if (!agreeTerms) {
-      setError('É necessário concordar com os Termos de Uso e Serviços para se cadastrar.')
+      setError(t('auth.mustAgreeTerms'))
       return
     }
     const { valid, message } = validatePassword(password)
@@ -59,7 +76,7 @@ export default function Register() {
       return
     }
     if (password !== passwordConfirm) {
-      setError('As senhas não coincidem.')
+      setError(t('auth.passwordMismatch'))
       return
     }
     setLoading(true)
@@ -75,7 +92,7 @@ export default function Register() {
 
     setLoading(false)
     if (err) {
-      setError(err.message || 'Erro ao criar conta')
+      setError(err.message || t('auth.signUpError'))
       return
     }
     if (data?.user) {
@@ -85,7 +102,7 @@ export default function Register() {
       if (data?.session) {
         await getOrCreateProfile(data.user.id, { email, name })
         setSuccess(true)
-        setTimeout(() => navigate('/app/dashboard', { replace: true }), 1500)
+        setTimeout(() => navigate(localizedPath('appDashboard', locale), { replace: true }), 1500)
       } else {
         setNeedsConfirmation(true)
       }
@@ -100,48 +117,52 @@ export default function Register() {
 
   if (success) {
     return (
-      <section className="flex min-h-[calc(100vh-8rem)] items-center justify-center px-4 pt-24 pb-16">
-        <div className="rounded-lg border border-earth-200 bg-earth-100 p-6 text-center">
-          <p className="text-earth-900">Conta criada com sucesso. Redirecionando...</p>
-        </div>
-      </section>
+      <>
+        <PageSeo routeKey="register" title={t('meta.register.title')} description={t('meta.register.description')} noindex />
+        <section className="flex min-h-[calc(100vh-8rem)] items-center justify-center px-4 pt-24 pb-16">
+          <div className="rounded-lg border border-earth-200 bg-earth-100 p-6 text-center">
+            <p className="text-earth-900">{t('auth.accountCreated')}</p>
+          </div>
+        </section>
+      </>
     )
   }
 
   if (needsConfirmation) {
     return (
-      <section className="flex min-h-[calc(100vh-8rem)] items-center justify-center px-4 pt-24 pb-16">
-        <div className="w-full max-w-md rounded-lg border border-earth-200 bg-earth-100 p-6 text-center shadow-sm">
-          <h1 className="text-xl font-bold text-earth-900">Verifique seu email</h1>
-          <p className="mt-4 text-earth-700">
-            Enviamos um link de confirmação para <strong>{email}</strong>.
-            Clique no link para ativar sua conta.
-          </p>
-          <p className="mt-2 text-sm text-earth-600">
-            Não encontrou o email? Verifique a pasta de spam.
-          </p>
-          <Link
-            to="/login"
-            className="mt-6 inline-block rounded-lg bg-earth-900 px-6 py-3 font-medium text-earth-50 hover:bg-earth-800"
-          >
-            Ir para login
-          </Link>
-        </div>
-      </section>
+      <>
+        <PageSeo routeKey="register" title={t('meta.register.title')} description={t('meta.register.description')} noindex />
+        <section className="flex min-h-[calc(100vh-8rem)] items-center justify-center px-4 pt-24 pb-16">
+          <div className="w-full max-w-md rounded-lg border border-earth-200 bg-earth-100 p-6 text-center shadow-sm">
+            <h1 className="text-xl font-bold text-earth-900">{t('auth.verifyEmailTitle')}</h1>
+            <p className="mt-4 text-earth-700">
+              {t('auth.verifyEmailSentTo')} <strong>{email}</strong>. {t('auth.verifyEmailClick')}
+            </p>
+            <p className="mt-2 text-sm text-earth-600">{t('auth.verifySpam')}</p>
+            <LocalizedLink
+              toRoute="login"
+              className="mt-6 inline-block rounded-lg bg-earth-900 px-6 py-3 font-medium text-earth-50 hover:bg-earth-800"
+            >
+              {t('auth.goToLogin')}
+            </LocalizedLink>
+          </div>
+        </section>
+      </>
     )
   }
 
   return (
     <>
-      <Helmet>
-        <title>Cadastre-se | Plataforma</title>
-      </Helmet>
+      <PageSeo
+        routeKey="register"
+        title={t('meta.register.title')}
+        description={t('meta.register.description')}
+        noindex
+      />
       <section className="flex min-h-[calc(100vh-8rem)] items-center justify-center px-4 pt-24 pb-16">
         <div className="w-full max-w-2xl rounded-lg border border-earth-200 bg-earth-100 p-6 shadow-sm">
-          <h1 className="text-xl font-bold text-earth-900">Cadastre-se</h1>
-          <p className="mt-1 text-sm text-earth-600">
-            Crie sua conta na plataforma
-          </p>
+          <h1 className="text-xl font-bold text-earth-900">{t('auth.registerTitle')}</h1>
+          <p className="mt-1 text-sm text-earth-600">{t('auth.registerSubtitle')}</p>
           {error && (
             <p className="mt-4 rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700">{error}</p>
           )}
@@ -157,7 +178,7 @@ export default function Register() {
                 <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                 <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
               </svg>
-              Continuar com Google
+              {t('auth.continueGoogle')}
             </button>
             <button
               type="button"
@@ -167,7 +188,7 @@ export default function Register() {
               <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
               </svg>
-              Continuar com Facebook
+              {t('auth.continueFacebook')}
             </button>
           </div>
           <div className="relative my-6">
@@ -175,13 +196,13 @@ export default function Register() {
               <div className="w-full border-t border-earth-300" />
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="bg-earth-100 px-2 text-earth-600">ou com email</span>
+              <span className="bg-earth-100 px-2 text-earth-600">{t('auth.orEmail')}</span>
             </div>
           </div>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-earth-700">
-                Nome
+                {t('auth.name')}
               </label>
               <input
                 id="name"
@@ -189,12 +210,12 @@ export default function Register() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
-                placeholder="Seu nome"
+                placeholder={t('auth.namePlaceholder')}
               />
             </div>
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-earth-700">
-                Email
+                {t('auth.email')}
               </label>
               <input
                 id="email"
@@ -203,12 +224,12 @@ export default function Register() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
-                placeholder="seu@email.com"
+                placeholder={t('auth.emailPlaceholder')}
               />
             </div>
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-earth-700">
-                Senha
+                {t('auth.password')}
               </label>
               <input
                 id="password"
@@ -219,12 +240,12 @@ export default function Register() {
                 minLength={8}
                 autoComplete="new-password"
                 className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
-                placeholder={PASSWORD_PLACEHOLDER}
+                placeholder={t('auth.passwordValidation.placeholder')}
               />
             </div>
             <div>
               <label htmlFor="passwordConfirm" className="block text-sm font-medium text-earth-700">
-                Confirmar senha
+                {t('auth.confirmPassword')}
               </label>
               <input
                 id="passwordConfirm"
@@ -235,16 +256,16 @@ export default function Register() {
                 minLength={8}
                 autoComplete="new-password"
                 className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
-                placeholder="Digite a senha novamente"
+                placeholder={t('auth.confirmPasswordPlaceholder')}
               />
               {passwordConfirm.length > 0 && password !== passwordConfirm && (
-                <p className="mt-1 text-xs text-red-600">As senhas não coincidem.</p>
+                <p className="mt-1 text-xs text-red-600">{t('auth.passwordMismatchHint')}</p>
               )}
             </div>
             <div className="space-y-3">
               <div className="rounded-lg border border-earth-300 bg-white p-3">
-                <p className="text-sm font-medium text-earth-800">Termos de Uso e Serviços (texto integral)</p>
-                <p className="mt-1 text-xs text-earth-600">Role até o final para habilitar o aceite.</p>
+                <p className="text-sm font-medium text-earth-800">{t('auth.termsFullTitle')}</p>
+                <p className="mt-1 text-xs text-earth-600">{t('auth.termsScrollHint')}</p>
                 <div
                   className="mt-2 max-h-[min(14rem,38vh)] overflow-y-auto rounded border border-earth-200 bg-earth-50 p-3"
                   onScroll={(e) => unlockOnScrollEnd(e, setCanAgreeTerms)}
@@ -254,10 +275,10 @@ export default function Register() {
                   </div>
                 </div>
                 <p className="mt-2 text-xs text-earth-600">
-                  Versão também em{' '}
-                  <Link to="/legal/terms" target="_blank" rel="noopener noreferrer" className="font-medium text-earth-900 underline hover:no-underline">
+                  {t('auth.termsAlsoAt')}{' '}
+                  <LocalizedLink toRoute="legalTerms" target="_blank" rel="noopener noreferrer" className="font-medium text-earth-900 underline hover:no-underline">
                     /legal/terms
-                  </Link>
+                  </LocalizedLink>
                   .
                 </p>
               </div>
@@ -271,11 +292,11 @@ export default function Register() {
                   className="mt-1 rounded border-earth-300 text-earth-900"
                 />
                 <span className="text-sm text-earth-700">
-                  Li e concordo com os{' '}
-                  <Link to="/legal/terms" target="_blank" rel="noopener noreferrer" className="font-medium text-earth-900 underline hover:no-underline">
-                    Termos de Uso e Serviços
-                  </Link>{' '}
-                  acima.
+                  {t('auth.agreeTermsBefore')}{' '}
+                  <LocalizedLink toRoute="legalTerms" target="_blank" rel="noopener noreferrer" className="font-medium text-earth-900 underline hover:no-underline">
+                    {t('auth.agreeTermsLink')}
+                  </LocalizedLink>{' '}
+                  {t('auth.agreeTermsAfter')}
                 </span>
               </label>
             </div>
@@ -291,14 +312,14 @@ export default function Register() {
               }
               className="w-full rounded-lg bg-earth-900 px-4 py-3 font-medium text-earth-50 hover:bg-earth-800 disabled:opacity-70"
             >
-              {loading ? 'Criando conta...' : 'Cadastrar'}
+              {loading ? t('auth.creatingAccount') : t('auth.createAccount')}
             </button>
           </form>
           <p className="mt-6 text-center text-sm text-earth-600">
-            Já tem conta?{' '}
-            <Link to="/login" className="font-medium text-earth-900 hover:underline">
-              Entrar
-            </Link>
+            {t('auth.hasAccount')}{' '}
+            <LocalizedLink toRoute="login" className="font-medium text-earth-900 hover:underline">
+              {t('auth.signInShort')}
+            </LocalizedLink>
           </p>
         </div>
       </section>

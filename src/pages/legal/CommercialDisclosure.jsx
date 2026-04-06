@@ -3,6 +3,8 @@
  * Content in JA (default), PT-BR and EN.
  */
 import { Helmet } from 'react-helmet-async'
+import { useTranslation } from 'react-i18next'
+import { PageSeo } from '../../components/PageSeo'
 import { useLegalLanguage } from '../../contexts/LegalLanguageContext'
 import { LEGAL_CONFIG } from '../../data/legalConfig'
 
@@ -296,6 +298,7 @@ const CONTENT = {
 }
 
 export default function CommercialDisclosure() {
+  const { t } = useTranslation()
   const { lang } = useLegalLanguage()
   const { BUSINESS_NAME, BUSINESS_OWNER_JA, BUSINESS_OWNER_PT, BUSINESS_OWNER_EN, SUPPORT_EMAIL } = LEGAL_CONFIG
   const owner = lang === 'pt-BR' ? BUSINESS_OWNER_PT : lang === 'en' ? BUSINESS_OWNER_EN : BUSINESS_OWNER_JA
@@ -308,6 +311,7 @@ export default function CommercialDisclosure() {
 
   return (
     <>
+      <PageSeo routeKey="legalCommercial" title={null} description={t('meta.legalCommercial.description')} />
       <Helmet>
         <title>{content.title} | Legal | Delivery</title>
       </Helmet>

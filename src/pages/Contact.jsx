@@ -1,8 +1,15 @@
-import { Helmet } from 'react-helmet-async'
+import { useTranslation } from 'react-i18next'
 import { useState } from 'react'
+import { PageSeo } from '../components/PageSeo'
 import { CONTATOS_DIRETOS } from '../data/contatoDireto'
 
 const WEB3FORMS_ACCESS_KEY = import.meta.env.VITE_WEB3FORMS_ACCESS_KEY || ''
+
+const DIRECT_LABEL_KEY = {
+  WhatsApp: 'contactPage.directWhatsApp',
+  Telegram: 'contactPage.directTelegram',
+  Instagram: 'contactPage.directInstagram',
+}
 
 /**
  * Ícones SVG para os botões de contato direto.
@@ -30,12 +37,13 @@ const ICONES = {
  * Configure VITE_WEB3FORMS_ACCESS_KEY em .env (obtenha em web3forms.com com support@eiko-dls.com).
  */
 function Contact() {
+  const { t } = useTranslation()
   const [formData, setFormData] = useState({
     nome: '',
     email: '',
     mensagem: '',
   })
-  const [status, setStatus] = useState('idle') // idle | loading | success | error
+  const [status, setStatus] = useState('idle')
   const [errorMsg, setErrorMsg] = useState('')
 
   const handleChange = (e) => {
@@ -47,7 +55,7 @@ function Contact() {
     e.preventDefault()
     if (!WEB3FORMS_ACCESS_KEY) {
       setStatus('error')
-      setErrorMsg('Formulário não configurado. Adicione VITE_WEB3FORMS_ACCESS_KEY no .env (obtenha em web3forms.com).')
+      setErrorMsg(t('contactPage.errNotConfigured'))
       return
     }
     setStatus('loading')
@@ -61,7 +69,7 @@ function Contact() {
           name: formData.nome,
           email: formData.email,
           message: formData.mensagem,
-          subject: `Contato - Eiko's Delivery (de ${formData.nome})`,
+          subject: t('contactPage.emailSubject', { name: formData.nome }),
         }),
       })
       const data = await res.json()
@@ -70,32 +78,28 @@ function Contact() {
         setFormData({ nome: '', email: '', mensagem: '' })
       } else {
         setStatus('error')
-        setErrorMsg(data.message || 'Falha ao enviar. Tente novamente.')
+        setErrorMsg(data.message || t('contactPage.errSend'))
       }
     } catch {
       setStatus('error')
-      setErrorMsg('Erro de conexão. Tente novamente.')
+      setErrorMsg(t('contactPage.errNetwork'))
     }
   }
 
   return (
     <>
-      <Helmet>
-        <title>Contato | Entre em contato conosco</title>
-        <meta
-          name="description"
-          content="Entre em contato com a Delivery. Tire suas dúvidas ou solicite nossos serviços de entrega."
-        />
-      </Helmet>
+      <PageSeo
+        routeKey="contact"
+        title={t('meta.contact.title')}
+        description={t('meta.contact.description')}
+      />
 
       <section className="px-4 pt-24 pb-16">
         <div className="mx-auto max-w-xl">
           <h1 className="text-3xl font-bold tracking-tight text-earth-900 sm:text-4xl">
-            Contato
+            {t('contactPage.title')}
           </h1>
-          <p className="mt-2 text-earth-600">
-            Preencha o formulário abaixo e retornaremos em breve.
-          </p>
+          <p className="mt-2 text-earth-600">{t('contactPage.subtitle')}</p>
 
           <form onSubmit={handleSubmit} className="mt-8 space-y-6">
             <div>
@@ -103,7 +107,7 @@ function Contact() {
                 htmlFor="nome"
                 className="block text-sm font-medium text-earth-700"
               >
-                Nome
+                {t('contactPage.name')}
               </label>
               <input
                 type="text"
@@ -113,7 +117,7 @@ function Contact() {
                 onChange={handleChange}
                 required
                 className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 shadow-sm focus:border-earth-900 focus:outline-none focus:ring-1 focus:ring-earth-900"
-                placeholder="Seu nome completo"
+                placeholder={t('contactPage.namePh')}
               />
             </div>
 
@@ -122,7 +126,7 @@ function Contact() {
                 htmlFor="email"
                 className="block text-sm font-medium text-earth-700"
               >
-                Email
+                {t('contactPage.email')}
               </label>
               <input
                 type="email"
@@ -132,7 +136,7 @@ function Contact() {
                 onChange={handleChange}
                 required
                 className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 shadow-sm focus:border-earth-900 focus:outline-none focus:ring-1 focus:ring-earth-900"
-                placeholder="seu@email.com"
+                placeholder={t('contactPage.emailPh')}
               />
             </div>
 
@@ -141,7 +145,7 @@ function Contact() {
                 htmlFor="mensagem"
                 className="block text-sm font-medium text-earth-700"
               >
-                Mensagem
+                {t('contactPage.message')}
               </label>
               <textarea
                 id="mensagem"
@@ -151,13 +155,13 @@ function Contact() {
                 onChange={handleChange}
                 required
                 className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 shadow-sm focus:border-earth-900 focus:outline-none focus:ring-1 focus:ring-earth-900"
-                placeholder="Como podemos ajudar?"
+                placeholder={t('contactPage.messagePh')}
               />
             </div>
 
             {status === 'success' && (
               <p className="rounded-lg bg-green-50 p-4 text-sm font-medium text-green-800">
-                Mensagem enviada com sucesso! Retornaremos em breve.
+                {t('contactPage.success')}
               </p>
             )}
             {status === 'error' && (
@@ -170,31 +174,32 @@ function Contact() {
               disabled={status === 'loading'}
               className="w-full rounded-lg bg-earth-900 px-4 py-3 font-medium text-earth-50 transition hover:bg-earth-800 disabled:cursor-not-allowed disabled:opacity-70"
             >
-              {status === 'loading' ? 'Enviando...' : 'Enviar mensagem'}
+              {status === 'loading' ? t('contactPage.sending') : t('contactPage.submit')}
             </button>
           </form>
 
-          {/* Contato direto: WhatsApp, Telegram, Instagram */}
           <div className="mt-12 border-t border-earth-200 pt-10">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-earth-500">
-              Ou entre em contato direto
+              {t('contactPage.directHeading')}
             </h2>
             <div className="mt-6 grid w-full grid-cols-3 gap-4">
-              {CONTATOS_DIRETOS.map((contato) => (
-                <a
-                  key={contato.nome}
-                  href={contato.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={contato.texto}
-                  className={`flex w-full flex-col items-center justify-center gap-2 rounded-lg px-4 py-5 text-earth-50 transition ${contato.cor}`}
-                >
-                  <span className="shrink-0">{ICONES[contato.nome]}</span>
-                  <span className="text-center text-sm font-medium">
-                    {contato.texto}
-                  </span>
-                </a>
-              ))}
+              {CONTATOS_DIRETOS.map((contato) => {
+                const labelKey = DIRECT_LABEL_KEY[contato.nome]
+                const label = labelKey ? t(labelKey) : contato.texto
+                return (
+                  <a
+                    key={contato.nome}
+                    href={contato.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={label}
+                    className={`flex w-full flex-col items-center justify-center gap-2 rounded-lg px-4 py-5 text-earth-50 transition ${contato.cor}`}
+                  >
+                    <span className="shrink-0">{ICONES[contato.nome]}</span>
+                    <span className="text-center text-sm font-medium">{label}</span>
+                  </a>
+                )
+              })}
             </div>
           </div>
         </div>

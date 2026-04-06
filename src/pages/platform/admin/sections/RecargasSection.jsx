@@ -1,8 +1,10 @@
 ﻿import { approveWalletTopupAdmin, rejectWalletTopupAdmin } from '../../../../services/walletService'
-import { formatJPY } from '../../../../lib/fx'
+import { useSiteLocale } from '../../../../hooks/useSiteLocale'
+import { formatJpyForSite } from '../../../../lib/moneyDisplay'
 import { useAdminContext } from '../AdminContext'
 
 export default function RecargasSection() {
+  const siteLocale = useSiteLocale()
   const {
     activeTab,
     topupLoading,
@@ -33,7 +35,7 @@ export default function RecargasSection() {
             >
               <div>
                 <p className="font-medium text-earth-900">
-                  {formatJPY(r.amount_jpy)} — {r.user_name || r.user_email || r.user_id?.slice(0, 8) || '—'}
+                  {formatJpyForSite(siteLocale, r.amount_jpy, null)} — {r.user_name || r.user_email || r.user_id?.slice(0, 8) || '—'}
                 </p>
                 <p className="mt-1 text-sm text-earth-600">
                   {formatMoney(r.amount_brl, 'BRL')} • {r.created_at ? new Date(r.created_at).toLocaleString('pt-BR') : ''}

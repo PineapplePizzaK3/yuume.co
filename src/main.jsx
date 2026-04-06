@@ -8,6 +8,7 @@ import { HelmetProvider } from 'react-helmet-async'
 import { AuthProvider } from './contexts/AuthContext'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { refreshFxRate } from './lib/fx'
+import './i18n/i18n.js'
 import App from './App.jsx'
 import './index.css'
 

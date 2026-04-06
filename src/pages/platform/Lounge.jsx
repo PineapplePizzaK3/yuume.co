@@ -1,23 +1,21 @@
-import { useEffect, useState } from 'react'
-import { Helmet } from 'react-helmet-async'
+import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router-dom'
+import { PageSeo } from '../../components/PageSeo'
 import { useAuth } from '../../hooks/useAuth'
+import { useFormatPrice } from '../../hooks/useFormatPrice'
 import { getWallet, getWalletTransactions } from '../../services/walletService'
-import { formatJPY } from '../../lib/fx'
 import MeusProdutos from './MeusProdutos'
 import Envios from './Envios'
 import Orders from './Orders'
 import ListaDesejos from './ListaDesejos'
 
 const LOUNGE_TAB_ORDER_STORAGE_KEY = 'lounge_tabs_order_v1'
-const LOUNGE_MODULES = [
-  { id: 'produtos', label: 'Meus Produtos' },
-  { id: 'envios', label: 'Envios' },
-  { id: 'pedidos', label: 'Pedidos' },
-  { id: 'desejos', label: 'Lista de Desejos' },
-]
+const LOUNGE_MODULE_IDS = ['produtos', 'envios', 'pedidos', 'desejos']
 
 export default function Lounge() {
+  const { t } = useTranslation()
+  const fp = useFormatPrice()
   const { user } = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
   const [orders, setOrders] = useState([])
@@ -25,14 +23,24 @@ export default function Lounge() {
   const [wallet, setWallet] = useState(null)
   const [transactions, setTransactions] = useState([])
   const initialTab = searchParams.get('tab')
-  const initialModule = LOUNGE_MODULES.some((m) => m.id === initialTab) ? initialTab : 'produtos'
+  const initialModule = LOUNGE_MODULE_IDS.includes(initialTab) ? initialTab : 'produtos'
   const [activeModule, setActiveModule] = useState(initialModule)
   const [draggingTabId, setDraggingTabId] = useState('')
-  const [tabOrder, setTabOrder] = useState(LOUNGE_MODULES.map((m) => m.id))
+  const [tabOrder, setTabOrder] = useState([...LOUNGE_MODULE_IDS])
   const [feedback, setFeedback] = useState('')
 
+  const tabLabel = useMemo(
+    () => ({
+      produtos: t('platform.lounge.tabProdutos'),
+      envios: t('platform.lounge.tabEnvios'),
+      pedidos: t('platform.lounge.tabPedidos'),
+      desejos: t('platform.lounge.tabDesejos'),
+    }),
+    [t]
+  )
+
   const normalizeTabOrder = (raw) => {
-    const allowed = LOUNGE_MODULES.map((m) => m.id)
+    const allowed = [...LOUNGE_MODULE_IDS]
     const base = Array.isArray(raw) ? raw : []
     const safe = base.filter((id) => allowed.includes(id))
     for (const id of allowed) {
@@ -58,25 +66,25 @@ export default function Lounge() {
 
   useEffect(() => {
     const tab = searchParams.get('tab')
-    const moduleId = LOUNGE_MODULES.some((m) => m.id === tab) ? tab : 'produtos'
+    const moduleId = LOUNGE_MODULE_IDS.includes(tab) ? tab : 'produtos'
     if (moduleId !== activeModule) setActiveModule(moduleId)
   }, [searchParams, activeModule])
 
   useEffect(() => {
     if (!user?.id) {
-      setTabOrder(LOUNGE_MODULES.map((m) => m.id))
+      setTabOrder([...LOUNGE_MODULE_IDS])
       return
     }
     try {
       const raw = localStorage.getItem(LOUNGE_TAB_ORDER_STORAGE_KEY)
       if (!raw) {
-        setTabOrder(LOUNGE_MODULES.map((m) => m.id))
+        setTabOrder([...LOUNGE_MODULE_IDS])
         return
       }
       const all = JSON.parse(raw)
       setTabOrder(normalizeTabOrder(all?.[user.id]))
     } catch {
-      setTabOrder(LOUNGE_MODULES.map((m) => m.id))
+      setTabOrder([...LOUNGE_MODULE_IDS])
     }
   }, [user?.id])
 
@@ -109,24 +117,29 @@ export default function Lounge() {
           setFeedback(walletRes.error?.message || txRes.error?.message || '')
         }
       } catch (e) {
-        if (isActive) setFeedback(e?.message || 'Erro ao carregar lounge')
+        if (isActive) setFeedback(e?.message || t('platform.lounge.loadError'))
       } finally {
         if (isActive) setLoadingWallet(false)
       }
     }
     run()
-    return () => { isActive = false }
-  }, [user?.id])
+    return () => {
+      isActive = false
+    }
+  }, [user?.id, t])
 
   return (
     <>
-      <Helmet>
-        <title>Lounge | Plataforma</title>
-      </Helmet>
+      <PageSeo
+        routeKey="appLounge"
+        title={t('meta.appLounge.title')}
+        description={t('meta.appLounge.description')}
+        noindex
+      />
       <div>
-        <h1 className="text-2xl font-bold text-earth-900">Lounge</h1>
+        <h1 className="text-2xl font-bold text-earth-900">{t('platform.lounge.pageTitle')}</h1>
         <p className="mt-2 text-earth-600">
-          Central de Pedidos, Envios, Meus Produtos e Lista de Desejos com todas as funções completas.
+          {t('platform.lounge.intro')}
         </p>
 
         {feedback && (
@@ -140,16 +153,18 @@ export default function Lounge() {
                 ¥
               </div>
               <div className="min-w-0">
-                <p className="text-xs text-earth-500">Carteira</p>
+                <p className="text-xs text-earth-500">{t('platform.lounge.wallet')}</p>
                 {loadingWallet ? (
-                  <p className="text-sm text-earth-500">Carregando...</p>
+                  <p className="text-sm text-earth-500">{t('platform.lounge.loadingShort')}</p>
                 ) : (
-                  <p className="truncate text-xl font-bold text-earth-900">{formatJPY(wallet?.balance ?? 0)}</p>
+                  <p className="truncate text-xl font-bold text-earth-900">{fp.jpy(wallet?.balance ?? 0)}</p>
                 )}
               </div>
             </div>
             <p className="text-xs text-earth-500">
-              {transactions.length > 0 ? `${transactions.length} movimentações` : 'Sem movimentações'}
+              {transactions.length > 0
+                ? t('platform.lounge.movementsCount', { count: transactions.length })
+                : t('platform.lounge.movementsNone')}
             </p>
           </div>
         </section>
@@ -157,42 +172,40 @@ export default function Lounge() {
         <section className="mt-4 rounded-xl border border-earth-200 bg-earth-50 p-3">
           <div className="flex flex-wrap gap-2">
             {orderedModules.map((moduleId) => {
-              const m = LOUNGE_MODULES.find((entry) => entry.id === moduleId)
-              if (!m) return null
               return (
                 <button
-                key={m.id}
-                type="button"
-                draggable
-                onClick={() => {
-                  setActiveModule(m.id)
-                  const next = new URLSearchParams(searchParams)
-                  if (m.id === 'produtos') next.delete('tab')
-                  else next.set('tab', m.id)
-                  setSearchParams(next, { replace: true })
-                }}
-                onDragStart={(e) => {
-                  setDraggingTabId(m.id)
-                  e.dataTransfer.effectAllowed = 'move'
-                }}
-                onDragOver={(e) => {
-                  if (!draggingTabId || draggingTabId === m.id) return
-                  e.preventDefault()
-                }}
-                onDrop={(e) => {
-                  if (!draggingTabId || draggingTabId === m.id) return
-                  e.preventDefault()
-                  handleTabReorder(draggingTabId, m.id)
-                }}
-                onDragEnd={() => setDraggingTabId('')}
-                className={`rounded-lg px-3 py-1.5 text-sm font-medium ${
-                  activeModule === m.id
-                    ? 'bg-earth-900 text-white'
-                    : 'bg-white text-earth-700 hover:bg-earth-100'
-                }`}
-              >
-                {m.label}
-              </button>
+                  key={moduleId}
+                  type="button"
+                  draggable
+                  onClick={() => {
+                    setActiveModule(moduleId)
+                    const next = new URLSearchParams(searchParams)
+                    if (moduleId === 'produtos') next.delete('tab')
+                    else next.set('tab', moduleId)
+                    setSearchParams(next, { replace: true })
+                  }}
+                  onDragStart={(e) => {
+                    setDraggingTabId(moduleId)
+                    e.dataTransfer.effectAllowed = 'move'
+                  }}
+                  onDragOver={(e) => {
+                    if (!draggingTabId || draggingTabId === moduleId) return
+                    e.preventDefault()
+                  }}
+                  onDrop={(e) => {
+                    if (!draggingTabId || draggingTabId === moduleId) return
+                    e.preventDefault()
+                    handleTabReorder(draggingTabId, moduleId)
+                  }}
+                  onDragEnd={() => setDraggingTabId('')}
+                  className={`rounded-lg px-3 py-1.5 text-sm font-medium ${
+                    activeModule === moduleId
+                      ? 'bg-earth-900 text-white'
+                      : 'bg-white text-earth-700 hover:bg-earth-100'
+                  }`}
+                >
+                  {tabLabel[moduleId]}
+                </button>
               )
             })}
           </div>
@@ -208,4 +221,3 @@ export default function Lounge() {
     </>
   )
 }
-

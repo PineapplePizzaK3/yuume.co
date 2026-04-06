@@ -2,6 +2,8 @@
  * Terms of Service — JA / PT-BR / EN via dedicated body components.
  */
 import { Helmet } from 'react-helmet-async'
+import { useTranslation } from 'react-i18next'
+import { PageSeo } from '../../components/PageSeo'
 import { useLegalLanguage } from '../../contexts/LegalLanguageContext'
 import { LEGAL_CONFIG } from '../../data/legalConfig'
 import { TermsOfUseJaBody } from '../../legal/TermsOfUseJaBody'
@@ -27,6 +29,7 @@ const CONTENT = {
 }
 
 export default function TermsOfService() {
+  const { t } = useTranslation()
   const { lang } = useLegalLanguage()
   const { BUSINESS_NAME, SUPPORT_EMAIL, SUPPORT_PHONE } = LEGAL_CONFIG
   const cfg = { BUSINESS_NAME, SUPPORT_EMAIL, SUPPORT_PHONE }
@@ -34,6 +37,7 @@ export default function TermsOfService() {
 
   return (
     <>
+      <PageSeo routeKey="legalTerms" title={null} description={t('meta.legalTerms.description')} />
       <Helmet>
         <title>{content.title} | Legal | Delivery</title>
       </Helmet>

@@ -3,28 +3,25 @@
  * O saldo pode ser usado para pagar frete, itens da loja e serviços.
  */
 import { useEffect, useState } from 'react'
-import { Helmet } from 'react-helmet-async'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../hooks/useAuth'
+import { useSiteLocale } from '../../hooks/useSiteLocale'
+import { useFormatPrice } from '../../hooks/useFormatPrice'
+import { PageSeo } from '../../components/PageSeo'
 import { getWallet, getWalletTransactions, createWalletTopupRequest } from '../../services/walletService'
 import { createTopUpCheckoutSession } from '../../services/paymentService'
 import { jpyToBrl } from '../../lib/fx'
 import WalletTopupPixModal from '../../components/WalletTopupPixModal'
 import { cacheKey, readCache, writeCache } from '../../lib/cache'
 
-function formatMoney(value, currency = 'BRL') {
-  return Number(value)?.toLocaleString('pt-BR', { style: 'currency', currency }) ?? '—'
-}
-
-const TYPE_LABELS = {
-  topup: 'Adição de saldo',
-  refund: 'Reembolso',
-  order_shipping: 'Pagamento de frete',
-  order_service: 'Serviço',
-  loja: 'Loja virtual',
-  adjustment: 'Ajuste',
-}
-
 export default function Wallet() {
+  const { t } = useTranslation()
+  const locale = useSiteLocale()
+  const fp = useFormatPrice()
+  const dateLocale = locale === 'en' ? 'en-US' : 'pt-BR'
+  const navigate = useNavigate()
+  const location = useLocation()
   const { user, session } = useAuth()
   const [wallet, setWallet] = useState(null)
   const [transactions, setTransactions] = useState([])
@@ -33,6 +30,9 @@ export default function Wallet() {
   const [adding, setAdding] = useState(false)
   const [feedback, setFeedback] = useState('')
   const [pixModal, setPixModal] = useState({ open: false, request: null })
+
+  const txTypeLabel = (type) =>
+    t(`platform.wallet.types.${type}`, { defaultValue: type })
 
   const loadData = async (active) => {
     if (!user?.id) return
@@ -55,7 +55,7 @@ export default function Wallet() {
       if (wRes.error) setFeedback(wRes.error.message)
       if (tRes.error && !wRes.error) setFeedback(tRes.error.message)
     } catch (e) {
-      if (active()) setFeedback(e?.message || 'Erro ao carregar carteira')
+      if (active()) setFeedback(e?.message || t('platform.wallet.loadError'))
     } finally {
       if (active()) setLoading(false)
     }
@@ -64,27 +64,29 @@ export default function Wallet() {
   useEffect(() => {
     let isActive = true
     loadData(() => isActive)
-    return () => { isActive = false }
-  }, [user?.id])
+    return () => {
+      isActive = false
+    }
+  }, [user?.id, t])
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     if (params.get('success') === 'true') {
-      setFeedback('Saldo adicionado com sucesso!')
-      window.history.replaceState({}, '', '/app/wallet')
+      setFeedback(t('platform.wallet.successTopup'))
+      navigate(location.pathname, { replace: true })
       loadData(() => true)
     }
     if (params.get('canceled') === 'true') {
-      setFeedback('Adição de saldo cancelada.')
-      window.history.replaceState({}, '', '/app/wallet')
+      setFeedback(t('platform.wallet.canceledTopup'))
+      navigate(location.pathname, { replace: true })
     }
-  }, [])
+  }, [navigate, location.pathname, t])
 
   const handleAddFundsCard = async (e) => {
     e.preventDefault()
     const value = parseFloat(topUpAmount?.replace(',', '.'))
     if (!value || value < 500 || value > 500000) {
-      setFeedback('Informe um valor entre ¥500 e ¥500.000')
+      setFeedback(t('platform.wallet.invalidAmount'))
       return
     }
     const amountJpy = Math.round(value)
@@ -93,15 +95,15 @@ export default function Wallet() {
     try {
       const accessToken = session?.access_token
       if (!accessToken) {
-        setFeedback('Faça login novamente')
+        setFeedback(t('platform.wallet.loginAgain'))
         setAdding(false)
         return
       }
       const { url } = await createTopUpCheckoutSession(amountJpy, accessToken)
       if (url) window.location.href = url
-      else setFeedback('Erro ao abrir pagamento')
+      else setFeedback(t('platform.wallet.openPayError'))
     } catch (err) {
-      setFeedback(err.message || 'Erro ao adicionar saldo')
+      setFeedback(err.message || t('platform.wallet.addError'))
     } finally {
       setAdding(false)
     }
@@ -111,7 +113,7 @@ export default function Wallet() {
     e.preventDefault()
     const value = parseFloat(topUpAmount?.replace(',', '.'))
     if (!value || value < 500 || value > 500000) {
-      setFeedback('Informe um valor entre ¥500 e ¥500.000')
+      setFeedback(t('platform.wallet.invalidAmount'))
       return
     }
     const amountJpy = Math.round(value)
@@ -121,13 +123,13 @@ export default function Wallet() {
     try {
       const { data: request, error } = await createWalletTopupRequest(user.id, amountJpy, amountBrl)
       if (error) {
-        setFeedback(error.message || 'Erro ao criar solicitação PIX')
+        setFeedback(error.message || t('platform.wallet.pixRequestError'))
         setAdding(false)
         return
       }
       setPixModal({ open: true, request })
     } catch (err) {
-      setFeedback(err.message || 'Erro ao adicionar saldo')
+      setFeedback(err.message || t('platform.wallet.addError'))
     } finally {
       setAdding(false)
     }
@@ -135,23 +137,27 @@ export default function Wallet() {
 
   const presets = [1000, 2000, 5000, 10000]
 
+  const feedbackPositive = (msg) => /success|sucesso/i.test(String(msg || ''))
+  const feedbackCanceled = (msg) => /cancel|canceled|cancelada/i.test(String(msg || ''))
+
   return (
     <>
-      <Helmet>
-        <title>Carteira | Plataforma</title>
-      </Helmet>
+      <PageSeo
+        routeKey="appLounge"
+        title={t('meta.appWallet.title')}
+        description={t('meta.appWallet.description')}
+        noindex
+      />
       <div>
-        <h1 className="text-2xl font-bold text-earth-900">Carteira</h1>
-        <p className="mt-2 text-earth-600">
-          Seu saldo pode ser usado para pagar frete, itens da loja e serviços.
-        </p>
+        <h1 className="text-2xl font-bold text-earth-900">{t('platform.wallet.pageTitle')}</h1>
+        <p className="mt-2 text-earth-600">{t('platform.wallet.intro')}</p>
 
         {feedback && (
           <p
             className={`mt-4 rounded-lg px-4 py-2 text-sm ${
-              feedback.includes('sucesso')
+              feedbackPositive(feedback)
                 ? 'bg-green-100 text-green-800'
-                : feedback.includes('cancelada')
+                : feedbackCanceled(feedback)
                   ? 'bg-amber-100 text-amber-800'
                   : 'bg-red-100 text-red-800'
             }`}
@@ -160,18 +166,18 @@ export default function Wallet() {
           </p>
         )}
 
-        {loading && <p className="mt-6 text-earth-600">Carregando...</p>}
+        {loading && <p className="mt-6 text-earth-600">{t('loading')}</p>}
 
         {!loading && (
           <>
             <div className="mt-6 rounded-xl border border-earth-200 bg-earth-50 p-6">
-              <p className="text-sm font-medium text-earth-600">Saldo disponível</p>
+              <p className="text-sm font-medium text-earth-600">{t('platform.wallet.availableBalance')}</p>
               <p className="mt-1 text-3xl font-bold text-earth-900">
-                {formatMoney(wallet?.balance ?? 0, 'JPY')}
+                {fp.jpy(wallet?.balance ?? 0)}
               </p>
 
               <form onSubmit={(e) => { e.preventDefault(); handleAddFundsCard(e); }} className="mt-6">
-                <label className="block text-sm font-medium text-earth-700">Adicionar saldo</label>
+                <label className="block text-sm font-medium text-earth-700">{t('platform.wallet.addBalance')}</label>
                 <div className="mt-2 flex flex-wrap items-center gap-2">
                   {presets.map((p) => (
                     <button
@@ -184,7 +190,7 @@ export default function Wallet() {
                           : 'border-earth-300 text-earth-700 hover:bg-earth-100'
                       }`}
                     >
-                      ¥ {p}
+                      {fp.jpy(p)}
                     </button>
                   ))}
                   <input
@@ -192,10 +198,10 @@ export default function Wallet() {
                     inputMode="decimal"
                     value={topUpAmount}
                     onChange={(e) => setTopUpAmount(e.target.value.replace(/[^0-9,.]/g, ''))}
-                    placeholder="Outro valor (¥)"
+                    placeholder={t('platform.wallet.otherAmountPh')}
                     className="w-28 rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
                   />
-                  <span className="text-sm text-earth-500">mín. ¥500 — máx. ¥500.000</span>
+                  <span className="text-sm text-earth-500">{t('platform.wallet.minMaxHint')}</span>
                 </div>
                 <div className="mt-4 flex flex-wrap gap-2">
                   <button
@@ -203,7 +209,7 @@ export default function Wallet() {
                     disabled={adding}
                     className="rounded-lg bg-earth-900 px-5 py-2.5 font-medium text-earth-50 hover:bg-earth-800 disabled:opacity-60"
                   >
-                    {adding ? 'Abrindo...' : 'Cartão'}
+                    {adding ? t('platform.wallet.opening') : t('platform.wallet.card')}
                   </button>
                   <button
                     type="button"
@@ -211,16 +217,16 @@ export default function Wallet() {
                     onClick={handleAddFundsPix}
                     className="rounded-lg border border-earth-900 bg-white px-5 py-2.5 font-medium text-earth-900 hover:bg-earth-50 disabled:opacity-60"
                   >
-                    {adding ? '...' : 'PIX'}
+                    {adding ? t('platform.wallet.pixDots') : t('platform.wallet.pix')}
                   </button>
                 </div>
               </form>
             </div>
 
             <div className="mt-8">
-              <h2 className="text-lg font-semibold text-earth-900">Extrato</h2>
+              <h2 className="text-lg font-semibold text-earth-900">{t('platform.wallet.statement')}</h2>
               {transactions.length === 0 ? (
-                <p className="mt-2 text-sm text-earth-600">Nenhuma movimentação ainda.</p>
+                <p className="mt-2 text-sm text-earth-600">{t('platform.wallet.emptyStatement')}</p>
               ) : (
                 <ul className="mt-4 space-y-2">
                   {transactions.map((tx) => (
@@ -230,25 +236,27 @@ export default function Wallet() {
                     >
                       <div>
                         <span className="font-medium text-earth-900">
-                          {TYPE_LABELS[tx.type] ?? tx.type}
+                          {txTypeLabel(tx.type)}
                         </span>
                         {tx.description && (
                           <p className="text-sm text-earth-500">{tx.description}</p>
                         )}
                         <p className="text-xs text-earth-400">
                           {tx.created_at
-                            ? new Date(tx.created_at).toLocaleString('pt-BR')
+                            ? new Date(tx.created_at).toLocaleString(dateLocale)
                             : ''}
                         </p>
                       </div>
                       <div className="text-right">
                         <span className={tx.kind === 'credit' ? 'text-green-700' : 'text-earth-900'}>
                           {tx.kind === 'credit' ? '+' : ''}
-                          {formatMoney(tx.amount, 'JPY')}
+                          {fp.jpy(tx.amount)}
                         </span>
                         {tx.balance_after != null && (
                           <p className="text-xs text-earth-500">
-                            Saldo: {formatMoney(tx.balance_after, 'JPY')}
+                            {t('platform.wallet.balanceAfter', {
+                              amount: fp.jpy(tx.balance_after),
+                            })}
                           </p>
                         )}
                       </div>

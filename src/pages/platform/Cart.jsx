@@ -3,14 +3,18 @@
  * Todos os pagamentos da conta são centralizados aqui para melhorar a UX.
  */
 import { useEffect, useMemo, useState } from 'react'
-import { Helmet } from 'react-helmet-async'
+import { useTranslation } from 'react-i18next'
 import { Link, useSearchParams } from 'react-router-dom'
+import { useLocalizedPath } from '../../hooks/useLocalizedPath'
+import { useSiteLocale } from '../../hooks/useSiteLocale'
+import { useFormatPrice } from '../../hooks/useFormatPrice'
+import { PageSeo } from '../../components/PageSeo'
 import { createPortal } from 'react-dom'
 import { useAuth } from '../../hooks/useAuth'
 import { getCart, updateCartItem, removeFromCart, getLatestPendingStoreOrder } from '../../services/cartService'
 import { validateCoupon } from '../../services/couponService'
 import { createCheckoutSession, fetchExchangeRates, getMyPayments } from '../../services/paymentService'
-import { getMyOrders, ORDER_STATUS_LABELS } from '../../services/orderService'
+import { getMyOrders } from '../../services/orderService'
 import { getWallet } from '../../services/walletService'
 import {
   computeGrupoComprasFeeBrl,
@@ -19,7 +23,7 @@ import {
   GRUPO_COMPRAS_FEE_PERCENT,
   GRUPO_COMPRAS_FEE_PER_UNIT_USD,
 } from '../../data/serviceFees'
-import { brlToJpy, formatBRL, formatJPY, formatUSD, jpyToBrl, getFxBrlPerJpy } from '../../lib/fx'
+import { brlToJpy, formatUSD, jpyToBrl, getFxBrlPerJpy } from '../../lib/fx'
 import { TriCurrencyDisplay } from '../../components/TriCurrencyDisplay'
 import { getSystemSettings } from '../../services/settingsService'
 
@@ -29,30 +33,11 @@ function formatPriceBrlAsJpy(brl) {
   return { jpy, approxBrl }
 }
 
-const PAYMENT_STATUS_LABELS = {
-  pending: 'Pendente',
-  completed: 'Concluído',
-  failed: 'Falhou',
-  refunded: 'Reembolsado',
-}
 const CART_TAB_ORDER_STORAGE_KEY = 'cart_tabs_order_v1'
-const CART_TABS = [
-  { id: 'checkout', label: 'Pagamento' },
-  { id: 'history', label: 'Histórico' },
-]
-const GATEWAY_OPTIONS = [
-  {
-    id: 'parcelow',
-    label: 'Parcelow',
-    icon: '🇧🇷',
-    details: 'Cartão até 21x, PIX, TED',
-  },
-  {
-    id: 'stripe',
-    label: 'Stripe',
-    icon: '🌐',
-    details: 'Cartão internacional',
-  },
+const CART_TAB_IDS = ['checkout', 'history']
+const GATEWAY_OPTIONS_META = [
+  { id: 'parcelow', label: 'Parcelow', icon: '🇧🇷' },
+  { id: 'stripe', label: 'Stripe', icon: '🌐' },
 ]
 const buildBadgeSrc = (label, { bg = '#ffffff', fg = '#1f2937', stroke = '#d1d5db' } = {}) =>
   `data:image/svg+xml;utf8,${encodeURIComponent(
@@ -76,11 +61,6 @@ const PIX_BADGE_SRC = `data:image/svg+xml;utf8,${encodeURIComponent(
   </svg>`
 )}`
 const TED_BADGE_SRC = buildBadgeSrc('TED', { bg: '#f8fafc', fg: '#0f172a', stroke: '#cbd5e1' })
-const PAYMENT_METHOD_GROUP_LABELS = {
-  card: 'Cartão',
-  pix: 'PIX',
-  transfer: 'Transferência',
-}
 
 const PAYMENT_METHODS_BY_GATEWAY = {
   parcelow: [
@@ -107,8 +87,49 @@ const PAYMENT_METHODS_BY_GATEWAY = {
 }
 
 function Cart() {
+  const { t } = useTranslation()
+  const locale = useSiteLocale()
+  const fp = useFormatPrice()
+  const dateLocale = locale === 'en' ? 'en-US' : 'pt-BR'
   const { user, session } = useAuth()
+  const lp = useLocalizedPath()
   const [searchParams, setSearchParams] = useSearchParams()
+
+  const cartTabs = useMemo(
+    () => [
+      { id: 'checkout', label: t('platform.cart.tabCheckout') },
+      { id: 'history', label: t('platform.cart.tabHistory') },
+    ],
+    [t]
+  )
+
+  const gatewayOptions = useMemo(
+    () =>
+      GATEWAY_OPTIONS_META.map((entry) => ({
+        ...entry,
+        details: t(`platform.orders.gateway.${entry.id}`),
+      })),
+    [t]
+  )
+
+  const paymentStatusLabels = useMemo(
+    () => ({
+      pending: t('platform.cart.paymentStatus.pending'),
+      completed: t('platform.cart.paymentStatus.completed'),
+      failed: t('platform.cart.paymentStatus.failed'),
+      refunded: t('platform.cart.paymentStatus.refunded'),
+    }),
+    [t]
+  )
+
+  const methodGroupLabels = useMemo(
+    () => ({
+      card: t('platform.cart.methodGroup.card'),
+      pix: t('platform.cart.methodGroup.pix'),
+      transfer: t('platform.cart.methodGroup.transfer'),
+    }),
+    [t]
+  )
   const [items, setItems] = useState([])
   const [qtyDrafts, setQtyDrafts] = useState({})
   const [pendingOrders, setPendingOrders] = useState([])
@@ -129,7 +150,7 @@ function Cart() {
   const [couponApplied, setCouponApplied] = useState(null)
   const [couponLoading, setCouponLoading] = useState(false)
   const [draggingTabId, setDraggingTabId] = useState('')
-  const [tabOrder, setTabOrder] = useState(CART_TABS.map((tab) => tab.id))
+  const [tabOrder, setTabOrder] = useState(() => [...CART_TAB_IDS])
   const [exchangeSnapshot, setExchangeSnapshot] = useState(null)
 
   const success = searchParams.get('success') === 'true'
@@ -138,7 +159,7 @@ function Cart() {
   const activeTab = searchParams.get('tab') === 'history' ? 'history' : 'checkout'
 
   const normalizeTabOrder = (raw) => {
-    const allowed = CART_TABS.map((tab) => tab.id)
+    const allowed = [...CART_TAB_IDS]
     const base = Array.isArray(raw) ? raw : []
     const safe = base.filter((id) => allowed.includes(id))
     for (const id of allowed) {
@@ -173,19 +194,19 @@ function Cart() {
 
   useEffect(() => {
     if (!user?.id) {
-      setTabOrder(CART_TABS.map((tab) => tab.id))
+      setTabOrder([...CART_TAB_IDS])
       return
     }
     try {
       const raw = localStorage.getItem(CART_TAB_ORDER_STORAGE_KEY)
       if (!raw) {
-        setTabOrder(CART_TABS.map((tab) => tab.id))
+        setTabOrder([...CART_TAB_IDS])
         return
       }
       const all = JSON.parse(raw)
       setTabOrder(normalizeTabOrder(all?.[user.id]))
     } catch {
-      setTabOrder(CART_TABS.map((tab) => tab.id))
+      setTabOrder([...CART_TAB_IDS])
     }
   }, [user?.id])
 
@@ -204,13 +225,13 @@ function Cart() {
   const getPayableAmount = (order) => {
     if (order?.status !== 'awaiting_payment') return null
     if (order?.quote_amount != null && Number(order.quote_amount) > 0) {
-      return { amount: Number(order.quote_amount), currency: order.quote_currency || 'JPY', label: 'Orçamento' }
+      return { amount: Number(order.quote_amount), currency: order.quote_currency || 'JPY', kind: 'quote' }
     }
     if (order?.total_amount != null && Number(order.total_amount) > 0) {
-      return { amount: Number(order.total_amount), currency: 'BRL', label: 'Total' }
+      return { amount: Number(order.total_amount), currency: 'BRL', kind: 'productTotal' }
     }
     if (order?.shipping_cost != null && Number(order.shipping_cost) > 0) {
-      return { amount: Number(order.shipping_cost), currency: order.shipping_currency || 'JPY', label: 'Frete' }
+      return { amount: Number(order.shipping_cost), currency: order.shipping_currency || 'JPY', kind: 'shipping' }
     }
     return null
   }
@@ -220,7 +241,7 @@ function Cart() {
     setPendingLoading(true)
     const { data, error } = await getMyOrders(user.id, { limit: 40, offset: 0 })
     if (error) {
-      setFeedback(error.message || 'Erro ao carregar pagamentos pendentes.')
+      setFeedback(error.message || t('platform.cart.errors.loadPending'))
       setPendingOrders([])
       setPendingLoading(false)
       return []
@@ -236,7 +257,7 @@ function Cart() {
     setPaymentsLoading(true)
     const { data, error } = await getMyPayments()
     if (error) {
-      setFeedback(error.message || 'Erro ao carregar histórico de pagamentos.')
+      setFeedback(error.message || t('platform.cart.errors.loadHistory'))
       setPayments([])
       setPaymentsLoading(false)
       return
@@ -301,13 +322,13 @@ function Cart() {
 
   useEffect(() => {
     if (!success && !canceled) return
-    if (success) setFeedback('Pagamento realizado com sucesso!')
-    else if (canceled) setFeedback('Pagamento cancelado.')
+    if (success) setFeedback(t('platform.cart.feedbackSuccess'))
+    else if (canceled) setFeedback(t('platform.cart.feedbackCanceled'))
     const next = new URLSearchParams(searchParams)
     next.delete('success')
     next.delete('canceled')
     setSearchParams(next, { replace: true })
-  }, [success, canceled, searchParams, setSearchParams])
+  }, [success, canceled, searchParams, setSearchParams, t])
 
   useEffect(() => {
     let isActive = true
@@ -333,17 +354,16 @@ function Cart() {
     if (!payModal.open) return
     // Volta do gateway (cancel/success) deixa feedback preso no overlay do modal; limpar ao abrir.
     setFeedback((prev) => {
-      const t = String(prev || '').trim()
-      if (
-        t === 'Pagamento cancelado.' ||
-        t === 'Pagamento realizado com sucesso!' ||
-        t === 'Pagamento realizado com carteira.'
-      ) {
-        return ''
-      }
+      const prevStr = String(prev || '').trim()
+      const clearMsgs = [
+        t('platform.cart.feedbackCanceled'),
+        t('platform.cart.feedbackSuccess'),
+        t('platform.cart.payWalletSuccess'),
+      ]
+      if (clearMsgs.includes(prevStr)) return ''
       return prev
     })
-  }, [payModal.open])
+  }, [payModal.open, t])
 
   useEffect(() => {
     if (!payModal.open) return
@@ -449,7 +469,7 @@ function Cart() {
   const handleApplyCoupon = async () => {
     const code = couponInput.trim()
     if (!code) {
-      setFeedback('Digite um código de cupom.')
+      setFeedback(t('platform.cart.errors.couponEmpty'))
       return
     }
     setCouponLoading(true)
@@ -505,7 +525,7 @@ function Cart() {
 
   const handleCheckout = async () => {
     if (items.length === 0) {
-      setFeedback('Sem itens da loja para finalizar.')
+      setFeedback(t('platform.cart.errors.noStoreItems'))
       return
     }
     setSubmitting(true)
@@ -513,7 +533,7 @@ function Cart() {
     try {
       const { data: latestPendingStoreOrder, error: latestPendingError } = await getLatestPendingStoreOrder(user.id)
       if (latestPendingError) {
-        setFeedback(latestPendingError.message || 'Erro ao verificar pagamento pendente.')
+        setFeedback(latestPendingError.message || t('platform.cart.errors.verifyPending'))
         return
       }
 
@@ -549,7 +569,7 @@ function Cart() {
       setPayModal({ open: true, order: orderToPay, useWallet: false, cartCheckout: true })
       setFeedback('')
     } catch (e) {
-      setFeedback(e?.message || 'Erro ao processar')
+      setFeedback(e?.message || t('platform.cart.errors.processGeneric'))
     } finally {
       setSubmitting(false)
     }
@@ -616,10 +636,10 @@ function Cart() {
       } else if (lineBasedJpy != null && lineBasedJpy > jpy) {
         jpy = lineBasedJpy
       }
-      return { jpy, approxBrl: baseBrl, chargeUsd, label: payable.label }
+      return { jpy, approxBrl: baseBrl, chargeUsd, kind: payable.kind }
     }
     const jpy = Math.round(Number(payable.amount) || 0)
-    return { jpy, approxBrl: jpy * effBrlPerJpy, chargeUsd: null, label: payable.label }
+    return { jpy, approxBrl: jpy * effBrlPerJpy, chargeUsd: null, kind: payable.kind }
   }
 
   const parseWalletAmountJpy = (rawValue) => {
@@ -684,7 +704,7 @@ function Cart() {
     if (!payModal.order) return
     const accessToken = session?.access_token
     if (!accessToken) {
-      setFeedback('Faça login novamente para pagar.')
+      setFeedback(t('platform.cart.errors.loginAgain'))
       return
     }
     const orderId = payModal.order.id
@@ -729,7 +749,7 @@ function Cart() {
       )
       if (result?.paid) {
         setPayModal({ open: false, order: null, useWallet: false, cartCheckout: false })
-        setFeedback('Pagamento realizado com carteira.')
+        setFeedback(t('platform.cart.payWalletSuccess'))
         setCouponApplied(null)
         setCouponInput('')
         await loadCart()
@@ -746,9 +766,9 @@ function Cart() {
           // noop
         }
         window.location.href = result.url
-      } else setFeedback('Erro ao redirecionar para pagamento.')
+      } else setFeedback(t('platform.cart.errors.redirectPay'))
     } catch (err) {
-      setFeedback(err.message || 'Erro ao processar pagamento.')
+      setFeedback(err.message || t('platform.cart.errors.processPay'))
     } finally {
       setSubmitting(false)
     }
@@ -764,12 +784,42 @@ function Cart() {
     setSearchParams(next, { replace: true })
   }
 
+  const payableKindLabel = (kind) =>
+    kind ? t(`platform.orders.payable.${kind}`, { defaultValue: kind }) : ''
+
+  const historyPaymentKind = (order, orderId, paymentIdLower) => {
+    if (paymentIdLower === 'referral_discount') return t('platform.cart.historyKind.discount')
+    if (order?.order_source === 'store') return t('platform.cart.historyKind.store')
+    if (Number(order?.quote_amount) > 0) return t('platform.cart.historyKind.service')
+    if (Number(order?.shipping_cost) > 0) return t('platform.cart.historyKind.shipping')
+    if (orderId) return t('platform.cart.historyKind.order')
+    return t('platform.cart.historyKind.payment')
+  }
+
+  const historyPayMethodLabel = (raw) => {
+    const paymentId = String(raw || '').trim().toLowerCase()
+    if (!paymentId) return '—'
+    if (paymentId.startsWith('wallet')) return t('platform.cart.payMethod.wallet')
+    if (paymentId === 'referral_discount') return t('platform.cart.payMethod.discount')
+    if (paymentId.startsWith('parcelow')) return 'Parcelow'
+    if (paymentId.includes('pix')) return 'PIX'
+    if (paymentId.startsWith('pi_') || paymentId.startsWith('cs_') || paymentId.startsWith('ch_')) {
+      return t('platform.cart.payMethod.card')
+    }
+    if (paymentId.includes('manual')) return t('platform.cart.payMethod.manual')
+    return t('platform.cart.payMethod.card')
+  }
+
+  const feedbackTonePositive = (msg) => /success|sucesso/i.test(String(msg || ''))
 
   if (!user) {
     return (
       <div className="py-8">
         <p className="text-earth-600">
-          <Link to="/login" className="font-medium text-earth-900 underline">Faça login</Link> para acessar a central de pagamentos.
+          <Link to={lp('login')} className="font-medium text-earth-900 underline">
+            {t('platform.cart.loginLink')}
+          </Link>
+          {t('platform.cart.loginPromptSuffix')}
         </p>
       </div>
     )
@@ -777,18 +827,19 @@ function Cart() {
 
   return (
     <>
-      <Helmet>
-        <title>Central de Pagamentos | Plataforma</title>
-      </Helmet>
+      <PageSeo
+        routeKey="appCart"
+        title={t('meta.appCart.title')}
+        description={t('meta.appCart.description')}
+        noindex
+      />
       <div>
-        <h1 className="text-2xl font-bold text-earth-900">Central de Pagamentos</h1>
-        <p className="mt-2 text-earth-600">
-          Faça todos os pagamentos da sua conta aqui: pedidos da loja, fretes e valores pendentes.
-        </p>
+        <h1 className="text-2xl font-bold text-earth-900">{t('platform.cart.pageTitle')}</h1>
+        <p className="mt-2 text-earth-600">{t('platform.cart.intro')}</p>
 
         <div className="mt-4 inline-flex rounded-lg border border-earth-200 bg-earth-50 p-1">
           {orderedTabs.map((tabId) => {
-            const tab = CART_TABS.find((entry) => entry.id === tabId)
+            const tab = cartTabs.find((entry) => entry.id === tabId)
             if (!tab) return null
             return (
               <button
@@ -830,18 +881,24 @@ function Cart() {
         {feedback && !payModal.open && (
           <p
             className={`mt-4 rounded-lg px-4 py-2 text-sm ${
-              feedback.includes('sucesso') ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
+              feedbackTonePositive(feedback) ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
             }`}
           >
             {feedback}
           </p>
         )}
 
-        {activeTab === 'checkout' && loading && <p className="mt-6 text-earth-600">Carregando...</p>}
+        {activeTab === 'checkout' && loading && (
+          <p className="mt-6 text-earth-600">{t('platform.cart.loading')}</p>
+        )}
 
         {activeTab === 'checkout' && !loading && items.length === 0 && (
           <p className="mt-6 text-earth-600">
-            Sem itens da loja no momento. <Link to="/app/loja" className="font-medium text-earth-900 underline">Compre na loja</Link>.
+            {t('platform.cart.emptyCart')}{' '}
+            <Link to={lp('appLoja')} className="font-medium text-earth-900 underline">
+              {t('platform.cart.shopLink')}
+            </Link>
+            .
           </p>
         )}
 
@@ -850,13 +907,11 @@ function Cart() {
             <section className="rounded-2xl border border-earth-200 bg-white p-4 sm:p-5">
               <div className="mb-4 flex items-center justify-between gap-3 border-b border-earth-100 pb-3">
                 <div>
-                  <h2 className="text-lg font-semibold text-earth-900">Carrinho</h2>
-                  <p className="text-sm text-earth-600">
-                    Revise os itens antes de finalizar a compra.
-                  </p>
+                  <h2 className="text-lg font-semibold text-earth-900">{t('platform.cart.cartTitle')}</h2>
+                  <p className="text-sm text-earth-600">{t('platform.cart.cartSubtitle')}</p>
                 </div>
                 <span className="rounded-full bg-earth-100 px-3 py-1 text-xs font-semibold text-earth-700">
-                  {items.length} {items.length === 1 ? 'item' : 'itens'}
+                  {t('platform.cart.item', { count: items.length })}
                 </span>
               </div>
               <div className="space-y-4">
@@ -874,7 +929,9 @@ function Cart() {
                   const lineJpy = jpyUnit * qty
                   const lineBrl = unitBrl * qty
                   const lineUsd = hasTri ? usdUnit * qty : NaN
-                  const sourceTag = p.purchase_group_id ? 'Grupo de Compras' : 'Loja Virtual'
+                  const sourceTag = p.purchase_group_id
+                    ? t('platform.cart.sourceGroupBuy')
+                    : t('platform.cart.sourceStore')
                   const sourceTagClass = p.purchase_group_id
                     ? 'bg-amber-100 text-amber-800'
                     : 'bg-sky-100 text-sky-800'
@@ -887,7 +944,7 @@ function Cart() {
                         <img src={p.image_url} alt={p.name} className="h-20 w-20 rounded-lg object-cover" />
                       ) : (
                         <div className="flex h-20 w-20 items-center justify-center rounded-lg bg-earth-200 text-earth-500 text-sm">
-                          Sem imagem
+                          {t('platform.cart.noImage')}
                         </div>
                       )}
                       <div className="min-w-0 flex-1">
@@ -898,14 +955,14 @@ function Cart() {
                         </div>
                         <h3 className="font-semibold text-earth-900">{p.name}</h3>
                         <p className="mt-1 text-[11px] font-medium uppercase tracking-wide text-earth-500">
-                          Unitário
+                          {t('platform.cart.unitLabel')}
                         </p>
                         <TriCurrencyDisplay
                           brl={unitBrl}
                           jpy={jpyUnit}
                           usd={unitUsd}
                           variant="compact"
-                          footnote={hasTri ? null : 'Dólar após atualizar cotações no servidor.'}
+                          footnote={hasTri ? null : t('platform.cart.triFootnoteRates')}
                         />
                       </div>
                       <div className="flex flex-col items-end gap-2 sm:flex-row sm:items-center">
@@ -928,7 +985,7 @@ function Cart() {
                         />
                         <div className="text-right">
                           <p className="text-[11px] font-medium uppercase tracking-wide text-earth-500">
-                            Subtotal ({qty} un.)
+                            {t('platform.cart.subtotalLine', { qty })}
                           </p>
                           <TriCurrencyDisplay brl={lineBrl} jpy={lineJpy} usd={lineUsd} variant="compact" />
                         </div>
@@ -937,7 +994,7 @@ function Cart() {
                           onClick={() => handleRemove(item.product_id)}
                           className="text-sm text-red-600 hover:text-red-800 sm:ml-1"
                         >
-                          Remover
+                          {t('platform.cart.remove')}
                         </button>
                       </div>
                     </div>
@@ -948,14 +1005,14 @@ function Cart() {
 
             <div className="rounded-xl border border-earth-200 bg-earth-50 p-6 space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                <label className="text-sm font-medium text-earth-700">Cupom de desconto</label>
+                <label className="text-sm font-medium text-earth-700">{t('platform.cart.couponLabel')}</label>
                 <div className="flex gap-2 flex-1">
                   <input
                     type="text"
                     value={couponInput}
                     onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
                     onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleApplyCoupon())}
-                    placeholder="Digite o código"
+                    placeholder={t('platform.cart.couponPlaceholder')}
                     disabled={!!couponApplied}
                     className="flex-1 min-w-0 rounded-lg border border-earth-300 px-3 py-2 text-earth-900 placeholder:text-earth-400 focus:border-earth-500 focus:outline-none focus:ring-1 focus:ring-earth-500 disabled:bg-earth-100 disabled:cursor-not-allowed"
                   />
@@ -965,7 +1022,7 @@ function Cart() {
                       onClick={handleRemoveCoupon}
                       className="shrink-0 rounded-lg border border-earth-300 px-4 py-2 font-medium text-earth-700 hover:bg-earth-100"
                     >
-                      Remover
+                      {t('platform.cart.removeCoupon')}
                     </button>
                   ) : (
                     <button
@@ -974,38 +1031,50 @@ function Cart() {
                       disabled={couponLoading || !couponInput.trim()}
                       className="shrink-0 rounded-lg border border-earth-300 bg-white px-4 py-2 font-medium text-earth-800 hover:bg-earth-50 disabled:opacity-60"
                     >
-                      {couponLoading ? '...' : 'Aplicar'}
+                      {couponLoading ? t('platform.cart.applyingDots') : t('platform.cart.apply')}
                     </button>
                   )}
                 </div>
               </div>
               {couponApplied && (
                 <p className="text-sm text-green-700 font-medium">
-                  Cupom {couponApplied.code} aplicado! Desconto: -{formatBRL(couponApplied.discount_brl)}
+                  {t('platform.cart.couponApplied', {
+                    code: couponApplied.code,
+                    amount: fp.brl(couponApplied.discount_brl),
+                  })}
                 </p>
               )}
               {grupoFeeBrl > 0 && (
                 <div className="rounded-lg border border-earth-200 bg-white px-3 py-2 text-sm text-earth-700">
-                  <p className="font-medium text-earth-900">Taxa Grupo de Compras</p>
+                  <p className="font-medium text-earth-900">{t('platform.cart.grupoFeeTitle')}</p>
                   <p className="mt-1">
-                    {GRUPO_COMPRAS_FEE_PERCENT}% sobre o subtotal USD dos itens do grupo + {formatUSD(GRUPO_COMPRAS_FEE_PER_UNIT_USD)} por
-                    unidade ({grupoQty} un., referência ¥{SERVICE_FEE_JPY_PER_ITEM}/un.) — {formatBRL(grupoFeeBrl)} no total do pedido.
+                    {t('platform.cart.grupoFeeBody', {
+                      percent: GRUPO_COMPRAS_FEE_PERCENT,
+                      perUnit: formatUSD(GRUPO_COMPRAS_FEE_PER_UNIT_USD),
+                      qty: grupoQty,
+                      feeJpy: SERVICE_FEE_JPY_PER_ITEM,
+                      total: fp.brl(grupoFeeBrl),
+                    })}
                   </p>
                 </div>
               )}
               <div className="flex flex-col gap-4 border-t border-earth-200 pt-4 sm:flex-row sm:items-end sm:justify-between">
                 <div className="min-w-0 flex-1 space-y-2">
                   <p className="text-sm text-earth-600">
-                    Composição: subtotal produtos {formatBRL(productSubtotalBrl)}
-                    {grupoFeeBrl > 0 && <> + taxa grupo {formatBRL(grupoFeeBrl)}</>}
-                    {discountBrl > 0 && (
-                      <span className="block text-green-700">
-                        Cupom: −{formatBRL(discountBrl)}
-                      </span>
-                    )}
+                    {t('platform.cart.composition', {
+                      subtotal: fp.brl(productSubtotalBrl),
+                      grupo:
+                        grupoFeeBrl > 0
+                          ? t('platform.cart.compositionGrupo', { amount: fp.brl(grupoFeeBrl) })
+                          : '',
+                      coupon:
+                        discountBrl > 0
+                          ? t('platform.cart.couponLine', { amount: fp.brl(discountBrl) })
+                          : '',
+                    })}
                   </p>
                   <p className="text-xs font-medium uppercase tracking-wide text-earth-500">
-                    Total do pedido
+                    {t('platform.cart.totalOrderLabel')}
                   </p>
                   <TriCurrencyDisplay
                     brl={totalAfterDiscountBrl}
@@ -1018,8 +1087,8 @@ function Cart() {
                     variant="checkout"
                     footnote={
                       totalUsdEstimate != null && Number.isFinite(totalUsdEstimate)
-                        ? 'Real em destaque para leitura; iene = base Japão; dólar = cobrança (ex.: Parcelow).'
-                        : 'Dólar de cobrança aparece quando a cotação e os produtos estiverem atualizados no servidor.'
+                        ? t('platform.cart.triFootnoteCheckout')
+                        : t('platform.cart.triFootnoteCheckoutPending')
                     }
                   />
                 </div>
@@ -1029,7 +1098,7 @@ function Cart() {
                   disabled={submitting}
                   className="rounded-lg bg-earth-900 px-6 py-3 font-medium text-white hover:bg-earth-800 disabled:opacity-60"
                 >
-                  {submitting ? 'Processando...' : 'Finalizar compra'}
+                  {submitting ? t('platform.cart.processing') : t('platform.cart.finalizePurchase')}
                 </button>
               </div>
             </div>
@@ -1037,13 +1106,15 @@ function Cart() {
         )}
 
         {activeTab === 'checkout' && <div className="mt-8">
-          <h2 className="text-xl font-semibold text-earth-900">Pagamentos pendentes</h2>
-          <p className="mt-1 text-sm text-earth-600">Pedidos aguardando pagamento para finalizar o fluxo.</p>
+          <h2 className="text-xl font-semibold text-earth-900">{t('platform.cart.pendingTitle')}</h2>
+          <p className="mt-1 text-sm text-earth-600">{t('platform.cart.pendingSubtitle')}</p>
 
-          {pendingLoading && <p className="mt-4 text-earth-600">Carregando pendências...</p>}
+          {pendingLoading && (
+            <p className="mt-4 text-earth-600">{t('platform.cart.pendingLoading')}</p>
+          )}
 
           {!pendingLoading && pendingOrders.length === 0 && (
-            <p className="mt-4 text-earth-600">Nenhum pagamento pendente.</p>
+            <p className="mt-4 text-earth-600">{t('platform.cart.noPending')}</p>
           )}
 
           {!pendingLoading && pendingOrders.length > 0 && (
@@ -1074,15 +1145,15 @@ function Cart() {
                       <div>
                         <p>
                           <Link
-                            to={`/app/lounge?tab=pedidos&orderId=${encodeURIComponent(order.id)}`}
+                            to={lp('appLounge', `?tab=pedidos&orderId=${encodeURIComponent(order.id)}`)}
                             className="font-medium text-earth-900 underline decoration-earth-300 underline-offset-2 hover:decoration-earth-700"
                           >
-                            Pedido {order.id?.slice(0, 8)}…
+                            {t('platform.cart.orderLink', { id: order.id?.slice(0, 8) })}
                           </Link>
                         </p>
                         <p className="text-xs text-earth-600">
-                          {ORDER_STATUS_LABELS[order.status] ?? order.status}
-                          {payable?.label ? ` - ${payable.label}` : ''}
+                          {t(`platform.orders.status.${order.status}`, { defaultValue: order.status })}
+                          {payable?.kind ? ` - ${payableKindLabel(payable.kind)}` : ''}
                         </p>
                         {charge && (
                           <div className="mt-2">
@@ -1094,7 +1165,9 @@ function Cart() {
                             />
                             {alreadyAppliedJpy > 0 && (
                               <p className="mt-1 text-xs text-green-700">
-                                Carteira já aplicada anteriormente: -{formatJPY(alreadyAppliedJpy)}
+                                {t('platform.cart.walletPreviouslyApplied', {
+                                  amount: fp.jpy(alreadyAppliedJpy),
+                                })}
                               </p>
                             )}
                           </div>
@@ -1105,7 +1178,7 @@ function Cart() {
                         onClick={() => setPayModal({ open: true, order, useWallet: false, cartCheckout: false })}
                         className="rounded-lg bg-earth-900 px-4 py-2 text-sm font-medium text-white hover:bg-earth-800"
                       >
-                        Pagar agora
+                        {t('platform.cart.payNow')}
                       </button>
                     </div>
                   </div>
@@ -1117,18 +1190,20 @@ function Cart() {
 
         {activeTab === 'history' && (
           <div className="mt-6">
-            {paymentsLoading && <p className="text-earth-600">Carregando histórico...</p>}
+            {paymentsLoading && (
+              <p className="text-earth-600">{t('platform.cart.historyLoading')}</p>
+            )}
             {!paymentsLoading && payments.length === 0 && (
-              <p className="text-earth-600">Nenhum pagamento registrado.</p>
+              <p className="text-earth-600">{t('platform.cart.historyEmpty')}</p>
             )}
             {!paymentsLoading && payments.length > 0 && (
               <div className="overflow-hidden rounded-xl border border-earth-200">
                 <div className="hidden bg-earth-100 sm:grid sm:grid-cols-12 sm:gap-4 sm:px-4 sm:py-3 sm:text-xs sm:font-semibold sm:uppercase sm:tracking-wide sm:text-earth-600">
-                  <div className="sm:col-span-3">Data</div>
-                  <div className="sm:col-span-3">Descrição</div>
-                  <div className="sm:col-span-2">Valor</div>
-                  <div className="sm:col-span-2">Método</div>
-                  <div className="sm:col-span-2">Status</div>
+                  <div className="sm:col-span-3">{t('platform.cart.colDate')}</div>
+                  <div className="sm:col-span-3">{t('platform.cart.colDescription')}</div>
+                  <div className="sm:col-span-2">{t('platform.cart.colAmount')}</div>
+                  <div className="sm:col-span-2">{t('platform.cart.colMethod')}</div>
+                  <div className="sm:col-span-2">{t('platform.cart.colStatus')}</div>
                 </div>
                 <ul className="divide-y divide-earth-200">
                   {payments.map((p) => {
@@ -1137,32 +1212,8 @@ function Cart() {
                     const serviceName = order?.service?.name ?? order?.service?.[0]?.name ?? ''
                     const rawPaymentId = String(p?.stripe_payment_id || '').trim()
                     const paymentId = rawPaymentId.toLowerCase()
-                    const paymentMethod = !rawPaymentId
-                      ? '—'
-                      : paymentId.startsWith('wallet')
-                        ? 'Carteira'
-                        : paymentId === 'referral_discount'
-                          ? 'Desconto'
-                          : paymentId.startsWith('parcelow')
-                            ? 'Parcelow'
-                          : paymentId.includes('pix')
-                            ? 'PIX'
-                            : (paymentId.startsWith('pi_') || paymentId.startsWith('cs_') || paymentId.startsWith('ch_'))
-                              ? 'Cartão'
-                              : paymentId.includes('manual')
-                                ? 'Manual'
-                                : 'Cartão'
-                    const paymentKind = paymentId === 'referral_discount'
-                      ? 'Desconto'
-                      : order?.order_source === 'store'
-                        ? 'Loja'
-                        : Number(order?.quote_amount) > 0
-                          ? 'Serviço'
-                          : Number(order?.shipping_cost) > 0
-                            ? 'Frete'
-                            : orderId
-                              ? 'Pedido'
-                              : 'Pagamento'
+                    const paymentMethod = historyPayMethodLabel(rawPaymentId)
+                    const paymentKind = historyPaymentKind(order, orderId, paymentId)
                     const paymentCurrency = String(p.currency || 'JPY').toUpperCase()
                     const amount = Number(p.amount) || 0
                     return (
@@ -1172,7 +1223,7 @@ function Cart() {
                       >
                         <div className="w-full text-earth-700 sm:col-span-3 sm:w-auto">
                           {p.created_at
-                            ? new Date(p.created_at).toLocaleString('pt-BR', {
+                            ? new Date(p.created_at).toLocaleString(dateLocale, {
                                 day: '2-digit',
                                 month: '2-digit',
                                 year: 'numeric',
@@ -1184,10 +1235,13 @@ function Cart() {
                         <div className="w-full sm:col-span-3 sm:w-auto">
                           {orderId ? (
                             <Link
-                              to={`/app/lounge?tab=pedidos&orderId=${encodeURIComponent(orderId)}`}
+                              to={lp('appLounge', `?tab=pedidos&orderId=${encodeURIComponent(orderId)}`)}
                               className="text-earth-900 underline decoration-earth-300 underline-offset-2 hover:decoration-earth-700"
                             >
-                              {paymentKind} · Pedido {String(orderId).slice(0, 8)}…
+                              {t('platform.cart.historyDesc', {
+                                kind: paymentKind,
+                                id: String(orderId).slice(0, 8),
+                              })}
                             </Link>
                           ) : (
                             <span className="text-earth-900">{paymentKind}</span>
@@ -1197,11 +1251,11 @@ function Cart() {
                           )}
                         </div>
                         <div className="w-full font-medium text-earth-900 sm:col-span-2 sm:w-auto">
-                          <div>{paymentCurrency === 'BRL' ? formatBRL(amount) : formatJPY(amount)}</div>
+                          <div>{fp.byCurrency(amount, paymentCurrency)}</div>
                           <p className="text-xs font-normal text-earth-500">
                             {paymentCurrency === 'BRL'
-                              ? 'registro legado em BRL'
-                              : `${formatBRL(jpyToBrl(amount))} convertido`}
+                              ? t('platform.cart.legacyBrl')
+                              : t('platform.cart.convertedBrl', { amount: fp.brl(jpyToBrl(amount)) })}
                           </p>
                         </div>
                         <div className="w-full text-earth-600 sm:col-span-2 sm:w-auto">
@@ -1217,7 +1271,7 @@ function Cart() {
                                   : 'bg-earth-100 text-earth-700'
                             }`}
                           >
-                            {PAYMENT_STATUS_LABELS[p.status] ?? p.status}
+                            {paymentStatusLabels[p.status] ?? p.status}
                           </span>
                         </div>
                       </li>
@@ -1243,7 +1297,7 @@ function Cart() {
             <div className="absolute inset-0 z-[80] flex items-center justify-center pointer-events-none">
               <p
                 className={`rounded-lg px-4 py-2 text-sm ${
-                  feedback.includes('Erro') || feedback.includes('erro')
+                  /error|erro/i.test(String(feedback))
                     ? 'bg-red-100 text-red-800'
                     : 'bg-green-100 text-green-800'
                 }`}
@@ -1257,10 +1311,8 @@ function Cart() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex-1 min-h-0 overflow-y-auto p-6">
-              <h3 className="font-semibold text-earth-900">Pagamento</h3>
-              <p className="mt-1 text-sm text-earth-600">
-                Escolha se deseja usar a carteira e a forma de pagamento do restante, quando houver.
-              </p>
+              <h3 className="font-semibold text-earth-900">{t('platform.cart.modalTitle')}</h3>
+              <p className="mt-1 text-sm text-earth-600">{t('platform.cart.modalSubtitle')}</p>
 
               {(() => {
                 const breakdown = getPaymentBreakdown(
@@ -1305,30 +1357,32 @@ function Cart() {
                       {charge && (
                         <>
                           <div className="flex justify-between text-sm">
-                            <span className="text-earth-600">{charge.label || 'Subtotal'}</span>
-                            <span className="font-medium text-earth-900">{formatJPY(totalJpy)}</span>
+                            <span className="text-earth-600">
+                              {charge.kind ? payableKindLabel(charge.kind) : t('platform.cart.subtotal')}
+                            </span>
+                            <span className="font-medium text-earth-900">{fp.jpy(totalJpy)}</span>
                           </div>
                           {useWallet && walletApplied > 0 && (
                             <div className="flex justify-between text-sm text-green-700">
-                              <span>Carteira aplicada</span>
-                              <span>-{formatJPY(walletApplied)}</span>
+                              <span>{t('platform.cart.modalWalletApplied')}</span>
+                              <span>-{fp.jpy(walletApplied)}</span>
                             </div>
                           )}
                           <div className="flex justify-between pt-2 border-t border-earth-200 font-medium">
-                            <span className="text-earth-800">Total a pagar (carteira)</span>
-                            <span className="text-earth-900">{formatJPY(remainingJpy)}</span>
+                            <span className="text-earth-800">{t('platform.cart.modalTotalWalletLine')}</span>
+                            <span className="text-earth-900">{fp.jpy(remainingJpy)}</span>
                           </div>
                           <p className="text-sm font-semibold text-earth-900 mt-2">
-                            Total: {formatBRL(remainingBrlUi)}
+                            {t('platform.cart.modalTotalBrl', { amount: fp.brl(remainingBrlUi) })}
                           </p>
                           {remainingUsdParcelow != null && remainingUsdParcelow > 0 && (
                             <p className="text-sm text-earth-700">
-                              Cobrança Parcelow em USD: {formatUSD(remainingUsdParcelow)}
+                              {t('platform.cart.modalParcelowUsd', {
+                                amount: formatUSD(remainingUsdParcelow),
+                              })}
                             </p>
                           )}
-                          <p className="text-xs text-earth-500 mt-1">
-                            O valor em BRL é referência (USD × cotação). O banco pode cobrar um BRL ligeiramente diferente.
-                          </p>
+                          <p className="text-xs text-earth-500 mt-1">{t('platform.cart.modalBrlNote')}</p>
                         </>
                       )}
                     </div>
@@ -1346,9 +1400,9 @@ function Cart() {
                         className="mt-1"
                       />
                       <div>
-                        <p className="font-medium text-earth-900">Usar saldo da carteira</p>
+                        <p className="font-medium text-earth-900">{t('platform.cart.modalUseWallet')}</p>
                         <p className="text-sm text-earth-600">
-                          Saldo disponível: {formatJPY(balance)}
+                          {t('platform.cart.modalWalletAvailable', { amount: fp.jpy(balance) })}
                         </p>
                         {useWallet && canUseWallet && (
                           <div className="mt-3 space-y-2">
@@ -1359,7 +1413,7 @@ function Cart() {
                                 checked={walletApplyMode === 'full'}
                                 onChange={() => setWalletApplyMode('full')}
                               />
-                              <span>Usar saldo máximo possível</span>
+                              <span>{t('platform.cart.modalWalletFull')}</span>
                             </label>
                             <label className="flex items-center gap-2 text-sm text-earth-700">
                               <input
@@ -1368,12 +1422,12 @@ function Cart() {
                                 checked={walletApplyMode === 'custom'}
                                 onChange={() => setWalletApplyMode('custom')}
                               />
-                              <span>Usar valor específico</span>
+                              <span>{t('platform.cart.modalWalletCustom')}</span>
                             </label>
                             {walletApplyMode === 'custom' && (
                               <div className="mt-2">
                                 <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-earth-500">
-                                  Valor da carteira (JPY)
+                                  {t('platform.cart.modalWalletJpyLabel')}
                                 </label>
                                 <input
                                   type="number"
@@ -1381,7 +1435,7 @@ function Cart() {
                                   step="1"
                                   value={walletCustomAmount}
                                   onChange={(e) => setWalletCustomAmount(e.target.value)}
-                                  placeholder="Ex: 1000"
+                                  placeholder={t('platform.cart.modalWalletJpyPh')}
                                   className="w-full rounded border border-earth-300 px-3 py-2 text-sm text-earth-900"
                                 />
                               </div>
@@ -1392,16 +1446,17 @@ function Cart() {
                     </label>
                     {!isFullyCovered && (
                     <div className="rounded-lg border border-earth-200 bg-white p-4">
-                      <p className="font-medium text-earth-900">Forma de pagamento</p>
+                      <p className="font-medium text-earth-900">{t('platform.cart.modalPayMethod')}</p>
                       {(() => {
-                        const option = GATEWAY_OPTIONS.find((entry) => entry.id === selectedGateway) || GATEWAY_OPTIONS[0]
+                        const option =
+                          gatewayOptions.find((entry) => entry.id === selectedGateway) || gatewayOptions[0]
                         const methods = PAYMENT_METHODS_BY_GATEWAY[option.id] || []
                         const groups = Array.from(new Set(methods.map((method) => method.group || 'card')))
                         const visibleMethods = methods.filter((method) => (method.group || 'card') === selectedMethodGroup)
                         return (
                           <>
                             <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                              {GATEWAY_OPTIONS.map((entry) => {
+                              {gatewayOptions.map((entry) => {
                                 const active = entry.id === option.id
                                 return (
                                   <button
@@ -1430,7 +1485,7 @@ function Cart() {
                               </p>
                               <p className="text-xs text-earth-600">{option.details}</p>
                               <p className="mt-2 text-xs font-medium uppercase tracking-wide text-earth-500">
-                                Formas aceitas
+                                {t('platform.cart.modalAccepted')}
                               </p>
                               {groups.length > 1 && (
                                 <div className="mt-2 flex flex-wrap gap-1">
@@ -1447,7 +1502,7 @@ function Cart() {
                                             : 'border-earth-200 bg-white text-earth-600 hover:bg-earth-100'
                                         }`}
                                       >
-                                        {PAYMENT_METHOD_GROUP_LABELS[group] || group}
+                                        {methodGroupLabels[group] || group}
                                       </button>
                                     )
                                   })}
@@ -1461,7 +1516,7 @@ function Cart() {
                                   >
                                     <img
                                       src={method.src}
-                                      alt={`Bandeira ${method.label}`}
+                                      alt={t('platform.cart.cardBadgeAlt', { label: method.label })}
                                       className="h-7 w-auto rounded"
                                       loading="lazy"
                                     />
@@ -1497,14 +1552,10 @@ function Cart() {
                 return (
                   <div className="flex flex-col gap-3">
                     {!isFullyCovered && (
-                      <p className="text-xs text-earth-500">
-                        Parcelow: cobrança em dólar (USD). Stripe segue em ienes (JPY) neste fluxo.
-                      </p>
+                      <p className="text-xs text-earth-500">{t('platform.cart.modalParcelowHint')}</p>
                     )}
                     {customWalletInvalid && (
-                      <p className="text-xs text-amber-700">
-                        Informe quanto deseja usar da carteira (JPY) ou marque &quot;Usar saldo máximo possível&quot;.
-                      </p>
+                      <p className="text-xs text-amber-700">{t('platform.cart.modalWalletCustomError')}</p>
                     )}
                     <div className="flex flex-wrap gap-2">
                       <button
@@ -1519,10 +1570,10 @@ function Cart() {
                         className="flex-1 min-w-0 rounded-lg bg-earth-900 px-6 py-2.5 font-medium text-earth-50 hover:bg-earth-800 disabled:opacity-60"
                       >
                         {submitting
-                          ? 'Processando...'
+                          ? t('platform.cart.processing')
                           : isFullyCovered
-                            ? 'Concluir com carteira'
-                            : 'Pagar com método selecionado'}
+                            ? t('platform.cart.modalCompleteWallet')
+                            : t('platform.cart.modalPaySelected')}
                       </button>
                       <button
                         type="button"
@@ -1530,7 +1581,7 @@ function Cart() {
                         disabled={submitting}
                         className="rounded-lg border border-earth-300 px-4 py-2.5 font-medium text-earth-700 hover:bg-earth-100 disabled:opacity-60"
                       >
-                        Fechar
+                        {t('platform.cart.modalClose')}
                       </button>
                     </div>
                   </div>

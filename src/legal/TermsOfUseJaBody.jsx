@@ -2,7 +2,7 @@
  * 利用規約・サービス条項（日本語・法務ページ）
  * 最終更新：2026年3月30日
  */
-import { Link } from 'react-router-dom'
+import { LocalizedLink } from '../components/LocalizedLink'
 
 function LegalSection({ title, children }) {
   return (
@@ -61,9 +61,9 @@ export function TermsOfUseJaBody({ cfg }) {
       <LegalSection title="第2条（規約への同意）">
         <P>
           本利用規約およびサービス条項（以下「本規約」）は、プラットフォームおよび各サービスの利用条件を定めます。アカウント登録、電子的同意、またはサービスの利用により、ユーザーは本規約および
-          <Link to="/legal/privacy" className="font-medium text-earth-900 underline hover:no-underline">
+          <LocalizedLink toRoute="legalPrivacy" className="font-medium text-earth-900 underline hover:no-underline">
             プライバシーポリシー
-          </Link>
+          </LocalizedLink>
           に同意したものとみなされます。
         </P>
       </LegalSection>
@@ -166,9 +166,9 @@ export function TermsOfUseJaBody({ cfg }) {
         />
         <P>
           詳細は
-          <Link to="/servicos-e-precos" className="font-medium text-earth-900 underline hover:no-underline">
+          <LocalizedLink toRoute="servicosPrecos" className="font-medium text-earth-900 underline hover:no-underline">
             サービス・料金
-          </Link>
+          </LocalizedLink>
           をご確認ください。決済は第三者（例：Stripe）を利用する場合があります。カード番号は当サービスのサーバーに保存しません。利用可能な場合、
           <strong>PIX</strong>、<strong>クレジットカード</strong>（分割払いが提供される場合）、
           <strong>銀行振込</strong>等があります。決済の有効化後に注文が確定します。
@@ -186,12 +186,12 @@ export function TermsOfUseJaBody({ cfg }) {
       <LegalSection title="第11条（国際送料）">
         <P>
           発送依頼・合算（ある場合）・最終計量後に国際送料が算定されます。発送前に送料および関連費用の支払が必要です。目安は
-          <Link
-            to="/servicos-e-precos/fretes-prazos"
+          <LocalizedLink
+            toRoute="servicosFretes"
             className="font-medium text-earth-900 underline hover:no-underline"
           >
             送料・所要日数
-          </Link>
+          </LocalizedLink>
           をご参照ください。
         </P>
       </LegalSection>
@@ -209,9 +209,9 @@ export function TermsOfUseJaBody({ cfg }) {
         </P>
         <P>
           ブラジル向けの参考：
-          <Link to="/faq/taxas-alfandegarias" className="font-medium text-earth-900 underline hover:no-underline">
+          <LocalizedLink toRoute="faqCustoms" className="font-medium text-earth-900 underline hover:no-underline">
             関税・税金の案内
-          </Link>
+          </LocalizedLink>
           。
         </P>
       </LegalSection>
@@ -288,9 +288,9 @@ export function TermsOfUseJaBody({ cfg }) {
       <LegalSection title="第21条（プライバシー）">
         <P>
           個人データの取扱いは
-          <Link to="/legal/privacy" className="font-medium text-earth-900 underline hover:no-underline">
+          <LocalizedLink toRoute="legalPrivacy" className="font-medium text-earth-900 underline hover:no-underline">
             プライバシーポリシー
-          </Link>
+          </LocalizedLink>
           に従います。決済事業者・運送事業者・業務委託先との共有が含まれます。
         </P>
       </LegalSection>

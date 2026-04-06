@@ -2,26 +2,59 @@
  * Payments - Histórico de pagamentos do usuário.
  * Exibe pagamentos de frete (cartão e carteira) vinculados aos pedidos.
  */
-import { useEffect, useState } from 'react'
-import { Helmet } from 'react-helmet-async'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../hooks/useAuth'
+import { useLocalizedPath } from '../../hooks/useLocalizedPath'
+import { useSiteLocale } from '../../hooks/useSiteLocale'
+import { PageSeo } from '../../components/PageSeo'
 import { getMyPayments } from '../../services/paymentService'
 import { brlToJpy, jpyToBrl } from '../../lib/fx'
 import { TriCurrencyDisplay } from '../../components/TriCurrencyDisplay'
 
-const STATUS_LABELS = {
-  pending: 'Pendente',
-  completed: 'Concluído',
-  failed: 'Falhou',
-  refunded: 'Reembolsado',
-}
-
 export default function Payments() {
+  const { t } = useTranslation()
+  const locale = useSiteLocale()
+  const dateLocale = locale === 'en' ? 'en-US' : 'pt-BR'
   const { user } = useAuth()
+  const lp = useLocalizedPath()
   const [payments, setPayments] = useState([])
   const [loading, setLoading] = useState(true)
   const [feedback, setFeedback] = useState('')
+
+  const paymentStatusLabels = useMemo(
+    () => ({
+      pending: t('platform.cart.paymentStatus.pending'),
+      completed: t('platform.cart.paymentStatus.completed'),
+      failed: t('platform.cart.paymentStatus.failed'),
+      refunded: t('platform.cart.paymentStatus.refunded'),
+    }),
+    [t]
+  )
+
+  const historyPaymentKind = (order, orderId, paymentIdLower) => {
+    if (paymentIdLower === 'referral_discount') return t('platform.cart.historyKind.discount')
+    if (order?.order_source === 'store') return t('platform.cart.historyKind.store')
+    if (Number(order?.quote_amount) > 0) return t('platform.cart.historyKind.service')
+    if (Number(order?.shipping_cost) > 0) return t('platform.cart.historyKind.shipping')
+    if (orderId) return t('platform.cart.historyKind.order')
+    return t('platform.cart.historyKind.payment')
+  }
+
+  const historyPayMethodLabel = (raw) => {
+    const paymentId = String(raw || '').trim().toLowerCase()
+    if (!paymentId) return '—'
+    if (paymentId.startsWith('wallet')) return t('platform.cart.payMethod.wallet')
+    if (paymentId === 'referral_discount') return t('platform.cart.payMethod.discount')
+    if (paymentId.startsWith('parcelow')) return 'Parcelow'
+    if (paymentId.includes('pix')) return 'PIX'
+    if (paymentId.startsWith('pi_') || paymentId.startsWith('cs_') || paymentId.startsWith('ch_')) {
+      return t('platform.cart.payMethod.card')
+    }
+    if (paymentId.includes('manual')) return t('platform.cart.payMethod.manual')
+    return t('platform.cart.payMethod.card')
+  }
 
   useEffect(() => {
     let isActive = true
@@ -36,37 +69,23 @@ export default function Payments() {
         setPayments(data ?? [])
         if (error) setFeedback(error.message)
       } catch (e) {
-        if (isActive) setFeedback(e?.message || 'Erro ao carregar pagamentos')
+        if (isActive) setFeedback(e?.message || t('platform.paymentHistory.loadError'))
       } finally {
         if (isActive) setLoading(false)
       }
     }
     run()
-    return () => { isActive = false }
-  }, [user?.id])
+    return () => {
+      isActive = false
+    }
+  }, [user?.id, t])
 
-  const paymentMethod = (p) => {
-    const raw = String(p?.stripe_payment_id || '').trim()
-    if (!raw) return '—'
-    const id = raw.toLowerCase()
-    if (id.startsWith('wallet')) return 'Carteira'
-    if (id === 'referral_discount') return 'Desconto'
-    if (id.startsWith('parcelow')) return 'Parcelow'
-    if (id.includes('pix')) return 'PIX'
-    if (id.startsWith('pi_') || id.startsWith('cs_') || id.startsWith('ch_')) return 'Cartão'
-    if (id.includes('manual')) return 'Manual'
-    if (raw) return 'Cartão'
-    return '—'
-  }
+  const paymentMethod = (p) => historyPayMethodLabel(p?.stripe_payment_id)
   const paymentKind = (p) => {
     const o = order(p)
     const id = String(p?.stripe_payment_id || '').toLowerCase()
-    if (id === 'referral_discount') return 'Desconto'
-    if (o?.order_source === 'store') return 'Loja'
-    if (Number(o?.quote_amount) > 0) return 'Serviço'
-    if (Number(o?.shipping_cost) > 0) return 'Frete'
-    if (p?.order_id) return 'Pedido'
-    return 'Pagamento'
+    const oid = o?.id ?? p.order_id
+    return historyPaymentKind(o, oid, id)
   }
 
   const order = (p) => {
@@ -79,9 +98,7 @@ export default function Payments() {
     const svc = o.service
     return (svc && (svc.name ?? (Array.isArray(svc) ? svc[0]?.name : null))) ?? ''
   }
-  /**
-   * Tenta montar BRL (destaque), JPY (base) e USD (cobrança) a partir do registro do pagamento + pedido.
-   */
+
   const paymentTriValues = (p) => {
     const o = order(p)
     const amount = Number(p?.amount) || 0
@@ -105,7 +122,7 @@ export default function Payments() {
         brl,
         jpy,
         usd,
-        footnote: Number.isFinite(brl) ? null : 'Cobrança em dólar (Parcelow). BRL/¥ são referência quando o pedido tem totais.',
+        footnote: Number.isFinite(brl) ? null : t('platform.paymentHistory.usdChargeFootnote'),
       }
     }
     if (cur === 'BRL') {
@@ -127,17 +144,20 @@ export default function Payments() {
 
   return (
     <>
-      <Helmet>
-        <title>Pagamentos | Plataforma</title>
-      </Helmet>
+      <PageSeo
+        routeKey="appPayments"
+        title={t('meta.appPayments.title')}
+        description={t('meta.appPayments.description')}
+        noindex
+      />
       <div>
-        <h1 className="text-2xl font-bold text-earth-900">Pagamentos</h1>
+        <h1 className="text-2xl font-bold text-earth-900">{t('platform.paymentHistory.pageTitle')}</h1>
         <p className="mt-2 text-earth-600">
-          Histórico de pagamentos de frete e serviços. Recargas da carteira aparecem em{' '}
-          <Link to="/app/lounge" className="font-medium text-earth-900 underline hover:no-underline">
-            Carteira
-          </Link>
-          .
+          {t('platform.paymentHistory.introBefore')}{' '}
+          <Link to={lp('appLounge')} className="font-medium text-earth-900 underline hover:no-underline">
+            {t('platform.wallet.pageTitle')}
+          </Link>{' '}
+          {t('platform.paymentHistory.introAfter')}
         </p>
 
         {feedback && (
@@ -146,26 +166,27 @@ export default function Payments() {
           </p>
         )}
 
-        {loading && <p className="mt-6 text-earth-600">Carregando pagamentos...</p>}
+        {loading && <p className="mt-6 text-earth-600">{t('platform.paymentHistory.loading')}</p>}
 
         {!loading && payments.length === 0 && (
-          <p className="mt-6 text-earth-600">Nenhum pagamento registrado.</p>
+          <p className="mt-6 text-earth-600">{t('platform.paymentHistory.empty')}</p>
         )}
 
         {!loading && payments.length > 0 && (
           <div className="mt-6 overflow-hidden rounded-xl border border-earth-200">
             <div className="hidden bg-earth-100 sm:grid sm:grid-cols-12 sm:gap-4 sm:px-4 sm:py-3 sm:text-xs sm:font-semibold sm:uppercase sm:tracking-wide sm:text-earth-600">
-              <div className="sm:col-span-3">Data</div>
-              <div className="sm:col-span-3">Descrição</div>
-              <div className="sm:col-span-2">Valor</div>
-              <div className="sm:col-span-2">Método</div>
-              <div className="sm:col-span-2">Status</div>
+              <div className="sm:col-span-3">{t('platform.cart.colDate')}</div>
+              <div className="sm:col-span-3">{t('platform.cart.colDescription')}</div>
+              <div className="sm:col-span-2">{t('platform.cart.colAmount')}</div>
+              <div className="sm:col-span-2">{t('platform.cart.colMethod')}</div>
+              <div className="sm:col-span-2">{t('platform.cart.colStatus')}</div>
             </div>
             <ul className="divide-y divide-earth-200">
               {payments.map((p) => {
                 const o = order(p)
                 const orderId = o?.id ?? p.order_id
                 const tri = paymentTriValues(p)
+                const kind = paymentKind(p)
                 return (
                   <li
                     key={p.id}
@@ -173,7 +194,7 @@ export default function Payments() {
                   >
                     <div className="w-full text-earth-700 sm:col-span-3 sm:w-auto">
                       {p.created_at
-                        ? new Date(p.created_at).toLocaleString('pt-BR', {
+                        ? new Date(p.created_at).toLocaleString(dateLocale, {
                             day: '2-digit',
                             month: '2-digit',
                             year: 'numeric',
@@ -185,13 +206,16 @@ export default function Payments() {
                     <div className="w-full sm:col-span-3 sm:w-auto">
                       {orderId ? (
                         <Link
-                          to={`/app/lounge?tab=pedidos&orderId=${encodeURIComponent(orderId)}`}
+                          to={lp('appLounge', `?tab=pedidos&orderId=${encodeURIComponent(orderId)}`)}
                           className="text-earth-900 underline decoration-earth-300 underline-offset-2 hover:decoration-earth-700"
                         >
-                          {paymentKind(p)} · Pedido {String(orderId).slice(0, 8)}…
+                          {t('platform.cart.historyDesc', {
+                            kind,
+                            id: String(orderId).slice(0, 8),
+                          })}
                         </Link>
                       ) : (
-                        <span className="text-earth-900">{paymentKind(p)}</span>
+                        <span className="text-earth-900">{kind}</span>
                       )}
                       {serviceName(p) && (
                         <p className="text-sm text-earth-500">{serviceName(p)}</p>
@@ -219,7 +243,7 @@ export default function Payments() {
                               : 'bg-earth-100 text-earth-700'
                         }`}
                       >
-                        {STATUS_LABELS[p.status] ?? p.status}
+                        {paymentStatusLabels[p.status] ?? p.status}
                       </span>
                     </div>
                   </li>

@@ -1,27 +1,37 @@
 /**
  * LegalLayout - Reusable layout for legal pages.
- * Provides centered readable content, max-width container, clear section headings.
- * Includes language switcher (JP / PT-BR / EN) with flag buttons. JP is default.
+ * Includes language switcher (JP / PT-BR / EN) with flag buttons.
+ * Site locale from URL (/en/legal vs /legal) sets default legal document language.
  */
-import { Outlet, Link, useLocation } from 'react-router-dom'
+import { useEffect } from 'react'
+import { Outlet, useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { LegalLanguageProvider, useLegalLanguage } from '../contexts/LegalLanguageContext'
+import { isRouteActive } from '../lib/localeRoutes'
+import { LocalizedLink } from '../components/LocalizedLink'
 
 const LEGAL_LINKS = [
-  { to: '/legal/commercial-disclosure', labelJa: '特定商取引法に基づく表記', labelPt: 'Divulgação Comercial', labelEn: 'Commercial Disclosure' },
-  { to: '/legal/privacy', labelJa: 'プライバシーポリシー', labelPt: 'Política de Privacidade', labelEn: 'Privacy Policy' },
-  { to: '/legal/terms', labelJa: '利用規約', labelPt: 'Termos de Uso e Serviços', labelEn: 'Terms of Use & Services' },
+  { routeKey: 'legalCommercial', labelJa: '特定商取引法に基づく表記', labelPt: 'Divulgação Comercial', labelEn: 'Commercial Disclosure' },
+  { routeKey: 'legalPrivacy', labelJa: 'プライバシーポリシー', labelPt: 'Política de Privacidade', labelEn: 'Privacy Policy' },
+  { routeKey: 'legalTerms', labelJa: '利用規約', labelPt: 'Termos de Uso e Serviços', labelEn: 'Terms of Use & Services' },
 ]
 
 function LegalLayoutInner() {
+  const { t } = useTranslation()
   const location = useLocation()
   const { lang, setLang } = useLegalLanguage()
+
+  useEffect(() => {
+    if (location.pathname.startsWith('/en/legal')) setLang('en')
+    else if (location.pathname.startsWith('/legal')) setLang('pt-BR')
+  }, [location.pathname, setLang])
 
   return (
     <section className="px-4 pt-24 pb-16">
       <div className="mx-auto max-w-3xl">
         <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
           <h1 className="text-3xl font-bold tracking-tight text-earth-900 sm:text-4xl">
-            Legal
+            {t('layout.legal.title')}
           </h1>
           <div className="flex gap-2" role="group" aria-label="言語 / Idioma / Language">
             <button
@@ -62,18 +72,18 @@ function LegalLayoutInner() {
 
         <nav className="mb-10 border-b border-earth-200">
           <ul className="flex flex-wrap gap-4 sm:gap-6">
-            {LEGAL_LINKS.map(({ to, labelJa, labelPt, labelEn }) => (
-              <li key={to}>
-                <Link
-                  to={to}
+            {LEGAL_LINKS.map(({ routeKey, labelJa, labelPt, labelEn }) => (
+              <li key={routeKey}>
+                <LocalizedLink
+                  toRoute={routeKey}
                   className={`block border-b-2 pb-3 text-sm font-medium transition ${
-                    location.pathname === to
+                    isRouteActive(routeKey, location.pathname)
                       ? 'border-earth-900 text-earth-900'
                       : 'border-transparent text-earth-600 hover:border-earth-300 hover:text-earth-900'
                   }`}
                 >
                   {lang === 'ja' ? labelJa : lang === 'pt-BR' ? labelPt : labelEn}
-                </Link>
+                </LocalizedLink>
               </li>
             ))}
           </ul>

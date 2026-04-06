@@ -7,6 +7,8 @@
  * - Pelo menos um símbolo
  */
 
+import i18n from '../i18n/i18n'
+
 const PASSWORD_REQUIREMENTS = {
   minLength: 8,
   requireLowercase: true,
@@ -15,34 +17,34 @@ const PASSWORD_REQUIREMENTS = {
   requireSymbol: true,
 }
 
-const REQUIREMENTS_MESSAGE = 'A senha deve ter no mínimo 8 caracteres, incluindo letras maiúsculas, minúsculas, números e símbolos.'
+function pv(key) {
+  return i18n.t(`auth.passwordValidation.${key}`)
+}
 
 export function validatePassword(password) {
   if (!password || typeof password !== 'string') {
-    return { valid: false, message: REQUIREMENTS_MESSAGE }
+    return { valid: false, message: pv('summary') }
   }
 
   if (password.length < PASSWORD_REQUIREMENTS.minLength) {
-    return { valid: false, message: 'A senha deve ter no mínimo 8 caracteres.' }
+    return { valid: false, message: pv('minLength') }
   }
 
   if (PASSWORD_REQUIREMENTS.requireLowercase && !/[a-z]/.test(password)) {
-    return { valid: false, message: 'A senha deve incluir pelo menos uma letra minúscula.' }
+    return { valid: false, message: pv('needLowercase') }
   }
 
   if (PASSWORD_REQUIREMENTS.requireUppercase && !/[A-Z]/.test(password)) {
-    return { valid: false, message: 'A senha deve incluir pelo menos uma letra maiúscula.' }
+    return { valid: false, message: pv('needUppercase') }
   }
 
   if (PASSWORD_REQUIREMENTS.requireDigit && !/[0-9]/.test(password)) {
-    return { valid: false, message: 'A senha deve incluir pelo menos um número.' }
+    return { valid: false, message: pv('needDigit') }
   }
 
   if (PASSWORD_REQUIREMENTS.requireSymbol && !/[^a-zA-Z0-9]/.test(password)) {
-    return { valid: false, message: 'A senha deve incluir pelo menos um símbolo (!@#$%^&* etc.).' }
+    return { valid: false, message: pv('needSymbol') }
   }
 
   return { valid: true, message: null }
 }
-
-export const PASSWORD_PLACEHOLDER = 'Mín. 8 caracteres, maiúsculas, minúsculas, números e símbolos'

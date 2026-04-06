@@ -1,55 +1,56 @@
-import { Outlet, Link, useLocation } from 'react-router-dom'
+import { Outlet, useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+import { isRouteActive } from '../../lib/localeRoutes'
+import { LocalizedLink } from '../../components/LocalizedLink'
 
-/**
- * Layout para Dúvidas (rotas /faq) e sub-páginas.
- */
 function FaqLayout() {
+  const { t } = useTranslation()
   const location = useLocation()
 
   return (
     <section className="px-4 pt-24 pb-16">
       <div className="mx-auto max-w-6xl">
         <h1 className="mb-8 text-3xl font-bold tracking-tight text-earth-900 sm:text-4xl">
-          Dúvidas
+          {t('layout.faq.title')}
         </h1>
 
         <nav className="mb-10 border-b border-earth-200">
           <ul className="flex flex-wrap gap-6">
             <li>
-              <Link
-                to="/faq"
+              <LocalizedLink
+                toRoute="faqIndex"
                 className={`block border-b-2 pb-3 text-sm font-medium transition ${
-                  location.pathname === '/faq'
+                  isRouteActive('faqIndex', location.pathname)
                     ? 'border-earth-900 text-earth-900'
                     : 'border-transparent text-earth-600 hover:border-earth-300 hover:text-earth-900'
                 }`}
               >
-                Perguntas frequentes
-              </Link>
+                {t('layout.faq.navFaq')}
+              </LocalizedLink>
             </li>
             <li>
-              <Link
-                to="/faq/itens-proibidos"
+              <LocalizedLink
+                toRoute="faqProhibited"
                 className={`block border-b-2 pb-3 text-sm font-medium transition ${
-                  location.pathname === '/faq/itens-proibidos'
+                  isRouteActive('faqProhibited', location.pathname)
                     ? 'border-earth-900 text-earth-900'
                     : 'border-transparent text-earth-600 hover:border-earth-300 hover:text-earth-900'
                 }`}
               >
-                Itens proibidos
-              </Link>
+                {t('layout.faq.navProhibited')}
+              </LocalizedLink>
             </li>
             <li>
-              <Link
-                to="/faq/taxas-alfandegarias"
+              <LocalizedLink
+                toRoute="faqCustoms"
                 className={`block border-b-2 pb-3 text-sm font-medium transition ${
-                  location.pathname === '/faq/taxas-alfandegarias'
+                  isRouteActive('faqCustoms', location.pathname)
                     ? 'border-earth-900 text-earth-900'
                     : 'border-transparent text-earth-600 hover:border-earth-300 hover:text-earth-900'
                 }`}
               >
-                Taxas alfandegárias
-              </Link>
+                {t('layout.faq.navCustoms')}
+              </LocalizedLink>
             </li>
           </ul>
         </nav>

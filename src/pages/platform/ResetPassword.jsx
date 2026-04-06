@@ -3,12 +3,16 @@
  * Usuário define nova senha. Supabase recupera a sessão do hash na URL.
  */
 import { useState, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { Helmet } from 'react-helmet-async'
+import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+import { LocalizedLink } from '../../components/LocalizedLink'
+import { PageSeo } from '../../components/PageSeo'
+import { useLocalizedPath } from '../../hooks/useLocalizedPath'
 import { supabase } from '../../lib/supabase'
-import { validatePassword, PASSWORD_PLACEHOLDER } from '../../lib/passwordValidation'
+import { validatePassword } from '../../lib/passwordValidation'
 
 export default function ResetPassword() {
+  const { t } = useTranslation()
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [error, setError] = useState('')
@@ -16,6 +20,7 @@ export default function ResetPassword() {
   const [loading, setLoading] = useState(false)
   const [validSession, setValidSession] = useState(null)
   const navigate = useNavigate()
+  const path = useLocalizedPath()
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -27,7 +32,7 @@ export default function ResetPassword() {
     e.preventDefault()
     setError('')
     if (password !== confirm) {
-      setError('As senhas não coincidem')
+      setError(t('auth.resetPasswordMismatch'))
       return
     }
     const { valid, message } = validatePassword(password)
@@ -41,54 +46,71 @@ export default function ResetPassword() {
 
     setLoading(false)
     if (err) {
-      setError(err.message || 'Erro ao redefinir senha')
+      setError(err.message || t('auth.resetError'))
       return
     }
     setSuccess(true)
-    setTimeout(() => navigate('/login'), 2000)
+    setTimeout(() => navigate(path('login')), 2000)
   }
 
   if (validSession === false) {
     return (
-      <section className="flex min-h-[calc(100vh-8rem)] items-center justify-center px-4 pt-24 pb-16">
-        <div className="w-full max-w-sm rounded-lg border border-earth-200 bg-earth-100 p-6 text-center">
-          <p className="text-earth-700">Link inválido ou expirado. Solicite um novo.</p>
-          <Link
-            to="/forgot-password"
-            className="mt-4 inline-block font-medium text-earth-900 underline hover:no-underline"
-          >
-            Esqueci minha senha
-          </Link>
-        </div>
-      </section>
+      <>
+        <PageSeo
+          routeKey="resetPassword"
+          title={t('meta.resetPassword.title')}
+          description={t('meta.resetPassword.description')}
+          noindex
+        />
+        <section className="flex min-h-[calc(100vh-8rem)] items-center justify-center px-4 pt-24 pb-16">
+          <div className="w-full max-w-sm rounded-lg border border-earth-200 bg-earth-100 p-6 text-center">
+            <p className="text-earth-700">{t('auth.resetInvalid')}</p>
+            <LocalizedLink
+              toRoute="forgotPassword"
+              className="mt-4 inline-block font-medium text-earth-900 underline hover:no-underline"
+            >
+              {t('auth.forgotLink')}
+            </LocalizedLink>
+          </div>
+        </section>
+      </>
     )
   }
 
   if (success) {
     return (
-      <section className="flex min-h-[calc(100vh-8rem)] items-center justify-center px-4 pt-24 pb-16">
-        <div className="w-full max-w-sm rounded-lg border border-earth-200 bg-earth-100 p-6 text-center">
-          <p className="text-earth-900">Senha alterada com sucesso. Redirecionando para o login...</p>
-        </div>
-      </section>
+      <>
+        <PageSeo
+          routeKey="resetPassword"
+          title={t('meta.resetPassword.title')}
+          description={t('meta.resetPassword.description')}
+          noindex
+        />
+        <section className="flex min-h-[calc(100vh-8rem)] items-center justify-center px-4 pt-24 pb-16">
+          <div className="w-full max-w-sm rounded-lg border border-earth-200 bg-earth-100 p-6 text-center">
+            <p className="text-earth-900">{t('auth.resetSuccess')}</p>
+          </div>
+        </section>
+      </>
     )
   }
 
   return (
     <>
-      <Helmet>
-        <title>Nova senha | Plataforma</title>
-      </Helmet>
+      <PageSeo
+        routeKey="resetPassword"
+        title={t('meta.resetPassword.title')}
+        description={t('meta.resetPassword.description')}
+        noindex
+      />
       <section className="flex min-h-[calc(100vh-8rem)] items-center justify-center px-4 pt-24 pb-16">
         <div className="w-full max-w-sm rounded-lg border border-earth-200 bg-earth-100 p-6 shadow-sm">
-          <h1 className="text-xl font-bold text-earth-900">Nova senha</h1>
-          <p className="mt-1 text-sm text-earth-600">
-            Digite e confirme sua nova senha
-          </p>
+          <h1 className="text-xl font-bold text-earth-900">{t('auth.resetTitle')}</h1>
+          <p className="mt-1 text-sm text-earth-600">{t('auth.resetSubtitle')}</p>
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-earth-700">
-                Nova senha
+                {t('auth.newPassword')}
               </label>
               <input
                 id="password"
@@ -98,12 +120,12 @@ export default function ResetPassword() {
                 required
                 minLength={8}
                 className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
-                placeholder={PASSWORD_PLACEHOLDER}
+                placeholder={t('auth.passwordValidation.placeholder')}
               />
             </div>
             <div>
               <label htmlFor="confirm" className="block text-sm font-medium text-earth-700">
-                Confirmar senha
+                {t('auth.confirmNewPassword')}
               </label>
               <input
                 id="confirm"
@@ -121,7 +143,7 @@ export default function ResetPassword() {
               disabled={loading}
               className="w-full rounded-lg bg-earth-900 px-4 py-3 font-medium text-earth-50 hover:bg-earth-800 disabled:opacity-70"
             >
-              {loading ? 'Salvando...' : 'Redefinir senha'}
+              {loading ? t('auth.saving') : t('auth.resetSubmit')}
             </button>
           </form>
         </div>

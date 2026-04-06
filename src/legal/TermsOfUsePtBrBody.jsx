@@ -2,7 +2,7 @@
  * Texto integral dos Termos de Uso e Serviços em PT-BR (página legal e cadastro).
  * Última atualização: 30 de março de 2026.
  */
-import { Link } from 'react-router-dom'
+import { LocalizedLink } from '../components/LocalizedLink'
 
 function LegalSection({ title, children, compact = false }) {
   return (
@@ -81,9 +81,9 @@ export function TermsOfUsePtBrBody({ cfg, compact = false }) {
           Estes Termos de Uso e Serviços (&quot;Termos&quot;) regem o uso da plataforma e dos serviços. Ao criar conta,
           aceitar eletronicamente e/ou utilizar qualquer serviço, você declara ter lido e concordado com estes Termos e
           com a{' '}
-          <Link to="/legal/privacy" className="font-medium text-earth-900 underline hover:no-underline">
+          <LocalizedLink toRoute="legalPrivacy" className="font-medium text-earth-900 underline hover:no-underline">
             Política de Privacidade
-          </Link>
+          </LocalizedLink>
           .
         </P>
       </LegalSection>
@@ -215,9 +215,9 @@ export function TermsOfUsePtBrBody({ cfg, compact = false }) {
         />
         <P>
           Detalhes em{' '}
-          <Link to="/servicos-e-precos" className="font-medium text-earth-900 underline hover:no-underline">
+          <LocalizedLink toRoute="servicosPrecos" className="font-medium text-earth-900 underline hover:no-underline">
             Serviços e Preços
-          </Link>
+          </LocalizedLink>
           . Pagamentos podem ser processados por terceiros (ex.: Stripe); dados de cartão não são armazenados em nossos
           servidores. Conforme disponibilidade: <strong>PIX</strong>, <strong>cartão de crédito</strong> (parcelamento
           quando oferecido) e <strong>depósito bancário</strong>. Pedidos confirmam após validação do pagamento.
@@ -239,9 +239,9 @@ export function TermsOfUsePtBrBody({ cfg, compact = false }) {
         <P>
           O frete é calculado após solicitação de envio, consolidação (se houver) e pesagem final. O pagamento do frete e
           encargos aplicáveis deve ocorrer antes da postagem. Valores orientativos em{' '}
-          <Link to="/servicos-e-precos/fretes-prazos" className="font-medium text-earth-900 underline hover:no-underline">
+          <LocalizedLink toRoute="servicosFretes" className="font-medium text-earth-900 underline hover:no-underline">
             Fretes e Prazos
-          </Link>
+          </LocalizedLink>
           .
         </P>
       </LegalSection>
@@ -264,9 +264,9 @@ export function TermsOfUsePtBrBody({ cfg, compact = false }) {
         </P>
         <P>
           Orientações sobre o Brasil:{' '}
-          <Link to="/faq/taxas-alfandegarias" className="font-medium text-earth-900 underline hover:no-underline">
+          <LocalizedLink toRoute="faqCustoms" className="font-medium text-earth-900 underline hover:no-underline">
             Taxas alfandegárias
-          </Link>
+          </LocalizedLink>
           .
         </P>
       </LegalSection>
@@ -355,9 +355,9 @@ export function TermsOfUsePtBrBody({ cfg, compact = false }) {
       <LegalSection title="Art. 21º (Privacidade e dados pessoais)" compact={compact}>
         <P>
           O tratamento de dados segue a{' '}
-          <Link to="/legal/privacy" className="font-medium text-earth-900 underline hover:no-underline">
+          <LocalizedLink toRoute="legalPrivacy" className="font-medium text-earth-900 underline hover:no-underline">
             Política de Privacidade
-          </Link>
+          </LocalizedLink>
           , incluindo compartilhamento com processadores de pagamento, transportadoras e parceiros necessários à execução
           dos serviços.
         </P>

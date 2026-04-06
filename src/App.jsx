@@ -1,10 +1,14 @@
 import { Suspense, lazy, useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import WhatsAppFloating from './components/WhatsAppFloating'
 import CookieConsentBanner from './components/CookieConsentBanner'
+import { LocaleSync } from './components/LocaleSync'
 import { recordAffiliateClick } from './services/affiliateService'
+import { LOCALE_EN, LOCALE_PT_BR, localizedPath } from './lib/localeRoutes'
+
 const Home = lazy(() => import('./pages/Home'))
 const Contact = lazy(() => import('./pages/Contact'))
 const OndeComprar = lazy(() => import('./pages/OndeComprar'))
@@ -51,10 +55,22 @@ const AdminNotificacoesTab = lazy(() => import('./pages/platform/admin/tabs/Noti
 const AdminRecargasTab = lazy(() => import('./pages/platform/admin/tabs/RecargasTab'))
 const AdminLogsTab = lazy(() => import('./pages/platform/admin/tabs/LogsTab'))
 const Lounge = lazy(() => import('./pages/platform/Lounge'))
-/**
- * Componente principal da aplicação.
- * Define as rotas e o layout (Navbar + conteúdo + Footer).
- */
+const Invoices = lazy(() => import('./pages/platform/Invoices'))
+const InvoiceDetail = lazy(() => import('./pages/platform/InvoiceDetail'))
+const Affiliate = lazy(() => import('./pages/platform/Affiliate'))
+
+const p = (key, q = '') => localizedPath(key, LOCALE_PT_BR, q)
+const e = (key, q = '') => localizedPath(key, LOCALE_EN, q)
+
+function SuspenseLoading() {
+  const { t } = useTranslation()
+  return (
+    <div className="mx-auto max-w-6xl px-4 py-10 text-earth-600">
+      {t('loading')}
+    </div>
+  )
+}
+
 function App() {
   useEffect(() => {
     const url = new URL(window.location.href)
@@ -80,7 +96,6 @@ function App() {
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || null,
       })
     }
-
   }, [])
 
   useEffect(() => {
@@ -93,7 +108,6 @@ function App() {
 
     const syncBodyScrollLock = () => {
       if (hasOpenModal()) {
-        // Compensa a largura da scrollbar para evitar "pulo" de layout.
         const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth
         body.style.overflow = 'hidden'
         body.style.paddingRight = scrollbarWidth > 0 ? `${scrollbarWidth}px` : ''
@@ -122,12 +136,14 @@ function App() {
 
   return (
     <div className="flex min-h-screen flex-col">
+      <LocaleSync />
       <Navbar />
       <main className="flex-1">
-        <Suspense fallback={<div className="mx-auto max-w-6xl px-4 py-10 text-earth-600">Carregando...</div>}>
+        <Suspense fallback={<SuspenseLoading />}>
           <Routes>
+            {/* pt-BR */}
             <Route path="/" element={<Home />} />
-            <Route path="/como-funciona" element={<Navigate to="/servicos-e-precos" replace />} />
+            <Route path="/como-funciona" element={<Navigate to={p('servicosPrecos')} replace />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/loja" element={<LojaPublicRoute />} />
             <Route path="/login" element={<Login />} />
@@ -139,31 +155,31 @@ function App() {
                 <PlatformLayout />
               </ProtectedRoute>
             }>
-              <Route index element={<Navigate to="/app/dashboard" replace />} />
+              <Route index element={<Navigate to={p('appDashboard')} replace />} />
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="complete-social-profile" element={<CompleteSocialProfile />} />
               <Route path="lounge" element={<Lounge />} />
               <Route path="services" element={<Services />} />
-              <Route path="orders" element={<Navigate to="/app/lounge" replace />} />
-              <Route path="wallet" element={<Navigate to="/app/lounge" replace />} />
-              <Route path="payments" element={<Navigate to="/app/cart?tab=history" replace />} />
+              <Route path="orders" element={<Navigate to={p('appLounge')} replace />} />
+              <Route path="wallet" element={<Navigate to={p('appLounge')} replace />} />
+              <Route path="payments" element={<Navigate to={p('appCart', '?tab=history')} replace />} />
               <Route path="profile" element={<Profile />} />
               <Route path="conta" element={<Conta />} />
-              <Route path="meus-produtos" element={<Navigate to="/app/lounge" replace />} />
+              <Route path="meus-produtos" element={<Navigate to={p('appLounge')} replace />} />
               <Route path="loja" element={<Loja />} />
               <Route path="cart" element={<Cart />} />
-              <Route path="invoices" element={<Navigate to="/app/lounge?tab=pedidos" replace />} />
-              <Route path="invoices/:id" element={<Navigate to="/app/lounge?tab=pedidos" replace />} />
+              <Route path="invoices" element={<Invoices />} />
+              <Route path="invoices/:id" element={<InvoiceDetail />} />
               <Route path="grupo-de-compras" element={<GrupoDeCompras />} />
-              <Route path="affiliate" element={<Navigate to="/app/dashboard" replace />} />
-              <Route path="lista-desejos" element={<Navigate to="/app/lounge?tab=desejos" replace />} />
-              <Route path="envios" element={<Navigate to="/app/lounge" replace />} />
+              <Route path="affiliate" element={<Affiliate />} />
+              <Route path="lista-desejos" element={<Navigate to={p('appLounge', '?tab=desejos')} replace />} />
+              <Route path="envios" element={<Navigate to={p('appLounge')} replace />} />
               <Route path="admin" element={
                 <AdminRoute>
                   <AdminLayout />
                 </AdminRoute>
               }>
-                <Route index element={<Navigate to="/app/admin/pedidos" replace />} />
+                <Route index element={<Navigate to={p('appAdminPedidos')} replace />} />
                 <Route path="pedidos" element={<AdminPedidosTab />} />
                 <Route path="usuarios" element={<AdminUsuariosTab />} />
                 <Route path="envios" element={<AdminEnviosTab />} />
@@ -185,7 +201,7 @@ function App() {
             </Route>
             <Route path="/onde-comprar" element={<OndeComprar />} />
             <Route path="/legal" element={<LegalLayout />}>
-              <Route index element={<Navigate to="/legal/privacy" replace />} />
+              <Route index element={<Navigate to={p('legalPrivacy')} replace />} />
               <Route path="commercial-disclosure" element={<CommercialDisclosure />} />
               <Route path="privacy" element={<PrivacyPolicy />} />
               <Route path="terms" element={<TermsOfService />} />
@@ -194,6 +210,77 @@ function App() {
               <Route index element={<Servicos />} />
               <Route path="fretes-prazos" element={<FretesEPrazos />} />
               <Route path="simulador" element={<Simulador />} />
+            </Route>
+
+            {/* English */}
+            <Route path="/en" element={<Home />} />
+            <Route path="/en/como-funciona" element={<Navigate to={e('servicosPrecos')} replace />} />
+            <Route path="/en/contact" element={<Contact />} />
+            <Route path="/en/store" element={<LojaPublicRoute />} />
+            <Route path="/en/login" element={<Login />} />
+            <Route path="/en/register" element={<Register />} />
+            <Route path="/en/forgot-password" element={<ForgotPassword />} />
+            <Route path="/en/reset-password" element={<ResetPassword />} />
+            <Route path="/en/app" element={
+              <ProtectedRoute>
+                <PlatformLayout />
+              </ProtectedRoute>
+            }>
+              <Route index element={<Navigate to={e('appDashboard')} replace />} />
+              <Route path="dashboard" element={<Dashboard />} />
+              <Route path="complete-social-profile" element={<CompleteSocialProfile />} />
+              <Route path="lounge" element={<Lounge />} />
+              <Route path="services" element={<Services />} />
+              <Route path="orders" element={<Navigate to={e('appLounge')} replace />} />
+              <Route path="wallet" element={<Navigate to={e('appLounge')} replace />} />
+              <Route path="payments" element={<Navigate to={e('appCart', '?tab=history')} replace />} />
+              <Route path="profile" element={<Profile />} />
+              <Route path="account" element={<Conta />} />
+              <Route path="my-products" element={<Navigate to={e('appLounge')} replace />} />
+              <Route path="store" element={<Loja />} />
+              <Route path="cart" element={<Cart />} />
+              <Route path="invoices" element={<Invoices />} />
+              <Route path="invoices/:id" element={<InvoiceDetail />} />
+              <Route path="group-buying" element={<GrupoDeCompras />} />
+              <Route path="affiliate" element={<Affiliate />} />
+              <Route path="wishlist" element={<Navigate to={e('appLounge', '?tab=desejos')} replace />} />
+              <Route path="shipments" element={<Navigate to={e('appLounge')} replace />} />
+              <Route path="admin" element={
+                <AdminRoute>
+                  <AdminLayout />
+                </AdminRoute>
+              }>
+                <Route index element={<Navigate to={e('appAdminPedidos')} replace />} />
+                <Route path="orders" element={<AdminPedidosTab />} />
+                <Route path="users" element={<AdminUsuariosTab />} />
+                <Route path="shipping" element={<AdminEnviosTab />} />
+                <Route path="products" element={<AdminProdutosTab />} />
+                <Route path="catalog" element={<AdminCatalogoProdutosTab />} />
+                <Route path="catalog-search" element={<AdminBuscaCatalogoTab />} />
+                <Route path="groups" element={<AdminGruposTab />} />
+                <Route path="marketing" element={<AdminMarketingTab />} />
+                <Route path="fraud" element={<AdminFraudeTab />} />
+                <Route path="notifications" element={<AdminNotificacoesTab />} />
+                <Route path="top-ups" element={<AdminRecargasTab />} />
+                <Route path="logs" element={<AdminLogsTab />} />
+              </Route>
+            </Route>
+            <Route path="/en/help" element={<FaqLayout />}>
+              <Route index element={<Faq />} />
+              <Route path="prohibited-items" element={<ItensProibidos />} />
+              <Route path="customs-fees" element={<TaxasAlfandegarias />} />
+            </Route>
+            <Route path="/en/where-to-buy" element={<OndeComprar />} />
+            <Route path="/en/legal" element={<LegalLayout />}>
+              <Route index element={<Navigate to={e('legalPrivacy')} replace />} />
+              <Route path="commercial-disclosure" element={<CommercialDisclosure />} />
+              <Route path="privacy" element={<PrivacyPolicy />} />
+              <Route path="terms" element={<TermsOfService />} />
+            </Route>
+            <Route path="/en/services-pricing" element={<ServicosEPrecosLayout />}>
+              <Route index element={<Servicos />} />
+              <Route path="shipping-times" element={<FretesEPrazos />} />
+              <Route path="shipping-calculator" element={<Simulador />} />
             </Route>
           </Routes>
         </Suspense>

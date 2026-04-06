@@ -3,9 +3,11 @@
  * Cards com modal no mesmo estilo da página de `Loja`.
  */
 import { useEffect, useMemo, useState } from 'react'
-import { Helmet } from 'react-helmet-async'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../hooks/useAuth'
+import { useLocalizedPath } from '../../hooks/useLocalizedPath'
+import { PageSeo } from '../../components/PageSeo'
 import { getPurchaseGroups } from '../../services/groupService'
 import { getPurchaseGroupProducts } from '../../services/productService'
 import { addToCart } from '../../services/cartService'
@@ -27,6 +29,7 @@ function getProductImages(p) {
 }
 
 export default function GrupoDeCompras() {
+  const lp = useLocalizedPath()
   const { user } = useAuth()
   const [groups, setGroups] = useState([])
   const [groupProducts, setGroupProducts] = useState({})
@@ -69,7 +72,7 @@ export default function GrupoDeCompras() {
         const map = Object.fromEntries(groupIds.map((id, i) => [id, productsArrays[i] ?? []]))
         setGroupProducts(map)
       } catch (e) {
-        if (isActive) setMessage(e?.message || 'Erro ao carregar grupos de compra')
+        if (isActive) setMessage(e?.message || t('platform.groupBuy.loadError'))
       } finally {
         if (isActive) setLoading(false)
       }
@@ -78,7 +81,7 @@ export default function GrupoDeCompras() {
     return () => {
       isActive = false
     }
-  }, [])
+  }, [t])
 
   const images = useMemo(() => {
     return detailGroup ? getGroupImages(detailGroup) : []
@@ -106,28 +109,28 @@ export default function GrupoDeCompras() {
 
   const handleComprar = async (product) => {
     if (!user?.id) {
-      setMessage('Faça login para comprar.')
+      setMessage(t('platform.groupBuy.loginToBuy'))
       return
     }
     const { error } = await addToCart(user.id, product.id, 1)
     const inModal = !!detailGroup
     if (error) {
-      if (inModal) setModalFeedback(error.message || 'Erro ao adicionar ao carrinho')
+      if (inModal) setModalFeedback(error.message || t('platform.groupBuy.addError'))
       else setMessage(error.message)
       return
     }
-    if (inModal) setModalFeedback('Produto adicionado ao carrinho!')
-    else setMessage('Produto adicionado ao carrinho!')
+    if (inModal) setModalFeedback(t('platform.groupBuy.added'))
+    else setMessage(t('platform.groupBuy.added'))
   }
 
   if (!user) {
     return (
       <div className="py-8">
         <p className="text-earth-600">
-          <Link to="/login" className="font-medium text-earth-900 underline">
-            Faça login
-          </Link>{' '}
-          para acessar o carrinho.
+          <Link to={lp('login')} className="font-medium text-earth-900 underline">
+            {t('platform.groupBuy.loginLink')}
+          </Link>
+          {t('platform.groupBuy.loginSuffix')}
         </p>
       </div>
     )
@@ -135,25 +138,27 @@ export default function GrupoDeCompras() {
 
   return (
     <>
-      <Helmet>
-        <title>Grupo de Compras | Plataforma</title>
-      </Helmet>
+      <PageSeo
+        routeKey="appGrupoCompras"
+        title={t('meta.appGroupBuy.title')}
+        description={t('meta.appGroupBuy.description')}
+        noindex
+      />
 
       <div>
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-earth-900">Grupo de Compras</h1>
-            <p className="mt-2 text-earth-600">
-              Veja grupos disponíveis e detalhes com fotos. Taxa de serviço: 20% sobre o valor dos produtos do grupo + ¥250 por
-              unidade (no checkout a conversão para real segue a cotação configurada).
-            </p>
+            <h1 className="text-2xl font-bold text-earth-900">{t('platform.groupBuy.pageTitle')}</h1>
+            <p className="mt-2 text-earth-600">{t('platform.groupBuy.intro')}</p>
           </div>
         </div>
 
         {message && !detailGroup && <p className="mt-4 rounded-lg bg-earth-100 px-4 py-2 text-sm text-earth-800">{message}</p>}
 
-        {loading && <p className="mt-6 text-earth-600">Carregando...</p>}
-        {!loading && groups.length === 0 && <p className="mt-6 text-earth-600">Nenhum grupo disponível no momento.</p>}
+        {loading && <p className="mt-6 text-earth-600">{t('platform.groupBuy.loading')}</p>}
+        {!loading && groups.length === 0 && (
+          <p className="mt-6 text-earth-600">{t('platform.groupBuy.emptyGroups')}</p>
+        )}
 
         {!loading && groups.length > 0 && (
           <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -175,7 +180,9 @@ export default function GrupoDeCompras() {
                     {mainImg ? (
                       <img src={mainImg} alt={g.name} className="h-48 w-full object-cover" />
                     ) : (
-                      <div className="flex h-48 items-center justify-center bg-earth-200 text-earth-500">Sem imagem</div>
+                      <div className="flex h-48 items-center justify-center bg-earth-200 text-earth-500">
+                        {t('platform.store.noImage')}
+                      </div>
                     )}
                     <div className="p-4">
                       <h2 className="font-semibold text-earth-900">{g.name}</h2>
@@ -185,7 +192,7 @@ export default function GrupoDeCompras() {
                         </p>
                       )}
                       <p className="mt-2 text-xs text-earth-500">
-                        Produtos no grupo: {groupProducts.length}
+                        {t('platform.groupBuy.productsInGroup', { count: groupProducts.length })}
                       </p>
                     </div>
                   </button>
@@ -196,7 +203,7 @@ export default function GrupoDeCompras() {
                       onClick={() => openDetail(g)}
                       className="flex-1 rounded-lg bg-earth-900 px-3 py-2 text-sm font-medium text-white hover:bg-earth-800"
                     >
-                      Ver detalhes
+                      {t('platform.groupBuy.viewDetails')}
                     </button>
                   </div>
                 </div>
@@ -220,11 +227,13 @@ export default function GrupoDeCompras() {
             >
               {modalFeedback && (
                 <div className="absolute inset-0 z-[60] flex items-center justify-center pointer-events-none">
-                  <p className={`rounded-lg px-4 py-2 text-sm ${
-                    modalFeedback.toLowerCase().includes('erro')
-                      ? 'bg-red-100 text-red-800'
-                      : 'bg-green-100 text-green-800'
-                  }`}>
+                  <p
+                    className={`rounded-lg px-4 py-2 text-sm ${
+                      modalFeedback === t('platform.groupBuy.added')
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-red-100 text-red-800'
+                    }`}
+                  >
                     {modalFeedback}
                   </p>
                 </div>
@@ -246,7 +255,7 @@ export default function GrupoDeCompras() {
                             setDetailImageIndex((i) => (i === 0 ? images.length - 1 : i - 1))
                           }}
                           className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow hover:bg-white"
-                          aria-label="Foto anterior"
+                          aria-label={t('platform.store.prevPhoto')}
                         >
                           <svg className="h-5 w-5 text-earth-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -259,7 +268,7 @@ export default function GrupoDeCompras() {
                             setDetailImageIndex((i) => (i === images.length - 1 ? 0 : i + 1))
                           }}
                           className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow hover:bg-white"
-                          aria-label="Próxima foto"
+                          aria-label={t('platform.store.nextPhoto')}
                         >
                           <svg className="h-5 w-5 text-earth-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -275,7 +284,7 @@ export default function GrupoDeCompras() {
                                 setDetailImageIndex(i)
                               }}
                               className={`h-2 w-2 rounded-full ${i === detailImageIndex ? 'bg-earth-800' : 'bg-earth-300'}`}
-                              aria-label={`Foto ${i + 1}`}
+                              aria-label={t('platform.store.photoDot', { n: i + 1 })}
                             />
                           ))}
                         </div>
@@ -284,7 +293,7 @@ export default function GrupoDeCompras() {
                   </>
                 ) : (
                   <div className="flex h-64 items-center justify-center bg-earth-200 text-earth-500 sm:h-80">
-                    Sem imagem
+                    {t('platform.store.noImage')}
                   </div>
                 )}
               </div>
@@ -300,9 +309,11 @@ export default function GrupoDeCompras() {
                 )}
 
                 <div className="mt-5">
-                  <h3 className="text-sm font-semibold uppercase tracking-wide text-earth-700">Produtos disponíveis</h3>
+                  <h3 className="text-sm font-semibold uppercase tracking-wide text-earth-700">
+                    {t('platform.groupBuy.productsAvailable')}
+                  </h3>
                   {getGroupProducts(detailGroup).length === 0 ? (
-                    <p className="mt-2 text-sm text-earth-600">Este grupo ainda não possui produtos vinculados.</p>
+                    <p className="mt-2 text-sm text-earth-600">{t('platform.groupBuy.noProductsLinked')}</p>
                   ) : (
                     <div className="mt-3 grid gap-3 sm:grid-cols-2">
                       {getGroupProducts(detailGroup).map((p) => {
@@ -327,7 +338,7 @@ export default function GrupoDeCompras() {
                               />
                             ) : (
                               <div className="flex h-32 items-center justify-center bg-earth-200 text-earth-500 text-sm">
-                                Sem imagem
+                                {t('platform.store.noImage')}
                               </div>
                             )}
                             <div className="p-3">
@@ -341,14 +352,16 @@ export default function GrupoDeCompras() {
                                     jpy={jpy}
                                     usd={NaN}
                                     variant="card"
-                                    footnote="Cotação BRL/USD em atualização — valor em dólar após refresh."
+                                    footnote={t('platform.store.triUpdatingFootnote')}
                                   />
                                 )}
                               </div>
-                              <p className="mt-2 text-xs font-medium text-earth-500">Clique para ver detalhes</p>
+                              <p className="mt-2 text-xs font-medium text-earth-500">
+                                {t('platform.groupBuy.clickForDetails')}
+                              </p>
                               <div className="mt-3 flex gap-2">
                                 <span className="rounded-lg border border-earth-300 px-3 py-1.5 text-xs font-medium text-earth-700">
-                                  Ver produto
+                                  {t('platform.groupBuy.viewProduct')}
                                 </span>
                                 <span
                                   className={`rounded-lg px-3 py-1.5 text-xs font-medium ${
@@ -357,7 +370,7 @@ export default function GrupoDeCompras() {
                                       : 'bg-earth-900 text-white'
                                   }`}
                                 >
-                                  {isOutOfStock(p) ? 'Esgotado' : 'Comprar'}
+                                  {isOutOfStock(p) ? t('platform.store.outOfStock') : t('platform.groupBuy.buy')}
                                 </span>
                               </div>
                             </div>
@@ -374,7 +387,7 @@ export default function GrupoDeCompras() {
                     onClick={() => setDetailGroup(null)}
                     className="rounded-xl bg-earth-900 px-6 py-3 font-medium text-white hover:bg-earth-800"
                   >
-                    Fechar
+                    {t('platform.store.close')}
                   </button>
                 </div>
               </div>
@@ -412,7 +425,7 @@ export default function GrupoDeCompras() {
                             setDetailProductImageIndex((i) => (i === 0 ? detailProductImages.length - 1 : i - 1))
                           }}
                           className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow hover:bg-white"
-                          aria-label="Foto anterior"
+                          aria-label={t('platform.store.prevPhoto')}
                         >
                           <svg className="h-5 w-5 text-earth-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -425,7 +438,7 @@ export default function GrupoDeCompras() {
                             setDetailProductImageIndex((i) => (i === detailProductImages.length - 1 ? 0 : i + 1))
                           }}
                           className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow hover:bg-white"
-                          aria-label="Próxima foto"
+                          aria-label={t('platform.store.nextPhoto')}
                         >
                           <svg className="h-5 w-5 text-earth-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -441,7 +454,7 @@ export default function GrupoDeCompras() {
                                 setDetailProductImageIndex(i)
                               }}
                               className={`h-2 w-2 rounded-full ${i === detailProductImageIndex ? 'bg-earth-800' : 'bg-earth-300'}`}
-                              aria-label={`Foto ${i + 1}`}
+                              aria-label={t('platform.store.photoDot', { n: i + 1 })}
                             />
                           ))}
                         </div>
@@ -450,7 +463,7 @@ export default function GrupoDeCompras() {
                   </>
                 ) : (
                   <div className="flex h-64 items-center justify-center bg-earth-200 text-earth-500 sm:h-80">
-                    Sem imagem
+                    {t('platform.store.noImage')}
                   </div>
                 )}
               </div>
@@ -482,7 +495,7 @@ export default function GrupoDeCompras() {
                           jpy={jpy}
                           usd={NaN}
                           variant="modal"
-                          footnote="Cotação BRL/USD em atualização — valor em dólar após refresh."
+                          footnote={t('platform.store.triUpdatingFootnote')}
                         />
                       )}
                     </div>
@@ -495,14 +508,16 @@ export default function GrupoDeCompras() {
                     disabled={isOutOfStock(detailProduct)}
                     className="rounded-xl px-6 py-3 font-medium disabled:cursor-not-allowed disabled:opacity-60 disabled:bg-earth-300 disabled:text-earth-600 bg-earth-900 text-white hover:bg-earth-800"
                   >
-                    {isOutOfStock(detailProduct) ? 'Esgotado' : 'Adicionar ao carrinho'}
+                    {isOutOfStock(detailProduct)
+                      ? t('platform.store.outOfStock')
+                      : t('platform.store.addToCart')}
                   </button>
                   <button
                     type="button"
                     onClick={() => setDetailProduct(null)}
                     className="rounded-xl border border-earth-200 px-6 py-3 font-medium text-earth-600 hover:bg-earth-50"
                   >
-                    Fechar
+                    {t('platform.store.close')}
                   </button>
                 </div>
               </div>

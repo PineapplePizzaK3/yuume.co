@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { LocalizedLink } from '../components/LocalizedLink'
 
 /**
  * Perguntas frequentes — texto alinhado aos serviços (redirecionamento, assistido,
@@ -205,9 +205,9 @@ export const FAQ_ITEMS = [
         </p>
         <p>
           Mais detalhes:{' '}
-          <Link to="/faq/taxas-alfandegarias" className="font-medium text-earth-900 underline hover:no-underline">
+          <LocalizedLink toRoute="faqCustoms" className="font-medium text-earth-900 underline hover:no-underline">
             Taxas alfandegárias
-          </Link>
+          </LocalizedLink>
           .
         </p>
       </>
@@ -244,9 +244,9 @@ export const FAQ_ITEMS = [
         </p>
         <p>
           Lista orientativa:{' '}
-          <Link to="/faq/itens-proibidos" className="font-medium text-earth-900 underline hover:no-underline">
+          <LocalizedLink toRoute="faqProhibited" className="font-medium text-earth-900 underline hover:no-underline">
             Itens proibidos
-          </Link>
+          </LocalizedLink>
           .
         </p>
       </>

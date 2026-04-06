@@ -1,42 +1,113 @@
 import { Link } from 'react-router-dom'
-import { Helmet } from 'react-helmet-async'
+import { useTranslation } from 'react-i18next'
+import { PageSeo } from '../../components/PageSeo'
+import { useLocalizedPath } from '../../hooks/useLocalizedPath'
+import { useSiteLocale } from '../../hooks/useSiteLocale'
+import { formatJpyForSite } from '../../lib/moneyDisplay'
 
-function formatarIene(valor) {
-  return `¥ ${Number(valor).toLocaleString('pt-BR')}`
-}
+/** @typedef {{ id: string, prefix: string, stepCount: number, pricingKey: string, variant?: 'redir', tabela?: { percentual?: number, porItem?: number, freteKey?: string, modoLoja?: boolean } }} ServiceFlowDef */
 
-const LINHAS_VALORES = (percentual, porItem, freteTexto, formatarIene) => [
-  { label: 'Percentual sobre o valor da compra', valor: percentual === null ? 'Sob consulta' : `${percentual}%` },
-  { label: 'Taxa por item', valor: porItem === null ? 'Não se aplica' : `${formatarIene(porItem)}/item` },
-  { label: 'Frete internacional', valor: freteTexto },
-]
-
-/** Padrão: escada por qtd. Assistido: 15% + taxa por item igual ao padrão. */
-const LINHAS_REDIRECIONAMENTO = (formatarIene) => [
+/** @type {ServiceFlowDef[]} */
+const SERVICE_FLOWS = [
   {
-    componente: 'Taxa de serviço',
-    padrao: `1 item ${formatarIene(1000)} · 2–4 itens ${formatarIene(750)}/item · 5+ itens ${formatarIene(500)}/item`,
-    assistido: `15% sobre o valor da compra + mesma taxa por item do Redirecionamento Padrão`,
+    id: 'redirecionamento',
+    prefix: 'flowRedir',
+    stepCount: 5,
+    pricingKey: 'pricingRedir',
+    variant: 'redir',
   },
   {
-    componente: 'Frete internacional',
-    padrao: 'Informado após consolidação (Japan Post)',
-    assistido: 'Informado após consolidação (Japan Post)',
+    id: 'personal-shopping',
+    prefix: 'flowPS',
+    stepCount: 6,
+    pricingKey: 'pricingPS',
+    tabela: { percentual: 25, porItem: 250, freteKey: 'afterConsolidation' },
+  },
+  {
+    id: 'grupo-de-compras',
+    prefix: 'flowGrupo',
+    stepCount: 5,
+    pricingKey: 'pricingGrupo',
+    tabela: { percentual: 20, porItem: 250, freteKey: 'afterShipRequest' },
+  },
+  {
+    id: 'loja-virtual',
+    prefix: 'flowLoja',
+    stepCount: 5,
+    pricingKey: 'pricingLoja',
+    tabela: { modoLoja: true, freteKey: 'afterShipRequest' },
   },
 ]
 
-const LINHAS_LOJA = (freteTexto) => [
-  { label: 'Preço do produto', valor: 'Conforme catálogo (por item)' },
-  { label: 'Frete internacional', valor: freteTexto || 'Informado após solicitar envio (Japan Post)' },
-]
+/**
+ * @param {object} p
+ * @param {import('react-i18next').TFunction} p.t
+ * @param {(n: number) => string} p.formatarIene
+ * @param {number | null} [p.percentual]
+ * @param {number | null} [p.porItem]
+ * @param {string} [p.freteTexto]
+ * @param {boolean} [p.modoRedirecionamento]
+ * @param {boolean} [p.modoLoja]
+ */
+function TabelaValores({
+  t,
+  formatarIene,
+  percentual,
+  porItem,
+  freteTexto,
+  modoRedirecionamento,
+  modoLoja,
+}) {
+  const linhasSimples =
+    !modoRedirecionamento && !modoLoja
+      ? [
+          {
+            label: t('publicServicos.linePercentPurchase'),
+            valor:
+              percentual === null
+                ? t('publicServicos.valueOnRequest')
+                : `${percentual}%`,
+          },
+          {
+            label: t('publicServicos.linePerItem'),
+            valor:
+              porItem === null
+                ? t('publicServicos.na')
+                : `${formatarIene(porItem)}/item`,
+          },
+          {
+            label: t('publicServicos.lineIntlShipping'),
+            valor: freteTexto ?? '',
+          },
+        ]
+      : modoLoja
+        ? [
+            {
+              label: t('publicServicos.productPrice'),
+              valor: t('publicServicos.perCatalog'),
+            },
+            {
+              label: t('publicServicos.lineIntlShipping'),
+              valor:
+                freteTexto || t('publicServicos.afterShipRequest'),
+            },
+          ]
+        : null
 
-function TabelaValores({ percentual, porItem, freteTexto, modoRedirecionamento, modoLoja }) {
-  const linhasSimples = !modoRedirecionamento && !modoLoja
-    ? LINHAS_VALORES(percentual, porItem, freteTexto, formatarIene)
-    : modoLoja
-      ? LINHAS_LOJA(freteTexto)
-      : null
-  const linhasRedir = modoRedirecionamento ? LINHAS_REDIRECIONAMENTO(formatarIene) : null
+  const linhasRedir = modoRedirecionamento
+    ? [
+        {
+          componente: t('publicServicos.rowServiceFee'),
+          padrao: t('publicServicos.feeRedirStandard'),
+          assistido: t('publicServicos.feeRedirAssisted'),
+        },
+        {
+          componente: t('publicServicos.lineIntlShipping'),
+          padrao: t('publicServicos.afterConsolidation'),
+          assistido: t('publicServicos.afterConsolidation'),
+        },
+      ]
+    : null
 
   if (modoRedirecionamento && linhasRedir) {
     return (
@@ -46,13 +117,13 @@ function TabelaValores({ percentual, porItem, freteTexto, modoRedirecionamento, 
             <thead className="bg-earth-100">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-earth-600">
-                  Componente
+                  {t('publicServicos.tableComponent')}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-earth-600">
-                  📦 Redirecionamento Padrão
+                  {t('publicServicos.fwdStandardCol')}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-earth-600">
-                  🛍️ Redirecionamento Assistido
+                  {t('publicServicos.fwdAssistedCol')}
                 </th>
               </tr>
             </thead>
@@ -73,11 +144,11 @@ function TabelaValores({ percentual, porItem, freteTexto, modoRedirecionamento, 
               <span className="text-xs font-medium text-earth-500 uppercase">{linha.componente}</span>
               <div className="space-y-0.5">
                 <div className="text-sm">
-                  <span className="text-earth-500">📦 Redirecionamento Padrão:</span>{' '}
+                  <span className="text-earth-500">{t('publicServicos.fwdStandardShort')}</span>{' '}
                   <span className="font-medium text-earth-900">{linha.padrao}</span>
                 </div>
                 <div className="text-sm">
-                  <span className="text-earth-500">🛍️ Redirecionamento Assistido:</span>{' '}
+                  <span className="text-earth-500">{t('publicServicos.fwdAssistedShort')}</span>{' '}
                   <span className="font-medium text-earth-900">{linha.assistido}</span>
                 </div>
               </div>
@@ -89,6 +160,7 @@ function TabelaValores({ percentual, porItem, freteTexto, modoRedirecionamento, 
   }
 
   const linhas = linhasSimples
+  if (!linhas) return null
   return (
     <div className="mt-6 rounded-lg border border-earth-200 overflow-hidden">
       <div className="hidden sm:block">
@@ -96,10 +168,10 @@ function TabelaValores({ percentual, porItem, freteTexto, modoRedirecionamento, 
           <thead className="bg-earth-100">
             <tr>
               <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-earth-600">
-                Componente
+                {t('publicServicos.tableComponent')}
               </th>
               <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-earth-600">
-                Valor
+                {t('publicServicos.tableValue')}
               </th>
             </tr>
           </thead>
@@ -126,184 +198,140 @@ function TabelaValores({ percentual, porItem, freteTexto, modoRedirecionamento, 
 }
 
 /**
- * Fluxo de cada serviço.
- * Frete real só é conhecido após consolidação; o cliente paga e então enviamos.
- */
-const FLUXOS = [
-  {
-    id: 'redirecionamento',
-    titulo: 'Redirecionamento',
-    descricao:
-      'Compre em lojas japonesas e envie para nosso endereço. Dois módulos: 📦 Redirecionamento Padrão (você compra e envia) ou 🛍️ Redirecionamento Assistido (nós compramos para você, com pré-pagamento).',
-    passos: [
-      'Cadastre-se e receba nosso endereço no Japão',
-      'Faça suas compras e envie os pacotes para nosso endereço (ou envie a lista para nós comprarmos)',
-      'Recebemos e consolidamos os produtos',
-      'Informamos o valor real do frete — você paga',
-      'Enviamos até você',
-    ],
-  },
-  {
-    id: 'personal-shopping',
-    titulo: 'Personal shopping',
-    descricao: 'Serviço ideal para quem não sabe exatamente o que comprar e precisa da nossa ajuda.',
-    passos: [
-      'Conte o que você procura (estilo, orçamento, tamanho, referências)',
-      'Sugerimos opções e ajudamos a definir a compra',
-      'Após sua confirmação, realizamos as compras nas lojas',
-      'Consolidamos os produtos',
-      'Informamos o valor real do frete — você paga',
-      'Enviamos até você',
-    ],
-  },
-  {
-    id: 'grupo-de-compras',
-    titulo: 'Grupo de Compras',
-    descricao: 'Seleções especiais organizadas por tema ou período. Produtos criados exclusivamente para cada grupo.',
-    passos: [
-      'Navegue pelos grupos de compra disponíveis',
-      'Escolha os produtos que deseja no grupo',
-      'Adicione ao carrinho e finalize a compra',
-      'Produtos vão para Meus Produtos — solicite o envio quando quiser',
-      'Pague o frete e receba em casa',
-    ],
-  },
-  {
-    id: 'loja-virtual',
-    titulo: 'Loja Virtual',
-    descricao: 'Catálogo fixo de produtos com preços definidos. Compre e armazene para enviar depois.',
-    passos: [
-      'Navegue pela loja virtual',
-      'Escolha os produtos e adicione ao carrinho',
-      'Finalize a compra (produtos vão para Meus Produtos)',
-      'Solicite o envio quando quiser e pague o frete',
-      'Receba em casa',
-    ],
-  },
-]
-
-/**
  * Página Serviços - visão geral dos serviços com fluxos.
  * Sub-página de Serviços e Preços (index).
  */
 function Servicos() {
+  const { t } = useTranslation()
+  const lp = useLocalizedPath()
+  const siteLocale = useSiteLocale()
+  const formatarIene = (valor) => formatJpyForSite(siteLocale, valor, null)
+
   return (
     <>
-      <Helmet>
-        <title>Nossos serviços | Serviços e Preços | Delivery</title>
-        <meta
-          name="description"
-          content="Conheça nossos serviços: redirecionamento, personal shopping, grupo de compras e loja virtual. Entenda o fluxo e taxas de cada modalidade."
-        />
-      </Helmet>
+      <PageSeo
+        routeKey="servicosPrecos"
+        title={t('meta.servicosPrecos.title')}
+        description={t('meta.servicosPrecos.description')}
+      />
 
       <div className="space-y-12">
         <p className="text-earth-600">
-          Escolha um dos nossos serviços e saiba passo a passo como utilizar.
-          Confira os tipos de envio e tarifas em{' '}
+          {t('publicServicos.introBefore')}{' '}
           <Link
-            to="/servicos-e-precos/fretes-prazos"
+            to={lp('servicosFretes')}
             className="font-medium text-earth-900 underline hover:no-underline"
           >
-            Fretes e Prazos
+            {t('publicServicos.introLinkFretes')}
           </Link>
-          , ou use o{' '}
+          {t('publicServicos.introMiddle')}{' '}
           <Link
-            to="/servicos-e-precos/simulador"
+            to={lp('servicosSimulador')}
             className="font-medium text-earth-900 underline hover:no-underline"
           >
-            simulador
+            {t('publicServicos.introLinkSim')}
           </Link>{' '}
-          para calcular seu pedido.
+          {t('publicServicos.introAfter')}
         </p>
 
-        {FLUXOS.map((servico) => (
-          <div
-            key={servico.id}
-            className="rounded-lg border border-earth-200 bg-earth-100 p-6 shadow-sm"
-          >
-            <h2 className="text-xl font-semibold text-earth-900 sm:text-2xl">
-              {servico.titulo}
-            </h2>
-            <p className="mt-2 text-earth-600">{servico.descricao}</p>
+        {SERVICE_FLOWS.map((servico) => {
+          const titulo = t(`publicServicos.${servico.prefix}Title`)
+          const descricao = t(`publicServicos.${servico.prefix}Desc`)
+          const passos = Array.from({ length: servico.stepCount }, (_, i) =>
+            t(`publicServicos.${servico.prefix}P${i}`),
+          )
+          const pricing = t(`publicServicos.${servico.pricingKey}`)
 
-            <ol className="mt-6 space-y-4">
-              {servico.passos.map((passo, i) => (
-                <li key={i} className="flex gap-4">
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-earth-900 text-sm font-semibold text-earth-50">
-                    {i + 1}
-                  </span>
-                  <span className="pt-0.5 text-earth-700">{passo}</span>
-                </li>
-              ))}
-            </ol>
+          return (
+            <div
+              key={servico.id}
+              className="rounded-lg border border-earth-200 bg-earth-100 p-6 shadow-sm"
+            >
+              <h2 className="text-xl font-semibold text-earth-900 sm:text-2xl">{titulo}</h2>
+              <p className="mt-2 text-earth-600">{descricao}</p>
 
-            {/* Valores / tabela por serviço */}
-            {servico.id === 'redirecionamento' && (
-              <>
-                <p className="mt-6 text-sm text-earth-600">
-                  <strong>Como cobramos:</strong> Redirecionamento tem dois módulos — 📦 Redirecionamento Padrão (taxa por quantidade de itens, ver tabela) e 🛍️ Redirecionamento Assistido (15% sobre o valor da compra + taxa por item igual ao Padrão). Frete informado após consolidação.
-                </p>
-                <TabelaValores modoRedirecionamento />
-              </>
-            )}
+              <ol className="mt-6 space-y-4">
+                {passos.map((passo, i) => (
+                  <li key={i} className="flex gap-4">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-earth-900 text-sm font-semibold text-earth-50">
+                      {i + 1}
+                    </span>
+                    <span className="pt-0.5 text-earth-700">{passo}</span>
+                  </li>
+                ))}
+              </ol>
 
-            {servico.id === 'personal-shopping' && (
-              <>
-                <p className="mt-6 text-sm text-earth-600">
-                  <strong>Como cobramos:</strong> 25% do valor da compra + ¥250 por item + frete. Este serviço inclui ajuda para decidir o que comprar.
-                </p>
-                <TabelaValores
-                  percentual={25}
-                  porItem={250}
-                  freteTexto="Informado após consolidação (Japan Post)"
-                />
-              </>
-            )}
+              {servico.variant === 'redir' && (
+                <>
+                  <p className="mt-6 text-sm text-earth-600">
+                    <strong>{t('publicServicos.howWeCharge')}</strong> {pricing}
+                  </p>
+                  <TabelaValores
+                    t={t}
+                    formatarIene={formatarIene}
+                    modoRedirecionamento
+                  />
+                </>
+              )}
 
-            {servico.id === 'grupo-de-compras' && (
-              <>
-                <p className="mt-6 text-sm text-earth-600">
-                  <strong>Como cobramos:</strong> 20% do valor da compra + ¥250 por unidade de produto + frete. Preços dos itens vêm do catálogo de cada grupo.
-                </p>
-                <TabelaValores
-                  percentual={20}
-                  porItem={250}
-                  freteTexto="Informado após solicitar envio (Japan Post)"
-                />
-              </>
-            )}
+              {servico.tabela && !servico.tabela.modoLoja && (
+                <>
+                  <p className="mt-6 text-sm text-earth-600">
+                    <strong>{t('publicServicos.howWeCharge')}</strong> {pricing}
+                  </p>
+                  <TabelaValores
+                    t={t}
+                    formatarIene={formatarIene}
+                    percentual={servico.tabela.percentual ?? null}
+                    porItem={servico.tabela.porItem ?? null}
+                    freteTexto={
+                      servico.tabela.freteKey
+                        ? t(`publicServicos.${servico.tabela.freteKey}`)
+                        : undefined
+                    }
+                  />
+                </>
+              )}
 
-            {servico.id === 'loja-virtual' && (
-              <>
-                <p className="mt-6 text-sm text-earth-600">
-                  <strong>Como cobramos:</strong> Preço do produto (definido por item no catálogo) + frete quando solicitar o envio. Produtos ficam em Meus Produtos até você solicitar a consolidação.
-                </p>
-                <TabelaValores
-                  modoLoja
-                  freteTexto="Informado após solicitar envio (Japan Post)"
-                />
-              </>
-            )}
+              {servico.tabela?.modoLoja && (
+                <>
+                  <p className="mt-6 text-sm text-earth-600">
+                    <strong>{t('publicServicos.howWeCharge')}</strong> {pricing}
+                  </p>
+                  <TabelaValores
+                    t={t}
+                    formatarIene={formatarIene}
+                    modoLoja
+                    freteTexto={
+                      servico.tabela.freteKey
+                        ? t(`publicServicos.${servico.tabela.freteKey}`)
+                        : undefined
+                    }
+                  />
+                </>
+              )}
 
-            <div className="mt-6 flex flex-wrap gap-4">
-              <Link
-                to="/servicos-e-precos/fretes-prazos"
-                className="text-sm font-medium text-earth-900 hover:underline"
-              >
-                Ver fretes e prazos →
-              </Link>
-              {(servico.id === 'grupo-de-compras' || servico.id === 'loja-virtual') && (
+              <div className="mt-6 flex flex-wrap gap-4">
                 <Link
-                  to={servico.id === 'grupo-de-compras' ? '/app/grupo-de-compras' : '/loja'}
+                  to={lp('servicosFretes')}
                   className="text-sm font-medium text-earth-900 hover:underline"
                 >
-                  {servico.id === 'grupo-de-compras' ? 'Ver grupos de compra →' : 'Ir para a loja →'}
+                  {t('publicServicos.linkFretes')}
                 </Link>
-              )}
+                {(servico.id === 'grupo-de-compras' || servico.id === 'loja-virtual') && (
+                  <Link
+                    to={servico.id === 'grupo-de-compras' ? lp('appGrupoCompras') : lp('lojaPublic')}
+                    className="text-sm font-medium text-earth-900 hover:underline"
+                  >
+                    {servico.id === 'grupo-de-compras'
+                      ? t('publicServicos.linkGrupos')
+                      : t('publicServicos.linkLoja')}
+                  </Link>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
     </>
   )

@@ -1,9 +1,12 @@
 /**
  * Minha Conta - Informações do usuário, endereços e segurança.
  */
-import { useEffect, useState } from 'react'
-import { Helmet } from 'react-helmet-async'
+import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../hooks/useAuth'
+import { useSiteLocale } from '../../hooks/useSiteLocale'
+import { PageSeo } from '../../components/PageSeo'
+import { localizedPath } from '../../lib/localeRoutes'
 import {
   getProfile,
   updateProfile,
@@ -17,7 +20,7 @@ import {
   deleteAddress,
 } from '../../services/addressService'
 import { cacheKey, readCache, writeCache } from '../../lib/cache'
-import { validatePassword, PASSWORD_PLACEHOLDER } from '../../lib/passwordValidation'
+import { validatePassword } from '../../lib/passwordValidation'
 import { supabase } from '../../lib/supabase'
 
 const MAX_KYC_FILES = 5
@@ -39,7 +42,13 @@ const ESTADOS = [
   'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO',
 ]
 
+const TAB_IDS = ['dados', 'seguranca']
+const TAB_ICONS = { dados: '👤', seguranca: '🔐' }
+
 export default function Conta() {
+  const { t } = useTranslation()
+  const locale = useSiteLocale()
+  const dateLocale = locale === 'en' ? 'en-US' : 'pt-BR'
   const { user, refreshProfile, signOut } = useAuth()
   const [profile, setProfile] = useState(null)
   const [addresses, setAddresses] = useState([])
@@ -50,11 +59,16 @@ export default function Conta() {
   const [editingId, setEditingId] = useState(null)
   const [activeTab, setActiveTab] = useState('dados')
   const [draggingTabId, setDraggingTabId] = useState('')
-  const TABS = [
-    { id: 'dados', label: 'Dados pessoais', icon: '👤' },
-    { id: 'seguranca', label: 'Segurança', icon: '🔐' },
-  ]
-  const [tabOrder, setTabOrder] = useState(TABS.map((tab) => tab.id))
+  const tabs = useMemo(
+    () =>
+      TAB_IDS.map((id) => ({
+        id,
+        icon: TAB_ICONS[id],
+        label: id === 'dados' ? t('platform.conta.tabPersonal') : t('platform.conta.tabSecurity'),
+      })),
+    [t],
+  )
+  const [tabOrder, setTabOrder] = useState(() => [...TAB_IDS])
   const [profileForm, setProfileForm] = useState({ name: '', cpf_cnpj: '', phone: '' })
   const [addressForm, setAddressForm] = useState({
     label: '',
@@ -108,10 +122,10 @@ export default function Conta() {
       setAddresses(addr.data ?? [])
       writeCache(k, { profile: profNorm, addresses: addr.data ?? [] })
       if (prof.error || addr.error) {
-        setMessage(prof.error?.message || addr.error?.message || 'Erro ao carregar dados')
+        setMessage(prof.error?.message || addr.error?.message || t('platform.conta.loadError'))
       }
     } catch (e) {
-      if (active()) setMessage(e?.message || 'Erro ao carregar dados')
+      if (active()) setMessage(e?.message || t('platform.conta.loadError'))
     } finally {
       if (active()) setLoading(false)
     }
@@ -136,7 +150,7 @@ export default function Conta() {
   }, [profile])
 
   const normalizeTabOrder = (raw) => {
-    const allowed = TABS.map((tab) => tab.id)
+    const allowed = [...TAB_IDS]
     const base = Array.isArray(raw) ? raw : []
     const safe = base.filter((id) => allowed.includes(id))
     for (const id of allowed) {
@@ -162,19 +176,19 @@ export default function Conta() {
 
   useEffect(() => {
     if (!user?.id) {
-      setTabOrder(TABS.map((tab) => tab.id))
+      setTabOrder([...TAB_IDS])
       return
     }
     try {
       const raw = localStorage.getItem(CONTA_TAB_ORDER_STORAGE_KEY)
       if (!raw) {
-        setTabOrder(TABS.map((tab) => tab.id))
+        setTabOrder([...TAB_IDS])
         return
       }
       const all = JSON.parse(raw)
       setTabOrder(normalizeTabOrder(all?.[user.id]))
     } catch {
-      setTabOrder(TABS.map((tab) => tab.id))
+      setTabOrder([...TAB_IDS])
     }
   }, [user?.id])
 
@@ -201,7 +215,7 @@ export default function Conta() {
     }
     const { error } = await updateProfile(user.id, payload)
     setSaving(false)
-    setMessage(error ? error.message : 'Dados salvos')
+    setMessage(error ? error.message : t('platform.conta.profileSaved'))
     if (!error) {
       // Atualiza o estado local e o AuthContext (Navbar/menu/dashboard) imediatamente.
       setProfile((p) => (p ? { ...p, ...payload } : p))
@@ -245,14 +259,14 @@ export default function Conta() {
     }
     if (editingId) {
       const { error } = await updateAddress(user.id, editingId, payload)
-      setMessage(error ? error.message : 'Endereço atualizado')
+      setMessage(error ? error.message : t('platform.conta.addressUpdated'))
       if (!error) {
         resetAddressForm()
         loadData()
       }
     } else {
       const { error } = await createAddress(user.id, payload)
-      setMessage(error ? error.message : 'Endereço adicionado')
+      setMessage(error ? error.message : t('platform.conta.addressAdded'))
       if (!error) {
         resetAddressForm()
         loadData()
@@ -279,10 +293,10 @@ export default function Conta() {
   }
 
   const handleDeleteAddress = async (id) => {
-    if (!confirm('Remover este endereço?')) return
+    if (!confirm(t('platform.conta.confirmRemoveAddress'))) return
     setSaving(true)
     const { error } = await deleteAddress(user.id, id)
-    setMessage(error ? error.message : 'Endereço removido')
+    setMessage(error ? error.message : t('platform.conta.addressRemoved'))
     if (!error) loadData()
     setSaving(false)
   }
@@ -343,7 +357,7 @@ export default function Conta() {
     if (!file || !user?.id) return
     const current = normalizeKycDocuments(profile?.kyc_documents)
     if (current.length >= MAX_KYC_FILES) {
-      setKycMessage(`Você já enviou o máximo de ${MAX_KYC_FILES} documentos. Remova um para enviar outro.`)
+      setKycMessage(t('platform.conta.kycMaxFiles', { max: MAX_KYC_FILES }))
       return
     }
     setKycUploading(true)
@@ -351,7 +365,7 @@ export default function Conta() {
     const { data: docMeta, error: upErr } = await uploadKycDocument(file, user.id)
     if (upErr) {
       setKycUploading(false)
-      setKycMessage(upErr.message || 'Falha no envio do arquivo.')
+      setKycMessage(upErr.message || t('platform.conta.kycUploadFail'))
       return
     }
     const nextDocs = [...current, docMeta]
@@ -359,7 +373,7 @@ export default function Conta() {
     if (saveErr) {
       await removeKycDocumentFromStorage([docMeta.path])
       setKycUploading(false)
-      setKycMessage(saveErr.message || 'Não foi possível registrar o documento.')
+      setKycMessage(saveErr.message || t('platform.conta.kycSaveFail'))
       return
     }
     setProfile((p) => (p ? { ...p, kyc_documents: nextDocs } : p))
@@ -372,25 +386,25 @@ export default function Conta() {
       })
     }
     setKycUploading(false)
-    setKycMessage('Documento enviado com sucesso.')
+    setKycMessage(t('platform.conta.kycUploadSuccess'))
   }
 
   const handleRemoveKyc = async (path) => {
     if (!path || !user?.id) return
-    if (!confirm('Remover este documento do seu cadastro?')) return
+    if (!confirm(t('platform.conta.confirmRemoveKyc'))) return
     setKycUploading(true)
     setKycMessage('')
     const { error: rmErr } = await removeKycDocumentFromStorage([path])
     if (rmErr) {
       setKycUploading(false)
-      setKycMessage(rmErr.message || 'Não foi possível remover o arquivo.')
+      setKycMessage(rmErr.message || t('platform.conta.kycRemoveStorageFail'))
       return
     }
     const nextDocs = normalizeKycDocuments(profile?.kyc_documents).filter((d) => d.path !== path)
     const { error: saveErr } = await updateProfile(user.id, { kyc_documents: nextDocs })
     if (saveErr) {
       setKycUploading(false)
-      setKycMessage(saveErr.message || 'Arquivo removido do armazenamento, mas falhou ao atualizar o perfil. Entre em contato com o suporte.')
+      setKycMessage(saveErr.message || t('platform.conta.kycProfileUpdateFail'))
       return
     }
     setProfile((p) => (p ? { ...p, kyc_documents: nextDocs } : p))
@@ -403,7 +417,7 @@ export default function Conta() {
       })
     }
     setKycUploading(false)
-    setKycMessage('Documento removido.')
+    setKycMessage(t('platform.conta.kycRemoved'))
   }
 
   const startMfaEnroll = async () => {
@@ -411,7 +425,7 @@ export default function Conta() {
     setMfaEnrolling(true)
     const { data, error } = await supabase.auth.mfa.enroll({
       factorType: 'totp',
-      friendlyName: 'Plataforma',
+      friendlyName: t('platform.conta.mfaFriendlyName'),
     })
     setMfaEnrolling(false)
     if (error) {
@@ -434,7 +448,7 @@ export default function Conta() {
     setMfaError('')
     const code = mfaVerifyCode.trim()
     if (!code || code.length !== 6) {
-      setMfaError('Digite o código de 6 dígitos do seu app.')
+      setMfaError(t('platform.conta.mfaCodeHint'))
       return
     }
     setMfaEnrolling(true)
@@ -462,7 +476,7 @@ export default function Conta() {
   const handleMfaUnenroll = async () => {
     const totp = mfaFactors?.totp?.[0]
     if (!totp) return
-    if (!confirm('Tem certeza que deseja desativar a autenticação em duas etapas?')) return
+    if (!confirm(t('platform.conta.mfaUnenrollConfirm'))) return
     setMfaError('')
     setMfaLoading(true)
     const { error } = await supabase.auth.mfa.unenroll({ factorId: totp.id })
@@ -479,7 +493,7 @@ export default function Conta() {
     setSecurityMessage('')
     const { currentPassword, newPassword, confirm: confirmVal } = passwordForm
     if (!currentPassword) {
-      setSecurityMessage('Digite sua senha atual')
+      setSecurityMessage(t('platform.conta.passwordCurrentRequired'))
       return
     }
     const { valid, message } = validatePassword(newPassword)
@@ -488,14 +502,14 @@ export default function Conta() {
       return
     }
     if (newPassword !== confirmVal) {
-      setSecurityMessage('As senhas não coincidem')
+      setSecurityMessage(t('platform.conta.passwordMismatch'))
       return
     }
     setPasswordSaving(true)
     const email = user?.email || profile?.email
     if (!email) {
       setPasswordSaving(false)
-      setSecurityMessage('Não foi possível validar sua senha atual. Faça login novamente.')
+      setSecurityMessage(t('platform.conta.passwordReauthFail'))
       return
     }
     // Reautentica com senha atual antes de permitir a troca.
@@ -505,28 +519,31 @@ export default function Conta() {
     })
     if (reauthError) {
       setPasswordSaving(false)
-      setSecurityMessage('Senha atual incorreta')
+      setSecurityMessage(t('platform.conta.passwordWrongCurrent'))
       return
     }
     const { error } = await supabase.auth.updateUser({ password: newPassword })
     setPasswordSaving(false)
-    setSecurityMessage(error ? error.message : 'Senha alterada com sucesso')
+    setSecurityMessage(error ? error.message : t('platform.conta.passwordChanged'))
     if (!error) setPasswordForm({ currentPassword: '', newPassword: '', confirm: '' })
   }
 
   return (
     <>
-      <Helmet>
-        <title>Minha Conta | Plataforma</title>
-      </Helmet>
+      <PageSeo
+        routeKey="appConta"
+        title={t('meta.appConta.title')}
+        description={t('meta.appConta.description')}
+        noindex
+      />
       <div>
-        <h1 className="text-2xl font-bold text-earth-900">Minha Conta</h1>
-        <p className="mt-2 text-earth-600">Seus dados, endereços e configurações de segurança</p>
+        <h1 className="text-2xl font-bold text-earth-900">{t('platform.conta.pageTitle')}</h1>
+        <p className="mt-2 text-earth-600">{t('platform.conta.subtitle')}</p>
 
         <nav className="mt-6 border-b border-earth-200">
           <div className="flex gap-1">
             {orderedTabs.map((tabId) => {
-              const tab = TABS.find((entry) => entry.id === tabId)
+              const tab = tabs.find((entry) => entry.id === tabId)
               if (!tab) return null
               return (
               <button
@@ -562,16 +579,16 @@ export default function Conta() {
           </div>
         </nav>
 
-        {loading && <p className="mt-6 text-earth-600">Carregando...</p>}
+        {loading && <p className="mt-6 text-earth-600">{t('platform.conta.loading')}</p>}
 
         {!loading && activeTab === 'dados' && (
           <div className="mt-6 space-y-8 rounded-b-xl border border-t-0 border-earth-200 bg-earth-50 p-6">
             {/* Dados pessoais */}
             <section className="rounded-xl border border-earth-200 bg-earth-50 p-6">
-              <h2 className="text-lg font-semibold text-earth-900">Dados pessoais</h2>
+              <h2 className="text-lg font-semibold text-earth-900">{t('platform.conta.personalData')}</h2>
               <form onSubmit={handleSaveProfile} className="mt-4 grid gap-4 sm:grid-cols-2">
                 <div className="sm:col-span-2">
-                  <label className="block text-sm font-medium text-earth-700">Email</label>
+                  <label className="block text-sm font-medium text-earth-700">{t('platform.conta.email')}</label>
                   <input
                     type="email"
                     value={profile?.email ?? user?.email ?? ''}
@@ -580,32 +597,32 @@ export default function Conta() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-earth-700">Nome completo</label>
+                  <label className="block text-sm font-medium text-earth-700">{t('platform.conta.fullName')}</label>
                   <input
                     type="text"
                     value={profileForm.name}
                     onChange={(e) => setProfileForm((f) => ({ ...f, name: e.target.value }))}
-                    placeholder="Seu nome completo"
+                    placeholder={t('platform.conta.fullNamePlaceholder')}
                     className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-earth-700">CPF / CNPJ</label>
+                  <label className="block text-sm font-medium text-earth-700">{t('platform.conta.cpfCnpj')}</label>
                   <input
                     type="text"
                     value={profileForm.cpf_cnpj}
                     onChange={(e) => setProfileForm((f) => ({ ...f, cpf_cnpj: e.target.value }))}
-                    placeholder="000.000.000-00"
+                    placeholder={t('platform.conta.cpfPlaceholder')}
                     className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-earth-700">Telefone</label>
+                  <label className="block text-sm font-medium text-earth-700">{t('platform.conta.phone')}</label>
                   <input
                     type="tel"
                     value={profileForm.phone}
                     onChange={(e) => setProfileForm((f) => ({ ...f, phone: e.target.value }))}
-                    placeholder="(00) 00000-0000"
+                    placeholder={t('platform.conta.phonePlaceholder')}
                     className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
                   />
                 </div>
@@ -616,7 +633,7 @@ export default function Conta() {
                     disabled={saving}
                     className="rounded-lg bg-earth-900 px-4 py-2 font-medium text-earth-50 hover:bg-earth-800 disabled:opacity-70"
                   >
-                    {saving ? 'Salvando...' : 'Salvar dados'}
+                    {saving ? t('platform.conta.saving') : t('platform.conta.saveData')}
                   </button>
                 </div>
               </form>
@@ -624,21 +641,16 @@ export default function Conta() {
 
             {/* Verificação de identidade (KYC) */}
             <section className="rounded-xl border border-earth-200 bg-white p-6 shadow-sm">
-              <h2 className="text-lg font-semibold text-earth-900">Verificação de identidade (KYC)</h2>
-              <p className="mt-2 text-sm text-earth-600">
-                Em alguns casos — especialmente em pagamentos, antifraude ou exigências de parceiros — podemos solicitar
-                comprovação de identidade. Você pode adiantar enviando documentos aqui (opcional): por exemplo, RG ou CNH
-                (frente e verso em arquivos separados, se preferir) ou outro documento oficial com foto.
-              </p>
+              <h2 className="text-lg font-semibold text-earth-900">{t('platform.conta.kycTitle')}</h2>
+              <p className="mt-2 text-sm text-earth-600">{t('platform.conta.kycIntro')}</p>
               <p className="mt-2 text-xs text-earth-500">
-                Os arquivos ficam em armazenamento restrito à sua conta e à equipe autorizada. Formatos aceitos: JPG, PNG,
-                WebP ou PDF, até 10 MB cada. Máximo de {MAX_KYC_FILES} arquivos.
+                {t('platform.conta.kycFormats', { max: MAX_KYC_FILES })}
               </p>
 
               {kycMessage && (
                 <p
                   className={`mt-3 rounded-lg px-3 py-2 text-sm ${
-                    kycMessage.includes('sucesso') || kycMessage.includes('removido')
+                    /success|removed|sucesso|removido/i.test(kycMessage)
                       ? 'bg-green-50 text-green-800'
                       : 'bg-amber-50 text-amber-900'
                   }`}
@@ -649,7 +661,7 @@ export default function Conta() {
 
               <div className="mt-4">
                 <label className="inline-flex cursor-pointer items-center rounded-lg bg-earth-900 px-4 py-2 text-sm font-medium text-earth-50 transition hover:bg-earth-800 disabled:cursor-not-allowed disabled:opacity-60">
-                  {kycUploading ? 'Enviando...' : 'Enviar documento'}
+                  {kycUploading ? t('platform.conta.kycUploading') : t('platform.conta.kycUpload')}
                   <input
                     type="file"
                     accept="image/jpeg,image/png,image/webp,application/pdf"
@@ -659,7 +671,10 @@ export default function Conta() {
                   />
                 </label>
                 <span className="ml-3 text-sm text-earth-500">
-                  {normalizeKycDocuments(profile?.kyc_documents).length}/{MAX_KYC_FILES} enviados
+                  {t('platform.conta.kycUploaded', {
+                    current: normalizeKycDocuments(profile?.kyc_documents).length,
+                    max: MAX_KYC_FILES,
+                  })}
                 </span>
               </div>
 
@@ -688,8 +703,8 @@ export default function Conta() {
                           </p>
                           {doc.uploaded_at && (
                             <p className="text-xs text-earth-500">
-                              Enviado em{' '}
-                              {new Date(doc.uploaded_at).toLocaleString('pt-BR', {
+                              {t('platform.conta.kycUploadedAt')}{' '}
+                              {new Date(doc.uploaded_at).toLocaleString(dateLocale, {
                                 dateStyle: 'short',
                                 timeStyle: 'short',
                               })}
@@ -702,7 +717,7 @@ export default function Conta() {
                               rel="noopener noreferrer"
                               className="mt-1 inline-block text-sm font-medium text-earth-800 underline hover:no-underline"
                             >
-                              Abrir PDF
+                              {t('platform.conta.kycOpenPdf')}
                             </a>
                           )}
                         </div>
@@ -713,7 +728,7 @@ export default function Conta() {
                         disabled={kycUploading}
                         className="shrink-0 rounded-lg border border-red-200 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-50"
                       >
-                        Remover
+                        {t('platform.conta.kycRemove')}
                       </button>
                     </li>
                   ))}
@@ -724,14 +739,14 @@ export default function Conta() {
             {/* Endereços */}
             <section className="rounded-xl border border-earth-200 bg-earth-50 p-6">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-earth-900">Endereços</h2>
+                <h2 className="text-lg font-semibold text-earth-900">{t('platform.conta.addresses')}</h2>
                 {!showForm && (
                   <button
                     type="button"
                     onClick={() => setShowForm(true)}
                     className="rounded-lg bg-earth-900 px-3 py-1.5 text-sm font-medium text-earth-50 hover:bg-earth-800"
                   >
-                    + Novo endereço
+                    {t('platform.conta.newAddress')}
                   </button>
                 )}
               </div>
@@ -740,7 +755,7 @@ export default function Conta() {
                 <form onSubmit={handleSaveAddress} className="mt-4 space-y-3 rounded-lg border border-earth-200 bg-white p-4">
                   <div className="grid gap-3">
                     <div className="grid gap-2 sm:grid-cols-[180px_1fr] sm:items-center">
-                      <label className="text-sm font-medium text-earth-700">Nome do endereço</label>
+                      <label className="text-sm font-medium text-earth-700">{t('platform.conta.addressLabel')}</label>
                       <input
                         type="text"
                         value={addressForm.label}
@@ -750,7 +765,7 @@ export default function Conta() {
                     </div>
 
                     <div className="grid gap-2 sm:grid-cols-[180px_1fr] sm:items-center">
-                      <label className="text-sm font-medium text-earth-700">Destinatário *</label>
+                      <label className="text-sm font-medium text-earth-700">{t('platform.conta.recipient')}</label>
                       <input
                         required
                         type="text"
@@ -761,7 +776,7 @@ export default function Conta() {
                     </div>
 
                     <div className="grid gap-2 sm:grid-cols-[180px_1fr] sm:items-center">
-                      <label className="text-sm font-medium text-earth-700">CEP *</label>
+                      <label className="text-sm font-medium text-earth-700">{t('platform.conta.postalCode')}</label>
                       <input
                         required
                         type="text"
@@ -772,7 +787,7 @@ export default function Conta() {
                     </div>
 
                     <div className="grid gap-2 sm:grid-cols-[180px_1fr] sm:items-center">
-                      <label className="text-sm font-medium text-earth-700">Rua/Avenida *</label>
+                      <label className="text-sm font-medium text-earth-700">{t('platform.conta.street')}</label>
                       <input
                         required
                         type="text"
@@ -783,7 +798,7 @@ export default function Conta() {
                     </div>
 
                     <div className="grid gap-2 sm:grid-cols-[180px_1fr] sm:items-center">
-                      <label className="text-sm font-medium text-earth-700">Número *</label>
+                      <label className="text-sm font-medium text-earth-700">{t('platform.conta.number')}</label>
                       <input
                         required
                         type="text"
@@ -794,7 +809,7 @@ export default function Conta() {
                     </div>
 
                     <div className="grid gap-2 sm:grid-cols-[180px_1fr] sm:items-center">
-                      <label className="text-sm font-medium text-earth-700">Complemento</label>
+                      <label className="text-sm font-medium text-earth-700">{t('platform.conta.complement')}</label>
                       <input
                         type="text"
                         value={addressForm.complement}
@@ -804,7 +819,7 @@ export default function Conta() {
                     </div>
 
                     <div className="grid gap-2 sm:grid-cols-[180px_1fr] sm:items-center">
-                      <label className="text-sm font-medium text-earth-700">Bairro *</label>
+                      <label className="text-sm font-medium text-earth-700">{t('platform.conta.neighborhood')}</label>
                       <input
                         required
                         type="text"
@@ -815,7 +830,7 @@ export default function Conta() {
                     </div>
 
                     <div className="grid gap-2 sm:grid-cols-[180px_1fr] sm:items-center">
-                      <label className="text-sm font-medium text-earth-700">Cidade *</label>
+                      <label className="text-sm font-medium text-earth-700">{t('platform.conta.city')}</label>
                       <input
                         required
                         type="text"
@@ -826,14 +841,14 @@ export default function Conta() {
                     </div>
 
                     <div className="grid gap-2 sm:grid-cols-[180px_1fr] sm:items-center">
-                      <label className="text-sm font-medium text-earth-700">UF *</label>
+                      <label className="text-sm font-medium text-earth-700">{t('platform.conta.state')}</label>
                       <select
                         required
                         value={addressForm.state}
                         onChange={(e) => setAddressForm((f) => ({ ...f, state: e.target.value }))}
                         className="block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
                       >
-                        <option value="">Selecione</option>
+                        <option value="">{t('platform.conta.selectState')}</option>
                         {ESTADOS.map((uf) => (
                           <option key={uf} value={uf}>{uf}</option>
                         ))}
@@ -841,7 +856,7 @@ export default function Conta() {
                     </div>
 
                     <div className="grid gap-2 sm:grid-cols-[180px_1fr] sm:items-center">
-                      <label className="text-sm font-medium text-earth-700">País</label>
+                      <label className="text-sm font-medium text-earth-700">{t('platform.conta.country')}</label>
                       <input
                         type="text"
                         value={addressForm.country}
@@ -856,14 +871,14 @@ export default function Conta() {
                       disabled={saving}
                       className="rounded-lg bg-earth-900 px-4 py-2 font-medium text-earth-50 hover:bg-earth-800 disabled:opacity-70"
                     >
-                      {saving ? 'Salvando...' : editingId ? 'Atualizar' : 'Adicionar'}
+                      {saving ? t('platform.conta.saving') : editingId ? t('platform.conta.update') : t('platform.conta.add')}
                     </button>
                     <button
                       type="button"
                       onClick={resetAddressForm}
                       className="rounded-lg border border-earth-300 px-4 py-2 font-medium text-earth-700 hover:bg-earth-100"
                     >
-                      Cancelar
+                      {t('platform.conta.cancel')}
                     </button>
                   </div>
                 </form>
@@ -871,7 +886,7 @@ export default function Conta() {
 
               <div className="mt-4 space-y-3">
                 {addresses.length === 0 && !showForm && (
-                  <p className="text-earth-600">Nenhum endereço cadastrado.</p>
+                  <p className="text-earth-600">{t('platform.conta.noAddresses')}</p>
                 )}
                 {addresses.map((addr) => (
                   <div
@@ -896,14 +911,14 @@ export default function Conta() {
                         onClick={() => handleEditAddress(addr)}
                         className="text-sm font-medium text-earth-600 hover:text-earth-900"
                       >
-                        Editar
+                        {t('platform.conta.edit')}
                       </button>
                       <button
                         type="button"
                         onClick={() => handleDeleteAddress(addr.id)}
                         className="text-sm font-medium text-red-600 hover:text-red-800"
                       >
-                        Remover
+                        {t('platform.conta.remove')}
                       </button>
                     </div>
                   </div>
@@ -916,50 +931,51 @@ export default function Conta() {
         {!loading && activeTab === 'seguranca' && (
           <div className="mt-0 space-y-6 rounded-b-xl border border-t-0 border-earth-200 bg-earth-50 p-6">
             <section className="rounded-xl border border-earth-200 bg-white p-6">
-              <h2 className="text-lg font-semibold text-earth-900">Alterar senha</h2>
+              <h2 className="text-lg font-semibold text-earth-900">{t('platform.conta.changePassword')}</h2>
               {isOAuthUser() ? (
                 <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4">
-                  <p className="text-sm text-amber-900">
-                    Você entrou com um provedor externo (Google, etc). A senha é gerenciada pelo provedor.
-                    Para redefinir o acesso, use a opção &quot;Esqueci minha senha&quot; na tela de login com seu email.
-                  </p>
+                  <p className="text-sm text-amber-900">{t('platform.conta.oauthPasswordNote')}</p>
                 </div>
               ) : (
                 <form onSubmit={handleChangePassword} className="mt-4 max-w-md space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-earth-700">Senha atual</label>
+                    <label className="block text-sm font-medium text-earth-700">{t('platform.conta.currentPassword')}</label>
                     <input
                       type="password"
                       value={passwordForm.currentPassword}
                       onChange={(e) => setPasswordForm((f) => ({ ...f, currentPassword: e.target.value }))}
-                      placeholder="Digite sua senha atual"
+                      placeholder={t('platform.conta.currentPasswordPlaceholder')}
                       className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-earth-700">Nova senha</label>
+                    <label className="block text-sm font-medium text-earth-700">{t('platform.conta.newPassword')}</label>
                     <input
                       type="password"
                       value={passwordForm.newPassword}
                       onChange={(e) => setPasswordForm((f) => ({ ...f, newPassword: e.target.value }))}
                       minLength={8}
-                      placeholder={PASSWORD_PLACEHOLDER}
+                      placeholder={t('auth.passwordValidation.placeholder')}
                       className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-earth-700">Confirmar nova senha</label>
+                    <label className="block text-sm font-medium text-earth-700">{t('platform.conta.confirmNewPassword')}</label>
                     <input
                       type="password"
                       value={passwordForm.confirm}
                       onChange={(e) => setPasswordForm((f) => ({ ...f, confirm: e.target.value }))}
                       minLength={8}
-                      placeholder="Repita a senha"
+                      placeholder={t('platform.conta.repeatPasswordPlaceholder')}
                       className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
                     />
                   </div>
                   {securityMessage && (
-                    <p className={`text-sm ${securityMessage.includes('sucesso') ? 'text-green-700' : 'text-red-600'}`}>
+                    <p
+                      className={`text-sm ${
+                        /success|sucesso/i.test(securityMessage) ? 'text-green-700' : 'text-red-600'
+                      }`}
+                    >
                       {securityMessage}
                     </p>
                   )}
@@ -968,27 +984,25 @@ export default function Conta() {
                     disabled={passwordSaving}
                     className="rounded-lg bg-earth-900 px-4 py-2 font-medium text-earth-50 hover:bg-earth-800 disabled:opacity-70"
                   >
-                    {passwordSaving ? 'Salvando...' : 'Alterar senha'}
+                    {passwordSaving ? t('platform.conta.saving') : t('platform.conta.changePasswordSubmit')}
                   </button>
                 </form>
               )}
             </section>
 
             <section className="rounded-xl border border-earth-200 bg-white p-6">
-              <h2 className="text-lg font-semibold text-earth-900">Autenticação em duas etapas</h2>
-              <p className="mt-2 text-sm text-earth-600">
-                Use o Google Authenticator ou outro app compatível para adicionar uma camada extra de segurança.
-              </p>
+              <h2 className="text-lg font-semibold text-earth-900">{t('platform.conta.mfaTitle')}</h2>
+              <p className="mt-2 text-sm text-earth-600">{t('platform.conta.mfaIntro')}</p>
               {mfaError && (
                 <p className="mt-3 rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700">{mfaError}</p>
               )}
-              {mfaLoading && <p className="mt-3 text-sm text-earth-600">Carregando...</p>}
+              {mfaLoading && <p className="mt-3 text-sm text-earth-600">{t('platform.conta.loading')}</p>}
               {!mfaLoading && !mfaEnrollData && (
                 <div className="mt-4">
                   {mfaFactors?.totp?.length > 0 ? (
                     <div className="flex flex-wrap items-center gap-3">
                       <span className="inline-flex items-center rounded-full bg-green-100 px-3 py-1 text-sm text-green-800">
-                        Ativado
+                        {t('platform.conta.mfaStatusOn')}
                       </span>
                       <button
                         type="button"
@@ -996,7 +1010,7 @@ export default function Conta() {
                         disabled={mfaLoading}
                         className="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-70"
                       >
-                        Desativar 2FA
+                        {t('platform.conta.mfaDisable')}
                       </button>
                     </div>
                   ) : (
@@ -1006,19 +1020,19 @@ export default function Conta() {
                       disabled={mfaEnrolling}
                       className="rounded-lg bg-earth-900 px-4 py-2 font-medium text-earth-50 hover:bg-earth-800 disabled:opacity-70"
                     >
-                      {mfaEnrolling ? 'Preparando...' : 'Ativar Google Authenticator'}
+                      {mfaEnrolling ? t('platform.conta.mfaPreparing') : t('platform.conta.mfaActivate')}
                     </button>
                   )}
                 </div>
               )}
               {mfaEnrollData && (
                 <div className="mt-4 space-y-4">
-                  <p className="text-sm text-earth-700">Escaneie o QR code com seu app ou digite o código manualmente:</p>
+                  <p className="text-sm text-earth-700">{t('platform.conta.mfaScanHint')}</p>
                   <div className="flex flex-wrap gap-6">
                     {mfaEnrollData.totp?.qr_code && (
                       <img
                         src={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(mfaEnrollData.totp.qr_code)}`}
-                        alt="QR Code para app autenticador"
+                        alt={t('platform.conta.mfaQrAlt')}
                         width={200}
                         height={200}
                         className="rounded-lg border border-earth-200"
@@ -1026,7 +1040,7 @@ export default function Conta() {
                     )}
                     {mfaEnrollData.totp?.secret && (
                       <div>
-                        <p className="text-xs font-medium text-earth-600">Ou digite manualmente:</p>
+                        <p className="text-xs font-medium text-earth-600">{t('platform.conta.mfaManualSecret')}</p>
                         <code className="mt-1 block break-all rounded bg-earth-100 px-2 py-1 text-sm">
                           {mfaEnrollData.totp.secret}
                         </code>
@@ -1035,7 +1049,7 @@ export default function Conta() {
                   </div>
                   <form onSubmit={confirmMfaEnroll} className="flex flex-wrap items-end gap-3">
                     <div>
-                      <label className="block text-sm font-medium text-earth-700">Código de 6 dígitos</label>
+                      <label className="block text-sm font-medium text-earth-700">{t('platform.conta.mfaCode6')}</label>
                       <input
                         type="text"
                         inputMode="numeric"
@@ -1052,7 +1066,7 @@ export default function Conta() {
                         disabled={mfaEnrolling || mfaVerifyCode.length !== 6}
                         className="rounded-lg bg-earth-900 px-4 py-2 font-medium text-earth-50 hover:bg-earth-800 disabled:opacity-70"
                       >
-                        {mfaEnrolling ? 'Verificando...' : 'Confirmar'}
+                        {mfaEnrolling ? t('platform.conta.mfaVerifying') : t('platform.conta.mfaConfirm')}
                       </button>
                       <button
                         type="button"
@@ -1060,7 +1074,7 @@ export default function Conta() {
                         disabled={mfaEnrolling}
                         className="rounded-lg border border-earth-300 px-4 py-2 text-earth-700 hover:bg-earth-50 disabled:opacity-70"
                       >
-                        Cancelar
+                        {t('platform.conta.mfaCancelEnroll')}
                       </button>
                     </div>
                   </form>
@@ -1069,19 +1083,17 @@ export default function Conta() {
             </section>
 
             <section className="rounded-xl border border-earth-200 bg-white p-6">
-              <h2 className="text-lg font-semibold text-earth-900">Sessão</h2>
-              <p className="mt-2 text-sm text-earth-600">
-                Encerrar sessão fará com que você precise fazer login novamente neste dispositivo.
-              </p>
+              <h2 className="text-lg font-semibold text-earth-900">{t('platform.conta.sessionTitle')}</h2>
+              <p className="mt-2 text-sm text-earth-600">{t('platform.conta.sessionIntro')}</p>
               <button
                 type="button"
                 onClick={async () => {
                   await signOut()
-                  window.location.href = '/login'
+                  window.location.href = localizedPath('login', locale)
                 }}
                 className="mt-4 rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50"
               >
-                Encerrar sessão
+                {t('platform.conta.signOut')}
               </button>
             </section>
           </div>

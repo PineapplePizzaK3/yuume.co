@@ -3,9 +3,13 @@
  * Mostra pedidos recentes, carteira, pagamentos e lista de desejos sem sair da página.
  */
 import { useEffect, useState } from 'react'
-import { Helmet } from 'react-helmet-async'
-import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+import { Link, useNavigate } from 'react-router-dom'
+import { PageSeo } from '../../components/PageSeo'
 import { useAuth } from '../../hooks/useAuth'
+import { useLocalizedPath } from '../../hooks/useLocalizedPath'
+import { useSiteLocale } from '../../hooks/useSiteLocale'
+import { LOCALE_EN } from '../../lib/localeRoutes'
 import { getMyOrders } from '../../services/orderService'
 import { getWallet } from '../../services/walletService'
 import { getWishlistLinks } from '../../services/wishlistLinkService'
@@ -15,7 +19,8 @@ import { SHIPPING_ADDRESS_JAPAN } from '../../data/legalConfig'
 import { cacheKey, readCache, writeCache } from '../../lib/cache'
 import { getMyReferralOverview } from '../../services/referralService'
 import { getSystemSettings } from '../../services/settingsService'
-import { brlToJpy, formatJPY } from '../../lib/fx'
+import { brlToJpy } from '../../lib/fx'
+import { useFormatPrice } from '../../hooks/useFormatPrice'
 
 /** Mesmos status da aba "Envios em processo" em Lounge → Envios. */
 const SHIPMENT_IN_PROCESS_STATUSES = ['requested', 'awaiting_payment', 'paid', 'shipped']
@@ -33,8 +38,8 @@ const DEFAULT_DASHBOARD_PREFS = {
   showCardMyProducts: true,
 }
 
-function formatMoney(value, currency = 'BRL') {
-  return Number(value)?.toLocaleString('pt-BR', { style: 'currency', currency }) ?? '—'
+function formatMoney(value, currency = 'BRL', numberLocale = 'pt-BR') {
+  return Number(value)?.toLocaleString(numberLocale, { style: 'currency', currency }) ?? '—'
 }
 
 function readDashboardPrefs(userId) {
@@ -63,6 +68,7 @@ function writeDashboardPrefs(userId, prefs) {
 }
 
 function CopyAddressButton({ address }) {
+  const { t } = useTranslation()
   const [copied, setCopied] = useState(false)
   const fullText = [
     address.recipient,
@@ -93,13 +99,19 @@ function CopyAddressButton({ address }) {
       onClick={handleCopy}
       className="mt-3 rounded-lg border border-earth-300 bg-white px-4 py-2 text-sm font-medium text-earth-800 hover:bg-earth-50"
     >
-      {copied ? 'Copiado!' : 'Copiar endereço'}
+      {copied ? t('platform.dashboard.copyDone') : t('platform.dashboard.copyAddress')}
     </button>
   )
 }
 
 export default function Dashboard() {
-  const { user, profile, isAdmin } = useAuth()
+  const { t } = useTranslation()
+  const navigate = useNavigate()
+  const siteLocale = useSiteLocale()
+  const fp = useFormatPrice()
+  const dateLocale = siteLocale === LOCALE_EN ? 'en-US' : 'pt-BR'
+  const { user, profile } = useAuth()
+  const lp = useLocalizedPath()
   const [orders, setOrders] = useState([])
   const [wallet, setWallet] = useState(null)
   const [wishlist, setWishlist] = useState([])
@@ -261,7 +273,7 @@ export default function Dashboard() {
     }
   }, [user?.id])
 
-  const name = profile?.name?.trim() || user?.email?.split('@')[0] || 'usuário'
+  const name = profile?.name?.trim() || user?.email?.split('@')[0] || t('platform.dashboard.userFallback')
   const accountCode = profile?.account_code ?? ''
   const recipientLine = accountCode ? `${name} - ${accountCode}` : name
   const balance = wallet?.balance ?? 0
@@ -283,27 +295,30 @@ export default function Dashboard() {
 
   return (
     <>
-      <Helmet>
-        <title>Resumo da conta | Plataforma</title>
-      </Helmet>
+      <PageSeo
+        routeKey="appDashboard"
+        title={t('meta.appDashboard.title')}
+        description={t('meta.appDashboard.description')}
+        noindex
+      />
       <div>
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-2xl font-bold text-earth-900">Resumo da conta</h1>
+          <h1 className="text-2xl font-bold text-earth-900">{t('platform.dashboard.pageTitle')}</h1>
           <button
             type="button"
             onClick={() => setShowCustomizer((v) => !v)}
             className="rounded-lg border border-earth-300 bg-white px-3 py-2 text-sm font-medium text-earth-700 hover:bg-earth-50"
           >
-            {showCustomizer ? 'Fechar personalização' : 'Personalizar dashboard'}
+            {showCustomizer ? t('platform.dashboard.customizeClose') : t('platform.dashboard.customizeOpen')}
           </button>
         </div>
         <p className="mt-2 text-earth-600">
-          Olá, {name}. Resumo da sua conta abaixo.
+          {t('platform.dashboard.greeting', { name })}
         </p>
 
         {showCustomizer && (
           <section className="mt-4 rounded-xl border border-earth-200 bg-earth-50 p-4">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-earth-700">O que mostrar</h2>
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-earth-700">{t('platform.dashboard.whatToShow')}</h2>
             <div className="mt-3 grid gap-2 sm:grid-cols-2">
               <label className="flex items-center gap-2 text-sm text-earth-800">
                 <input
@@ -312,7 +327,7 @@ export default function Dashboard() {
                   onChange={(e) => updateDashboardPref('showNotifications', e.target.checked)}
                   className="rounded border-earth-300"
                 />
-                Notificações
+                {t('platform.dashboard.chkNotifications')}
               </label>
               <label className="flex items-center gap-2 text-sm text-earth-800">
                 <input
@@ -321,7 +336,7 @@ export default function Dashboard() {
                   onChange={(e) => updateDashboardPref('showAddress', e.target.checked)}
                   className="rounded border-earth-300"
                 />
-                Endereço de envio no Japão
+                {t('platform.dashboard.chkJapanAddress')}
               </label>
               <label className="flex items-center gap-2 text-sm text-earth-800 sm:col-span-2">
                 <input
@@ -330,7 +345,7 @@ export default function Dashboard() {
                   onChange={(e) => updateDashboardPref('showAccountCards', e.target.checked)}
                   className="rounded border-earth-300"
                 />
-                Cards rápidos da conta
+                {t('platform.dashboard.chkQuickCards')}
               </label>
               {dashboardPrefs.showAccountCards && (
                 <>
@@ -341,7 +356,7 @@ export default function Dashboard() {
                       onChange={(e) => updateDashboardPref('showCardAccount', e.target.checked)}
                       className="rounded border-earth-300"
                     />
-                    Card Minha conta
+                    {t('platform.dashboard.chkCardAccount')}
                   </label>
                   <label className="flex items-center gap-2 text-sm text-earth-700 sm:col-span-2">
                     <input
@@ -350,7 +365,7 @@ export default function Dashboard() {
                       onChange={(e) => updateDashboardPref('showCardShipments', e.target.checked)}
                       className="rounded border-earth-300"
                     />
-                    Cards Envios (em processo + entregues em casa)
+                    {t('platform.dashboard.chkCardShipments')}
                   </label>
                   <label className="flex items-center gap-2 text-sm text-earth-700">
                     <input
@@ -359,7 +374,7 @@ export default function Dashboard() {
                       onChange={(e) => updateDashboardPref('showCardWallet', e.target.checked)}
                       className="rounded border-earth-300"
                     />
-                    Card Carteira
+                    {t('platform.dashboard.chkCardWallet')}
                   </label>
                   <label className="flex items-center gap-2 text-sm text-earth-700">
                     <input
@@ -368,7 +383,7 @@ export default function Dashboard() {
                       onChange={(e) => updateDashboardPref('showCardOrders', e.target.checked)}
                       className="rounded border-earth-300"
                     />
-                    Card Pedidos
+                    {t('platform.dashboard.chkCardOrders')}
                   </label>
                   <label className="flex items-center gap-2 text-sm text-earth-700 sm:col-span-2">
                     <input
@@ -377,7 +392,7 @@ export default function Dashboard() {
                       onChange={(e) => updateDashboardPref('showCardWishlist', e.target.checked)}
                       className="rounded border-earth-300"
                     />
-                    Card Lista de desejos
+                    {t('platform.dashboard.chkCardWishlist')}
                   </label>
                   <label className="flex items-center gap-2 text-sm text-earth-700 sm:col-span-2">
                     <input
@@ -386,7 +401,7 @@ export default function Dashboard() {
                       onChange={(e) => updateDashboardPref('showCardMyProducts', e.target.checked)}
                       className="rounded border-earth-300"
                     />
-                    Card Meus produtos
+                    {t('platform.dashboard.chkCardMyProducts')}
                   </label>
                 </>
               )}
@@ -395,7 +410,7 @@ export default function Dashboard() {
         )}
 
         {loading && (
-          <p className="mt-6 text-earth-600">Carregando...</p>
+          <p className="mt-6 text-earth-600">{t('platform.dashboard.loading')}</p>
         )}
 
         {!loading && (
@@ -403,30 +418,30 @@ export default function Dashboard() {
             {/* Notificações */}
             {dashboardPrefs.showNotifications && <section className="rounded-xl border border-earth-200 bg-white p-4 sm:p-5">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-earth-900">Notificações</h2>
+                <h2 className="text-lg font-semibold text-earth-900">{t('platform.dashboard.notifTitle')}</h2>
                 {unreadCount > 0 && (
                   <span className="inline-flex items-center gap-2 text-sm font-medium text-earth-700">
                     <span className="inline-block h-2 w-2 rounded-full bg-red-600" aria-hidden />
-                    {unreadCount} nova(s)
+                    {t('platform.dashboard.notifNew', { count: unreadCount })}
                   </span>
                 )}
               </div>
               <p className="mt-1 text-sm text-earth-600">
-                Você receberá uma notificação quando seu pedido mudar de status.
+                {t('platform.dashboard.notifHint')}
               </p>
 
               {notifsLoading && (
-                <p className="mt-4 text-sm text-earth-600">Carregando notificações...</p>
+                <p className="mt-4 text-sm text-earth-600">{t('platform.dashboard.notifLoading')}</p>
               )}
 
               {!notifsLoading && notifications.length === 0 && (
-                <p className="mt-4 text-sm text-earth-600">Nenhuma notificação ainda.</p>
+                <p className="mt-4 text-sm text-earth-600">{t('platform.dashboard.notifEmpty')}</p>
               )}
 
               {!notifsLoading && notifications.length > 0 && (
                 <div
                   className="mt-4 max-h-72 space-y-2 overflow-y-auto pr-2"
-                  aria-label="Lista de notificações"
+                  aria-label={t('platform.dashboard.notifListAria')}
                 >
                   {notifications.map((n) => {
                     const isUnread = !n.read_at
@@ -450,7 +465,9 @@ export default function Dashboard() {
                             )
                           }
                           const orderId = n.meta?.order_id
-                          if (orderId) window.location.href = `/app/lounge?tab=pedidos&orderId=${encodeURIComponent(orderId)}`
+                          if (orderId) {
+                            navigate(lp('appLounge', `?tab=pedidos&orderId=${encodeURIComponent(orderId)}`))
+                          }
                         }}
                         className="w-full rounded-lg border border-earth-200 bg-earth-50 p-3 text-left hover:bg-earth-100"
                       >
@@ -463,7 +480,7 @@ export default function Dashboard() {
                             {n.body && <p className="mt-1 text-sm text-earth-600">{n.body}</p>}
                           </div>
                           <span className="shrink-0 text-xs text-earth-500">
-                            {n.created_at ? new Date(n.created_at).toLocaleString('pt-BR') : ''}
+                            {n.created_at ? new Date(n.created_at).toLocaleString(dateLocale) : ''}
                           </span>
                         </div>
                       </button>
@@ -476,9 +493,9 @@ export default function Dashboard() {
             {/* Informações da conta – ícones pequenos */}
             {dashboardPrefs.showAccountCards && <section className="flex flex-wrap gap-3">
               {dashboardPrefs.showCardAccount && <Link
-                to="/app/conta"
+                to={lp('appConta')}
                 className="flex items-center gap-2 rounded-lg border border-earth-200 bg-white px-3 py-2 text-left transition hover:bg-earth-50"
-                title="Minha conta"
+                title={t('platform.dashboard.cardAccountTitle')}
               >
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-earth-100 text-earth-600">
                   <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
@@ -487,15 +504,17 @@ export default function Dashboard() {
                 </span>
                 <span className="min-w-0 text-xs">
                   <span className="block truncate font-medium text-earth-900">{name}</span>
-                  <span className="block truncate text-earth-500">{accountCode ? `Conta · ${accountCode}` : 'Conta'}</span>
+                  <span className="block truncate text-earth-500">
+                    {accountCode ? t('platform.dashboard.accountWithCode', { code: accountCode }) : t('platform.dashboard.accountShort')}
+                  </span>
                 </span>
               </Link>}
               {dashboardPrefs.showCardShipments && (
                 <>
                   <Link
-                    to="/app/lounge?tab=envios"
+                    to={lp('appLounge', '?tab=envios')}
                     className="flex items-center gap-2 rounded-lg border border-earth-200 bg-white px-3 py-2 text-left transition hover:bg-earth-50"
-                    title="Envios em processo — Lounge → Envios"
+                    title={t('platform.dashboard.cardShipmentsProcessTitle')}
                   >
                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-earth-100 text-earth-600">
                       <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
@@ -508,14 +527,16 @@ export default function Dashboard() {
                       </svg>
                     </span>
                     <span className="min-w-0 text-xs">
-                      <span className="block font-medium text-earth-900">{shipmentsInProcessCount} em processo</span>
-                      <span className="block text-earth-500">Envios em andamento</span>
+                      <span className="block font-medium text-earth-900">
+                        {t('platform.dashboard.inProcessCount', { count: shipmentsInProcessCount })}
+                      </span>
+                      <span className="block text-earth-500">{t('platform.dashboard.inProcessSub')}</span>
                     </span>
                   </Link>
                   <Link
-                    to="/app/lounge?tab=envios&envSub=recebidos"
+                    to={lp('appLounge', '?tab=envios&envSub=recebidos')}
                     className="flex items-center gap-2 rounded-lg border border-earth-200 bg-white px-3 py-2 text-left transition hover:bg-earth-50"
-                    title="Entregues em casa — histórico no Lounge → Envios"
+                    title={t('platform.dashboard.cardShipmentsDeliveredTitle')}
                   >
                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-earth-100 text-earth-600">
                       <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
@@ -528,16 +549,18 @@ export default function Dashboard() {
                       </svg>
                     </span>
                     <span className="min-w-0 text-xs">
-                      <span className="block font-medium text-earth-900">{deliveredAtHomeCount} entregues</span>
-                      <span className="block text-earth-500">Recebidos em casa</span>
+                      <span className="block font-medium text-earth-900">
+                        {t('platform.dashboard.deliveredCount', { count: deliveredAtHomeCount })}
+                      </span>
+                      <span className="block text-earth-500">{t('platform.dashboard.deliveredSub')}</span>
                     </span>
                   </Link>
                 </>
               )}
               {dashboardPrefs.showCardWallet && <Link
-                to="/app/lounge"
+                to={lp('appLounge')}
                 className="flex items-center gap-2 rounded-lg border border-earth-200 bg-white px-3 py-2 text-left transition hover:bg-earth-50"
-                title="Carteira"
+                title={t('platform.dashboard.cardWalletTitle')}
               >
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-earth-100 text-earth-600">
                   <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
@@ -545,14 +568,14 @@ export default function Dashboard() {
                   </svg>
                 </span>
                 <span className="min-w-0 text-xs">
-                  <span className="block font-medium text-earth-900">{formatMoney(balance, currency)}</span>
-                  <span className="block text-earth-500">Carteira</span>
+                  <span className="block font-medium text-earth-900">{formatMoney(balance, currency, dateLocale)}</span>
+                  <span className="block text-earth-500">{t('platform.dashboard.walletLabel')}</span>
                 </span>
               </Link>}
               {dashboardPrefs.showCardOrders && <Link
-                to="/app/lounge?tab=pedidos"
+                to={lp('appLounge', '?tab=pedidos')}
                 className="flex items-center gap-2 rounded-lg border border-earth-200 bg-white px-3 py-2 text-left transition hover:bg-earth-50"
-                title="Pedidos"
+                title={t('platform.dashboard.cardOrdersTitle')}
               >
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-earth-100 text-earth-600">
                   <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
@@ -560,14 +583,16 @@ export default function Dashboard() {
                   </svg>
                 </span>
                 <span className="min-w-0 text-xs">
-                  <span className="block font-medium text-earth-900">{orders.length} pedido(s)</span>
-                  <span className="block text-earth-500">Pedidos</span>
+                  <span className="block font-medium text-earth-900">
+                    {t('platform.dashboard.ordersCount', { count: orders.length })}
+                  </span>
+                  <span className="block text-earth-500">{t('platform.dashboard.ordersLabel')}</span>
                 </span>
               </Link>}
               {dashboardPrefs.showCardWishlist && <Link
-                to="/app/lista-desejos"
+                to={lp('appLounge', '?tab=desejos')}
                 className="flex items-center gap-2 rounded-lg border border-earth-200 bg-white px-3 py-2 text-left transition hover:bg-earth-50"
-                title="Lista de desejos"
+                title={t('platform.dashboard.cardWishlistTitle')}
               >
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-earth-100 text-earth-600">
                   <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
@@ -575,14 +600,16 @@ export default function Dashboard() {
                   </svg>
                 </span>
                 <span className="min-w-0 text-xs">
-                  <span className="block font-medium text-earth-900">{wishlist.length} item(ns)</span>
-                  <span className="block text-earth-500">Lista de desejos</span>
+                  <span className="block font-medium text-earth-900">
+                    {t('platform.dashboard.wishlistCount', { count: wishlist.length })}
+                  </span>
+                  <span className="block text-earth-500">{t('platform.dashboard.wishlistLabel')}</span>
                 </span>
               </Link>}
               {dashboardPrefs.showCardMyProducts && <Link
-                to="/app/meus-produtos"
+                to={lp('appLounge')}
                 className="flex items-center gap-2 rounded-lg border border-earth-200 bg-white px-3 py-2 text-left transition hover:bg-earth-50"
-                title="Meus produtos"
+                title={t('platform.dashboard.cardProductsTitle')}
               >
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-earth-100 text-earth-600">
                   <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
@@ -590,72 +617,71 @@ export default function Dashboard() {
                   </svg>
                 </span>
                 <span className="min-w-0 text-xs">
-                  <span className="block font-medium text-earth-900">{inventoryCount} item(ns)</span>
-                  <span className="block text-earth-500">Meus produtos</span>
+                  <span className="block font-medium text-earth-900">
+                    {t('platform.dashboard.inventoryCount', { count: inventoryCount })}
+                  </span>
+                  <span className="block text-earth-500">{t('platform.dashboard.productsLabel')}</span>
                 </span>
               </Link>}
             </section>}
 
             {/* Endereço para envio dos seus pedidos */}
             {dashboardPrefs.showAddress && <section className="rounded-xl border border-earth-200 bg-white p-4 sm:p-5">
-              <h2 className="text-lg font-semibold text-earth-900">Nosso endereço para envio dos seus pedidos</h2>
+              <h2 className="text-lg font-semibold text-earth-900">{t('platform.dashboard.addressTitle')}</h2>
               <p className="mt-1 text-sm text-earth-600">
-                Use este endereço nas lojas japonesas (Amazon, Rakuten, Mercari, etc.) como destino de entrega. O <strong>destinatário</strong> deve ser seu nome e código (abaixo). Os pacotes chegam até nós e consolidamos antes de enviar para você.
+                {t('platform.dashboard.addressIntro')}
               </p>
               <address className="mt-4 rounded-lg border border-earth-100 bg-earth-50 p-4 font-normal not-italic text-earth-800">
                 <p className="font-semibold text-earth-900">
-                  <span className="text-earth-500 font-normal">Destinatário:</span> {recipientLine}
+                  <span className="text-earth-500 font-normal">{t('platform.dashboard.labelRecipient')}</span> {recipientLine}
                 </p>
                 <p className="text-earth-600">
-                  <span className="text-earth-500">Empresa:</span> {SHIPPING_ADDRESS_JAPAN.company}
+                  <span className="text-earth-500">{t('platform.dashboard.labelCompany')}</span> {SHIPPING_ADDRESS_JAPAN.company}
                 </p>
                 <p>
-                  <span className="text-earth-500">Código postal:</span> {SHIPPING_ADDRESS_JAPAN.postalCode}
+                  <span className="text-earth-500">{t('platform.dashboard.labelPostal')}</span> {SHIPPING_ADDRESS_JAPAN.postalCode}
                 </p>
                 {SHIPPING_ADDRESS_JAPAN.prefecture && (
                   <p>
-                    <span className="text-earth-500">Prefectura:</span> {SHIPPING_ADDRESS_JAPAN.prefecture}
+                    <span className="text-earth-500">{t('platform.dashboard.labelPrefecture')}</span> {SHIPPING_ADDRESS_JAPAN.prefecture}
                   </p>
                 )}
                 <p>
-                  <span className="text-earth-500">Cidade:</span> {SHIPPING_ADDRESS_JAPAN.city}
+                  <span className="text-earth-500">{t('platform.dashboard.labelCity')}</span> {SHIPPING_ADDRESS_JAPAN.city}
                 </p>
                 <p>
-                  <span className="text-earth-500">Endereço (linha 1):</span> {SHIPPING_ADDRESS_JAPAN.line1}
+                  <span className="text-earth-500">{t('platform.dashboard.labelLine1')}</span> {SHIPPING_ADDRESS_JAPAN.line1}
                 </p>
                 {SHIPPING_ADDRESS_JAPAN.line2 && (
                   <p>
-                    <span className="text-earth-500">Complemento (linha 2):</span> {SHIPPING_ADDRESS_JAPAN.line2}
+                    <span className="text-earth-500">{t('platform.dashboard.labelLine2')}</span> {SHIPPING_ADDRESS_JAPAN.line2}
                   </p>
                 )}
                 <p>
-                  <span className="text-earth-500">País:</span> {SHIPPING_ADDRESS_JAPAN.country}
+                  <span className="text-earth-500">{t('platform.dashboard.labelCountry')}</span> {SHIPPING_ADDRESS_JAPAN.country}
                 </p>
               </address>
               <CopyAddressButton address={addressForUser} />
             </section>}
 
             <section id="referral-section" className="rounded-xl border border-green-200 bg-green-50 p-4 sm:p-5">
-              <h2 className="text-lg font-semibold text-earth-900">Programa de indicação</h2>
+              <h2 className="text-lg font-semibold text-earth-900">{t('platform.dashboard.referralTitle')}</h2>
               {referralLoadError && (
                 <p className="mt-2 rounded bg-amber-100 px-3 py-2 text-xs text-amber-800">
                   {referralLoadError}
                 </p>
               )}
               <p className="mt-2 text-sm text-earth-800">
-                <strong>Para quem você indica:</strong> ao se cadastrar com seu link e aplicar o benefício no primeiro pagamento
-                elegível na central de pagamentos, a pessoa pode receber até{' '}
-                <strong>{formatJPY(referralDiscountJpy)}</strong> de desconto nesse pedido (conforme regras no checkout).
+                <strong>{t('platform.dashboard.referralThemStrong')}</strong>
+                {t('platform.dashboard.referralThemBody', { amount: fp.jpy(referralDiscountJpy) })}
               </p>
               <p className="mt-2 text-sm text-earth-800">
-                <strong>Para você:</strong> quando o indicado <strong>finalizar o envio</strong> desse pedido (status{' '}
-                <em>enviado</em> ou <em>concluído</em> no sistema), você recebe{' '}
-                <strong>{formatJPY(referralCreditJpy)}</strong> em crédito na carteira, desde que o benefício de
-                indicação tenha sido aplicado naquele pedido.
+                <strong>{t('platform.dashboard.referralYouStrong')}</strong>
+                {t('platform.dashboard.referralYouBody', { amount: fp.jpy(referralCreditJpy) })}
               </p>
               <div className="mt-4 flex flex-wrap items-center gap-2">
                 <span className="rounded bg-white px-3 py-1.5 text-sm font-semibold text-earth-900 border border-green-200">
-                  Seu código: {referral.code || '—'}
+                  {t('platform.dashboard.yourCode', { code: referral.code || '—' })}
                 </span>
                 <button
                   type="button"
@@ -663,24 +689,31 @@ export default function Dashboard() {
                   disabled={referralRefreshing}
                   className="rounded border border-green-300 bg-white px-3 py-1.5 text-sm font-medium text-green-700 hover:bg-green-100 disabled:opacity-70"
                 >
-                  {referralRefreshing ? 'Gerando...' : 'Gerar novamente'}
+                  {referralRefreshing ? t('platform.dashboard.referralGenLoading') : t('platform.dashboard.referralGenAgain')}
                 </button>
                 {referral.code && (
                   <button
                     type="button"
-                    onClick={() => navigator.clipboard.writeText(`${window.location.origin}/register?invite=${referral.code}`)}
+                    onClick={() =>
+                      navigator.clipboard.writeText(
+                        `${window.location.origin}${lp('register')}?invite=${referral.code}`
+                      )
+                    }
                     className="rounded border border-green-300 bg-white px-3 py-1.5 text-sm font-medium text-green-700 hover:bg-green-100"
                   >
-                    Copiar link de cadastro
+                    {t('platform.dashboard.referralCopySignup')}
                   </button>
                 )}
               </div>
               <p className="mt-3 text-sm text-earth-700">
-                Créditos na carteira: <strong>{formatJPY(referralCreditsJpy)}</strong>
+                {t('platform.dashboard.referralWalletLine', { amount: fp.jpy(referralCreditsJpy) })}
               </p>
               <p className="mt-1 text-xs text-earth-600">
-                Indicados: {referral.stats?.total || 0} • Aguardando seu crédito (ex.: após o envio do indicado):{' '}
-                {referral.stats?.awaitingReferrerCredit ?? 0} • Crédito já recebido por indicação: {referral.stats?.rewarded || 0}
+                {t('platform.dashboard.referralStats', {
+                  total: referral.stats?.total || 0,
+                  awaiting: referral.stats?.awaitingReferrerCredit ?? 0,
+                  rewarded: referral.stats?.rewarded || 0,
+                })}
               </p>
             </section>
           </div>

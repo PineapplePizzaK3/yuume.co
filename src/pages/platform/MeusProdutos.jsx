@@ -3,9 +3,11 @@
  * Lista itens e direciona a solicitação de envio para a página Envios.
  */
 import { useEffect, useState } from 'react'
-import { Helmet } from 'react-helmet-async'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../hooks/useAuth'
 import { Link, useSearchParams } from 'react-router-dom'
+import { useLocalizedPath } from '../../hooks/useLocalizedPath'
+import { PageSeo } from '../../components/PageSeo'
 import { getMyInventory } from '../../services/inventoryService'
 import { cacheKey, readCache, writeCache } from '../../lib/cache'
 import { formatWeight } from '../../lib/fx'
@@ -27,8 +29,20 @@ function getStorageDays(item) {
 
 const INVENTORY_PAGE_SIZE = 24
 
+const INVENTORY_CATEGORY_KEYS = ['store', 'assisted', 'standard', 'personal', 'other']
+
+const INVENTORY_CATEGORY_TKEY = {
+  store: 'platform.inventory.categoryStore',
+  assisted: 'platform.inventory.categoryAssisted',
+  standard: 'platform.inventory.categoryStandard',
+  personal: 'platform.inventory.categoryPersonal',
+  other: 'platform.inventory.categoryOther',
+}
+
 export default function MeusProdutos() {
+  const { t } = useTranslation()
   const { user } = useAuth()
+  const lp = useLocalizedPath()
   const [searchParams, setSearchParams] = useSearchParams()
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
@@ -37,25 +51,23 @@ export default function MeusProdutos() {
   const [inventoryHasMore, setInventoryHasMore] = useState(false)
   const [detailItem, setDetailItem] = useState(null)
 
-  const getCategory = (it) => {
+  const getCategoryKey = (it) => {
     const order = it?.orders
     const orderSource = order?.order_source
     const orderModule = order?.order_module
 
-    if (orderSource === 'store') return 'Loja Virtual'
-    if (orderSource === 'service' && orderModule === 'assisted_buy')
-      return '🛍️ Redirecionamento Assistido'
-    if (orderSource === 'service' && orderModule === 'self_buy')
-      return '📦 Redirecionamento Padrão'
-    if (orderSource === 'service') return 'Personal Shopping'
-    return 'Outros'
+    if (orderSource === 'store') return 'store'
+    if (orderSource === 'service' && orderModule === 'assisted_buy') return 'assisted'
+    if (orderSource === 'service' && orderModule === 'self_buy') return 'standard'
+    if (orderSource === 'service') return 'personal'
+    return 'other'
   }
 
   const getItemPhotoUrl = (item) => item?.photo_url || item?.product?.image_url || null
 
   useEffect(() => {
     if (searchParams.get('success') === 'true' && user?.id) {
-      setFeedback('Compra realizada com sucesso! Seus produtos estão aqui. O pedido consta no histórico de pedidos.')
+      setFeedback(t('platform.inventory.purchaseSuccess'))
       setSearchParams({}, { replace: true })
       const k = cacheKey(user.id, `inventory_v1_p${inventoryPage}`)
       writeCache(k, null)
@@ -69,7 +81,7 @@ export default function MeusProdutos() {
         writeCache(k, { items: list, hasMore: list.length === INVENTORY_PAGE_SIZE })
       })
     }
-  }, [searchParams, setSearchParams, user?.id, inventoryPage])
+  }, [searchParams, setSearchParams, user?.id, inventoryPage, t])
 
   useEffect(() => {
     let isActive = true
@@ -97,44 +109,43 @@ export default function MeusProdutos() {
         writeCache(k, { items: list, hasMore: list.length === INVENTORY_PAGE_SIZE })
         if (error) setFeedback(error.message)
       } catch (e) {
-        if (isActive) setFeedback(e?.message || 'Erro ao carregar itens')
+        if (isActive) setFeedback(e?.message || t('platform.inventory.loadError'))
       } finally {
         if (isActive) setLoading(false)
       }
     }
     run()
     return () => { isActive = false }
-  }, [user?.id, inventoryPage])
+  }, [user?.id, inventoryPage, t])
+
+  const feedbackPositive = (msg) => /success|sucesso|created|criada/i.test(String(msg || ''))
 
   return (
     <>
-      <Helmet>
-        <title>Meus Produtos | Plataforma</title>
-      </Helmet>
+      <PageSeo
+        routeKey="appLounge"
+        title={t('platform.inventory.metaTitle')}
+        description={t('platform.inventory.metaDescription')}
+        noindex
+      />
       <div>
-        <h1 className="text-2xl font-bold text-earth-900">Meus produtos</h1>
-        <p className="mt-2 text-earth-600">
-          Itens recebidos e armazenados na sua conta. Para solicitar envio, use o fluxo da página Envios.
-        </p>
+        <h1 className="text-2xl font-bold text-earth-900">{t('platform.inventory.pageTitle')}</h1>
+        <p className="mt-2 text-earth-600">{t('platform.inventory.intro')}</p>
 
         {feedback && (
           <p
             className={`mt-4 rounded-lg px-4 py-2 text-sm ${
-              feedback.includes('criada') || feedback.includes('sucesso')
-                ? 'bg-green-100 text-green-800'
-                : 'bg-amber-100 text-amber-800'
+              feedbackPositive(feedback) ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
             }`}
           >
             {feedback}
           </p>
         )}
 
-        {loading && <p className="mt-6 text-earth-600">Carregando...</p>}
+        {loading && <p className="mt-6 text-earth-600">{t('platform.inventory.loading')}</p>}
 
         {!loading && items.length === 0 && (
-          <p className="mt-6 text-earth-600">
-            Você ainda não tem itens no inventário. Quando seus pacotes forem recebidos e confirmados, eles aparecerão aqui.
-          </p>
+          <p className="mt-6 text-earth-600">{t('platform.inventory.empty')}</p>
         )}
 
         {!loading && items.length > 0 && (
@@ -142,49 +153,41 @@ export default function MeusProdutos() {
             <div className="mt-6 rounded-xl border border-sky-300 bg-gradient-to-r from-sky-50 to-blue-50 p-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <p className="text-sm font-semibold text-sky-900">Solicitação de envio</p>
-                  <p className="mt-1 text-xs text-sky-800">
-                    Para solicitar envio, acesse a página de Envios e preencha o fluxo em etapas.
+                  <p className="text-sm font-semibold text-sky-900">
+                    {t('platform.inventory.shippingBannerTitle')}
                   </p>
+                  <p className="mt-1 text-xs text-sky-800">{t('platform.inventory.shippingBannerBody')}</p>
                 </div>
                 <Link
-                  to="/app/lounge?tab=envios"
+                  to={lp('appLounge', '?tab=envios')}
                   className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700"
                 >
-                  Ir para Envios
+                  {t('platform.inventory.goToShipments')}
                 </Link>
               </div>
             </div>
 
             {(() => {
-              const orderedCategories = [
-                'Loja Virtual',
-                '🛍️ Redirecionamento Assistido',
-                '📦 Redirecionamento Padrão',
-                'Personal Shopping',
-                'Outros',
-              ]
-              const grouped = orderedCategories.reduce((acc, c) => {
-                acc[c] = []
+              const grouped = INVENTORY_CATEGORY_KEYS.reduce((acc, key) => {
+                acc[key] = []
                 return acc
               }, {})
 
               for (const it of items) {
-                const c = getCategory(it)
-                if (!grouped[c]) grouped[c] = []
-                grouped[c].push(it)
+                const key = getCategoryKey(it)
+                if (!grouped[key]) grouped[key] = []
+                grouped[key].push(it)
               }
 
-              return orderedCategories
-                .filter((c) => grouped[c]?.length > 0)
-                .map((c) => (
-                  <section key={c} className="mt-6">
-                    <h3 className="text-base font-semibold text-earth-900">{c}</h3>
+              return INVENTORY_CATEGORY_KEYS.filter((key) => grouped[key]?.length > 0).map((key) => (
+                  <section key={key} className="mt-6">
+                    <h3 className="text-base font-semibold text-earth-900">{t(INVENTORY_CATEGORY_TKEY[key])}</h3>
                     <p className="mt-1 text-sm text-earth-600">
-                      Total: <span className="font-medium text-earth-800">{grouped[c].length}</span>
+                      {t('platform.inventory.sectionTotal')}{' '}
+                      <span className="font-medium text-earth-800">{grouped[key].length}</span>
                     </p>
                     <ul className="mt-4 space-y-4">
-                      {grouped[c].map((item) => (
+                      {grouped[key].map((item) => (
                         <li
                           key={item.id}
                           className="group overflow-hidden rounded-xl border border-earth-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
@@ -195,13 +198,13 @@ export default function MeusProdutos() {
                                 <div className="flex h-full w-full items-center justify-center bg-earth-100 p-2">
                                   <img
                                     src={getItemPhotoUrl(item)}
-                                    alt={item.name || 'Produto'}
+                                    alt={item.name || t('platform.inventory.productFallback')}
                                     className="max-h-full max-w-full object-contain transition-transform duration-500 group-hover:scale-[1.02]"
                                   />
                                 </div>
                               ) : (
                                 <div className="flex h-full w-full items-center justify-center bg-earth-100 text-earth-500">
-                                  Sem imagem
+                                  {t('platform.inventory.noImage')}
                                 </div>
                               )}
                               <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
@@ -212,11 +215,13 @@ export default function MeusProdutos() {
                                   <div className="flex flex-wrap items-center gap-2">
                                     <p className="text-base font-semibold text-earth-900">{item.name}</p>
                                     <span className="inline-flex items-center rounded bg-earth-100 px-2 py-0.5 text-xs text-earth-700">
-                                      {item.status === 'stored' ? 'Armazenado' : 'Pronto para envio'}
+                                      {item.status === 'stored'
+                                        ? t('platform.inventory.statusStored')
+                                        : t('platform.inventory.statusReady')}
                                     </span>
                                     {getStorageDays(item) != null && (
                                       <span className="inline-flex items-center rounded bg-amber-100 px-2 py-0.5 text-xs text-amber-800">
-                                        {getStorageDays(item)} dia(s)
+                                        {t('platform.inventory.days', { count: getStorageDays(item) })}
                                       </span>
                                     )}
                                   </div>
@@ -226,12 +231,20 @@ export default function MeusProdutos() {
                                   onClick={() => setDetailItem(item)}
                                   className="shrink-0 rounded-md border border-earth-300 px-2.5 py-1 text-xs font-semibold text-earth-700 hover:bg-earth-100"
                                 >
-                                  Ver detalhes
+                                  {t('platform.inventory.viewDetails')}
                                 </button>
                               </div>
                               <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-earth-500">
-                                {item.items_count != null && <span>Itens: {item.items_count}</span>}
-                                {item.weight_kg != null && <span>Peso: {formatWeight(item.weight_kg)}</span>}
+                                {item.items_count != null && (
+                                  <span>
+                                    {t('platform.inventory.itemsLabel')} {item.items_count}
+                                  </span>
+                                )}
+                                {item.weight_kg != null && (
+                                  <span>
+                                    {t('platform.inventory.weightLabel')} {formatWeight(item.weight_kg)}
+                                  </span>
+                                )}
                               </div>
                               {item.products_description && (
                                 <p className="mt-3 line-clamp-3 whitespace-pre-wrap text-sm text-earth-700">
@@ -251,7 +264,7 @@ export default function MeusProdutos() {
                                     rel="noopener noreferrer"
                                     className="text-xs font-medium text-earth-700 underline hover:text-earth-900"
                                   >
-                                    Abrir vídeo
+                                    {t('platform.inventory.openVideo')}
                                   </a>
                                 )}
                               </div>
@@ -262,10 +275,12 @@ export default function MeusProdutos() {
                     </ul>
                   </section>
                 ))
-            })()}
+              })()}
 
             <div className="mt-4 flex items-center justify-between gap-3 rounded-lg border border-earth-200 bg-white px-3 py-2">
-              <p className="text-xs text-earth-600">Página {inventoryPage + 1}</p>
+              <p className="text-xs text-earth-600">
+                {t('platform.inventory.pageIndicator', { page: inventoryPage + 1 })}
+              </p>
               <div className="flex gap-2">
                 <button
                   type="button"
@@ -273,7 +288,7 @@ export default function MeusProdutos() {
                   disabled={loading || inventoryPage <= 0}
                   className="rounded border border-earth-300 px-3 py-1.5 text-sm font-medium text-earth-700 hover:bg-earth-100 disabled:opacity-50"
                 >
-                  Anterior
+                  {t('platform.inventory.prevPage')}
                 </button>
                 <button
                   type="button"
@@ -281,7 +296,7 @@ export default function MeusProdutos() {
                   disabled={loading || !inventoryHasMore}
                   className="rounded border border-earth-300 px-3 py-1.5 text-sm font-medium text-earth-700 hover:bg-earth-100 disabled:opacity-50"
                 >
-                  Próxima
+                  {t('platform.inventory.nextPage')}
                 </button>
               </div>
             </div>
@@ -292,17 +307,17 @@ export default function MeusProdutos() {
             <div
               role="dialog"
               aria-modal="true"
-              aria-label="Detalhes do produto"
+              aria-label={t('platform.inventory.detailAria')}
               className="max-h-[90vh] w-full max-w-4xl overflow-hidden rounded-2xl bg-white shadow-2xl"
             >
               <div className="flex items-center justify-between border-b border-earth-200 px-5 py-4">
-                <p className="text-base font-semibold text-earth-900">Detalhes do produto</p>
+                <p className="text-base font-semibold text-earth-900">{t('platform.inventory.detailTitle')}</p>
                 <button
                   type="button"
                   onClick={() => setDetailItem(null)}
                   className="rounded-md border border-earth-300 px-2.5 py-1 text-sm font-medium text-earth-700 hover:bg-earth-100"
                 >
-                  Fechar
+                  {t('platform.inventory.close')}
                 </button>
               </div>
               <div className="grid max-h-[calc(90vh-64px)] overflow-y-auto md:grid-cols-[1.2fr_1fr]">
@@ -310,25 +325,39 @@ export default function MeusProdutos() {
                   {getItemPhotoUrl(detailItem) ? (
                     <img
                       src={getItemPhotoUrl(detailItem)}
-                      alt={detailItem.name || 'Produto'}
+                      alt={detailItem.name || t('platform.inventory.productFallback')}
                       className="h-full max-h-[70vh] w-full object-contain"
                     />
                   ) : (
                     <div className="flex h-full min-h-[320px] items-center justify-center text-earth-500">
-                      Sem imagem disponível
+                      {t('platform.inventory.noImageDetail')}
                     </div>
                   )}
                 </div>
                 <div className="space-y-3 p-5">
                   <p className="text-lg font-semibold text-earth-900">{detailItem.name}</p>
                   <div className="flex flex-wrap gap-x-3 gap-y-1 text-sm text-earth-600">
-                    {detailItem.items_count != null && <span>Itens: {detailItem.items_count}</span>}
-                    {detailItem.weight_kg != null && <span>Peso: {formatWeight(detailItem.weight_kg)}</span>}
-                    {getStorageDays(detailItem) != null && <span>Armazenado há {getStorageDays(detailItem)} dia(s)</span>}
+                    {detailItem.items_count != null && (
+                      <span>
+                        {t('platform.inventory.itemsLabel')} {detailItem.items_count}
+                      </span>
+                    )}
+                    {detailItem.weight_kg != null && (
+                      <span>
+                        {t('platform.inventory.weightLabel')} {formatWeight(detailItem.weight_kg)}
+                      </span>
+                    )}
+                    {getStorageDays(detailItem) != null && (
+                      <span>
+                        {t('platform.inventory.storedFor', { count: getStorageDays(detailItem) })}
+                      </span>
+                    )}
                   </div>
                   {detailItem.products_description && (
                     <div>
-                      <p className="text-xs font-semibold uppercase tracking-wide text-earth-500">Descrição</p>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-earth-500">
+                        {t('platform.inventory.description')}
+                      </p>
                       <p className="mt-1 whitespace-pre-wrap text-sm text-earth-800">
                         <LinkifyText text={detailItem.products_description} />
                       </p>
@@ -336,7 +365,9 @@ export default function MeusProdutos() {
                   )}
                   {detailItem.notes && (
                     <div>
-                      <p className="text-xs font-semibold uppercase tracking-wide text-earth-500">Observações</p>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-earth-500">
+                        {t('platform.inventory.notes')}
+                      </p>
                       <p className="mt-1 whitespace-pre-wrap text-sm text-earth-700">
                         <LinkifyText text={detailItem.notes} />
                       </p>
@@ -350,7 +381,7 @@ export default function MeusProdutos() {
                         rel="noopener noreferrer"
                         className="text-sm font-medium text-earth-700 underline hover:text-earth-900"
                       >
-                        Abrir vídeo
+                        {t('platform.inventory.openVideo')}
                       </a>
                     )}
                   </div>

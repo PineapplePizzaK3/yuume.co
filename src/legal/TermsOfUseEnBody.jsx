@@ -2,7 +2,7 @@
  * Full Terms of Use and Services — English (legal page).
  * Last updated: March 30, 2026.
  */
-import { Link } from 'react-router-dom'
+import { LocalizedLink } from '../components/LocalizedLink'
 
 function LegalSection({ title, children }) {
   return (
@@ -64,9 +64,9 @@ export function TermsOfUseEnBody({ cfg }) {
           These Terms of Use and Services (&quot;Terms&quot;) govern use of the platform and services. By creating an
           account, accepting electronically and/or using any service, you declare that you have read and agree to these
           Terms and the{' '}
-          <Link to="/legal/privacy" className="font-medium text-earth-900 underline hover:no-underline">
+          <LocalizedLink toRoute="legalPrivacy" className="font-medium text-earth-900 underline hover:no-underline">
             Privacy Policy
-          </Link>
+          </LocalizedLink>
           .
         </P>
       </LegalSection>
@@ -190,9 +190,9 @@ export function TermsOfUseEnBody({ cfg }) {
         />
         <P>
           Details are on{' '}
-          <Link to="/servicos-e-precos" className="font-medium text-earth-900 underline hover:no-underline">
+          <LocalizedLink toRoute="servicosPrecos" className="font-medium text-earth-900 underline hover:no-underline">
             Services &amp; Pricing
-          </Link>
+          </LocalizedLink>
           . Payments may be processed by third parties (e.g. Stripe); card data is not stored on our servers. Where
           available: <strong>PIX</strong>, <strong>credit card</strong> (installments when offered) and{' '}
           <strong>bank transfer</strong>. Orders are confirmed after payment is validated.
@@ -214,12 +214,12 @@ export function TermsOfUseEnBody({ cfg }) {
         <P>
           Shipping is calculated after you request shipment, consolidation (if any) and final weighing. Freight and
           applicable charges must be paid before posting. Indicative information:{' '}
-          <Link
-            to="/servicos-e-precos/fretes-prazos"
+          <LocalizedLink
+            toRoute="servicosFretes"
             className="font-medium text-earth-900 underline hover:no-underline"
           >
             Shipping &amp; delivery times
-          </Link>
+          </LocalizedLink>
           .
         </P>
       </LegalSection>
@@ -240,9 +240,9 @@ export function TermsOfUseEnBody({ cfg }) {
         </P>
         <P>
           Brazil-oriented guidance:{' '}
-          <Link to="/faq/taxas-alfandegarias" className="font-medium text-earth-900 underline hover:no-underline">
+          <LocalizedLink toRoute="faqCustoms" className="font-medium text-earth-900 underline hover:no-underline">
             Customs charges
-          </Link>
+          </LocalizedLink>
           .
         </P>
       </LegalSection>
@@ -325,9 +325,9 @@ export function TermsOfUseEnBody({ cfg }) {
       <LegalSection title="Article 21 (Privacy and personal data)">
         <P>
           Data processing is described in the{' '}
-          <Link to="/legal/privacy" className="font-medium text-earth-900 underline hover:no-underline">
+          <LocalizedLink toRoute="legalPrivacy" className="font-medium text-earth-900 underline hover:no-underline">
             Privacy Policy
-          </Link>
+          </LocalizedLink>
           , including sharing with payment processors, carriers and partners necessary to perform the services.
         </P>
       </LegalSection>

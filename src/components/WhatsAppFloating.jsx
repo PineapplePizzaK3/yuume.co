@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { useTranslation } from 'react-i18next'
 import { CONTATOS_DIRETOS } from '../data/contatoDireto'
+import { isAppPath } from '../lib/localeRoutes'
 
 const FAB_SIZE = 56
 const EDGE_PADDING = 12
@@ -22,7 +24,7 @@ function getBottomRightDefault() {
   const defaultX = w - FAB_SIZE - EDGE_PADDING
 
   const onAppMobile =
-    window.location.pathname.startsWith('/app') &&
+    isAppPath(window.location.pathname) &&
     window.matchMedia('(max-width: 1023px)').matches
   const nav = document.getElementById('platform-mobile-bottom-nav')
   let defaultY
@@ -40,6 +42,7 @@ function getBottomRightDefault() {
  * Usa o link do primeiro contato WhatsApp em contatoDireto.
  */
 function WhatsAppFloating() {
+  const { t } = useTranslation()
   const whatsapp = CONTATOS_DIRETOS.find((c) => c.nome === 'WhatsApp')
   const [position, setPosition] = useState(() => {
     if (typeof window === 'undefined') return { x: 0, y: 0 }
@@ -161,7 +164,7 @@ function WhatsAppFloating() {
       rel="noopener noreferrer"
       className="fixed z-[60] flex h-14 w-14 cursor-grab items-center justify-center rounded-full bg-[#25D366] text-white shadow-lg transition-[transform,box-shadow,background-color] hover:scale-105 hover:bg-[#20BD5A] hover:shadow-xl active:cursor-grabbing"
       style={{ left: `${position.x}px`, top: `${position.y}px`, touchAction: 'none' }}
-      aria-label="Chamar no WhatsApp"
+      aria-label={t('whatsapp.aria')}
       title={whatsapp.texto}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}

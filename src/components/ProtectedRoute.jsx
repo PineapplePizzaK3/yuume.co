@@ -5,13 +5,21 @@
  */
 import { useState, useEffect } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../lib/supabase'
+import {
+  getLocaleFromPathname,
+  isCompleteSocialProfilePath,
+  localizedPath,
+} from '../lib/localeRoutes'
 import { MFAGate } from './MFAGate'
 
 export function ProtectedRoute({ children }) {
+  const { t } = useTranslation()
   const { isAuthenticated, loading, session, needsSocialOnboarding } = useAuth()
   const location = useLocation()
+  const locale = getLocaleFromPathname(location.pathname)
   const [aalCheck, setAalCheck] = useState({ loading: true, needsMFA: false })
 
   useEffect(() => {
@@ -35,17 +43,17 @@ export function ProtectedRoute({ children }) {
   if (loading || aalCheck.loading) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
-        <p className="text-earth-600">Carregando...</p>
+        <p className="text-earth-600">{t('loading')}</p>
       </div>
     )
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />
+    return <Navigate to={localizedPath('login', locale)} state={{ from: location }} replace />
   }
 
-  if (needsSocialOnboarding && location.pathname !== '/app/complete-social-profile') {
-    return <Navigate to="/app/complete-social-profile" replace />
+  if (needsSocialOnboarding && !isCompleteSocialProfilePath(location.pathname)) {
+    return <Navigate to={localizedPath('appCompleteSocial', locale)} replace />
   }
 
   if (aalCheck.needsMFA) {

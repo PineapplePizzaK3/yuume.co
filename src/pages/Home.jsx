@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Helmet } from 'react-helmet-async'
+import { useTranslation } from 'react-i18next'
 import { RECOMENDACOES_QUICK_ACCESS } from '../data/lojasOndeComprar'
 import ImageLightbox from '../components/ImageLightbox'
+import { PageSeo } from '../components/PageSeo'
+import { LocalizedLink } from '../components/LocalizedLink'
+import { useLocalizedPath } from '../hooks/useLocalizedPath'
 
 /** Imagens alinhadas aos cards: 1 registrar, 2 selecionar serviço, 3 finalizar pedido (mesmo tamanho via aspect-video + object-cover). */
 const stepRegistrar = '/home/step-registrar.png'
@@ -14,10 +17,14 @@ const stepFinalizarPedido = '/home/step-finalizar-pedido.png'
  * Primeira div: apresentação da loja com frase de efeito e imagem.
  */
 function Home() {
+  const { t } = useTranslation()
+  const lp = useLocalizedPath()
   const [catIndex, setCatIndex] = useState(0)
   const [lightbox, setLightbox] = useState({ open: false, src: '', alt: '' })
   const rec = RECOMENDACOES_QUICK_ACCESS[catIndex] ?? RECOMENDACOES_QUICK_ACCESS[0]
   const imagens = rec.imagens ?? [rec.imagem, rec.imagem, rec.imagem]
+  const catTitle = t(`home.quickAccess.${rec.id}.title`, { defaultValue: rec.tipoLoja })
+  const catDesc = t(`home.quickAccess.${rec.id}.desc`, { defaultValue: rec.descricao })
 
   const goPrev = () => setCatIndex((i) => (i <= 0 ? RECOMENDACOES_QUICK_ACCESS.length - 1 : i - 1))
   const goNext = () => setCatIndex((i) => (i >= RECOMENDACOES_QUICK_ACCESS.length - 1 ? 0 : i + 1))
@@ -39,13 +46,11 @@ function Home() {
 
   return (
     <>
-      <Helmet>
-        <title>Home | Levando o Japão até você</title>
-        <meta
-          name="description"
-          content="Delivery - Levando o Japão até o conforto da sua casa. Rápido, seguro e confiável."
-        />
-      </Helmet>
+      <PageSeo
+        routeKey="home"
+        title={t('meta.home.title')}
+        description={t('meta.home.description')}
+      />
 
       {/* Seção 1: Apresentação da loja */}
       <section className="px-4 pt-24 pb-16">
@@ -53,11 +58,10 @@ function Home() {
           {/* Frase de efeito */}
           <div className="flex-1 text-center lg:text-left">
             <h1 className="text-4xl font-bold tracking-tight text-earth-900 sm:text-5xl">
-              Levando o Japão até o conforto da sua casa
+              {t('home.heroTitle')}
             </h1>
             <p className="mt-4 text-lg text-earth-600">
-              Conectamos você ao que importa. Nossa missão é levar seus pedidos
-              com agilidade e cuidado até o destino.
+              {t('home.heroSubtitle')}
             </p>
           </div>
 
@@ -65,9 +69,9 @@ function Home() {
           <div className="w-full shrink-0 lg:max-w-md">
             <img
               src="/voando.png?v=2"
-              alt="Apresentação da loja"
+              alt={t('home.heroImgAlt')}
               className="w-full animate-voar rounded-lg object-contain cursor-zoom-in"
-              onClick={(e) => openLightbox('/voando.png?v=2', 'Apresentação da loja', e)}
+              onClick={(e) => openLightbox('/voando.png?v=2', t('home.heroImgAlt'), e)}
             />
           </div>
         </div>
@@ -77,10 +81,10 @@ function Home() {
       <section className="border-t border-earth-200 bg-earth-50 px-4 py-16">
         <div className="mx-auto max-w-6xl">
           <h2 className="text-center text-2xl font-bold text-earth-900 sm:text-3xl">
-            O que você pode comprar
+            {t('home.buyTitle')}
           </h2>
           <p className="mx-auto mt-3 max-w-2xl text-center text-earth-600">
-            Tipos de produtos e onde encontrá-los no Japão
+            {t('home.buySubtitle')}
           </p>
 
           <div className="relative mt-10 flex items-stretch gap-2 md:gap-4">
@@ -88,7 +92,7 @@ function Home() {
             <button
               type="button"
               onClick={goPrev}
-              aria-label="Categoria anterior"
+              aria-label={t('home.prevCat')}
               className="shrink-0 self-center rounded-full p-2 text-earth-600 transition hover:bg-earth-200 hover:text-earth-900 md:p-3"
             >
               <svg className="h-6 w-6 md:h-8 md:w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -98,16 +102,16 @@ function Home() {
 
             {/* Conteúdo da categoria em destaque */}
             <Link
-              to={`/onde-comprar?categoria=${rec.id}`}
+              to={`${lp('ondeComprar')}?categoria=${rec.id}`}
               className="group flex flex-1 flex-col overflow-hidden rounded-xl border border-earth-200 bg-white shadow-sm transition hover:border-earth-400 hover:shadow-lg"
             >
               <div className="p-4 text-center md:p-6">
-                <h3 className="text-xl font-semibold text-earth-900 md:text-2xl">{rec.tipoLoja}</h3>
+                <h3 className="text-xl font-semibold text-earth-900 md:text-2xl">{catTitle}</h3>
                 <p className="mt-2 text-sm text-earth-600 md:text-base">
-                  {rec.descricao}
+                  {catDesc}
                 </p>
                 <span className="mt-4 inline-block text-sm font-medium text-earth-800 group-hover:underline">
-                  Ver lojas desta categoria →
+                  {t('home.seeStores')}
                 </span>
               </div>
               <div className="grid grid-cols-3 gap-1 md:gap-2 md:p-2">
@@ -120,7 +124,7 @@ function Home() {
                       src={src}
                       alt=""
                       className="h-full w-full cursor-zoom-in object-cover transition group-hover:scale-105"
-                      onClick={(e) => openLightbox(src, rec.tipoLoja, e)}
+                      onClick={(e) => openLightbox(src, catTitle, e)}
                       onError={(e) => {
                         e.target.onerror = null
                         e.target.style.display = 'none'
@@ -129,7 +133,7 @@ function Home() {
                       }}
                     />
                     <div className="hidden absolute inset-0 flex items-center justify-center bg-earth-200 text-earth-500 text-xs">
-                      {rec.tipoLoja}
+                      {catTitle}
                     </div>
                   </div>
                 ))}
@@ -140,7 +144,7 @@ function Home() {
             <button
               type="button"
               onClick={goNext}
-              aria-label="Próxima categoria"
+              aria-label={t('home.nextCat')}
               className="shrink-0 self-center rounded-full p-2 text-earth-600 transition hover:bg-earth-200 hover:text-earth-900 md:p-3"
             >
               <svg className="h-6 w-6 md:h-8 md:w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -156,7 +160,9 @@ function Home() {
                 key={r.id}
                 type="button"
                 onClick={() => setCatIndex(i)}
-                aria-label={`Ir para ${r.tipoLoja}`}
+                aria-label={t('home.goToCat', {
+                  name: t(`home.quickAccess.${r.id}.title`, { defaultValue: r.tipoLoja }),
+                })}
                 className={`h-2 w-2 rounded-full transition md:h-2.5 md:w-2.5 ${
                   i === catIndex ? 'bg-earth-900' : 'bg-earth-300 hover:bg-earth-400'
                 }`}
@@ -170,15 +176,15 @@ function Home() {
       <section className="border-t border-earth-200 px-4 py-16">
         <div className="mx-auto max-w-6xl">
           <h2 className="text-center text-2xl font-bold text-earth-900 sm:text-3xl">
-            Por onde começar?
+            {t('home.startTitle')}
           </h2>
           <p className="mx-auto mt-3 max-w-2xl text-center text-earth-600">
-            Guia rápido para você aproveitar nossos serviços
+            {t('home.startSubtitle')}
           </p>
 
           <div className="mt-10 grid gap-6 sm:grid-cols-3">
-            <Link
-              to="/servicos-e-precos"
+            <LocalizedLink
+              toRoute="servicosPrecos"
               className="group flex flex-col overflow-hidden rounded-lg border border-earth-200 bg-earth-100 shadow-sm transition hover:border-earth-300 hover:shadow-md"
             >
               <div className="aspect-video w-full bg-earth-200">
@@ -186,7 +192,7 @@ function Home() {
                   src="/home/guia-servicos.png"
                   alt=""
                   className="h-full w-full cursor-zoom-in object-cover"
-                  onClick={(e) => openLightbox('/home/guia-servicos.png', 'Guia de serviços', e)}
+                  onClick={(e) => openLightbox('/home/guia-servicos.png', t('home.guideServicesAlt'), e)}
                 />
               </div>
               <div className="flex flex-1 flex-col p-6">
@@ -194,19 +200,19 @@ function Home() {
                   1.
                 </span>
                 <h3 className="mt-2 text-lg font-semibold text-earth-900">
-                  Serviços
+                  {t('home.guideServicesTitle')}
                 </h3>
                 <p className="mt-2 flex-1 text-earth-600">
-                  Redirecionamento (📦 Padrão ou 🛍️ Assistido), personal shopping, grupo de compras e loja virtual.
+                  {t('home.guideServicesBody')}
                 </p>
                 <span className="mt-4 text-sm font-medium text-earth-900 group-hover:underline">
-                  Ver serviços →
+                  {t('home.guideServicesCta')}
                 </span>
               </div>
-            </Link>
+            </LocalizedLink>
 
-            <Link
-              to="/onde-comprar"
+            <LocalizedLink
+              toRoute="ondeComprar"
               className="group flex flex-col overflow-hidden rounded-lg border border-earth-200 bg-earth-100 shadow-sm transition hover:border-earth-300 hover:shadow-md"
             >
               <div className="aspect-video w-full bg-earth-200">
@@ -214,7 +220,7 @@ function Home() {
                   src="/home/guia-onde-comprar.png"
                   alt=""
                   className="h-full w-full cursor-zoom-in object-cover"
-                  onClick={(e) => openLightbox('/home/guia-onde-comprar.png', 'Guia de onde comprar', e)}
+                  onClick={(e) => openLightbox('/home/guia-onde-comprar.png', t('home.guideWhereAlt'), e)}
                 />
               </div>
               <div className="flex flex-1 flex-col p-6">
@@ -222,19 +228,19 @@ function Home() {
                   2.
                 </span>
                 <h3 className="mt-2 text-lg font-semibold text-earth-900">
-                  Onde comprar
+                  {t('home.guideWhereTitle')}
                 </h3>
                 <p className="mt-2 flex-1 text-earth-600">
-                  Lojas japonesas para redirecionamento. Compre e envie para nosso endereço no Japão.
+                  {t('home.guideWhereBody')}
                 </p>
                 <span className="mt-4 text-sm font-medium text-earth-900 group-hover:underline">
-                  Ver lojas →
+                  {t('home.guideWhereCta')}
                 </span>
               </div>
-            </Link>
+            </LocalizedLink>
 
-            <Link
-              to="/servicos-e-precos"
+            <LocalizedLink
+              toRoute="servicosPrecos"
               className="group flex flex-col overflow-hidden rounded-lg border border-earth-200 bg-earth-100 shadow-sm transition hover:border-earth-300 hover:shadow-md"
             >
               <div className="aspect-video w-full bg-earth-200">
@@ -242,7 +248,7 @@ function Home() {
                   src="/home/guia-precos.png"
                   alt=""
                   className="h-full w-full cursor-zoom-in object-cover"
-                  onClick={(e) => openLightbox('/home/guia-precos.png', 'Guia de preços e simulador', e)}
+                  onClick={(e) => openLightbox('/home/guia-precos.png', t('home.guidePricesAlt'), e)}
                 />
               </div>
               <div className="flex flex-1 flex-col p-6">
@@ -250,16 +256,16 @@ function Home() {
                   3.
                 </span>
                 <h3 className="mt-2 text-lg font-semibold text-earth-900">
-                  Preços e simulador
+                  {t('home.guidePricesTitle')}
                 </h3>
                 <p className="mt-2 flex-1 text-earth-600">
-                  Taxas por itens, percentuais e frete. Use o simulador para estimar o valor do seu pedido.
+                  {t('home.guidePricesBody')}
                 </p>
                 <span className="mt-4 text-sm font-medium text-earth-900 group-hover:underline">
-                  Ver preços →
+                  {t('home.guidePricesCta')}
                 </span>
               </div>
-            </Link>
+            </LocalizedLink>
           </div>
         </div>
       </section>
@@ -268,10 +274,10 @@ function Home() {
       <section className="border-t border-earth-200 px-4 py-16">
         <div className="mx-auto max-w-6xl">
           <h2 className="text-center text-2xl font-bold text-earth-900 sm:text-3xl">
-            Como usar nossos serviços
+            {t('home.howTitle')}
           </h2>
           <p className="mx-auto mt-3 max-w-2xl text-center text-earth-600">
-            Passo a passo para começar
+            {t('home.howSubtitle')}
           </p>
 
           <ol className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -281,16 +287,16 @@ function Home() {
                   src={stepRegistrar}
                   alt=""
                   className="h-full w-full cursor-zoom-in object-cover"
-                  onClick={(e) => openLightbox(stepRegistrar, 'Passo 1', e)}
+                  onClick={(e) => openLightbox(stepRegistrar, t('home.step1Alt'), e)}
                 />
               </div>
               <div className="flex flex-1 flex-col p-6">
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center self-start rounded-full bg-earth-900 text-sm font-bold text-earth-50">1</span>
                 <h3 className="mt-4 font-semibold text-earth-900">
-                <Link to="/register" className="hover:underline">Registre-se na nossa plataforma</Link>
+                  <LocalizedLink toRoute="register" className="hover:underline">{t('home.step1Title')}</LocalizedLink>
                 </h3>
                 <p className="mt-2 flex-1 text-sm text-earth-600">
-                  Crie sua conta gratuitamente. Com ela você acessa Meus Produtos, carrinho, envios e todos os serviços.
+                  {t('home.step1Body')}
                 </p>
               </div>
             </li>
@@ -300,14 +306,14 @@ function Home() {
                   src={stepSelecionarServico}
                   alt=""
                   className="h-full w-full cursor-zoom-in object-cover"
-                  onClick={(e) => openLightbox(stepSelecionarServico, 'Passo 2', e)}
+                  onClick={(e) => openLightbox(stepSelecionarServico, t('home.step2Alt'), e)}
                 />
               </div>
               <div className="flex flex-1 flex-col p-6">
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center self-start rounded-full bg-earth-900 text-sm font-bold text-earth-50">2</span>
-                <h3 className="mt-4 font-semibold text-earth-900">Escolha o serviço</h3>
+                <h3 className="mt-4 font-semibold text-earth-900">{t('home.step2Title')}</h3>
                 <p className="mt-2 flex-1 text-sm text-earth-600">
-                  Redirecionamento Padrão ou Assistido, personal shopping, grupo de compras ou loja virtual.
+                  {t('home.step2Body')}
                 </p>
               </div>
             </li>
@@ -317,14 +323,14 @@ function Home() {
                   src={stepFinalizarPedido}
                   alt=""
                   className="h-full w-full cursor-zoom-in object-cover"
-                  onClick={(e) => openLightbox(stepFinalizarPedido, 'Passo 3', e)}
+                  onClick={(e) => openLightbox(stepFinalizarPedido, t('home.step3Alt'), e)}
                 />
               </div>
               <div className="flex flex-1 flex-col p-6">
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center self-start rounded-full bg-earth-900 text-sm font-bold text-earth-50">3</span>
-                <h3 className="mt-4 font-semibold text-earth-900">Finalize o pedido</h3>
+                <h3 className="mt-4 font-semibold text-earth-900">{t('home.step3Title')}</h3>
                 <p className="mt-2 flex-1 text-sm text-earth-600">
-                  Faça o pagamento (produtos e frete quando informado). Acompanhe o envio em Pedidos e receba em casa.
+                  {t('home.step3Body')}
                 </p>
               </div>
             </li>
@@ -336,26 +342,26 @@ function Home() {
       <section className="border-t border-earth-200 bg-earth-50 px-4 py-16">
         <div className="mx-auto max-w-6xl">
           <h2 className="text-center text-2xl font-bold text-earth-900 sm:text-3xl">
-            Tem alguma dúvida?
+            {t('home.doubtsTitle')}
           </h2>
           <div className="mt-10 flex justify-center">
-            <Link
-              to="/faq"
+            <LocalizedLink
+              toRoute="faqIndex"
               className="group flex max-w-sm flex-col overflow-hidden rounded-lg border border-earth-200 bg-white shadow-sm transition hover:border-earth-300 hover:shadow-md"
             >
               <div className="flex h-24 items-center justify-center bg-earth-100">
                 <span className="text-4xl" aria-hidden>❓</span>
               </div>
               <div className="flex flex-1 flex-col p-6">
-                <h3 className="font-semibold text-earth-900">Dúvidas</h3>
+                <h3 className="font-semibold text-earth-900">{t('home.doubtsCardTitle')}</h3>
                 <p className="mt-2 text-sm text-earth-600">
-                  Tire suas dúvidas sobre envios, taxas, prazos e como funciona nosso serviço.
+                  {t('home.doubtsCardBody')}
                 </p>
                 <span className="mt-4 text-sm font-medium text-earth-900 group-hover:underline">
-                  Ver dúvidas →
+                  {t('home.doubtsCta')}
                 </span>
               </div>
-            </Link>
+            </LocalizedLink>
           </div>
         </div>
       </section>

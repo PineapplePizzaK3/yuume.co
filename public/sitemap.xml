@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <!-- Base URL must match VITE_SITE_URL in production (default: https://eiko-dls.com). Update if your domain differs. -->
+  <url>
+    <loc>https://eiko-dls.com/</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://eiko-dls.com/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://eiko-dls.com/en"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://eiko-dls.com/"/>
+  </url>
+  <url>
+    <loc>https://eiko-dls.com/en</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://eiko-dls.com/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://eiko-dls.com/en"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://eiko-dls.com/"/>
+  </url>
+  <url>
+    <loc>https://eiko-dls.com/servicos-e-precos</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://eiko-dls.com/servicos-e-precos"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://eiko-dls.com/en/services-pricing"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://eiko-dls.com/"/>
+  </url>
+  <url>
+    <loc>https://eiko-dls.com/en/services-pricing</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://eiko-dls.com/servicos-e-precos"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://eiko-dls.com/en/services-pricing"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://eiko-dls.com/"/>
+  </url>
+  <url>
+    <loc>https://eiko-dls.com/servicos-e-precos/fretes-prazos</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://eiko-dls.com/servicos-e-precos/fretes-prazos"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://eiko-dls.com/en/services-pricing/shipping-times"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://eiko-dls.com/"/>
+  </url>
+  <url>
+    <loc>https://eiko-dls.com/en/services-pricing/shipping-times</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://eiko-dls.com/servicos-e-precos/fretes-prazos"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://eiko-dls.com/en/services-pricing/shipping-times"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://eiko-dls.com/"/>
+  </url>
+  <url>
+    <loc>https://eiko-dls.com/servicos-e-precos/simulador</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://eiko-dls.com/servicos-e-precos/simulador"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://eiko-dls.com/en/services-pricing/shipping-calculator"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://eiko-dls.com/"/>
+  </url>
+  <url>
+    <loc>https://eiko-dls.com/en/services-pricing/shipping-calculator</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://eiko-dls.com/servicos-e-precos/simulador"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://eiko-dls.com/en/services-pricing/shipping-calculator"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://eiko-dls.com/"/>
+  </url>
+  <url>
+    <loc>https://eiko-dls.com/faq</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://eiko-dls.com/faq"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://eiko-dls.com/en/help"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://eiko-dls.com/"/>
+  </url>
+  <url>
+    <loc>https://eiko-dls.com/en/help</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://eiko-dls.com/faq"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://eiko-dls.com/en/help"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://eiko-dls.com/"/>
+  </url>
+  <url>
+    <loc>https://eiko-dls.com/faq/itens-proibidos</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://eiko-dls.com/faq/itens-proibidos"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://eiko-dls.com/en/help/prohibited-items"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://eiko-dls.com/"/>
+  </url>
+  <url>
+    <loc>https://eiko-dls.com/en/help/prohibited-items</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://eiko-dls.com/faq/itens-proibidos"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://eiko-dls.com/en/help/prohibited-items"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://eiko-dls.com/"/>
+  </url>
+  <url>
+    <loc>https://eiko-dls.com/faq/taxas-alfandegarias</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://eiko-dls.com/faq/taxas-alfandegarias"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://eiko-dls.com/en/help/customs-fees"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://eiko-dls.com/"/>
+  </url>
+  <url>
+    <loc>https://eiko-dls.com/en/help/customs-fees</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://eiko-dls.com/faq/taxas-alfandegarias"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://eiko-dls.com/en/help/customs-fees"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://eiko-dls.com/"/>
+  </url>
+  <url>
+    <loc>https://eiko-dls.com/onde-comprar</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://eiko-dls.com/onde-comprar"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://eiko-dls.com/en/where-to-buy"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://eiko-dls.com/"/>
+  </url>
+  <url>
+    <loc>https://eiko-dls.com/en/where-to-buy</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://eiko-dls.com/onde-comprar"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://eiko-dls.com/en/where-to-buy"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://eiko-dls.com/"/>
+  </url>
+  <url>
+    <loc>https://eiko-dls.com/contact</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://eiko-dls.com/contact"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://eiko-dls.com/en/contact"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://eiko-dls.com/"/>
+  </url>
+  <url>
+    <loc>https://eiko-dls.com/en/contact</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://eiko-dls.com/contact"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://eiko-dls.com/en/contact"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://eiko-dls.com/"/>
+  </url>
+  <url>
+    <loc>https://eiko-dls.com/loja</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://eiko-dls.com/loja"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://eiko-dls.com/en/store"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://eiko-dls.com/"/>
+  </url>
+  <url>
+    <loc>https://eiko-dls.com/en/store</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://eiko-dls.com/loja"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://eiko-dls.com/en/store"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://eiko-dls.com/"/>
+  </url>
+  <url>
+    <loc>https://eiko-dls.com/legal/privacy</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://eiko-dls.com/legal/privacy"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://eiko-dls.com/en/legal/privacy"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://eiko-dls.com/"/>
+  </url>
+  <url>
+    <loc>https://eiko-dls.com/en/legal/privacy</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://eiko-dls.com/legal/privacy"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://eiko-dls.com/en/legal/privacy"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://eiko-dls.com/"/>
+  </url>
+  <url>
+    <loc>https://eiko-dls.com/legal/terms</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://eiko-dls.com/legal/terms"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://eiko-dls.com/en/legal/terms"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://eiko-dls.com/"/>
+  </url>
+  <url>
+    <loc>https://eiko-dls.com/en/legal/terms</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://eiko-dls.com/legal/terms"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://eiko-dls.com/en/legal/terms"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://eiko-dls.com/"/>
+  </url>
+  <url>
+    <loc>https://eiko-dls.com/legal/commercial-disclosure</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://eiko-dls.com/legal/commercial-disclosure"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://eiko-dls.com/en/legal/commercial-disclosure"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://eiko-dls.com/"/>
+  </url>
+  <url>
+    <loc>https://eiko-dls.com/en/legal/commercial-disclosure</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://eiko-dls.com/legal/commercial-disclosure"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://eiko-dls.com/en/legal/commercial-disclosure"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://eiko-dls.com/"/>
+  </url>
+</urlset>

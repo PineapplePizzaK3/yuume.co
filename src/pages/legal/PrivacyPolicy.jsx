@@ -2,6 +2,8 @@
  * Privacy Policy - Content in JA (default), PT-BR and EN.
  */
 import { Helmet } from 'react-helmet-async'
+import { useTranslation } from 'react-i18next'
+import { PageSeo } from '../../components/PageSeo'
 import { useLegalLanguage } from '../../contexts/LegalLanguageContext'
 import { LEGAL_CONFIG } from '../../data/legalConfig'
 
@@ -247,6 +249,7 @@ const CONTENT = {
 }
 
 export default function PrivacyPolicy() {
+  const { t } = useTranslation()
   const { lang } = useLegalLanguage()
   const { BUSINESS_NAME, SUPPORT_EMAIL } = LEGAL_CONFIG
   const cfg = { BUSINESS_NAME, SUPPORT_EMAIL }
@@ -254,6 +257,7 @@ export default function PrivacyPolicy() {
 
   return (
     <>
+      <PageSeo routeKey="legalPrivacy" title={null} description={t('meta.legalPrivacy.description')} />
       <Helmet>
         <title>{content.title} | Legal | Delivery</title>
       </Helmet>
