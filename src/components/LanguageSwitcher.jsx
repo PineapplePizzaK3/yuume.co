@@ -7,10 +7,30 @@ import {
   LOCALE_PT_BR,
   localizedRoutePath,
 } from '../lib/localeRoutes'
+import { FlagIcon } from './FlagIcon'
+
+/** SVG flags render everywhere; emoji regional flags break on Windows (show as “BR”, “US”). */
+function LangFlag({ code, size, title }) {
+  return (
+    <span aria-hidden className="inline-flex shrink-0" title={title}>
+      <FlagIcon code={code} size={size} />
+    </span>
+  )
+}
 
 const LANG_OPTIONS = [
-  { locale: LOCALE_PT_BR, labelKey: 'nav.langPt', flag: '🇧🇷' },
-  { locale: LOCALE_EN, labelKey: 'nav.langEn', flag: '🇺🇸' },
+  {
+    locale: LOCALE_PT_BR,
+    labelKey: 'nav.langPt',
+    flagCode: 'BR',
+    flagTitleKey: 'platform.triCurrency.flagBr',
+  },
+  {
+    locale: LOCALE_EN,
+    labelKey: 'nav.langEn',
+    flagCode: 'US',
+    flagTitleKey: 'platform.triCurrency.flagUs',
+  },
 ]
 
 /**
@@ -44,9 +64,7 @@ export function LanguageSwitcherDropdown() {
         aria-haspopup="menu"
         aria-label={`${current.label} — ${t('nav.langMenuAria')}`}
       >
-        <span className="text-base leading-none" aria-hidden>
-          {current.flag}
-        </span>
+        <LangFlag code={current.flagCode} size={18} title={t(current.flagTitleKey)} />
         <span>{current.label}</span>
         <svg
           className="h-3.5 w-3.5 shrink-0 text-earth-500"
@@ -69,9 +87,7 @@ export function LanguageSwitcherDropdown() {
             const active = opt.locale === siteLocale
             const row = (
               <>
-                <span className="text-lg leading-none" aria-hidden>
-                  {opt.flag}
-                </span>
+                <LangFlag code={opt.flagCode} size={20} title={t(opt.flagTitleKey)} />
                 {opt.label}
               </>
             )
@@ -136,9 +152,7 @@ export function LanguageSwitcherInline({ onNavigate, className = '' }) {
         const active = opt.locale === siteLocale
         const inner = (
           <>
-            <span className="text-lg leading-none" aria-hidden>
-              {opt.flag}
-            </span>
+            <LangFlag code={opt.flagCode} size={20} title={t(opt.flagTitleKey)} />
             {opt.label}
           </>
         )
@@ -206,7 +220,7 @@ export function LanguageSwitcherFooterRow() {
               }`}
               aria-current={active ? 'true' : undefined}
             >
-              <span aria-hidden>{opt.flag}</span>
+              <LangFlag code={opt.flagCode} size={18} title={t(opt.flagTitleKey)} />
               {opt.label}
             </Link>
           )

@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next'
 import { LegalLanguageProvider, useLegalLanguage } from '../contexts/LegalLanguageContext'
 import { isRouteActive } from '../lib/localeRoutes'
 import { LocalizedLink } from '../components/LocalizedLink'
+import { FlagIcon } from '../components/FlagIcon'
 
 const LEGAL_LINKS = [
   { routeKey: 'legalCommercial', labelJa: '特定商取引法に基づく表記', labelPt: 'Divulgação Comercial', labelEn: 'Commercial Disclosure' },
@@ -38,34 +39,40 @@ function LegalLayoutInner() {
               type="button"
               onClick={() => setLang('ja')}
               title="日本語"
-              className={`rounded-lg px-3 py-2 text-2xl transition hover:bg-earth-200 ${
+              className={`inline-flex items-center justify-center rounded-lg px-3 py-2 transition hover:bg-earth-200 ${
                 lang === 'ja' ? 'ring-2 ring-earth-700 ring-offset-2' : 'opacity-70 hover:opacity-100'
               }`}
               aria-pressed={lang === 'ja'}
             >
-              🇯🇵
+              <span aria-hidden className="inline-flex">
+                <FlagIcon code="JP" size={28} />
+              </span>
             </button>
             <button
               type="button"
               onClick={() => setLang('pt-BR')}
               title="Português (Brasil)"
-              className={`rounded-lg px-3 py-2 text-2xl transition hover:bg-earth-200 ${
+              className={`inline-flex items-center justify-center rounded-lg px-3 py-2 transition hover:bg-earth-200 ${
                 lang === 'pt-BR' ? 'ring-2 ring-earth-700 ring-offset-2' : 'opacity-70 hover:opacity-100'
               }`}
               aria-pressed={lang === 'pt-BR'}
             >
-              🇧🇷
+              <span aria-hidden className="inline-flex">
+                <FlagIcon code="BR" size={28} />
+              </span>
             </button>
             <button
               type="button"
               onClick={() => setLang('en')}
               title="English"
-              className={`rounded-lg px-3 py-2 text-2xl transition hover:bg-earth-200 ${
+              className={`inline-flex items-center justify-center rounded-lg px-3 py-2 transition hover:bg-earth-200 ${
                 lang === 'en' ? 'ring-2 ring-earth-700 ring-offset-2' : 'opacity-70 hover:opacity-100'
               }`}
               aria-pressed={lang === 'en'}
             >
-              🇺🇸
+              <span aria-hidden className="inline-flex">
+                <FlagIcon code="US" size={28} />
+              </span>
             </button>
           </div>
         </div>

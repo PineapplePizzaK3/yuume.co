@@ -173,7 +173,6 @@ export default function CentralPaymentModal({ open, onClose, amountJpy, accessTo
               </div>
 
               <p className="text-xs text-earth-500 mt-1">{t('platform.cart.modalBrlNote')}</p>
-              <p className="text-xs text-earth-600 mt-2">{t('platform.wallet.topupFxPipelineNote')}</p>
             </div>
 
             <div className="rounded-lg border border-earth-200 bg-white p-4">
