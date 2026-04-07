@@ -278,7 +278,7 @@
     "lounge": {
       "metaTitle": "Lounge | Plataforma",
       "pageTitle": "Lounge",
-      "intro": "Central de Pedidos, Envios, Meus Produtos e Lista de Desejos com todas as funções completas.",
+      "intro": "Central de Pedidos, Envios, Meus Produtos e Lista de Desejos.",
       "loadError": "Erro ao carregar lounge",
       "wallet": "Carteira",
       "loadingShort": "Carregando...",
@@ -305,7 +305,6 @@
       "extraRequestSent": "Solicitação de serviços extras enviada!",
       "extraRequestFailed": "Erro ao solicitar",
       "pageTitle": "Pedidos",
-      "intro": "Todos os pedidos da sua conta, em duas listas: Em andamento reúne todo pedido que ainda não está com status finalizado; Finalizados mostra apenas os concluídos. Na aba Envios do Lounge há uma visão extra só da fase de envio internacional. Pagamentos na Central de Pagamentos.",
       "filterOpen": "Em andamento",
       "filterCompleted": "Finalizados",
       "loading": "Carregando pedidos...",

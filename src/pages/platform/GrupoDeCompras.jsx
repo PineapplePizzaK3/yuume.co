@@ -29,6 +29,7 @@ function getProductImages(p) {
 }
 
 export default function GrupoDeCompras() {
+  const { t } = useTranslation()
   const lp = useLocalizedPath()
   const { user } = useAuth()
   const [groups, setGroups] = useState([])
@@ -43,14 +44,14 @@ export default function GrupoDeCompras() {
 
   useEffect(() => {
     if (!message) return
-    const t = setTimeout(() => setMessage(''), 3000)
-    return () => clearTimeout(t)
+    const timeoutId = setTimeout(() => setMessage(''), 3000)
+    return () => clearTimeout(timeoutId)
   }, [message])
 
   useEffect(() => {
     if (!modalFeedback) return
-    const t = setTimeout(() => setModalFeedback(''), 2200)
-    return () => clearTimeout(t)
+    const timeoutId = setTimeout(() => setModalFeedback(''), 2200)
+    return () => clearTimeout(timeoutId)
   }, [modalFeedback])
 
   useEffect(() => {
