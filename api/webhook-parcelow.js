@@ -161,6 +161,43 @@ export default async function handler(req, res) {
         ?? payload?.amount,
     { assumeCents: true }
   )
+  // Tentativa de conciliação de recarga de carteira via Parcelow.
+  const { data: topupReq } = await supabase
+    .from('wallet_topup_requests')
+    .select('id, user_id, amount_jpy, status')
+    .eq('id', orderId)
+    .maybeSingle()
+  if (topupReq && topupReq.status === 'pending') {
+    const paymentAlreadyRecorded = await supabase
+      .from('payments')
+      .select('id')
+      .eq('stripe_payment_id', paymentId)
+      .limit(1)
+    const existingRows = paymentAlreadyRecorded?.data || []
+    if (!existingRows.length) {
+      await supabase.from('payments').insert({
+        order_id: null,
+        stripe_payment_id: paymentId,
+        status: 'completed',
+        amount: amount ?? null,
+        currency: payCurrency,
+      })
+    }
+    await supabase.rpc('wallet_credit', {
+      p_user_id: topupReq.user_id,
+      p_amount: Number(topupReq.amount_jpy),
+      p_type: 'topup',
+      p_description: `Recarga Parcelow - solicitação ${String(orderId).slice(0, 8)}`,
+      p_reference_type: 'wallet_topup',
+      p_reference_id: topupReq.id,
+    })
+    await supabase
+      .from('wallet_topup_requests')
+      .update({ status: 'completed', processed_at: new Date().toISOString() })
+      .eq('id', topupReq.id)
+      .eq('status', 'pending')
+    return res.status(200).json({ received: true, flow: 'wallet_topup' })
+  }
 
   let resolvedOrderId = orderId
   let finalizedFromIntent = false

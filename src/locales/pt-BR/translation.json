@@ -21,8 +21,8 @@
     "openMenu": "Abrir menu",
     "closeMenu": "Fechar menu",
     "logoAlt": "Logo da loja - Delivery",
-    "langPt": "Português",
-    "langEn": "English",
+    "langPt": "PT-BR",
+    "langEn": "EN",
     "langMenuAria": "Menu de idioma"
   },
   "footer": {
@@ -288,7 +288,8 @@
       "tabProdutos": "Meus Produtos",
       "tabEnvios": "Envios",
       "tabPedidos": "Pedidos",
-      "tabDesejos": "Lista de Desejos"
+      "tabDesejos": "Lista de Desejos",
+      "addFundsButton": "Adicionar saldo"
     },
     "orders": {
       "paySuccess": "Pagamento realizado com sucesso!",
@@ -804,6 +805,17 @@
       "statement": "Extrato",
       "emptyStatement": "Nenhuma movimentação ainda.",
       "balanceAfter": "Saldo: {{amount}}",
+      "proceedToPay": "Pagar",
+      "topupChargeLabel": "Valor da recarga",
+      "topupJpyBase": "YEN base",
+      "topupUsdCharge": "USD cobrança",
+      "topupBrlUi": "BRL UI",
+      "topupUsdRef": "Referência USD (cobrança no pipeline)",
+      "topupBrlRef": "Referência BRL (aprox.)",
+      "topupPaymentSubtitle": "Valor principal em JPY e referências em USD/BRL no pipeline JPY → USD → BRL.",
+      "topupParcelowUnavailable": "Recarga de carteira só via Stripe. Parcelow segue disponível para pedidos na Central de Pagamentos.",
+      "topupFxPipelineNote": "USD e BRL usam a mesma base de câmbio da Central (incl. markup Wise no JPY→USD quando aplicável).",
+      "topupMethodsFootnote": "Cada gateway exibe suas próprias formas aceitas para pagamento.",
       "types": {
         "topup": "Adição de saldo",
         "refund": "Reembolso",

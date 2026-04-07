@@ -168,10 +168,11 @@ export async function createCartCheckoutSession(items, accessToken) {
 }
 
 /**
- * Create Stripe Checkout session para adicionar saldo na carteira (¥ em JPY).
+ * Create checkout session para adicionar saldo na carteira (¥ em JPY).
  * amountJpy: valor inteiro em ienes (ex.: 1000 = ¥1.000).
+ * provider: 'stripe' | 'parcelow' (fallback no backend para stripe).
  */
-export async function createTopUpCheckoutSession(amountJpy, accessToken) {
+export async function createTopUpCheckoutSession(amountJpy, accessToken, provider = null) {
   const headers = { 'Content-Type': 'application/json' }
   if (accessToken) {
     headers['Authorization'] = `Bearer ${accessToken}`
@@ -180,7 +181,7 @@ export async function createTopUpCheckoutSession(amountJpy, accessToken) {
   const res = await fetch(`${getPaymentsApiBase()}/create-checkout-session`, {
     method: 'POST',
     headers,
-    body: JSON.stringify({ type: 'topup', amountJpy }),
+    body: JSON.stringify({ type: 'topup', amountJpy, provider: provider || null }),
     credentials: 'same-origin',
   })
 

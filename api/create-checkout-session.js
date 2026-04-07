@@ -676,14 +676,71 @@ export default async function handler(req, res) {
 
     // Recarga de carteira (adicionar saldo)
     if (body.type === 'topup') {
-      if (!stripe) {
-        return res.status(500).json({ error: 'Stripe not configured' })
-      }
       const amountJpy = Math.round(Number(body.amountJpy) || 0)
+      const requestedProvider = normalizeProvider(body.provider)
+      const selectedProvider = requestedProvider || 'stripe'
       const minJpy = 500 // ¥500
       const maxJpy = 500000 // ¥500.000
       if (amountJpy < minJpy || amountJpy > maxJpy) {
         return res.status(400).json({ error: 'Valor deve ser entre ¥500 e ¥500.000' })
+      }
+      if (selectedProvider === 'parcelow') {
+        const ratesTopup = await getExchangeRates(supabase)
+        const wiseTopup = await resolveWiseWithdrawalMarkupPercent(supabase)
+        if (!ratesTopup?.jpy_usd || !ratesTopup?.usd_brl) {
+          return res.status(503).json({
+            error: 'Câmbio indisponível para cobrança Parcelow em USD na recarga.',
+          })
+        }
+        const amountUsdTopup = jpyToFinalUsd(amountJpy, ratesTopup.jpy_usd, wiseTopup)
+        const amountBrlTopup = Number((amountUsdTopup * ratesTopup.usd_brl).toFixed(2))
+        const { data: topupRequest, error: topupErr } = await supabase
+          .from('wallet_topup_requests')
+          .insert({
+            user_id: user.id,
+            amount_jpy: amountJpy,
+            amount_brl: amountBrlTopup,
+            status: 'pending',
+            // Marca origem automática para rastreio (sem depender de comprovante manual).
+            comprovante_url: 'parcelow:auto',
+          })
+          .select('id, amount_jpy, amount_brl')
+          .single()
+        if (topupErr || !topupRequest?.id) {
+          return res.status(500).json({ error: topupErr?.message || 'Falha ao iniciar recarga Parcelow' })
+        }
+        try {
+          const parcelowCheckout = await createParcelowOrderCheckout({
+            orderId: topupRequest.id,
+            user,
+            profile,
+            remainingJpy: amountJpy,
+            amountUsdOverride: amountUsdTopup,
+            productName: `Recarga de carteira ${amountJpy} JPY`,
+            baseUrl,
+            supabase,
+            rates: ratesTopup,
+            wiseMarkup: wiseTopup,
+            debugContext: {
+              flow: 'wallet_topup',
+              topupRequestId: topupRequest.id,
+              amountJpy,
+              amountUsd: Number(amountUsdTopup.toFixed(4)),
+              amountBrl: amountBrlTopup,
+            },
+          })
+          return res.status(200).json({
+            ...parcelowCheckout,
+            provider: 'parcelow',
+            topup_request_id: topupRequest.id,
+          })
+        } catch (parcelowErr) {
+          await supabase.from('wallet_topup_requests').delete().eq('id', topupRequest.id)
+          throw parcelowErr
+        }
+      }
+      if (!stripe) {
+        return res.status(500).json({ error: 'Stripe not configured' })
       }
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],

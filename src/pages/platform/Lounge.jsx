@@ -5,6 +5,7 @@ import { PageSeo } from '../../components/PageSeo'
 import { useAuth } from '../../hooks/useAuth'
 import { useFormatPrice } from '../../hooks/useFormatPrice'
 import { getWallet, getWalletTransactions } from '../../services/walletService'
+import WalletAddFundsModal from '../../components/WalletAddFundsModal'
 import MeusProdutos from './MeusProdutos'
 import Envios from './Envios'
 import Orders from './Orders'
@@ -16,7 +17,7 @@ const LOUNGE_MODULE_IDS = ['produtos', 'envios', 'pedidos', 'desejos']
 export default function Lounge() {
   const { t } = useTranslation()
   const fp = useFormatPrice()
-  const { user } = useAuth()
+  const { user, session } = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
   const [orders, setOrders] = useState([])
   const [loadingWallet, setLoadingWallet] = useState(true)
@@ -28,6 +29,7 @@ export default function Lounge() {
   const [draggingTabId, setDraggingTabId] = useState('')
   const [tabOrder, setTabOrder] = useState([...LOUNGE_MODULE_IDS])
   const [feedback, setFeedback] = useState('')
+  const [addFundsOpen, setAddFundsOpen] = useState(false)
 
   const tabLabel = useMemo(
     () => ({
@@ -147,7 +149,7 @@ export default function Lounge() {
         )}
 
         <section className="mt-6 rounded-xl border border-earth-200 bg-white p-4">
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-earth-100 text-lg" aria-hidden>
                 ¥
@@ -161,13 +163,28 @@ export default function Lounge() {
                 )}
               </div>
             </div>
-            <p className="text-xs text-earth-500">
-              {transactions.length > 0
-                ? t('platform.lounge.movementsCount', { count: transactions.length })
-                : t('platform.lounge.movementsNone')}
-            </p>
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setAddFundsOpen(true)}
+                className="rounded-lg bg-earth-900 px-4 py-2 text-sm font-medium text-earth-50 hover:bg-earth-800"
+              >
+                {t('platform.lounge.addFundsButton')}
+              </button>
+              <p className="text-xs text-earth-500">
+                {transactions.length > 0
+                  ? t('platform.lounge.movementsCount', { count: transactions.length })
+                  : t('platform.lounge.movementsNone')}
+              </p>
+            </div>
           </div>
         </section>
+
+        <WalletAddFundsModal
+          open={addFundsOpen}
+          onClose={() => setAddFundsOpen(false)}
+          accessToken={session?.access_token}
+        />
 
         <section className="mt-4 rounded-xl border border-earth-200 bg-earth-50 p-3">
           <div className="flex flex-wrap gap-2">
