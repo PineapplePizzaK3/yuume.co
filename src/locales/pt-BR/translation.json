@@ -807,7 +807,7 @@
       "balanceAfter": "Saldo: {{amount}}",
       "proceedToPay": "Pagar",
       "topupChargeLabel": "Valor da recarga",
-      "topupJpyBase": "YEN base",
+      "topupJpyBase": "Valor a ser adicionado:",
       "topupUsdCharge": "USD cobrança",
       "topupBrlUi": "BRL UI",
       "topupUsdRef": "Referência USD",
