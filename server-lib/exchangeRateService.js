@@ -123,10 +123,14 @@ function envFallbackRates() {
 async function loadRatesFromSupabase(supabase) {
   if (!supabase) return null
   try {
-    const { data: rows } = await supabase
+    const { data: rows, error } = await supabase
       .from('system_settings')
       .select('key, value')
       .in('key', ['fx_usd_jpy', 'fx_usd_brl', 'fx_jpy_usd', 'fx_rates_updated_at', 'fx_rates_source'])
+    if (error) {
+      console.error('loadRatesFromSupabase query error:', error?.message || error)
+      return null
+    }
     if (!rows?.length) return null
 
     const map = Object.fromEntries(rows.map((r) => [r.key, r.value]))

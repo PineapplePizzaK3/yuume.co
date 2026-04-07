@@ -3,6 +3,13 @@ import { getExchangeRates } from './exchangeRateService.js'
 import { chargeJpyUsdRate, effectiveBrlPerJpy } from './pricingEngine.js'
 import { resolveWiseWithdrawalMarkupPercent } from './wiseWithdrawalMarkup.js'
 
+function getSupabaseAdmin() {
+  const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!url || !key) return null
+  return createClient(url, key)
+}
+
 function getSupabaseAnon() {
   const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
   const key = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY
@@ -15,7 +22,8 @@ export async function handleExchangeRatesGet(req, res) {
     return res.status(405).json({ error: 'Method not allowed' })
   }
   try {
-    const supabase = getSupabaseAnon()
+    // Server-side endpoint: prefer service role to bypass anon RLS on system_settings.
+    const supabase = getSupabaseAdmin() || getSupabaseAnon()
     const rates = await getExchangeRates(supabase)
     if (!rates) {
       return res.status(503).json({
