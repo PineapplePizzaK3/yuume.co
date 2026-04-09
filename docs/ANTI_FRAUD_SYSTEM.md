@@ -57,7 +57,7 @@ Migration: `supabase/migrations/065_anti_fraud_foundation.sql`
 
 ### Shared anti-fraud engine
 
-`api/_antiFraud.js`
+`server-lib/antiFraud.js`
 
 - Auth helpers, admin check, IP extraction.
 - Fingerprint generation.

@@ -1506,13 +1506,13 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       loadOrders()
       if (status === 'paid' && session?.access_token) {
         const base = getPaymentsApiBase()
-        void fetch(`${base}/invoices/ensure`, {
+        void fetch(`${base}/invoices`, {
           method: 'POST',
           headers: {
             Authorization: `Bearer ${session.access_token}`,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ orderId }),
+          body: JSON.stringify({ action: 'ensure_invoice', orderId }),
         }).catch(() => null)
       }
     }

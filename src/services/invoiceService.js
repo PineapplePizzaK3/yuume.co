@@ -89,13 +89,13 @@ export async function downloadInvoicePdfByOrder(accessToken, orderId, filename) 
 
 export async function ensureInvoiceAdmin(accessToken, orderId) {
   const base = getPaymentsApiBase()
-  const res = await fetch(`${base}/invoices/ensure`, {
+  const res = await fetch(`${base}/invoices`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${accessToken}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ orderId }),
+    body: JSON.stringify({ action: 'ensure_invoice', orderId }),
   })
   return parseJson(res)
 }

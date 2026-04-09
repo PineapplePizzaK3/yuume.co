@@ -10,7 +10,7 @@ export async function getFraudReviewQueue(limit = 100) {
   try {
     const token = await getAccessToken()
     if (!token) return { data: null, error: { message: 'Sessão inválida' } }
-    const res = await fetch(`/api/admin/fraud/review?limit=${encodeURIComponent(String(limit))}`, {
+    const res = await fetch(`/api/admin/fraud?limit=${encodeURIComponent(String(limit))}`, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -28,13 +28,13 @@ export async function decideFraudCase({ entityType, id, decision, note = '' }) {
   try {
     const token = await getAccessToken()
     if (!token) return { data: null, error: { message: 'Sessão inválida' } }
-    const res = await fetch('/api/admin/fraud/decision', {
+    const res = await fetch('/api/admin/fraud', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ entityType, id, decision, note }),
+      body: JSON.stringify({ action: 'decision', entityType, id, decision, note }),
     })
     const json = await res.json().catch(() => ({}))
     if (!res.ok) return { data: null, error: { message: json?.error || 'Erro ao decidir caso de fraude' } }

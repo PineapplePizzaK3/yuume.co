@@ -44,10 +44,10 @@ export async function listFinancialDocumentsAdmin(accessToken, opts = {}) {
 
 export async function createInvoiceDocumentAdmin(accessToken, payload) {
   const base = getPaymentsApiBase()
-  const res = await fetch(`${base}/create-invoice`, {
+  const res = await fetch(`${base}/invoices`, {
     method: 'POST',
     headers: authHeaders(accessToken),
-    body: JSON.stringify(payload || {}),
+    body: JSON.stringify({ action: 'create_invoice', ...(payload || {}) }),
   })
   const data = await parsePayload(res)
   if (!res.ok) return { data: null, error: normalizeAdminApiError(res, data) }
@@ -56,10 +56,10 @@ export async function createInvoiceDocumentAdmin(accessToken, payload) {
 
 export async function createCreditNoteAdmin(accessToken, payload) {
   const base = getPaymentsApiBase()
-  const res = await fetch(`${base}/create-credit-note`, {
+  const res = await fetch(`${base}/invoices`, {
     method: 'POST',
     headers: authHeaders(accessToken),
-    body: JSON.stringify(payload || {}),
+    body: JSON.stringify({ action: 'create_credit_note', ...(payload || {}) }),
   })
   const data = await parsePayload(res)
   if (!res.ok) return { data: null, error: normalizeAdminApiError(res, data) }
@@ -68,10 +68,10 @@ export async function createCreditNoteAdmin(accessToken, payload) {
 
 export async function createPayoutStatementAdmin(accessToken, payload) {
   const base = getPaymentsApiBase()
-  const res = await fetch(`${base}/create-payout`, {
+  const res = await fetch(`${base}/invoices`, {
     method: 'POST',
     headers: authHeaders(accessToken),
-    body: JSON.stringify(payload || {}),
+    body: JSON.stringify({ action: 'create_payout', ...(payload || {}) }),
   })
   const data = await parsePayload(res)
   if (!res.ok) return { data: null, error: normalizeAdminApiError(res, data) }

@@ -4,9 +4,23 @@
  * GET /api/invoices?orderId=<uuid> — documento mais recente do pedido (autorizado).
  * GET /api/invoices?id=<uuid>&format=pdf — download PDF.
  * GET /api/invoices?orderId=<uuid>&format=pdf — download PDF por pedido.
+ *
+ * POST /api/invoices
+ * Body:
+ * {
+ *   "action": "create_invoice" | "ensure_invoice" | "create_credit_note" | "create_payout",
+ *   ...payload
+ * }
  */
 import { createClient } from '@supabase/supabase-js'
 import { buildInvoicePdfBuffer } from '../server-lib/invoicePdf.js'
+import { ensureInvoiceForPaidOrder } from '../server-lib/invoiceGenerator.js'
+import {
+  buildRandomCreditNotePayload,
+  buildRandomPayoutPayload,
+  createCreditNoteDocument,
+  createPayoutStatementDocument,
+} from '../server-lib/financialDocumentGenerator.js'
 
 const ALL_DOC_KINDS = ['invoice', 'consolidation_invoice', 'credit_note', 'payout_statement']
 
@@ -42,8 +56,74 @@ async function isAdmin(supabaseAdmin, userId) {
   return data?.role === 'admin'
 }
 
+async function parseBody(req) {
+  if (!req?.body) return {}
+  if (typeof req.body === 'string') {
+    try {
+      return JSON.parse(req.body || '{}')
+    } catch {
+      return null
+    }
+  }
+  if (typeof req.body === 'object') return req.body
+  return {}
+}
+
+function pickRandom(arr = []) {
+  if (!Array.isArray(arr) || arr.length === 0) return null
+  return arr[Math.floor(Math.random() * arr.length)] || null
+}
+
+async function pickRandomEligibleOrderForInvoiceKind(supabaseAdmin, invoiceKind) {
+  const statuses = ['paid', 'products_paid', 'shipped', 'completed']
+  const { data: orders } = await supabaseAdmin
+    .from('orders')
+    .select('id, shipping_cost')
+    .in('status', statuses)
+    .order('created_at', { ascending: false })
+    .limit(300)
+  if (!orders?.length) return null
+
+  const ids = orders.map((o) => o.id).filter(Boolean)
+  const { data: docs } = await supabaseAdmin
+    .from('invoices')
+    .select('order_id, invoice_kind')
+    .in('order_id', ids)
+    .in('invoice_kind', ['invoice', 'consolidation_invoice'])
+
+  const byOrder = new Map()
+  for (const row of docs || []) {
+    const oid = row?.order_id
+    if (!oid) continue
+    const set = byOrder.get(oid) || new Set()
+    set.add(row.invoice_kind)
+    byOrder.set(oid, set)
+  }
+
+  const kind = String(invoiceKind || 'invoice')
+  let candidates = []
+  if (kind === 'consolidation_invoice') {
+    candidates = orders.filter((o) => {
+      const set = byOrder.get(o.id) || new Set()
+      return Number(o.shipping_cost) > 0 && set.has('invoice') && !set.has('consolidation_invoice')
+    })
+    if (candidates.length === 0) {
+      candidates = orders.filter((o) => {
+        const set = byOrder.get(o.id) || new Set()
+        return Number(o.shipping_cost) > 0 && !set.has('consolidation_invoice')
+      })
+    }
+  } else {
+    candidates = orders.filter((o) => {
+      const set = byOrder.get(o.id) || new Set()
+      return !set.has('invoice')
+    })
+  }
+  return pickRandom(candidates)?.id || null
+}
+
 export default async function handler(req, res) {
-  if (req.method !== 'GET') {
+  if (!['GET', 'POST'].includes(req.method)) {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
@@ -58,6 +138,69 @@ export default async function handler(req, res) {
   }
 
   const admin = await isAdmin(supabaseAdmin, auth.user.id)
+
+  if (req.method === 'POST') {
+    if (!admin) return res.status(403).json({ error: 'Admin only' })
+    const body = await parseBody(req)
+    if (body == null) return res.status(400).json({ error: 'Invalid JSON' })
+
+    const action = String(body.action || '').trim().toLowerCase()
+
+    if (action === 'create_invoice' || action === 'ensure_invoice') {
+      const invoiceKind = typeof body.invoiceKind === 'string' ? body.invoiceKind.trim() : ''
+      const useRandomData = body?.randomData === true
+      let orderId = typeof body.orderId === 'string' ? body.orderId.trim() : ''
+      if (!orderId && useRandomData) {
+        orderId = await pickRandomEligibleOrderForInvoiceKind(
+          supabaseAdmin,
+          invoiceKind || 'invoice'
+        )
+      }
+      if (!orderId) return res.status(400).json({ error: 'orderId required' })
+
+      const result = await ensureInvoiceForPaidOrder(supabaseAdmin, orderId, {
+        invoiceKind: invoiceKind || undefined,
+      })
+      return res.status(200).json({
+        ...result,
+        order_id: orderId,
+        random_data_used: useRandomData,
+      })
+    }
+
+    if (action === 'create_credit_note') {
+      const useRandomData = body?.randomData === true
+      let payload = { ...body }
+      if (useRandomData) {
+        const rnd = await buildRandomCreditNotePayload(supabaseAdmin)
+        if (!rnd.ok) return res.status(400).json(rnd)
+        payload = { ...rnd.payload, ...payload }
+      }
+      delete payload.action
+      delete payload.randomData
+      const result = await createCreditNoteDocument(supabaseAdmin, payload)
+      if (!result.ok) return res.status(400).json(result)
+      return res.status(200).json(result)
+    }
+
+    if (action === 'create_payout') {
+      const useRandomData = body?.randomData === true
+      let payload = { ...body }
+      if (useRandomData) {
+        const rnd = await buildRandomPayoutPayload(supabaseAdmin)
+        if (!rnd.ok) return res.status(400).json(rnd)
+        payload = { ...rnd.payload, ...payload }
+      }
+      delete payload.action
+      delete payload.randomData
+      const result = await createPayoutStatementDocument(supabaseAdmin, payload)
+      if (!result.ok) return res.status(400).json(result)
+      return res.status(200).json(result)
+    }
+
+    return res.status(400).json({ error: 'Unknown action' })
+  }
+
   const id = typeof req.query?.id === 'string' ? req.query.id.trim() : ''
   const orderId = typeof req.query?.orderId === 'string' ? req.query.orderId.trim() : ''
   const format = typeof req.query?.format === 'string' ? req.query.format.trim().toLowerCase() : ''

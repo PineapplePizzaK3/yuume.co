@@ -23,10 +23,11 @@ export async function recordAffiliateClick({
   ipCountry = null,
 }) {
   try {
-    const res = await fetch('/api/affiliate/track-click', {
+    const res = await fetch('/api/affiliate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        action: 'track_click',
         code,
         sessionKey,
         source,
@@ -57,10 +58,11 @@ export async function trackAffiliateOrder({
   try {
     const headers = { 'Content-Type': 'application/json' }
     if (accessToken) headers.Authorization = `Bearer ${accessToken}`
-    const res = await fetch('/api/affiliate/track-order', {
+    const res = await fetch('/api/affiliate', {
       method: 'POST',
       headers,
       body: JSON.stringify({
+        action: 'track_order',
         orderId,
         code,
         timezone,

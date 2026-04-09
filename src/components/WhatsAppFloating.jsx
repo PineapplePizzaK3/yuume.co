@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { CONTATOS_DIRETOS } from '../data/contatoDireto'
 import { isAppPath } from '../lib/localeRoutes'
@@ -8,6 +9,8 @@ const FAB_SIZE = 56
 const EDGE_PADDING = 12
 const ABOVE_NAV_GAP = 12
 const STORAGE_KEY = 'whatsapp_fab_position_v2'
+/** Espaço reservado acima da bottom nav mobile (/app, viewport estreita) — evita medir DOM a cada resize. */
+const MOBILE_APP_NAV_RESERVE_REM = 6
 
 function clampPosition(x, y) {
   const maxX = Math.max(EDGE_PADDING, window.innerWidth - FAB_SIZE - EDGE_PADDING)
@@ -18,85 +21,67 @@ function clampPosition(x, y) {
   }
 }
 
-function getBottomRightDefault() {
-  const w = window.innerWidth
-  const h = window.innerHeight
-  const defaultX = w - FAB_SIZE - EDGE_PADDING
-
-  const onAppMobile =
-    isAppPath(window.location.pathname) &&
-    window.matchMedia('(max-width: 1023px)').matches
-  const nav = document.getElementById('platform-mobile-bottom-nav')
-  let defaultY
-  if (onAppMobile && nav) {
-    const navTop = nav.getBoundingClientRect().top
-    defaultY = navTop - FAB_SIZE - ABOVE_NAV_GAP
-  } else {
-    defaultY = h - FAB_SIZE - 24
+function readSavedFabPosition() {
+  if (typeof window === 'undefined') return null
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (!raw) return null
+    const saved = JSON.parse(raw)
+    if (typeof saved?.x !== 'number' || typeof saved?.y !== 'number') return null
+    return clampPosition(saved.x, saved.y)
+  } catch {
+    return null
   }
-  return clampPosition(defaultX, defaultY)
 }
 
 /**
  * Botão flutuante do WhatsApp no canto inferior direito.
- * Usa o link do primeiro contato WhatsApp em contatoDireto.
+ * Modo padrão: fixed com right/bottom (não depende de JS no resize).
+ * Após arrastar: left/top persistidos; só aí o resize reclampa à viewport.
  */
 function WhatsAppFloating() {
   const { t } = useTranslation()
+  const { pathname } = useLocation()
   const whatsapp = CONTATOS_DIRETOS.find((c) => c.nome === 'WhatsApp')
-  const [position, setPosition] = useState(() => {
-    if (typeof window === 'undefined') return { x: 0, y: 0 }
-    return getBottomRightDefault()
-  })
+
+  const [freePosition, setFreePosition] = useState(() => readSavedFabPosition())
+  const [isMobileViewport, setIsMobileViewport] = useState(() =>
+    typeof window !== 'undefined' ? window.matchMedia('(max-width: 1023px)').matches : false
+  )
+
   const dragDataRef = useRef({
     pointerId: null,
     originX: 0,
     originY: 0,
-    startX: 0,
-    startY: 0,
+    startFabX: 0,
+    startFabY: 0,
     dragged: false,
   })
   const suppressClickRef = useRef(false)
-  /** Se false, o usuário definiu posição (arraste); no resize só limitamos à viewport. Se true, seguimos o canto padrão. */
-  const followDefaultCornerRef = useRef(true)
-  const positionRef = useRef(position)
-  positionRef.current = position
+  const freePositionRef = useRef(freePosition)
+  freePositionRef.current = freePosition
+
+  const appMobile = isAppPath(pathname) && isMobileViewport
+  const useAnchor = freePosition === null
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY)
-      if (!raw) {
-        followDefaultCornerRef.current = true
-        const place = () => setPosition(getBottomRightDefault())
-        place()
-        requestAnimationFrame(() => requestAnimationFrame(place))
-        return
-      }
-      const saved = JSON.parse(raw)
-      if (typeof saved?.x !== 'number' || typeof saved?.y !== 'number') {
-        followDefaultCornerRef.current = true
-        setPosition(getBottomRightDefault())
-        return
-      }
-      followDefaultCornerRef.current = false
-      setPosition(clampPosition(saved.x, saved.y))
-    } catch {
-      followDefaultCornerRef.current = true
-      setPosition(getBottomRightDefault())
-    }
+    const mq = window.matchMedia('(max-width: 1023px)')
+    const onChange = () => setIsMobileViewport(mq.matches)
+    onChange()
+    mq.addEventListener('change', onChange)
+    return () => mq.removeEventListener('change', onChange)
   }, [])
 
   useEffect(() => {
+    if (useAnchor) return
     let rafId = 0
     const onResize = () => {
       if (rafId) cancelAnimationFrame(rafId)
       rafId = requestAnimationFrame(() => {
         rafId = 0
-        if (followDefaultCornerRef.current) {
-          setPosition(getBottomRightDefault())
-        } else {
-          setPosition((prev) => clampPosition(prev.x, prev.y))
-        }
+        const p = freePositionRef.current
+        if (!p) return
+        setFreePosition(clampPosition(p.x, p.y))
       })
     }
     window.addEventListener('resize', onResize)
@@ -107,21 +92,24 @@ function WhatsAppFloating() {
       window.removeEventListener('resize', onResize)
       if (vv) vv.removeEventListener('resize', onResize)
     }
-  }, [])
+  }, [useAnchor])
 
   if (!whatsapp) return null
 
   const handlePointerDown = (event) => {
     event.preventDefault()
+    const el = event.currentTarget
+    const rect = el.getBoundingClientRect()
+    const start = freePositionRef.current
     dragDataRef.current = {
       pointerId: event.pointerId,
       originX: event.clientX,
       originY: event.clientY,
-      startX: position.x,
-      startY: position.y,
+      startFabX: start ? start.x : rect.left,
+      startFabY: start ? start.y : rect.top,
       dragged: false,
     }
-    event.currentTarget.setPointerCapture(event.pointerId)
+    el.setPointerCapture(event.pointerId)
   }
 
   const handlePointerMove = (event) => {
@@ -133,22 +121,24 @@ function WhatsAppFloating() {
       suppressClickRef.current = true
     }
     const next = clampPosition(
-      dragDataRef.current.startX + deltaX,
-      dragDataRef.current.startY + deltaY
+      dragDataRef.current.startFabX + deltaX,
+      dragDataRef.current.startFabY + deltaY
     )
-    setPosition(next)
+    setFreePosition(next)
   }
 
   const handlePointerUp = (event) => {
     if (dragDataRef.current.pointerId !== event.pointerId) return
-    const finalPosition = clampPosition(positionRef.current.x, positionRef.current.y)
-    setPosition(finalPosition)
-    if (dragDataRef.current.dragged) {
-      followDefaultCornerRef.current = false
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(finalPosition))
-      } catch {
-        // ignore
+    const p = freePositionRef.current
+    if (p) {
+      const finalPosition = clampPosition(p.x, p.y)
+      setFreePosition(finalPosition)
+      if (dragDataRef.current.dragged) {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(finalPosition))
+        } catch {
+          // ignore
+        }
       }
     }
     dragDataRef.current.pointerId = null
@@ -157,13 +147,36 @@ function WhatsAppFloating() {
     }, 0)
   }
 
+  const anchorStyle = appMobile
+    ? {
+        right: EDGE_PADDING,
+        left: 'auto',
+        top: 'auto',
+        bottom: `calc(${MOBILE_APP_NAV_RESERVE_REM}rem + env(safe-area-inset-bottom, 0px) + ${ABOVE_NAV_GAP}px)`,
+      }
+    : {
+        right: EDGE_PADDING,
+        left: 'auto',
+        top: 'auto',
+        bottom: 'max(24px, env(safe-area-inset-bottom, 0px))',
+      }
+
+  const positionStyle = useAnchor
+    ? anchorStyle
+    : {
+        left: freePosition.x,
+        top: freePosition.y,
+        right: 'auto',
+        bottom: 'auto',
+      }
+
   const fab = (
     <a
       href={whatsapp.url}
       target="_blank"
       rel="noopener noreferrer"
       className="fixed z-[60] flex h-14 w-14 cursor-grab items-center justify-center rounded-full bg-[#25D366] text-white shadow-lg transition-[transform,box-shadow,background-color] hover:scale-105 hover:bg-[#20BD5A] hover:shadow-xl active:cursor-grabbing"
-      style={{ left: `${position.x}px`, top: `${position.y}px`, touchAction: 'none' }}
+      style={{ ...positionStyle, touchAction: 'none' }}
       aria-label={t('whatsapp.aria')}
       title={whatsapp.texto}
       onPointerDown={handlePointerDown}
