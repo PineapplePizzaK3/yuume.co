@@ -268,12 +268,27 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: listErr.message })
   }
 
+  const uniqueUserIds = Array.from(new Set((list || []).map((r) => r?.user_id).filter(Boolean)))
+  let userNameById = new Map()
+  if (uniqueUserIds.length > 0) {
+    const { data: users } = await supabaseAdmin
+      .from('profiles')
+      .select('id, name, email')
+      .in('id', uniqueUserIds)
+    userNameById = new Map(
+      (users || []).map((u) => [u.id, String(u?.name || u?.email || '').trim() || null])
+    )
+  }
+
   const slim = (list || []).map((r) => {
     const ps = r.data_json?.pricing_summary || {}
+    const fallbackName = String(r.data_json?.customer?.name || '').trim() || null
+    const userName = userNameById.get(r.user_id) || fallbackName
     return {
       id: r.id,
       order_id: r.order_id,
       user_id: r.user_id,
+      user_name: userName,
       invoice_number: r.invoice_number,
       invoice_kind: r.invoice_kind,
       document_subtype: r.data_json?.document_subtype || null,

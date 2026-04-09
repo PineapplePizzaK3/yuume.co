@@ -94,6 +94,7 @@ import {
   createPayoutStatementAdmin,
   listFinancialDocumentsAdmin,
 } from '../../../services/invoiceAdminService'
+import { downloadInvoicePdf } from '../../../services/invoiceService'
 
 function formatMoney(v, currency = 'BRL') {
   return Number(v)?.toLocaleString('pt-BR', { style: 'currency', currency }) ?? 'â€”'
@@ -1205,8 +1206,36 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       setMessage(error)
       return
     }
-    setMessage(`Documento gerado: ${data?.invoice_number || data?.document_number || 'ok'}`)
-    loadFinancialDocuments()
+    const invoiceId = data?.invoice_id || data?.id || null
+    const invoiceNumber = data?.invoice_number || data?.document_number || 'invoice'
+    if (data?.skipped) {
+      setMessage(
+        `Documento já existente (${invoiceNumber}). Motivo: ${data?.reason || 'duplicate'}. Baixando PDF...`
+      )
+    } else {
+      setMessage(`Documento gerado: ${invoiceNumber}. Baixando PDF...`)
+    }
+    if (invoiceId) {
+      try {
+        await downloadInvoicePdf(session.access_token, invoiceId, `${invoiceNumber}.pdf`)
+      } catch (e) {
+        setMessage(
+          `${data?.skipped ? 'Documento já existente' : 'Documento gerado'}: ${invoiceNumber}. Erro ao baixar PDF: ${
+            e?.message || 'falha desconhecida'
+          }`
+        )
+      }
+    }
+    await loadFinancialDocuments()
+  }
+
+  const downloadFinancialDocPdf = async (invoiceId, invoiceNumber) => {
+    if (!session?.access_token || !invoiceId) return
+    try {
+      await downloadInvoicePdf(session.access_token, invoiceId, `${invoiceNumber || 'invoice'}.pdf`)
+    } catch (e) {
+      setMessage(e?.message || 'Erro ao baixar PDF do documento')
+    }
   }
 
   const generateCreditNoteDoc = async (payload) => {
@@ -2279,6 +2308,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     generateInvoiceDoc,
     generateCreditNoteDoc,
     generatePayoutDoc,
+    downloadFinancialDocPdf,
   }
 
   return (

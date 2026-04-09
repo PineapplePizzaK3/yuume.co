@@ -22,6 +22,7 @@ export default function InvoicesAdminSection() {
     generateInvoiceDoc,
     generateCreditNoteDoc,
     generatePayoutDoc,
+    downloadFinancialDocPdf,
     setMessage,
   } = useAdminContext()
 
@@ -254,10 +255,23 @@ export default function InvoicesAdminSection() {
           <tbody>
             {financialDocs.map((doc) => (
               <tr key={doc.id} className="border-b border-earth-100">
-                <td className="px-3 py-2 font-medium text-earth-900">{doc.invoice_number || '—'}</td>
+                <td className="px-3 py-2 font-medium text-earth-900">
+                  {doc.invoice_number ? (
+                    <button
+                      type="button"
+                      onClick={() => downloadFinancialDocPdf(doc.id, doc.invoice_number)}
+                      className="underline hover:text-earth-700"
+                      title="Baixar PDF do documento"
+                    >
+                      {doc.invoice_number}
+                    </button>
+                  ) : (
+                    '—'
+                  )}
+                </td>
                 <td className="px-3 py-2">{doc.invoice_kind || doc.document_subtype || '—'}</td>
                 <td className="px-3 py-2 font-mono text-xs">{doc.order_id || '—'}</td>
-                <td className="px-3 py-2 font-mono text-xs">{doc.user_id || '—'}</td>
+                <td className="px-3 py-2 text-xs">{doc.user_name || doc.user_id || '—'}</td>
                 <td className="px-3 py-2">{doc.created_at ? new Date(doc.created_at).toLocaleString('pt-BR') : '—'}</td>
               </tr>
             ))}

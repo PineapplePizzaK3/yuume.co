@@ -107,7 +107,7 @@ export async function ensureInvoiceForPaidOrder(supabaseAdmin, orderId, options 
 
   const { data: existingRows } = await supabaseAdmin
     .from('invoices')
-    .select('id, invoice_kind, created_at')
+    .select('id, invoice_number, invoice_kind, created_at')
     .eq('order_id', orderId)
     .in('invoice_kind', [INVOICE_KIND_STANDARD, INVOICE_KIND_CONSOLIDATION])
     .order('created_at', { ascending: true })
@@ -165,15 +165,28 @@ export async function ensureInvoiceForPaidOrder(supabaseAdmin, orderId, options 
         skipped: true,
         reason: 'duplicate',
         invoice_id: consolidationRow?.id || standardRow.id,
+        invoice_number: consolidationRow?.invoice_number || standardRow?.invoice_number || null,
       }
     }
   }
 
   if (invoiceKind === INVOICE_KIND_STANDARD && standardRow?.id) {
-    return { ok: true, skipped: true, reason: 'duplicate', invoice_id: standardRow.id }
+    return {
+      ok: true,
+      skipped: true,
+      reason: 'duplicate',
+      invoice_id: standardRow.id,
+      invoice_number: standardRow.invoice_number || null,
+    }
   }
   if (invoiceKind === INVOICE_KIND_CONSOLIDATION && consolidationRow?.id) {
-    return { ok: true, skipped: true, reason: 'duplicate', invoice_id: consolidationRow.id }
+    return {
+      ok: true,
+      skipped: true,
+      reason: 'duplicate',
+      invoice_id: consolidationRow.id,
+      invoice_number: consolidationRow.invoice_number || null,
+    }
   }
 
   const { data: profile } = await supabaseAdmin

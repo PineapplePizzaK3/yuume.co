@@ -111,7 +111,14 @@ export default function Invoices() {
             <tbody>
               {rows.map((r) => (
                 <tr key={r.id} className="border-b border-earth-100 hover:bg-earth-50/80">
-                  <td className="px-4 py-3 font-medium text-earth-900">{r.invoice_number}</td>
+                  <td className="px-4 py-3 font-medium text-earth-900">
+                    <Link
+                      to={lp('appInvoices', `/${r.id}`)}
+                      className="underline hover:text-earth-700"
+                    >
+                      {r.invoice_number}
+                    </Link>
+                  </td>
                   <td className="px-4 py-3 text-earth-700">{formatDate(r.created_at, dateLocale)}</td>
                   <td className="px-4 py-3 text-earth-800">{formatUsd(r.total_paid_usd)}</td>
                   <td className="px-4 py-3 text-earth-800">{formatBrl(r.total_display_brl, locale)}</td>
