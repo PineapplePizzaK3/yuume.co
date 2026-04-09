@@ -44,3 +44,33 @@ export async function validateCoupon(code, subtotalBrl) {
     return { data: null, error: toServiceError(e) }
   }
 }
+
+/**
+ * Lista cupons pessoais do usuário (caixa de cupons).
+ * @param {string} userId
+ */
+export async function getMyCoupons(userId) {
+  try {
+    const { data, error } = await withDbTimeout(
+      supabase
+        .from('coupons')
+        .select(`
+          id,
+          code,
+          discount_type,
+          discount_value,
+          min_order_brl,
+          max_uses,
+          used_count,
+          valid_from,
+          valid_until,
+          description
+        `)
+        .eq('owner_user_id', userId)
+        .order('created_at', { ascending: false })
+    )
+    return { data: data ?? [], error }
+  } catch (e) {
+    return { data: [], error: toServiceError(e) }
+  }
+}

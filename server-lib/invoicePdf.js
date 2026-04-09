@@ -22,12 +22,15 @@ export function buildInvoicePdfBuffer(data) {
     const fx = d.currency_info || {}
     const foot = d.footer || {}
 
-    doc.fontSize(18).text(esc(`Invoice ${d.invoice_number || ''}`), { underline: true })
+    const subtype = String(d.document_subtype || '').toLowerCase()
+    const docTitle = subtype === 'consolidation' ? 'Consolidation Invoice' : 'Invoice'
+    doc.fontSize(18).text(esc(`${docTitle} ${d.invoice_number || ''}`), { underline: true })
     doc.moveDown(0.5)
     doc.fontSize(10)
     doc.text(esc(`Order: ${d.order_id || ''}`))
     doc.text(esc(`Issue date: ${d.issue_date || ''}`))
     doc.text(esc(`Payment date: ${d.payment_date || ''}`))
+    if (d.order_flow_type) doc.text(esc(`Flow: ${d.order_flow_type}`))
     doc.moveDown()
 
     doc.fontSize(11).text('Bill to', { underline: true })
@@ -56,6 +59,9 @@ export function buildInvoicePdfBuffer(data) {
     doc.text(esc(`Subtotal BRL (approx.): ${Number(ps.subtotal_brl || 0).toFixed(2)}`))
     doc.text(esc(`Service fee USD: ${Number(ps.service_fee_usd || 0).toFixed(4)}`))
     doc.text(esc(`Service fee BRL (approx.): ${Number(ps.service_fee_brl || 0).toFixed(2)}`))
+    if (d.service_fees?.service_type) {
+      doc.text(esc(`Service type: ${String(d.service_fees.service_type)}`))
+    }
     doc.text(esc(`Shipping USD: ${Number(ps.shipping_usd || 0).toFixed(4)}`))
     doc.text(esc(`Shipping BRL (approx.): ${Number(ps.shipping_brl || 0).toFixed(2)}`))
     doc.moveDown(0.3)

@@ -87,6 +87,13 @@ import UsuariosSection from './sections/UsuariosSection'
 import GruposSection from './sections/GruposSection'
 import CatalogoProdutosSection from './sections/CatalogoProdutosSection'
 import PedidosSection from './sections/PedidosSection'
+import InvoicesAdminSection from './sections/InvoicesAdminSection'
+import {
+  createCreditNoteAdmin,
+  createInvoiceDocumentAdmin,
+  createPayoutStatementAdmin,
+  listFinancialDocumentsAdmin,
+} from '../../../services/invoiceAdminService'
 
 function formatMoney(v, currency = 'BRL') {
   return Number(v)?.toLocaleString('pt-BR', { style: 'currency', currency }) ?? 'â€”'
@@ -294,6 +301,10 @@ export default function Admin({ routeTabId = 'pedidos' }) {
   const [userLogsLoading, setUserLogsLoading] = useState(false)
   const [authLogs, setAuthLogs] = useState([])
   const [authLogsLoading, setAuthLogsLoading] = useState(false)
+  const [financialDocs, setFinancialDocs] = useState([])
+  const [docsLoading, setDocsLoading] = useState(false)
+  const [docsFilterKind, setDocsFilterKind] = useState('')
+  const [docsFilterUserId, setDocsFilterUserId] = useState('')
 
   const [shippingPanel, setShippingPanel] = useState({ shipments: [], orders: [], inventoryReady: [] })
   const [shippingPanelLoading, setShippingPanelLoading] = useState(false)
@@ -889,6 +900,12 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     }
   }, [activeTab])
 
+  useEffect(() => {
+    if (activeTab === 'invoices_admin') {
+      loadFinancialDocuments()
+    }
+  }, [activeTab, session?.access_token, docsFilterKind, docsFilterUserId])
+
   const resetForm = () => {
     setForm({
       name: '',
@@ -1163,6 +1180,55 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     } finally {
       if (active()) setAuthLogsLoading(false)
     }
+  }
+
+  const loadFinancialDocuments = async (opts = {}) => {
+    if (!session?.access_token) return
+    setDocsLoading(true)
+    try {
+      const kind = Object.prototype.hasOwnProperty.call(opts, 'kind') ? opts.kind : docsFilterKind
+      const userId = Object.prototype.hasOwnProperty.call(opts, 'userId') ? opts.userId : docsFilterUserId
+      const { data, error } = await listFinancialDocumentsAdmin(session.access_token, { kind, userId })
+      if (error) setMessage(error)
+      else setFinancialDocs(data || [])
+    } catch (e) {
+      setMessage(e?.message || 'Erro ao carregar documentos financeiros')
+    } finally {
+      setDocsLoading(false)
+    }
+  }
+
+  const generateInvoiceDoc = async (payload) => {
+    if (!session?.access_token) return
+    const { data, error } = await createInvoiceDocumentAdmin(session.access_token, payload)
+    if (error) {
+      setMessage(error)
+      return
+    }
+    setMessage(`Documento gerado: ${data?.invoice_number || data?.document_number || 'ok'}`)
+    loadFinancialDocuments()
+  }
+
+  const generateCreditNoteDoc = async (payload) => {
+    if (!session?.access_token) return
+    const { data, error } = await createCreditNoteAdmin(session.access_token, payload)
+    if (error) {
+      setMessage(error)
+      return
+    }
+    setMessage(`Credit note gerada: ${data?.document_number || 'ok'}`)
+    loadFinancialDocuments()
+  }
+
+  const generatePayoutDoc = async (payload) => {
+    if (!session?.access_token) return
+    const { data, error } = await createPayoutStatementAdmin(session.access_token, payload)
+    if (error) {
+      setMessage(error)
+      return
+    }
+    setMessage(`Payout statement gerado: ${data?.document_number || 'ok'}`)
+    loadFinancialDocuments()
   }
 
   const handleSaveGroup = async (e) => {
@@ -2203,6 +2269,16 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     loadAuthLogs,
     authLogsLoading,
     authLogs,
+    financialDocs,
+    docsLoading,
+    docsFilterKind,
+    setDocsFilterKind,
+    docsFilterUserId,
+    setDocsFilterUserId,
+    loadFinancialDocuments,
+    generateInvoiceDoc,
+    generateCreditNoteDoc,
+    generatePayoutDoc,
   }
 
   return (
@@ -2268,6 +2344,9 @@ export default function Admin({ routeTabId = 'pedidos' }) {
 
         {/* Catálogo mestre de produtos */}
         <CatalogoProdutosSection />
+
+        {/* Invoices e documentos financeiros */}
+        <InvoicesAdminSection />
 
         {/* Modal: detalhes e ediÃ§Ã£o do usuÃ¡rio */}
         {userDetailModal.open && (

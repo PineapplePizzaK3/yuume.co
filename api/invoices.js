@@ -1,12 +1,14 @@
 /**
- * GET /api/invoices — lista faturas do usuário (admin: todas, ?userId= opcional).
- * GET /api/invoices?id=<uuid> — JSON da fatura (autorizado).
- * GET /api/invoices?orderId=<uuid> — fatura do pedido (autorizado).
+ * GET /api/invoices — lista documentos financeiros do usuário.
+ * GET /api/invoices?id=<uuid> — JSON do documento (autorizado).
+ * GET /api/invoices?orderId=<uuid> — documento mais recente do pedido (autorizado).
  * GET /api/invoices?id=<uuid>&format=pdf — download PDF.
  * GET /api/invoices?orderId=<uuid>&format=pdf — download PDF por pedido.
  */
 import { createClient } from '@supabase/supabase-js'
 import { buildInvoicePdfBuffer } from '../server-lib/invoicePdf.js'
+
+const ALL_DOC_KINDS = ['invoice', 'consolidation_invoice', 'credit_note', 'payout_statement']
 
 function getSupabaseAdmin() {
   const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
@@ -59,12 +61,16 @@ export default async function handler(req, res) {
   const id = typeof req.query?.id === 'string' ? req.query.id.trim() : ''
   const orderId = typeof req.query?.orderId === 'string' ? req.query.orderId.trim() : ''
   const format = typeof req.query?.format === 'string' ? req.query.format.trim().toLowerCase() : ''
+  const kindFilter = typeof req.query?.kind === 'string' ? req.query.kind.trim().toLowerCase() : ''
+  const allowedKinds = ALL_DOC_KINDS
+  const filteredKinds = allowedKinds.includes(kindFilter) ? [kindFilter] : allowedKinds
+  const kindsForQuery = filteredKinds
 
   if (id || orderId) {
     let query = supabaseAdmin
       .from('invoices')
       .select('id, order_id, user_id, invoice_number, data_json, invoice_kind, created_at')
-      .eq('invoice_kind', 'invoice')
+      .in('invoice_kind', kindsForQuery)
 
     if (id) {
       query = query.eq('id', id)
@@ -103,7 +109,7 @@ export default async function handler(req, res) {
   let q = supabaseAdmin
     .from('invoices')
     .select('id, order_id, user_id, invoice_number, invoice_kind, created_at, data_json')
-    .eq('invoice_kind', 'invoice')
+    .in('invoice_kind', kindsForQuery)
     .order('created_at', { ascending: false })
     .limit(200)
 
@@ -126,6 +132,8 @@ export default async function handler(req, res) {
       order_id: r.order_id,
       user_id: r.user_id,
       invoice_number: r.invoice_number,
+      invoice_kind: r.invoice_kind,
+      document_subtype: r.data_json?.document_subtype || null,
       created_at: r.created_at,
       total_paid_usd: ps.total_paid_usd,
       total_display_brl: ps.total_display_brl,

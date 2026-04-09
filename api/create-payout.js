@@ -1,9 +1,22 @@
 /**
- * POST /api/invoices/ensure — gera fatura se pedido estiver paid (admin ou serviço).
- * Body: { "orderId": "uuid" }
+ * POST /api/create-payout
+ * Body:
+ * {
+ *   "orderId"?: "uuid",
+ *   "userId"?: "uuid",
+ *   "affiliateId"?: "uuid",
+ *   "commissionUsd": number,
+ *   "commissionBrl": number,
+ *   "paymentMethod"?: string,
+ *   "transactionId"?: string,
+ *   "randomData"?: boolean
+ * }
  */
 import { createClient } from '@supabase/supabase-js'
-import { ensureInvoiceForPaidOrder } from '../../server-lib/invoiceGenerator.js'
+import {
+  buildRandomPayoutPayload,
+  createPayoutStatementDocument,
+} from '../server-lib/financialDocumentGenerator.js'
 
 function getSupabaseAdmin() {
   const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
@@ -45,7 +58,6 @@ export default async function handler(req, res) {
   if (!user) {
     return res.status(401).json({ error: 'Unauthorized' })
   }
-
   const { data: profile } = await supabaseAdmin.from('profiles').select('role').eq('id', user.id).maybeSingle()
   if (profile?.role !== 'admin') {
     return res.status(403).json({ error: 'Admin only' })
@@ -58,14 +70,16 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Invalid JSON' })
   }
 
-  const orderId = typeof body.orderId === 'string' ? body.orderId.trim() : ''
-  const invoiceKind = typeof body.invoiceKind === 'string' ? body.invoiceKind.trim() : ''
-  if (!orderId) {
-    return res.status(400).json({ error: 'orderId required' })
+  const useRandomData = body?.randomData === true
+  let payload = body
+  if (useRandomData) {
+    const rnd = await buildRandomPayoutPayload(supabaseAdmin)
+    if (!rnd.ok) return res.status(400).json(rnd)
+    payload = { ...rnd.payload, ...body }
   }
+  delete payload.randomData
 
-  const result = await ensureInvoiceForPaidOrder(supabaseAdmin, orderId, {
-    invoiceKind: invoiceKind || undefined,
-  })
+  const result = await createPayoutStatementDocument(supabaseAdmin, payload)
+  if (!result.ok) return res.status(400).json(result)
   return res.status(200).json(result)
 }

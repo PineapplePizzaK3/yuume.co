@@ -12,6 +12,7 @@ export const ADMIN_TABS = [
   { id: 'fraude', path: 'fraude', label: 'Fraude', icon: '🛡️' },
   { id: 'notificacoes', path: 'notificacoes', label: 'Notificações', icon: '🔔' },
   { id: 'recargas', path: 'recargas', label: 'Recargas PIX', icon: '💰' },
+  { id: 'invoices_admin', path: 'invoices', label: 'Invoices', icon: '🧾' },
   { id: 'logs', path: 'logs', label: 'Logs', icon: '📋' },
 ]
 
@@ -28,6 +29,7 @@ const ADMIN_PT_TO_EN_SEGMENT = {
   fraude: 'fraud',
   notificacoes: 'notifications',
   recargas: 'top-ups',
+  invoices: 'invoices',
   logs: 'logs',
 }
 

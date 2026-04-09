@@ -16,6 +16,9 @@ import { resolveWiseWithdrawalMarkupPercent } from './wiseWithdrawalMarkup.js'
 const SCHEMA_VERSION = 1
 const BRL_NOTE =
   'BRL values are approximate and based on exchange rates at the time of purchase.'
+const INVOICE_KIND_STANDARD = 'invoice'
+const INVOICE_KIND_CONSOLIDATION = 'consolidation_invoice'
+const INVOICE_KIND_SET = new Set([INVOICE_KIND_STANDARD, INVOICE_KIND_CONSOLIDATION])
 
 function num(n, fallback = 0) {
   const x = Number(n)
@@ -32,6 +35,32 @@ function roundBrl(x) {
 
 function roundJpy(x) {
   return Math.round(num(x) * 100) / 100
+}
+
+function normalizeInvoiceKind(raw) {
+  const k = String(raw || '').trim().toLowerCase()
+  if (!k) return null
+  return INVOICE_KIND_SET.has(k) ? k : null
+}
+
+function resolveOrderFlowType(order) {
+  const source = String(order?.order_source || '').toLowerCase()
+  const mod = String(order?.order_module || '').toLowerCase()
+  if (source === 'store') return 'virtual_store'
+  if (['assisted_buy', 'redir-assistido', 'assisted_redirect'].includes(mod)) return 'assisted_redirect'
+  if (['personal_shopping', 'personal-shopping'].includes(mod)) return 'personal_shopping'
+  if (['group_purchase', 'group_buy', 'purchase_group'].includes(mod)) return 'group_purchase'
+  return 'classic_redirect'
+}
+
+function resolveServiceTypeLabel(order, invoiceKind) {
+  if (invoiceKind === INVOICE_KIND_CONSOLIDATION) return 'consolidation_fee'
+  const flow = resolveOrderFlowType(order)
+  if (flow === 'assisted_redirect') return 'assisted_redirect_service_fee'
+  if (flow === 'personal_shopping') return 'personal_shopping_service_fee'
+  if (flow === 'group_purchase') return 'group_purchase_service_fee'
+  if (flow === 'virtual_store') return 'product_only'
+  return 'classic_redirect_service_fee'
 }
 
 function paymentsTotalUsd(payments, jpyUsd, usdBrl, wiseMarkup) {
@@ -52,11 +81,11 @@ export function classifyPayments(payments = []) {
   const labels = []
   if (ids.some((i) => i.startsWith('parcelow_'))) labels.push('Parcelow')
   if (ids.some((i) => /wallet/i.test(i))) labels.push('Carteira (JPY)')
-  if (ids.some((i) => i === 'referral_discount')) labels.push('Desconto indicação')
+  if (ids.some((i) => i === 'referral_discount' || i === 'coupon_discount')) labels.push('Desconto')
   if (ids.some((i) => /pix/i.test(i))) labels.push('PIX')
   const cardLike = payments.some((p) => {
     const id = String(p.stripe_payment_id || '')
-    if (!id || /wallet|parcelow|referral_discount|pix/i.test(id)) return false
+    if (!id || /wallet|parcelow|referral_discount|coupon_discount|pix/i.test(id)) return false
     return ['JPY', 'BRL', 'USD'].includes(String(p.currency || '').toUpperCase())
   })
   if (cardLike && !labels.includes('Parcelow')) labels.push('Stripe')
@@ -69,21 +98,19 @@ export function classifyPayments(payments = []) {
  * Monta data_json e insere fatura (service role).
  * @returns {Promise<{ ok: boolean, skipped?: boolean, reason?: string, invoice_id?: string, error?: string }>}
  */
-export async function ensureInvoiceForPaidOrder(supabaseAdmin, orderId) {
+export async function ensureInvoiceForPaidOrder(supabaseAdmin, orderId, options = {}) {
   if (!supabaseAdmin || !orderId) {
     return { ok: false, skipped: true, reason: 'missing_params' }
   }
 
-  const { data: dup } = await supabaseAdmin
-    .from('invoices')
-    .select('id')
-    .eq('order_id', orderId)
-    .eq('invoice_kind', 'invoice')
-    .maybeSingle()
+  const requestedKind = normalizeInvoiceKind(options?.invoiceKind)
 
-  if (dup?.id) {
-    return { ok: true, skipped: true, reason: 'duplicate', invoice_id: dup.id }
-  }
+  const { data: existingRows } = await supabaseAdmin
+    .from('invoices')
+    .select('id, invoice_kind, created_at')
+    .eq('order_id', orderId)
+    .in('invoice_kind', [INVOICE_KIND_STANDARD, INVOICE_KIND_CONSOLIDATION])
+    .order('created_at', { ascending: true })
 
   const { data: order, error: orderErr } = await supabaseAdmin
     .from('orders')
@@ -93,6 +120,7 @@ export async function ensureInvoiceForPaidOrder(supabaseAdmin, orderId) {
       user_id,
       status,
       order_source,
+      order_module,
       ship_immediately,
       total_amount,
       total_amount_usd,
@@ -121,6 +149,31 @@ export async function ensureInvoiceForPaidOrder(supabaseAdmin, orderId) {
   const status = String(order.status || '').toLowerCase()
   if (!['paid', 'products_paid'].includes(status)) {
     return { ok: false, skipped: true, reason: 'not_eligible_status' }
+  }
+
+  const standardRow = (existingRows || []).find((r) => r.invoice_kind === INVOICE_KIND_STANDARD) || null
+  const consolidationRow =
+    (existingRows || []).find((r) => r.invoice_kind === INVOICE_KIND_CONSOLIDATION) || null
+
+  let invoiceKind = requestedKind
+  if (!invoiceKind) {
+    if (!standardRow?.id) {
+      invoiceKind = INVOICE_KIND_STANDARD
+    } else {
+      return {
+        ok: true,
+        skipped: true,
+        reason: 'duplicate',
+        invoice_id: consolidationRow?.id || standardRow.id,
+      }
+    }
+  }
+
+  if (invoiceKind === INVOICE_KIND_STANDARD && standardRow?.id) {
+    return { ok: true, skipped: true, reason: 'duplicate', invoice_id: standardRow.id }
+  }
+  if (invoiceKind === INVOICE_KIND_CONSOLIDATION && consolidationRow?.id) {
+    return { ok: true, skipped: true, reason: 'duplicate', invoice_id: consolidationRow.id }
   }
 
   const { data: profile } = await supabaseAdmin
@@ -264,10 +317,13 @@ export async function ensureInvoiceForPaidOrder(supabaseAdmin, orderId) {
   if (rpcErr) {
     console.error('next_invoice_number failed:', rpcErr)
   }
-  const invoiceNumber =
+  let invoiceNumber =
     typeof invNo === 'string' && invNo.startsWith('INV-')
       ? invNo
       : `INV-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`
+  if (invoiceKind === INVOICE_KIND_CONSOLIDATION && !/-CON$/.test(invoiceNumber)) {
+    invoiceNumber = `${invoiceNumber}-CON`
+  }
 
   const companyName = String(process.env.INVOICE_COMPANY_NAME || 'EIKO DLS').trim()
   const supportContact =
@@ -277,6 +333,8 @@ export async function ensureInvoiceForPaidOrder(supabaseAdmin, orderId) {
 
   const dataJson = {
     schema_version: SCHEMA_VERSION,
+    document_type: 'invoice',
+    document_subtype: invoiceKind === INVOICE_KIND_CONSOLIDATION ? 'consolidation' : 'phase_1',
     invoice_id: invoiceRowId,
     invoice_number: invoiceNumber,
     order_id: orderId,
@@ -299,6 +357,15 @@ export async function ensureInvoiceForPaidOrder(supabaseAdmin, orderId) {
       discount_brl: discountBrl,
       total_paid_usd: totalPaidUsd,
       total_display_brl: totalDisplayBrl,
+      total_usd: totalPaidUsd,
+      total_brl: totalDisplayBrl,
+      payment_method: payClass.payment_method,
+      transaction_id: payClass.transaction_id,
+    },
+    service_fees: {
+      service_type: resolveServiceTypeLabel(order, invoiceKind),
+      service_fee_usd: serviceFeeUsd,
+      service_fee_brl: serviceFeeBrl,
     },
     currency_info: {
       exchange_rate_usd_brl: usdBrl,
@@ -327,6 +394,16 @@ export async function ensureInvoiceForPaidOrder(supabaseAdmin, orderId) {
       disclaimer:
         'International purchase. Import duties, taxes, and customs clearance may apply in your country and are the responsibility of the buyer unless otherwise stated.',
     },
+    order_flow_type: resolveOrderFlowType(order),
+    shipping_fee: {
+      shipping_method: order.ship_immediately ? 'express' : 'standard',
+      shipping_fee_usd: shippingUsd,
+      shipping_fee_brl: shippingBrl,
+    },
+    references:
+      invoiceKind === INVOICE_KIND_CONSOLIDATION && standardRow?.id
+        ? { original_invoice_id: standardRow.id }
+        : undefined,
   }
 
   const { data: inserted, error: insErr } = await supabaseAdmin
@@ -337,7 +414,7 @@ export async function ensureInvoiceForPaidOrder(supabaseAdmin, orderId) {
       user_id: order.user_id,
       invoice_number: invoiceNumber,
       data_json: dataJson,
-      invoice_kind: 'invoice',
+      invoice_kind: invoiceKind,
     })
     .select('id')
     .single()
@@ -345,7 +422,8 @@ export async function ensureInvoiceForPaidOrder(supabaseAdmin, orderId) {
   if (insErr) {
     if (
       String(insErr.code || insErr.message || '').includes('23505') ||
-      String(insErr.message || '').includes('invoices_one_standard_per_order')
+      String(insErr.message || '').includes('invoices_one_standard_per_order') ||
+      String(insErr.message || '').includes('invoices_one_consolidation_per_order')
     ) {
       return { ok: true, skipped: true, reason: 'duplicate_race' }
     }
@@ -353,5 +431,5 @@ export async function ensureInvoiceForPaidOrder(supabaseAdmin, orderId) {
     return { ok: false, error: insErr.message }
   }
 
-  return { ok: true, invoice_id: inserted.id, invoice_number: invoiceNumber }
+  return { ok: true, invoice_id: inserted.id, invoice_number: invoiceNumber, invoice_kind: invoiceKind }
 }

@@ -12,7 +12,7 @@ import { PageSeo } from '../../components/PageSeo'
 import { createPortal } from 'react-dom'
 import { useAuth } from '../../hooks/useAuth'
 import { getCart, updateCartItem, removeFromCart, getLatestPendingStoreOrder } from '../../services/cartService'
-import { validateCoupon } from '../../services/couponService'
+import { getMyCoupons, validateCoupon } from '../../services/couponService'
 import { createCheckoutSession, fetchExchangeRates, getMyPayments } from '../../services/paymentService'
 import { getMyOrders } from '../../services/orderService'
 import { getWallet } from '../../services/walletService'
@@ -100,6 +100,8 @@ function Cart() {
   const [couponInput, setCouponInput] = useState('')
   const [couponApplied, setCouponApplied] = useState(null)
   const [couponLoading, setCouponLoading] = useState(false)
+  const [myCoupons, setMyCoupons] = useState([])
+  const [myCouponsLoading, setMyCouponsLoading] = useState(false)
   const [draggingTabId, setDraggingTabId] = useState('')
   const [tabOrder, setTabOrder] = useState(() => [...CART_TAB_IDS])
   const [exchangeSnapshot, setExchangeSnapshot] = useState(null)
@@ -272,6 +274,24 @@ function Cart() {
   }, [user?.id])
 
   useEffect(() => {
+    let active = true
+    const run = async () => {
+      if (!user?.id) return
+      setMyCouponsLoading(true)
+      const { data, error } = await getMyCoupons(user.id)
+      if (!active) return
+      if (error) {
+        setMyCoupons([])
+      } else {
+        setMyCoupons(data ?? [])
+      }
+      setMyCouponsLoading(false)
+    }
+    run()
+    return () => { active = false }
+  }, [user?.id])
+
+  useEffect(() => {
     if (!success && !canceled) return
     if (success) setFeedback(t('platform.cart.feedbackSuccess'))
     else if (canceled) setFeedback(t('platform.cart.feedbackCanceled'))
@@ -417,8 +437,8 @@ function Cart() {
   const totalUsdEstimate =
     exchangeSnapshot?.usd_brl > 0 ? totalAfterDiscountBrl / Number(exchangeSnapshot.usd_brl) : null
 
-  const handleApplyCoupon = async () => {
-    const code = couponInput.trim()
+  const handleApplyCoupon = async (inputCode = null) => {
+    const code = String(inputCode ?? couponInput).trim()
     if (!code) {
       setFeedback(t('platform.cart.errors.couponEmpty'))
       return
@@ -432,6 +452,7 @@ function Cart() {
       setFeedback(error.message)
       return
     }
+    setCouponInput(String(data?.code || code).toUpperCase())
     setCouponApplied(data)
     setFeedback('')
   }
@@ -706,6 +727,10 @@ function Cart() {
         await loadCart()
         await loadPendingOrders()
         await loadPayments()
+        await (async () => {
+          const { data: box } = await getMyCoupons(user.id)
+          setMyCoupons(box ?? [])
+        })()
         return
       }
       if (result?.url) {
@@ -739,7 +764,7 @@ function Cart() {
     kind ? t(`platform.orders.payable.${kind}`, { defaultValue: kind }) : ''
 
   const historyPaymentKind = (order, orderId, paymentIdLower) => {
-    if (paymentIdLower === 'referral_discount') return t('platform.cart.historyKind.discount')
+    if (paymentIdLower === 'referral_discount' || paymentIdLower === 'coupon_discount') return t('platform.cart.historyKind.discount')
     if (order?.order_source === 'store') return t('platform.cart.historyKind.store')
     if (Number(order?.quote_amount) > 0) return t('platform.cart.historyKind.service')
     if (Number(order?.shipping_cost) > 0) return t('platform.cart.historyKind.shipping')
@@ -751,7 +776,7 @@ function Cart() {
     const paymentId = String(raw || '').trim().toLowerCase()
     if (!paymentId) return '—'
     if (paymentId.startsWith('wallet')) return t('platform.cart.payMethod.wallet')
-    if (paymentId === 'referral_discount') return t('platform.cart.payMethod.discount')
+    if (paymentId === 'referral_discount' || paymentId === 'coupon_discount') return t('platform.cart.payMethod.discount')
     if (paymentId.startsWith('parcelow')) return 'Parcelow'
     if (paymentId.includes('pix')) return 'PIX'
     if (paymentId.startsWith('pi_') || paymentId.startsWith('cs_') || paymentId.startsWith('ch_')) {
@@ -987,6 +1012,38 @@ function Cart() {
                   )}
                 </div>
               </div>
+              {myCouponsLoading ? (
+                <p className="text-sm text-earth-600">{t('platform.cart.couponBoxLoading')}</p>
+              ) : myCoupons.length > 0 ? (
+                <div className="rounded-lg border border-earth-200 bg-white p-3">
+                  <p className="text-sm font-medium text-earth-800">{t('platform.cart.couponBoxTitle')}</p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {myCoupons.map((cp) => {
+                      const usedCount = Number(cp?.used_count) || 0
+                      const maxUses = cp?.max_uses != null ? Number(cp.max_uses) : null
+                      const exhausted = maxUses != null && usedCount >= maxUses
+                      const expired = cp?.valid_until ? new Date(cp.valid_until).getTime() < Date.now() : false
+                      const disabled = exhausted || expired || !!couponApplied
+                      return (
+                        <button
+                          key={cp.id}
+                          type="button"
+                          disabled={disabled}
+                          onClick={() => handleApplyCoupon(cp.code)}
+                          className="rounded-md border border-earth-300 bg-earth-50 px-3 py-2 text-left text-sm text-earth-800 hover:bg-earth-100 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          <span className="block font-semibold">{cp.code}</span>
+                          <span className="block text-xs text-earth-600">
+                            {cp.discount_type === 'percent'
+                              ? t('platform.cart.couponBoxPercent', { value: Number(cp.discount_value) || 0 })
+                              : t('platform.cart.couponBoxFixed', { value: fp.brl(Number(cp.discount_value) || 0) })}
+                          </span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              ) : null}
               {couponApplied && (
                 <p className="text-sm text-green-700 font-medium">
                   {t('platform.cart.couponApplied', {

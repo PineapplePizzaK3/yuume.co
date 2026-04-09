@@ -32,6 +32,13 @@ export default function Register() {
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
   const [name, setName] = useState('')
+  const [referralCode, setReferralCode] = useState(() => {
+    if (typeof window === 'undefined') return ''
+    const fromStorage = (localStorage.getItem('referral_signup_code') || '').trim().toUpperCase()
+    if (fromStorage) return fromStorage
+    const fromUrl = (new URL(window.location.href).searchParams.get('invite') || new URL(window.location.href).searchParams.get('referral') || '').trim().toUpperCase()
+    return fromUrl
+  })
   const [agreeTerms, setAgreeTerms] = useState(false)
   const [canAgreeTerms, setCanAgreeTerms] = useState(false)
   const [error, setError] = useState('')
@@ -82,9 +89,11 @@ export default function Register() {
     setLoading(true)
     setNeedsConfirmation(false)
 
-    const referralCode = (localStorage.getItem('referral_signup_code') || '').trim().toUpperCase()
+    const referralCodeNormalized = (referralCode || '').trim().toUpperCase()
+    if (referralCodeNormalized) localStorage.setItem('referral_signup_code', referralCodeNormalized)
+    else localStorage.removeItem('referral_signup_code')
     const metadata = { name }
-    if (referralCode) metadata.referral_code = referralCode
+    if (referralCodeNormalized) metadata.referral_code = referralCodeNormalized
 
     const { data, error: err } = await signUp(email, password, {
       userMetadata: metadata,
@@ -96,7 +105,7 @@ export default function Register() {
       return
     }
     if (data?.user) {
-      if (referralCode && data.user.id) {
+      if (referralCodeNormalized && data.user.id) {
         localStorage.removeItem('referral_signup_code')
       }
       if (data?.session) {
@@ -225,6 +234,19 @@ export default function Register() {
                 required
                 className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
                 placeholder={t('auth.emailPlaceholder')}
+              />
+            </div>
+            <div>
+              <label htmlFor="referralCode" className="block text-sm font-medium text-earth-700">
+                {t('auth.referralCode')}
+              </label>
+              <input
+                id="referralCode"
+                type="text"
+                value={referralCode}
+                onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+                className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                placeholder={t('auth.referralCodePlaceholder')}
               />
             </div>
             <div>

@@ -49,6 +49,7 @@ export const ROUTES = {
   appAdminFraude: { [LOCALE_PT_BR]: '/app/admin/fraude', [LOCALE_EN]: '/en/app/admin/fraud' },
   appAdminNotificacoes: { [LOCALE_PT_BR]: '/app/admin/notificacoes', [LOCALE_EN]: '/en/app/admin/notifications' },
   appAdminRecargas: { [LOCALE_PT_BR]: '/app/admin/recargas', [LOCALE_EN]: '/en/app/admin/top-ups' },
+  appAdminInvoices: { [LOCALE_PT_BR]: '/app/admin/invoices', [LOCALE_EN]: '/en/app/admin/invoices' },
   appAdminLogs: { [LOCALE_PT_BR]: '/app/admin/logs', [LOCALE_EN]: '/en/app/admin/logs' },
 }
 

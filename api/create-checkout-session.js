@@ -571,10 +571,10 @@ function orderLikeFromIntentRow(ir) {
     wallet_applied_amount: 0,
     order_source: 'store',
     ship_immediately: !!ir.ship_immediately,
-    acquisition_mode: 'none',
-    referral_discount_amount: null,
+    acquisition_mode: ir.referral_id ? 'referral' : 'none',
+    referral_discount_amount: ir.referral_discount_amount != null ? Number(ir.referral_discount_amount) : null,
     affiliate_id: null,
-    referral_id: null,
+    referral_id: ir.referral_id || null,
   }
 }
 
@@ -1119,7 +1119,24 @@ export default async function handler(req, res) {
     const unitAmount = Math.round(remainingJpy) // JPY sem casas decimais
     if (!unitAmount || unitAmount <= 0) {
       if (intentCheckoutId) {
-        return res.status(400).json({ error: 'Nada a cobrar no gateway para este checkout' })
+        const { data: paidOrderId, error: finalizeErr } = await supabase.rpc(
+          'service_finalize_store_checkout_intent_as_paid',
+          { p_intent_id: intentCheckoutId }
+        )
+        if (finalizeErr || !paidOrderId) {
+          return res.status(400).json({ error: finalizeErr?.message || 'Não foi possível finalizar checkout sem cobrança' })
+        }
+        await supabase.from('payments').insert({
+          order_id: paidOrderId,
+          stripe_payment_id: 'coupon_discount',
+          status: 'completed',
+          amount: 0,
+          currency: 'JPY',
+        })
+        await ensureInvoiceForPaidOrder(supabase, paidOrderId).catch((e) =>
+          console.error('ensureInvoice (checkout zero remainder intent):', e?.message || e)
+        )
+        return res.status(200).json({ paid: true, walletApplied, discounted: true })
       }
       const newStatus = order?.order_source === 'store' && order?.ship_immediately
         ? 'products_paid'
@@ -1131,7 +1148,7 @@ export default async function handler(req, res) {
         .eq('status', 'awaiting_payment')
       await supabase.from('payments').insert({
         order_id: orderId,
-        stripe_payment_id: 'referral_discount',
+        stripe_payment_id: 'coupon_discount',
         status: 'completed',
         amount: 0,
         currency: 'JPY',

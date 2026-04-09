@@ -53,6 +53,7 @@ const AdminMarketingTab = lazy(() => import('./pages/platform/admin/tabs/Marketi
 const AdminFraudeTab = lazy(() => import('./pages/platform/admin/tabs/FraudeTab'))
 const AdminNotificacoesTab = lazy(() => import('./pages/platform/admin/tabs/NotificacoesTab'))
 const AdminRecargasTab = lazy(() => import('./pages/platform/admin/tabs/RecargasTab'))
+const AdminInvoicesTab = lazy(() => import('./pages/platform/admin/tabs/InvoicesAdminTab'))
 const AdminLogsTab = lazy(() => import('./pages/platform/admin/tabs/LogsTab'))
 const Lounge = lazy(() => import('./pages/platform/Lounge'))
 const Invoices = lazy(() => import('./pages/platform/Invoices'))
@@ -191,6 +192,7 @@ function App() {
                 <Route path="fraude" element={<AdminFraudeTab />} />
                 <Route path="notificacoes" element={<AdminNotificacoesTab />} />
                 <Route path="recargas" element={<AdminRecargasTab />} />
+                <Route path="invoices" element={<AdminInvoicesTab />} />
                 <Route path="logs" element={<AdminLogsTab />} />
               </Route>
             </Route>
@@ -262,6 +264,7 @@ function App() {
                 <Route path="fraud" element={<AdminFraudeTab />} />
                 <Route path="notifications" element={<AdminNotificacoesTab />} />
                 <Route path="top-ups" element={<AdminRecargasTab />} />
+                <Route path="invoices" element={<AdminInvoicesTab />} />
                 <Route path="logs" element={<AdminLogsTab />} />
               </Route>
             </Route>

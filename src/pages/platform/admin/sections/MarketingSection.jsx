@@ -32,9 +32,10 @@ export default function MarketingSection() {
       </div>
 
       <p className="text-sm text-earth-600">
-        O desconto ({formatJpyForSite(siteLocale, Math.round(brlToJpy(Number(settingsForm.referral_discount_value) || 0)), null)}) aplica-se no checkout do indicado
-        quando ele usa o benefício. O crédito ao indicador ({formatJpyForSite(siteLocale, Math.round(brlToJpy(Number(settingsForm.referral_credit_value) || 0)), null)}) é
-        lançado quando o pedido do indicado (com referral aplicado) atinge status <strong>enviado</strong> ou{' '}
+        O benefício do indicado é emitido como cupom na caixa de cupons da central de pagamentos, no valor de{' '}
+        {formatJpyForSite(siteLocale, Math.round(brlToJpy(Number(settingsForm.referral_discount_value) || 0)), null)}.
+        O crédito ao indicador ({formatJpyForSite(siteLocale, Math.round(brlToJpy(Number(settingsForm.referral_credit_value) || 0)), null)}) é
+        lançado quando o pedido do indicado (com cupom de indicação usado) atinge status <strong>enviado</strong> ou{' '}
         <strong>concluído</strong>.
       </p>
 
@@ -55,7 +56,7 @@ export default function MarketingSection() {
             />
           </label>
           <label className="text-sm">
-            <span className="text-earth-700">Desconto para o indicado (referral_discount_value)</span>
+            <span className="text-earth-700">Valor do cupom do indicado (referral_discount_value)</span>
             <input
               type="number"
               min="0"

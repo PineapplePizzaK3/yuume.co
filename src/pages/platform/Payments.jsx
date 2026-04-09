@@ -34,7 +34,7 @@ export default function Payments() {
   )
 
   const historyPaymentKind = (order, orderId, paymentIdLower) => {
-    if (paymentIdLower === 'referral_discount') return t('platform.cart.historyKind.discount')
+    if (paymentIdLower === 'referral_discount' || paymentIdLower === 'coupon_discount') return t('platform.cart.historyKind.discount')
     if (order?.order_source === 'store') return t('platform.cart.historyKind.store')
     if (Number(order?.quote_amount) > 0) return t('platform.cart.historyKind.service')
     if (Number(order?.shipping_cost) > 0) return t('platform.cart.historyKind.shipping')
@@ -46,7 +46,7 @@ export default function Payments() {
     const paymentId = String(raw || '').trim().toLowerCase()
     if (!paymentId) return '—'
     if (paymentId.startsWith('wallet')) return t('platform.cart.payMethod.wallet')
-    if (paymentId === 'referral_discount') return t('platform.cart.payMethod.discount')
+    if (paymentId === 'referral_discount' || paymentId === 'coupon_discount') return t('platform.cart.payMethod.discount')
     if (paymentId.startsWith('parcelow')) return 'Parcelow'
     if (paymentId.includes('pix')) return 'PIX'
     if (paymentId.startsWith('pi_') || paymentId.startsWith('cs_') || paymentId.startsWith('ch_')) {
