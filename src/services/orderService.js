@@ -65,7 +65,7 @@ export async function getServices() {
  * - assisted_buy (Redirecionamento Assistido, pré-pagamento): status awaiting_quote (admin define orçamento)
  * Personal Shopping: status awaiting_quote.
  */
-export async function createOrder(userId, { service_id, message, attachment_urls, service_name, order_module, early_prepayment_requested, early_prepayment_wallet_jpy }) {
+export async function createOrder(userId, { service_id, message, attachment_urls, service_name, order_module, early_prepayment_requested, early_prepayment_wallet_jpy, early_prepayment_declared_products_jpy }) {
   const isPersonalShopping = service_name === 'Personal Shopping'
   const isRedirecionamento = service_name === 'Redirecionamento'
   const module = order_module || null
@@ -76,6 +76,10 @@ export async function createOrder(userId, { service_id, message, attachment_urls
   const walletJpy =
     earlyPrepay && early_prepayment_wallet_jpy != null && Number(early_prepayment_wallet_jpy) > 0
       ? Math.floor(Number(early_prepayment_wallet_jpy))
+      : null
+  const declaredProductsJpy =
+    earlyPrepay && early_prepayment_declared_products_jpy != null && Number(early_prepayment_declared_products_jpy) > 0
+      ? Math.floor(Number(early_prepayment_declared_products_jpy))
       : null
   try {
     const { data, error } = await withDbTimeout(
@@ -91,6 +95,7 @@ export async function createOrder(userId, { service_id, message, attachment_urls
           status,
           early_prepayment_requested: earlyPrepay,
           early_prepayment_wallet_jpy: walletJpy,
+          early_prepayment_declared_products_jpy: declaredProductsJpy,
         })
         .select()
         .single()
@@ -115,6 +120,7 @@ export async function getMyOrders(userId, options = {}) {
       .select(`
       *,
       service:services(name),
+      payments(stripe_payment_id),
       order_items(
         id,
         product_id,
@@ -192,6 +198,7 @@ export async function getOrderById(orderId, userId) {
         .select(`
       *,
       service:services(name),
+      payments(stripe_payment_id),
       order_items(
         id,
         product_id,

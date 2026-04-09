@@ -14,6 +14,15 @@ const url = supabaseUrl || 'https://placeholder.supabase.co'
 const key = supabaseAnonKey || 'placeholder-anon-key'
 const REQUEST_TIMEOUT_MS = 25000
 
+/**
+ * Avoids sporadic browser LockManager aborts:
+ * "AbortError: Lock broken by another request with the 'steal' option."
+ * We run auth critical sections directly in the same tab.
+ */
+async function authBestEffortLock(_name, _acquireTimeout, fn) {
+  return await fn()
+}
+
 async function fetchWithTimeout(input, init = {}) {
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
@@ -50,6 +59,7 @@ export const supabase = createClient(url, key, {
     autoRefreshToken: true,
     detectSessionInUrl: true,
     storage,
+    lock: authBestEffortLock,
   },
   global: {
     fetch: fetchWithTimeout,

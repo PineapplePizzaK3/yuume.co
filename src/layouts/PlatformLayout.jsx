@@ -11,7 +11,7 @@ import { useLocalizedPath } from '../hooks/useLocalizedPath'
 
 const NAV_ROUTE_KEYS = ['appDashboard']
 const CONTA_ROUTE_KEYS = ['appLounge', 'appConta', 'appCart']
-const LOJA_ROUTE_KEYS = ['appServices', 'appGrupoCompras', 'appLoja']
+const LOJA_ROUTE_KEYS = ['appLoja']
 
 const ALL_MENU_KEYS = [...NAV_ROUTE_KEYS, ...CONTA_ROUTE_KEYS, ...LOJA_ROUTE_KEYS]
 
@@ -40,7 +40,7 @@ const LABEL_KEY_BY_ROUTE = {
   appCart: 'platform.navPayments',
   appServices: 'platform.navServices',
   appGrupoCompras: 'platform.navGroupBuy',
-  appLoja: 'platform.navVirtualStore',
+  appLoja: 'platform.navStore',
 }
 
 const MENU_ORDER_STORAGE_KEY = 'platform_menu_order_v2'
@@ -180,28 +180,6 @@ export function PlatformLayout() {
 
   const mobileTabs = useMemo(
     () => [
-      {
-        id: 'services',
-        routeKey: 'appServices',
-        label: t('platform.mobileServices'),
-        active: isActive('appServices'),
-        icon: (
-          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.5 9.75h15M4.5 14.25h15M8.25 5.25h7.5M8.25 18.75h7.5" />
-          </svg>
-        ),
-      },
-      {
-        id: 'grupo-compras',
-        routeKey: 'appGrupoCompras',
-        label: t('platform.mobileGroups'),
-        active: isActive('appGrupoCompras'),
-        icon: (
-          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.25 8.25a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zM11.25 9.75a3 3 0 11-6 0 3 3 0 016 0zM3.75 18a4.5 4.5 0 019 0M12.75 18a3.75 3.75 0 017.5 0" />
-          </svg>
-        ),
-      },
       {
         id: 'lounge',
         routeKey: 'appLounge',

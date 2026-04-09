@@ -5,6 +5,7 @@ import { parseQuoteMessage, serializeQuoteProducts } from '../../../../lib/quote
 import QuoteProductsList from '../../../../components/QuoteProductsList'
 import OrderAttachments from '../../../../components/OrderAttachments'
 import { useAdminContext } from '../AdminContext'
+import { REDIR_ASSISTIDO_FEE_PERCENT, computeAssistedEarlyPrepayDebitJpy } from '../../../../data/serviceFees'
 
 export default function PedidosSection() {
   const {
@@ -252,16 +253,39 @@ export default function PedidosSection() {
                       </span>
                     </p>
                   )}
-                  {o.early_prepayment_requested && (
-                    <p className="mt-1">
-                      <span className="inline-flex flex-wrap items-center gap-x-1 rounded bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-900">
-                        <span>Pré-pagamento antecipado (ex.: flea market)</span>
-                        {o.early_prepayment_wallet_jpy != null && Number(o.early_prepayment_wallet_jpy) > 0 && (
-                          <span className="text-emerald-950">· carteira {formatJPY(Number(o.early_prepayment_wallet_jpy))}</span>
-                        )}
-                      </span>
-                    </p>
-                  )}
+                  {o.early_prepayment_requested && (() => {
+                    const walletJpy =
+                      o.early_prepayment_wallet_jpy != null && Number(o.early_prepayment_wallet_jpy) > 0
+                        ? Number(o.early_prepayment_wallet_jpy)
+                        : 0
+                    const declaredRaw = o.early_prepayment_declared_products_jpy
+                    const declaredJpy =
+                      declaredRaw != null && Number(declaredRaw) > 0 ? Math.floor(Number(declaredRaw)) : null
+                    const breakdown =
+                      declaredJpy != null ? computeAssistedEarlyPrepayDebitJpy(declaredJpy) : null
+                    const feeJpy =
+                      walletJpy > 0 && declaredJpy != null
+                        ? breakdown && breakdown.totalDebitJpy === walletJpy
+                          ? breakdown.feeJpy
+                          : Math.max(0, walletJpy - declaredJpy)
+                        : 0
+                    return (
+                      <p className="mt-1">
+                        <span className="inline-flex flex-wrap items-center gap-x-1 rounded bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-900">
+                          <span>Pré-pagamento antecipado (ex.: flea market)</span>
+                          {walletJpy > 0 && declaredJpy != null && (
+                            <span className="text-emerald-950">
+                              · produtos {formatJPY(declaredJpy)} · taxa {REDIR_ASSISTIDO_FEE_PERCENT}%{' '}
+                              {formatJPY(feeJpy)} · total carteira {formatJPY(walletJpy)}
+                            </span>
+                          )}
+                          {walletJpy > 0 && declaredJpy == null && (
+                            <span className="text-emerald-950">· carteira {formatJPY(walletJpy)}</span>
+                          )}
+                        </span>
+                      </p>
+                    )
+                  })()}
                   {o.message && (
                     <QuoteProductsList
                       message={o.message}

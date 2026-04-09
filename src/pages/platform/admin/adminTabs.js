@@ -1,4 +1,4 @@
-﻿import { LOCALE_EN, LOCALE_PT_BR } from '../../../lib/localeRoutes'
+import { LOCALE_EN, LOCALE_PT_BR } from '../../../lib/localeRoutes'
 
 export const ADMIN_TABS = [
   { id: 'pedidos', path: 'pedidos', label: 'Pedidos', icon: '📦' },
@@ -7,7 +7,7 @@ export const ADMIN_TABS = [
   { id: 'produtos', path: 'produtos', label: 'Produtos Loja', icon: '🛒' },
   { id: 'catalogo_produtos', path: 'catalogo-produtos', label: 'Lista de Produtos', icon: '📚' },
   { id: 'busca_catalogo', path: 'busca-catalogo', label: 'Busca em Catálogos', icon: '🔎' },
-  { id: 'grupos', path: 'grupos', label: 'Grupo de Compras', icon: '👥' },
+  { id: 'grupos', path: 'grupos', label: 'Compras Programadas', icon: '👥' },
   { id: 'marketing', path: 'marketing', label: 'Referral', icon: '🎯' },
   { id: 'fraude', path: 'fraude', label: 'Fraude', icon: '🛡️' },
   { id: 'notificacoes', path: 'notificacoes', label: 'Notificações', icon: '🔔' },

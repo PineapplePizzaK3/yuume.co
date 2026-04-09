@@ -1,12 +1,26 @@
 /**
- * Taxas de serviço — Personal Shopping e Grupo de Compras (alinhado ao site e ao RPC create_store_order).
+ * Taxas de serviço — Personal Shopping e Compras Programadas (alinhado ao site e ao RPC create_store_order).
  */
 export const SERVICE_FEE_JPY_PER_ITEM = 250
-/** Taxa fixa por unidade no Grupo de Compras (USD); BRL só para exibição (× usd_brl). */
+/** Taxa fixa por unidade nas Compras Programadas (USD); BRL só para exibição (× usd_brl). */
 export const GRUPO_COMPRAS_FEE_PER_UNIT_USD = 1.9
 export const GRUPO_COMPRAS_FEE_PERCENT = 20
 export const PERSONAL_SHOPPING_FEE_PERCENT = 25
 export const REDIR_ASSISTIDO_FEE_PERCENT = 15
+
+/**
+ * Pré-pagamento antecipado (assistido): taxa de serviço sobre o valor declarado dos produtos + débito total na carteira.
+ * @param {number} productsJpy valor total dos produtos em JPY (inteiro)
+ * @param {number} [feePercent] default REDIR_ASSISTIDO_FEE_PERCENT
+ * @returns {{ productsJpy: number, feeJpy: number, totalDebitJpy: number } | null}
+ */
+export function computeAssistedEarlyPrepayDebitJpy(productsJpy, feePercent = REDIR_ASSISTIDO_FEE_PERCENT) {
+  const p = Math.max(0, Math.floor(Number(productsJpy) || 0))
+  if (p < 1) return null
+  const pct = Number(feePercent)
+  const fee = Math.round(p * (Number.isFinite(pct) && pct >= 0 ? pct : REDIR_ASSISTIDO_FEE_PERCENT) / 100)
+  return { productsJpy: p, feeJpy: fee, totalDebitJpy: p + fee }
+}
 
 /** Texto único da escada de taxa por item (Padrão e Assistido usam a mesma tabela). */
 export const REDIRECIONAMENTO_ITEM_FEE_SUMMARY =
@@ -27,7 +41,7 @@ export function computeRedirecionamentoPadraoFeeJpy(totalItems) {
 }
 
 /**
- * Taxa extra em BRL para itens de Grupo de Compras: % sobre subtotal dos produtos do grupo + ¥250 por unidade.
+ * Taxa extra em BRL para itens de Compras Programadas: % sobre subtotal dos produtos do grupo + ¥250 por unidade.
  * @param {number} grupoSubtotalBrl
  * @param {number} grupoUnitsQty soma das quantidades (unidades) dos itens do grupo
  * @param {number} brlPerJpy cotação BRL por 1 JPY (ex.: 0,033)

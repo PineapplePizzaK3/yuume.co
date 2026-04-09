@@ -1,5 +1,5 @@
 /**
- * Loja Virtual (espelho) - Versão pública para quem não está logado.
+ * Loja (espelho) - Versão pública para quem não está logado.
  * Mostra os mesmos produtos da loja, mas sem opção de comprar.
  * Usuário deve fazer login para comprar.
  */
@@ -66,11 +66,11 @@ export default function LojaMirror() {
   return (
     <>
       <Helmet>
-        <title>Loja Virtual | Delivery</title>
+        <title>Loja | Delivery</title>
       </Helmet>
       <div className="px-4 pt-24 pb-12">
         <div className="mx-auto max-w-6xl">
-          <h1 className="text-2xl font-bold text-earth-900">Loja Virtual</h1>
+          <h1 className="text-2xl font-bold text-earth-900">Loja</h1>
           <div className="mt-3 rounded-lg bg-amber-50 border border-amber-200 px-4 py-3">
             <p className="text-sm text-amber-900">
               Faça <Link to={lp('login')} className="font-semibold underline hover:text-amber-700">login</Link> ou{' '}

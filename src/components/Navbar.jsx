@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { REDES_SOCIAIS } from '../data/redesSociais'
@@ -31,6 +31,30 @@ function Navbar() {
     'text-earth-600 transition hover:text-earth-900'
 
   const homePath = path('home')
+  const isStorePublicRoute = isRouteActive('lojaPublic', location.pathname, true)
+  const isStoreAppRoute = isRouteActive('appLoja', location.pathname, true)
+  const isStoreLegacyServicesRoute = isRouteActive('appServices', location.pathname, true)
+  const isStoreLegacyGroupsRoute = isRouteActive('appGrupoCompras', location.pathname, true)
+  const showStoreHeaderSubmenu =
+    isStorePublicRoute || isStoreAppRoute || isStoreLegacyServicesRoute || isStoreLegacyGroupsRoute
+  const storeRouteKey = isAuthenticated ? 'appLoja' : 'lojaPublic'
+  const currentStoreSection = useMemo(() => {
+    if (isStoreLegacyServicesRoute) return 'servicos'
+    if (isStoreLegacyGroupsRoute) return 'compras-programadas'
+    const sec = new URLSearchParams(location.search).get('sec')
+    if (sec === 'compras-programadas' || sec === 'vitrine' || sec === 'servicos') return sec
+    return 'em-estoque'
+  }, [isStoreLegacyGroupsRoute, isStoreLegacyServicesRoute, location.search])
+  const storeSubmenuItems = useMemo(
+    () => [
+      { id: 'em-estoque', label: t('platform.storeHub.tabStock'), search: '' },
+      { id: 'compras-programadas', label: t('platform.storeHub.tabScheduled'), search: '?sec=compras-programadas' },
+      { id: 'vitrine', label: t('platform.storeHub.tabShowcase'), search: '?sec=vitrine' },
+      { id: 'servicos', label: t('platform.storeHub.tabServices'), search: '?sec=servicos' },
+    ],
+    [t]
+  )
+
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-earth-50 shadow-sm border-b border-earth-200">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -91,16 +115,27 @@ function Navbar() {
             <LanguageSwitcherDropdown />
 
             {isAuthenticated ? (
-              <LocalizedLink
-                toRoute="appDashboard"
-                className="relative flex items-center gap-2 rounded-lg bg-earth-800 px-4 py-2 text-sm font-medium text-earth-50 transition hover:bg-earth-700"
-              >
-                {hasUnreadNotifications && (
-                  <span className="absolute -right-1 -top-1 inline-block h-2.5 w-2.5 rounded-full bg-red-600 ring-2 ring-earth-50" aria-hidden />
-                )}
-                <span className="h-2 w-2 rounded-full bg-green-400" aria-hidden />
-                {profile?.name || user?.email?.split('@')[0] || t('nav.myAccount')}
-              </LocalizedLink>
+              <div className="group relative">
+                <LocalizedLink
+                  toRoute="appDashboard"
+                  className="relative flex items-center gap-2 rounded-lg bg-earth-800 px-4 py-2 text-sm font-medium text-earth-50 transition hover:bg-earth-700"
+                >
+                  {hasUnreadNotifications && (
+                    <span className="absolute -right-1 -top-1 inline-block h-2.5 w-2.5 rounded-full bg-red-600 ring-2 ring-earth-50" aria-hidden />
+                  )}
+                  <span className="h-2 w-2 rounded-full bg-green-400" aria-hidden />
+                  {profile?.name || user?.email?.split('@')[0] || t('nav.myAccount')}
+                </LocalizedLink>
+                <div className="pointer-events-none absolute right-0 top-full z-20 pt-2 opacity-0 transition group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100">
+                  <button
+                    type="button"
+                    onClick={() => signOut()}
+                    className="w-full whitespace-nowrap rounded-lg border border-earth-300 bg-white px-3 py-2 text-sm font-medium text-earth-700 shadow-sm hover:bg-earth-100"
+                  >
+                    {t('nav.signOut')}
+                  </button>
+                </div>
+              </div>
             ) : (
               <LocalizedLink
                 toRoute="login"
@@ -282,6 +317,26 @@ function Navbar() {
           </div>
         )}
       </div>
+      {showStoreHeaderSubmenu && (
+        <div className="pointer-events-none absolute left-0 right-0 top-16 hidden border-t border-earth-200 bg-earth-50/95 backdrop-blur lg:block">
+          <div className="mx-auto flex max-w-7xl justify-center gap-2 px-4 py-2 sm:px-6 lg:px-8">
+            {storeSubmenuItems.map((item) => (
+              <LocalizedLink
+                key={item.id}
+                toRoute={storeRouteKey}
+                search={item.search}
+                className={`pointer-events-auto rounded-lg px-3 py-1.5 text-sm font-medium transition ${
+                  currentStoreSection === item.id
+                    ? 'bg-earth-900 text-earth-50'
+                    : 'bg-white text-earth-700 hover:bg-earth-100'
+                }`}
+              >
+                {item.label}
+              </LocalizedLink>
+            ))}
+          </div>
+        </div>
+      )}
     </nav>
   )
 }

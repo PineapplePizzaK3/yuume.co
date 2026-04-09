@@ -14,7 +14,7 @@ import { useFormatPrice } from '../../hooks/useFormatPrice'
 import { LOCALE_EN } from '../../lib/localeRoutes'
 import { deleteMyOrder, getMyOrders, getOrderById, requestOrderExtraServices, ORDER_STATUS_LABELS } from '../../services/orderService'
 import { createCheckoutSession } from '../../services/paymentService'
-import { getWallet } from '../../services/walletService'
+import { applyEarlyPrepaymentWalletJpy, getWallet } from '../../services/walletService'
 import { cacheKey, readCache, writeCache } from '../../lib/cache'
 import { brlToJpy, jpyToBrl } from '../../lib/fx'
 import { TriCurrencyDisplay } from '../../components/TriCurrencyDisplay'
@@ -27,12 +27,32 @@ import {
   REDIR_ASSISTIDO_FEE_PERCENT,
   PERSONAL_SHOPPING_FEE_PERCENT,
   computeRedirecionamentoPadraoFeeJpy,
+  computeAssistedEarlyPrepayDebitJpy,
 } from '../../data/serviceFees'
 
 const ORDERS_PAGE_SIZE = 12
 const ORDER_FILTERS = {
   OPEN: 'open',
   COMPLETED: 'completed',
+}
+
+function orderEarlyPrepayWalletApplied(order) {
+  const pays = order?.payments
+  return Array.isArray(pays) && pays.some((p) => p.stripe_payment_id === 'wallet_early_prepay')
+}
+
+function orderIsAssistedModule(order) {
+  const m = order?.order_module
+  return m === 'assisted_buy' || m === 'redir-assistido'
+}
+
+function orderNeedsEarlyPrepayWalletPayment(order) {
+  if (String(order?.status) !== 'awaiting_quote') return false
+  if (!orderIsAssistedModule(order)) return false
+  if (!order?.early_prepayment_requested) return false
+  const amt = Number(order?.early_prepayment_wallet_jpy)
+  if (!Number.isFinite(amt) || amt <= 0) return false
+  return !orderEarlyPrepayWalletApplied(order)
 }
 
 export default function Orders() {
@@ -89,6 +109,7 @@ export default function Orders() {
   const [extraServices, setExtraServices] = useState({ photos: false, video: false })
   const [detailsModal, setDetailsModal] = useState({ open: false, order: null })
   const [deletingId, setDeletingId] = useState(null)
+  const [earlyPrepayApplyingId, setEarlyPrepayApplyingId] = useState(null)
   const [ordersPage, setOrdersPage] = useState(0)
   const [ordersHasMore, setOrdersHasMore] = useState(false)
   const [ordersFilter, setOrdersFilter] = useState(ORDER_FILTERS.OPEN)
@@ -175,7 +196,7 @@ export default function Orders() {
         return
       }
       const cacheScope = ordersFilter === ORDER_FILTERS.COMPLETED ? 'finalizados' : 'andamento'
-      const k = cacheKey(user.id, `orders_page_v2_${cacheScope}_p${ordersPage}`)
+      const k = cacheKey(user.id, `orders_page_v3_${cacheScope}_p${ordersPage}`)
       const cached = readCache(k, 1000 * 60 * 30)
       if (cached && isActive) {
         setOrders(cached.orders ?? [])
@@ -299,6 +320,41 @@ export default function Orders() {
     return !['paid', 'products_paid', 'shipped', 'completed'].includes(order.status)
   }
 
+  const handleApplyEarlyPrepayment = async (order) => {
+    if (!user?.id || !order?.id) return
+    const amt = Math.floor(Number(order.early_prepayment_wallet_jpy) || 0)
+    if (amt < 1) return
+    const bal = Math.floor(Number(wallet?.balance) || 0)
+    if (amt > bal) {
+      setFeedback(
+        t('platform.orders.earlyPrepayInsufficientBalance', {
+          balance: fp.jpy(bal),
+          required: fp.jpy(amt),
+        })
+      )
+      return
+    }
+    setFeedback('')
+    setEarlyPrepayApplyingId(order.id)
+    try {
+      const { error } = await applyEarlyPrepaymentWalletJpy(order.id)
+      if (error) {
+        setFeedback(error.message || t('platform.orders.earlyPrepayPayError'))
+        return
+      }
+      setFeedback(t('platform.orders.earlyPrepayPaySuccess'))
+      await refreshOrders()
+      const { data: fresh } = await getOrderById(order.id, user.id)
+      if (fresh && detailsModal.open && detailsModal.order?.id === order.id) {
+        setDetailsModal({ open: true, order: fresh })
+      }
+    } catch (err) {
+      setFeedback(err?.message || t('platform.orders.earlyPrepayPayError'))
+    } finally {
+      setEarlyPrepayApplyingId(null)
+    }
+  }
+
   const refreshOrders = async () => {
     if (!user?.id) return
     const [ordersRes, walletRes] = await Promise.all([
@@ -316,7 +372,7 @@ export default function Orders() {
     setOrdersHasMore(list.length === ORDERS_PAGE_SIZE)
     setWallet(walletRes.data ?? null)
     const cacheScope = ordersFilter === ORDER_FILTERS.COMPLETED ? 'finalizados' : 'andamento'
-    const k = cacheKey(user.id, `orders_page_v2_${cacheScope}_p${ordersPage}`)
+    const k = cacheKey(user.id, `orders_page_v3_${cacheScope}_p${ordersPage}`)
     writeCache(k, { orders: list, wallet: walletRes.data ?? null, hasMore: list.length === ORDERS_PAGE_SIZE })
   }
 
@@ -676,6 +732,32 @@ export default function Orders() {
                     {o.service?.name && (
                       <p className="mt-1 text-sm text-earth-600">{o.service.name}</p>
                     )}
+                    {orderNeedsEarlyPrepayWalletPayment(o) && (
+                      <div className="mt-3 rounded-lg border border-emerald-300 bg-emerald-50 p-3">
+                        <p className="text-sm font-medium text-emerald-950">
+                          {t('platform.orders.earlyPrepayPendingTitle')}
+                        </p>
+                        <p className="mt-1 text-xs text-emerald-900">{t('platform.orders.earlyPrepayPendingExplain')}</p>
+                        <p className="mt-2 text-sm text-emerald-950">
+                          <span className="text-emerald-800">{t('platform.orders.earlyPrepayAmountLabel')} </span>
+                          <span className="font-semibold tabular-nums">
+                            {fp.jpy(Number(o.early_prepayment_wallet_jpy))}
+                          </span>
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => handleApplyEarlyPrepayment(o)}
+                          disabled={earlyPrepayApplyingId === o.id}
+                          className="mt-3 w-full rounded-lg bg-emerald-800 px-4 py-2.5 text-sm font-medium text-white hover:bg-emerald-900 disabled:opacity-60 sm:w-auto"
+                        >
+                          {earlyPrepayApplyingId === o.id
+                            ? t('platform.orders.earlyPrepayPaying')
+                            : t('platform.orders.earlyPrepayPayButton', {
+                                amount: fp.jpy(Number(o.early_prepayment_wallet_jpy)),
+                              })}
+                        </button>
+                      </div>
+                    )}
                     {o.message && (
                       <QuoteProductsList
                         message={o.message}
@@ -921,15 +1003,75 @@ export default function Orders() {
                     {t('platform.orders.prepayNote')}
                   </p>
                   {detailsModal.order.early_prepayment_wallet_jpy != null &&
+                    Number(detailsModal.order.early_prepayment_wallet_jpy) > 0 &&
+                    (() => {
+                      const walletJpy = Number(detailsModal.order.early_prepayment_wallet_jpy)
+                      const declaredRaw = detailsModal.order.early_prepayment_declared_products_jpy
+                      const declaredJpy =
+                        declaredRaw != null && Number(declaredRaw) > 0 ? Math.floor(Number(declaredRaw)) : null
+                      const breakdown =
+                        declaredJpy != null ? computeAssistedEarlyPrepayDebitJpy(declaredJpy) : null
+                      const feeJpy =
+                        breakdown && breakdown.totalDebitJpy === walletJpy
+                          ? breakdown.feeJpy
+                          : Math.max(0, walletJpy - (declaredJpy ?? 0))
+                      if (declaredJpy != null) {
+                        return (
+                          <ul className="mt-2 list-inside list-disc space-y-1 text-sm text-earth-800">
+                            <li>
+                              {t('platform.orders.prepayDeclaredProducts')}{' '}
+                              <span className="font-semibold text-earth-900">{fp.jpy(declaredJpy)}</span>
+                            </li>
+                            <li>
+                              {t('platform.orders.prepayServiceFee', { pct: REDIR_ASSISTIDO_FEE_PERCENT })}{' '}
+                              <span className="font-semibold text-earth-900">{fp.jpy(feeJpy)}</span>
+                            </li>
+                            <li>
+                              {t(
+                                orderEarlyPrepayWalletApplied(detailsModal.order)
+                                  ? 'platform.orders.prepayWalletLine'
+                                  : 'platform.orders.prepayWalletTotalPending'
+                              )}{' '}
+                              <span className="font-semibold text-earth-900">{fp.jpy(walletJpy)}</span>
+                            </li>
+                          </ul>
+                        )
+                      }
+                      return (
+                        <p className="mt-2 text-sm text-earth-800">
+                          {t(
+                            orderEarlyPrepayWalletApplied(detailsModal.order)
+                              ? 'platform.orders.prepayWalletLine'
+                              : 'platform.orders.prepayWalletTotalPending'
+                          )}{' '}
+                          <span className="font-semibold text-earth-900">{fp.jpy(walletJpy)}</span>.
+                        </p>
+                      )
+                    })()}
+                  {orderEarlyPrepayWalletApplied(detailsModal.order) &&
+                    detailsModal.order.early_prepayment_wallet_jpy != null &&
                     Number(detailsModal.order.early_prepayment_wallet_jpy) > 0 && (
-                      <p className="mt-2 text-sm text-earth-800">
-                        {t('platform.orders.prepayWalletLine')}{' '}
-                        <span className="font-semibold text-earth-900">
-                          {fp.jpy(Number(detailsModal.order.early_prepayment_wallet_jpy))}
-                        </span>
-                        .
+                      <p className="mt-2 text-sm font-medium text-emerald-800">
+                        {t('platform.orders.earlyPrepayWalletPaid')}
                       </p>
                     )}
+                  {orderNeedsEarlyPrepayWalletPayment(detailsModal.order) && (
+                    <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50/80 p-3">
+                      <p className="text-xs text-emerald-900">{t('platform.orders.earlyPrepayPayHint')}</p>
+                      <button
+                        type="button"
+                        onClick={() => handleApplyEarlyPrepayment(detailsModal.order)}
+                        disabled={earlyPrepayApplyingId === detailsModal.order.id}
+                        className="mt-2 w-full rounded-lg bg-emerald-800 px-4 py-2.5 text-sm font-medium text-white hover:bg-emerald-900 disabled:opacity-60"
+                      >
+                        {earlyPrepayApplyingId === detailsModal.order.id
+                          ? t('platform.orders.earlyPrepayPaying')
+                          : t('platform.orders.earlyPrepayPayButton', {
+                              amount: fp.jpy(Number(detailsModal.order.early_prepayment_wallet_jpy)),
+                            })}
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
               {isOrderInvoiceEligible(detailsModal.order) && (

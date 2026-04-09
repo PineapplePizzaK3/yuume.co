@@ -3,7 +3,7 @@
  * Redirecionamento (Padrão ou Assistido): disclaimer → user cria pedido → admin aprova / orça.
  * Personal Shopping e Redirecionamento: anexos por arquivo ou URL; admin orça / aprova conforme o fluxo.
  */
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../hooks/useAuth'
@@ -13,8 +13,14 @@ import { PageSeo } from '../../components/PageSeo'
 import { getServices, createOrder } from '../../services/orderService'
 import { uploadOrderAttachment } from '../../services/productService'
 import { getWallet } from '../../services/walletService'
-import { supabase } from '../../lib/supabase'
-import { REDIR_ASSISTIDO_FEE_PERCENT } from '../../data/serviceFees'
+import {
+  REDIR_ASSISTIDO_FEE_PERCENT,
+  computeAssistedEarlyPrepayDebitJpy,
+} from '../../data/serviceFees'
+
+function messageContainsHttpUrl(text) {
+  return /https?:\/\/[^\s<>"']+/i.test(String(text || '').trim())
+}
 
 const SERVICOS_OFERTADOS = ['Redirecionamento', 'Personal Shopping']
 const REDIRECIONAMENTO = 'Redirecionamento'
@@ -52,7 +58,7 @@ function clearServicesDraft(userId) {
   }
 }
 
-export default function Services() {
+export default function Services({ embedded = false }) {
   const { t } = useTranslation()
   const fp = useFormatPrice()
   const { user } = useAuth()
@@ -72,7 +78,7 @@ export default function Services() {
   const [failedThumbUrls, setFailedThumbUrls] = useState(() => new Set())
   const [draftHydrated, setDraftHydrated] = useState(false)
   const [earlyPrepaymentRequested, setEarlyPrepaymentRequested] = useState(false)
-  const [earlyPrepaymentWalletInput, setEarlyPrepaymentWalletInput] = useState('')
+  const [earlyPrepaymentProductsJpyInput, setEarlyPrepaymentProductsJpyInput] = useState('')
   const [walletPreview, setWalletPreview] = useState(null)
   const saveDebounceRef = useRef(null)
   const draftLoadedRef = useRef(false)
@@ -84,6 +90,11 @@ export default function Services() {
   const isRedirStandard = isRedirecionamento && redirModule === 'self_buy'
   const showImageAttachments = isPersonalShopping || isRedirAssisted || isRedirStandard
   const canSubmit = !isRedirecionamento || agreeProhibited
+
+  const earlyPrepayBreakdown = useMemo(() => {
+    if (!isRedirAssisted || !earlyPrepaymentRequested) return null
+    return computeAssistedEarlyPrepayDebitJpy(earlyPrepaymentProductsJpyInput, REDIR_ASSISTIDO_FEE_PERCENT)
+  }, [isRedirAssisted, earlyPrepaymentRequested, earlyPrepaymentProductsJpyInput])
 
   const serviceUiDescription = (s) => {
     if (s.name === REDIRECIONAMENTO) return t('platform.services.descForwarding')
@@ -132,7 +143,11 @@ export default function Services() {
       }
       if (typeof d.imageUrlDraft === 'string') setImageUrlDraft(d.imageUrlDraft)
       if (typeof d.earlyPrepaymentRequested === 'boolean') setEarlyPrepaymentRequested(d.earlyPrepaymentRequested)
-      if (typeof d.earlyPrepaymentWalletInput === 'string') setEarlyPrepaymentWalletInput(d.earlyPrepaymentWalletInput)
+      if (typeof d.earlyPrepaymentProductsJpyInput === 'string') {
+        setEarlyPrepaymentProductsJpyInput(d.earlyPrepaymentProductsJpyInput)
+      } else if (typeof d.earlyPrepaymentWalletInput === 'string') {
+        setEarlyPrepaymentProductsJpyInput(d.earlyPrepaymentWalletInput)
+      }
       if (d.selectedId && oferta.some((s) => s.id === d.selectedId)) {
         setSelectedId(d.selectedId)
       }
@@ -152,14 +167,14 @@ export default function Services() {
         attachmentUrls,
         imageUrlDraft,
         earlyPrepaymentRequested,
-        earlyPrepaymentWalletInput,
+        earlyPrepaymentProductsJpyInput,
         updatedAt: Date.now(),
       })
     }, 450)
     return () => {
       if (saveDebounceRef.current) clearTimeout(saveDebounceRef.current)
     }
-  }, [user?.id, draftHydrated, message, selectedId, redirModule, agreeProhibited, attachmentUrls, imageUrlDraft, earlyPrepaymentRequested, earlyPrepaymentWalletInput])
+  }, [user?.id, draftHydrated, message, selectedId, redirModule, agreeProhibited, attachmentUrls, imageUrlDraft, earlyPrepaymentRequested, earlyPrepaymentProductsJpyInput])
 
   useEffect(() => {
     if (!user?.id || !isRedirAssisted) {
@@ -182,7 +197,7 @@ export default function Services() {
     setAttachmentUrls([])
     setImageUrlDraft('')
     setEarlyPrepaymentRequested(false)
-    setEarlyPrepaymentWalletInput('')
+    setEarlyPrepaymentProductsJpyInput('')
     setFailedThumbUrls(() => new Set())
     clearServicesDraft(user?.id)
   }
@@ -245,18 +260,27 @@ export default function Services() {
       setFeedback(t('platform.services.selectService'))
       return
     }
-    const earlyWalletJpy =
-      isRedirAssisted && earlyPrepaymentRequested
-        ? Math.floor(Math.max(0, Number(earlyPrepaymentWalletInput) || 0))
-        : 0
+    let earlyDebitTotalJpy = 0
+    let declaredProductsJpy = null
     if (isRedirAssisted && earlyPrepaymentRequested) {
-      if (!earlyWalletJpy || earlyWalletJpy < 1) {
-        setFeedback(t('platform.services.prepayMinJpy'))
+      const prep = computeAssistedEarlyPrepayDebitJpy(
+        earlyPrepaymentProductsJpyInput,
+        REDIR_ASSISTIDO_FEE_PERCENT
+      )
+      if (!prep) {
+        setFeedback(t('platform.services.earlyPrepayProductsMin'))
         return
       }
+      const msgTrim = message.trim()
+      if (!messageContainsHttpUrl(msgTrim)) {
+        setFeedback(t('platform.services.earlyPrepayMessageRequiresLinks'))
+        return
+      }
+      earlyDebitTotalJpy = prep.totalDebitJpy
+      declaredProductsJpy = prep.productsJpy
       const { data: wBal } = await getWallet(user.id)
       const bal = Math.floor(Number(wBal?.balance) || 0)
-      if (earlyWalletJpy > bal) {
+      if (earlyDebitTotalJpy > bal) {
         setFeedback(t('platform.services.walletBalanceShort', { balance: fp.jpy(bal) }))
         return
       }
@@ -273,7 +297,11 @@ export default function Services() {
       order_module: isRedirecionamento ? redirModule : null,
       early_prepayment_requested: isRedirAssisted && earlyPrepaymentRequested,
       early_prepayment_wallet_jpy:
-        isRedirAssisted && earlyPrepaymentRequested && earlyWalletJpy > 0 ? earlyWalletJpy : null,
+        isRedirAssisted && earlyPrepaymentRequested && earlyDebitTotalJpy > 0 ? earlyDebitTotalJpy : null,
+      early_prepayment_declared_products_jpy:
+        isRedirAssisted && earlyPrepaymentRequested && declaredProductsJpy != null
+          ? declaredProductsJpy
+          : null,
     })
     if (error) {
       setSubmitting(false)
@@ -281,24 +309,13 @@ export default function Services() {
       return
     }
 
-    let walletEarlyPayError = null
-    if (isRedirAssisted && earlyPrepaymentRequested && earlyWalletJpy > 0 && data?.id) {
-      const { error: wErr } = await supabase.rpc('apply_early_prepayment_wallet_jpy', {
-        p_order_id: data.id,
-      })
-      if (wErr) {
-        walletEarlyPayError = wErr.message || t('platform.services.walletDebitError')
-      }
-    }
-
     setSubmitting(false)
     setSuccessNotice({
       quoteFlow: !!(isPersonalShopping || isRedirAssisted),
-      walletAppliedJpy:
-        !walletEarlyPayError && isRedirAssisted && earlyPrepaymentRequested && earlyWalletJpy > 0
-          ? earlyWalletJpy
-          : null,
-      walletEarlyPayError,
+      earlyPrepayOrderId:
+        isRedirAssisted && earlyPrepaymentRequested && earlyDebitTotalJpy > 0 && data?.id ? data.id : null,
+      earlyPrepayAmountJpy:
+        isRedirAssisted && earlyPrepaymentRequested && earlyDebitTotalJpy > 0 ? earlyDebitTotalJpy : null,
     })
     clearServicesDraft(user.id)
     setSelectedId(null)
@@ -306,19 +323,36 @@ export default function Services() {
     setAttachmentUrls([])
     setImageUrlDraft('')
     setEarlyPrepaymentRequested(false)
-    setEarlyPrepaymentWalletInput('')
+    setEarlyPrepaymentProductsJpyInput('')
     setFailedThumbUrls(() => new Set())
+  }
+
+  if (!user) {
+    return (
+      <div className={embedded ? 'rounded-xl border border-earth-200 bg-white p-4 sm:p-6' : ''}>
+        <h1 className="text-2xl font-bold text-earth-900">{t('platform.services.pageTitle')}</h1>
+        <p className="mt-2 text-earth-600">{t('platform.services.intro')}</p>
+        <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <Link to={lp('login')} className="font-semibold underline hover:no-underline">
+            {t('platform.groupBuy.loginLink')}
+          </Link>
+          {t('platform.groupBuy.loginSuffix')}
+        </div>
+      </div>
+    )
   }
 
   return (
     <>
-      <PageSeo
-        routeKey="appServices"
-        title={t('meta.appServices.title')}
-        description={t('meta.appServices.description')}
-        noindex
-      />
-      <div>
+      {!embedded && (
+        <PageSeo
+          routeKey="appServices"
+          title={t('meta.appServices.title')}
+          description={t('meta.appServices.description')}
+          noindex
+        />
+      )}
+      <div className={embedded ? 'rounded-xl border border-earth-200 bg-white p-4 sm:p-6' : ''}>
         <h1 className="text-2xl font-bold text-earth-900">{t('platform.services.pageTitle')}</h1>
         <p className="mt-2 text-earth-600">{t('platform.services.intro')}</p>
 
@@ -344,7 +378,7 @@ export default function Services() {
                       setAgreeProhibited(false)
                       setRedirModule('self_buy')
                       setEarlyPrepaymentRequested(false)
-                      setEarlyPrepaymentWalletInput('')
+                      setEarlyPrepaymentProductsJpyInput('')
                     }}
                     className={`rounded-xl border-2 p-5 text-left transition ${
                       selectedId === s.id
@@ -391,7 +425,7 @@ export default function Services() {
                         onChange={() => {
                           setRedirModule('self_buy')
                           setEarlyPrepaymentRequested(false)
-                          setEarlyPrepaymentWalletInput('')
+                          setEarlyPrepaymentProductsJpyInput('')
                         }}
                         className="mt-1"
                       />
@@ -456,43 +490,20 @@ export default function Services() {
                       onChange={(e) => {
                         const on = e.target.checked
                         setEarlyPrepaymentRequested(on)
-                        if (!on) setEarlyPrepaymentWalletInput('')
+                        if (!on) setEarlyPrepaymentProductsJpyInput('')
                       }}
                       className="mt-1 rounded border-earth-300"
                     />
                     <span className="text-sm text-earth-800">
                       <span className="font-semibold text-earth-900">{t('platform.services.earlyPrepayHeading')}</span>
-                      <span className="mt-1 block font-normal">{t('platform.services.earlyPrepayDesc')}</span>
+                      <span className="mt-1 block font-normal">
+                        {t('platform.services.earlyPrepayDesc', { pct: REDIR_ASSISTIDO_FEE_PERCENT })}
+                      </span>
                     </span>
                   </label>
-                  <p className="mt-3 text-xs text-earth-600">{t('platform.services.earlyPrepayHint')}</p>
-                  {earlyPrepaymentRequested && (
-                    <div className="mt-4 rounded-lg border border-emerald-300/60 bg-white/90 px-3 py-3">
-                      <label htmlFor="early-prepay-wallet" className="block text-sm font-medium text-earth-800">
-                        {t('platform.services.earlyPrepayLabel')}
-                      </label>
-                      <p className="mt-1 text-xs text-earth-600">
-                        {t('platform.services.earlyPrepayBalance', {
-                          balance:
-                            walletPreview != null ? fp.jpy(Math.floor(walletPreview.balance || 0)) : '…',
-                        })}{' '}
-                        <Link to={lp('appLounge')} className="font-medium text-earth-800 underline hover:no-underline">
-                          {t('platform.lounge.wallet')}
-                        </Link>
-                      </p>
-                      <input
-                        id="early-prepay-wallet"
-                        type="number"
-                        min={1}
-                        step={1}
-                        inputMode="numeric"
-                        value={earlyPrepaymentWalletInput}
-                        onChange={(e) => setEarlyPrepaymentWalletInput(e.target.value)}
-                        placeholder={t('platform.services.earlyPrepayPlaceholder')}
-                        className="mt-2 w-full max-w-xs rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
-                      />
-                    </div>
-                  )}
+                  <p className="mt-3 text-xs text-earth-600">
+                    {t('platform.services.earlyPrepayHint', { pct: REDIR_ASSISTIDO_FEE_PERCENT })}
+                  </p>
                 </div>
               )}
               <label htmlFor="message" className="block text-sm font-medium text-earth-700">
@@ -507,6 +518,11 @@ export default function Services() {
                     ? t('platform.services.hintStandard')
                     : t('platform.services.hintAssisted')}
               </p>
+              {isRedirAssisted && earlyPrepaymentRequested && (
+                <p className="mt-2 text-xs font-medium text-amber-900">
+                  {t('platform.services.earlyPrepayMessageHint')}
+                </p>
+              )}
               <p className="mt-1 text-xs text-earth-600">{t('platform.services.draftNote')}</p>
               <textarea
                 id="message"
@@ -520,6 +536,54 @@ export default function Services() {
                 rows={4}
                 className="mt-2 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900 placeholder:text-earth-400"
               />
+              {isRedirAssisted && earlyPrepaymentRequested && (
+                <div className="mt-4 rounded-lg border border-emerald-300/60 bg-emerald-50/90 px-3 py-3">
+                  <p className="text-sm font-medium text-earth-900">
+                    {t('platform.services.earlyPrepayProductsSectionTitle')}
+                  </p>
+                  <label htmlFor="early-prepay-products-jpy" className="mt-2 block text-sm font-medium text-earth-800">
+                    {t('platform.services.earlyPrepayProductsLabel')}
+                  </label>
+                  <input
+                    id="early-prepay-products-jpy"
+                    type="number"
+                    min={1}
+                    step={1}
+                    inputMode="numeric"
+                    value={earlyPrepaymentProductsJpyInput}
+                    onChange={(e) => setEarlyPrepaymentProductsJpyInput(e.target.value)}
+                    placeholder={t('platform.services.earlyPrepayProductsPlaceholder')}
+                    className="mt-2 w-full max-w-xs rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
+                  />
+                  {earlyPrepayBreakdown && (
+                    <ul className="mt-3 space-y-1 rounded-md border border-emerald-200/80 bg-white/90 px-3 py-2 text-sm text-earth-800">
+                      <li className="flex justify-between gap-2">
+                        <span>{t('platform.services.earlyPrepayLineProducts')}</span>
+                        <span className="font-medium tabular-nums">{fp.jpy(earlyPrepayBreakdown.productsJpy)}</span>
+                      </li>
+                      <li className="flex justify-between gap-2">
+                        <span>
+                          {t('platform.services.earlyPrepayLineFee', { pct: REDIR_ASSISTIDO_FEE_PERCENT })}
+                        </span>
+                        <span className="font-medium tabular-nums">{fp.jpy(earlyPrepayBreakdown.feeJpy)}</span>
+                      </li>
+                      <li className="flex justify-between gap-2 border-t border-emerald-100 pt-1 font-semibold text-earth-900">
+                        <span>{t('platform.services.earlyPrepayLineTotalDebit')}</span>
+                        <span className="tabular-nums">{fp.jpy(earlyPrepayBreakdown.totalDebitJpy)}</span>
+                      </li>
+                    </ul>
+                  )}
+                  <p className="mt-3 text-xs text-earth-600">
+                    {t('platform.services.earlyPrepayBalance', {
+                      balance:
+                        walletPreview != null ? fp.jpy(Math.floor(walletPreview.balance || 0)) : '…',
+                    })}{' '}
+                    <Link to={lp('appLounge')} className="font-medium text-earth-800 underline hover:no-underline">
+                      {t('platform.lounge.wallet')}
+                    </Link>
+                  </p>
+                </div>
+              )}
               <div className="mt-2 flex flex-wrap items-center gap-3">
                 <button
                   type="button"
@@ -622,21 +686,21 @@ export default function Services() {
                     {t('platform.services.successApproveAfter')}
                   </p>
                 )}
-                {successNotice.walletAppliedJpy != null && successNotice.walletAppliedJpy > 0 && (
-                  <p className="font-medium text-green-900">
-                    {t('platform.services.walletDebited', {
-                      amount: fp.jpy(successNotice.walletAppliedJpy),
-                    })}
-                  </p>
-                )}
-                {successNotice.walletEarlyPayError && (
-                  <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-amber-900">
-                    {t('platform.services.walletErrorBefore')} {successNotice.walletEarlyPayError}.{' '}
-                    {t('platform.services.walletErrorMiddle')}{' '}
-                    <Link to={lp('appLounge', '?tab=pedidos')} className="font-semibold underline hover:no-underline">
-                      {t('platform.orders.pageTitle')}
-                    </Link>{' '}
-                    {t('platform.services.walletErrorAfter')}
+                {successNotice.earlyPrepayOrderId && successNotice.earlyPrepayAmountJpy != null && (
+                  <p className="text-green-900">
+                    {t('platform.services.successEarlyPrepayLead', {
+                      amount: fp.jpy(successNotice.earlyPrepayAmountJpy),
+                    })}{' '}
+                    <Link
+                      to={lp(
+                        'appLounge',
+                        `?tab=pedidos&orderId=${encodeURIComponent(successNotice.earlyPrepayOrderId)}`
+                      )}
+                      className="font-semibold text-green-950 underline hover:no-underline"
+                    >
+                      {t('platform.services.successEarlyPrepayLink')}
+                    </Link>
+                    {t('platform.services.successEarlyPrepayTail')}
                   </p>
                 )}
               </div>

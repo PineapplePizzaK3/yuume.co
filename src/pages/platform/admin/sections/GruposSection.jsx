@@ -52,7 +52,7 @@ export default function GruposSection() {
 
   return (
     <section className="mt-0 rounded-b-xl border border-t-0 border-earth-200 bg-earth-50 p-6">
-      <h2 className="text-lg font-semibold text-earth-900">Grupo de Compras</h2>
+      <h2 className="text-lg font-semibold text-earth-900">Compras Programadas</h2>
 
       <form onSubmit={handleSaveGroup} className="mt-4 space-y-3">
         <div>
@@ -64,6 +64,21 @@ export default function GruposSection() {
             onChange={(e) => setGroupForm((f) => ({ ...f, name: e.target.value }))}
             className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
           />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-earth-700">Origem do grupo</label>
+          <select
+            value={groupForm.source || 'scheduled'}
+            onChange={(e) => setGroupForm((f) => ({ ...f, source: e.target.value }))}
+            className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+          >
+            <option value="scheduled">Compras Programadas</option>
+            <option value="showcase">Vitrine</option>
+          </select>
+          <p className="mt-1 text-xs text-earth-500">
+            A origem define em qual página este grupo aparece para o cliente.
+          </p>
         </div>
 
         <div>
@@ -285,7 +300,7 @@ export default function GruposSection() {
             className="rounded border-earth-300"
           />
           <label htmlFor="group_is_active" className="text-sm font-medium text-earth-700">
-            Ativo (visível na página de grupo de compras)
+            Ativo (visível em {groupForm.source === 'showcase' ? 'Vitrine' : 'Compras Programadas'})
           </label>
         </div>
 
@@ -436,6 +451,17 @@ export default function GruposSection() {
                   )}
                   <div>
                     <p className="font-medium text-earth-900">{g.name}</p>
+                    <p className="mt-1">
+                      <span
+                        className={`inline-flex rounded px-2 py-0.5 text-xs font-medium ${
+                          g.source === 'showcase'
+                            ? 'bg-indigo-100 text-indigo-900'
+                            : 'bg-emerald-100 text-emerald-900'
+                        }`}
+                      >
+                        {g.source === 'showcase' ? 'Vitrine' : 'Compras Programadas'}
+                      </span>
+                    </p>
                     {g.description && <p className="mt-1 line-clamp-2 whitespace-pre-wrap text-sm text-earth-600">{g.description}</p>}
                     <p className="mt-1 text-xs text-earth-500">
                       Produtos: {g.products_count ?? 0}

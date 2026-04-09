@@ -1,4 +1,4 @@
-﻿import { useSiteLocale } from '../../../../hooks/useSiteLocale'
+import { useSiteLocale } from '../../../../hooks/useSiteLocale'
 import { brlToJpy } from '../../../../lib/fx'
 import { formatJpyForSite } from '../../../../lib/moneyDisplay'
 import { saveSystemSettingsAdmin } from '../../../../services/settingsService'
@@ -44,7 +44,7 @@ export default function MarketingSection() {
         <div className="mt-3 grid gap-3 md:grid-cols-2">
           <label className="text-sm md:col-span-2">
             <span className="text-earth-700">
-              Cotação BRL por 1 JPY (fx_brl_per_jpy) — usada no servidor para converter ¥250/un. do Grupo de Compras
+              Cotação BRL por 1 JPY (fx_brl_per_jpy) — usada no servidor para converter ¥250/un. das Compras Programadas
             </span>
             <input
               type="number"

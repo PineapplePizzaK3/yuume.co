@@ -1,5 +1,5 @@
 /**
- * Grupo de Compras - página pública na plataforma (para usuários logados).
+ * Compras Programadas - página pública na plataforma (para usuários logados).
  * Cards com modal no mesmo estilo da página de `Loja`.
  */
 import { useEffect, useMemo, useState } from 'react'
@@ -28,10 +28,12 @@ function getProductImages(p) {
   return []
 }
 
-export default function GrupoDeCompras() {
+export default function GrupoDeCompras({ embedded = false, variant = 'scheduled' }) {
   const { t } = useTranslation()
   const lp = useLocalizedPath()
   const { user } = useAuth()
+  const copyNs = variant === 'showcase' ? 'platform.showcase' : 'platform.groupBuy'
+  const tt = (key, options) => t(`${copyNs}.${key}`, options)
   const [groups, setGroups] = useState([])
   const [groupProducts, setGroupProducts] = useState({})
   const [loading, setLoading] = useState(true)
@@ -56,11 +58,12 @@ export default function GrupoDeCompras() {
 
   useEffect(() => {
     let isActive = true
+    const groupSource = variant === 'showcase' ? 'showcase' : 'scheduled'
     const run = async () => {
       setLoading(true)
       setMessage('')
       try {
-        const { data: groupsData, error } = await getPurchaseGroups()
+        const { data: groupsData, error } = await getPurchaseGroups(groupSource)
         if (!isActive) return
         setGroups(groupsData ?? [])
         if (error) setMessage(error?.message)
@@ -73,7 +76,7 @@ export default function GrupoDeCompras() {
         const map = Object.fromEntries(groupIds.map((id, i) => [id, productsArrays[i] ?? []]))
         setGroupProducts(map)
       } catch (e) {
-        if (isActive) setMessage(e?.message || t('platform.groupBuy.loadError'))
+        if (isActive) setMessage(e?.message || tt('loadError'))
       } finally {
         if (isActive) setLoading(false)
       }
@@ -82,7 +85,7 @@ export default function GrupoDeCompras() {
     return () => {
       isActive = false
     }
-  }, [t])
+  }, [t, variant])
 
   const images = useMemo(() => {
     return detailGroup ? getGroupImages(detailGroup) : []
@@ -110,55 +113,44 @@ export default function GrupoDeCompras() {
 
   const handleComprar = async (product) => {
     if (!user?.id) {
-      setMessage(t('platform.groupBuy.loginToBuy'))
+      setMessage(tt('loginToBuy'))
       return
     }
     const { error } = await addToCart(user.id, product.id, 1)
     const inModal = !!detailGroup
     if (error) {
-      if (inModal) setModalFeedback(error.message || t('platform.groupBuy.addError'))
+      if (inModal) setModalFeedback(error.message || tt('addError'))
       else setMessage(error.message)
       return
     }
-    if (inModal) setModalFeedback(t('platform.groupBuy.added'))
-    else setMessage(t('platform.groupBuy.added'))
-  }
-
-  if (!user) {
-    return (
-      <div className="py-8">
-        <p className="text-earth-600">
-          <Link to={lp('login')} className="font-medium text-earth-900 underline">
-            {t('platform.groupBuy.loginLink')}
-          </Link>
-          {t('platform.groupBuy.loginSuffix')}
-        </p>
-      </div>
-    )
+    if (inModal) setModalFeedback(tt('added'))
+    else setMessage(tt('added'))
   }
 
   return (
     <>
-      <PageSeo
-        routeKey="appGrupoCompras"
-        title={t('meta.appGroupBuy.title')}
-        description={t('meta.appGroupBuy.description')}
-        noindex
-      />
+      {!embedded && (
+        <PageSeo
+          routeKey="appGrupoCompras"
+          title={t('meta.appGroupBuy.title')}
+          description={t('meta.appGroupBuy.description')}
+          noindex
+        />
+      )}
 
-      <div>
+      <div className={embedded ? 'rounded-xl border border-earth-200 bg-white p-4 sm:p-6' : ''}>
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-earth-900">{t('platform.groupBuy.pageTitle')}</h1>
-            <p className="mt-2 text-earth-600">{t('platform.groupBuy.intro')}</p>
+            <h1 className="text-2xl font-bold text-earth-900">{tt('pageTitle')}</h1>
+            <p className="mt-2 text-earth-600">{tt('intro')}</p>
           </div>
         </div>
 
         {message && !detailGroup && <p className="mt-4 rounded-lg bg-earth-100 px-4 py-2 text-sm text-earth-800">{message}</p>}
 
-        {loading && <p className="mt-6 text-earth-600">{t('platform.groupBuy.loading')}</p>}
+        {loading && <p className="mt-6 text-earth-600">{tt('loading')}</p>}
         {!loading && groups.length === 0 && (
-          <p className="mt-6 text-earth-600">{t('platform.groupBuy.emptyGroups')}</p>
+          <p className="mt-6 text-earth-600">{tt('emptyGroups')}</p>
         )}
 
         {!loading && groups.length > 0 && (
@@ -193,7 +185,7 @@ export default function GrupoDeCompras() {
                         </p>
                       )}
                       <p className="mt-2 text-xs text-earth-500">
-                        {t('platform.groupBuy.productsInGroup', { count: groupProducts.length })}
+                        {tt('productsInGroup', { count: groupProducts.length })}
                       </p>
                     </div>
                   </button>
@@ -204,7 +196,7 @@ export default function GrupoDeCompras() {
                       onClick={() => openDetail(g)}
                       className="flex-1 rounded-lg bg-earth-900 px-3 py-2 text-sm font-medium text-white hover:bg-earth-800"
                     >
-                      {t('platform.groupBuy.viewDetails')}
+                      {tt('viewDetails')}
                     </button>
                   </div>
                 </div>
@@ -230,7 +222,7 @@ export default function GrupoDeCompras() {
                 <div className="absolute inset-0 z-[60] flex items-center justify-center pointer-events-none">
                   <p
                     className={`rounded-lg px-4 py-2 text-sm ${
-                      modalFeedback === t('platform.groupBuy.added')
+                      modalFeedback === tt('added')
                         ? 'bg-green-100 text-green-800'
                         : 'bg-red-100 text-red-800'
                     }`}
@@ -311,10 +303,10 @@ export default function GrupoDeCompras() {
 
                 <div className="mt-5">
                   <h3 className="text-sm font-semibold uppercase tracking-wide text-earth-700">
-                    {t('platform.groupBuy.productsAvailable')}
+                    {tt('productsAvailable')}
                   </h3>
                   {getGroupProducts(detailGroup).length === 0 ? (
-                    <p className="mt-2 text-sm text-earth-600">{t('platform.groupBuy.noProductsLinked')}</p>
+                    <p className="mt-2 text-sm text-earth-600">{tt('noProductsLinked')}</p>
                   ) : (
                     <div className="mt-3 grid gap-3 sm:grid-cols-2">
                       {getGroupProducts(detailGroup).map((p) => {
@@ -358,11 +350,11 @@ export default function GrupoDeCompras() {
                                 )}
                               </div>
                               <p className="mt-2 text-xs font-medium text-earth-500">
-                                {t('platform.groupBuy.clickForDetails')}
+                                {tt('clickForDetails')}
                               </p>
                               <div className="mt-3 flex gap-2">
                                 <span className="rounded-lg border border-earth-300 px-3 py-1.5 text-xs font-medium text-earth-700">
-                                  {t('platform.groupBuy.viewProduct')}
+                                  {tt('viewProduct')}
                                 </span>
                                 <span
                                   className={`rounded-lg px-3 py-1.5 text-xs font-medium ${
@@ -371,7 +363,7 @@ export default function GrupoDeCompras() {
                                       : 'bg-earth-900 text-white'
                                   }`}
                                 >
-                                  {isOutOfStock(p) ? t('platform.store.outOfStock') : t('platform.groupBuy.buy')}
+                                  {isOutOfStock(p) ? t('platform.store.outOfStock') : tt('buy')}
                                 </span>
                               </div>
                             </div>

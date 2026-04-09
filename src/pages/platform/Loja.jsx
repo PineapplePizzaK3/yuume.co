@@ -1,5 +1,5 @@
 /**
- * Loja Virtual - Itens disponíveis para compra.
+ * Em Estoque - Itens disponíveis para compra.
  * Usuário vê apenas produtos ativos. Clique no card abre modal com detalhes e botão Adicionar ao carrinho.
  */
 import { useEffect, useState } from 'react'
@@ -60,7 +60,7 @@ function getProductImages(p) {
   return []
 }
 
-export default function Loja() {
+export default function Loja({ embedded = false }) {
   const { t } = useTranslation()
   const lp = useLocalizedPath()
   const { user } = useAuth()
@@ -111,7 +111,10 @@ export default function Loja() {
   }
 
   const handleComprar = async (p) => {
-    if (!user?.id) return
+    if (!user?.id) {
+      setMessage(t('platform.groupBuy.loginToBuy'))
+      return
+    }
     const { error } = await addToCart(user.id, p.id, 1)
     const inModal = !!detailProduct
     if (error) {
@@ -134,13 +137,15 @@ export default function Loja() {
 
   return (
     <>
-      <PageSeo
-        routeKey="appLoja"
-        title={t('meta.appStore.title')}
-        description={t('meta.appStore.description')}
-        noindex
-      />
-      <div className="px-4 pt-24 pb-12">
+      {!embedded && (
+        <PageSeo
+          routeKey="appLoja"
+          title={t('meta.appStore.title')}
+          description={t('meta.appStore.description')}
+          noindex
+        />
+      )}
+      <div className={embedded ? '' : 'px-4 pt-24 pb-12'}>
         <div className="mx-auto max-w-6xl">
         <h1 className="text-2xl font-bold text-earth-900">{t('platform.store.pageTitle')}</h1>
         {message && !detailProduct && (

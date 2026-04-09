@@ -34,13 +34,11 @@ const CompleteSocialProfile = lazy(() => import('./pages/platform/CompleteSocial
 const ForgotPassword = lazy(() => import('./pages/platform/ForgotPassword'))
 const ResetPassword = lazy(() => import('./pages/platform/ResetPassword'))
 const Dashboard = lazy(() => import('./pages/platform/Dashboard'))
-const Services = lazy(() => import('./pages/platform/Services'))
 const Profile = lazy(() => import('./pages/platform/Profile'))
 const Conta = lazy(() => import('./pages/platform/Conta'))
-const Loja = lazy(() => import('./pages/platform/Loja'))
+const LojaHub = lazy(() => import('./pages/platform/LojaHub'))
 const LojaMirror = lazy(() => import('./pages/LojaMirror'))
 const Cart = lazy(() => import('./pages/platform/Cart'))
-const GrupoDeCompras = lazy(() => import('./pages/platform/GrupoDeCompras'))
 const AdminLayout = lazy(() => import('./pages/platform/admin/AdminLayout'))
 const AdminPedidosTab = lazy(() => import('./pages/platform/admin/tabs/PedidosTab'))
 const AdminUsuariosTab = lazy(() => import('./pages/platform/admin/tabs/UsuariosTab'))
@@ -160,18 +158,18 @@ function App() {
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="complete-social-profile" element={<CompleteSocialProfile />} />
               <Route path="lounge" element={<Lounge />} />
-              <Route path="services" element={<Services />} />
+              <Route path="services" element={<Navigate to={p('appLoja', '?sec=servicos')} replace />} />
               <Route path="orders" element={<Navigate to={p('appLounge')} replace />} />
               <Route path="wallet" element={<Navigate to={p('appLounge')} replace />} />
               <Route path="payments" element={<Navigate to={p('appCart', '?tab=history')} replace />} />
               <Route path="profile" element={<Profile />} />
               <Route path="conta" element={<Conta />} />
               <Route path="meus-produtos" element={<Navigate to={p('appLounge')} replace />} />
-              <Route path="loja" element={<Loja />} />
+              <Route path="loja" element={<LojaHub />} />
               <Route path="cart" element={<Cart />} />
               <Route path="invoices" element={<Invoices />} />
               <Route path="invoices/:id" element={<InvoiceDetail />} />
-              <Route path="grupo-de-compras" element={<GrupoDeCompras />} />
+              <Route path="grupo-de-compras" element={<Navigate to={p('appLoja', '?sec=compras-programadas')} replace />} />
               <Route path="affiliate" element={<Affiliate />} />
               <Route path="lista-desejos" element={<Navigate to={p('appLounge', '?tab=desejos')} replace />} />
               <Route path="envios" element={<Navigate to={p('appLounge')} replace />} />
@@ -232,18 +230,18 @@ function App() {
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="complete-social-profile" element={<CompleteSocialProfile />} />
               <Route path="lounge" element={<Lounge />} />
-              <Route path="services" element={<Services />} />
+              <Route path="services" element={<Navigate to={e('appLoja', '?sec=servicos')} replace />} />
               <Route path="orders" element={<Navigate to={e('appLounge')} replace />} />
               <Route path="wallet" element={<Navigate to={e('appLounge')} replace />} />
               <Route path="payments" element={<Navigate to={e('appCart', '?tab=history')} replace />} />
               <Route path="profile" element={<Profile />} />
               <Route path="account" element={<Conta />} />
               <Route path="my-products" element={<Navigate to={e('appLounge')} replace />} />
-              <Route path="store" element={<Loja />} />
+              <Route path="store" element={<LojaHub />} />
               <Route path="cart" element={<Cart />} />
               <Route path="invoices" element={<Invoices />} />
               <Route path="invoices/:id" element={<InvoiceDetail />} />
-              <Route path="group-buying" element={<GrupoDeCompras />} />
+              <Route path="group-buying" element={<Navigate to={e('appLoja', '?sec=compras-programadas')} replace />} />
               <Route path="affiliate" element={<Affiliate />} />
               <Route path="wishlist" element={<Navigate to={e('appLounge', '?tab=desejos')} replace />} />
               <Route path="shipments" element={<Navigate to={e('appLounge')} replace />} />

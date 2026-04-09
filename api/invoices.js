@@ -74,7 +74,7 @@ function pickRandom(arr = []) {
   return arr[Math.floor(Math.random() * arr.length)] || null
 }
 
-async function pickRandomEligibleOrderForInvoiceKind(supabaseAdmin, invoiceKind) {
+async function pickRandomEligibleOrderForInvoiceKind(supabaseAdmin, invoiceKind, excludedOrderIds = []) {
   const statuses = ['paid', 'products_paid', 'shipped', 'completed']
   const { data: orders } = await supabaseAdmin
     .from('orders')
@@ -84,7 +84,11 @@ async function pickRandomEligibleOrderForInvoiceKind(supabaseAdmin, invoiceKind)
     .limit(300)
   if (!orders?.length) return null
 
-  const ids = orders.map((o) => o.id).filter(Boolean)
+  const excluded = new Set((excludedOrderIds || []).filter(Boolean))
+  const baseOrders = orders.filter((o) => !excluded.has(o.id))
+  if (!baseOrders.length) return null
+
+  const ids = baseOrders.map((o) => o.id).filter(Boolean)
   const { data: docs } = await supabaseAdmin
     .from('invoices')
     .select('order_id, invoice_kind')
@@ -103,18 +107,18 @@ async function pickRandomEligibleOrderForInvoiceKind(supabaseAdmin, invoiceKind)
   const kind = String(invoiceKind || 'invoice')
   let candidates = []
   if (kind === 'consolidation_invoice') {
-    candidates = orders.filter((o) => {
+    candidates = baseOrders.filter((o) => {
       const set = byOrder.get(o.id) || new Set()
       return Number(o.shipping_cost) > 0 && set.has('invoice') && !set.has('consolidation_invoice')
     })
     if (candidates.length === 0) {
-      candidates = orders.filter((o) => {
+      candidates = baseOrders.filter((o) => {
         const set = byOrder.get(o.id) || new Set()
         return Number(o.shipping_cost) > 0 && !set.has('consolidation_invoice')
       })
     }
   } else {
-    candidates = orders.filter((o) => {
+    candidates = baseOrders.filter((o) => {
       const set = byOrder.get(o.id) || new Set()
       return !set.has('invoice')
     })
@@ -151,11 +155,42 @@ export default async function handler(req, res) {
       const useRandomData = body?.randomData === true
       let orderId = typeof body.orderId === 'string' ? body.orderId.trim() : ''
       if (!orderId && useRandomData) {
-        orderId = await pickRandomEligibleOrderForInvoiceKind(
-          supabaseAdmin,
-          invoiceKind || 'invoice'
-        )
+        const triedOrderIds = []
+        let result = null
+        const maxAttempts = 12
+
+        for (let i = 0; i < maxAttempts; i += 1) {
+          const randomOrderId = await pickRandomEligibleOrderForInvoiceKind(
+            supabaseAdmin,
+            invoiceKind || 'invoice',
+            triedOrderIds
+          )
+          if (!randomOrderId) break
+          triedOrderIds.push(randomOrderId)
+
+          const current = await ensureInvoiceForPaidOrder(supabaseAdmin, randomOrderId, {
+            invoiceKind: invoiceKind || undefined,
+          })
+          result = current
+          orderId = randomOrderId
+
+          if (current?.ok && !current?.skipped) {
+            return res.status(200).json({
+              ...current,
+              order_id: orderId,
+              random_data_used: true,
+            })
+          }
+        }
+
+        return res.status(409).json({
+          error:
+            'Nao foi possivel gerar novo invoice aleatorio. Todos os pedidos elegiveis ja possuem documento desse tipo.',
+          reason: result?.reason || 'no_eligible_order_without_document',
+          random_data_used: true,
+        })
       }
+
       if (!orderId) return res.status(400).json({ error: 'orderId required' })
 
       const result = await ensureInvoiceForPaidOrder(supabaseAdmin, orderId, {

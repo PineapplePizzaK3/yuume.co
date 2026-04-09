@@ -4,13 +4,15 @@
 import { supabase } from '../lib/supabase'
 import { withDbTimeout, toServiceError } from '../lib/dbGuard'
 
-export async function getPurchaseGroups() {
+export async function getPurchaseGroups(source = 'scheduled') {
   try {
+    const safeSource = source === 'showcase' ? 'showcase' : 'scheduled'
     const { data, error } = await withDbTimeout(
       supabase
         .from('purchase_groups')
         .select('*')
         .eq('is_active', true)
+        .eq('source', safeSource)
         .order('created_at', { ascending: false })
     )
     return { data: data ?? [], error }
@@ -34,6 +36,7 @@ export async function getPurchaseGroupsAdmin() {
 export async function createPurchaseGroup(group) {
   try {
     const imageUrls = Array.isArray(group.image_urls) ? group.image_urls : []
+    const safeSource = group.source === 'showcase' ? 'showcase' : 'scheduled'
     const payload = {
       name: group.name,
       description: group.description ?? '',
@@ -41,6 +44,7 @@ export async function createPurchaseGroup(group) {
       image_urls: imageUrls,
       is_active: group.is_active ?? true,
       product_ids: [],
+      source: safeSource,
     }
 
     const { data, error } = await withDbTimeout(
@@ -55,6 +59,7 @@ export async function createPurchaseGroup(group) {
 export async function updatePurchaseGroup(id, group) {
   try {
     const imageUrls = Array.isArray(group.image_urls) ? group.image_urls : []
+    const safeSource = group.source === 'showcase' ? 'showcase' : 'scheduled'
     const payload = {
       name: group.name,
       description: group.description ?? '',
@@ -62,6 +67,7 @@ export async function updatePurchaseGroup(id, group) {
       image_urls: imageUrls,
       is_active: group.is_active ?? true,
       product_ids: [],
+      source: safeSource,
     }
 
     const { data, error } = await withDbTimeout(

@@ -181,3 +181,18 @@ export async function payOrderWithWallet(orderId, userId) {
     return { data: null, error: toServiceError(e) }
   }
 }
+
+/**
+ * Redirecionamento Assistido: debita early_prepayment_wallet_jpy da carteira (JPY) no pedido.
+ * Deve ser chamado pelo cliente na página do pedido (não no formulário de solicitação).
+ */
+export async function applyEarlyPrepaymentWalletJpy(orderId) {
+  try {
+    const { data, error } = await withDbTimeout(
+      supabase.rpc('apply_early_prepayment_wallet_jpy', { p_order_id: orderId })
+    )
+    return { data: data ?? null, error }
+  } catch (e) {
+    return { data: null, error: toServiceError(e) }
+  }
+}

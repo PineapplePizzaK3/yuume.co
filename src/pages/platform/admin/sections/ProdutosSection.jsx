@@ -48,7 +48,7 @@ export default function ProdutosSection() {
 
       <div className="mt-6 space-y-6">
         <div className="rounded-lg border border-earth-200 bg-white p-4">
-          <h3 className="font-medium text-earth-900">Publicar itens da base na Loja Virtual</h3>
+          <h3 className="font-medium text-earth-900">Publicar itens da base em Em Estoque</h3>
           <p className="mt-1 text-xs text-earth-600">
             Aqui voce apenas vincula/desvincula itens da loja. O cadastro e edicao do produto-base fica na aba Lista de Produtos.
           </p>
@@ -87,7 +87,7 @@ export default function ProdutosSection() {
         </div>
 
         <div>
-          <h3 className="font-medium text-earth-900">Produtos publicados na Loja Virtual</h3>
+          <h3 className="font-medium text-earth-900">Produtos publicados em Em Estoque</h3>
           {loading && <p className="mt-2 text-sm text-earth-600">Carregando...</p>}
           {!loading && storeProducts.length === 0 && (
             <p className="mt-2 text-sm text-earth-600">Nenhum produto publicado na loja.</p>

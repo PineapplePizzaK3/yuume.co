@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Admin - Painel de administraÃ§Ã£o da plataforma.
  * Inclui gestÃ£o de produtos e pedidos.
  */
@@ -231,7 +231,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
   })
   const [activeTab, setActiveTabState] = useState(() => normalizeAdminTabId(routeTabId))
 
-  // Grupo de Compras (admin)
+  // Compras Programadas (admin)
   const [purchaseGroups, setPurchaseGroups] = useState([])
   const [groupsLoading, setGroupsLoading] = useState(false)
   const [groupSubmitting, setGroupSubmitting] = useState(false)
@@ -241,6 +241,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     image_url: '',
     image_urls: [],
     is_active: true,
+    source: 'scheduled',
   })
   const [editingGroupId, setEditingGroupId] = useState(null)
   const [groupImageUploading, setGroupImageUploading] = useState(false)
@@ -973,6 +974,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       image_url: '',
       image_urls: [],
       is_active: true,
+      source: 'scheduled',
     })
     setEditingGroupId(null)
     setGroupImageUploadError('')
@@ -997,6 +999,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       image_url: g.image_url ?? '',
       image_urls: Array.isArray(g.image_urls) ? g.image_urls.filter(Boolean) : [],
       is_active: g.is_active ?? true,
+      source: g.source === 'showcase' ? 'showcase' : 'scheduled',
     })
     setEditingGroupId(g.id)
     setGroupImageUploadError('')
@@ -1284,6 +1287,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
         image_urls: imageUrls,
         image_url: groupForm.image_url || imageUrls[0] || '',
         is_active: groupForm.is_active ?? true,
+        source: groupForm.source === 'showcase' ? 'showcase' : 'scheduled',
       }
 
       const { data: groupData, error } = editingGroupId
@@ -1483,12 +1487,12 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       setMessage(error.message || 'Erro ao publicar produto na loja')
       return
     }
-    setMessage('Produto publicado na loja virtual')
+    setMessage('Produto publicado em Em Estoque')
     loadStoreProducts()
   }
 
   const handleUnpublishFromStore = async (productId) => {
-    if (!productId || !confirm('Remover este item da Loja Virtual?')) return
+    if (!productId || !confirm('Remover este item de Em Estoque?')) return
     setStoreLinkSubmittingId(productId)
     const { error } = await removeProductFromStoreAdmin(productId)
     setStoreLinkSubmittingId('')
@@ -1496,7 +1500,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       setMessage(error.message || 'Erro ao remover produto da loja')
       return
     }
-    setMessage('Produto removido da loja virtual')
+    setMessage('Produto removido de Em Estoque')
     loadStoreProducts()
   }
 
@@ -2345,7 +2349,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
         {/* Usuários */}
         <UsuariosSection />
 
-        {/* Grupo de Compras */}
+        {/* Compras Programadas */}
         <GruposSection />
 
         {/* Referral */}
