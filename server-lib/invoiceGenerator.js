@@ -19,6 +19,11 @@ const BRL_NOTE =
 const INVOICE_KIND_STANDARD = 'invoice'
 const INVOICE_KIND_CONSOLIDATION = 'consolidation_invoice'
 const INVOICE_KIND_SET = new Set([INVOICE_KIND_STANDARD, INVOICE_KIND_CONSOLIDATION])
+const REDIR_ASSISTIDO_FEE_PERCENT = 15
+const PERSONAL_SHOPPING_FEE_PERCENT = 25
+const GRUPO_COMPRAS_FEE_PERCENT = 20
+const GRUPO_COMPRAS_FEE_PER_UNIT_USD = 1.9
+const SERVICE_FEE_JPY_PER_ITEM = 250
 
 function num(n, fallback = 0) {
   const x = Number(n)
@@ -61,6 +66,220 @@ function resolveServiceTypeLabel(order, invoiceKind) {
   if (flow === 'group_purchase') return 'group_purchase_service_fee'
   if (flow === 'virtual_store') return 'product_only'
   return 'classic_redirect_service_fee'
+}
+
+function computeRedirectionPerItemFeeJpy(totalItems) {
+  const qty = Math.max(0, Math.floor(num(totalItems) || 0))
+  if (qty <= 0) return 0
+  if (qty === 1) return 1000
+  if (qty <= 4) return 750 * qty
+  return 500 * qty
+}
+
+function clampNonNegativeUsd(value) {
+  return roundUsd(Math.max(0, num(value)))
+}
+
+function buildBillingBreakdown({
+  order,
+  invoiceKind,
+  flowType,
+  itemsCount,
+  subtotalUsd,
+  shippingUsd,
+  serviceFeeUsd,
+  totalPaidUsd,
+  totalDisplayBrl,
+  discountBrl,
+  walletAppliedBrl,
+  usdBrl,
+  jpyUsd,
+  wiseMarkup,
+}) {
+  const components = []
+  const add = (code, labelPt, labelEn, amountUsd, amountBrl, notePt = null, noteEn = null) => {
+    components.push({
+      code,
+      label_pt: labelPt,
+      label_en: labelEn,
+      amount_usd: clampNonNegativeUsd(amountUsd),
+      amount_brl: roundBrl(Math.max(0, num(amountBrl))),
+      note_pt: notePt,
+      note_en: noteEn,
+    })
+  }
+
+  add('products_subtotal', 'Subtotal de produtos', 'Products subtotal', subtotalUsd, subtotalUsd * usdBrl)
+
+  const qty = Math.max(0, Math.floor(num(itemsCount)))
+  if (invoiceKind === INVOICE_KIND_CONSOLIDATION) {
+    add(
+      'shipping_fee',
+      'Frete internacional',
+      'International shipping',
+      shippingUsd,
+      shippingUsd * usdBrl,
+      'Documento de consolidacao/frete',
+      'Consolidation/shipping document'
+    )
+  } else if (flowType === 'assisted_redirect') {
+    const estimatedPercentUsd = clampNonNegativeUsd(subtotalUsd * (REDIR_ASSISTIDO_FEE_PERCENT / 100))
+    const estimatedPerItemJpy = computeRedirectionPerItemFeeJpy(qty)
+    const estimatedPerItemUsd = clampNonNegativeUsd(jpyToFinalUsd(estimatedPerItemJpy, jpyUsd, wiseMarkup))
+    const estimatedTotal = clampNonNegativeUsd(estimatedPercentUsd + estimatedPerItemUsd)
+    add(
+      'service_fee_assisted',
+      'Taxa de servico assistido',
+      'Assisted service fee',
+      serviceFeeUsd,
+      serviceFeeUsd * usdBrl,
+      `${REDIR_ASSISTIDO_FEE_PERCENT}% sobre produtos + taxa por item (escada)`,
+      `${REDIR_ASSISTIDO_FEE_PERCENT}% over products + tiered per-item fee`
+    )
+    add(
+      'service_fee_assisted_formula_estimate',
+      'Estimativa da formula',
+      'Formula estimate',
+      estimatedTotal,
+      estimatedTotal * usdBrl,
+      `Itens: ${qty}; escada JPY aplicada`,
+      `Items: ${qty}; tiered JPY fee applied`
+    )
+  } else if (flowType === 'personal_shopping') {
+    const percentUsd = clampNonNegativeUsd(subtotalUsd * (PERSONAL_SHOPPING_FEE_PERCENT / 100))
+    const perItemUsd = clampNonNegativeUsd(jpyToFinalUsd(SERVICE_FEE_JPY_PER_ITEM * qty, jpyUsd, wiseMarkup))
+    const estimatedTotal = clampNonNegativeUsd(percentUsd + perItemUsd)
+    add(
+      'service_fee_personal',
+      'Taxa de personal shopping',
+      'Personal shopping fee',
+      serviceFeeUsd,
+      serviceFeeUsd * usdBrl,
+      `${PERSONAL_SHOPPING_FEE_PERCENT}% sobre produtos + ¥${SERVICE_FEE_JPY_PER_ITEM} por item`,
+      `${PERSONAL_SHOPPING_FEE_PERCENT}% over products + ¥${SERVICE_FEE_JPY_PER_ITEM} per item`
+    )
+    add(
+      'service_fee_personal_formula_estimate',
+      'Estimativa da formula',
+      'Formula estimate',
+      estimatedTotal,
+      estimatedTotal * usdBrl,
+      `Itens: ${qty}`,
+      `Items: ${qty}`
+    )
+  } else if (flowType === 'group_purchase') {
+    const percentUsd = clampNonNegativeUsd(subtotalUsd * (GRUPO_COMPRAS_FEE_PERCENT / 100))
+    const perUnitUsd = clampNonNegativeUsd(GRUPO_COMPRAS_FEE_PER_UNIT_USD * qty)
+    const estimatedTotal = clampNonNegativeUsd(percentUsd + perUnitUsd)
+    add(
+      'service_fee_group',
+      'Taxa de grupo de compras',
+      'Group purchase fee',
+      serviceFeeUsd,
+      serviceFeeUsd * usdBrl,
+      `${GRUPO_COMPRAS_FEE_PERCENT}% sobre produtos + $${GRUPO_COMPRAS_FEE_PER_UNIT_USD} por unidade`,
+      `${GRUPO_COMPRAS_FEE_PERCENT}% over products + $${GRUPO_COMPRAS_FEE_PER_UNIT_USD} per unit`
+    )
+    add(
+      'service_fee_group_formula_estimate',
+      'Estimativa da formula',
+      'Formula estimate',
+      estimatedTotal,
+      estimatedTotal * usdBrl,
+      `Unidades: ${qty}`,
+      `Units: ${qty}`
+    )
+  } else if (flowType === 'classic_redirect') {
+    const perItemJpy = computeRedirectionPerItemFeeJpy(qty)
+    const perItemUsd = clampNonNegativeUsd(jpyToFinalUsd(perItemJpy, jpyUsd, wiseMarkup))
+    add(
+      'service_fee_redirect',
+      'Taxa de redirecionamento',
+      'Redirect fee',
+      serviceFeeUsd,
+      serviceFeeUsd * usdBrl,
+      'Taxa por item (escada)',
+      'Tiered per-item fee'
+    )
+    add(
+      'service_fee_redirect_formula_estimate',
+      'Estimativa da formula',
+      'Formula estimate',
+      perItemUsd,
+      perItemUsd * usdBrl,
+      `Itens: ${qty}; total tabela JPY: ${Math.round(perItemJpy)}`,
+      `Items: ${qty}; JPY table total: ${Math.round(perItemJpy)}`
+    )
+  } else if (flowType === 'virtual_store') {
+    if (serviceFeeUsd > 0) {
+      add(
+        'store_service_or_markup',
+        'Taxa/plataforma da loja',
+        'Store platform/markup fee',
+        serviceFeeUsd,
+        serviceFeeUsd * usdBrl
+      )
+    }
+  } else if (serviceFeeUsd > 0) {
+    add('service_fee', 'Taxa de servico', 'Service fee', serviceFeeUsd, serviceFeeUsd * usdBrl)
+  }
+
+  if (shippingUsd > 0) {
+    add('shipping_fee', 'Frete internacional', 'International shipping', shippingUsd, shippingUsd * usdBrl)
+  }
+
+  if (discountBrl > 0) {
+    add(
+      'discount',
+      'Desconto aplicado',
+      'Applied discount',
+      clampNonNegativeUsd(discountBrl / usdBrl),
+      roundBrl(discountBrl)
+    )
+  }
+
+  if (walletAppliedBrl > 0) {
+    add(
+      'wallet_credit',
+      'Credito de carteira usado',
+      'Wallet credit used',
+      clampNonNegativeUsd(walletAppliedBrl / usdBrl),
+      roundBrl(walletAppliedBrl)
+    )
+  }
+
+  return {
+    flow_type: flowType,
+    formula_summary_pt:
+      flowType === 'assisted_redirect'
+        ? 'Produtos + taxa assistida (percentual) + taxa por item + frete'
+        : flowType === 'personal_shopping'
+          ? 'Produtos + taxa personal (percentual) + ¥250 por item + frete'
+          : flowType === 'group_purchase'
+            ? 'Produtos + taxa grupo (percentual) + taxa por unidade + frete'
+            : flowType === 'virtual_store'
+              ? 'Preco de produtos da loja + frete (quando aplicavel)'
+              : flowType === 'classic_redirect'
+                ? 'Produtos + taxa de redirecionamento por item + frete'
+                : 'Composicao de cobranca por servico',
+    formula_summary_en:
+      flowType === 'assisted_redirect'
+        ? 'Products + assisted fee (percentage) + per-item fee + shipping'
+        : flowType === 'personal_shopping'
+          ? 'Products + personal fee (percentage) + ¥250 per item + shipping'
+          : flowType === 'group_purchase'
+            ? 'Products + group fee (percentage) + per-unit fee + shipping'
+            : flowType === 'virtual_store'
+              ? 'Store product prices + shipping (when applicable)'
+              : flowType === 'classic_redirect'
+                ? 'Products + per-item redirect fee + shipping'
+                : 'Charge composition by service',
+    components,
+    totals: {
+      total_paid_usd: roundUsd(totalPaidUsd),
+      total_display_brl: roundBrl(totalDisplayBrl),
+    },
+  }
 }
 
 function paymentsTotalUsd(payments, jpyUsd, usdBrl, wiseMarkup) {
@@ -216,11 +435,13 @@ export async function ensureInvoiceForPaidOrder(supabaseAdmin, orderId, options 
 
   const items = []
   let subtotalUsdFromLines = 0
+  let itemsCount = 0
 
   const oiList = order.order_items || []
   if (oiList.length > 0) {
     for (const line of oiList) {
       const qty = Math.max(1, Math.floor(num(line.quantity, 1)))
+      itemsCount += qty
       const p = line.product || {}
       const name = (p.name && String(p.name).trim()) || 'Item'
       const jpyUnit = roundJpy(line.price_at_purchase ?? p.price_jpy ?? p.price ?? 0)
@@ -292,6 +513,7 @@ export async function ensureInvoiceForPaidOrder(supabaseAdmin, orderId, options 
       unit_price_usd: usdU,
       unit_price_brl: brlU,
     })
+    itemsCount = 1
     subtotalUsdFromLines = usdU
   }
 
@@ -380,6 +602,22 @@ export async function ensureInvoiceForPaidOrder(supabaseAdmin, orderId, options 
       service_fee_usd: serviceFeeUsd,
       service_fee_brl: serviceFeeBrl,
     },
+    billing_breakdown: buildBillingBreakdown({
+      order,
+      invoiceKind,
+      flowType: resolveOrderFlowType(order),
+      itemsCount,
+      subtotalUsd: subtotalUsdFromLines,
+      shippingUsd,
+      serviceFeeUsd,
+      totalPaidUsd,
+      totalDisplayBrl,
+      discountBrl,
+      walletAppliedBrl: roundBrl(order.wallet_applied_amount || 0),
+      usdBrl,
+      jpyUsd,
+      wiseMarkup,
+    }),
     currency_info: {
       exchange_rate_usd_brl: usdBrl,
       exchange_rate_jpy_usd: jpyUsd,

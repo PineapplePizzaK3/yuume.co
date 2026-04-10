@@ -25,6 +25,13 @@ function formatDate(isoLike) {
   return dt.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
+function truncateText(value, max = 48) {
+  const s = String(value ?? '').trim()
+  if (!s) return '—'
+  if (s.length <= max) return s
+  return `${s.slice(0, Math.max(0, max - 3))}...`
+}
+
 function drawTopDecoration(doc, pageWidth) {
   doc.save()
   doc.rect(0, 0, pageWidth, 34).fill('#111111')
@@ -53,12 +60,21 @@ function drawTableHeader(doc, x, y, widths) {
   doc.save()
   doc.rect(x, y, widths.item + widths.qty + widths.price + widths.amount, 26).fill('#F3F4F6')
   doc.fillColor('#1F2937').font('Helvetica-Bold').fontSize(10)
-  doc.text('Item', x + 8, y + 8, { width: widths.item - 16 })
-  doc.text('Quantity', x + widths.item + 8, y + 8, { width: widths.qty - 16, align: 'center' })
-  doc.text('Price', x + widths.item + widths.qty + 8, y + 8, { width: widths.price - 16, align: 'right' })
-  doc.text('Amount', x + widths.item + widths.qty + widths.price + 8, y + 8, {
+  doc.text('Item', x + 8, y + 8, { width: widths.item - 16, lineBreak: false })
+  doc.text('Qtd / Qty', x + widths.item + 8, y + 8, {
+    width: widths.qty - 16,
+    align: 'center',
+    lineBreak: false,
+  })
+  doc.text('Preco / Price', x + widths.item + widths.qty + 8, y + 8, {
+    width: widths.price - 16,
+    align: 'right',
+    lineBreak: false,
+  })
+  doc.text('Valor / Amount', x + widths.item + widths.qty + widths.price + 8, y + 8, {
     width: widths.amount - 16,
     align: 'right',
+    lineBreak: false,
   })
   doc.restore()
 }
@@ -126,15 +142,31 @@ function resolveDocumentKind(d) {
 
 function documentMeta(kind) {
   if (kind === 'credit_note') {
-    return { title: 'CREDIT NOTE', totalLabel: 'Credit Total', paymentLabel: 'Refund Method :' }
+    return {
+      title: 'NOTA DE CREDITO / CREDIT NOTE',
+      totalLabel: 'Total credito / Credit total',
+      paymentLabel: 'Metodo de reembolso / Refund method :',
+    }
   }
   if (kind === 'payout_statement') {
-    return { title: 'PAYOUT STATEMENT', totalLabel: 'Payout Total', paymentLabel: 'Payout Method :' }
+    return {
+      title: 'COMPROVANTE DE REPASSE / PAYOUT STATEMENT',
+      totalLabel: 'Total repasse / Payout total',
+      paymentLabel: 'Metodo de repasse / Payout method :',
+    }
   }
   if (kind === 'consolidation_invoice') {
-    return { title: 'CONSOLIDATION INVOICE', totalLabel: 'Total', paymentLabel: 'Payment Method :' }
+    return {
+      title: 'FATURA DE CONSOLIDACAO / CONSOLIDATION INVOICE',
+      totalLabel: 'Total',
+      paymentLabel: 'Metodo de pagamento / Payment method :',
+    }
   }
-  return { title: 'INVOICE', totalLabel: 'Total', paymentLabel: 'Payment Method :' }
+  return {
+    title: 'FATURA / INVOICE',
+    totalLabel: 'Total',
+    paymentLabel: 'Metodo de pagamento / Payment method :',
+  }
 }
 
 function buildRows(d, kind, totalUsd) {
@@ -160,7 +192,7 @@ function buildRows(d, kind, totalUsd) {
   }
   const items = Array.isArray(d?.items) ? d.items : []
   if (!items.length) {
-    return [{ item: 'No items', qty: 1, unitPrice: totalUsd, amount: totalUsd }]
+    return [{ item: 'Sem itens / No items', qty: 1, unitPrice: totalUsd, amount: totalUsd }]
   }
   return items.map((it) => {
     const qty = Math.max(1, Math.floor(num(it.quantity, 1)))
@@ -172,6 +204,28 @@ function buildRows(d, kind, totalUsd) {
       amount: qty * unitPrice,
     }
   })
+}
+
+function normalizeBreakdownComponents(breakdown) {
+  const list = Array.isArray(breakdown?.components) ? breakdown.components : []
+  const priority = {
+    products_subtotal: 10,
+    service_fee_assisted: 20,
+    service_fee_personal: 20,
+    service_fee_group: 20,
+    service_fee_redirect: 20,
+    store_service_or_markup: 20,
+    service_fee_assisted_formula_estimate: 30,
+    service_fee_personal_formula_estimate: 30,
+    service_fee_group_formula_estimate: 30,
+    service_fee_redirect_formula_estimate: 30,
+    shipping_fee: 40,
+    discount: 50,
+    wallet_credit: 60,
+  }
+  return [...list]
+    .filter(Boolean)
+    .sort((a, b) => (priority[a?.code] || 999) - (priority[b?.code] || 999))
 }
 
 export function buildInvoicePdfBuffer(data) {
@@ -188,6 +242,7 @@ export function buildInvoicePdfBuffer(data) {
     const pay = d.payment || {}
     const fx = d.currency_info || {}
     const foot = d.footer || {}
+    const breakdown = d.billing_breakdown || {}
     const kind = resolveDocumentKind(d)
     const meta = documentMeta(kind)
     const logoPath = resolveLogoPath()
@@ -213,32 +268,51 @@ export function buildInvoicePdfBuffer(data) {
       foot.company_name || 'EIKO DLS',
       foot.support_contact || ''
     )
-    doc.fillColor('#111111').font('Helvetica-Bold').fontSize(52).text(meta.title, 48, 108)
+    doc.fillColor('#111111').font('Helvetica-Bold').fontSize(29).text(meta.title, 48, 116, {
+      width: 390,
+      lineBreak: false,
+    })
     doc.font('Helvetica-Bold').fontSize(12).text(`NO. ${esc(d.invoice_number || '000001')}`, 420, 96, {
       width: 130,
       align: 'right',
+      lineBreak: false,
     })
-    doc.font('Helvetica-Bold').fontSize(10).text('Date  :', 48, 184)
-    doc.font('Helvetica').fontSize(11).text(formatDate(d.issue_date), 90, 183)
+    doc.font('Helvetica-Bold').fontSize(10).text('Data / Date :', 48, 184, { lineBreak: false })
+    doc.font('Helvetica').fontSize(11).text(formatDate(d.issue_date), 126, 183, { lineBreak: false })
     doc.moveTo(48, 206).lineTo(pageWidth - 48, 206).stroke('#E5E7EB')
 
     const boxY = 218
     const boxW = (pageWidth - 96 - 18) / 2
-    doc.font('Helvetica-Bold').fontSize(11).text('Billed to:', 48, boxY)
+    doc.font('Helvetica-Bold').fontSize(11).text('Cobrado para / Billed to:', 48, boxY, { lineBreak: false })
     doc.font('Helvetica').fontSize(10)
-    doc.text(esc(cust.name || 'Customer'), 48, boxY + 18, { width: boxW })
-    doc.text(esc(cust.email || '—'), 48, boxY + 34, { width: boxW })
-    doc.text(esc(cust.country || 'Brazil'), 48, boxY + 50, { width: boxW })
-
-    doc.font('Helvetica-Bold').fontSize(11).text('From:', 48 + boxW + 18, boxY)
-    doc.font('Helvetica').fontSize(10)
-    doc.text(esc(foot.company_name || 'EIKO DLS'), 48 + boxW + 18, boxY + 18, { width: boxW })
-    doc.text(esc(foot.support_contact || 'support@example.com'), 48 + boxW + 18, boxY + 34, {
+    doc.text(esc(truncateText(cust.name || 'Cliente / Customer', 30)), 48, boxY + 18, {
       width: boxW,
+      lineBreak: false,
+    })
+    doc.text(esc(truncateText(cust.email || '—', 32)), 48, boxY + 34, { width: boxW, lineBreak: false })
+    doc.text(esc(truncateText(cust.country || 'Brazil', 24)), 48, boxY + 50, {
+      width: boxW,
+      lineBreak: false,
+    })
+
+    doc.font('Helvetica-Bold').fontSize(11).text('Emitido por / From:', 48 + boxW + 18, boxY, {
+      lineBreak: false,
+    })
+    doc.font('Helvetica').fontSize(10)
+    doc.text(esc(truncateText(foot.company_name || 'EIKO DLS', 30)), 48 + boxW + 18, boxY + 18, {
+      width: boxW,
+      lineBreak: false,
+    })
+    doc.text(esc(truncateText(foot.support_contact || 'support@example.com', 32)), 48 + boxW + 18, boxY + 34, {
+      width: boxW,
+      lineBreak: false,
     })
     const orderRef = d.order_id || d.original_invoice_id || d.statement_id || d.credit_note_id
     if (orderRef) {
-      doc.text(`Reference: ${esc(String(orderRef).slice(0, 22))}`, 48 + boxW + 18, boxY + 50, { width: boxW })
+      doc.text(`Referencia / Reference: ${esc(String(orderRef).slice(0, 22))}`, 48 + boxW + 18, boxY + 50, {
+        width: boxW,
+        lineBreak: false,
+      })
     }
 
     let y = 304
@@ -248,21 +322,34 @@ export function buildInvoicePdfBuffer(data) {
     y += 32
 
     doc.font('Helvetica').fontSize(10).fillColor('#111111')
-    for (const row of rows) {
-      if (y > pageHeight - 180) break
+    const rowHeight = 24
+    const rowsLimitBySpace = Math.max(1, Math.floor((pageHeight - 430 - y) / rowHeight))
+    const maxRows = Math.min(8, rowsLimitBySpace)
+    const hiddenRows = Math.max(0, rows.length - maxRows)
+    const rowsToRender = rows.slice(0, maxRows)
+    if (hiddenRows > 0 && rowsToRender.length > 0) {
+      const last = rowsToRender[rowsToRender.length - 1]
+      rowsToRender[rowsToRender.length - 1] = {
+        ...last,
+        item: `${truncateText(last.item, 28)} (+${hiddenRows} itens)`,
+      }
+    }
+    for (const row of rowsToRender) {
 
-      doc.text(esc(row.item || 'Item'), tx + 8, y, { width: tw.item - 16 })
-      doc.text(String(row.qty || 1), tx + tw.item + 8, y, { width: tw.qty - 16, align: 'center' })
+      doc.text(esc(truncateText(row.item || 'Item', 38)), tx + 8, y, { width: tw.item - 16, lineBreak: false })
+      doc.text(String(row.qty || 1), tx + tw.item + 8, y, { width: tw.qty - 16, align: 'center', lineBreak: false })
       doc.text(formatUsd(row.unitPrice || 0), tx + tw.item + tw.qty + 8, y, {
         width: tw.price - 16,
         align: 'right',
+        lineBreak: false,
       })
       doc.text(formatUsd(row.amount || 0), tx + tw.item + tw.qty + tw.price + 8, y, {
         width: tw.amount - 16,
         align: 'right',
+        lineBreak: false,
       })
       doc.moveTo(tx, y + 18).lineTo(tx + tw.item + tw.qty + tw.price + tw.amount, y + 18).stroke('#E5E7EB')
-      y += 24
+      y += rowHeight
     }
 
     const totalY = y + 8
@@ -274,7 +361,43 @@ export function buildInvoicePdfBuffer(data) {
     })
     doc.moveTo(tx, totalY - 6).lineTo(tx + tw.item + tw.qty + tw.price + tw.amount, totalY - 6).stroke('#D1D5DB')
 
-    const paymentY = Math.min(totalY + 56, pageHeight - 160)
+    const paymentY = pageHeight - 154
+    const components = normalizeBreakdownComponents(breakdown)
+    const breakdownTitleY = totalY + 20
+    const breakdownRowStartY = breakdownTitleY + 12
+    const maxBreakdownRowsBySpace = Math.max(
+      0,
+      Math.floor((paymentY - 8 - breakdownRowStartY) / 10)
+    )
+    const maxBreakdownRows = Math.min(6, maxBreakdownRowsBySpace)
+    if (components.length > 0 && maxBreakdownRows > 0) {
+      doc.font('Helvetica-Bold').fontSize(9).fillColor('#374151')
+      doc.text('Composicao da cobranca / Charge breakdown', 48, breakdownTitleY, {
+        width: 300,
+        lineBreak: false,
+      })
+      doc.font('Helvetica').fontSize(8).fillColor('#111111')
+      const visible = components.slice(0, maxBreakdownRows)
+      visible.forEach((c, idx) => {
+        const yy = breakdownRowStartY + idx * 10
+        const label = truncateText(c?.label_pt || c?.label_en || c?.code || 'Item', 38)
+        doc.text(`- ${esc(label)}`, 48, yy, { width: 225, lineBreak: false })
+        doc.text(formatUsd(c?.amount_usd || 0), 236, yy, {
+          width: 110,
+          align: 'right',
+          lineBreak: false,
+        })
+      })
+      if (components.length > maxBreakdownRows) {
+        doc.fillColor('#6B7280').fontSize(8).text(
+          `+${components.length - maxBreakdownRows} itens adicionais`,
+          48,
+          breakdownRowStartY + maxBreakdownRows * 10,
+          { width: 300, lineBreak: false }
+        )
+      }
+    }
+
     doc.font('Helvetica-Bold').fontSize(16).fillColor('#F97316').text(meta.paymentLabel, 48, paymentY)
     doc.fillColor('#111111').font('Helvetica').fontSize(11)
     const method =
@@ -295,28 +418,40 @@ export function buildInvoicePdfBuffer(data) {
         : kind === 'payout_statement'
           ? pay.currency || 'USD'
           : pay.currency || 'USD'
-    doc.font('Helvetica-Bold').text('Payment Type  :', 48, paymentY + 24)
-    doc.font('Helvetica').text(esc(method || '—'), 138, paymentY + 24)
-    doc.font('Helvetica-Bold').text('Reference    :', 48, paymentY + 40)
-    doc.font('Helvetica').text(esc(txn || '—'), 138, paymentY + 40, { width: 360 })
-    doc.font('Helvetica-Bold').text('Currency     :', 48, paymentY + 56)
-    doc.font('Helvetica').text(esc(currency), 138, paymentY + 56)
+    doc.font('Helvetica-Bold').text('Tipo / Type    :', 48, paymentY + 24, { lineBreak: false })
+    doc.font('Helvetica').text(esc(truncateText(method || '—', 26)), 138, paymentY + 24, { lineBreak: false })
+    doc.font('Helvetica-Bold').text('Ref / Reference:', 48, paymentY + 40, { lineBreak: false })
+    doc.font('Helvetica').text(esc(truncateText(txn || '—', 40)), 138, paymentY + 40, {
+      width: 360,
+      lineBreak: false,
+    })
+    doc.font('Helvetica-Bold').text('Moeda / Currency:', 48, paymentY + 56, { lineBreak: false })
+    doc.font('Helvetica').text(esc(currency), 138, paymentY + 56, { lineBreak: false })
     if (fx.exchange_rate_usd_brl) {
-      doc.font('Helvetica-Bold').text('FX USD/BRL :', 340, paymentY + 24)
-      doc.font('Helvetica').text(esc(fx.exchange_rate_usd_brl), 420, paymentY + 24)
+      doc.font('Helvetica-Bold').text('Cambio :', 340, paymentY + 24, { lineBreak: false })
+      doc.font('Helvetica').text(esc(fx.exchange_rate_usd_brl), 420, paymentY + 24, { lineBreak: false })
     }
-    if (d.order_flow_type) {
-      doc.font('Helvetica-Bold').text('Flow       :', 340, paymentY + 40)
-      doc.font('Helvetica').text(esc(d.order_flow_type), 420, paymentY + 40)
+    const flowText = breakdown.flow_type || d.order_flow_type
+    if (flowText) {
+      doc.font('Helvetica-Bold').text('Fluxo :', 340, paymentY + 40, { lineBreak: false })
+      doc.font('Helvetica').text(esc(truncateText(flowText, 16)), 420, paymentY + 40, { lineBreak: false })
     }
-    if (d.service_fees?.service_type) {
-      doc.font('Helvetica-Bold').text('Service    :', 340, paymentY + 56)
-      doc.font('Helvetica').text(esc(d.service_fees.service_type), 420, paymentY + 56)
+    const formulaText = breakdown.formula_summary_pt || d.service_fees?.service_type
+    if (formulaText) {
+      doc.font('Helvetica-Bold').text('Formula :', 340, paymentY + 56, { lineBreak: false })
+      doc.font('Helvetica').text(esc(truncateText(formulaText, 24)), 420, paymentY + 56, {
+        lineBreak: false,
+      })
     }
     if (foot.disclaimer) {
-      doc.font('Helvetica').fontSize(8).fillColor('#4B5563').text(esc(foot.disclaimer), 48, pageHeight - 58, {
-        width: pageWidth - 96,
-      })
+      doc
+        .font('Helvetica')
+        .fontSize(8)
+        .fillColor('#4B5563')
+        .text(esc(truncateText(foot.disclaimer, 150)), 48, pageHeight - 58, {
+          width: pageWidth - 96,
+          lineBreak: false,
+        })
     }
 
     doc.end()
