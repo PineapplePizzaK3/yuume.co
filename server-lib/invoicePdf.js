@@ -32,6 +32,15 @@ function truncateText(value, max = 48) {
   return `${s.slice(0, Math.max(0, max - 3))}...`
 }
 
+function resolveRenderLocale(d = {}) {
+  const raw = String(d?.document_locale || d?.locale || '').toLowerCase()
+  return raw.startsWith('en') ? 'en' : 'pt-BR'
+}
+
+function t(locale, pt, en) {
+  return locale === 'en' ? en : pt
+}
+
 function drawTopDecoration(doc, pageWidth) {
   doc.save()
   doc.rect(0, 0, pageWidth, 34).fill('#111111')
@@ -56,22 +65,22 @@ function drawBottomDecoration(doc, pageWidth, pageHeight) {
   doc.restore()
 }
 
-function drawTableHeader(doc, x, y, widths) {
+function drawTableHeader(doc, x, y, widths, locale) {
   doc.save()
   doc.rect(x, y, widths.item + widths.qty + widths.price + widths.amount, 26).fill('#F3F4F6')
   doc.fillColor('#1F2937').font('Helvetica-Bold').fontSize(10)
-  doc.text('Item', x + 8, y + 8, { width: widths.item - 16, lineBreak: false })
-  doc.text('Qtd / Qty', x + widths.item + 8, y + 8, {
+  doc.text(t(locale, 'Item', 'Item'), x + 8, y + 8, { width: widths.item - 16, lineBreak: false })
+  doc.text(t(locale, 'Qtd', 'Qty'), x + widths.item + 8, y + 8, {
     width: widths.qty - 16,
     align: 'center',
     lineBreak: false,
   })
-  doc.text('Preco / Price', x + widths.item + widths.qty + 8, y + 8, {
+  doc.text(t(locale, 'Preco', 'Price'), x + widths.item + widths.qty + 8, y + 8, {
     width: widths.price - 16,
     align: 'right',
     lineBreak: false,
   })
-  doc.text('Valor / Amount', x + widths.item + widths.qty + widths.price + 8, y + 8, {
+  doc.text(t(locale, 'Valor', 'Amount'), x + widths.item + widths.qty + widths.price + 8, y + 8, {
     width: widths.amount - 16,
     align: 'right',
     lineBreak: false,
@@ -95,7 +104,7 @@ function drawBrandMark(
   x,
   y,
   logoPath = null,
-  companyName = 'EIKO DLS',
+  companyName = "Eiko's Delivery Service",
   supportContact = ''
 ) {
   doc.save()
@@ -112,7 +121,7 @@ function drawBrandMark(
     doc.circle(x + 14, y + 14, 14).fill('#F97316')
     doc.polygon([x + 20, y + 3], [x + 28, y + 11], [x + 19, y + 25], [x + 10, y + 16]).fill('#111111')
   }
-  const rawName = String(companyName || '').trim() || 'EIKO DLS'
+  const rawName = String(companyName || '').trim() || "Eiko's Delivery Service"
   const parts = rawName.split(/\s+/).filter(Boolean)
   const line1 = parts.slice(0, 2).join(' ') || 'EIKO'
   const line2 = parts.slice(2).join(' ') || 'DLS'
@@ -140,40 +149,40 @@ function resolveDocumentKind(d) {
   return 'invoice'
 }
 
-function documentMeta(kind) {
+function documentMeta(kind, locale) {
   if (kind === 'credit_note') {
     return {
-      title: 'NOTA DE CREDITO / CREDIT NOTE',
-      totalLabel: 'Total credito / Credit total',
-      paymentLabel: 'Metodo de reembolso / Refund method :',
+      title: t(locale, 'NOTA DE CREDITO', 'CREDIT NOTE'),
+      totalLabel: t(locale, 'Total credito', 'Credit total'),
+      paymentLabel: t(locale, 'Metodo de reembolso :', 'Refund method :'),
     }
   }
   if (kind === 'payout_statement') {
     return {
-      title: 'COMPROVANTE DE REPASSE / PAYOUT STATEMENT',
-      totalLabel: 'Total repasse / Payout total',
-      paymentLabel: 'Metodo de repasse / Payout method :',
+      title: t(locale, 'COMPROVANTE DE REPASSE', 'PAYOUT STATEMENT'),
+      totalLabel: t(locale, 'Total repasse', 'Payout total'),
+      paymentLabel: t(locale, 'Metodo de repasse :', 'Payout method :'),
     }
   }
   if (kind === 'consolidation_invoice') {
     return {
-      title: 'FATURA DE CONSOLIDACAO / CONSOLIDATION INVOICE',
+      title: t(locale, 'FATURA DE CONSOLIDACAO', 'CONSOLIDATION INVOICE'),
       totalLabel: 'Total',
-      paymentLabel: 'Metodo de pagamento / Payment method :',
+      paymentLabel: t(locale, 'Metodo de pagamento :', 'Payment method :'),
     }
   }
   return {
-    title: 'FATURA / INVOICE',
+    title: t(locale, 'FATURA', 'INVOICE'),
     totalLabel: 'Total',
-    paymentLabel: 'Metodo de pagamento / Payment method :',
+    paymentLabel: t(locale, 'Metodo de pagamento :', 'Payment method :'),
   }
 }
 
-function buildRows(d, kind, totalUsd) {
+function buildRows(d, kind, totalUsd, locale) {
   if (kind === 'credit_note') {
     return [
       {
-        item: d?.reason || d?.document_subtype || 'Refund or adjustment',
+        item: d?.reason || d?.document_subtype || t(locale, 'Reembolso ou ajuste', 'Refund or adjustment'),
         qty: 1,
         unitPrice: num(d?.amount_credited_usd),
         amount: num(d?.amount_credited_usd),
@@ -183,7 +192,7 @@ function buildRows(d, kind, totalUsd) {
   if (kind === 'payout_statement') {
     return [
       {
-        item: `Affiliate commission${d?.affiliate_id ? ` (${String(d.affiliate_id).slice(0, 8)})` : ''}`,
+        item: `${t(locale, 'Comissao de afiliado', 'Affiliate commission')}${d?.affiliate_id ? ` (${String(d.affiliate_id).slice(0, 8)})` : ''}`,
         qty: 1,
         unitPrice: num(d?.commission_usd),
         amount: num(d?.commission_usd),
@@ -192,7 +201,7 @@ function buildRows(d, kind, totalUsd) {
   }
   const items = Array.isArray(d?.items) ? d.items : []
   if (!items.length) {
-    return [{ item: 'Sem itens / No items', qty: 1, unitPrice: totalUsd, amount: totalUsd }]
+    return [{ item: t(locale, 'Sem itens', 'No items'), qty: 1, unitPrice: totalUsd, amount: totalUsd }]
   }
   return items.map((it) => {
     const qty = Math.max(1, Math.floor(num(it.quantity, 1)))
@@ -244,7 +253,8 @@ export function buildInvoicePdfBuffer(data) {
     const foot = d.footer || {}
     const breakdown = d.billing_breakdown || {}
     const kind = resolveDocumentKind(d)
-    const meta = documentMeta(kind)
+    const locale = resolveRenderLocale(d)
+    const meta = documentMeta(kind, locale)
     const logoPath = resolveLogoPath()
 
     const pageWidth = doc.page.width
@@ -258,14 +268,14 @@ export function buildInvoicePdfBuffer(data) {
         : kind === 'payout_statement'
           ? num(d.commission_usd, 0)
           : num(ps.total_paid_usd || ps.total_usd, 0)
-    const rows = buildRows(d, kind, totalUsd)
+    const rows = buildRows(d, kind, totalUsd, locale)
 
     drawBrandMark(
       doc,
       48,
       54,
       logoPath,
-      foot.company_name || 'EIKO DLS',
+      foot.company_name || "Eiko's Delivery Service",
       foot.support_contact || ''
     )
     doc.fillColor('#111111').font('Helvetica-Bold').fontSize(29).text(meta.title, 48, 116, {
@@ -277,15 +287,15 @@ export function buildInvoicePdfBuffer(data) {
       align: 'right',
       lineBreak: false,
     })
-    doc.font('Helvetica-Bold').fontSize(10).text('Data / Date :', 48, 184, { lineBreak: false })
+    doc.font('Helvetica-Bold').fontSize(10).text(t(locale, 'Data :', 'Date :'), 48, 184, { lineBreak: false })
     doc.font('Helvetica').fontSize(11).text(formatDate(d.issue_date), 126, 183, { lineBreak: false })
     doc.moveTo(48, 206).lineTo(pageWidth - 48, 206).stroke('#E5E7EB')
 
     const boxY = 218
     const boxW = (pageWidth - 96 - 18) / 2
-    doc.font('Helvetica-Bold').fontSize(11).text('Cobrado para / Billed to:', 48, boxY, { lineBreak: false })
+    doc.font('Helvetica-Bold').fontSize(11).text(t(locale, 'Cobrado para:', 'Billed to:'), 48, boxY, { lineBreak: false })
     doc.font('Helvetica').fontSize(10)
-    doc.text(esc(truncateText(cust.name || 'Cliente / Customer', 30)), 48, boxY + 18, {
+    doc.text(esc(truncateText(cust.name || t(locale, 'Cliente', 'Customer'), 30)), 48, boxY + 18, {
       width: boxW,
       lineBreak: false,
     })
@@ -295,11 +305,11 @@ export function buildInvoicePdfBuffer(data) {
       lineBreak: false,
     })
 
-    doc.font('Helvetica-Bold').fontSize(11).text('Emitido por / From:', 48 + boxW + 18, boxY, {
+    doc.font('Helvetica-Bold').fontSize(11).text(t(locale, 'Emitido por:', 'From:'), 48 + boxW + 18, boxY, {
       lineBreak: false,
     })
     doc.font('Helvetica').fontSize(10)
-    doc.text(esc(truncateText(foot.company_name || 'EIKO DLS', 30)), 48 + boxW + 18, boxY + 18, {
+    doc.text(esc(truncateText(foot.company_name || "Eiko's Delivery Service", 30)), 48 + boxW + 18, boxY + 18, {
       width: boxW,
       lineBreak: false,
     })
@@ -309,7 +319,7 @@ export function buildInvoicePdfBuffer(data) {
     })
     const orderRef = d.order_id || d.original_invoice_id || d.statement_id || d.credit_note_id
     if (orderRef) {
-      doc.text(`Referencia / Reference: ${esc(String(orderRef).slice(0, 22))}`, 48 + boxW + 18, boxY + 50, {
+      doc.text(`${t(locale, 'Referencia', 'Reference')}: ${esc(String(orderRef).slice(0, 22))}`, 48 + boxW + 18, boxY + 50, {
         width: boxW,
         lineBreak: false,
       })
@@ -318,7 +328,7 @@ export function buildInvoicePdfBuffer(data) {
     let y = 304
     const tx = 48
     const tw = { item: 260, qty: 80, price: 95, amount: 95 }
-    drawTableHeader(doc, tx, y, tw)
+    drawTableHeader(doc, tx, y, tw, locale)
     y += 32
 
     doc.font('Helvetica').fontSize(10).fillColor('#111111')
@@ -331,7 +341,7 @@ export function buildInvoicePdfBuffer(data) {
       const last = rowsToRender[rowsToRender.length - 1]
       rowsToRender[rowsToRender.length - 1] = {
         ...last,
-        item: `${truncateText(last.item, 28)} (+${hiddenRows} itens)`,
+        item: `${truncateText(last.item, 28)} (+${hiddenRows} ${t(locale, 'itens', 'items')})`,
       }
     }
     for (const row of rowsToRender) {
@@ -372,7 +382,7 @@ export function buildInvoicePdfBuffer(data) {
     const maxBreakdownRows = Math.min(6, maxBreakdownRowsBySpace)
     if (components.length > 0 && maxBreakdownRows > 0) {
       doc.font('Helvetica-Bold').fontSize(9).fillColor('#374151')
-      doc.text('Composicao da cobranca / Charge breakdown', 48, breakdownTitleY, {
+      doc.text(t(locale, 'Composicao da cobranca', 'Charge breakdown'), 48, breakdownTitleY, {
         width: 300,
         lineBreak: false,
       })
@@ -380,7 +390,10 @@ export function buildInvoicePdfBuffer(data) {
       const visible = components.slice(0, maxBreakdownRows)
       visible.forEach((c, idx) => {
         const yy = breakdownRowStartY + idx * 10
-        const label = truncateText(c?.label_pt || c?.label_en || c?.code || 'Item', 38)
+        const label = truncateText(
+          locale === 'en' ? c?.label_en || c?.label_pt || c?.code : c?.label_pt || c?.label_en || c?.code || 'Item',
+          38
+        )
         doc.text(`- ${esc(label)}`, 48, yy, { width: 225, lineBreak: false })
         doc.text(formatUsd(c?.amount_usd || 0), 236, yy, {
           width: 110,
@@ -390,7 +403,7 @@ export function buildInvoicePdfBuffer(data) {
       })
       if (components.length > maxBreakdownRows) {
         doc.fillColor('#6B7280').fontSize(8).text(
-          `+${components.length - maxBreakdownRows} itens adicionais`,
+          `+${components.length - maxBreakdownRows} ${t(locale, 'itens adicionais', 'additional items')}`,
           48,
           breakdownRowStartY + maxBreakdownRows * 10,
           { width: 300, lineBreak: false }
@@ -418,28 +431,29 @@ export function buildInvoicePdfBuffer(data) {
         : kind === 'payout_statement'
           ? pay.currency || 'USD'
           : pay.currency || 'USD'
-    doc.font('Helvetica-Bold').text('Tipo / Type    :', 48, paymentY + 24, { lineBreak: false })
+    doc.font('Helvetica-Bold').text(`${t(locale, 'Tipo', 'Type')}    :`, 48, paymentY + 24, { lineBreak: false })
     doc.font('Helvetica').text(esc(truncateText(method || '—', 26)), 138, paymentY + 24, { lineBreak: false })
-    doc.font('Helvetica-Bold').text('Ref / Reference:', 48, paymentY + 40, { lineBreak: false })
+    doc.font('Helvetica-Bold').text(`${t(locale, 'Ref', 'Reference')}:`, 48, paymentY + 40, { lineBreak: false })
     doc.font('Helvetica').text(esc(truncateText(txn || '—', 40)), 138, paymentY + 40, {
       width: 360,
       lineBreak: false,
     })
-    doc.font('Helvetica-Bold').text('Moeda / Currency:', 48, paymentY + 56, { lineBreak: false })
+    doc.font('Helvetica-Bold').text(`${t(locale, 'Moeda', 'Currency')}:`, 48, paymentY + 56, { lineBreak: false })
     doc.font('Helvetica').text(esc(currency), 138, paymentY + 56, { lineBreak: false })
     if (fx.exchange_rate_usd_brl) {
-      doc.font('Helvetica-Bold').text('Cambio :', 340, paymentY + 24, { lineBreak: false })
+      doc.font('Helvetica-Bold').text(t(locale, 'Cambio :', 'FX :'), 340, paymentY + 24, { lineBreak: false })
       doc.font('Helvetica').text(esc(fx.exchange_rate_usd_brl), 420, paymentY + 24, { lineBreak: false })
     }
     const flowText = breakdown.flow_type || d.order_flow_type
     if (flowText) {
-      doc.font('Helvetica-Bold').text('Fluxo :', 340, paymentY + 40, { lineBreak: false })
+      doc.font('Helvetica-Bold').text(t(locale, 'Fluxo :', 'Flow :'), 340, paymentY + 40, { lineBreak: false })
       doc.font('Helvetica').text(esc(truncateText(flowText, 16)), 420, paymentY + 40, { lineBreak: false })
     }
     const formulaText = breakdown.formula_summary_pt || d.service_fees?.service_type
     if (formulaText) {
-      doc.font('Helvetica-Bold').text('Formula :', 340, paymentY + 56, { lineBreak: false })
-      doc.font('Helvetica').text(esc(truncateText(formulaText, 24)), 420, paymentY + 56, {
+      const localizedFormula = locale === 'en' ? breakdown.formula_summary_en || formulaText : formulaText
+      doc.font('Helvetica-Bold').text(t(locale, 'Formula :', 'Formula :'), 340, paymentY + 56, { lineBreak: false })
+      doc.font('Helvetica').text(esc(truncateText(localizedFormula, 24)), 420, paymentY + 56, {
         lineBreak: false,
       })
     }

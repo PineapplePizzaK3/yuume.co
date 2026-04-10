@@ -12,6 +12,7 @@ import {
   usdToBrlDisplay,
 } from './pricingEngine.js'
 import { resolveWiseWithdrawalMarkupPercent } from './wiseWithdrawalMarkup.js'
+import { resolveUserDocumentLocale } from './documentLocale.js'
 
 const SCHEMA_VERSION = 1
 const BRL_NOTE =
@@ -413,6 +414,7 @@ export async function ensureInvoiceForPaidOrder(supabaseAdmin, orderId, options 
     .select('name, email')
     .eq('id', order.user_id)
     .maybeSingle()
+  const documentLocale = await resolveUserDocumentLocale(supabaseAdmin, order.user_id, 'pt-BR')
 
   const { data: paymentsRaw } = await supabaseAdmin
     .from('payments')
@@ -560,9 +562,9 @@ export async function ensureInvoiceForPaidOrder(supabaseAdmin, orderId, options 
     invoiceNumber = `${invoiceNumber}-CON`
   }
 
-  const companyName = String(process.env.INVOICE_COMPANY_NAME || 'EIKO DLS').trim()
+  const companyName = String(process.env.INVOICE_COMPANY_NAME || "Eiko's Delivery Service").trim()
   const supportContact =
-    String(process.env.INVOICE_SUPPORT_EMAIL || process.env.VITE_CONTACT_EMAIL || 'suporte@exemplo.com').trim()
+    String(process.env.INVOICE_SUPPORT_EMAIL || process.env.VITE_CONTACT_EMAIL || 'support@eiko-dls.com').trim()
 
   const invoiceRowId = randomUUID()
 
@@ -576,6 +578,7 @@ export async function ensureInvoiceForPaidOrder(supabaseAdmin, orderId, options 
     user_id: order.user_id,
     issue_date: issueDate,
     payment_date: paymentDate,
+    document_locale: documentLocale,
     customer: {
       name: profile?.name || '—',
       email: profile?.email || '—',

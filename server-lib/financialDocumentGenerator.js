@@ -1,4 +1,5 @@
 import { randomUUID } from 'crypto'
+import { normalizeDocumentLocale, resolveUserDocumentLocale } from './documentLocale.js'
 
 function num(n, fallback = 0) {
   const x = Number(n)
@@ -140,6 +141,9 @@ export async function createCreditNoteDocument(supabaseAdmin, payload = {}) {
   if (!orderId || !userId) {
     return { ok: false, error: 'orderId and userId are required' }
   }
+  const documentLocale = payload?.documentLocale
+    ? normalizeDocumentLocale(payload.documentLocale)
+    : await resolveUserDocumentLocale(supabaseAdmin, userId, 'pt-BR')
 
   const issueDate = String(payload.issueDate || '').trim() || nowIso()
   const amountCreditedUsd = roundUsd(payload.amountCreditedUsd)
@@ -154,6 +158,7 @@ export async function createCreditNoteDocument(supabaseAdmin, payload = {}) {
   const dataJson = {
     document_type: 'credit_note',
     document_subtype: 'refund_or_adjustment',
+    document_locale: documentLocale,
     original_invoice_id: original?.id || null,
     original_invoice_number: original?.invoice_number || null,
     credit_note_id: creditNoteNumber,
@@ -198,6 +203,9 @@ export async function createPayoutStatementDocument(supabaseAdmin, payload = {})
   if (!userId) {
     return { ok: false, error: 'userId required (or provide orderId linked to a user)' }
   }
+  const documentLocale = payload?.documentLocale
+    ? normalizeDocumentLocale(payload.documentLocale)
+    : await resolveUserDocumentLocale(supabaseAdmin, userId, 'pt-BR')
 
   const issueDate = String(payload.issueDate || '').trim() || nowIso()
   const affiliateId = String(payload.affiliateId || '').trim() || null
@@ -210,6 +218,7 @@ export async function createPayoutStatementDocument(supabaseAdmin, payload = {})
 
   const dataJson = {
     document_type: 'payout_statement',
+    document_locale: documentLocale,
     statement_id: payoutNumber,
     issue_date: issueDate,
     user_id: userId,
