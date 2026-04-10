@@ -8,7 +8,7 @@
  * POST /api/invoices
  * Body:
  * {
- *   "action": "create_invoice" | "ensure_invoice" | "create_credit_note" | "create_payout",
+ *   "action": "create_invoice" | "ensure_invoice" | "create_credit_note" | "create_payout" | "delete_document" | "delete_documents",
  *   ...payload
  * }
  */
@@ -231,6 +231,67 @@ export default async function handler(req, res) {
       const result = await createPayoutStatementDocument(supabaseAdmin, payload)
       if (!result.ok) return res.status(400).json(result)
       return res.status(200).json(result)
+    }
+
+    if (action === 'delete_document') {
+      const invoiceId = typeof body.invoiceId === 'string' ? body.invoiceId.trim() : ''
+      if (!invoiceId) return res.status(400).json({ error: 'invoiceId required' })
+
+      const { data: existing } = await supabaseAdmin
+        .from('invoices')
+        .select('id, invoice_number, invoice_kind')
+        .eq('id', invoiceId)
+        .maybeSingle()
+
+      if (!existing?.id) return res.status(404).json({ error: 'Document not found' })
+
+      const { error: delErr } = await supabaseAdmin
+        .from('invoices')
+        .delete()
+        .eq('id', invoiceId)
+
+      if (delErr) return res.status(500).json({ error: delErr.message || 'Delete failed' })
+
+      return res.status(200).json({
+        ok: true,
+        deleted_id: existing.id,
+        deleted_number: existing.invoice_number || null,
+        deleted_kind: existing.invoice_kind || null,
+      })
+    }
+
+    if (action === 'delete_documents') {
+      const rawIds = Array.isArray(body.invoiceIds) ? body.invoiceIds : []
+      const ids = Array.from(
+        new Set(
+          rawIds
+            .map((x) => (typeof x === 'string' ? x.trim() : ''))
+            .filter(Boolean)
+        )
+      )
+      if (ids.length === 0) return res.status(400).json({ error: 'invoiceIds required' })
+
+      const { data: existingRows, error: existingErr } = await supabaseAdmin
+        .from('invoices')
+        .select('id, invoice_number')
+        .in('id', ids)
+
+      if (existingErr) return res.status(500).json({ error: existingErr.message || 'List failed' })
+      if (!existingRows?.length) return res.status(404).json({ error: 'No documents found to delete' })
+
+      const foundIds = existingRows.map((r) => r.id).filter(Boolean)
+      const { error: delErr } = await supabaseAdmin
+        .from('invoices')
+        .delete()
+        .in('id', foundIds)
+
+      if (delErr) return res.status(500).json({ error: delErr.message || 'Bulk delete failed' })
+
+      return res.status(200).json({
+        ok: true,
+        deleted_count: foundIds.length,
+        deleted_ids: foundIds,
+      })
     }
 
     return res.status(400).json({ error: 'Unknown action' })

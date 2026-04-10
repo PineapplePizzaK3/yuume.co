@@ -90,6 +90,8 @@ import PedidosSection from './sections/PedidosSection'
 import InvoicesAdminSection from './sections/InvoicesAdminSection'
 import {
   createCreditNoteAdmin,
+  deleteFinancialDocumentAdmin,
+  deleteFinancialDocumentsAdmin,
   createInvoiceDocumentAdmin,
   createPayoutStatementAdmin,
   listFinancialDocumentsAdmin,
@@ -1263,6 +1265,28 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     loadFinancialDocuments()
   }
 
+  const deleteFinancialDocument = async (invoiceId) => {
+    if (!session?.access_token || !invoiceId) return
+    const { data, error } = await deleteFinancialDocumentAdmin(session.access_token, invoiceId)
+    if (error) {
+      setMessage(error)
+      return
+    }
+    setMessage(`Documento removido: ${data?.deleted_number || invoiceId}`)
+    await loadFinancialDocuments()
+  }
+
+  const deleteFinancialDocumentsBulk = async (invoiceIds = []) => {
+    if (!session?.access_token || !Array.isArray(invoiceIds) || invoiceIds.length === 0) return
+    const { data, error } = await deleteFinancialDocumentsAdmin(session.access_token, invoiceIds)
+    if (error) {
+      setMessage(error)
+      return
+    }
+    setMessage(`Documentos removidos: ${data?.deleted_count || 0}`)
+    await loadFinancialDocuments()
+  }
+
   const handleSaveGroup = async (e) => {
     e.preventDefault()
     setMessage('')
@@ -2313,6 +2337,8 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     generateCreditNoteDoc,
     generatePayoutDoc,
     downloadFinancialDocPdf,
+    deleteFinancialDocument,
+    deleteFinancialDocumentsBulk,
   }
 
   return (

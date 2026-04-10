@@ -77,3 +77,27 @@ export async function createPayoutStatementAdmin(accessToken, payload) {
   if (!res.ok) return { data: null, error: normalizeAdminApiError(res, data) }
   return { data, error: null }
 }
+
+export async function deleteFinancialDocumentAdmin(accessToken, invoiceId) {
+  const base = getPaymentsApiBase()
+  const res = await fetch(`${base}/invoices`, {
+    method: 'POST',
+    headers: authHeaders(accessToken),
+    body: JSON.stringify({ action: 'delete_document', invoiceId }),
+  })
+  const data = await parsePayload(res)
+  if (!res.ok) return { data: null, error: normalizeAdminApiError(res, data) }
+  return { data, error: null }
+}
+
+export async function deleteFinancialDocumentsAdmin(accessToken, invoiceIds = []) {
+  const base = getPaymentsApiBase()
+  const res = await fetch(`${base}/invoices`, {
+    method: 'POST',
+    headers: authHeaders(accessToken),
+    body: JSON.stringify({ action: 'delete_documents', invoiceIds }),
+  })
+  const data = await parsePayload(res)
+  if (!res.ok) return { data: null, error: normalizeAdminApiError(res, data) }
+  return { data, error: null }
+}

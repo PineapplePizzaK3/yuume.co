@@ -23,6 +23,8 @@ export default function InvoicesAdminSection() {
     generateCreditNoteDoc,
     generatePayoutDoc,
     downloadFinancialDocPdf,
+    deleteFinancialDocument,
+    deleteFinancialDocumentsBulk,
     setMessage,
   } = useAdminContext()
 
@@ -54,14 +56,33 @@ export default function InvoicesAdminSection() {
     <section className="mt-0 space-y-6 rounded-b-xl border border-t-0 border-earth-200 bg-earth-50 p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-lg font-semibold text-earth-900">Invoices & Financial Documents</h2>
-        <button
-          type="button"
-          onClick={() => loadFinancialDocuments()}
-          disabled={docsLoading}
-          className="rounded-lg border border-earth-300 px-3 py-1.5 text-sm font-medium text-earth-700 hover:bg-earth-100 disabled:opacity-70"
-        >
-          {docsLoading ? 'Atualizando...' : 'Atualizar'}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => loadFinancialDocuments()}
+            disabled={docsLoading}
+            className="rounded-lg border border-earth-300 px-3 py-1.5 text-sm font-medium text-earth-700 hover:bg-earth-100 disabled:opacity-70"
+          >
+            {docsLoading ? 'Atualizando...' : 'Atualizar'}
+          </button>
+          <button
+            type="button"
+            disabled={financialDocs.length === 0}
+            onClick={() => {
+              const ids = financialDocs.map((d) => d?.id).filter(Boolean)
+              if (ids.length === 0) return
+              const ok = window.confirm(
+                `Excluir ${ids.length} documentos listados? Esta ação não pode ser desfeita.`
+              )
+              if (!ok) return
+              deleteFinancialDocumentsBulk(ids)
+            }}
+            className="rounded-lg border border-red-300 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-50"
+            title="Excluir todos os documentos atualmente listados"
+          >
+            Excluir listados
+          </button>
+        </div>
       </div>
 
       <div className="grid gap-3 rounded-lg border border-earth-200 bg-white p-4 md:grid-cols-3">
@@ -250,6 +271,7 @@ export default function InvoicesAdminSection() {
               <th className="px-3 py-2">Order</th>
               <th className="px-3 py-2">User</th>
               <th className="px-3 py-2">Criado</th>
+              <th className="px-3 py-2 text-right">Ações</th>
             </tr>
           </thead>
           <tbody>
@@ -273,11 +295,27 @@ export default function InvoicesAdminSection() {
                 <td className="px-3 py-2 font-mono text-xs">{doc.order_id || '—'}</td>
                 <td className="px-3 py-2 text-xs">{doc.user_name || doc.user_id || '—'}</td>
                 <td className="px-3 py-2">{doc.created_at ? new Date(doc.created_at).toLocaleString('pt-BR') : '—'}</td>
+                <td className="px-3 py-2 text-right">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const ok = window.confirm(
+                        `Excluir documento ${doc.invoice_number || doc.id}? Esta ação não pode ser desfeita.`
+                      )
+                      if (!ok) return
+                      deleteFinancialDocument(doc.id)
+                    }}
+                    className="rounded border border-red-300 px-2.5 py-1 text-xs font-medium text-red-700 hover:bg-red-50"
+                    title="Excluir documento"
+                  >
+                    Excluir
+                  </button>
+                </td>
               </tr>
             ))}
             {financialDocs.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-3 py-6 text-center text-earth-600">
+                <td colSpan={6} className="px-3 py-6 text-center text-earth-600">
                   Nenhum documento encontrado.
                 </td>
               </tr>
