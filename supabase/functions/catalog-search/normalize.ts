@@ -1,4 +1,4 @@
-import type { StoreId, UnifiedSearchHit } from '../types.ts'
+import type { StoreId, UnifiedSearchHit } from './types.ts'
 
 export function parsePrice(value: unknown): number | null {
   if (value == null) return null

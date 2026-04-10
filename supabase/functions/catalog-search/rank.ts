@@ -1,4 +1,4 @@
-import type { UnifiedSearchHit } from '../types.ts'
+import type { UnifiedSearchHit } from './types.ts'
 
 function tokenize(value: string): string[] {
   return String(value || '')

@@ -1,5 +1,5 @@
 import type { UnifiedSearchHit } from '../types.ts'
-import { buildHit, parsePrice, pickBestImage } from '../lib/normalize.ts'
+import { buildHit, parsePrice, pickBestImage } from '../normalize.ts'
 import { collectImageCandidates, fetchText, fetchViaJina, parseJinaHits } from './common.ts'
 
 const STORE_ID = 'amazon'

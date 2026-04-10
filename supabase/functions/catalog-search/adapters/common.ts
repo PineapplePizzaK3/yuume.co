@@ -1,4 +1,4 @@
-import { parsePrice, toAbsoluteUrl } from '../lib/normalize.ts'
+import { parsePrice, toAbsoluteUrl } from '../normalize.ts'
 
 const DEFAULT_HEADERS = {
   'User-Agent': 'Mozilla/5.0 (compatible; EikoDelivery/1.0; +https://eiko-dls.com)',

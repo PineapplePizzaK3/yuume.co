@@ -13,6 +13,16 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 const url = supabaseUrl || 'https://placeholder.supabase.co'
 const key = supabaseAnonKey || 'placeholder-anon-key'
 const REQUEST_TIMEOUT_MS = 25000
+/** Edge Functions (ex.: catalog-search) podem demorar ao agregar lojas externas. */
+const FUNCTIONS_REQUEST_TIMEOUT_MS = 120000
+
+function resolveRequestUrl(input) {
+  if (typeof input === 'string') return input
+  if (input && typeof input === 'object' && 'url' in input && typeof input.url === 'string') {
+    return input.url
+  }
+  return ''
+}
 
 /**
  * Avoids sporadic browser LockManager aborts:
@@ -24,8 +34,11 @@ async function authBestEffortLock(_name, _acquireTimeout, fn) {
 }
 
 async function fetchWithTimeout(input, init = {}) {
+  const ms = resolveRequestUrl(input).includes('/functions/v1/')
+    ? FUNCTIONS_REQUEST_TIMEOUT_MS
+    : REQUEST_TIMEOUT_MS
   const controller = new AbortController()
-  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+  const timeoutId = setTimeout(() => controller.abort(), ms)
   try {
     return await fetch(input, {
       ...init,

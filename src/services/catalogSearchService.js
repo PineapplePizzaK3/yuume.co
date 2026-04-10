@@ -1,7 +1,8 @@
 import { supabase } from '../lib/supabase'
 
 const SEARCH_FUNCTION_NAMES = ['catalog-search', 'catalog_search']
-const SEARCH_TIMEOUT_MS = 30000
+/** Alinhado ao timeout longo de `fetch` para `/functions/v1/` em `supabase.js`. */
+const SEARCH_TIMEOUT_MS = 115000
 
 async function normalizeInvokeError(err) {
   const status = err?.context?.status
@@ -27,7 +28,14 @@ async function normalizeInvokeError(err) {
   }
   if (backendMessage) return { message: backendMessage }
   if (status) return { message: `Erro na busca (HTTP ${status}).` }
-  return { message: err?.message || 'Erro ao buscar catálogo externo.' }
+  const raw = err?.message || ''
+  if (/failed to send a request to the edge function/i.test(raw)) {
+    return {
+      message:
+        'Não foi possível contactar a função catalog-search no Supabase. Confira se ela está implantada (`supabase functions deploy catalog-search`), se a URL/chave do projeto no .env estão corretas e a aba Rede do navegador para CORS ou bloqueio.',
+    }
+  }
+  return { message: raw || 'Erro ao buscar catálogo externo.' }
 }
 
 export async function searchCatalogAdmin({ query, stores = ['amazon', 'rakuma', 'mercari'], page = 1, pageSize = 12 }) {
