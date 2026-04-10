@@ -130,7 +130,7 @@ function buildBillingBreakdown({
     const estimatedTotal = clampNonNegativeUsd(estimatedPercentUsd + estimatedPerItemUsd)
     add(
       'service_fee_assisted',
-      'Taxa de servico assistido',
+      'Taxa de serviço assistido',
       'Assisted service fee',
       serviceFeeUsd,
       serviceFeeUsd * usdBrl,
@@ -139,7 +139,7 @@ function buildBillingBreakdown({
     )
     add(
       'service_fee_assisted_formula_estimate',
-      'Estimativa da formula',
+      'Estimativa da fórmula',
       'Formula estimate',
       estimatedTotal,
       estimatedTotal * usdBrl,
@@ -161,7 +161,7 @@ function buildBillingBreakdown({
     )
     add(
       'service_fee_personal_formula_estimate',
-      'Estimativa da formula',
+      'Estimativa da fórmula',
       'Formula estimate',
       estimatedTotal,
       estimatedTotal * usdBrl,
@@ -183,7 +183,7 @@ function buildBillingBreakdown({
     )
     add(
       'service_fee_group_formula_estimate',
-      'Estimativa da formula',
+      'Estimativa da fórmula',
       'Formula estimate',
       estimatedTotal,
       estimatedTotal * usdBrl,
@@ -204,7 +204,7 @@ function buildBillingBreakdown({
     )
     add(
       'service_fee_redirect_formula_estimate',
-      'Estimativa da formula',
+      'Estimativa da fórmula',
       'Formula estimate',
       perItemUsd,
       perItemUsd * usdBrl,
@@ -222,7 +222,7 @@ function buildBillingBreakdown({
       )
     }
   } else if (serviceFeeUsd > 0) {
-    add('service_fee', 'Taxa de servico', 'Service fee', serviceFeeUsd, serviceFeeUsd * usdBrl)
+    add('service_fee', 'Taxa de serviço', 'Service fee', serviceFeeUsd, serviceFeeUsd * usdBrl)
   }
 
   if (shippingUsd > 0) {
@@ -242,7 +242,7 @@ function buildBillingBreakdown({
   if (walletAppliedBrl > 0) {
     add(
       'wallet_credit',
-      'Credito de carteira usado',
+      'Crédito de carteira usado',
       'Wallet credit used',
       clampNonNegativeUsd(walletAppliedBrl / usdBrl),
       roundBrl(walletAppliedBrl)
@@ -262,7 +262,7 @@ function buildBillingBreakdown({
               ? 'Preco de produtos da loja + frete (quando aplicavel)'
               : flowType === 'classic_redirect'
                 ? 'Produtos + taxa de redirecionamento por item + frete'
-                : 'Composicao de cobranca por servico',
+                : 'Composição de cobrança por serviço',
     formula_summary_en:
       flowType === 'assisted_redirect'
         ? 'Products + assisted fee (percentage) + per-item fee + shipping'

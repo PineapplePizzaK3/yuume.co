@@ -41,6 +41,16 @@ function t(locale, pt, en) {
   return locale === 'en' ? en : pt
 }
 
+function flowLabel(flow, locale) {
+  const f = String(flow || '').trim().toLowerCase()
+  if (f === 'assisted_redirect') return t(locale, 'Redirecionamento assistido', 'Assisted redirect')
+  if (f === 'classic_redirect') return t(locale, 'Redirecionamento padrão', 'Standard redirect')
+  if (f === 'personal_shopping') return t(locale, 'Personal shopper', 'Personal shopping')
+  if (f === 'group_purchase') return t(locale, 'Grupo de compras', 'Group purchase')
+  if (f === 'virtual_store') return t(locale, 'Loja virtual', 'Virtual store')
+  return String(flow || '—')
+}
+
 function drawTopDecoration(doc, pageWidth) {
   doc.save()
   doc.rect(0, 0, pageWidth, 34).fill('#111111')
@@ -69,18 +79,18 @@ function drawTableHeader(doc, x, y, widths, locale) {
   doc.save()
   doc.rect(x, y, widths.item + widths.qty + widths.price + widths.amount, 26).fill('#F3F4F6')
   doc.fillColor('#1F2937').font('Helvetica-Bold').fontSize(10)
-  doc.text(t(locale, 'Item', 'Item'), x + 8, y + 8, { width: widths.item - 16, lineBreak: false })
+  doc.text(t(locale, 'Descrição', 'Description'), x + 8, y + 8, { width: widths.item - 16, lineBreak: false })
   doc.text(t(locale, 'Qtd', 'Qty'), x + widths.item + 8, y + 8, {
     width: widths.qty - 16,
     align: 'center',
     lineBreak: false,
   })
-  doc.text(t(locale, 'Preco', 'Price'), x + widths.item + widths.qty + 8, y + 8, {
+  doc.text(t(locale, 'Preço unit.', 'Unit price'), x + widths.item + widths.qty + 8, y + 8, {
     width: widths.price - 16,
     align: 'right',
     lineBreak: false,
   })
-  doc.text(t(locale, 'Valor', 'Amount'), x + widths.item + widths.qty + widths.price + 8, y + 8, {
+  doc.text(t(locale, 'Valor total', 'Total amount'), x + widths.item + widths.qty + widths.price + 8, y + 8, {
     width: widths.amount - 16,
     align: 'right',
     lineBreak: false,
@@ -152,29 +162,29 @@ function resolveDocumentKind(d) {
 function documentMeta(kind, locale) {
   if (kind === 'credit_note') {
     return {
-      title: t(locale, 'NOTA DE CREDITO', 'CREDIT NOTE'),
-      totalLabel: t(locale, 'Total credito', 'Credit total'),
-      paymentLabel: t(locale, 'Metodo de reembolso :', 'Refund method :'),
+      title: t(locale, 'NOTA DE CRÉDITO', 'CREDIT NOTE'),
+      totalLabel: t(locale, 'Total crédito', 'Credit total'),
+      paymentLabel: t(locale, 'Método de reembolso :', 'Refund method :'),
     }
   }
   if (kind === 'payout_statement') {
     return {
       title: t(locale, 'COMPROVANTE DE REPASSE', 'PAYOUT STATEMENT'),
       totalLabel: t(locale, 'Total repasse', 'Payout total'),
-      paymentLabel: t(locale, 'Metodo de repasse :', 'Payout method :'),
+      paymentLabel: t(locale, 'Método de repasse :', 'Payout method :'),
     }
   }
   if (kind === 'consolidation_invoice') {
     return {
-      title: t(locale, 'FATURA DE CONSOLIDACAO', 'CONSOLIDATION INVOICE'),
+      title: t(locale, 'FATURA DE CONSOLIDAÇÃO', 'CONSOLIDATION INVOICE'),
       totalLabel: 'Total',
-      paymentLabel: t(locale, 'Metodo de pagamento :', 'Payment method :'),
+      paymentLabel: t(locale, 'Método de pagamento :', 'Payment method :'),
     }
   }
   return {
     title: t(locale, 'FATURA', 'INVOICE'),
     totalLabel: 'Total',
-    paymentLabel: t(locale, 'Metodo de pagamento :', 'Payment method :'),
+    paymentLabel: t(locale, 'Método de pagamento :', 'Payment method :'),
   }
 }
 
@@ -192,7 +202,7 @@ function buildRows(d, kind, totalUsd, locale) {
   if (kind === 'payout_statement') {
     return [
       {
-        item: `${t(locale, 'Comissao de afiliado', 'Affiliate commission')}${d?.affiliate_id ? ` (${String(d.affiliate_id).slice(0, 8)})` : ''}`,
+        item: `${t(locale, 'Comissão de afiliado', 'Affiliate commission')}${d?.affiliate_id ? ` (${String(d.affiliate_id).slice(0, 8)})` : ''}`,
         qty: 1,
         unitPrice: num(d?.commission_usd),
         amount: num(d?.commission_usd),
@@ -319,7 +329,7 @@ export function buildInvoicePdfBuffer(data) {
     })
     const orderRef = d.order_id || d.original_invoice_id || d.statement_id || d.credit_note_id
     if (orderRef) {
-      doc.text(`${t(locale, 'Referencia', 'Reference')}: ${esc(String(orderRef).slice(0, 22))}`, 48 + boxW + 18, boxY + 50, {
+      doc.text(`${t(locale, 'Referência do pedido', 'Order reference')}: ${esc(String(orderRef).slice(0, 22))}`, 48 + boxW + 18, boxY + 50, {
         width: boxW,
         lineBreak: false,
       })
@@ -332,21 +342,17 @@ export function buildInvoicePdfBuffer(data) {
     y += 32
 
     doc.font('Helvetica').fontSize(10).fillColor('#111111')
-    const rowHeight = 24
-    const rowsLimitBySpace = Math.max(1, Math.floor((pageHeight - 430 - y) / rowHeight))
-    const maxRows = Math.min(8, rowsLimitBySpace)
-    const hiddenRows = Math.max(0, rows.length - maxRows)
-    const rowsToRender = rows.slice(0, maxRows)
-    if (hiddenRows > 0 && rowsToRender.length > 0) {
-      const last = rowsToRender[rowsToRender.length - 1]
-      rowsToRender[rowsToRender.length - 1] = {
-        ...last,
-        item: `${truncateText(last.item, 28)} (+${hiddenRows} ${t(locale, 'itens', 'items')})`,
-      }
-    }
-    for (const row of rowsToRender) {
+    const rowMinHeight = 24
+    const rowAreaBottomY = pageHeight - 430
+    let renderedRows = 0
+    for (let i = 0; i < rows.length; i += 1) {
+      const row = rows[i]
+      const itemText = esc(String(row.item || 'Item'))
+      const itemHeight = Math.ceil(doc.heightOfString(itemText, { width: tw.item - 16 }))
+      const rowHeight = Math.max(rowMinHeight, itemHeight + 6)
+      if (y + rowHeight > rowAreaBottomY) break
 
-      doc.text(esc(truncateText(row.item || 'Item', 38)), tx + 8, y, { width: tw.item - 16, lineBreak: false })
+      doc.text(itemText, tx + 8, y, { width: tw.item - 16 })
       doc.text(String(row.qty || 1), tx + tw.item + 8, y, { width: tw.qty - 16, align: 'center', lineBreak: false })
       doc.text(formatUsd(row.unitPrice || 0), tx + tw.item + tw.qty + 8, y, {
         width: tw.price - 16,
@@ -358,8 +364,23 @@ export function buildInvoicePdfBuffer(data) {
         align: 'right',
         lineBreak: false,
       })
-      doc.moveTo(tx, y + 18).lineTo(tx + tw.item + tw.qty + tw.price + tw.amount, y + 18).stroke('#E5E7EB')
+      doc.moveTo(tx, y + rowHeight - 6)
+        .lineTo(tx + tw.item + tw.qty + tw.price + tw.amount, y + rowHeight - 6)
+        .stroke('#E5E7EB')
       y += rowHeight
+      renderedRows += 1
+    }
+    const hiddenRows = Math.max(0, rows.length - renderedRows)
+    if (hiddenRows > 0) {
+      doc.font('Helvetica').fontSize(8).fillColor('#6B7280')
+      doc.text(
+        `+${hiddenRows} ${t(locale, 'itens não exibidos por limite de página única', 'items not shown due to single-page limit')}`,
+        tx + 8,
+        y - 2,
+        { width: tw.item + tw.qty + tw.price + tw.amount - 16, lineBreak: false }
+      )
+      doc.fillColor('#111111').fontSize(10)
+      y += 10
     }
 
     const totalY = y + 8
@@ -382,7 +403,7 @@ export function buildInvoicePdfBuffer(data) {
     const maxBreakdownRows = Math.min(6, maxBreakdownRowsBySpace)
     if (components.length > 0 && maxBreakdownRows > 0) {
       doc.font('Helvetica-Bold').fontSize(9).fillColor('#374151')
-      doc.text(t(locale, 'Composicao da cobranca', 'Charge breakdown'), 48, breakdownTitleY, {
+      doc.text(t(locale, 'Como este valor foi calculado', 'How this amount was calculated'), 48, breakdownTitleY, {
         width: 300,
         lineBreak: false,
       })
@@ -403,7 +424,7 @@ export function buildInvoicePdfBuffer(data) {
       })
       if (components.length > maxBreakdownRows) {
         doc.fillColor('#6B7280').fontSize(8).text(
-          `+${components.length - maxBreakdownRows} ${t(locale, 'itens adicionais', 'additional items')}`,
+          `+${components.length - maxBreakdownRows} ${t(locale, 'linhas adicionais', 'additional lines')}`,
           48,
           breakdownRowStartY + maxBreakdownRows * 10,
           { width: 300, lineBreak: false }
@@ -431,43 +452,32 @@ export function buildInvoicePdfBuffer(data) {
         : kind === 'payout_statement'
           ? pay.currency || 'USD'
           : pay.currency || 'USD'
-    doc.font('Helvetica-Bold').text(`${t(locale, 'Tipo', 'Type')}    :`, 48, paymentY + 24, { lineBreak: false })
+    doc.font('Helvetica-Bold').text(`${t(locale, 'Forma de pagamento', 'Payment method')} :`, 48, paymentY + 24, { lineBreak: false })
     doc.font('Helvetica').text(esc(truncateText(method || '—', 26)), 138, paymentY + 24, { lineBreak: false })
-    doc.font('Helvetica-Bold').text(`${t(locale, 'Ref', 'Reference')}:`, 48, paymentY + 40, { lineBreak: false })
+    doc.font('Helvetica-Bold').text(`${t(locale, 'ID da transação', 'Transaction ID')} :`, 48, paymentY + 40, { lineBreak: false })
     doc.font('Helvetica').text(esc(truncateText(txn || '—', 40)), 138, paymentY + 40, {
       width: 360,
       lineBreak: false,
     })
-    doc.font('Helvetica-Bold').text(`${t(locale, 'Moeda', 'Currency')}:`, 48, paymentY + 56, { lineBreak: false })
+    doc.font('Helvetica-Bold').text(`${t(locale, 'Moeda de referência', 'Reference currency')} :`, 48, paymentY + 56, { lineBreak: false })
     doc.font('Helvetica').text(esc(currency), 138, paymentY + 56, { lineBreak: false })
     if (fx.exchange_rate_usd_brl) {
-      doc.font('Helvetica-Bold').text(t(locale, 'Cambio :', 'FX :'), 340, paymentY + 24, { lineBreak: false })
+      doc.font('Helvetica-Bold').text(t(locale, 'Cotação USD/BRL :', 'USD/BRL rate :'), 340, paymentY + 24, { lineBreak: false })
       doc.font('Helvetica').text(esc(fx.exchange_rate_usd_brl), 420, paymentY + 24, { lineBreak: false })
     }
     const flowText = breakdown.flow_type || d.order_flow_type
     if (flowText) {
-      doc.font('Helvetica-Bold').text(t(locale, 'Fluxo :', 'Flow :'), 340, paymentY + 40, { lineBreak: false })
-      doc.font('Helvetica').text(esc(truncateText(flowText, 16)), 420, paymentY + 40, { lineBreak: false })
+      doc.font('Helvetica-Bold').text(t(locale, 'Modalidade :', 'Service mode :'), 340, paymentY + 40, { lineBreak: false })
+      doc.font('Helvetica').text(esc(truncateText(flowLabel(flowText, locale), 22)), 420, paymentY + 40, { lineBreak: false })
     }
     const formulaText = breakdown.formula_summary_pt || d.service_fees?.service_type
     if (formulaText) {
       const localizedFormula = locale === 'en' ? breakdown.formula_summary_en || formulaText : formulaText
-      doc.font('Helvetica-Bold').text(t(locale, 'Formula :', 'Formula :'), 340, paymentY + 56, { lineBreak: false })
-      doc.font('Helvetica').text(esc(truncateText(localizedFormula, 24)), 420, paymentY + 56, {
+      doc.font('Helvetica-Bold').text(t(locale, 'Regra de cobrança :', 'Charging rule :'), 340, paymentY + 56, { lineBreak: false })
+      doc.font('Helvetica').text(esc(truncateText(localizedFormula, 30)), 420, paymentY + 56, {
         lineBreak: false,
       })
     }
-    if (foot.disclaimer) {
-      doc
-        .font('Helvetica')
-        .fontSize(8)
-        .fillColor('#4B5563')
-        .text(esc(truncateText(foot.disclaimer, 150)), 48, pageHeight - 58, {
-          width: pageWidth - 96,
-          lineBreak: false,
-        })
-    }
-
     doc.end()
   })
 }
