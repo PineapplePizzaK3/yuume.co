@@ -105,7 +105,7 @@ function drawBrandMark(
   y,
   logoPath = null,
   companyName = "Eiko's Delivery Service",
-  supportContact = ''
+  supportContact = 'support@eiko-dls.com'
 ) {
   doc.save()
   let usedLogo = false
@@ -127,7 +127,7 @@ function drawBrandMark(
   const line2 = parts.slice(2).join(' ') || 'DLS'
   doc.fillColor('#111111').font('Helvetica-Bold').fontSize(12).text(esc(line1), x + 42, y + 6)
   doc.font('Helvetica-Bold').fontSize(12).text(esc(line2), x + 42, y + 20)
-  const support = String(supportContact || '').trim()
+  const support = String(supportContact || 'support@eiko-dls.com').trim()
   if (support) {
     const safeSupport = support.length > 36 ? `${support.slice(0, 33)}...` : support
     doc.fillColor('#4B5563').font('Helvetica').fontSize(7).text(esc(safeSupport), x + 42, y + 33)
@@ -276,7 +276,7 @@ export function buildInvoicePdfBuffer(data) {
       54,
       logoPath,
       foot.company_name || "Eiko's Delivery Service",
-      foot.support_contact || ''
+      foot.support_contact || 'support@eiko-dls.com'
     )
     doc.fillColor('#111111').font('Helvetica-Bold').fontSize(29).text(meta.title, 48, 116, {
       width: 390,
@@ -313,7 +313,7 @@ export function buildInvoicePdfBuffer(data) {
       width: boxW,
       lineBreak: false,
     })
-    doc.text(esc(truncateText(foot.support_contact || 'support@example.com', 32)), 48 + boxW + 18, boxY + 34, {
+    doc.text(esc(truncateText(foot.support_contact || 'support@eiko-dls.com', 32)), 48 + boxW + 18, boxY + 34, {
       width: boxW,
       lineBreak: false,
     })
