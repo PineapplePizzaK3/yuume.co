@@ -92,7 +92,7 @@ function buildBillingBreakdown({
   totalPaidUsd,
   totalDisplayBrl,
   discountBrl,
-  walletAppliedBrl,
+  walletAppliedJpy,
   usdBrl,
   jpyUsd,
   wiseMarkup,
@@ -239,13 +239,17 @@ function buildBillingBreakdown({
     )
   }
 
-  if (walletAppliedBrl > 0) {
+  if (walletAppliedJpy > 0) {
+    const walletUsd = clampNonNegativeUsd(jpyToFinalUsd(walletAppliedJpy, jpyUsd, wiseMarkup))
+    const walletBrl = roundBrl(usdToBrlDisplay(walletUsd, usdBrl))
     add(
       'wallet_credit',
       'Crédito de carteira usado',
       'Wallet credit used',
-      clampNonNegativeUsd(walletAppliedBrl / usdBrl),
-      roundBrl(walletAppliedBrl)
+      walletUsd,
+      walletBrl,
+      `Valor aplicado da carteira em JPY: ${roundJpy(walletAppliedJpy)}`,
+      `Wallet amount applied in JPY: ${roundJpy(walletAppliedJpy)}`
     )
   }
 
@@ -616,7 +620,7 @@ export async function ensureInvoiceForPaidOrder(supabaseAdmin, orderId, options 
       totalPaidUsd,
       totalDisplayBrl,
       discountBrl,
-      walletAppliedBrl: roundBrl(order.wallet_applied_amount || 0),
+      walletAppliedJpy: roundJpy(order.wallet_applied_amount || 0),
       usdBrl,
       jpyUsd,
       wiseMarkup,

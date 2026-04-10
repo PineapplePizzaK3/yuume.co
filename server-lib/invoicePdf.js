@@ -343,14 +343,19 @@ export function buildInvoicePdfBuffer(data) {
 
     doc.font('Helvetica').fontSize(10).fillColor('#111111')
     const rowMinHeight = 24
-    const rowAreaBottomY = pageHeight - 430
-    let renderedRows = 0
     for (let i = 0; i < rows.length; i += 1) {
       const row = rows[i]
       const itemText = esc(String(row.item || 'Item'))
       const itemHeight = Math.ceil(doc.heightOfString(itemText, { width: tw.item - 16 }))
       const rowHeight = Math.max(rowMinHeight, itemHeight + 6)
-      if (y + rowHeight > rowAreaBottomY) break
+      if (y + rowHeight > pageHeight - 60) {
+        doc.addPage()
+        drawTopDecoration(doc, pageWidth)
+        drawBottomDecoration(doc, pageWidth, pageHeight)
+        y = 70
+        drawTableHeader(doc, tx, y, tw, locale)
+        y += 32
+      }
 
       doc.text(itemText, tx + 8, y, { width: tw.item - 16 })
       doc.text(String(row.qty || 1), tx + tw.item + 8, y, { width: tw.qty - 16, align: 'center', lineBreak: false })
@@ -368,19 +373,13 @@ export function buildInvoicePdfBuffer(data) {
         .lineTo(tx + tw.item + tw.qty + tw.price + tw.amount, y + rowHeight - 6)
         .stroke('#E5E7EB')
       y += rowHeight
-      renderedRows += 1
     }
-    const hiddenRows = Math.max(0, rows.length - renderedRows)
-    if (hiddenRows > 0) {
-      doc.font('Helvetica').fontSize(8).fillColor('#6B7280')
-      doc.text(
-        `+${hiddenRows} ${t(locale, 'itens não exibidos por limite de página única', 'items not shown due to single-page limit')}`,
-        tx + 8,
-        y - 2,
-        { width: tw.item + tw.qty + tw.price + tw.amount - 16, lineBreak: false }
-      )
-      doc.fillColor('#111111').fontSize(10)
-      y += 10
+
+    if (y + 50 > pageHeight - 60) {
+      doc.addPage()
+      drawTopDecoration(doc, pageWidth)
+      drawBottomDecoration(doc, pageWidth, pageHeight)
+      y = 70
     }
 
     const totalY = y + 8
@@ -391,49 +390,49 @@ export function buildInvoicePdfBuffer(data) {
       align: 'right',
     })
     doc.moveTo(tx, totalY - 6).lineTo(tx + tw.item + tw.qty + tw.price + tw.amount, totalY - 6).stroke('#D1D5DB')
+    y = totalY + 22
 
-    const paymentY = pageHeight - 154
     const components = normalizeBreakdownComponents(breakdown)
-    const breakdownTitleY = totalY + 20
-    const breakdownRowStartY = breakdownTitleY + 12
-    const maxBreakdownRowsBySpace = Math.max(
-      0,
-      Math.floor((paymentY - 8 - breakdownRowStartY) / 10)
-    )
-    const maxBreakdownRows = Math.min(6, maxBreakdownRowsBySpace)
-    if (components.length > 0 && maxBreakdownRows > 0) {
-      doc.font('Helvetica-Bold').fontSize(9).fillColor('#374151')
-      doc.text(t(locale, 'Como este valor foi calculado', 'How this amount was calculated'), 48, breakdownTitleY, {
-        width: 300,
-        lineBreak: false,
-      })
-      doc.font('Helvetica').fontSize(8).fillColor('#111111')
-      const visible = components.slice(0, maxBreakdownRows)
-      visible.forEach((c, idx) => {
-        const yy = breakdownRowStartY + idx * 10
-        const label = truncateText(
-          locale === 'en' ? c?.label_en || c?.label_pt || c?.code : c?.label_pt || c?.label_en || c?.code || 'Item',
-          38
-        )
-        doc.text(`- ${esc(label)}`, 48, yy, { width: 225, lineBreak: false })
-        doc.text(formatUsd(c?.amount_usd || 0), 236, yy, {
-          width: 110,
-          align: 'right',
-          lineBreak: false,
-        })
-      })
-      if (components.length > maxBreakdownRows) {
-        doc.fillColor('#6B7280').fontSize(8).text(
-          `+${components.length - maxBreakdownRows} ${t(locale, 'linhas adicionais', 'additional lines')}`,
-          48,
-          breakdownRowStartY + maxBreakdownRows * 10,
-          { width: 300, lineBreak: false }
-        )
+    if (components.length > 0) {
+      if (y + 40 > pageHeight - 60) {
+        doc.addPage()
+        drawTopDecoration(doc, pageWidth)
+        drawBottomDecoration(doc, pageWidth, pageHeight)
+        y = 70
       }
+      doc.font('Helvetica-Bold').fontSize(9).fillColor('#374151')
+      doc.text(t(locale, 'Como este valor foi calculado', 'How this amount was calculated'), 48, y, {
+        width: 330,
+      })
+      y += 14
+      doc.font('Helvetica').fontSize(8).fillColor('#111111')
+      for (const c of components) {
+        if (y + 12 > pageHeight - 60) {
+          doc.addPage()
+          drawTopDecoration(doc, pageWidth)
+          drawBottomDecoration(doc, pageWidth, pageHeight)
+          y = 70
+        }
+        const label = locale === 'en'
+          ? c?.label_en || c?.label_pt || c?.code || 'Item'
+          : c?.label_pt || c?.label_en || c?.code || 'Item'
+        doc.text(`- ${esc(label)}`, 48, y, { width: 260 })
+        doc.text(formatUsd(c?.amount_usd || 0), 310, y, { width: 95, align: 'right' })
+        y += 11
+      }
+      y += 8
     }
 
-    doc.font('Helvetica-Bold').fontSize(16).fillColor('#F97316').text(meta.paymentLabel, 48, paymentY)
-    doc.fillColor('#111111').font('Helvetica').fontSize(11)
+    if (y + 110 > pageHeight - 60) {
+      doc.addPage()
+      drawTopDecoration(doc, pageWidth)
+      drawBottomDecoration(doc, pageWidth, pageHeight)
+      y = 70
+    }
+
+    doc.font('Helvetica-Bold').fontSize(16).fillColor('#F97316').text(meta.paymentLabel, 48, y)
+    y += 22
+    doc.fillColor('#111111').font('Helvetica').fontSize(10)
     const method =
       kind === 'credit_note'
         ? d.payment_method || pay.payment_method
@@ -452,32 +451,39 @@ export function buildInvoicePdfBuffer(data) {
         : kind === 'payout_statement'
           ? pay.currency || 'USD'
           : pay.currency || 'USD'
-    doc.font('Helvetica-Bold').text(`${t(locale, 'Forma de pagamento', 'Payment method')} :`, 48, paymentY + 24, { lineBreak: false })
-    doc.font('Helvetica').text(esc(truncateText(method || '—', 26)), 138, paymentY + 24, { lineBreak: false })
-    doc.font('Helvetica-Bold').text(`${t(locale, 'ID da transação', 'Transaction ID')} :`, 48, paymentY + 40, { lineBreak: false })
-    doc.font('Helvetica').text(esc(truncateText(txn || '—', 40)), 138, paymentY + 40, {
-      width: 360,
-      lineBreak: false,
-    })
-    doc.font('Helvetica-Bold').text(`${t(locale, 'Moeda de referência', 'Reference currency')} :`, 48, paymentY + 56, { lineBreak: false })
-    doc.font('Helvetica').text(esc(currency), 138, paymentY + 56, { lineBreak: false })
-    if (fx.exchange_rate_usd_brl) {
-      doc.font('Helvetica-Bold').text(t(locale, 'Cotação USD/BRL :', 'USD/BRL rate :'), 340, paymentY + 24, { lineBreak: false })
-      doc.font('Helvetica').text(esc(fx.exchange_rate_usd_brl), 420, paymentY + 24, { lineBreak: false })
-    }
+    const leftPairs = [
+      { label: t(locale, 'Forma de pagamento', 'Payment method'), value: method || '—' },
+      { label: t(locale, 'ID da transação', 'Transaction ID'), value: txn || '—' },
+      { label: t(locale, 'Moeda de referência', 'Reference currency'), value: currency || '—' },
+    ]
+    const rightPairs = []
+    if (fx.exchange_rate_usd_brl) rightPairs.push({ label: t(locale, 'Cotação USD/BRL', 'USD/BRL rate'), value: fx.exchange_rate_usd_brl })
     const flowText = breakdown.flow_type || d.order_flow_type
     if (flowText) {
-      doc.font('Helvetica-Bold').text(t(locale, 'Modalidade :', 'Service mode :'), 340, paymentY + 40, { lineBreak: false })
-      doc.font('Helvetica').text(esc(truncateText(flowLabel(flowText, locale), 22)), 420, paymentY + 40, { lineBreak: false })
+      rightPairs.push({ label: t(locale, 'Modalidade', 'Service mode'), value: flowLabel(flowText, locale) })
     }
     const formulaText = breakdown.formula_summary_pt || d.service_fees?.service_type
     if (formulaText) {
       const localizedFormula = locale === 'en' ? breakdown.formula_summary_en || formulaText : formulaText
-      doc.font('Helvetica-Bold').text(t(locale, 'Regra de cobrança :', 'Charging rule :'), 340, paymentY + 56, { lineBreak: false })
-      doc.font('Helvetica').text(esc(truncateText(localizedFormula, 30)), 420, paymentY + 56, {
-        lineBreak: false,
-      })
+      rightPairs.push({ label: t(locale, 'Regra de cobrança', 'Charging rule'), value: localizedFormula })
     }
+
+    const drawPairColumn = (x, startY, pairs, labelWidth, valueWidth) => {
+      let cy = startY
+      for (const pair of pairs) {
+        doc.font('Helvetica-Bold').fontSize(10).fillColor('#111111').text(`${pair.label}:`, x, cy, { width: labelWidth })
+        doc.font('Helvetica').fontSize(10).fillColor('#111111').text(esc(String(pair.value || '—')), x + labelWidth + 6, cy, { width: valueWidth })
+        const hLabel = doc.heightOfString(`${pair.label}:`, { width: labelWidth })
+        const hValue = doc.heightOfString(esc(String(pair.value || '—')), { width: valueWidth })
+        cy += Math.max(hLabel, hValue) + 6
+      }
+      return cy
+    }
+
+    const leftEndY = drawPairColumn(48, y, leftPairs, 102, 180)
+    const rightEndY = drawPairColumn(330, y, rightPairs, 110, 110)
+    y = Math.max(leftEndY, rightEndY)
+
     doc.end()
   })
 }
