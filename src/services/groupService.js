@@ -4,15 +4,16 @@
 import { supabase } from '../lib/supabase'
 import { withDbTimeout, toServiceError } from '../lib/dbGuard'
 
-export async function getPurchaseGroups(source = 'scheduled') {
+export async function getPurchaseGroups(destination = 'physical') {
   try {
-    const safeSource = source === 'showcase' ? 'showcase' : 'scheduled'
+    const safeDestination = destination === 'online' ? 'online' : 'physical'
     const { data, error } = await withDbTimeout(
       supabase
         .from('purchase_groups')
         .select('*')
         .eq('is_active', true)
-        .eq('source', safeSource)
+        .eq('source', 'scheduled')
+        .eq('destination', safeDestination)
         .order('created_at', { ascending: false })
     )
     return { data: data ?? [], error }
@@ -36,7 +37,6 @@ export async function getPurchaseGroupsAdmin() {
 export async function createPurchaseGroup(group) {
   try {
     const imageUrls = Array.isArray(group.image_urls) ? group.image_urls : []
-    const safeSource = group.source === 'showcase' ? 'showcase' : 'scheduled'
     const payload = {
       name: group.name,
       description: group.description ?? '',
@@ -44,7 +44,8 @@ export async function createPurchaseGroup(group) {
       image_urls: imageUrls,
       is_active: group.is_active ?? true,
       product_ids: [],
-      source: safeSource,
+      source: 'scheduled',
+      destination: group.destination ?? null,
     }
 
     const { data, error } = await withDbTimeout(
@@ -59,7 +60,6 @@ export async function createPurchaseGroup(group) {
 export async function updatePurchaseGroup(id, group) {
   try {
     const imageUrls = Array.isArray(group.image_urls) ? group.image_urls : []
-    const safeSource = group.source === 'showcase' ? 'showcase' : 'scheduled'
     const payload = {
       name: group.name,
       description: group.description ?? '',
@@ -67,7 +67,8 @@ export async function updatePurchaseGroup(id, group) {
       image_urls: imageUrls,
       is_active: group.is_active ?? true,
       product_ids: [],
-      source: safeSource,
+      source: 'scheduled',
+      destination: group.destination ?? null,
     }
 
     const { data, error } = await withDbTimeout(
@@ -100,6 +101,7 @@ export async function createPurchaseGroupProduct(groupId, product) {
       price: product.price,
       image_url: product.image_url ?? (imageUrls[0] || ''),
       image_urls: imageUrls,
+      source_url: product.source_url ?? null,
       weight_kg: product.weight_kg ?? 0,
       stock_quantity: product.stock_quantity ?? null,
     }
@@ -125,6 +127,7 @@ export async function updatePurchaseGroupProduct(groupId, productId, product) {
       price: product.price,
       image_url: product.image_url ?? (imageUrls[0] || ''),
       image_urls: imageUrls,
+      source_url: product.source_url ?? null,
       weight_kg: product.weight_kg ?? 0,
       stock_quantity: product.stock_quantity ?? null,
     }

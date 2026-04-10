@@ -29,31 +29,49 @@ function Navbar() {
     'font-semibold text-earth-900'
   const linkNormal =
     'text-earth-600 transition hover:text-earth-900'
+  const storeMainRoute = isAuthenticated ? 'appLoja' : 'lojaPublicVitrine'
 
   const homePath = path('home')
   const isStorePublicRoute = isRouteActive('lojaPublic', location.pathname, true)
   const isStoreAppRoute = isRouteActive('appLoja', location.pathname, true)
-  const isStoreLegacyServicesRoute = isRouteActive('appServices', location.pathname, true)
-  const isStoreLegacyGroupsRoute = isRouteActive('appGrupoCompras', location.pathname, true)
-  const showStoreHeaderSubmenu =
-    isStorePublicRoute || isStoreAppRoute || isStoreLegacyServicesRoute || isStoreLegacyGroupsRoute
-  const storeRouteKey = isAuthenticated ? 'appLoja' : 'lojaPublic'
+  const isStoreGroupRoute = isRouteActive('appGrupoCompras', location.pathname, true)
+  const isStoreServicesRoute = isRouteActive('appServices', location.pathname, true)
   const currentStoreSection = useMemo(() => {
-    if (isStoreLegacyServicesRoute) return 'servicos'
-    if (isStoreLegacyGroupsRoute) return 'compras-programadas'
-    const sec = new URLSearchParams(location.search).get('sec')
-    if (sec === 'compras-programadas' || sec === 'vitrine' || sec === 'servicos') return sec
-    return 'em-estoque'
-  }, [isStoreLegacyGroupsRoute, isStoreLegacyServicesRoute, location.search])
-  const storeSubmenuItems = useMemo(
-    () => [
-      { id: 'em-estoque', label: t('platform.storeHub.tabStock'), search: '' },
-      { id: 'compras-programadas', label: t('platform.storeHub.tabScheduled'), search: '?sec=compras-programadas' },
-      { id: 'vitrine', label: t('platform.storeHub.tabShowcase'), search: '?sec=vitrine' },
-      { id: 'servicos', label: t('platform.storeHub.tabServices'), search: '?sec=servicos' },
-    ],
-    [t]
-  )
+    if (isStoreServicesRoute) return 'servicos'
+    if (
+      isRouteActive('appGrupoCompras', location.pathname, true) ||
+      isRouteActive('appGrupoComprasOnline', location.pathname, true) ||
+      isRouteActive('appGrupoComprasFisica', location.pathname, true) ||
+      isRouteActive('lojaPublicProgramadas', location.pathname, true) ||
+      isRouteActive('lojaPublicProgramadasOnline', location.pathname, true) ||
+      isRouteActive('lojaPublicProgramadasFisica', location.pathname, true)
+    ) {
+      return 'programadas'
+    }
+    if (isStoreGroupRoute) return 'programadas'
+    return 'vitrine'
+  }, [isStoreGroupRoute, isStoreServicesRoute, location.pathname])
+  const storeSubmenuItems = useMemo(() => {
+    const vitrine = {
+      id: 'vitrine',
+      label: t('platform.storeHub.tabShowcase'),
+      toRoute: isAuthenticated ? 'appLoja' : 'lojaPublicVitrine',
+    }
+    const programadas = {
+      id: 'programadas',
+      label: t('platform.navScheduledBuying'),
+      toRoute: isAuthenticated ? 'appGrupoComprasOnline' : 'lojaPublicProgramadasOnline',
+    }
+    const servicos = {
+      id: 'servicos',
+      label: t('platform.storeHub.tabServices'),
+      toRoute: 'appServices',
+    }
+    if (isAuthenticated) {
+      return [servicos, vitrine, programadas]
+    }
+    return [vitrine, programadas]
+  }, [isAuthenticated, t])
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-earth-50 shadow-sm border-b border-earth-200">
@@ -101,21 +119,49 @@ function Navbar() {
             >
               {t('nav.contact')}
             </LocalizedLink>
-            <div className="flex self-stretch">
+            <div className="group relative flex self-stretch">
               <LocalizedLink
-                toRoute="lojaPublic"
+                toRoute={storeMainRoute}
                 className={`flex items-center px-4 text-sm font-medium text-white transition hover:bg-red-400 ${
-                  isRouteActive('lojaPublic', location.pathname) ? 'bg-red-500 ring-2 ring-white' : 'bg-red-300'
+                  isStorePublicRoute || isStoreAppRoute || isStoreGroupRoute || isStoreServicesRoute
+                    ? 'bg-red-500 ring-2 ring-white'
+                    : 'bg-red-300'
                 }`}
               >
                 {t('nav.virtualStore')}
               </LocalizedLink>
+              <div className="pointer-events-none absolute left-1/2 top-full z-20 -translate-x-1/2 pt-2 opacity-0 transition group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100">
+                <div className="flex items-center gap-2 rounded-none border border-earth-200 bg-white p-2 shadow-lg">
+                  {storeSubmenuItems.map((item) => (
+                    <LocalizedLink
+                      key={item.id}
+                      toRoute={item.toRoute}
+                      className={`rounded-none px-3 py-2 text-sm whitespace-nowrap transition ${
+                        currentStoreSection === item.id
+                          ? 'bg-earth-900 font-medium text-earth-50'
+                          : 'text-earth-700 hover:bg-earth-100'
+                      }`}
+                    >
+                      {item.label}
+                    </LocalizedLink>
+                  ))}
+                </div>
+              </div>
             </div>
 
             <LanguageSwitcherDropdown />
 
             {isAuthenticated ? (
-              <div className="group relative">
+              <div
+                className="group relative"
+                onMouseLeave={(e) => {
+                  if (e.currentTarget.contains(e.relatedTarget)) return
+                  const active = document.activeElement
+                  if (active && e.currentTarget.contains(active)) {
+                    active.blur()
+                  }
+                }}
+              >
                 <LocalizedLink
                   toRoute="appDashboard"
                   className="relative flex items-center gap-2 rounded-lg bg-earth-800 px-4 py-2 text-sm font-medium text-earth-50 transition hover:bg-earth-700"
@@ -287,10 +333,12 @@ function Navbar() {
                 {t('nav.contact')}
               </LocalizedLink>
               <LocalizedLink
-                toRoute="lojaPublic"
+                toRoute={storeMainRoute}
                 onClick={fecharMenu}
                 className={`px-4 py-3 font-medium text-white transition hover:bg-red-400 ${
-                  isRouteActive('lojaPublic', location.pathname) ? 'bg-red-500 ring-2 ring-white' : 'bg-red-300'
+                  isStorePublicRoute || isStoreAppRoute || isStoreGroupRoute || isStoreServicesRoute
+                    ? 'bg-red-500 ring-2 ring-white'
+                    : 'bg-red-300'
                 }`}
               >
                 {t('nav.virtualStore')}
@@ -317,26 +365,6 @@ function Navbar() {
           </div>
         )}
       </div>
-      {showStoreHeaderSubmenu && (
-        <div className="pointer-events-none absolute left-0 right-0 top-16 hidden border-t border-earth-200 bg-earth-50/95 backdrop-blur lg:block">
-          <div className="mx-auto flex max-w-7xl justify-center gap-2 px-4 py-2 sm:px-6 lg:px-8">
-            {storeSubmenuItems.map((item) => (
-              <LocalizedLink
-                key={item.id}
-                toRoute={storeRouteKey}
-                search={item.search}
-                className={`pointer-events-auto rounded-lg px-3 py-1.5 text-sm font-medium transition ${
-                  currentStoreSection === item.id
-                    ? 'bg-earth-900 text-earth-50'
-                    : 'bg-white text-earth-700 hover:bg-earth-100'
-                }`}
-              >
-                {item.label}
-              </LocalizedLink>
-            ))}
-          </div>
-        </div>
-      )}
     </nav>
   )
 }

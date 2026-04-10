@@ -12,7 +12,7 @@ import {
 } from '../server-lib/pricingEngine.js'
 import { ensureInvoiceForPaidOrder } from '../server-lib/invoiceGenerator.js'
 import { handleExchangeRatesGet } from '../server-lib/exchangeRatesHttp.js'
-import { handleCronRefreshExchangeRates } from '../server-lib/cronRefreshHttp.js'
+import { handleCronRefreshExchangeRates, handleCronRefreshOnlineGroupPrices } from '../server-lib/cronRefreshHttp.js'
 import { resolveWiseWithdrawalMarkupPercent } from '../server-lib/wiseWithdrawalMarkup.js'
 
 const REQUEST_WINDOW_MS = 60 * 1000
@@ -593,6 +593,9 @@ export default async function handler(req, res) {
   }
   if (dispatch === 'cron-refresh-exchange-rates') {
     return handleCronRefreshExchangeRates(req, res)
+  }
+  if (dispatch === 'cron-refresh-online-group-prices') {
+    return handleCronRefreshOnlineGroupPrices(req, res)
   }
 
   if (req.method !== 'POST') {

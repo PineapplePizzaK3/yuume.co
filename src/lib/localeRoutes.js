@@ -18,6 +18,16 @@ export const ROUTES = {
   ondeComprar: { [LOCALE_PT_BR]: '/onde-comprar', [LOCALE_EN]: '/en/where-to-buy' },
   contact: { [LOCALE_PT_BR]: '/contact', [LOCALE_EN]: '/en/contact' },
   lojaPublic: { [LOCALE_PT_BR]: '/loja', [LOCALE_EN]: '/en/store' },
+  lojaPublicVitrine: { [LOCALE_PT_BR]: '/loja/vitrine', [LOCALE_EN]: '/en/store/storefront' },
+  lojaPublicProgramadas: { [LOCALE_PT_BR]: '/loja/compras-programadas', [LOCALE_EN]: '/en/store/scheduled-buying' },
+  lojaPublicProgramadasOnline: {
+    [LOCALE_PT_BR]: '/loja/compras-programadas/online',
+    [LOCALE_EN]: '/en/store/scheduled-buying/online',
+  },
+  lojaPublicProgramadasFisica: {
+    [LOCALE_PT_BR]: '/loja/compras-programadas/fisica',
+    [LOCALE_EN]: '/en/store/scheduled-buying/physical',
+  },
   login: { [LOCALE_PT_BR]: '/login', [LOCALE_EN]: '/en/login' },
   register: { [LOCALE_PT_BR]: '/register', [LOCALE_EN]: '/en/register' },
   forgotPassword: { [LOCALE_PT_BR]: '/forgot-password', [LOCALE_EN]: '/en/forgot-password' },
@@ -35,6 +45,14 @@ export const ROUTES = {
   appLoja: { [LOCALE_PT_BR]: '/app/loja', [LOCALE_EN]: '/en/app/store' },
   appCart: { [LOCALE_PT_BR]: '/app/cart', [LOCALE_EN]: '/en/app/cart' },
   appGrupoCompras: { [LOCALE_PT_BR]: '/app/grupo-de-compras', [LOCALE_EN]: '/en/app/group-buying' },
+  appGrupoComprasOnline: {
+    [LOCALE_PT_BR]: '/app/grupo-de-compras/online',
+    [LOCALE_EN]: '/en/app/group-buying/online',
+  },
+  appGrupoComprasFisica: {
+    [LOCALE_PT_BR]: '/app/grupo-de-compras/fisica',
+    [LOCALE_EN]: '/en/app/group-buying/physical',
+  },
   appInvoices: { [LOCALE_PT_BR]: '/app/invoices', [LOCALE_EN]: '/en/app/invoices' },
 
   appAdmin: { [LOCALE_PT_BR]: '/app/admin', [LOCALE_EN]: '/en/app/admin' },

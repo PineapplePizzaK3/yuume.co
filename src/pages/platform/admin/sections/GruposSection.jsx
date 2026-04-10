@@ -24,6 +24,11 @@ export default function GruposSection() {
     setGroupProductReferenceSearch,
     groupProductReferenceId,
     setGroupProductReferenceId,
+    groupProductSourceUrlInput,
+    setGroupProductSourceUrlInput,
+    groupProductScraping,
+    handleScrapeOnlineGroupProduct,
+    isOnlineGroupDestination,
     filteredGroupProductReferences,
     applyReferenceToGroupProductForm,
     masterProductReferences,
@@ -67,21 +72,6 @@ export default function GruposSection() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-earth-700">Origem do grupo</label>
-          <select
-            value={groupForm.source || 'scheduled'}
-            onChange={(e) => setGroupForm((f) => ({ ...f, source: e.target.value }))}
-            className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
-          >
-            <option value="scheduled">Compras Programadas</option>
-            <option value="showcase">Vitrine</option>
-          </select>
-          <p className="mt-1 text-xs text-earth-500">
-            A origem define em qual página este grupo aparece para o cliente.
-          </p>
-        </div>
-
-        <div>
           <label className="block text-sm font-medium text-earth-700">Descrição</label>
           <textarea
             value={groupForm.description}
@@ -89,6 +79,23 @@ export default function GruposSection() {
             rows={3}
             className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
           />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-earth-700">Destino do grupo *</label>
+          <select
+            required
+            value={groupForm.destination || ''}
+            onChange={(e) => setGroupForm((f) => ({ ...f, destination: e.target.value }))}
+            className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+          >
+            <option value="">Selecione</option>
+            <option value="online">Online</option>
+            <option value="physical">Física</option>
+          </select>
+          <p className="mt-1 text-xs text-earth-500">
+            Define em qual subpágina o card aparecerá.
+          </p>
         </div>
 
         <div>
@@ -143,6 +150,7 @@ export default function GruposSection() {
           <div
             className="mt-3 space-y-2 rounded-lg border border-earth-200 bg-earth-50 p-3"
             onKeyDown={(e) => {
+              if (e.defaultPrevented) return
               if (e.key === 'Enter') {
                 e.preventDefault()
                 e.stopPropagation()
@@ -152,6 +160,35 @@ export default function GruposSection() {
               }
             }}
           >
+            {isOnlineGroupDestination && (
+              <div className="grid gap-2 md:grid-cols-[1fr_auto]">
+                <input
+                  type="url"
+                  value={groupProductSourceUrlInput}
+                  onChange={(e) => {
+                    const next = e.target.value
+                    setGroupProductSourceUrlInput(next)
+                    setGroupProductForm((f) => ({ ...f, source_url: next }))
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      void handleScrapeOnlineGroupProduct()
+                    }
+                  }}
+                  placeholder="URL do produto para scrape (Online)"
+                  className="rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
+                />
+                <button
+                  type="button"
+                  onClick={() => void handleScrapeOnlineGroupProduct()}
+                  disabled={groupProductScraping || !groupProductSourceUrlInput.trim()}
+                  className="rounded-lg border border-earth-300 bg-white px-3 py-2 text-sm font-medium text-earth-700 hover:bg-earth-100 disabled:opacity-60"
+                >
+                  {groupProductScraping ? 'Buscando...' : 'Buscar dados'}
+                </button>
+              </div>
+            )}
             <div className="grid gap-2 md:grid-cols-[1fr_1fr_auto]">
               <input
                 type="search"
@@ -300,7 +337,7 @@ export default function GruposSection() {
             className="rounded border-earth-300"
           />
           <label htmlFor="group_is_active" className="text-sm font-medium text-earth-700">
-            Ativo (visível em {groupForm.source === 'showcase' ? 'Vitrine' : 'Compras Programadas'})
+            Ativo (visível em Compras Programadas)
           </label>
         </div>
 
@@ -452,14 +489,18 @@ export default function GruposSection() {
                   <div>
                     <p className="font-medium text-earth-900">{g.name}</p>
                     <p className="mt-1">
-                      <span
-                        className={`inline-flex rounded px-2 py-0.5 text-xs font-medium ${
-                          g.source === 'showcase'
-                            ? 'bg-indigo-100 text-indigo-900'
-                            : 'bg-emerald-100 text-emerald-900'
-                        }`}
-                      >
-                        {g.source === 'showcase' ? 'Vitrine' : 'Compras Programadas'}
+                      <span className={`inline-flex rounded px-2 py-0.5 text-xs font-medium ${
+                        g.destination === 'online'
+                          ? 'bg-sky-100 text-sky-900'
+                          : g.destination === 'physical'
+                            ? 'bg-emerald-100 text-emerald-900'
+                            : 'bg-amber-100 text-amber-900'
+                      }`}>
+                        {g.destination === 'online'
+                          ? 'Online'
+                          : g.destination === 'physical'
+                            ? 'Física'
+                            : 'Sem destino'}
                       </span>
                     </p>
                     {g.description && <p className="mt-1 line-clamp-2 whitespace-pre-wrap text-sm text-earth-600">{g.description}</p>}

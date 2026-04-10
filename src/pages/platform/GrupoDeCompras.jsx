@@ -28,12 +28,11 @@ function getProductImages(p) {
   return []
 }
 
-export default function GrupoDeCompras({ embedded = false, variant = 'scheduled' }) {
+export default function GrupoDeCompras({ embedded = false, hideHeader = false, destination = 'physical' }) {
   const { t } = useTranslation()
   const lp = useLocalizedPath()
   const { user } = useAuth()
-  const copyNs = variant === 'showcase' ? 'platform.showcase' : 'platform.groupBuy'
-  const tt = (key, options) => t(`${copyNs}.${key}`, options)
+  const tt = (key, options) => t(`platform.groupBuy.${key}`, options)
   const [groups, setGroups] = useState([])
   const [groupProducts, setGroupProducts] = useState({})
   const [loading, setLoading] = useState(true)
@@ -58,12 +57,11 @@ export default function GrupoDeCompras({ embedded = false, variant = 'scheduled'
 
   useEffect(() => {
     let isActive = true
-    const groupSource = variant === 'showcase' ? 'showcase' : 'scheduled'
     const run = async () => {
       setLoading(true)
       setMessage('')
       try {
-        const { data: groupsData, error } = await getPurchaseGroups(groupSource)
+        const { data: groupsData, error } = await getPurchaseGroups(destination)
         if (!isActive) return
         setGroups(groupsData ?? [])
         if (error) setMessage(error?.message)
@@ -85,7 +83,7 @@ export default function GrupoDeCompras({ embedded = false, variant = 'scheduled'
     return () => {
       isActive = false
     }
-  }, [t, variant])
+  }, [destination, t])
 
   const images = useMemo(() => {
     return detailGroup ? getGroupImages(detailGroup) : []
@@ -139,12 +137,14 @@ export default function GrupoDeCompras({ embedded = false, variant = 'scheduled'
       )}
 
       <div className={embedded ? 'rounded-xl border border-earth-200 bg-white p-4 sm:p-6' : ''}>
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-earth-900">{tt('pageTitle')}</h1>
-            <p className="mt-2 text-earth-600">{tt('intro')}</p>
+        {!hideHeader && (
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-bold text-earth-900">{tt('pageTitle')}</h1>
+              <p className="mt-2 text-earth-600">{tt('intro')}</p>
+            </div>
           </div>
-        </div>
+        )}
 
         {message && !detailGroup && <p className="mt-4 rounded-lg bg-earth-100 px-4 py-2 text-sm text-earth-800">{message}</p>}
 

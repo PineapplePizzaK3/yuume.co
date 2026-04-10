@@ -8,10 +8,11 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '../hooks/useAuth'
 import { useCartCount } from '../hooks/useCartCount'
 import { useLocalizedPath } from '../hooks/useLocalizedPath'
+import { isRouteActive } from '../lib/localeRoutes'
 
 const NAV_ROUTE_KEYS = ['appDashboard']
 const CONTA_ROUTE_KEYS = ['appLounge', 'appConta', 'appCart']
-const LOJA_ROUTE_KEYS = ['appLoja']
+const LOJA_ROUTE_KEYS = ['appServices', 'appLoja', 'appGrupoCompras']
 
 const ALL_MENU_KEYS = [...NAV_ROUTE_KEYS, ...CONTA_ROUTE_KEYS, ...LOJA_ROUTE_KEYS]
 
@@ -29,6 +30,10 @@ const LEGACY_PATH_TO_KEY = {
   '/en/app/services': 'appServices',
   '/app/grupo-de-compras': 'appGrupoCompras',
   '/en/app/group-buying': 'appGrupoCompras',
+  '/app/grupo-de-compras/online': 'appGrupoCompras',
+  '/app/grupo-de-compras/fisica': 'appGrupoCompras',
+  '/en/app/group-buying/online': 'appGrupoCompras',
+  '/en/app/group-buying/physical': 'appGrupoCompras',
   '/app/loja': 'appLoja',
   '/en/app/store': 'appLoja',
 }
@@ -39,8 +44,8 @@ const LABEL_KEY_BY_ROUTE = {
   appConta: 'platform.navAccountData',
   appCart: 'platform.navPayments',
   appServices: 'platform.navServices',
-  appGrupoCompras: 'platform.navGroupBuy',
-  appLoja: 'platform.navStore',
+  appLoja: 'platform.storeHub.tabShowcase',
+  appGrupoCompras: 'platform.navScheduledBuying',
 }
 
 const MENU_ORDER_STORAGE_KEY = 'platform_menu_order_v2'
@@ -120,8 +125,24 @@ export function PlatformLayout() {
 
   const isActive = useCallback((routeKey) => location.pathname === p(routeKey), [location.pathname, p])
 
+  const isLojaItemActive = useCallback(
+    (routeKey) => {
+      if (routeKey === 'appGrupoCompras') {
+        return isRouteActive('appGrupoCompras', location.pathname, true)
+      }
+      return location.pathname === p(routeKey)
+    },
+    [location.pathname, p]
+  )
+
   const isInLoja = useMemo(
-    () => LOJA_ROUTE_KEYS.some((k) => p(k) === location.pathname),
+    () =>
+      LOJA_ROUTE_KEYS.some((k) => {
+        if (k === 'appGrupoCompras') {
+          return isRouteActive('appGrupoCompras', location.pathname, true)
+        }
+        return p(k) === location.pathname
+      }),
     [location.pathname, p]
   )
   const isInConta = useMemo(
@@ -132,7 +153,8 @@ export function PlatformLayout() {
   const navItemsByKey = useMemo(() => {
     const map = new Map()
     for (const k of ALL_MENU_KEYS) {
-      map.set(k, { routeKey: k, to: p(k), label: t(LABEL_KEY_BY_ROUTE[k]) })
+      const to = k === 'appGrupoCompras' ? p('appGrupoComprasOnline') : p(k)
+      map.set(k, { routeKey: k, to, label: t(LABEL_KEY_BY_ROUTE[k]) })
     }
     return map
   }, [p, t])
@@ -195,7 +217,7 @@ export function PlatformLayout() {
         id: 'loja-virtual',
         routeKey: 'appLoja',
         label: t('platform.mobileStore'),
-        active: isActive('appLoja'),
+        active: isInLoja,
         icon: (
           <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7.5h18M5.25 7.5l1.5 12a1.5 1.5 0 001.49 1.313h7.52a1.5 1.5 0 001.49-1.313l1.5-12M9 11.25h.008v.008H9v-.008zm6 0h.008v.008H15v-.008z" />
@@ -214,7 +236,7 @@ export function PlatformLayout() {
         ),
       },
     ],
-    [isActive, t]
+    [isActive, isInLoja, t]
   )
 
   const isPlatformHome = location.pathname === dashboardPath
@@ -432,7 +454,7 @@ export function PlatformLayout() {
                       }}
                       onDragEnd={() => setDraggingItem(null)}
                       className={`block cursor-grab rounded-lg px-3 py-2 text-sm transition active:cursor-grabbing ${
-                        isActive(item.routeKey)
+                        isLojaItemActive(item.routeKey)
                           ? 'font-medium text-earth-900 bg-earth-200'
                           : 'text-earth-600 hover:bg-earth-100 hover:text-earth-800'
                       }`}
@@ -466,7 +488,7 @@ export function PlatformLayout() {
         </div>
       </aside>
       <main className={`flex-1 p-4 pb-24 lg:pb-4 ${showReferralBanner ? 'pt-32' : 'pt-20'}`}>
-        <div className={`mx-auto ${location.pathname === p('appLoja') ? 'max-w-6xl' : 'max-w-4xl'}`}>
+        <div className={`mx-auto ${isInLoja ? 'max-w-6xl' : 'max-w-4xl'}`}>
           <Outlet />
         </div>
       </main>

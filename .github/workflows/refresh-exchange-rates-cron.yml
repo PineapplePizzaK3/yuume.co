@@ -34,3 +34,20 @@ jobs:
               -H "Authorization: Bearer $CRON_SECRET" \
               "$URL"
           fi
+
+      - name: Trigger online-group price refresh endpoint
+        env:
+          SITE_URL: ${{ secrets.CRON_SITE_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$SITE_URL" ] || [ -z "$CRON_SECRET" ]; then
+            echo "Missing required secrets: CRON_SITE_URL and/or CRON_SECRET"
+            exit 1
+          fi
+
+          URL="${SITE_URL%/}/api/cron-refresh-online-group-prices"
+          echo "Calling $URL"
+
+          curl --fail --show-error --silent \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            "$URL"

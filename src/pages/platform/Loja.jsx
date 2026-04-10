@@ -1,5 +1,5 @@
 /**
- * Em Estoque - Itens disponíveis para compra.
+ * Vitrine - Itens disponíveis para compra.
  * Usuário vê apenas produtos ativos. Clique no card abre modal com detalhes e botão Adicionar ao carrinho.
  */
 import { useEffect, useState } from 'react'
@@ -156,7 +156,7 @@ export default function Loja({ embedded = false }) {
           <p className="mt-6 text-earth-600">{t('platform.store.empty')}</p>
         )}
         {!loading && products.length > 0 && (
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-6 grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             {products.map((p) => {
               const imgs = getProductImages(p)
               const mainImg = imgs[0]
@@ -168,7 +168,7 @@ export default function Loja({ embedded = false }) {
               return (
                 <div
                   key={p.id}
-                  className="overflow-hidden rounded-lg border border-earth-200 bg-earth-50 shadow-sm transition hover:border-earth-400 hover:shadow-md"
+                  className="overflow-hidden rounded-md border border-earth-200 bg-earth-50 shadow-sm transition hover:border-earth-400 hover:shadow-md"
                 >
                   <button
                     type="button"
@@ -179,18 +179,18 @@ export default function Loja({ embedded = false }) {
                       <img
                         src={thumbUrl || mainImg}
                         alt={p.name}
-                        className="h-36 w-full cursor-zoom-in object-cover"
+                        className="h-28 w-full cursor-zoom-in object-cover"
                         loading="lazy"
                         onError={(e) => { if (e.target.src !== mainImg) e.target.src = mainImg }}
                         onClick={(e) => openLightbox(mainImg, p.name, e)}
                       />
                     ) : (
-                      <div className="flex h-36 items-center justify-center bg-earth-200 text-earth-500 text-sm">
+                      <div className="flex h-28 items-center justify-center bg-earth-200 text-earth-500 text-xs">
                         {t('platform.store.noImage')}
                       </div>
                     )}
-                    <div className="p-3">
-                      <h2 className="font-semibold text-earth-900 text-sm line-clamp-2">{p.name}</h2>
+                    <div className="p-2">
+                      <h2 className="font-semibold text-earth-900 text-xs leading-snug line-clamp-2 sm:text-sm">{p.name}</h2>
                       <span className={`mt-1 inline-flex rounded border px-2 py-0.5 text-[11px] font-medium ${condition.className}`}>
                         {condLabel}
                       </span>
@@ -202,19 +202,19 @@ export default function Loja({ embedded = false }) {
                       <ProductPriceBlock product={p} />
                     </div>
                   </button>
-                  <div className="flex gap-2 px-3 pb-3" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex gap-1.5 px-2 pb-2" onClick={(e) => e.stopPropagation()}>
                     <button
                       type="button"
                       onClick={() => !isOutOfStock(p) && handleComprar(p)}
                       disabled={isOutOfStock(p)}
-                      className="flex-1 rounded-lg px-3 py-2 text-xs font-medium disabled:cursor-not-allowed disabled:opacity-60 disabled:bg-earth-300 disabled:text-earth-600 bg-earth-900 text-white hover:bg-earth-800"
+                      className="flex-1 rounded-md px-2 py-1.5 text-[11px] font-medium disabled:cursor-not-allowed disabled:opacity-60 disabled:bg-earth-300 disabled:text-earth-600 bg-earth-900 text-white hover:bg-earth-800"
                     >
                       {isOutOfStock(p) ? t('platform.store.outOfStock') : t('platform.store.addToCart')}
                     </button>
                     {isOutOfStock(p) && (
                       <Link
                         to={lp('appServices')}
-                        className="rounded-lg border border-earth-300 bg-white px-3 py-2 text-xs font-medium text-earth-700 hover:bg-earth-100"
+                        className="rounded-md border border-earth-300 bg-white px-2 py-1.5 text-[11px] font-medium text-earth-700 hover:bg-earth-100"
                       >
                         {t('platform.store.requestOrder')}
                       </Link>

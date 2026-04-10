@@ -198,7 +198,8 @@
     "navPayments": "🛒 Payments hub",
     "navServices": "Services",
     "navGroupBuy": "Scheduled buying",
-    "navVirtualStore": "In stock",
+    "navVirtualStore": "Showcase",
+    "navScheduledBuying": "Scheduled buying",
     "navStore": "Store",
     "navAdmin": "Admin",
     "navSignOut": "Sign out",
@@ -874,8 +875,8 @@
       "for_parts": "For parts"
     },
     "store": {
-      "metaTitle": "In stock | Platform",
-      "pageTitle": "In stock",
+      "metaTitle": "Showcase | Platform",
+      "pageTitle": "Showcase",
       "loadError": "Could not load products",
       "loading": "Loading…",
       "empty": "No products available at the moment.",
@@ -886,7 +887,7 @@
       "outOfStock": "Out of stock",
       "addToCart": "Add to cart",
       "requestOrder": "Request a purchase",
-      "ctaBody": "Didn’t find what you need in In stock? We can buy it for you in Japan.",
+      "ctaBody": "Didn’t find what you need in Showcase? We can buy it for you in Japan.",
       "ctaButton": "Request a purchase",
       "prevPhoto": "Previous photo",
       "nextPhoto": "Next photo",
@@ -895,8 +896,8 @@
     },
     "storeHub": {
       "pageTitle": "Store",
-      "intro": "Access In stock, Scheduled buying, Showcase, and Services in one place.",
-      "tabStock": "In stock",
+      "intro": "Access Showcase and Scheduled buying in one place.",
+      "tabStock": "Showcase",
       "tabScheduled": "Scheduled buying",
       "tabShowcase": "Showcase",
       "tabServices": "Services"
@@ -904,7 +905,9 @@
     "groupBuy": {
       "metaTitle": "Scheduled buying | Platform",
       "pageTitle": "Scheduled buying",
-      "intro": "Browse available groups with photos. Service fee: 20% on group product value + ¥250 per unit (checkout converts to BRL at the configured rate).",
+      "intro": "Choose between Online and Physical groups for scheduled buying.",
+      "tabOnline": "Online",
+      "tabPhysical": "Physical",
       "loadError": "Could not load buying groups",
       "loading": "Loading…",
       "loginLink": "Sign in",
@@ -920,26 +923,6 @@
       "clickForDetails": "Click to view details",
       "viewProduct": "View product",
       "buy": "Buy"
-    },
-    "showcase": {
-      "pageTitle": "Showcase",
-      "intro": "Groups curated by us with products sold 100% online.",
-      "loadError": "Could not load showcase",
-      "loading": "Loading…",
-      "loginLink": "Sign in",
-      "loginSuffix": " to use the cart.",
-      "loginToBuy": "Please sign in to purchase.",
-      "addError": "Could not add to cart",
-      "added": "Added to cart!",
-      "emptyGroups": "No showcase groups available.",
-      "productsInGroup": "Products in group: {{count}}",
-      "viewDetails": "View details",
-      "productsAvailable": "Available products",
-      "noProductsLinked": "This showcase group does not have linked products yet.",
-      "clickForDetails": "Click to view details",
-      "viewProduct": "View product",
-      "buy": "Buy",
-      "metaTitle": "Showcase | Platform"
     },
     "services": {
       "loadError": "Could not load services",

@@ -25,7 +25,6 @@ const CommercialDisclosure = lazy(() => import('./pages/legal/CommercialDisclosu
 const PrivacyPolicy = lazy(() => import('./pages/legal/PrivacyPolicy'))
 const TermsOfService = lazy(() => import('./pages/legal/TermsOfService'))
 import { ProtectedRoute } from './components/ProtectedRoute'
-const LojaPublicRoute = lazy(() => import('./components/LojaPublicRoute'))
 import { AdminRoute } from './components/AdminRoute'
 const PlatformLayout = lazy(() => import('./layouts/PlatformLayout').then((m) => ({ default: m.PlatformLayout })))
 const Login = lazy(() => import('./pages/platform/Login'))
@@ -36,8 +35,9 @@ const ResetPassword = lazy(() => import('./pages/platform/ResetPassword'))
 const Dashboard = lazy(() => import('./pages/platform/Dashboard'))
 const Profile = lazy(() => import('./pages/platform/Profile'))
 const Conta = lazy(() => import('./pages/platform/Conta'))
-const LojaHub = lazy(() => import('./pages/platform/LojaHub'))
-const LojaMirror = lazy(() => import('./pages/LojaMirror'))
+const Loja = lazy(() => import('./pages/platform/Loja'))
+const Services = lazy(() => import('./pages/platform/Services'))
+const ComprasProgramadas = lazy(() => import('./pages/platform/ComprasProgramadas'))
 const Cart = lazy(() => import('./pages/platform/Cart'))
 const AdminLayout = lazy(() => import('./pages/platform/admin/AdminLayout'))
 const AdminPedidosTab = lazy(() => import('./pages/platform/admin/tabs/PedidosTab'))
@@ -144,7 +144,11 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/como-funciona" element={<Navigate to={p('servicosPrecos')} replace />} />
             <Route path="/contact" element={<Contact />} />
-            <Route path="/loja" element={<LojaPublicRoute />} />
+            <Route path="/loja" element={<Navigate to={p('lojaPublicVitrine')} replace />} />
+            <Route path="/loja/vitrine" element={<Loja />} />
+            <Route path="/loja/compras-programadas" element={<Navigate to={p('lojaPublicProgramadasOnline')} replace />} />
+            <Route path="/loja/compras-programadas/online" element={<ComprasProgramadas publicMode />} />
+            <Route path="/loja/compras-programadas/fisica" element={<ComprasProgramadas publicMode />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -158,18 +162,20 @@ function App() {
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="complete-social-profile" element={<CompleteSocialProfile />} />
               <Route path="lounge" element={<Lounge />} />
-              <Route path="services" element={<Navigate to={p('appLoja', '?sec=servicos')} replace />} />
+              <Route path="services" element={<Services />} />
               <Route path="orders" element={<Navigate to={p('appLounge')} replace />} />
               <Route path="wallet" element={<Navigate to={p('appLounge')} replace />} />
               <Route path="payments" element={<Navigate to={p('appCart', '?tab=history')} replace />} />
               <Route path="profile" element={<Profile />} />
               <Route path="conta" element={<Conta />} />
               <Route path="meus-produtos" element={<Navigate to={p('appLounge')} replace />} />
-              <Route path="loja" element={<LojaHub />} />
+              <Route path="loja" element={<Loja />} />
               <Route path="cart" element={<Cart />} />
               <Route path="invoices" element={<Invoices />} />
               <Route path="invoices/:id" element={<InvoiceDetail />} />
-              <Route path="grupo-de-compras" element={<Navigate to={p('appLoja', '?sec=compras-programadas')} replace />} />
+              <Route path="grupo-de-compras" element={<Navigate to={p('appGrupoComprasOnline')} replace />} />
+              <Route path="grupo-de-compras/online" element={<ComprasProgramadas />} />
+              <Route path="grupo-de-compras/fisica" element={<ComprasProgramadas />} />
               <Route path="affiliate" element={<Affiliate />} />
               <Route path="lista-desejos" element={<Navigate to={p('appLounge', '?tab=desejos')} replace />} />
               <Route path="envios" element={<Navigate to={p('appLounge')} replace />} />
@@ -216,7 +222,12 @@ function App() {
             <Route path="/en" element={<Home />} />
             <Route path="/en/como-funciona" element={<Navigate to={e('servicosPrecos')} replace />} />
             <Route path="/en/contact" element={<Contact />} />
-            <Route path="/en/store" element={<LojaPublicRoute />} />
+            <Route path="/en/store" element={<Navigate to={e('lojaPublicVitrine')} replace />} />
+            <Route path="/en/store/storefront" element={<Loja />} />
+            <Route path="/en/store/showcase" element={<Navigate to={e('lojaPublicVitrine')} replace />} />
+            <Route path="/en/store/scheduled-buying" element={<Navigate to={e('lojaPublicProgramadasOnline')} replace />} />
+            <Route path="/en/store/scheduled-buying/online" element={<ComprasProgramadas publicMode />} />
+            <Route path="/en/store/scheduled-buying/physical" element={<ComprasProgramadas publicMode />} />
             <Route path="/en/login" element={<Login />} />
             <Route path="/en/register" element={<Register />} />
             <Route path="/en/forgot-password" element={<ForgotPassword />} />
@@ -230,18 +241,20 @@ function App() {
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="complete-social-profile" element={<CompleteSocialProfile />} />
               <Route path="lounge" element={<Lounge />} />
-              <Route path="services" element={<Navigate to={e('appLoja', '?sec=servicos')} replace />} />
+              <Route path="services" element={<Services />} />
               <Route path="orders" element={<Navigate to={e('appLounge')} replace />} />
               <Route path="wallet" element={<Navigate to={e('appLounge')} replace />} />
               <Route path="payments" element={<Navigate to={e('appCart', '?tab=history')} replace />} />
               <Route path="profile" element={<Profile />} />
               <Route path="account" element={<Conta />} />
               <Route path="my-products" element={<Navigate to={e('appLounge')} replace />} />
-              <Route path="store" element={<LojaHub />} />
+              <Route path="store" element={<Loja />} />
               <Route path="cart" element={<Cart />} />
               <Route path="invoices" element={<Invoices />} />
               <Route path="invoices/:id" element={<InvoiceDetail />} />
-              <Route path="group-buying" element={<Navigate to={e('appLoja', '?sec=compras-programadas')} replace />} />
+              <Route path="group-buying" element={<Navigate to={e('appGrupoComprasOnline')} replace />} />
+              <Route path="group-buying/online" element={<ComprasProgramadas />} />
+              <Route path="group-buying/physical" element={<ComprasProgramadas />} />
               <Route path="affiliate" element={<Affiliate />} />
               <Route path="wishlist" element={<Navigate to={e('appLounge', '?tab=desejos')} replace />} />
               <Route path="shipments" element={<Navigate to={e('appLounge')} replace />} />

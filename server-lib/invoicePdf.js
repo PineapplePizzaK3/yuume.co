@@ -51,6 +51,53 @@ function flowLabel(flow, locale) {
   return String(flow || '—')
 }
 
+function humanizePaymentToken(token, locale) {
+  const raw = String(token || '').trim()
+  if (!raw) return '—'
+  const low = raw.toLowerCase()
+
+  if (low === 'wallet_jpy' || /wallet/.test(low)) return t(locale, 'Carteira (JPY)', 'Wallet (JPY)')
+  if (low === 'referral_discount') return t(locale, 'Desconto de indicação', 'Referral discount')
+  if (low === 'coupon_discount') return t(locale, 'Cupom de desconto', 'Coupon discount')
+  if (low.startsWith('parcelow_') || low === 'parcelow') return 'Parcelow'
+  if (/pix/.test(low)) return 'PIX'
+  if (low.startsWith('pi_') || low.startsWith('ch_') || low.startsWith('cs_')) return 'Stripe'
+  if (low === 'wise') return 'Wise'
+  if (low === 'internal_transfer') return t(locale, 'Transferência interna', 'Internal transfer')
+
+  return raw
+}
+
+function humanizeMethodLabel(method, locale) {
+  const parts = String(method || '')
+    .split(/\s*\+\s*/)
+    .map((p) => humanizePaymentToken(p, locale))
+    .filter(Boolean)
+  if (parts.length === 0) return '—'
+  return parts.join(' + ')
+}
+
+function humanizeTransactionRef(txn, locale) {
+  const raw = String(txn || '').trim()
+  if (!raw) return '—'
+  const parts = raw
+    .split(/\s*\|\s*/)
+    .map((p) => p.trim())
+    .filter(Boolean)
+  if (parts.length === 0) return '—'
+
+  return parts
+    .map((p) => {
+      const low = p.toLowerCase()
+      if (low === 'wallet_jpy') return t(locale, 'Débito em carteira (JPY)', 'Wallet debit (JPY)')
+      if (low === 'referral_discount') return t(locale, 'Desconto por indicação', 'Referral discount')
+      if (low === 'coupon_discount') return t(locale, 'Desconto por cupom', 'Coupon discount')
+      if (low.startsWith('parcelow_')) return `Parcelow #${p.slice('parcelow_'.length)}`
+      return p
+    })
+    .join(' | ')
+}
+
 function drawTopDecoration(doc, pageWidth) {
   doc.save()
   doc.rect(0, 0, pageWidth, 34).fill('#111111')
@@ -452,8 +499,8 @@ export function buildInvoicePdfBuffer(data) {
           ? pay.currency || 'USD'
           : pay.currency || 'USD'
     const leftPairs = [
-      { label: t(locale, 'Forma de pagamento', 'Payment method'), value: method || '—' },
-      { label: t(locale, 'ID da transação', 'Transaction ID'), value: txn || '—' },
+      { label: t(locale, 'Forma de pagamento', 'Payment method'), value: humanizeMethodLabel(method, locale) },
+      { label: t(locale, 'ID da transação', 'Transaction ID'), value: humanizeTransactionRef(txn, locale) },
       { label: t(locale, 'Moeda de referência', 'Reference currency'), value: currency || '—' },
     ]
     const rightPairs = []
@@ -471,16 +518,31 @@ export function buildInvoicePdfBuffer(data) {
     const drawPairColumn = (x, startY, pairs, labelWidth, valueWidth) => {
       let cy = startY
       for (const pair of pairs) {
-        doc.font('Helvetica-Bold').fontSize(10).fillColor('#111111').text(`${pair.label}:`, x, cy, { width: labelWidth })
-        doc.font('Helvetica').fontSize(10).fillColor('#111111').text(esc(String(pair.value || '—')), x + labelWidth + 6, cy, { width: valueWidth })
-        const hLabel = doc.heightOfString(`${pair.label}:`, { width: labelWidth })
-        const hValue = doc.heightOfString(esc(String(pair.value || '—')), { width: valueWidth })
-        cy += Math.max(hLabel, hValue) + 6
+        const labelText = `${pair.label}:`
+        const valueText = esc(String(pair.value || '—'))
+        doc.font('Helvetica-Bold').fontSize(10)
+        const hLabel = doc.heightOfString(labelText, { width: labelWidth, lineGap: 1 })
+        doc.font('Helvetica').fontSize(10)
+        const hValue = doc.heightOfString(valueText, { width: valueWidth, lineGap: 1 })
+        const rowHeight = Math.max(hLabel, hValue)
+
+        doc
+          .font('Helvetica-Bold')
+          .fontSize(10)
+          .fillColor('#111111')
+          .text(labelText, x, cy, { width: labelWidth, lineGap: 1 })
+        doc
+          .font('Helvetica')
+          .fontSize(10)
+          .fillColor('#111111')
+          .text(valueText, x + labelWidth + 8, cy, { width: valueWidth, lineGap: 1 })
+
+        cy += rowHeight + 8
       }
       return cy
     }
 
-    const leftEndY = drawPairColumn(48, y, leftPairs, 102, 180)
+    const leftEndY = drawPairColumn(48, y, leftPairs, 132, 150)
     const rightEndY = drawPairColumn(330, y, rightPairs, 110, 110)
     y = Math.max(leftEndY, rightEndY)
 

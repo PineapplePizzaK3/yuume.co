@@ -58,6 +58,7 @@ import {
   updatePurchaseGroupProduct,
   deletePurchaseGroupProduct,
 } from '../../../services/groupService'
+import { scrapeProductUrl } from '../../../services/wishlistLinkService'
 import { getPurchaseGroupProducts } from '../../../services/productService'
 import { getUserLogs, getAuthLogs, logAdminAction } from '../../../services/logService'
 import { getMyAdminNotifications, markNotificationRead } from '../../../services/notificationService'
@@ -243,7 +244,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     image_url: '',
     image_urls: [],
     is_active: true,
-    source: 'scheduled',
+    destination: '',
   })
   const [editingGroupId, setEditingGroupId] = useState(null)
   const [groupImageUploading, setGroupImageUploading] = useState(false)
@@ -258,6 +259,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     description: '',
     image_url: '',
     image_urls: [],
+    source_url: '',
     weight_kg: '0',
     weight_unit: 'g',
     stock_quantity: '',
@@ -321,6 +323,8 @@ export default function Admin({ routeTabId = 'pedidos' }) {
   const [productReferenceId, setProductReferenceId] = useState('')
   const [groupProductReferenceSearch, setGroupProductReferenceSearch] = useState('')
   const [groupProductReferenceId, setGroupProductReferenceId] = useState('')
+  const [groupProductSourceUrlInput, setGroupProductSourceUrlInput] = useState('')
+  const [groupProductScraping, setGroupProductScraping] = useState(false)
   const [externalSearchQuery, setExternalSearchQuery] = useState('')
   const [externalSearchStores, setExternalSearchStores] = useState({
     amazon: true,
@@ -976,16 +980,17 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       image_url: '',
       image_urls: [],
       is_active: true,
-      source: 'scheduled',
+      destination: '',
     })
     setEditingGroupId(null)
     setGroupImageUploadError('')
     setNewGroupImageUrl('')
     setGroupProducts([])
     setPendingGroupProducts([])
-    setGroupProductForm({ name: '', price: '', description: '', image_url: '', image_urls: [], weight_kg: '0', weight_unit: 'g', stock_quantity: '' })
+    setGroupProductForm({ name: '', price: '', description: '', image_url: '', image_urls: [], source_url: '', weight_kg: '0', weight_unit: 'g', stock_quantity: '' })
     setEditingGroupProductId(null)
     setEditingPendingProductIndex(null)
+    setGroupProductSourceUrlInput('')
   }
 
   const loadGroupProducts = async (groupId) => {
@@ -1001,7 +1006,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       image_url: g.image_url ?? '',
       image_urls: Array.isArray(g.image_urls) ? g.image_urls.filter(Boolean) : [],
       is_active: g.is_active ?? true,
-      source: g.source === 'showcase' ? 'showcase' : 'scheduled',
+      destination: g.destination ?? '',
     })
     setEditingGroupId(g.id)
     setGroupImageUploadError('')
@@ -1009,15 +1014,17 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     setEditingGroupProductId(null)
     setEditingPendingProductIndex(null)
     setPendingGroupProducts([])
-    setGroupProductForm({ name: '', price: '', description: '', image_url: '', image_urls: [], weight_kg: '0', weight_unit: 'g', stock_quantity: '' })
+    setGroupProductForm({ name: '', price: '', description: '', image_url: '', image_urls: [], source_url: '', weight_kg: '0', weight_unit: 'g', stock_quantity: '' })
     loadGroupProducts(g.id)
+    setGroupProductSourceUrlInput('')
   }
 
   const resetGroupProductForm = () => {
-    setGroupProductForm({ name: '', price: '', description: '', image_url: '', image_urls: [], weight_kg: '0', weight_unit: 'g', stock_quantity: '' })
+    setGroupProductForm({ name: '', price: '', description: '', image_url: '', image_urls: [], source_url: '', weight_kg: '0', weight_unit: 'g', stock_quantity: '' })
     setEditingGroupProductId(null)
     setEditingPendingProductIndex(null)
     setGroupProductReferenceId('')
+    setGroupProductSourceUrlInput('')
   }
 
   const buildGroupProductPayload = () => {
@@ -1038,8 +1045,45 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       price,
       image_url: imageUrls[0] || groupProductForm.image_url || '',
       image_urls: imageUrls,
+      source_url: groupProductForm.source_url?.trim() || null,
       weight_kg: weightKg,
       stock_quantity: stockQty,
+    }
+  }
+
+  const isOnlineGroupDestination = groupForm.destination === 'online'
+
+  const handleScrapeOnlineGroupProduct = async () => {
+    const url = String(groupProductSourceUrlInput || '').trim()
+    if (!isOnlineGroupDestination) {
+      setMessage('Scrape automático disponível apenas para grupos Online.')
+      return
+    }
+    if (!/^https?:\/\//i.test(url)) {
+      setMessage('Use uma URL completa começando com http:// ou https://')
+      return
+    }
+    setGroupProductScraping(true)
+    setMessage('')
+    try {
+      const { data, error } = await scrapeProductUrl(url)
+      if (error) {
+        setMessage(error.message || 'Não foi possível extrair dados do produto.')
+        return
+      }
+      setGroupProductForm((prev) => ({
+        ...prev,
+        name: data?.name || prev.name,
+        price: data?.price != null ? String(Math.round(Number(data.price) || 0)) : prev.price,
+        image_url: data?.imageUrl || prev.image_url,
+        image_urls: data?.imageUrl ? [data.imageUrl] : prev.image_urls,
+        source_url: url,
+      }))
+      setMessage('Dados do produto preenchidos via scrape.')
+    } catch (e) {
+      setMessage(e?.message || 'Erro ao executar scrape do produto.')
+    } finally {
+      setGroupProductScraping(false)
     }
   }
 
@@ -1101,12 +1145,14 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       description: p.description ?? '',
       image_url: p.image_url ?? '',
       image_urls: Array.isArray(p.image_urls) ? p.image_urls : (p.image_url ? [p.image_url] : []),
+      source_url: p.source_url ?? '',
       weight_kg: useG ? String(Math.round(kg * 1000)) : String(kg),
       weight_unit: useG ? 'g' : 'kg',
       stock_quantity: p.stock_quantity != null ? String(p.stock_quantity) : '',
     })
     setEditingGroupProductId(p.id)
     setGroupProductReferenceId(p.id || '')
+    setGroupProductSourceUrlInput(p.source_url || '')
   }
 
   const handleDeleteGroupProduct = async (productId) => {
@@ -1128,12 +1174,14 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       description: item.description ?? '',
       image_url: item.image_url ?? '',
       image_urls: Array.isArray(item.image_urls) ? item.image_urls : (item.image_url ? [item.image_url] : []),
+      source_url: item.source_url ?? '',
       weight_kg: useG ? String(Math.round(kg * 1000)) : String(kg),
       weight_unit: useG ? 'g' : 'kg',
       stock_quantity: item.stock_quantity != null ? String(item.stock_quantity) : '',
     })
     setEditingPendingProductIndex(index)
     setGroupProductReferenceId(item.id || '')
+    setGroupProductSourceUrlInput(item.source_url || '')
   }
 
   const handleRemovePendingGroupProduct = (index) => {
@@ -1151,7 +1199,9 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     try {
       const { data, error } = await getPurchaseGroupsAdmin()
       if (!active()) return
-      setPurchaseGroups(data ?? [])
+      setPurchaseGroups(
+        (data ?? []).filter((group) => !group?.source || group.source === 'scheduled')
+      )
       if (error) setMessage(error.message)
     } catch (e) {
       if (active()) setMessage(e?.message || 'Erro ao carregar grupos de compra')
@@ -1292,8 +1342,13 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     setMessage('')
 
     const name = groupForm.name?.trim()
+    const destination = String(groupForm.destination || '').trim().toLowerCase()
     if (!name) {
       setMessage('Nome do grupo Ã© obrigatÃ³rio')
+      return
+    }
+    if (destination !== 'online' && destination !== 'physical') {
+      setMessage('Selecione o destino do grupo: Online ou Física.')
       return
     }
 
@@ -1311,7 +1366,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
         image_urls: imageUrls,
         image_url: groupForm.image_url || imageUrls[0] || '',
         is_active: groupForm.is_active ?? true,
-        source: groupForm.source === 'showcase' ? 'showcase' : 'scheduled',
+        destination,
       }
 
       const { data: groupData, error } = editingGroupId
@@ -1511,12 +1566,12 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       setMessage(error.message || 'Erro ao publicar produto na loja')
       return
     }
-    setMessage('Produto publicado em Em Estoque')
+    setMessage('Produto publicado na Vitrine')
     loadStoreProducts()
   }
 
   const handleUnpublishFromStore = async (productId) => {
-    if (!productId || !confirm('Remover este item de Em Estoque?')) return
+    if (!productId || !confirm('Remover este item da Vitrine?')) return
     setStoreLinkSubmittingId(productId)
     const { error } = await removeProductFromStoreAdmin(productId)
     setStoreLinkSubmittingId('')
@@ -1524,7 +1579,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       setMessage(error.message || 'Erro ao remover produto da loja')
       return
     }
-    setMessage('Produto removido de Em Estoque')
+    setMessage('Produto removido da Vitrine')
     loadStoreProducts()
   }
 
@@ -2243,6 +2298,11 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     setGroupProductReferenceSearch,
     groupProductReferenceId,
     setGroupProductReferenceId,
+    groupProductSourceUrlInput,
+    setGroupProductSourceUrlInput,
+    groupProductScraping,
+    handleScrapeOnlineGroupProduct,
+    isOnlineGroupDestination,
     filteredGroupProductReferences,
     applyReferenceToGroupProductForm,
     masterProductReferences,

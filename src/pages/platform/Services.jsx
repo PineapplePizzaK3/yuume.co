@@ -372,6 +372,16 @@ export default function Services({ embedded = false }) {
                     key={s.id}
                     type="button"
                     onClick={() => {
+                      if (selectedId === s.id) {
+                        setSelectedId(null)
+                        setFeedback('')
+                        setSuccessNotice(null)
+                        setAgreeProhibited(false)
+                        setRedirModule('self_buy')
+                        setEarlyPrepaymentRequested(false)
+                        setEarlyPrepaymentProductsJpyInput('')
+                        return
+                      }
                       setSelectedId(s.id)
                       setFeedback('')
                       setSuccessNotice(null)
@@ -380,6 +390,7 @@ export default function Services({ embedded = false }) {
                       setEarlyPrepaymentRequested(false)
                       setEarlyPrepaymentProductsJpyInput('')
                     }}
+                    aria-pressed={selectedId === s.id}
                     className={`rounded-xl border-2 p-5 text-left transition ${
                       selectedId === s.id
                         ? 'border-earth-900 bg-earth-100'
