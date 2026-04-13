@@ -72,6 +72,13 @@ export async function createOrder(userId, { service_id, message, attachment_urls
   const isAssistedBuy = isRedirecionamento && module === 'assisted_buy'
   const status = (isPersonalShopping || isAssistedBuy) ? ORDER_STATUS.AWAITING_QUOTE : ORDER_STATUS.PENDING_APPROVAL
   const urls = Array.isArray(attachment_urls) ? attachment_urls.filter(Boolean) : []
+  const msgTrim = typeof message === 'string' ? message.trim() : ''
+  if (!msgTrim && urls.length === 0) {
+    return {
+      data: null,
+      error: { message: 'Descreva o pedido ou anexe pelo menos uma imagem de referência.' },
+    }
+  }
   const earlyPrepay = Boolean(isAssistedBuy && early_prepayment_requested)
   const walletJpy =
     earlyPrepay && early_prepayment_wallet_jpy != null && Number(early_prepayment_wallet_jpy) > 0

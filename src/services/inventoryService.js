@@ -133,6 +133,101 @@ export async function createShipment(userId, inventoryIds, options = {}) {
 }
 
 /**
+ * Converte products_description gravada pelo admin (ex.: "2x Item (100); 1x Outro (0)")
+ * em linhas editáveis.
+ */
+export function parseInventoryProductsForEdit(text) {
+  const raw = String(text || '').trim()
+  if (!raw) return [{ name: '', quantity: '1', price: '' }]
+  const parts = raw.split(';').map((s) => s.trim()).filter(Boolean)
+  const rows = []
+  for (const part of parts) {
+    const m = part.match(/^(\d+)\s*x\s+(.+?)\s*\(\s*([-0-9.]+)\s*\)\s*$/i)
+    if (m) {
+      rows.push({
+        name: m[2].trim(),
+        quantity: String(Math.max(1, parseInt(m[1], 10) || 1)),
+        price: m[3],
+      })
+      continue
+    }
+    const m2 = part.match(/^(\d+)\s*x\s+(.+)$/i)
+    if (m2) {
+      rows.push({
+        name: m2[2].trim(),
+        quantity: String(Math.max(1, parseInt(m2[1], 10) || 1)),
+        price: '',
+      })
+    }
+  }
+  if (rows.length === 0) return [{ name: raw, quantity: '1', price: '' }]
+  return rows
+}
+
+/**
+ * Admin: atualiza um pacote/inventário do usuário (nome, produtos, peso, mídias, notas).
+ */
+export async function updateUserInventoryAdmin(inventoryId, payload) {
+  const { name, notes, weight_kg, photo_url, video_url, products } = payload || {}
+  const validProducts = Array.isArray(products)
+    ? products.filter((p) => String(p?.name || '').trim())
+    : []
+
+  let finalName = String(name || '').trim()
+  let finalDesc = ''
+  let finalItemsCount = 1
+
+  if (validProducts.length > 0) {
+    finalName = validProducts[0].name.trim()
+    finalDesc = validProducts
+      .map((p) => {
+        const q = Math.max(1, parseInt(p.quantity, 10) || 1)
+        const price = Number.isFinite(Number(p.price)) ? Number(p.price) : 0
+        return `${q}x ${p.name.trim()} (${price})`
+      })
+      .join('; ')
+    finalItemsCount = validProducts.reduce(
+      (s, p) => s + Math.max(1, parseInt(p.quantity, 10) || 1),
+      0
+    )
+  } else if (finalName) {
+    finalDesc = ''
+    finalItemsCount = 1
+  }
+
+  if (!finalName) {
+    return { data: null, error: { message: 'Informe o nome do pacote ou pelo menos um produto.' } }
+  }
+
+  let w = null
+  if (weight_kg !== '' && weight_kg != null && String(weight_kg).trim() !== '') {
+    const parsed = parseFloat(weight_kg)
+    if (!Number.isFinite(parsed)) {
+      return { data: null, error: { message: 'Peso inválido.' } }
+    }
+    w = parsed
+  }
+
+  try {
+    const { data, error } = await withDbTimeout(
+      supabase.rpc('admin_update_user_inventory', {
+        p_inventory_id: inventoryId,
+        p_name: finalName,
+        p_notes: notes != null && String(notes).trim() !== '' ? String(notes).trim() : null,
+        p_weight_kg: w,
+        p_photo_url: photo_url != null && String(photo_url).trim() !== '' ? String(photo_url).trim() : null,
+        p_video_url: video_url != null && String(video_url).trim() !== '' ? String(video_url).trim() : null,
+        p_products_description: finalDesc || null,
+        p_items_count: finalItemsCount,
+      })
+    )
+    return { data: data ?? null, error }
+  } catch (e) {
+    return { data: null, error: toServiceError(e) }
+  }
+}
+
+/**
  * Admin: registra pacote na conta do usuário (com dados completos).
  * Suporta tanto o formato antigo (products_description) quanto o novo (products array).
  */
@@ -158,7 +253,11 @@ export async function registerPackageAdmin(userId, payload) {
 
     // Novo formato: array de produtos
     if (Array.isArray(products) && products.length > 0) {
-      rpcPayload.p_products = products
+      rpcPayload.p_products = products.map((p) => ({
+        name: String(p?.name || '').trim(),
+        quantity: Math.max(1, parseInt(p?.quantity, 10) || 1),
+        price: Number.isFinite(Number(p?.price)) ? Number(p.price) : 0,
+      }))
       rpcPayload.p_products_description = products.map(p => 
         `${p.quantity || 1}x ${p.name} (${p.price || 0})`
       ).join('; ')
@@ -203,15 +302,16 @@ export async function addInventoryFromOrderAdmin(orderId, { name, notes, weight_
 }
 
 /**
- * Admin: define frete no envio.
+ * Admin: define frete no envio (opcional: breakdown JSON no pedido principal vinculado).
  */
-export async function setShipmentFreightAdmin(shipmentId, cost, currency = 'JPY') {
+export async function setShipmentFreightAdmin(shipmentId, cost, currency = 'JPY', breakdown = null) {
   try {
     const { error } = await withDbTimeout(
       supabase.rpc('admin_set_shipment_freight', {
         p_shipment_id: shipmentId,
         p_shipping_cost: cost,
         p_currency: currency || 'JPY',
+        p_breakdown: breakdown && typeof breakdown === 'object' ? breakdown : null,
       })
     )
     return { error }
@@ -364,7 +464,8 @@ export async function getShipmentItems(shipmentId) {
             name,
             status,
             items_count,
-            weight_kg
+            weight_kg,
+            products_description
           )
         `)
         .eq('shipment_id', shipmentId)

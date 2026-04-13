@@ -20,6 +20,7 @@ import {
   readUserShippingQuoteBreakdown,
 } from '../../lib/loungeOrderRouting'
 import { fetchLoungeOrderPage } from '../../lib/loungeOrdersPagedFetch'
+import { PARCELOW_CARD_BRANDS_IMG, PIX_OFFICIAL_LOGO_IMG } from '../../components/paymentModalConstants'
 
 const PAGE_SIZE = 12
 
@@ -46,6 +47,48 @@ function orderStatusLabel(t, status) {
   if (!status) return ''
   const key = `platform.orders.status.${status}`
   return t(key, { defaultValue: status })
+}
+
+function getProductThumb(product) {
+  if (!product) return null
+  const u = typeof product.image_url === 'string' ? product.image_url.trim() : ''
+  if (u) return u
+  const raw = product.image_urls
+  if (Array.isArray(raw) && raw.length) {
+    const first = raw[0]
+    return typeof first === 'string' ? first : null
+  }
+  return null
+}
+
+/** Itens de loja / carrinho ligados ao pedido (mesma lógica da aba Pedidos). */
+function getRequestedItems(order, t) {
+  if (!Array.isArray(order?.order_items)) return []
+  return order.order_items.map((it, index) => {
+    const qty = Math.max(1, parseInt(it?.quantity, 10) || 1)
+    const unitPrice = Number(it?.price_at_purchase) || 0
+    const pid = it?.product_id
+    const name =
+      it?.product?.name ||
+      (pid
+        ? t('platform.orders.productFallback', { id: String(pid).slice(0, 8) })
+        : t('platform.orders.itemFallback', { n: index + 1 }))
+    return {
+      id: it?.id || `${name}-${index}`,
+      name,
+      qty,
+      unitPrice,
+      lineTotal: unitPrice * qty,
+      thumb: getProductThumb(it?.product),
+    }
+  })
+}
+
+function getRequestedItemsCurrency(order) {
+  if (order?.order_source === 'store') return 'BRL'
+  if (order?.quote_currency) return order.quote_currency
+  if (order?.shipping_currency) return order.shipping_currency
+  return 'JPY'
 }
 
 export default function LoungeShippingOrdersSection() {
@@ -278,12 +321,6 @@ export default function LoungeShippingOrdersSection() {
                         perItemTotal: formatByCurrency(bd.perItemTotal, bd.currency),
                       })}
                     </p>
-                    <p>
-                      {t('platform.shippingOrders.bufferLine', {
-                        pct: bd.bufferPercent,
-                        amount: formatByCurrency(bd.bufferAmount, bd.currency),
-                      })}
-                    </p>
                     {bd.finalTotal != null && (
                       <p className="mt-1 font-semibold text-earth-900">
                         {t('platform.shippingOrders.totalCharged', {
@@ -360,6 +397,12 @@ export default function LoungeShippingOrdersSection() {
                 status: orderStatusLabel(t, detailsModal.order.status),
               })}
             </p>
+            {detailsModal.order.service?.name && (
+              <p className="mt-2 text-sm text-earth-700">
+                <span className="text-earth-500">{t('platform.orders.labelService')}: </span>
+                {detailsModal.order.service.name}
+              </p>
+            )}
             {readUserShippingQuoteBreakdown(detailsModal.order) && (
               <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-earth-700">
                 {(() => {
@@ -379,12 +422,6 @@ export default function LoungeShippingOrdersSection() {
                           perItemTotal: formatByCurrency(b.perItemTotal, b.currency),
                         })}
                       </p>
-                      <p>
-                        {t('platform.shippingOrders.bufferLine', {
-                          pct: b.bufferPercent,
-                          amount: formatByCurrency(b.bufferAmount, b.currency),
-                        })}
-                      </p>
                       {b.finalTotal != null && (
                         <p className="font-semibold">
                           {t('platform.shippingOrders.totalSimple', {
@@ -399,6 +436,9 @@ export default function LoungeShippingOrdersSection() {
             )}
             {detailsModal.order.message && (
               <div className="mt-3">
+                <p className="mb-1 text-xs font-medium uppercase tracking-wide text-earth-500">
+                  {t('platform.orders.requestBlockTitle')}
+                </p>
                 <QuoteProductsList
                   message={detailsModal.order.message}
                   quoteCurrency={detailsModal.order.quote_currency || 'JPY'}
@@ -407,6 +447,55 @@ export default function LoungeShippingOrdersSection() {
                 />
               </div>
             )}
+            {(() => {
+              const requestedItems = getRequestedItems(detailsModal.order, t)
+              if (requestedItems.length === 0) return null
+              const totalRequested = requestedItems.reduce((sum, item) => sum + item.lineTotal, 0)
+              const itemsCurrency = getRequestedItemsCurrency(detailsModal.order)
+              return (
+                <div className="mt-3">
+                  <p className="mb-2 text-xs font-medium uppercase tracking-wide text-earth-500">
+                    {t('platform.orders.requestedItemsTitle')}
+                  </p>
+                  <div className="rounded-lg border border-earth-200 bg-earth-50 p-3">
+                    <ul className="space-y-2">
+                      {requestedItems.map((item) => (
+                        <li key={item.id} className="flex items-start justify-between gap-3 text-sm">
+                          <div className="flex min-w-0 gap-2">
+                            {item.thumb ? (
+                              <img
+                                src={item.thumb}
+                                alt=""
+                                className="h-12 w-12 shrink-0 rounded-md border border-earth-200 object-cover"
+                              />
+                            ) : (
+                              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md border border-earth-200 bg-earth-100 text-xs text-earth-400">
+                                —
+                              </div>
+                            )}
+                            <div className="min-w-0">
+                              <p className="font-medium text-earth-900">{item.name}</p>
+                              <p className="text-xs text-earth-600">{t('platform.orders.qty', { n: item.qty })}</p>
+                            </div>
+                          </div>
+                          <div className="shrink-0 text-right">
+                            <p className="text-earth-700">{formatByCurrency(item.lineTotal, itemsCurrency)}</p>
+                            {item.qty > 1 && (
+                              <p className="text-xs text-earth-500">
+                                {t('platform.orders.each', { price: formatByCurrency(item.unitPrice, itemsCurrency) })}
+                              </p>
+                            )}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                    <p className="mt-3 border-t border-earth-200 pt-2 text-sm font-semibold text-earth-900">
+                      {t('platform.orders.itemsTotal')} {formatByCurrency(totalRequested, itemsCurrency)}
+                    </p>
+                  </div>
+                </div>
+              )
+            })()}
             {Array.isArray(detailsModal.order.attachment_urls) && detailsModal.order.attachment_urls.length > 0 && (
               <div className="mt-3">
                 <OrderAttachments urls={detailsModal.order.attachment_urls} />
@@ -498,6 +587,25 @@ export default function LoungeShippingOrdersSection() {
                           </option>
                         ))}
                       </select>
+                      {selectedGateway === 'parcelow' && (
+                        <div className="mt-3 space-y-2 rounded-md border border-earth-100 bg-earth-50/90 p-3">
+                          <p className="text-xs font-medium text-earth-600">Parcelow · formas aceitas</p>
+                          <div className="flex flex-col gap-3">
+                            <img
+                              src={PIX_OFFICIAL_LOGO_IMG}
+                              alt="PIX"
+                              className="h-9 w-auto max-w-full object-contain object-left"
+                              loading="lazy"
+                            />
+                            <img
+                              src={PARCELOW_CARD_BRANDS_IMG}
+                              alt=""
+                              className="h-auto w-full max-h-32 object-contain object-left sm:max-h-40 md:max-h-44"
+                              loading="lazy"
+                            />
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )

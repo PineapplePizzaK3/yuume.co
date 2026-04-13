@@ -930,6 +930,7 @@
       "urlHttpOnly": "Use an http or https URL.",
       "urlInvalid": "Invalid URL. Please check the address.",
       "selectService": "Select a service",
+      "orderNotEmpty": "Describe your request in the text box or attach at least one reference image.",
       "prepayMinJpy": "Enter how much to pay from wallet (minimum ¥1).",
       "earlyPrepayProductsMin": "Enter the total product amount in yen (minimum ¥1).",
       "earlyPrepayMessageRequiresLinks": "Include at least one product link (http or https URL) in the description.",

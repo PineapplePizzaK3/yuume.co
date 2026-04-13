@@ -19,9 +19,29 @@ export default function EnviosSection() {
     submitting,
     openShipmentShippedModal,
     handleSetShipmentCompleted,
+    adminUserFilterTerm,
+    openEditInventoryModal,
   } = useAdminContext()
 
   if (activeTab !== 'envios') return null
+  const parseInventoryProductLines = (rawDescription) => {
+    const text = String(rawDescription || '').trim()
+    if (!text) return []
+    return text
+      .split(';')
+      .map((part) => part.trim())
+      .filter(Boolean)
+      .map((part) => {
+        const match = part.match(/^\s*(\d+)\s*x\s+(.+?)\s*$/i)
+        if (!match) return null
+        return {
+          quantity: Math.max(1, parseInt(match[1], 10) || 1),
+          name: String(match[2] || '').trim(),
+        }
+      })
+      .filter((line) => line && line.name)
+  }
+
   const readShippingBreakdown = (order) => {
     const raw = order?.shipping_quote_breakdown
     if (!raw || typeof raw !== 'object') return null
@@ -44,6 +64,18 @@ export default function EnviosSection() {
     }
   }
 
+  const includeByUser = (row) => {
+    if (!adminUserFilterTerm) return true
+    const haystack = [row?.user_name, row?.user_email, row?.user_id]
+      .map((v) => String(v || '').toLowerCase())
+      .join(' ')
+    return haystack.includes(adminUserFilterTerm)
+  }
+
+  const filteredOrders = (shippingPanel.orders || []).filter(includeByUser)
+  const filteredShipments = (shippingPanel.shipments || []).filter(includeByUser)
+  const filteredInventoryReady = (shippingPanel.inventoryReady || []).filter(includeByUser)
+
   return (
     <section className="mt-0 rounded-b-xl border border-t-0 border-earth-200 bg-earth-50 p-6">
       <h2 className="text-lg font-semibold text-earth-900">Envios</h2>
@@ -64,11 +96,11 @@ export default function EnviosSection() {
         <div className="mt-6 space-y-8">
           <div>
             <h3 className="font-medium text-earth-900">Pedidos em fluxo de envio</h3>
-            {!shippingPanel.orders || shippingPanel.orders.length === 0 ? (
+            {filteredOrders.length === 0 ? (
               <p className="mt-4 text-sm text-earth-500">Nenhum pedido em fluxo de envio.</p>
             ) : (
               <ul className="mt-4 space-y-3">
-                {shippingPanel.orders.map((o) => (
+                {filteredOrders.map((o) => (
                   <li key={o.id} className="rounded-lg border border-earth-200 bg-white p-4">
                     {(() => {
                       const shippingBreakdown = readShippingBreakdown(o)
@@ -152,11 +184,11 @@ export default function EnviosSection() {
 
           <div>
             <h3 className="font-medium text-earth-900">Solicitacoes de envio</h3>
-            {!shippingPanel.shipments || shippingPanel.shipments.length === 0 ? (
+            {filteredShipments.length === 0 ? (
               <p className="mt-4 text-sm text-earth-500">Nenhuma solicitacao de envio.</p>
             ) : (
               <ul className="mt-4 space-y-3">
-                {shippingPanel.shipments.map((s) => {
+                {filteredShipments.map((s) => {
                   const statusLabels = {
                     requested: 'Solicitado',
                     awaiting_payment: 'Aguardando pagamento',
@@ -165,7 +197,7 @@ export default function EnviosSection() {
                     completed: 'Finalizado',
                   }
                   const statusLabel = statusLabels[s.status] ?? s.status
-                  const hasPaidOrder = Array.isArray(s.order_ids) && shippingPanel.orders?.some(
+                  const hasPaidOrder = Array.isArray(s.order_ids) && filteredOrders.some(
                     (o) => s.order_ids?.includes(o.id) && o.status === ORDER_STATUS.PAID
                   )
                   const canMarkShipped = s.status === 'paid' || (s.status === 'awaiting_payment' && hasPaidOrder)
@@ -189,9 +221,55 @@ export default function EnviosSection() {
                             <p className="mt-1 text-sm text-earth-600">Rastreio: {s.tracking_code}</p>
                           )}
                           {Array.isArray(s.items) && s.items.length > 0 && (
-                            <div className="mt-2 text-xs text-earth-500">
-                              Itens: {s.items.map((i) => i.inventory_name || i.inventory_id?.slice(0, 8)).filter(Boolean).join(', ')}
-                            </div>
+                            <ul className="mt-2 space-y-1 text-xs text-earth-500">
+                              {s.items.map((i, idx) => {
+                                const lines = parseInventoryProductLines(i.products_description)
+                                return (
+                                  <li
+                                    key={i.inventory_id || idx}
+                                    className="flex flex-wrap items-start justify-between gap-2 rounded border border-earth-100 bg-earth-50 px-2 py-1"
+                                  >
+                                    <div className="min-w-0 flex-1">
+                                      <p className="text-earth-700">
+                                        {i.inventory_name || i.inventory_id?.slice(0, 8)}
+                                        {i.items_count != null ? ` (x${i.items_count})` : ''}
+                                      </p>
+                                      {lines.length > 0 && (
+                                        <ul className="mt-1 space-y-0.5 text-earth-600">
+                                          {lines.map((line, lineIdx) => (
+                                            <li key={`${i.inventory_id || idx}-line-${lineIdx}`}>
+                                              {line.name} {line.quantity > 1 ? `x${line.quantity}` : ''}
+                                            </li>
+                                          ))}
+                                        </ul>
+                                      )}
+                                    </div>
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        openEditInventoryModal({
+                                          inventory_id: i.inventory_id,
+                                          inventory_name: i.inventory_name,
+                                          name: i.inventory_name,
+                                          products_description: i.products_description,
+                                          items_count: i.items_count,
+                                          weight_kg: i.weight_kg,
+                                          notes: i.notes,
+                                          photo_url: i.photo_url,
+                                          video_url: i.video_url,
+                                          user_id: s.user_id,
+                                          user_name: s.user_name,
+                                          user_email: s.user_email,
+                                        })
+                                      }
+                                      className="shrink-0 rounded border border-earth-300 bg-white px-2 py-0.5 text-[11px] font-medium text-earth-700 hover:bg-earth-100"
+                                    >
+                                      Editar
+                                    </button>
+                                  </li>
+                                )
+                              })}
+                            </ul>
                           )}
                           {Array.isArray(s.order_ids) && s.order_ids.length > 0 && (
                             <p className="mt-1 text-xs text-earth-500">
@@ -242,7 +320,7 @@ export default function EnviosSection() {
                             <button
                               type="button"
                               onClick={async () => {
-                                const ord = shippingPanel.orders?.find((x) => s.order_ids?.includes(x.id))
+                                const ord = filteredOrders.find((x) => s.order_ids?.includes(x.id))
                                 if (ord && (ord.status === ORDER_STATUS.READY_FOR_SHIPMENT || ord.status === ORDER_STATUS.PRODUCTS_PAID)) {
                                   openShippingModal(ord)
                                 }
@@ -262,15 +340,35 @@ export default function EnviosSection() {
           </div>
 
           <div>
-            <h3 className="font-medium text-earth-900">Itens prontos para envio</h3>
-            {!shippingPanel.inventoryReady || shippingPanel.inventoryReady.length === 0 ? (
-              <p className="mt-4 text-sm text-earth-500">Nenhum item pronto para envio.</p>
+            <h3 className="font-medium text-earth-900">Inventário na conta (armazenado / pronto para envio)</h3>
+            <p className="mt-1 text-xs text-earth-500">
+              Edite nome, lista de produtos, peso, fotos/vídeo e notas. Itens já enviados não podem ser alterados aqui.
+            </p>
+            {filteredInventoryReady.length === 0 ? (
+              <p className="mt-4 text-sm text-earth-500">Nenhum item no armazém.</p>
             ) : (
               <ul className="mt-4 space-y-2">
-                {shippingPanel.inventoryReady.map((inv) => (
-                  <li key={inv.id} className="flex items-center justify-between rounded border border-earth-100 bg-white px-4 py-2 text-sm">
-                    <span className="text-earth-800">{inv.name || inv.id?.slice(0, 8)}</span>
-                    <span className="text-earth-600">{inv.user_name || inv.user_email} • Pedido {inv.order_id?.slice(0, 8)}...</span>
+                {filteredInventoryReady.map((inv) => (
+                  <li
+                    key={inv.id}
+                    className="flex flex-wrap items-center justify-between gap-2 rounded border border-earth-100 bg-white px-4 py-2 text-sm"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <span className="font-medium text-earth-900">{inv.name || inv.id?.slice(0, 8)}</span>
+                      <span className="ml-2 rounded bg-earth-100 px-1.5 py-0.5 text-xs text-earth-600">
+                        {inv.status === 'stored' ? 'Armazenado' : 'Pronto para envio'}
+                      </span>
+                      <p className="mt-0.5 text-earth-600">
+                        {inv.user_name || inv.user_email} • Pedido {inv.order_id?.slice(0, 8)}...
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => openEditInventoryModal(inv)}
+                      className="shrink-0 rounded border border-earth-300 px-3 py-1.5 text-xs font-medium text-earth-700 hover:bg-earth-100"
+                    >
+                      Editar
+                    </button>
                   </li>
                 ))}
               </ul>

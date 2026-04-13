@@ -1517,20 +1517,40 @@ function Cart() {
                                 </div>
                               )}
                               <div className="mt-2 flex flex-wrap gap-2">
-                                {visibleMethods.map((method) => (
-                                  <div
-                                    key={method.id}
-                                    className="inline-flex items-center gap-2 rounded-md border border-earth-200 bg-white px-2 py-1"
-                                  >
-                                    <img
-                                      src={method.src}
-                                      alt={t('platform.cart.cardBadgeAlt', { label: method.label })}
-                                      className="h-7 w-auto rounded"
-                                      loading="lazy"
-                                    />
-                                    <span className="text-xs font-medium text-earth-700">{method.label}</span>
-                                  </div>
-                                ))}
+                                {visibleMethods.map((method) =>
+                                  method.layout === 'strip' ? (
+                                    <div key={method.id} className="w-full rounded-md border border-earth-200 bg-white px-2 py-2 sm:px-4">
+                                      <img
+                                        src={method.src}
+                                        alt={t('platform.cart.cardBadgeAlt', { label: method.label })}
+                                        className="h-auto w-full max-h-32 object-contain object-left sm:max-h-40 md:max-h-44"
+                                        loading="lazy"
+                                        onError={(e) => {
+                                          e.currentTarget.style.display = 'none'
+                                        }}
+                                      />
+                                      <p className="mt-1 text-xs font-medium text-earth-700">{method.label}</p>
+                                    </div>
+                                  ) : (
+                                    <div
+                                      key={method.id}
+                                      className="inline-flex items-center gap-2 rounded-md border border-earth-200 bg-white px-2 py-1"
+                                    >
+                                      <img
+                                        src={method.src}
+                                        alt={t('platform.cart.cardBadgeAlt', { label: method.label })}
+                                        className="h-7 w-auto max-w-[10rem] rounded object-contain object-left"
+                                        loading="lazy"
+                                        onError={(ev) => {
+                                          if (method.fallbackSrc && ev.currentTarget.src !== method.fallbackSrc) {
+                                            ev.currentTarget.src = method.fallbackSrc
+                                          }
+                                        }}
+                                      />
+                                      <span className="text-xs font-medium text-earth-700">{method.label}</span>
+                                    </div>
+                                  )
+                                )}
                               </div>
                             </div>
                           </>

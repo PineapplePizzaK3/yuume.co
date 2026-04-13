@@ -101,21 +101,24 @@ export default function BuscaCatalogoSection() {
       )}
 
       {!externalSearchLoading && externalSearchResults.length > 0 && (
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-4 grid gap-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           {externalSearchResults.map((item) => (
-            <article key={item.id} className="overflow-hidden rounded-lg border border-earth-200 bg-white shadow-sm">
-              <div className="h-44 bg-earth-100">
+            <article
+              key={item.id}
+              className="overflow-hidden rounded-md border border-earth-200 bg-white shadow-sm"
+            >
+              <div className="h-28 bg-earth-100 sm:h-24">
                 {item.imageUrl ? (
                   <img src={item.imageUrl} alt={item.title} className="h-full w-full object-cover" loading="lazy" />
                 ) : (
-                  <div className="flex h-full items-center justify-center text-sm text-earth-500">Sem imagem</div>
+                  <div className="flex h-full items-center justify-center text-xs text-earth-500">Sem imagem</div>
                 )}
               </div>
-              <div className="space-y-2 p-3">
-                <p className="line-clamp-2 text-sm font-medium text-earth-900">{item.title}</p>
-                <div className="flex items-center justify-between text-xs">
-                  <span className="rounded bg-earth-100 px-2 py-1 text-earth-700">{item.storeName}</span>
-                  <span className="font-medium text-earth-800">
+              <div className="space-y-1.5 p-2">
+                <p className="line-clamp-2 text-xs font-medium leading-snug text-earth-900">{item.title}</p>
+                <div className="flex items-center justify-between gap-1 text-[11px]">
+                  <span className="truncate rounded bg-earth-100 px-1.5 py-0.5 text-earth-700">{item.storeName}</span>
+                  <span className="shrink-0 font-medium text-earth-800">
                     {formatExternalPrice(item.price, item.currency)}
                   </span>
                 </div>
@@ -123,7 +126,7 @@ export default function BuscaCatalogoSection() {
                   href={item.productUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex text-xs font-medium text-earth-700 underline hover:text-earth-900"
+                  className="inline-flex text-[11px] font-medium text-earth-700 underline hover:text-earth-900"
                 >
                   Abrir produto
                 </a>

@@ -40,11 +40,7 @@ function Navbar() {
     if (isStoreServicesRoute) return 'servicos'
     if (
       isRouteActive('appGrupoCompras', location.pathname, true) ||
-      isRouteActive('appGrupoComprasOnline', location.pathname, true) ||
-      isRouteActive('appGrupoComprasFisica', location.pathname, true) ||
-      isRouteActive('lojaPublicProgramadas', location.pathname, true) ||
-      isRouteActive('lojaPublicProgramadasOnline', location.pathname, true) ||
-      isRouteActive('lojaPublicProgramadasFisica', location.pathname, true)
+      isRouteActive('lojaPublicProgramadas', location.pathname, true)
     ) {
       return 'programadas'
     }
@@ -60,7 +56,7 @@ function Navbar() {
     const programadas = {
       id: 'programadas',
       label: t('platform.navScheduledBuying'),
-      toRoute: isAuthenticated ? 'appGrupoComprasOnline' : 'lojaPublicProgramadasOnline',
+      toRoute: isAuthenticated ? 'appGrupoCompras' : 'lojaPublicProgramadas',
     }
     const servicos = {
       id: 'servicos',

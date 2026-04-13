@@ -89,7 +89,9 @@ export default function Services({ embedded = false }) {
   const isRedirAssisted = isRedirecionamento && redirModule === 'assisted_buy'
   const isRedirStandard = isRedirecionamento && redirModule === 'self_buy'
   const showImageAttachments = isPersonalShopping || isRedirAssisted || isRedirStandard
-  const canSubmit = !isRedirecionamento || agreeProhibited
+  const hasOrderContent =
+    message.trim().length > 0 || (Array.isArray(attachmentUrls) && attachmentUrls.length > 0)
+  const canSubmit = hasOrderContent && (!isRedirecionamento || agreeProhibited)
 
   const earlyPrepayBreakdown = useMemo(() => {
     if (!isRedirAssisted || !earlyPrepaymentRequested) return null
@@ -258,6 +260,12 @@ export default function Services({ embedded = false }) {
     e.preventDefault()
     if (!selectedId) {
       setFeedback(t('platform.services.selectService'))
+      return
+    }
+    const msgTrim = message.trim()
+    const hasAttachments = Array.isArray(attachmentUrls) && attachmentUrls.length > 0
+    if (!msgTrim && !hasAttachments) {
+      setFeedback(t('platform.services.orderNotEmpty'))
       return
     }
     let earlyDebitTotalJpy = 0
@@ -470,24 +478,6 @@ export default function Services({ embedded = false }) {
                     </p>
                   </div>
                 )}
-
-                <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
-                  <label className="flex cursor-pointer items-start gap-3">
-                    <input
-                      type="checkbox"
-                      checked={agreeProhibited}
-                      onChange={(e) => setAgreeProhibited(e.target.checked)}
-                      className="mt-1 rounded border-earth-300"
-                    />
-                    <span className="text-sm text-earth-800">
-                      {t('platform.services.prohibitedLead')}{' '}
-                      <Link to={lp('faqProhibited')} target="_blank" rel="noopener noreferrer" className="font-medium text-earth-900 underline hover:no-underline">
-                        {t('platform.services.prohibitedLink')}
-                      </Link>{' '}
-                      {t('platform.services.prohibitedTail')}
-                    </span>
-                  </label>
-                </div>
               </div>
             )}
 
@@ -719,6 +709,31 @@ export default function Services({ embedded = false }) {
 
             {feedback && (
               <p className="rounded-lg bg-amber-100 px-4 py-2 text-sm text-amber-800">{feedback}</p>
+            )}
+
+            {isRedirecionamento && (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+                <label className="flex cursor-pointer items-start gap-3">
+                  <input
+                    type="checkbox"
+                    checked={agreeProhibited}
+                    onChange={(e) => setAgreeProhibited(e.target.checked)}
+                    className="mt-1 rounded border-earth-300"
+                  />
+                  <span className="text-sm text-earth-800">
+                    {t('platform.services.prohibitedLead')}{' '}
+                    <Link
+                      to={lp('faqProhibited')}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-medium text-earth-900 underline hover:no-underline"
+                    >
+                      {t('platform.services.prohibitedLink')}
+                    </Link>{' '}
+                    {t('platform.services.prohibitedTail')}
+                  </span>
+                </label>
+              </div>
             )}
 
             <button

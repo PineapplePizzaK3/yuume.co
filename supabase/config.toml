@@ -1,0 +1,7 @@
+# Configuração local/CLI: https://supabase.com/docs/guides/cli/config
+project_id = "delivery-site"
+
+# O gateway das Edge Functions valida JWT antes do Deno; em alguns casos isso retorna 401
+# mesmo com sessão válida no app. A função valida admin em código (ver index.ts).
+[functions.catalog-search]
+verify_jwt = false

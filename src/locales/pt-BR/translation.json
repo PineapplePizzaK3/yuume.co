@@ -930,6 +930,7 @@
       "urlHttpOnly": "Use uma URL http ou https.",
       "urlInvalid": "URL inválida. Verifique o endereço.",
       "selectService": "Selecione um serviço",
+      "orderNotEmpty": "Descreva o pedido na caixa de texto ou anexe pelo menos uma imagem de referência.",
       "prepayMinJpy": "Informe quanto deseja pagar pela carteira (mínimo ¥1).",
       "earlyPrepayProductsMin": "Informe o valor total dos produtos em ienes (mínimo ¥1).",
       "earlyPrepayMessageRequiresLinks": "Inclua na descrição pelo menos um link (URL http ou https) para os produtos que deseja comprar.",

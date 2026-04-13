@@ -21,6 +21,7 @@ async function normalizeInvokeError(err) {
     // ignore parse errors
   }
   if (status === 401 || status === 403) {
+    if (backendMessage) return { message: backendMessage }
     return { message: 'Sessão expirada ou sem permissão para usar a busca do admin.' }
   }
   if (status === 404) {
@@ -39,11 +40,26 @@ async function normalizeInvokeError(err) {
 }
 
 export async function searchCatalogAdmin({ query, stores = ['amazon', 'rakuma', 'mercari'], page = 1, pageSize = 12 }) {
+  const { error: userErr } = await supabase.auth.getUser()
+  if (userErr) {
+    return { data: null, error: { message: 'Sessão expirada. Faça login novamente.' } }
+  }
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
+  const token = session?.access_token
+  if (!token) {
+    return { data: null, error: { message: 'Faça login para usar a busca do catálogo.' } }
+  }
+
   let lastError = null
 
   for (const functionName of SEARCH_FUNCTION_NAMES) {
     const invokePromise = supabase.functions.invoke(functionName, {
       body: { query, stores, page, pageSize },
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     })
     const timeoutPromise = new Promise((_, reject) => {
       setTimeout(() => reject(new Error('Tempo esgotado ao consultar as lojas externas.')), SEARCH_TIMEOUT_MS)

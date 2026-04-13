@@ -27,6 +27,24 @@ function getStorageDays(item) {
   return daysSince(baseDate)
 }
 
+function parseInventoryProductLines(rawDescription) {
+  const text = String(rawDescription || '').trim()
+  if (!text) return []
+  return text
+    .split(';')
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .map((part) => {
+      const match = part.match(/^\s*(\d+)\s*x\s+(.+?)\s*$/i)
+      if (!match) return null
+      return {
+        quantity: Math.max(1, parseInt(match[1], 10) || 1),
+        name: String(match[2] || '').trim(),
+      }
+    })
+    .filter((line) => line && line.name)
+}
+
 const INVENTORY_PAGE_SIZE = 24
 
 const INVENTORY_CATEGORY_KEYS = ['store', 'assisted', 'standard', 'personal', 'other']
@@ -246,11 +264,26 @@ export default function MeusProdutos() {
                                   </span>
                                 )}
                               </div>
-                              {item.products_description && (
-                                <p className="mt-3 line-clamp-3 whitespace-pre-wrap text-sm text-earth-700">
-                                  <LinkifyText text={item.products_description} />
-                                </p>
-                              )}
+                              {(() => {
+                                const productLines = parseInventoryProductLines(item.products_description)
+                                if (productLines.length > 0) {
+                                  return (
+                                    <ul className="mt-3 space-y-1 text-sm text-earth-700">
+                                      {productLines.map((line, idx) => (
+                                        <li key={`${item.id}-line-${idx}`} className="truncate">
+                                          {line.name} {line.quantity > 1 ? `x${line.quantity}` : ''}
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  )
+                                }
+                                if (!item.products_description) return null
+                                return (
+                                  <p className="mt-3 line-clamp-3 whitespace-pre-wrap text-sm text-earth-700">
+                                    <LinkifyText text={item.products_description} />
+                                  </p>
+                                )
+                              })()}
                               {item.notes && (
                                 <p className="mt-2 line-clamp-2 text-sm text-earth-600">
                                   <LinkifyText text={item.notes} />
@@ -353,16 +386,36 @@ export default function MeusProdutos() {
                       </span>
                     )}
                   </div>
-                  {detailItem.products_description && (
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-wide text-earth-500">
-                        {t('platform.inventory.description')}
-                      </p>
-                      <p className="mt-1 whitespace-pre-wrap text-sm text-earth-800">
-                        <LinkifyText text={detailItem.products_description} />
-                      </p>
-                    </div>
-                  )}
+                  {(() => {
+                    const productLines = parseInventoryProductLines(detailItem.products_description)
+                    if (productLines.length > 0) {
+                      return (
+                        <div>
+                          <p className="text-xs font-semibold uppercase tracking-wide text-earth-500">
+                            {t('platform.inventory.description')}
+                          </p>
+                          <ul className="mt-1 space-y-1 text-sm text-earth-800">
+                            {productLines.map((line, idx) => (
+                              <li key={`${detailItem.id}-detail-line-${idx}`}>
+                                {line.name} {line.quantity > 1 ? `x${line.quantity}` : ''}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )
+                    }
+                    if (!detailItem.products_description) return null
+                    return (
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-earth-500">
+                          {t('platform.inventory.description')}
+                        </p>
+                        <p className="mt-1 whitespace-pre-wrap text-sm text-earth-800">
+                          <LinkifyText text={detailItem.products_description} />
+                        </p>
+                      </div>
+                    )
+                  })()}
                   {detailItem.notes && (
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-wide text-earth-500">

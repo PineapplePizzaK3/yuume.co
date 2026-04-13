@@ -10,9 +10,17 @@ export default function UsuariosSection() {
     usersPage,
     usersHasMore,
     setUsersPage,
+    adminUserFilterTerm,
   } = useAdminContext()
 
   if (activeTab !== 'usuarios') return null
+  const filteredUsers = (usersList || []).filter((u) => {
+    if (!adminUserFilterTerm) return true
+    const haystack = [u?.name, u?.email, u?.id, u?.account_code]
+      .map((v) => String(v || '').toLowerCase())
+      .join(' ')
+    return haystack.includes(adminUserFilterTerm)
+  })
 
   return (
     <section className="mt-0 rounded-b-xl border border-t-0 border-earth-200 bg-earth-50 p-6">
@@ -21,10 +29,10 @@ export default function UsuariosSection() {
         Visualize e edite informações dos usuários, adicione saldo na carteira e gerencie pedidos.
       </p>
       {usersListLoading && <p className="mt-4 text-sm text-earth-600">Carregando usuários...</p>}
-      {!usersListLoading && usersList.length === 0 && (
+      {!usersListLoading && filteredUsers.length === 0 && (
         <p className="mt-4 text-sm text-earth-600">Nenhum usuário cadastrado.</p>
       )}
-      {!usersListLoading && usersList.length > 0 && (
+      {!usersListLoading && filteredUsers.length > 0 && (
         <div className="mt-4">
           <div className="overflow-x-auto rounded-lg border border-earth-200 bg-white">
             <table className="min-w-full divide-y divide-earth-200 text-left text-sm">
@@ -37,7 +45,7 @@ export default function UsuariosSection() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-earth-200">
-                {usersList.map((u) => (
+                {filteredUsers.map((u) => (
                   <tr key={u.id} className="hover:bg-earth-50/50">
                     <td className="px-4 py-3 font-medium text-earth-900">{u.name || '—'}</td>
                     <td className="px-4 py-3 text-earth-700">{u.email || '—'}</td>

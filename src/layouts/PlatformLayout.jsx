@@ -153,7 +153,7 @@ export function PlatformLayout() {
   const navItemsByKey = useMemo(() => {
     const map = new Map()
     for (const k of ALL_MENU_KEYS) {
-      const to = k === 'appGrupoCompras' ? p('appGrupoComprasOnline') : p(k)
+      const to = p(k)
       map.set(k, { routeKey: k, to, label: t(LABEL_KEY_BY_ROUTE[k]) })
     }
     return map

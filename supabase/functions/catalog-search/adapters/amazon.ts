@@ -10,7 +10,7 @@ export async function searchAmazon(query: string, pageSize: number): Promise<Uni
   const searchUrl = `https://www.amazon.co.jp/s?k=${encoded}`
 
   try {
-    const html = await fetchText(searchUrl, 7000)
+    const html = await fetchText(searchUrl)
     const blockMatches = Array.from(
       html.matchAll(/<div[^>]+data-component-type=["']s-search-result["'][\s\S]*?<\/div>\s*<\/div>/gi)
     ).slice(0, pageSize * 2)
@@ -22,7 +22,16 @@ export async function searchAmazon(query: string, pageSize: number): Promise<Uni
       const title =
         block.match(/<h2[^>]*>\s*<a[^>]*>\s*<span[^>]*>([\s\S]*?)<\/span>/i)?.[1]?.replace(/<[^>]+>/g, ' ').trim() ||
         block.match(/aria-label=["']([^"']+)["']/i)?.[1]
-      const rawPrice = block.match(/(?:¥|￥)\s*([\d,]+(?:\.\d+)?)/i)?.[1] || null
+      const whole = block.match(/a-price-whole[^>]*>([\d,]+)/i)?.[1]
+      const frac = block.match(/a-price-fraction[^>]*>(\d+)/i)?.[1]
+      const rawPrice =
+        whole != null
+          ? frac != null
+            ? `${whole}.${frac}`
+            : whole
+          : block.match(/(?:¥|￥)\s*([\d,]+(?:\.\d+)?)/i)?.[1] ||
+            block.match(/"price"\s*:\s*"?([\d.,]+)"?/i)?.[1] ||
+            null
       const imageCandidates = [
         block.match(/<img[^>]+src=["']([^"']+)["']/i)?.[1],
         ...collectImageCandidates(block),
@@ -51,7 +60,7 @@ export async function searchAmazon(query: string, pageSize: number): Promise<Uni
     // fallback below
   }
 
-  const jinaText = await fetchViaJina(searchUrl, 7000)
+  const jinaText = await fetchViaJina(searchUrl)
   const fallbackHits = parseJinaHits(jinaText, 'https://www.amazon.co.jp', 'JPY')
   return fallbackHits.slice(0, pageSize).map((hit, idx) =>
     buildHit({

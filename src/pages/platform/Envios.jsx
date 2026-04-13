@@ -52,6 +52,24 @@ function shipmentStatusLabel(t, status) {
   return t(`platform.shipments.status.${status}`, { defaultValue: status })
 }
 
+function parseInventoryProductLines(rawDescription) {
+  const text = String(rawDescription || '').trim()
+  if (!text) return []
+  return text
+    .split(';')
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .map((part) => {
+      const match = part.match(/^\s*(\d+)\s*x\s+(.+?)\s*$/i)
+      if (!match) return null
+      return {
+        quantity: Math.max(1, parseInt(match[1], 10) || 1),
+        name: String(match[2] || '').trim(),
+      }
+    })
+    .filter((row) => row && row.name)
+}
+
 export default function Envios() {
   const { t } = useTranslation()
   const siteLocale = useSiteLocale()
@@ -567,27 +585,39 @@ export default function Envios() {
                   <ul className="mt-3 space-y-2">
                     {items.map((row) => {
                       const it = row.user_inventory
+                      const productLines = parseInventoryProductLines(it?.products_description)
                       return (
                         <li
                           key={row.id}
-                          className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-earth-200 bg-white px-3 py-2"
+                          className="rounded-lg border border-earth-200 bg-white px-3 py-2"
                         >
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-medium text-earth-900">
-                              {it?.name || t('platform.shipments.itemFallback')}
-                            </p>
-                            <p className="mt-0.5 text-xs text-earth-600">
-                              {it?.items_count != null
-                                ? t('platform.shipments.itemsCount', { count: it.items_count })
-                                : t('platform.shipments.itemsDash')}
-                              {it?.weight_kg != null
-                                ? t('platform.shipments.weightDot', { w: formatWeight(it.weight_kg) })
-                                : ''}
-                            </p>
+                          <div className="flex flex-wrap items-start justify-between gap-2">
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-medium text-earth-900">
+                                {it?.name || t('platform.shipments.itemFallback')}
+                              </p>
+                              <p className="mt-0.5 text-xs text-earth-600">
+                                {it?.items_count != null
+                                  ? t('platform.shipments.itemsCount', { count: it.items_count })
+                                  : t('platform.shipments.itemsDash')}
+                                {it?.weight_kg != null
+                                  ? t('platform.shipments.weightDot', { w: formatWeight(it.weight_kg) })
+                                  : ''}
+                              </p>
+                            </div>
+                            <span className="rounded bg-earth-100 px-2 py-0.5 text-xs text-earth-700">
+                              {it?.status || '—'}
+                            </span>
                           </div>
-                          <span className="rounded bg-earth-100 px-2 py-0.5 text-xs text-earth-700">
-                            {it?.status || '—'}
-                          </span>
+                          {productLines.length > 0 && (
+                            <ul className="mt-2 space-y-1 border-t border-earth-100 pt-2 text-xs text-earth-600">
+                              {productLines.map((line, idx) => (
+                                <li key={`${row.id}-line-${idx}`} className="truncate">
+                                  {line.name} {line.quantity > 1 ? `x${line.quantity}` : ''}
+                                </li>
+                              ))}
+                            </ul>
+                          )}
                         </li>
                       )
                     })}
@@ -833,6 +863,15 @@ export default function Envios() {
                                     ? t('platform.shipments.weightDot', { w: formatWeight(it.weight_kg) })
                                     : ''}
                                 </p>
+                                {parseInventoryProductLines(it.products_description).length > 0 && (
+                                  <ul className="mt-1 space-y-0.5 text-xs text-earth-600">
+                                    {parseInventoryProductLines(it.products_description).map((line, idx) => (
+                                      <li key={`${it.id}-product-${idx}`} className="truncate">
+                                        {line.name} {line.quantity > 1 ? `x${line.quantity}` : ''}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                )}
                               </div>
                             </label>
                           </li>

@@ -146,9 +146,9 @@ function App() {
             <Route path="/contact" element={<Contact />} />
             <Route path="/loja" element={<Navigate to={p('lojaPublicVitrine')} replace />} />
             <Route path="/loja/vitrine" element={<Loja />} />
-            <Route path="/loja/compras-programadas" element={<Navigate to={p('lojaPublicProgramadasOnline')} replace />} />
-            <Route path="/loja/compras-programadas/online" element={<ComprasProgramadas publicMode />} />
-            <Route path="/loja/compras-programadas/fisica" element={<ComprasProgramadas publicMode />} />
+            <Route path="/loja/compras-programadas" element={<ComprasProgramadas publicMode />} />
+            <Route path="/loja/compras-programadas/online" element={<Navigate to={`${p('lojaPublicProgramadas')}#online`} replace />} />
+            <Route path="/loja/compras-programadas/fisica" element={<Navigate to={`${p('lojaPublicProgramadas')}#fisica`} replace />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -173,9 +173,9 @@ function App() {
               <Route path="cart" element={<Cart />} />
               <Route path="invoices" element={<Invoices />} />
               <Route path="invoices/:id" element={<InvoiceDetail />} />
-              <Route path="grupo-de-compras" element={<Navigate to={p('appGrupoComprasOnline')} replace />} />
-              <Route path="grupo-de-compras/online" element={<ComprasProgramadas />} />
-              <Route path="grupo-de-compras/fisica" element={<ComprasProgramadas />} />
+              <Route path="grupo-de-compras" element={<ComprasProgramadas />} />
+              <Route path="grupo-de-compras/online" element={<Navigate to={`${p('appGrupoCompras')}#online`} replace />} />
+              <Route path="grupo-de-compras/fisica" element={<Navigate to={`${p('appGrupoCompras')}#fisica`} replace />} />
               <Route path="affiliate" element={<Affiliate />} />
               <Route path="lista-desejos" element={<Navigate to={p('appLounge', '?tab=desejos')} replace />} />
               <Route path="envios" element={<Navigate to={p('appLounge')} replace />} />
@@ -198,6 +198,19 @@ function App() {
                 <Route path="recargas" element={<AdminRecargasTab />} />
                 <Route path="invoices" element={<AdminInvoicesTab />} />
                 <Route path="logs" element={<AdminLogsTab />} />
+                <Route path="operacao/pedidos" element={<AdminPedidosTab />} />
+                <Route path="operacao/usuarios" element={<AdminUsuariosTab />} />
+                <Route path="operacao/envios" element={<AdminEnviosTab />} />
+                <Route path="catalogo/produtos" element={<AdminProdutosTab />} />
+                <Route path="catalogo/catalogo-produtos" element={<AdminCatalogoProdutosTab />} />
+                <Route path="catalogo/busca-catalogo" element={<AdminBuscaCatalogoTab />} />
+                <Route path="catalogo/grupos" element={<AdminGruposTab />} />
+                <Route path="growth/marketing" element={<AdminMarketingTab />} />
+                <Route path="growth/fraude" element={<AdminFraudeTab />} />
+                <Route path="growth/notificacoes" element={<AdminNotificacoesTab />} />
+                <Route path="financeiro/recargas" element={<AdminRecargasTab />} />
+                <Route path="financeiro/invoices" element={<AdminInvoicesTab />} />
+                <Route path="sistema/logs" element={<AdminLogsTab />} />
               </Route>
             </Route>
             <Route path="/faq" element={<FaqLayout />}>
@@ -225,9 +238,9 @@ function App() {
             <Route path="/en/store" element={<Navigate to={e('lojaPublicVitrine')} replace />} />
             <Route path="/en/store/storefront" element={<Loja />} />
             <Route path="/en/store/showcase" element={<Navigate to={e('lojaPublicVitrine')} replace />} />
-            <Route path="/en/store/scheduled-buying" element={<Navigate to={e('lojaPublicProgramadasOnline')} replace />} />
-            <Route path="/en/store/scheduled-buying/online" element={<ComprasProgramadas publicMode />} />
-            <Route path="/en/store/scheduled-buying/physical" element={<ComprasProgramadas publicMode />} />
+            <Route path="/en/store/scheduled-buying" element={<ComprasProgramadas publicMode />} />
+            <Route path="/en/store/scheduled-buying/online" element={<Navigate to={`${e('lojaPublicProgramadas')}#online`} replace />} />
+            <Route path="/en/store/scheduled-buying/physical" element={<Navigate to={`${e('lojaPublicProgramadas')}#physical`} replace />} />
             <Route path="/en/login" element={<Login />} />
             <Route path="/en/register" element={<Register />} />
             <Route path="/en/forgot-password" element={<ForgotPassword />} />
@@ -252,9 +265,9 @@ function App() {
               <Route path="cart" element={<Cart />} />
               <Route path="invoices" element={<Invoices />} />
               <Route path="invoices/:id" element={<InvoiceDetail />} />
-              <Route path="group-buying" element={<Navigate to={e('appGrupoComprasOnline')} replace />} />
-              <Route path="group-buying/online" element={<ComprasProgramadas />} />
-              <Route path="group-buying/physical" element={<ComprasProgramadas />} />
+              <Route path="group-buying" element={<ComprasProgramadas />} />
+              <Route path="group-buying/online" element={<Navigate to={`${e('appGrupoCompras')}#online`} replace />} />
+              <Route path="group-buying/physical" element={<Navigate to={`${e('appGrupoCompras')}#physical`} replace />} />
               <Route path="affiliate" element={<Affiliate />} />
               <Route path="wishlist" element={<Navigate to={e('appLounge', '?tab=desejos')} replace />} />
               <Route path="shipments" element={<Navigate to={e('appLounge')} replace />} />
@@ -277,6 +290,19 @@ function App() {
                 <Route path="top-ups" element={<AdminRecargasTab />} />
                 <Route path="invoices" element={<AdminInvoicesTab />} />
                 <Route path="logs" element={<AdminLogsTab />} />
+                <Route path="operations/orders" element={<AdminPedidosTab />} />
+                <Route path="operations/users" element={<AdminUsuariosTab />} />
+                <Route path="operations/shipping" element={<AdminEnviosTab />} />
+                <Route path="catalog/products" element={<AdminProdutosTab />} />
+                <Route path="catalog/catalog" element={<AdminCatalogoProdutosTab />} />
+                <Route path="catalog/catalog-search" element={<AdminBuscaCatalogoTab />} />
+                <Route path="catalog/groups" element={<AdminGruposTab />} />
+                <Route path="growth/marketing" element={<AdminMarketingTab />} />
+                <Route path="growth/fraud" element={<AdminFraudeTab />} />
+                <Route path="growth/notifications" element={<AdminNotificacoesTab />} />
+                <Route path="finance/top-ups" element={<AdminRecargasTab />} />
+                <Route path="finance/invoices" element={<AdminInvoicesTab />} />
+                <Route path="system/logs" element={<AdminLogsTab />} />
               </Route>
             </Route>
             <Route path="/en/help" element={<FaqLayout />}>

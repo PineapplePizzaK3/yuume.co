@@ -60,9 +60,29 @@ export default function PedidosSection() {
     users,
     registerPackageModal,
     handleRegisterPackage,
+    editInventoryModal,
+    adminUserFilterTerm,
   } = useAdminContext()
 
   const orderEditParsedQuote = parseQuoteMessage(orderEditModal.message)
+  const parseInventoryProductLines = (rawDescription) => {
+    const text = String(rawDescription || '').trim()
+    if (!text) return []
+    return text
+      .split(';')
+      .map((part) => part.trim())
+      .filter(Boolean)
+      .map((part) => {
+        const match = part.match(/^\s*(\d+)\s*x\s+(.+?)\s*$/i)
+        if (!match) return null
+        return {
+          quantity: Math.max(1, parseInt(match[1], 10) || 1),
+          name: String(match[2] || '').trim(),
+        }
+      })
+      .filter((line) => line && line.name)
+  }
+
   const readShippingBreakdown = (order) => {
     const raw = order?.shipping_quote_breakdown
     if (!raw || typeof raw !== 'object') return null
@@ -99,6 +119,28 @@ export default function PedidosSection() {
   const redirectFeeTotal = redirectFeePerItem * shippingItemsCount
   const shippingBufferAmount = baseShipping * (shippingBufferPercent / 100)
   const finalShippingTotal = baseShipping + redirectFeeTotal + shippingBufferAmount
+
+  const shipmentSnapshot = shipmentFreightModal.snapshot || null
+  const shipmentParsedItems = Array.isArray(shipmentSnapshot?.parsedProducts)
+    ? shipmentSnapshot.parsedProducts
+    : []
+  const shipmentItemsCount = Math.max(
+    0,
+    Number(
+      shipmentSnapshot?.itemsCount ??
+        shipmentParsedItems.reduce(
+          (acc, item) => acc + Math.max(1, parseInt(item?.quantidade, 10) || 1),
+          0
+        )
+    ) || 0
+  )
+  const shipmentBase = Math.max(0, parseFloat(shipmentFreightModal.cost || '0') || 0)
+  const shipmentRedirectPerItem = Math.max(0, parseFloat(shipmentFreightModal.redirectFeePerItem || '0') || 0)
+  const shipmentBufferPct = Math.max(0, parseFloat(shipmentFreightModal.shippingBufferPercent || '0') || 0)
+  const shipmentRedirectTotal = shipmentRedirectPerItem * shipmentItemsCount
+  const shipmentBufferAmt = shipmentBase * (shipmentBufferPct / 100)
+  const shipmentFinalTotal = shipmentBase + shipmentRedirectTotal + shipmentBufferAmt
+
   const hasGlobalModalOpen =
     shippingModal.open ||
     shipmentFreightModal.open ||
@@ -107,7 +149,16 @@ export default function PedidosSection() {
     orderEditModal.open ||
     inventoryModal.open ||
     createOrderModal.open ||
-    registerPackageModal.open
+    registerPackageModal.open ||
+    editInventoryModal.open
+  const includeByUser = (order) => {
+    if (!adminUserFilterTerm) return true
+    const haystack = [order?.user_name, order?.user_email, order?.user_id]
+      .map((v) => String(v || '').toLowerCase())
+      .join(' ')
+    return haystack.includes(adminUserFilterTerm)
+  }
+  const ordersForList = orders.filter(includeByUser)
 
   if (activeTab !== 'pedidos' && !hasGlobalModalOpen) return null
 
@@ -206,12 +257,12 @@ export default function PedidosSection() {
         </button>
       </div>
       {ordersLoading && <p className="mt-4 text-sm text-earth-600">Carregando pedidos...</p>}
-      {!ordersLoading && orders.length === 0 && (
+      {!ordersLoading && ordersForList.length === 0 && (
         <p className="mt-4 text-sm text-earth-600">Nenhum pedido ainda.</p>
       )}
-      {!ordersLoading && orders.length > 0 && (
+      {!ordersLoading && ordersForList.length > 0 && (
         <div className="mt-4 space-y-4">
-          {orders.map((o) => (
+          {ordersForList.map((o) => (
             <div key={o.id} className="rounded-lg border border-earth-200 bg-white p-4">
               {(() => {
                 const shippingBreakdown = readShippingBreakdown(o)
@@ -612,19 +663,160 @@ export default function PedidosSection() {
 
       {shipmentFreightModal.open && (
         <form onSubmit={handleSetShipmentFreight} className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-lg" onClick={(e) => e.stopPropagation()}>
-            <h3 className="font-semibold text-earth-900">Definir frete no envio</h3>
-            <div className="mt-4 space-y-3">
-              <input
-                type="number"
-                step="1"
-                min="0"
-                required
-                value={shipmentFreightModal.cost}
-                onChange={(e) => setShipmentFreightModal((m) => ({ ...m, cost: e.target.value }))}
-                placeholder="Ex: 5000"
-                className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
-              />
+          <div
+            className="max-h-[92vh] w-full max-w-4xl overflow-y-auto rounded-xl bg-white p-6 shadow-lg"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="font-semibold text-earth-900">Orçamento de envio (solicitação de envio)</h3>
+            <p className="mt-1 text-sm text-earth-600">
+              Mesma composição do frete por pedido: base, taxa por item, buffer e referência dos pacotes.
+            </p>
+
+            {shipmentSnapshot && (
+              <div className="mt-4 rounded-lg border border-earth-200 bg-earth-50 p-4">
+                <div className="flex flex-wrap items-center gap-2 text-sm text-earth-700">
+                  <span className="font-medium">Envio {shipmentSnapshot.shipmentId?.slice(0, 8)}...</span>
+                  <span>•</span>
+                  <span>{shipmentSnapshot.user_name || shipmentSnapshot.user_email || shipmentSnapshot.user_id}</span>
+                </div>
+                {Array.isArray(shipmentSnapshot.order_ids) && shipmentSnapshot.order_ids.length > 0 && (
+                  <p className="mt-2 text-xs text-earth-600">
+                    Pedidos vinculados:{' '}
+                    {shipmentSnapshot.order_ids
+                      .filter(Boolean)
+                      .map((id) => id?.slice(0, 8))
+                      .join(', ')}
+                    …
+                  </p>
+                )}
+                {shipmentSnapshot.message && (
+                  <p className="mt-2 text-xs text-earth-600 line-clamp-4">{shipmentSnapshot.message}</p>
+                )}
+              </div>
+            )}
+
+            <div className="mt-4 grid gap-6 lg:grid-cols-2">
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium text-earth-700">Frete base (¥)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    required
+                    value={shipmentFreightModal.cost}
+                    onChange={(e) => setShipmentFreightModal((m) => ({ ...m, cost: e.target.value }))}
+                    className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-earth-700">Taxa de redirecionamento por item (¥)</label>
+                  <p className="mt-1 text-xs text-earth-500">
+                    Valor inicial pela quantidade de itens: 1 → ¥1.000; 2–4 → ¥750; 5+ → ¥500 (editável).
+                  </p>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={shipmentFreightModal.redirectFeePerItem}
+                    onChange={(e) => setShipmentFreightModal((m) => ({ ...m, redirectFeePerItem: e.target.value }))}
+                    className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-earth-700">% Buffer sobre frete base</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={shipmentFreightModal.shippingBufferPercent}
+                    onChange={(e) => setShipmentFreightModal((m) => ({ ...m, shippingBufferPercent: e.target.value }))}
+                    className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                  />
+                </div>
+                <div className="rounded-lg border border-earth-200 bg-earth-50 p-3 text-sm text-earth-700">
+                  <p>
+                    Itens (contagem p/ taxa): <strong>{shipmentItemsCount}</strong>
+                  </p>
+                  <p>
+                    Frete base: <strong>{formatJPY(shipmentBase)}</strong>
+                  </p>
+                  <p>
+                    Taxa por item: <strong>{formatJPY(shipmentRedirectTotal)}</strong>
+                  </p>
+                  <p>
+                    Buffer: <strong>{formatJPY(shipmentBufferAmt)}</strong>
+                  </p>
+                  <p className="mt-1 text-base font-semibold text-earth-900">
+                    Total final ao cliente: {formatJPY(shipmentFinalTotal)}
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="rounded-lg border border-earth-200 p-3">
+                  <h4 className="text-sm font-semibold text-earth-900">Detalhamento</h4>
+                  {shipmentParsedItems.length > 0 ? (
+                    <ul className="mt-2 max-h-48 space-y-2 overflow-y-auto pr-1">
+                      {shipmentParsedItems.map((item, idx) => {
+                        const qty = Math.max(1, parseInt(item?.quantidade, 10) || 1)
+                        const unit = parseFloat(item?.valor) || 0
+                        const subtotal = unit * qty
+                        return (
+                          <li
+                            key={`${item?.name || 'item'}-${idx}`}
+                            className="rounded border border-earth-100 bg-earth-50 p-2 text-xs text-earth-700"
+                          >
+                            <p className="font-medium text-earth-900">{item?.name || `Item ${idx + 1}`}</p>
+                            <p>
+                              Qtd: {qty} • Unitário: {formatJPY(unit)} • Subtotal: {formatJPY(subtotal)}
+                            </p>
+                            {item?.descricao && <p className="text-earth-600">{item.descricao}</p>}
+                          </li>
+                        )
+                      })}
+                    </ul>
+                  ) : Array.isArray(shipmentSnapshot?.inventoryLines) && shipmentSnapshot.inventoryLines.length > 0 ? (
+                    <ul className="mt-2 max-h-48 space-y-2 overflow-y-auto pr-1">
+                      {shipmentSnapshot.inventoryLines.map((row, idx) => (
+                        <li
+                          key={row.inventory_id || idx}
+                          className="rounded border border-earth-100 bg-earth-50 p-2 text-xs text-earth-700"
+                        >
+                          <p className="font-medium text-earth-900">
+                            {row.inventory_name || row.inventory_id?.slice(0, 8) || `Pacote ${idx + 1}`}
+                          </p>
+                          {row.order_id && (
+                            <p className="text-earth-600">Pedido {String(row.order_id).slice(0, 8)}…</p>
+                          )}
+                          {row.weight_kg != null && Number(row.weight_kg) > 0 && (
+                            <p>Peso: {row.weight_kg} kg</p>
+                          )}
+                          {parseInventoryProductLines(row.products_description).length > 0 && (
+                            <ul className="mt-1 space-y-0.5 text-earth-600">
+                              {parseInventoryProductLines(row.products_description).map((line, lineIdx) => (
+                                <li key={`${row.inventory_id || idx}-line-${lineIdx}`}>
+                                  {line.name} {line.quantity > 1 ? `x${line.quantity}` : ''}
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="mt-2 text-xs text-earth-600">Sem pacotes listados no envio.</p>
+                  )}
+                </div>
+                {Array.isArray(shipmentSnapshot?.attachment_urls) && shipmentSnapshot.attachment_urls.length > 0 && (
+                  <div className="rounded-lg border border-earth-200 p-3">
+                    <h4 className="text-sm font-semibold text-earth-900">Fotos/arquivos do pedido</h4>
+                    <div className="mt-2">
+                      <OrderAttachments urls={shipmentSnapshot.attachment_urls} maxThumbnails={8} />
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
             <div className="mt-6 flex gap-2">
               <button
@@ -632,11 +824,21 @@ export default function PedidosSection() {
                 disabled={submitting}
                 className="rounded-lg bg-earth-900 px-4 py-2 font-medium text-earth-50 hover:bg-earth-800 disabled:opacity-60"
               >
-                {submitting ? 'Salvando...' : 'Definir frete'}
+                {submitting ? 'Salvando...' : 'Definir e notificar'}
               </button>
               <button
                 type="button"
-                onClick={() => setShipmentFreightModal({ open: false, shipmentId: null, cost: '', currency: 'JPY' })}
+                onClick={() =>
+                  setShipmentFreightModal({
+                    open: false,
+                    shipmentId: null,
+                    cost: '',
+                    currency: 'JPY',
+                    redirectFeePerItem: '',
+                    shippingBufferPercent: '',
+                    snapshot: null,
+                  })
+                }
                 className="rounded-lg border border-earth-300 px-4 py-2 font-medium text-earth-700 hover:bg-earth-100"
               >
                 Cancelar

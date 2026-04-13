@@ -170,7 +170,23 @@ for (const k of Object.keys(ROUTES)) {
 export function pathnameToRouteKey(pathname) {
   const loc = getLocaleFromPathname(pathname)
   const table = loc === LOCALE_EN ? PATH_TO_KEY_EN : PATH_TO_KEY_PT
-  return table[pathname] ?? null
+  const direct = table[pathname]
+  if (direct) return direct
+
+  const adminPrefix = loc === LOCALE_EN ? '/en/app/admin/' : '/app/admin/'
+  if (pathname.startsWith(adminPrefix)) {
+    const rest = pathname.slice(adminPrefix.length)
+    if (rest.includes('/')) {
+      const lastSeg = rest.split('/').filter(Boolean).pop()
+      if (lastSeg) {
+        const legacyPath = `${adminPrefix}${lastSeg}`
+        const byLastSegment = table[legacyPath]
+        if (byLastSegment) return byLastSegment
+      }
+    }
+  }
+
+  return null
 }
 
 /**

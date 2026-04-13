@@ -35,6 +35,8 @@ import {
 import {
   addInventoryFromOrderAdmin,
   registerPackageAdmin,
+  updateUserInventoryAdmin,
+  parseInventoryProductsForEdit,
   getShippingPanelAdmin,
   setShipmentFreightAdmin,
   setShipmentShippedAdmin,
@@ -74,7 +76,7 @@ import { getSystemSettings, saveSystemSettingsAdmin } from '../../../services/se
 import { getPaymentsApiBase } from '../../../services/paymentService'
 import { PRODUCT_CONDITION_OPTIONS, getProductConditionMeta, normalizeProductCondition } from '../../../lib/productCondition'
 import AdminTabsNav from './AdminTabsNav'
-import { ADMIN_TABS, adminTabPathFromId, normalizeAdminTabId } from './adminTabs'
+import { ADMIN_TABS, adminGroupedTabPathFromId, getAdminCategoryByTabId, normalizeAdminTabId } from './adminTabs'
 import { AdminContextProvider } from './AdminContext'
 import MarketingSection from './sections/MarketingSection'
 import FraudeSection from './sections/FraudeSection'
@@ -232,6 +234,17 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     photo_url: '',
     video_url: '',
   })
+  const [editInventoryModal, setEditInventoryModal] = useState({
+    open: false,
+    inventoryId: null,
+    userLabel: '',
+    name: '',
+    notes: '',
+    weight_kg: '',
+    photo_url: '',
+    video_url: '',
+    products: [{ name: '', quantity: '1', price: '' }],
+  })
   const [activeTab, setActiveTabState] = useState(() => normalizeAdminTabId(routeTabId))
 
   // Compras Programadas (admin)
@@ -314,7 +327,15 @@ export default function Admin({ routeTabId = 'pedidos' }) {
 
   const [shippingPanel, setShippingPanel] = useState({ shipments: [], orders: [], inventoryReady: [] })
   const [shippingPanelLoading, setShippingPanelLoading] = useState(false)
-  const [shipmentFreightModal, setShipmentFreightModal] = useState({ open: false, shipmentId: null, cost: '', currency: 'JPY' })
+  const [shipmentFreightModal, setShipmentFreightModal] = useState({
+    open: false,
+    shipmentId: null,
+    cost: '',
+    currency: 'JPY',
+    redirectFeePerItem: '',
+    shippingBufferPercent: '',
+    snapshot: null,
+  })
   const [shipmentShippedModal, setShipmentShippedModal] = useState({ open: false, shipmentId: null, trackingCode: '' })
   const [catalogSearch, setCatalogSearch] = useState('')
   const [catalogStatusFilter, setCatalogStatusFilter] = useState('all')
@@ -352,6 +373,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
   const [usersHasMore, setUsersHasMore] = useState(false)
   const [draggingTabId, setDraggingTabId] = useState('')
   const [tabOrder, setTabOrder] = useState(TABS.map((tab) => tab.id))
+  const [adminUserFilter, setAdminUserFilter] = useState('')
 
   const normalizeTabOrder = (raw) => {
     const allowed = TABS.map((tab) => tab.id)
@@ -369,7 +391,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     const safeId = normalizeAdminTabId(nextTabId)
     setActiveTabState(safeId)
     const base = localizedPath('appAdmin', siteLocale)
-    const seg = adminTabPathFromId(safeId, siteLocale)
+    const seg = adminGroupedTabPathFromId(safeId, siteLocale)
     const nextPath = `${base}/${seg}`
     if (typeof window !== 'undefined' && window.location.pathname !== nextPath) {
       navigate(nextPath)
@@ -403,6 +425,28 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       console.warn('Failed to save order status filter', e)
     }
   }, [orderStatusFilter, user?.id])
+
+  useEffect(() => {
+    if (!user?.id) {
+      setAdminUserFilter('')
+      return
+    }
+    try {
+      const saved = localStorage.getItem(`admin_user_filter_v1_${user.id}`)
+      setAdminUserFilter(saved ?? '')
+    } catch {
+      setAdminUserFilter('')
+    }
+  }, [user?.id])
+
+  useEffect(() => {
+    if (!user?.id) return
+    try {
+      localStorage.setItem(`admin_user_filter_v1_${user.id}`, adminUserFilter)
+    } catch {
+      // ignore
+    }
+  }, [adminUserFilter, user?.id])
 
   const handleTabReorder = (draggedId, targetId) => {
     if (!draggedId || !targetId || draggedId === targetId) return
@@ -1728,23 +1772,111 @@ export default function Admin({ routeTabId = 'pedidos' }) {
   }
 
   const openShipmentFreightModal = (s) => {
-    setShipmentFreightModal({ open: true, shipmentId: s.id, cost: s.shipping_cost ? String(s.shipping_cost) : '', currency: s.shipping_currency || 'JPY' })
+    const panelOrders = shippingPanel.orders || []
+    const oidList = Array.isArray(s.order_ids) ? s.order_ids.filter(Boolean) : []
+    let primaryOrder = null
+    for (const id of oidList) {
+      primaryOrder = panelOrders.find((o) => o.id === id)
+      if (primaryOrder) break
+    }
+
+    const savedBreakdown =
+      primaryOrder?.shipping_quote_breakdown && typeof primaryOrder.shipping_quote_breakdown === 'object'
+        ? primaryOrder.shipping_quote_breakdown
+        : null
+
+    const parsed = parseQuoteMessage(primaryOrder?.message || '')
+    const parsedProducts = Array.isArray(parsed?.products) ? parsed.products : []
+    let itemsCount = parsedProducts.reduce((acc, item) => {
+      const qty = Math.max(1, parseInt(item?.quantidade, 10) || 1)
+      return acc + qty
+    }, 0)
+    const invLines = Array.isArray(s.items) ? s.items : []
+    if (itemsCount === 0 && invLines.length > 0) {
+      itemsCount = Math.max(1, invLines.length)
+    }
+    if (itemsCount === 0) itemsCount = 1
+
+    const baseFromSaved = savedBreakdown?.base_shipping != null ? String(savedBreakdown.base_shipping) : ''
+
+    setShipmentFreightModal({
+      open: true,
+      shipmentId: s.id,
+      cost: baseFromSaved || (s.shipping_cost != null ? String(s.shipping_cost) : ''),
+      currency: s.shipping_currency || primaryOrder?.shipping_currency || 'JPY',
+      redirectFeePerItem:
+        savedBreakdown?.redirect_fee_per_item != null
+          ? String(savedBreakdown.redirect_fee_per_item)
+          : String(getDefaultRedirectFeePerItem(itemsCount)),
+      shippingBufferPercent:
+        savedBreakdown?.shipping_buffer_percent != null
+          ? String(savedBreakdown.shipping_buffer_percent)
+          : '',
+      snapshot: {
+        shipmentId: s.id,
+        user_name: s.user_name,
+        user_email: s.user_email,
+        user_id: s.user_id,
+        order_ids: oidList,
+        primaryOrderId: primaryOrder?.id ?? oidList[0] ?? null,
+        message: primaryOrder?.message || '',
+        parsedProducts,
+        itemsCount,
+        attachment_urls: Array.isArray(primaryOrder?.attachment_urls) ? primaryOrder.attachment_urls : [],
+        inventoryLines: invLines,
+      },
+    })
   }
 
   const handleSetShipmentFreight = async (e) => {
     e.preventDefault()
-    const cost = parseFloat(shipmentFreightModal.cost)
-    if (isNaN(cost) || cost < 0) {
-      setMessage('Valor do frete invÃ¡lido')
+    const baseShipping = parseFloat(shipmentFreightModal.cost)
+    if (isNaN(baseShipping) || baseShipping < 0) {
+      setMessage('Valor do frete inválido')
       return
+    }
+    const perItemFee = Math.max(0, parseFloat(shipmentFreightModal.redirectFeePerItem || '0') || 0)
+    const bufferPercent = Math.max(0, parseFloat(shipmentFreightModal.shippingBufferPercent || '0') || 0)
+    const itemCount = Math.max(0, Number(shipmentFreightModal.snapshot?.itemsCount) || 0)
+    const redirectFeeTotal = perItemFee * itemCount
+    const bufferAmount = baseShipping * (bufferPercent / 100)
+    const cost = baseShipping + redirectFeeTotal + bufferAmount
+    const breakdown = {
+      base_shipping: baseShipping,
+      redirect_fee_per_item: perItemFee,
+      redirect_fee_total: redirectFeeTotal,
+      items_count: itemCount,
+      shipping_buffer_percent: bufferPercent,
+      shipping_buffer_amount: bufferAmount,
+      final_total: cost,
+      currency: shipmentFreightModal.currency || 'JPY',
+      order_module: null,
     }
     setSubmitting(true)
     setMessage('')
-    const { error } = await setShipmentFreightAdmin(shipmentFreightModal.shipmentId, cost, shipmentFreightModal.currency)
+    const { error } = await setShipmentFreightAdmin(
+      shipmentFreightModal.shipmentId,
+      cost,
+      shipmentFreightModal.currency,
+      breakdown
+    )
     setSubmitting(false)
     setMessage(error ? error.message : 'Frete definido no envio. Aguardando pagamento.')
     if (!error) {
-      setShipmentFreightModal({ open: false, shipmentId: null, cost: '', currency: 'JPY' })
+      logAdminAction('shipment_set_freight', 'shipment', shipmentFreightModal.shipmentId, {
+        cost,
+        currency: shipmentFreightModal.currency,
+        breakdown,
+      })
+      setShipmentFreightModal({
+        open: false,
+        shipmentId: null,
+        cost: '',
+        currency: 'JPY',
+        redirectFeePerItem: '',
+        shippingBufferPercent: '',
+        snapshot: null,
+      })
       loadShippingPanel()
       loadOrders()
     }
@@ -2057,6 +2189,73 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     }
   }
 
+  const openEditInventoryModal = useCallback((row) => {
+    const id = row?.id || row?.inventory_id
+    if (!id) return
+    const displayName = row?.name || row?.inventory_name || ''
+    const productsDescription = row?.products_description || ''
+    const userLabel = [row?.user_name, row?.user_email].filter(Boolean).join(' • ') || row?.user_id || '—'
+    const parsed = parseInventoryProductsForEdit(productsDescription)
+    setEditInventoryModal({
+      open: true,
+      inventoryId: id,
+      userLabel,
+      name: displayName || (parsed[0]?.name?.trim()) || '',
+      notes: row?.notes ?? '',
+      weight_kg: row.weight_kg != null && row.weight_kg !== '' ? String(row.weight_kg) : '',
+      photo_url: row.photo_url ?? '',
+      video_url: row.video_url ?? '',
+      products: parsed.length > 0 ? parsed : [{ name: '', quantity: '1', price: '' }],
+    })
+  }, [])
+
+  const handleUpdateUserInventory = async (e) => {
+    e.preventDefault()
+    const id = editInventoryModal.inventoryId
+    if (!id) return
+
+    const validProducts = editInventoryModal.products.filter((p) => p.name?.trim())
+    if (!editInventoryModal.name?.trim() && validProducts.length === 0) {
+      setMessage('Informe o nome do pacote ou pelo menos um produto.')
+      return
+    }
+
+    setSubmitting(true)
+    setMessage('')
+    try {
+      const { error } = await updateUserInventoryAdmin(id, {
+        name: editInventoryModal.name,
+        notes: editInventoryModal.notes,
+        weight_kg: editInventoryModal.weight_kg,
+        photo_url: editInventoryModal.photo_url,
+        video_url: editInventoryModal.video_url,
+        products: validProducts.map((p) => ({
+          name: p.name.trim(),
+          quantity: p.quantity,
+          price: p.price,
+        })),
+      })
+      setMessage(error ? error.message : 'Inventário atualizado.')
+      if (!error) {
+        logAdminAction('inventory_update', 'inventory', id, { user: editInventoryModal.userLabel })
+        setEditInventoryModal({
+          open: false,
+          inventoryId: null,
+          userLabel: '',
+          name: '',
+          notes: '',
+          weight_kg: '',
+          photo_url: '',
+          video_url: '',
+          products: [{ name: '', quantity: '1', price: '' }],
+        })
+        loadShippingPanel()
+      }
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
   const selectedExternalStores = Object.entries(externalSearchStores)
     .filter(([, checked]) => checked)
     .map(([storeId]) => storeId)
@@ -2186,6 +2385,9 @@ export default function Admin({ routeTabId = 'pedidos' }) {
   const filteredFraudAffiliateOrders = (fraudQueue.affiliate_orders || []).filter((row) =>
     passesFraudFilters(row, ['id', 'order_id', 'affiliate_id'])
   )
+  const isOperacaoCategory = getAdminCategoryByTabId(activeTab) === 'operacao'
+  const adminUserFilterTerm = String(adminUserFilter || '').trim().toLowerCase()
+
   const adminContextValue = {
     activeTab,
     setActiveTab,
@@ -2232,6 +2434,10 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     users,
     registerPackageModal,
     handleRegisterPackage,
+    editInventoryModal,
+    setEditInventoryModal,
+    openEditInventoryModal,
+    handleUpdateUserInventory,
     submitting,
     loadShippingPanel,
     shippingPanelLoading,
@@ -2399,6 +2605,9 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     downloadFinancialDocPdf,
     deleteFinancialDocument,
     deleteFinancialDocumentsBulk,
+    adminUserFilter,
+    setAdminUserFilter,
+    adminUserFilterTerm,
   }
 
   return (
@@ -2428,6 +2637,38 @@ export default function Admin({ routeTabId = 'pedidos' }) {
           onTabChange={setActiveTab}
           onTabReorder={handleTabReorder}
         />
+
+        {isOperacaoCategory && (
+          <section className="mt-4 rounded-lg border border-earth-200 bg-earth-50 p-4">
+            <div className="flex flex-wrap items-end gap-3">
+              <div className="min-w-[260px] flex-1">
+                <label className="block text-xs font-semibold uppercase tracking-wide text-earth-600">
+                  Filtro global por usuário
+                </label>
+                <input
+                  type="text"
+                  value={adminUserFilter}
+                  onChange={(e) => setAdminUserFilter(e.target.value)}
+                  placeholder="Nome, e-mail, código da conta ou ID"
+                  className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => setAdminUserFilter('')}
+                disabled={!adminUserFilterTerm}
+                className="rounded border border-earth-300 bg-white px-3 py-2 text-sm font-medium text-earth-700 hover:bg-earth-100 disabled:opacity-50"
+              >
+                Limpar
+              </button>
+            </div>
+            {adminUserFilterTerm && (
+              <p className="mt-2 text-xs text-earth-600">
+                Filtro ativo em Pedidos, Envios e Usuários.
+              </p>
+            )}
+          </section>
+        )}
 
         {/* Pedidos - Fluxo Redirecionamento */}
         <PedidosSection />
@@ -2703,6 +2944,171 @@ export default function Admin({ routeTabId = 'pedidos' }) {
           </div>
         )}
       </div>
+
+      {editInventoryModal.open && (
+        <form
+          onSubmit={handleUpdateUserInventory}
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4"
+        >
+          <div
+            className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl bg-white p-6 shadow-lg"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="font-semibold text-earth-900">Editar inventário do usuário</h3>
+            <p className="mt-1 text-sm text-earth-500">
+              {editInventoryModal.userLabel}
+            </p>
+            <div className="mt-6 space-y-4">
+              <div>
+                <label className="mb-1 block text-sm font-medium text-earth-700">Nome do pacote</label>
+                <input
+                  type="text"
+                  value={editInventoryModal.name}
+                  onChange={(e) => setEditInventoryModal((m) => ({ ...m, name: e.target.value }))}
+                  className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <label className="block text-sm font-medium text-earth-700">Produtos</label>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setEditInventoryModal((m) => ({
+                      ...m,
+                      products: [...m.products, { name: '', quantity: '1', price: '' }],
+                    }))
+                  }
+                  className="rounded-full bg-earth-100 px-3 py-1 text-xs text-earth-700 hover:bg-earth-200"
+                >
+                  + Adicionar produto
+                </button>
+              </div>
+              <div className="max-h-64 space-y-3 overflow-y-auto pr-2">
+                {editInventoryModal.products.map((product, index) => (
+                  <div key={index} className="flex flex-wrap items-start gap-3 rounded-xl bg-earth-50 p-4">
+                    <input
+                      type="text"
+                      placeholder="Nome do produto"
+                      value={product.name}
+                      onChange={(e) => {
+                        const next = [...editInventoryModal.products]
+                        next[index] = { ...next[index], name: e.target.value }
+                        setEditInventoryModal((m) => ({ ...m, products: next }))
+                      }}
+                      className="min-w-[120px] flex-1 rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                    />
+                    <input
+                      type="number"
+                      placeholder="Qtd"
+                      min="1"
+                      value={product.quantity}
+                      onChange={(e) => {
+                        const next = [...editInventoryModal.products]
+                        next[index] = { ...next[index], quantity: e.target.value }
+                        setEditInventoryModal((m) => ({ ...m, products: next }))
+                      }}
+                      className="w-24 rounded-lg border border-earth-300 px-3 py-2 text-center text-earth-900"
+                    />
+                    <input
+                      type="number"
+                      placeholder="Preço"
+                      min="0"
+                      step="0.01"
+                      value={product.price}
+                      onChange={(e) => {
+                        const next = [...editInventoryModal.products]
+                        next[index] = { ...next[index], price: e.target.value }
+                        setEditInventoryModal((m) => ({ ...m, products: next }))
+                      }}
+                      className="w-28 rounded-lg border border-earth-300 px-3 py-2 text-right text-earth-900"
+                    />
+                    {editInventoryModal.products.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setEditInventoryModal((m) => ({
+                            ...m,
+                            products: m.products.filter((_, i) => i !== index),
+                          }))
+                        }
+                        className="rounded border border-red-200 px-2 py-1 text-xs text-red-700 hover:bg-red-50"
+                      >
+                        Remover
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-earth-700">Peso total (kg)</label>
+                <input
+                  type="number"
+                  step="0.001"
+                  min="0"
+                  value={editInventoryModal.weight_kg}
+                  onChange={(e) => setEditInventoryModal((m) => ({ ...m, weight_kg: e.target.value }))}
+                  className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-earth-700">Foto (URL)</label>
+                <input
+                  type="url"
+                  value={editInventoryModal.photo_url}
+                  onChange={(e) => setEditInventoryModal((m) => ({ ...m, photo_url: e.target.value }))}
+                  className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-earth-700">Vídeo (URL)</label>
+                <input
+                  type="url"
+                  value={editInventoryModal.video_url}
+                  onChange={(e) => setEditInventoryModal((m) => ({ ...m, video_url: e.target.value }))}
+                  className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-earth-700">Notas internas</label>
+                <textarea
+                  rows={2}
+                  value={editInventoryModal.notes}
+                  onChange={(e) => setEditInventoryModal((m) => ({ ...m, notes: e.target.value }))}
+                  className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                />
+              </div>
+            </div>
+            <div className="mt-8 flex gap-3">
+              <button
+                type="submit"
+                disabled={submitting}
+                className="flex-1 rounded-lg bg-earth-900 px-4 py-3 font-medium text-earth-50 hover:bg-earth-800 disabled:opacity-60"
+              >
+                {submitting ? 'Salvando...' : 'Salvar alterações'}
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  setEditInventoryModal({
+                    open: false,
+                    inventoryId: null,
+                    userLabel: '',
+                    name: '',
+                    notes: '',
+                    weight_kg: '',
+                    photo_url: '',
+                    video_url: '',
+                    products: [{ name: '', quantity: '1', price: '' }],
+                  })
+                }
+                className="rounded-lg border border-earth-300 px-4 py-3 font-medium text-earth-700 hover:bg-earth-100"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </form>
+      )}
       </AdminContextProvider>
     </>
   )

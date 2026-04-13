@@ -1,4 +1,5 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
+import { createClient } from 'jsr:@supabase/supabase-js@2'
 import type { SearchRequest, StoreId, StoreSearchResult, UnifiedSearchHit } from './types.ts'
 import { rankHits } from './rank.ts'
 import { buildCacheKey, getCache, setCache } from './cache.ts'
@@ -27,6 +28,39 @@ function safeJson(payload: unknown, status: number = 200): Response {
       'Content-Type': 'application/json',
     },
   })
+}
+
+/** Valida JWT + role admin (o gateway pode ter verify_jwt=false; a proteção fica aqui). */
+async function requireAdmin(req: Request): Promise<Response | null> {
+  const authHeader = req.headers.get('Authorization') ?? ''
+  const jwt = authHeader.replace(/^Bearer\s+/i, '').trim()
+  if (!jwt) {
+    return safeJson({ error: 'Autenticação necessária.' }, 401)
+  }
+  const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
+  const anon = Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+  if (!supabaseUrl || !anon) {
+    return safeJson({ error: 'Configuração do servidor incompleta.' }, 500)
+  }
+  const supabase = createClient(supabaseUrl, anon, {
+    global: { headers: { Authorization: `Bearer ${jwt}` } },
+  })
+  const {
+    data: { user },
+    error: userErr,
+  } = await supabase.auth.getUser()
+  if (userErr || !user) {
+    return safeJson({ error: 'Sessão inválida ou expirada.' }, 401)
+  }
+  const { data: profile, error: profErr } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .maybeSingle()
+  if (profErr || profile?.role !== 'admin') {
+    return safeJson({ error: 'Acesso restrito a administradores.' }, 403)
+  }
+  return null
 }
 
 function sanitizeRequest(body: SearchRequest): Required<SearchRequest> {
@@ -71,6 +105,9 @@ Deno.serve(async (req) => {
   if (req.method !== 'POST') return safeJson({ error: 'Método não suportado' }, 405)
 
   try {
+    const denied = await requireAdmin(req)
+    if (denied) return denied
+
     const body = (await req.json()) as SearchRequest
     const input = sanitizeRequest(body)
 
