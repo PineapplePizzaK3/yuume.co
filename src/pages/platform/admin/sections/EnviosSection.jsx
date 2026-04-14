@@ -19,6 +19,7 @@ export default function EnviosSection() {
     submitting,
     openShipmentShippedModal,
     handleSetShipmentCompleted,
+    handleDeleteShipment,
     adminUserFilterTerm,
     openEditInventoryModal,
   } = useAdminContext()
@@ -330,6 +331,20 @@ export default function EnviosSection() {
                               Ver pedidos
                             </button>
                           )}
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              const ok = window.confirm(
+                                'Remover este envio do usuário? Esta ação não pode ser desfeita.'
+                              )
+                              if (!ok) return
+                              await handleDeleteShipment(s.id)
+                            }}
+                            disabled={submitting}
+                            className="rounded border border-red-300 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-60"
+                          >
+                            Remover envio
+                          </button>
                         </div>
                       </div>
                     </li>

@@ -42,6 +42,7 @@ const AdminLayout = lazy(() => import('./pages/platform/admin/AdminLayout'))
 const AdminPedidosTab = lazy(() => import('./pages/platform/admin/tabs/PedidosTab'))
 const AdminUsuariosTab = lazy(() => import('./pages/platform/admin/tabs/UsuariosTab'))
 const AdminEnviosTab = lazy(() => import('./pages/platform/admin/tabs/EnviosTab'))
+const AdminProdutosUsuariosTab = lazy(() => import('./pages/platform/admin/tabs/ProdutosUsuariosTab'))
 const AdminProdutosTab = lazy(() => import('./pages/platform/admin/tabs/ProdutosTab'))
 const AdminCatalogoProdutosTab = lazy(() => import('./pages/platform/admin/tabs/CatalogoProdutosTab'))
 const AdminBuscaCatalogoTab = lazy(() => import('./pages/platform/admin/tabs/BuscaCatalogoTab'))
@@ -187,6 +188,7 @@ function App() {
                 <Route path="pedidos" element={<AdminPedidosTab />} />
                 <Route path="usuarios" element={<AdminUsuariosTab />} />
                 <Route path="envios" element={<AdminEnviosTab />} />
+                <Route path="produtos-usuarios" element={<AdminProdutosUsuariosTab />} />
                 <Route path="produtos" element={<AdminProdutosTab />} />
                 <Route path="catalogo-produtos" element={<AdminCatalogoProdutosTab />} />
                 <Route path="busca-catalogo" element={<AdminBuscaCatalogoTab />} />
@@ -200,6 +202,7 @@ function App() {
                 <Route path="operacao/pedidos" element={<AdminPedidosTab />} />
                 <Route path="operacao/usuarios" element={<AdminUsuariosTab />} />
                 <Route path="operacao/envios" element={<AdminEnviosTab />} />
+                <Route path="operacao/produtos-usuarios" element={<AdminProdutosUsuariosTab />} />
                 <Route path="catalogo/produtos" element={<AdminProdutosTab />} />
                 <Route path="catalogo/catalogo-produtos" element={<AdminCatalogoProdutosTab />} />
                 <Route path="catalogo/busca-catalogo" element={<AdminBuscaCatalogoTab />} />
@@ -279,6 +282,7 @@ function App() {
                 <Route path="orders" element={<AdminPedidosTab />} />
                 <Route path="users" element={<AdminUsuariosTab />} />
                 <Route path="shipping" element={<AdminEnviosTab />} />
+                <Route path="user-products" element={<AdminProdutosUsuariosTab />} />
                 <Route path="products" element={<AdminProdutosTab />} />
                 <Route path="catalog" element={<AdminCatalogoProdutosTab />} />
                 <Route path="catalog-search" element={<AdminBuscaCatalogoTab />} />
@@ -292,6 +296,7 @@ function App() {
                 <Route path="operations/orders" element={<AdminPedidosTab />} />
                 <Route path="operations/users" element={<AdminUsuariosTab />} />
                 <Route path="operations/shipping" element={<AdminEnviosTab />} />
+                <Route path="operations/user-products" element={<AdminProdutosUsuariosTab />} />
                 <Route path="catalog/products" element={<AdminProdutosTab />} />
                 <Route path="catalog/catalog" element={<AdminCatalogoProdutosTab />} />
                 <Route path="catalog/catalog-search" element={<AdminBuscaCatalogoTab />} />

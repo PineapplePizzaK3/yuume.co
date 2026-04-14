@@ -36,12 +36,14 @@ import {
   addInventoryFromOrderAdmin,
   registerPackageAdmin,
   updateUserInventoryAdmin,
+  deleteUserInventoryAdmin,
   parseInventoryProductsForEdit,
   getShippingPanelAdmin,
   setShipmentFreightAdmin,
   setShipmentShippedAdmin,
   setShipmentCompletedAdmin,
   setShipmentPaidAdmin,
+  deleteShipmentAdmin,
 } from '../../../services/inventoryService'
 import { getUsersAdmin, getUserFullAdmin, updateProfileAdmin } from '../../../services/profileService'
 import {
@@ -84,6 +86,7 @@ import NotificacoesSection from './sections/NotificacoesSection'
 import RecargasSection from './sections/RecargasSection'
 import LogsSection from './sections/LogsSection'
 import EnviosSection from './sections/EnviosSection'
+import ProdutosUsuariosSection from './sections/ProdutosUsuariosSection'
 import ProdutosSection from './sections/ProdutosSection'
 import BuscaCatalogoSection from './sections/BuscaCatalogoSection'
 import UsuariosSection from './sections/UsuariosSection'
@@ -823,7 +826,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
   }
 
   useEffect(() => {
-    if (activeTab === 'envios') {
+    if (activeTab === 'envios' || activeTab === 'produtos_usuarios') {
       let isActive = true
       loadShippingPanel(() => isActive)
       return () => { isActive = false }
@@ -1923,6 +1926,77 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     }
   }
 
+  const handleRemoveInventoryProductLine = async (inventoryRow, lineIndex) => {
+    const inventoryId = inventoryRow?.id || inventoryRow?.inventory_id
+    if (!inventoryId) return
+
+    const parsedLines = parseInventoryProductsForEdit(inventoryRow?.products_description || '')
+      .filter((line) => line?.name?.trim())
+    if (parsedLines.length === 0) {
+      setMessage('Este pacote não possui produtos para remover.')
+      return
+    }
+    if (lineIndex < 0 || lineIndex >= parsedLines.length) return
+
+    const nextLines = parsedLines.filter((_, idx) => idx !== lineIndex)
+    if (nextLines.length === 0) {
+      setMessage('Este pacote precisa manter pelo menos um produto. Edite o pacote para ajustar o nome.')
+      return
+    }
+
+    setSubmitting(true)
+    setMessage('')
+    const { error } = await updateUserInventoryAdmin(inventoryId, {
+      name: inventoryRow?.name || inventoryRow?.inventory_name || nextLines[0]?.name || 'Pacote',
+      notes: inventoryRow?.notes || null,
+      weight_kg: inventoryRow?.weight_kg ?? null,
+      photo_url: inventoryRow?.photo_url || null,
+      video_url: inventoryRow?.video_url || null,
+      products: nextLines.map((line) => ({
+        name: String(line.name || '').trim(),
+        quantity: line.quantity || '1',
+        price: line.price || '',
+      })),
+    })
+    setSubmitting(false)
+
+    setMessage(error ? error.message : 'Produto removido da lista do usuário.')
+    if (!error) {
+      logAdminAction('inventory_remove_product_line', 'inventory', inventoryId, { lineIndex }).catch(() => {})
+      loadShippingPanel()
+    }
+  }
+
+  const handleDeleteUserInventory = async (inventoryRow) => {
+    const inventoryId = inventoryRow?.id || inventoryRow?.inventory_id
+    if (!inventoryId) return
+    setSubmitting(true)
+    setMessage('')
+    const { error } = await deleteUserInventoryAdmin(inventoryId)
+    setSubmitting(false)
+    setMessage(error ? error.message : 'Pacote removido do inventário do usuário.')
+    if (!error) {
+      logAdminAction('inventory_delete', 'inventory', inventoryId, {
+        user_id: inventoryRow?.user_id || null,
+      }).catch(() => {})
+      loadShippingPanel()
+      loadOrders()
+    }
+  }
+
+  const handleDeleteShipment = async (shipmentId) => {
+    setSubmitting(true)
+    setMessage('')
+    const { error } = await deleteShipmentAdmin(shipmentId)
+    setSubmitting(false)
+    setMessage(error ? error.message : 'Envio removido.')
+    if (!error) {
+      logAdminAction('shipment_deleted', 'shipment', shipmentId, {})
+      loadShippingPanel()
+      loadOrders()
+    }
+  }
+
   const handleSetQuote = async (e) => {
     e.preventDefault()
     const products = quoteModal.products
@@ -2450,6 +2524,9 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     handleSetShipmentPaid,
     openShipmentShippedModal,
     handleSetShipmentCompleted,
+    handleDeleteShipment,
+    handleRemoveInventoryProductLine,
+    handleDeleteUserInventory,
     PaginationControls,
     getProductBasePriceJpy,
     getProductConditionMeta,
@@ -2664,7 +2741,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
             </div>
             {adminUserFilterTerm && (
               <p className="mt-2 text-xs text-earth-600">
-                Filtro ativo em Pedidos, Envios e Usuários.
+                Filtro ativo em Pedidos, Envios, Produtos (Usuários) e Usuários.
               </p>
             )}
           </section>
@@ -2696,6 +2773,9 @@ export default function Admin({ routeTabId = 'pedidos' }) {
 
         {/* Painel de Envios */}
         <EnviosSection />
+
+        {/* Produtos por usuário (inventário) */}
+        <ProdutosUsuariosSection />
 
         {/* Loja - Produtos */}
         <ProdutosSection />

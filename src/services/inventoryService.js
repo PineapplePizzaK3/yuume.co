@@ -228,6 +228,27 @@ export async function updateUserInventoryAdmin(inventoryId, payload) {
 }
 
 /**
+ * Admin: remove um pacote do inventário do usuário.
+ */
+export async function deleteUserInventoryAdmin(inventoryId) {
+  try {
+    const { error } = await withDbTimeout(
+      supabase.rpc('admin_delete_user_inventory', { p_inventory_id: inventoryId })
+    )
+    if (error && /admin_delete_user_inventory|function/i.test(String(error.message || ''))) {
+      // Fallback para ambientes sem o RPC aplicado.
+      const { error: directError } = await withDbTimeout(
+        supabase.from('user_inventory').delete().eq('id', inventoryId)
+      )
+      return { error: directError ?? null }
+    }
+    return { error }
+  } catch (e) {
+    return { error: toServiceError(e) }
+  }
+}
+
+/**
  * Admin: registra pacote na conta do usuário (com dados completos).
  * Suporta tanto o formato antigo (products_description) quanto o novo (products array).
  */
@@ -359,6 +380,27 @@ export async function setShipmentPaidAdmin(shipmentId) {
     const { error } = await withDbTimeout(
       supabase.rpc('admin_set_shipment_paid', { p_shipment_id: shipmentId })
     )
+    return { error }
+  } catch (e) {
+    return { error: toServiceError(e) }
+  }
+}
+
+/**
+ * Admin: remove envio da conta do usuário.
+ */
+export async function deleteShipmentAdmin(shipmentId) {
+  try {
+    const { error } = await withDbTimeout(
+      supabase.rpc('admin_delete_shipment', { p_shipment_id: shipmentId })
+    )
+    if (error && /admin_delete_shipment|function/i.test(String(error.message || ''))) {
+      // Fallback para ambientes onde o RPC ainda não foi aplicado.
+      const { error: directError } = await withDbTimeout(
+        supabase.from('shipments').delete().eq('id', shipmentId)
+      )
+      return { error: directError ?? null }
+    }
     return { error }
   } catch (e) {
     return { error: toServiceError(e) }
