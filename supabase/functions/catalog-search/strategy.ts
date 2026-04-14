@@ -1,0 +1,57 @@
+import type { StoreId, StoreSearchResult } from './types.ts'
+
+type StoreIntegrationModel = {
+  sourceModel: 'public_web_fetch'
+  officialPartner: boolean
+  currentSearchMode: 'realtime_parse'
+  targetSearchMode: 'ingestion_index'
+  notes: string
+}
+
+const STORE_MODEL: Record<StoreId, StoreIntegrationModel> = {
+  amazon: {
+    sourceModel: 'public_web_fetch',
+    officialPartner: false,
+    currentSearchMode: 'realtime_parse',
+    targetSearchMode: 'ingestion_index',
+    notes: 'Resultados podem variar por mudanças de HTML e anti-bot.',
+  },
+  rakuma: {
+    sourceModel: 'public_web_fetch',
+    officialPartner: false,
+    currentSearchMode: 'realtime_parse',
+    targetSearchMode: 'ingestion_index',
+    notes: 'Páginas dinâmicas podem reduzir cobertura e consistência.',
+  },
+  mercari: {
+    sourceModel: 'public_web_fetch',
+    officialPartner: false,
+    currentSearchMode: 'realtime_parse',
+    targetSearchMode: 'ingestion_index',
+    notes: 'Mercari costuma depender de dados embarcados e pode divergir da busca nativa.',
+  },
+}
+
+export function buildSystemStrategyMeta() {
+  return {
+    currentSystemMode: 'pilot_realtime_parse',
+    targetSystemMode: 'hybrid_ingestion_index',
+    benchmarkModel: 'partner_integrated_proxy',
+    architectureDecision:
+      'Priorizar ingestão assíncrona + índice próprio, mantendo parsing em tempo real apenas como fallback.',
+  }
+}
+
+export function buildStoreDiagnostics(stores: StoreId[], settled: StoreSearchResult[]) {
+  return stores.map((storeId) => {
+    const result = settled.find((row) => row.storeId === storeId)
+    return {
+      storeId,
+      model: STORE_MODEL[storeId],
+      hitCount: result?.hits?.length ?? 0,
+      tookMs: result?.tookMs ?? null,
+      status: result?.error ? 'partial_error' : 'ok',
+      error: result?.error ?? null,
+    }
+  })
+}

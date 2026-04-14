@@ -1,4 +1,4 @@
-import type { UnifiedSearchHit } from './types.ts'
+import type { StoreId, UnifiedSearchHit } from './types.ts'
 
 function tokenize(value: string): string[] {
   return String(value || '')
@@ -32,4 +32,32 @@ export function rankHits(hits: UnifiedSearchHit[], query: string): UnifiedSearch
   return [...hits]
     .map((hit) => ({ ...hit, score: scoreHit(hit, query) }))
     .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
+}
+
+/** Evita que uma loja com score alto (ex.: Amazon + query em inglês) ocupe a página inteira. */
+export function interleaveRankedByStore(
+  hits: UnifiedSearchHit[],
+  query: string,
+  storeOrder: StoreId[],
+): UnifiedSearchHit[] {
+  const ranked = rankHits(hits, query)
+  const buckets = new Map<string, UnifiedSearchHit[]>()
+  for (const sid of storeOrder) buckets.set(sid, [])
+  for (const h of ranked) {
+    const arr = buckets.get(h.storeId)
+    if (arr) arr.push(h)
+  }
+  const out: UnifiedSearchHit[] = []
+  for (;;) {
+    let progressed = false
+    for (const sid of storeOrder) {
+      const arr = buckets.get(sid)
+      if (arr?.length) {
+        out.push(arr.shift()!)
+        progressed = true
+      }
+    }
+    if (!progressed) break
+  }
+  return out
 }

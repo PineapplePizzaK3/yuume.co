@@ -6,6 +6,23 @@ import { withDbTimeout, toServiceError } from '../lib/dbGuard'
 
 export async function getPurchaseGroups(destination = 'physical') {
   try {
+    if (destination === 'all') {
+      const [online, physical] = await Promise.all([
+        getPurchaseGroups('online'),
+        getPurchaseGroups('physical'),
+      ])
+      const err = online.error || physical.error
+      const byId = new Map()
+      for (const g of [...(online.data ?? []), ...(physical.data ?? [])]) {
+        if (g?.id != null && !byId.has(g.id)) byId.set(g.id, g)
+      }
+      const merged = Array.from(byId.values()).sort((a, b) => {
+        const ta = new Date(a.created_at || 0).getTime()
+        const tb = new Date(b.created_at || 0).getTime()
+        return tb - ta
+      })
+      return { data: merged, error: err }
+    }
     const safeDestination = destination === 'online' ? 'online' : 'physical'
     const { data, error } = await withDbTimeout(
       supabase

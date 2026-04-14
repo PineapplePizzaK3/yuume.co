@@ -37,7 +37,6 @@ const Profile = lazy(() => import('./pages/platform/Profile'))
 const Conta = lazy(() => import('./pages/platform/Conta'))
 const Loja = lazy(() => import('./pages/platform/Loja'))
 const Services = lazy(() => import('./pages/platform/Services'))
-const ComprasProgramadas = lazy(() => import('./pages/platform/ComprasProgramadas'))
 const Cart = lazy(() => import('./pages/platform/Cart'))
 const AdminLayout = lazy(() => import('./pages/platform/admin/AdminLayout'))
 const AdminPedidosTab = lazy(() => import('./pages/platform/admin/tabs/PedidosTab'))
@@ -145,10 +144,10 @@ function App() {
             <Route path="/como-funciona" element={<Navigate to={p('servicosPrecos')} replace />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/loja" element={<Navigate to={p('lojaPublicVitrine')} replace />} />
-            <Route path="/loja/vitrine" element={<Loja />} />
-            <Route path="/loja/compras-programadas" element={<ComprasProgramadas publicMode />} />
-            <Route path="/loja/compras-programadas/online" element={<Navigate to={`${p('lojaPublicProgramadas')}#online`} replace />} />
-            <Route path="/loja/compras-programadas/fisica" element={<Navigate to={`${p('lojaPublicProgramadas')}#fisica`} replace />} />
+            <Route path="/loja/vitrine" element={<Loja publicMode />} />
+            <Route path="/loja/compras-programadas" element={<Navigate to={p('lojaPublicVitrine')} replace />} />
+            <Route path="/loja/compras-programadas/online" element={<Navigate to={p('lojaPublicVitrine')} replace />} />
+            <Route path="/loja/compras-programadas/fisica" element={<Navigate to={p('lojaPublicVitrine')} replace />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -173,9 +172,9 @@ function App() {
               <Route path="cart" element={<Cart />} />
               <Route path="invoices" element={<Invoices />} />
               <Route path="invoices/:id" element={<InvoiceDetail />} />
-              <Route path="grupo-de-compras" element={<ComprasProgramadas />} />
-              <Route path="grupo-de-compras/online" element={<Navigate to={`${p('appGrupoCompras')}#online`} replace />} />
-              <Route path="grupo-de-compras/fisica" element={<Navigate to={`${p('appGrupoCompras')}#fisica`} replace />} />
+              <Route path="grupo-de-compras" element={<Navigate to={p('appLoja')} replace />} />
+              <Route path="grupo-de-compras/online" element={<Navigate to={p('appLoja')} replace />} />
+              <Route path="grupo-de-compras/fisica" element={<Navigate to={p('appLoja')} replace />} />
               <Route path="affiliate" element={<Affiliate />} />
               <Route path="lista-desejos" element={<Navigate to={p('appLounge', '?tab=desejos')} replace />} />
               <Route path="envios" element={<Navigate to={p('appLounge')} replace />} />
@@ -236,11 +235,11 @@ function App() {
             <Route path="/en/como-funciona" element={<Navigate to={e('servicosPrecos')} replace />} />
             <Route path="/en/contact" element={<Contact />} />
             <Route path="/en/store" element={<Navigate to={e('lojaPublicVitrine')} replace />} />
-            <Route path="/en/store/storefront" element={<Loja />} />
+            <Route path="/en/store/storefront" element={<Loja publicMode />} />
             <Route path="/en/store/showcase" element={<Navigate to={e('lojaPublicVitrine')} replace />} />
-            <Route path="/en/store/scheduled-buying" element={<ComprasProgramadas publicMode />} />
-            <Route path="/en/store/scheduled-buying/online" element={<Navigate to={`${e('lojaPublicProgramadas')}#online`} replace />} />
-            <Route path="/en/store/scheduled-buying/physical" element={<Navigate to={`${e('lojaPublicProgramadas')}#physical`} replace />} />
+            <Route path="/en/store/scheduled-buying" element={<Navigate to={e('lojaPublicVitrine')} replace />} />
+            <Route path="/en/store/scheduled-buying/online" element={<Navigate to={e('lojaPublicVitrine')} replace />} />
+            <Route path="/en/store/scheduled-buying/physical" element={<Navigate to={e('lojaPublicVitrine')} replace />} />
             <Route path="/en/login" element={<Login />} />
             <Route path="/en/register" element={<Register />} />
             <Route path="/en/forgot-password" element={<ForgotPassword />} />
@@ -265,9 +264,9 @@ function App() {
               <Route path="cart" element={<Cart />} />
               <Route path="invoices" element={<Invoices />} />
               <Route path="invoices/:id" element={<InvoiceDetail />} />
-              <Route path="group-buying" element={<ComprasProgramadas />} />
-              <Route path="group-buying/online" element={<Navigate to={`${e('appGrupoCompras')}#online`} replace />} />
-              <Route path="group-buying/physical" element={<Navigate to={`${e('appGrupoCompras')}#physical`} replace />} />
+              <Route path="group-buying" element={<Navigate to={e('appLoja')} replace />} />
+              <Route path="group-buying/online" element={<Navigate to={e('appLoja')} replace />} />
+              <Route path="group-buying/physical" element={<Navigate to={e('appLoja')} replace />} />
               <Route path="affiliate" element={<Affiliate />} />
               <Route path="wishlist" element={<Navigate to={e('appLounge', '?tab=desejos')} replace />} />
               <Route path="shipments" element={<Navigate to={e('appLounge')} replace />} />

@@ -3,7 +3,7 @@
  * Menu order is stored by stable route keys (locale-independent).
  */
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { Link, Outlet, useLocation } from 'react-router-dom'
+import { Link, Outlet, useLocation, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../hooks/useAuth'
 import { useCartCount } from '../hooks/useCartCount'
@@ -12,7 +12,7 @@ import { isRouteActive } from '../lib/localeRoutes'
 
 const NAV_ROUTE_KEYS = ['appDashboard']
 const CONTA_ROUTE_KEYS = ['appLounge', 'appConta', 'appCart']
-const LOJA_ROUTE_KEYS = ['appServices', 'appLoja', 'appGrupoCompras']
+const LOJA_ROUTE_KEYS = ['appServices', 'appLoja']
 
 const ALL_MENU_KEYS = [...NAV_ROUTE_KEYS, ...CONTA_ROUTE_KEYS, ...LOJA_ROUTE_KEYS]
 
@@ -28,12 +28,12 @@ const LEGACY_PATH_TO_KEY = {
   '/en/app/cart': 'appCart',
   '/app/services': 'appServices',
   '/en/app/services': 'appServices',
-  '/app/grupo-de-compras': 'appGrupoCompras',
-  '/en/app/group-buying': 'appGrupoCompras',
-  '/app/grupo-de-compras/online': 'appGrupoCompras',
-  '/app/grupo-de-compras/fisica': 'appGrupoCompras',
-  '/en/app/group-buying/online': 'appGrupoCompras',
-  '/en/app/group-buying/physical': 'appGrupoCompras',
+  '/app/grupo-de-compras': 'appLoja',
+  '/en/app/group-buying': 'appLoja',
+  '/app/grupo-de-compras/online': 'appLoja',
+  '/app/grupo-de-compras/fisica': 'appLoja',
+  '/en/app/group-buying/online': 'appLoja',
+  '/en/app/group-buying/physical': 'appLoja',
   '/app/loja': 'appLoja',
   '/en/app/store': 'appLoja',
 }
@@ -45,7 +45,6 @@ const LABEL_KEY_BY_ROUTE = {
   appCart: 'platform.navPayments',
   appServices: 'platform.navServices',
   appLoja: 'platform.storeHub.tabShowcase',
-  appGrupoCompras: 'platform.navScheduledBuying',
 }
 
 const MENU_ORDER_STORAGE_KEY = 'platform_menu_order_v2'
@@ -60,8 +59,9 @@ function normalizeSectionOrder(value, allowed) {
   const raw = Array.isArray(value) ? value : []
   const migrated = raw.map((item) => {
     if (typeof item !== 'string') return null
-    if (ALL_MENU_KEYS.includes(item)) return item
-    return LEGACY_PATH_TO_KEY[item] || null
+    const key = item === 'appGrupoCompras' ? 'appLoja' : item
+    if (ALL_MENU_KEYS.includes(key)) return key
+    return LEGACY_PATH_TO_KEY[key] || null
   }).filter(Boolean)
   const safe = migrated.filter((k) => allowed.includes(k))
   for (const k of allowed) {
@@ -108,6 +108,7 @@ export function PlatformLayout() {
   const path = useLocalizedPath()
   const { user, isAdmin, signOut } = useAuth()
   const location = useLocation()
+  const [searchParams] = useSearchParams()
   const cartCount = useCartCount(user?.id)
   const hasCartItems = cartCount > 0
   const cartBadgeLabel = cartCount > 99 ? '99+' : String(cartCount)
@@ -127,8 +128,8 @@ export function PlatformLayout() {
 
   const isLojaItemActive = useCallback(
     (routeKey) => {
-      if (routeKey === 'appGrupoCompras') {
-        return isRouteActive('appGrupoCompras', location.pathname, true)
+      if (routeKey === 'appLoja') {
+        return isRouteActive('appLoja', location.pathname, true)
       }
       return location.pathname === p(routeKey)
     },
@@ -138,12 +139,22 @@ export function PlatformLayout() {
   const isInLoja = useMemo(
     () =>
       LOJA_ROUTE_KEYS.some((k) => {
-        if (k === 'appGrupoCompras') {
-          return isRouteActive('appGrupoCompras', location.pathname, true)
+        if (k === 'appLoja') {
+          return isRouteActive('appLoja', location.pathname, true)
         }
         return p(k) === location.pathname
       }),
     [location.pathname, p]
+  )
+
+  const lojaTab = searchParams.get('tab')
+  const isLojaEstoqueTab = useMemo(
+    () => isRouteActive('appLoja', location.pathname, true) && lojaTab === 'estoque',
+    [location.pathname, lojaTab]
+  )
+  const isLojaVitrineTab = useMemo(
+    () => isRouteActive('appLoja', location.pathname, true) && lojaTab !== 'estoque',
+    [location.pathname, lojaTab]
   )
   const isInConta = useMemo(
     () => CONTA_ROUTE_KEYS.some((k) => p(k) === location.pathname),
@@ -203,8 +214,40 @@ export function PlatformLayout() {
   const mobileTabs = useMemo(
     () => [
       {
+        id: 'servicos',
+        to: p('appServices'),
+        label: t('platform.mobileServices'),
+        active: isRouteActive('appServices', location.pathname, true),
+        icon: (
+          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655-5.653a2.548 2.548 0 010-3.586L11.4 2.829a2.548 2.548 0 013.586 0l4.344 4.344a2.548 2.548 0 010 3.586l-5.653 4.655a2.548 2.548 0 01-3.586 0z"
+            />
+          </svg>
+        ),
+      },
+      {
+        id: 'vitrine',
+        to: p('appLoja'),
+        label: t('platform.mobileVitrine'),
+        active: isLojaVitrineTab,
+        icon: (
+          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
+            />
+          </svg>
+        ),
+      },
+      {
         id: 'lounge',
-        routeKey: 'appLounge',
+        to: p('appLounge'),
         label: t('platform.mobileLounge'),
         active: isActive('appLounge'),
         icon: (
@@ -214,19 +257,24 @@ export function PlatformLayout() {
         ),
       },
       {
-        id: 'loja-virtual',
-        routeKey: 'appLoja',
-        label: t('platform.mobileStore'),
-        active: isInLoja,
+        id: 'em-estoque',
+        to: `${p('appLoja')}?tab=estoque`,
+        label: t('platform.mobileInStock'),
+        active: isLojaEstoqueTab,
         icon: (
           <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7.5h18M5.25 7.5l1.5 12a1.5 1.5 0 001.49 1.313h7.52a1.5 1.5 0 001.49-1.313l1.5-12M9 11.25h.008v.008H9v-.008zm6 0h.008v.008H15v-.008z" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+            />
           </svg>
         ),
       },
       {
         id: 'minha-conta',
-        routeKey: 'appConta',
+        to: p('appConta'),
         label: t('platform.mobileAccount'),
         active: isActive('appConta'),
         icon: (
@@ -236,7 +284,7 @@ export function PlatformLayout() {
         ),
       },
     ],
-    [isActive, isInLoja, t]
+    [isActive, isLojaEstoqueTab, isLojaVitrineTab, location.pathname, p, t]
   )
 
   const isPlatformHome = location.pathname === dashboardPath
@@ -283,7 +331,7 @@ export function PlatformLayout() {
           {mobileTabs.map((tab) => (
             <Link
               key={tab.id}
-              to={p(tab.routeKey)}
+              to={tab.to}
               className={`flex min-h-[3.35rem] flex-col items-center justify-center px-1 text-[0.62rem] font-medium transition ${
                 tab.id === 'lounge'
                   ? 'relative -translate-y-1'

@@ -320,7 +320,7 @@ function Servicos() {
                 </Link>
                 {(servico.id === 'grupo-de-compras' || servico.id === 'loja-virtual') && (
                   <Link
-                    to={servico.id === 'grupo-de-compras' ? lp('appGrupoCompras') : lp('lojaPublic')}
+                    to={servico.id === 'grupo-de-compras' ? lp('appLoja') : lp('lojaPublic')}
                     className="text-sm font-medium text-earth-900 hover:underline"
                   >
                     {servico.id === 'grupo-de-compras'

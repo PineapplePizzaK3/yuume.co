@@ -17,6 +17,11 @@ import {
   REDIR_ASSISTIDO_FEE_PERCENT,
   computeAssistedEarlyPrepayDebitJpy,
 } from '../../data/serviceFees'
+import { getFxBrlPerJpy } from '../../lib/fx'
+import AssistedRedirectBudgetSection, {
+  computeAssistedBudgetSubtotalJpy,
+  normalizeAssistedBudgetLinesFromDraft,
+} from './AssistedRedirectBudgetSection'
 
 function messageContainsHttpUrl(text) {
   return /https?:\/\/[^\s<>"']+/i.test(String(text || '').trim())
@@ -58,6 +63,29 @@ function clearServicesDraft(userId) {
   }
 }
 
+function buildAssistedOrderMessage(freeText, lines, fxBrlPerJpy, t, fp) {
+  const parts = []
+  if (lines?.length) {
+    const subtotal = computeAssistedBudgetSubtotalJpy(lines, fxBrlPerJpy)
+    let block = `${t('platform.services.budgetOrderHeader')}\n`
+    lines.forEach((line, idx) => {
+      const pricePart =
+        line.price != null && Number(line.price) > 0
+          ? fp.byCurrency(Number(line.price), line.currency === 'BRL' ? 'BRL' : 'JPY')
+          : '—'
+      block += `${idx + 1}. ${line.productName}\n   ${pricePart}\n   ${line.url}\n`
+    })
+    block += `\n${t('platform.services.budgetOrderSubtotalLine', { amount: fp.jpy(subtotal) })}`
+    if (lines.some((l) => l.currency === 'BRL' && l.price)) {
+      block += `\n${t('platform.services.budgetOrderFxDisclaimer')}`
+    }
+    parts.push(block.trim())
+  }
+  const trimmed = typeof freeText === 'string' ? freeText.trim() : ''
+  if (trimmed) parts.push(trimmed)
+  return parts.join('\n\n')
+}
+
 export default function Services({ embedded = false }) {
   const { t } = useTranslation()
   const fp = useFormatPrice()
@@ -80,8 +108,10 @@ export default function Services({ embedded = false }) {
   const [earlyPrepaymentRequested, setEarlyPrepaymentRequested] = useState(false)
   const [earlyPrepaymentProductsJpyInput, setEarlyPrepaymentProductsJpyInput] = useState('')
   const [walletPreview, setWalletPreview] = useState(null)
-  const saveDebounceRef = useRef(null)
+  const [assistedBudgetLines, setAssistedBudgetLines] = useState([])
   const draftLoadedRef = useRef(false)
+  const lastAutoBudgetSubtotalRef = useRef(null)
+  const servicesDraftRef = useRef({})
 
   const selectedService = selectedId ? services.find((s) => s.id === selectedId) : null
   const isRedirecionamento = selectedService?.name === REDIRECIONAMENTO
@@ -90,7 +120,9 @@ export default function Services({ embedded = false }) {
   const isRedirStandard = isRedirecionamento && redirModule === 'self_buy'
   const showImageAttachments = isPersonalShopping || isRedirAssisted || isRedirStandard
   const hasOrderContent =
-    message.trim().length > 0 || (Array.isArray(attachmentUrls) && attachmentUrls.length > 0)
+    message.trim().length > 0 ||
+    (Array.isArray(attachmentUrls) && attachmentUrls.length > 0) ||
+    (isRedirAssisted && assistedBudgetLines.length > 0)
   const canSubmit = hasOrderContent && (!isRedirecionamento || agreeProhibited)
 
   const earlyPrepayBreakdown = useMemo(() => {
@@ -153,30 +185,42 @@ export default function Services({ embedded = false }) {
       if (d.selectedId && oferta.some((s) => s.id === d.selectedId)) {
         setSelectedId(d.selectedId)
       }
+      if (d.redirModule === 'assisted_buy' && Array.isArray(d.assistedBudgetLines)) {
+        setAssistedBudgetLines(normalizeAssistedBudgetLinesFromDraft(d.assistedBudgetLines))
+      }
     }
     setDraftHydrated(true)
   }, [user?.id, loading, oferta.length])
 
+  servicesDraftRef.current = {
+    message,
+    selectedId,
+    redirModule,
+    agreeProhibited,
+    attachmentUrls,
+    imageUrlDraft,
+    earlyPrepaymentRequested,
+    earlyPrepaymentProductsJpyInput,
+    assistedBudgetLines,
+    updatedAt: Date.now(),
+  }
+
   useEffect(() => {
     if (!user?.id || !draftHydrated) return
-    if (saveDebounceRef.current) clearTimeout(saveDebounceRef.current)
-    saveDebounceRef.current = setTimeout(() => {
-      writeServicesDraft(user.id, {
-        message,
-        selectedId,
-        redirModule,
-        agreeProhibited,
-        attachmentUrls,
-        imageUrlDraft,
-        earlyPrepaymentRequested,
-        earlyPrepaymentProductsJpyInput,
-        updatedAt: Date.now(),
-      })
-    }, 450)
-    return () => {
-      if (saveDebounceRef.current) clearTimeout(saveDebounceRef.current)
-    }
-  }, [user?.id, draftHydrated, message, selectedId, redirModule, agreeProhibited, attachmentUrls, imageUrlDraft, earlyPrepaymentRequested, earlyPrepaymentProductsJpyInput])
+    writeServicesDraft(user.id, { ...servicesDraftRef.current })
+  }, [
+    user?.id,
+    draftHydrated,
+    message,
+    selectedId,
+    redirModule,
+    agreeProhibited,
+    attachmentUrls,
+    imageUrlDraft,
+    earlyPrepaymentRequested,
+    earlyPrepaymentProductsJpyInput,
+    assistedBudgetLines,
+  ])
 
   useEffect(() => {
     if (!user?.id || !isRedirAssisted) {
@@ -194,12 +238,38 @@ export default function Services({ embedded = false }) {
     }
   }, [user?.id, isRedirAssisted])
 
+  useEffect(() => {
+    if (!isRedirAssisted || !earlyPrepaymentRequested) {
+      lastAutoBudgetSubtotalRef.current = null
+      return
+    }
+    const fx = getFxBrlPerJpy()
+    const s = computeAssistedBudgetSubtotalJpy(assistedBudgetLines, fx)
+    setEarlyPrepaymentProductsJpyInput((cur) => {
+      if (assistedBudgetLines.length === 0) {
+        lastAutoBudgetSubtotalRef.current = null
+        return ''
+      }
+      if (s < 1) return cur
+      const inp = parseInt(cur, 10)
+      const prev = lastAutoBudgetSubtotalRef.current
+      const shouldSync = cur === '' || (Number.isFinite(inp) && inp === prev)
+      if (shouldSync) {
+        lastAutoBudgetSubtotalRef.current = s
+        return String(s)
+      }
+      lastAutoBudgetSubtotalRef.current = s
+      return cur
+    })
+  }, [isRedirAssisted, earlyPrepaymentRequested, assistedBudgetLines])
+
   const clearLocalDraft = () => {
     setMessage('')
     setAttachmentUrls([])
     setImageUrlDraft('')
     setEarlyPrepaymentRequested(false)
     setEarlyPrepaymentProductsJpyInput('')
+    setAssistedBudgetLines([])
     setFailedThumbUrls(() => new Set())
     clearServicesDraft(user?.id)
   }
@@ -264,8 +334,13 @@ export default function Services({ embedded = false }) {
     }
     const msgTrim = message.trim()
     const hasAttachments = Array.isArray(attachmentUrls) && attachmentUrls.length > 0
-    if (!msgTrim && !hasAttachments) {
-      setFeedback(t('platform.services.orderNotEmpty'))
+    const hasAssistedBudget = isRedirAssisted && assistedBudgetLines.length > 0
+    if (!msgTrim && !hasAttachments && !hasAssistedBudget) {
+      setFeedback(
+        t(
+          isRedirAssisted ? 'platform.services.orderNotEmptyAssisted' : 'platform.services.orderNotEmpty'
+        )
+      )
       return
     }
     let earlyDebitTotalJpy = 0
@@ -279,8 +354,9 @@ export default function Services({ embedded = false }) {
         setFeedback(t('platform.services.earlyPrepayProductsMin'))
         return
       }
-      const msgTrim = message.trim()
-      if (!messageContainsHttpUrl(msgTrim)) {
+      const fx = getFxBrlPerJpy()
+      const composedForLinks = buildAssistedOrderMessage(message, assistedBudgetLines, fx, t, fp)
+      if (!messageContainsHttpUrl(composedForLinks)) {
         setFeedback(t('platform.services.earlyPrepayMessageRequiresLinks'))
         return
       }
@@ -297,9 +373,14 @@ export default function Services({ embedded = false }) {
     setSubmitting(true)
     setFeedback('')
     setSuccessNotice(null)
+    const fxSubmit = getFxBrlPerJpy()
+    const messagePayload =
+      isRedirAssisted && assistedBudgetLines.length > 0
+        ? buildAssistedOrderMessage(message, assistedBudgetLines, fxSubmit, t, fp)
+        : message.trim() || null
     const { data, error } = await createOrder(user.id, {
       service_id: selectedId,
-      message: message.trim() || null,
+      message: messagePayload || null,
       attachment_urls: attachmentUrls,
       service_name: selectedService?.name,
       order_module: isRedirecionamento ? redirModule : null,
@@ -332,6 +413,7 @@ export default function Services({ embedded = false }) {
     setImageUrlDraft('')
     setEarlyPrepaymentRequested(false)
     setEarlyPrepaymentProductsJpyInput('')
+    setAssistedBudgetLines([])
     setFailedThumbUrls(() => new Set())
   }
 
@@ -388,6 +470,7 @@ export default function Services({ embedded = false }) {
                         setRedirModule('self_buy')
                         setEarlyPrepaymentRequested(false)
                         setEarlyPrepaymentProductsJpyInput('')
+                        setAssistedBudgetLines([])
                         return
                       }
                       setSelectedId(s.id)
@@ -397,6 +480,7 @@ export default function Services({ embedded = false }) {
                       setRedirModule('self_buy')
                       setEarlyPrepaymentRequested(false)
                       setEarlyPrepaymentProductsJpyInput('')
+                      if (s.name !== REDIRECIONAMENTO) setAssistedBudgetLines([])
                     }}
                     aria-pressed={selectedId === s.id}
                     className={`rounded-xl border-2 p-5 text-left transition ${
@@ -445,6 +529,7 @@ export default function Services({ embedded = false }) {
                           setRedirModule('self_buy')
                           setEarlyPrepaymentRequested(false)
                           setEarlyPrepaymentProductsJpyInput('')
+                          setAssistedBudgetLines([])
                         }}
                         className="mt-1"
                       />
@@ -483,6 +568,15 @@ export default function Services({ embedded = false }) {
 
             <div>
               {isRedirAssisted && (
+                <div className="mb-4">
+                  <AssistedRedirectBudgetSection
+                    lines={assistedBudgetLines}
+                    onLinesChange={setAssistedBudgetLines}
+                    fp={fp}
+                  />
+                </div>
+              )}
+              {isRedirAssisted && (
                 <div className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50/90 p-4">
                   <label className="flex cursor-pointer items-start gap-3">
                     <input
@@ -508,20 +602,24 @@ export default function Services({ embedded = false }) {
                 </div>
               )}
               <label htmlFor="message" className="block text-sm font-medium text-earth-700">
-                {isPersonalShopping || isRedirAssisted
+                {isPersonalShopping
                   ? t('platform.services.messageLabelShopping')
-                  : t('platform.services.messageLabelRedir')}
+                  : isRedirAssisted
+                    ? t('platform.services.messageLabelAssistedNotes')
+                    : t('platform.services.messageLabelRedir')}
               </label>
               <p className="mt-1 text-xs text-earth-500">
-                {isPersonalShopping || isRedirAssisted
+                {isPersonalShopping
                   ? t('platform.services.hintShopping')
-                  : isRedirStandard
-                    ? t('platform.services.hintStandard')
-                    : t('platform.services.hintAssisted')}
+                  : isRedirAssisted
+                    ? t('platform.services.hintAssistedNotes')
+                    : isRedirStandard
+                      ? t('platform.services.hintStandard')
+                      : t('platform.services.hintAssisted')}
               </p>
               {isRedirAssisted && earlyPrepaymentRequested && (
                 <p className="mt-2 text-xs font-medium text-amber-900">
-                  {t('platform.services.earlyPrepayMessageHint')}
+                  {t('platform.services.earlyPrepayMessageHintBudget')}
                 </p>
               )}
               <p className="mt-1 text-xs text-earth-600">{t('platform.services.draftNote')}</p>
@@ -530,9 +628,11 @@ export default function Services({ embedded = false }) {
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder={
-                  isPersonalShopping || isRedirAssisted
+                  isPersonalShopping
                     ? t('platform.services.placeholderShopping')
-                    : t('platform.services.placeholderRedir')
+                    : isRedirAssisted
+                      ? t('platform.services.placeholderAssistedNotes')
+                      : t('platform.services.placeholderRedir')
                 }
                 rows={4}
                 className="mt-2 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900 placeholder:text-earth-400"

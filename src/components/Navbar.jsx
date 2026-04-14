@@ -34,29 +34,19 @@ function Navbar() {
   const homePath = path('home')
   const isStorePublicRoute = isRouteActive('lojaPublic', location.pathname, true)
   const isStoreAppRoute = isRouteActive('appLoja', location.pathname, true)
-  const isStoreGroupRoute = isRouteActive('appGrupoCompras', location.pathname, true)
   const isStoreServicesRoute = isRouteActive('appServices', location.pathname, true)
   const currentStoreSection = useMemo(() => {
     if (isStoreServicesRoute) return 'servicos'
-    if (
-      isRouteActive('appGrupoCompras', location.pathname, true) ||
-      isRouteActive('lojaPublicProgramadas', location.pathname, true)
-    ) {
-      return 'programadas'
+    if (isRouteActive('appLoja', location.pathname, true) || isRouteActive('lojaPublicVitrine', location.pathname, true)) {
+      return 'vitrine'
     }
-    if (isStoreGroupRoute) return 'programadas'
     return 'vitrine'
-  }, [isStoreGroupRoute, isStoreServicesRoute, location.pathname])
+  }, [isStoreServicesRoute, location.pathname])
   const storeSubmenuItems = useMemo(() => {
     const vitrine = {
       id: 'vitrine',
       label: t('platform.storeHub.tabShowcase'),
       toRoute: isAuthenticated ? 'appLoja' : 'lojaPublicVitrine',
-    }
-    const programadas = {
-      id: 'programadas',
-      label: t('platform.navScheduledBuying'),
-      toRoute: isAuthenticated ? 'appGrupoCompras' : 'lojaPublicProgramadas',
     }
     const servicos = {
       id: 'servicos',
@@ -64,9 +54,9 @@ function Navbar() {
       toRoute: 'appServices',
     }
     if (isAuthenticated) {
-      return [servicos, vitrine, programadas]
+      return [servicos, vitrine]
     }
-    return [vitrine, programadas]
+    return [vitrine]
   }, [isAuthenticated, t])
 
   return (
@@ -119,7 +109,7 @@ function Navbar() {
               <LocalizedLink
                 toRoute={storeMainRoute}
                 className={`flex items-center px-4 text-sm font-medium text-white transition hover:bg-red-400 ${
-                  isStorePublicRoute || isStoreAppRoute || isStoreGroupRoute || isStoreServicesRoute
+                  isStorePublicRoute || isStoreAppRoute || isStoreServicesRoute
                     ? 'bg-red-500 ring-2 ring-white'
                     : 'bg-red-300'
                 }`}
@@ -332,7 +322,7 @@ function Navbar() {
                 toRoute={storeMainRoute}
                 onClick={fecharMenu}
                 className={`px-4 py-3 font-medium text-white transition hover:bg-red-400 ${
-                  isStorePublicRoute || isStoreAppRoute || isStoreGroupRoute || isStoreServicesRoute
+                  isStorePublicRoute || isStoreAppRoute || isStoreServicesRoute
                     ? 'bg-red-500 ring-2 ring-white'
                     : 'bg-red-300'
                 }`}

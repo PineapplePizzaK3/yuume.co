@@ -85,10 +85,27 @@ export default function BuscaCatalogoSection() {
         </div>
       )}
 
+      {!externalSearchLoading && externalSearchMeta?.strategy && (
+        <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-900">
+          <strong>Modo atual:</strong> busca em tempo real com parsing de páginas públicas (piloto).{' '}
+          <strong>Direção:</strong> ingestão assíncrona + índice próprio para aumentar precisão e estabilidade.
+        </div>
+      )}
+
       {externalSearchPartials?.length > 0 && (
         <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
           Algumas lojas falharam nesta tentativa:{' '}
           {externalSearchPartials.map((p) => `${p.storeId} (${p.reason})`).join(' | ')}
+        </div>
+      )}
+
+      {!externalSearchLoading && Array.isArray(externalSearchMeta?.diagnostics) && externalSearchMeta.diagnostics.length > 0 && (
+        <div className="mt-3 rounded-lg border border-earth-200 bg-white px-3 py-2 text-xs text-earth-700">
+          {externalSearchMeta.diagnostics.map((d) => (
+            <div key={d.storeId}>
+              {d.storeId}: {d.status === 'ok' ? 'ok' : 'falha parcial'} • hits {d.hitCount ?? 0} • {d.tookMs ?? 0}ms
+            </div>
+          ))}
         </div>
       )}
 

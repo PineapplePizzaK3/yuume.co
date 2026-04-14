@@ -1,8 +1,9 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 import type { SearchRequest, StoreId, StoreSearchResult, UnifiedSearchHit } from './types.ts'
-import { rankHits } from './rank.ts'
+import { interleaveRankedByStore } from './rank.ts'
 import { buildCacheKey, getCache, setCache } from './cache.ts'
+import { buildStoreDiagnostics, buildSystemStrategyMeta } from './strategy.ts'
 import { searchAmazon } from './adapters/amazon.ts'
 import { searchRakuma } from './adapters/rakuma.ts'
 import { searchMercari } from './adapters/mercari.ts'
@@ -136,7 +137,7 @@ Deno.serve(async (req) => {
       }))
 
     const merged = settled.flatMap((result) => result.hits)
-    const ranked = rankHits(merged, input.query)
+    const ranked = interleaveRankedByStore(merged, input.query, input.stores)
     const startIdx = (input.page - 1) * input.pageSize
     const pageHits = ranked.slice(startIdx, startIdx + input.pageSize)
 
@@ -150,6 +151,8 @@ Deno.serve(async (req) => {
         pageSize: input.pageSize,
         hasMore: startIdx + input.pageSize < ranked.length,
         tookMs: Date.now() - startedAt,
+        strategy: buildSystemStrategyMeta(),
+        diagnostics: buildStoreDiagnostics(input.stores, settled),
       },
       partials,
       cacheHit: false,

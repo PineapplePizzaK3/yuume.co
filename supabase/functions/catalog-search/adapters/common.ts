@@ -1,10 +1,18 @@
 import { parsePrice, toAbsoluteUrl } from '../normalize.ts'
 
-const DEFAULT_HEADERS = {
+const DEFAULT_HEADERS: Record<string, string> = {
   'User-Agent':
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-  'Accept-Language': 'ja,en-US;q=0.9,en;q=0.8,pt-BR;q=0.7',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+  'Accept':
+    'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+  'Accept-Language': 'ja,en-US;q=0.9,en;q=0.8',
+  'Cache-Control': 'no-cache',
+  'Pragma': 'no-cache',
+  'Sec-Fetch-Dest': 'document',
+  'Sec-Fetch-Mode': 'navigate',
+  'Sec-Fetch-Site': 'none',
+  'Sec-Fetch-User': '?1',
+  'Upgrade-Insecure-Requests': '1',
 }
 
 /** HTML direto: lojas no Japão costumam responder lentas; Jina costuma ser ainda mais lenta. */
@@ -21,11 +29,23 @@ function isTimeoutError(e: unknown): boolean {
   )
 }
 
-export async function fetchText(url: string, timeoutMs: number = FETCH_TIMEOUT_MS): Promise<string> {
+export async function fetchText(
+  url: string,
+  timeoutMs: number = FETCH_TIMEOUT_MS,
+  extraHeaders?: Record<string, string>,
+): Promise<string> {
+  const headers: Record<string, string> = { ...DEFAULT_HEADERS, ...extraHeaders }
+  if (!headers.Referer) {
+    try {
+      headers.Referer = new URL(url).origin + '/'
+    } catch {
+      /* ignore */
+    }
+  }
   const run = async (ms: number) => {
     const res = await fetch(url, {
       method: 'GET',
-      headers: DEFAULT_HEADERS,
+      headers,
       signal: AbortSignal.timeout(ms),
       redirect: 'follow',
     })
@@ -124,12 +144,19 @@ function hasImageLikeExt(url: string): boolean {
   return /\.(?:jpg|jpeg|png|gif|webp|svg)(?:\?|$)/i.test(url)
 }
 
+/** Mercari e Rakuma devolvem por vezes `/item/.../` com barra final. */
+function normalizeItemPathname(pathname: string): string {
+  const p = String(pathname || '/')
+  return p.replace(/\/+$/, '') || '/'
+}
+
 export function isMercariProductUrl(url: string): boolean {
   try {
     const u = new URL(url)
     if (!/(^|\.)mercari\.com$/i.test(u.hostname)) return false
-    if (!/^\/item\/m[a-z0-9]+$/i.test(u.pathname)) return false
-    if (hasImageLikeExt(u.pathname)) return false
+    const path = normalizeItemPathname(u.pathname)
+    if (!/^\/item\/m[a-z0-9]+$/i.test(path)) return false
+    if (hasImageLikeExt(path)) return false
     return true
   } catch {
     return false
@@ -140,12 +167,64 @@ export function isRakumaProductUrl(url: string): boolean {
   try {
     const u = new URL(url)
     if (!/(^|\.)fril\.jp$/i.test(u.hostname)) return false
-    if (!/^\/item\/[a-z0-9]+$/i.test(u.pathname)) return false
-    if (hasImageLikeExt(u.pathname)) return false
+    const path = normalizeItemPathname(u.pathname)
+    if (!/^\/item\/[a-z0-9_-]+$/i.test(path)) return false
+    if (hasImageLikeExt(path)) return false
     return true
   } catch {
     return false
   }
+}
+
+/** Fallback: URLs `/item/m…` embutidas no HTML (JSON escapado, prefetch, etc.). */
+export function extractMercariHitsFromHtmlRegex(html: string, pageSize: number): Array<{
+  title: string
+  productUrl: string
+  price: number | null
+  imageUrl: string | null
+}> {
+  const re = /\/item\/(m[0-9]+)/gi
+  const seen = new Set<string>()
+  const out: Array<{ title: string; productUrl: string; price: number | null; imageUrl: string | null }> = []
+  let m: RegExpExecArray | null
+  while ((m = re.exec(html)) !== null && out.length < pageSize * 2) {
+    const id = m[1]
+    const url = `https://jp.mercari.com/item/${id}`
+    if (!isMercariProductUrl(url) || seen.has(url)) continue
+    seen.add(url)
+    out.push({
+      title: `Mercari ${id}`,
+      productUrl: url,
+      price: null,
+      imageUrl: null,
+    })
+  }
+  return out.slice(0, pageSize)
+}
+
+export function extractRakumaHitsFromHtmlRegex(html: string, pageSize: number): Array<{
+  title: string
+  productUrl: string
+  price: number | null
+  imageUrl: string | null
+}> {
+  const re = /(?:https?:)?\/\/(?:www\.)?fril\.jp\/item\/([a-z0-9_-]+)/gi
+  const seen = new Set<string>()
+  const out: Array<{ title: string; productUrl: string; price: number | null; imageUrl: string | null }> = []
+  let m: RegExpExecArray | null
+  while ((m = re.exec(html)) !== null && out.length < pageSize * 2) {
+    const id = m[1]
+    const url = `https://fril.jp/item/${id}`
+    if (!isRakumaProductUrl(url) || seen.has(url)) continue
+    seen.add(url)
+    out.push({
+      title: `Rakuma ${id}`,
+      productUrl: url,
+      price: null,
+      imageUrl: null,
+    })
+  }
+  return out.slice(0, pageSize)
 }
 
 export function parseJinaHits(text: string, baseUrl: string, fallbackCurrency: string): Array<{
@@ -186,6 +265,33 @@ export function parseJinaHits(text: string, baseUrl: string, fallbackCurrency: s
       price: parsePrice(rawPrice),
       currency,
     })
+  }
+
+  const seenUrl = new Set(hits.map((h) => h.productUrl))
+
+  const pushPlainUrlLine = (line: string) => {
+    const merc = line.match(/https:\/\/(?:jp\.)?mercari\.com\/item\/(m[0-9]+)/i)
+    if (merc) {
+      const url = `https://jp.mercari.com/item/${merc[1]}`
+      if (isMercariProductUrl(url) && !seenUrl.has(url)) {
+        seenUrl.add(url)
+        const title = line.replace(/https?:\/\/[^\s)]+/i, '').trim().slice(0, 180) || `Mercari ${merc[1]}`
+        hits.push({ title, productUrl: url, price: null, currency: fallbackCurrency })
+      }
+    }
+    const fril = line.match(/https:\/\/(?:www\.)?fril\.jp\/item\/([a-z0-9_-]+)/i)
+    if (fril) {
+      const url = `https://fril.jp/item/${fril[1]}`
+      if (isRakumaProductUrl(url) && !seenUrl.has(url)) {
+        seenUrl.add(url)
+        const title = line.replace(/https?:\/\/[^\s)]+/i, '').trim().slice(0, 180) || `Rakuma ${fril[1]}`
+        hits.push({ title, productUrl: url, price: null, currency: fallbackCurrency })
+      }
+    }
+  }
+
+  for (const line of lines) {
+    pushPlainUrlLine(line)
   }
 
   return hits
@@ -241,23 +347,19 @@ export function extractMercariHitsFromNextData(html: string, pageSize: number, q
     else if (typeof rawId === 'string' && /^\d+$/.test(rawId)) mercariPath = `m${rawId}`
     else if (typeof rawId === 'number' && rawId > 0) mercariPath = `m${rawId}`
 
-    if (
-      typeof name === 'string' &&
-      name.length >= 2 &&
-      mercariPath != null &&
-      typeof priceVal === 'number' &&
-      Number.isFinite(priceVal) &&
-      priceVal > 0
-    ) {
+    if (typeof name === 'string' && name.length >= 2 && mercariPath != null) {
+      let priceNum: number | null = null
+      if (typeof priceVal === 'number' && Number.isFinite(priceVal) && priceVal > 0) {
+        priceNum = Math.round(priceVal)
+      }
       const url = `https://jp.mercari.com/item/${mercariPath}`
       if (!isMercariProductUrl(url)) return
-      if (!matchesQuery(name, query)) return
       if (seen.has(url)) return
       seen.add(url)
       out.push({
         title: name.trim(),
         productUrl: url,
-        price: Math.round(priceVal),
+        price: priceNum,
         imageUrl: thumb(o),
       })
     }
@@ -265,5 +367,7 @@ export function extractMercariHitsFromNextData(html: string, pageSize: number, q
   }
 
   visit(data, 0)
-  return out.slice(0, pageSize * 2)
+  const strict = out.filter((h) => matchesQuery(h.title, query))
+  const ranked = strict.length > 0 ? strict : out
+  return ranked.slice(0, pageSize * 2)
 }

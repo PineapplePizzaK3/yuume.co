@@ -34,6 +34,14 @@ function formatPriceBrlAsJpy(brl) {
   return { jpy, approxBrl }
 }
 
+/** Estoque limitado: retorna inteiro ≥ 0. `null` = sem limite (ilimitado). */
+function getProductStockCap(p) {
+  if (!p || p.stock_quantity == null) return null
+  const n = Number(p.stock_quantity)
+  if (!Number.isFinite(n)) return null
+  return Math.max(0, Math.floor(n))
+}
+
 const CART_TAB_ORDER_STORAGE_KEY = 'cart_tabs_order_v1'
 const CART_TAB_IDS = ['checkout', 'history']
 
@@ -911,6 +919,10 @@ function Cart() {
                   const sourceTagClass = p.purchase_group_id
                     ? 'bg-amber-100 text-amber-800'
                     : 'bg-sky-100 text-sky-800'
+                  const stockCap = getProductStockCap(p)
+                  const qtyOverStock =
+                    stockCap != null && stockCap > 0 && qty > stockCap
+                  const lineOutOfStock = stockCap != null && stockCap <= 0
                   return (
                     <div
                       key={item.id}
@@ -940,6 +952,16 @@ function Cart() {
                           variant="compact"
                           footnote={hasTri ? null : t('platform.cart.triFootnoteRates')}
                         />
+                        {lineOutOfStock && (
+                          <p className="mt-2 text-sm font-medium text-amber-800">
+                            {t('platform.cart.stockLineOutOfStock')}
+                          </p>
+                        )}
+                        {qtyOverStock && (
+                          <p className="mt-2 text-sm font-medium text-amber-800">
+                            {t('platform.cart.stockOverNotice', { count: stockCap, qty })}
+                          </p>
+                        )}
                       </div>
                       <div className="flex flex-col items-end gap-2 sm:flex-row sm:items-center">
                         <input

@@ -28,7 +28,7 @@ function getProductImages(p) {
   return []
 }
 
-export default function GrupoDeCompras({ embedded = false, hideHeader = false, destination = 'physical' }) {
+export default function GrupoDeCompras({ embedded = false, hideHeader = false, destination = 'all' }) {
   const { t } = useTranslation()
   const lp = useLocalizedPath()
   const { user } = useAuth()
@@ -129,9 +129,9 @@ export default function GrupoDeCompras({ embedded = false, hideHeader = false, d
     <>
       {!embedded && (
         <PageSeo
-          routeKey="appGrupoCompras"
-          title={t('meta.appGroupBuy.title')}
-          description={t('meta.appGroupBuy.description')}
+          routeKey="appLoja"
+          title={t('meta.appStore.title')}
+          description={t('meta.appStore.description')}
           noindex
         />
       )}
