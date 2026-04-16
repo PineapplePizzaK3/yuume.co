@@ -161,8 +161,8 @@ function drawBrandMark(
   x,
   y,
   logoPath = null,
-  companyName = "Eiko's Delivery Service",
-  supportContact = 'support@eiko-dls.com'
+  companyName = 'YuumeCo',
+  supportContact = 'support@yuume.co'
 ) {
   doc.save()
   let usedLogo = false
@@ -178,13 +178,13 @@ function drawBrandMark(
     doc.circle(x + 14, y + 14, 14).fill('#F97316')
     doc.polygon([x + 20, y + 3], [x + 28, y + 11], [x + 19, y + 25], [x + 10, y + 16]).fill('#111111')
   }
-  const rawName = String(companyName || '').trim() || "Eiko's Delivery Service"
+  const rawName = String(companyName || '').trim() || 'YuumeCo'
   const parts = rawName.split(/\s+/).filter(Boolean)
   const line1 = parts.slice(0, 2).join(' ') || 'EIKO'
   const line2 = parts.slice(2).join(' ') || 'DLS'
   doc.fillColor('#111111').font('Helvetica-Bold').fontSize(12).text(esc(line1), x + 42, y + 6)
   doc.font('Helvetica-Bold').fontSize(12).text(esc(line2), x + 42, y + 20)
-  const support = String(supportContact || 'support@eiko-dls.com').trim()
+  const support = String(supportContact || 'support@yuume.co').trim()
   if (support) {
     const safeSupport = support.length > 36 ? `${support.slice(0, 33)}...` : support
     doc.fillColor('#4B5563').font('Helvetica').fontSize(7).text(esc(safeSupport), x + 42, y + 33)
@@ -332,8 +332,8 @@ export function buildInvoicePdfBuffer(data) {
       48,
       54,
       logoPath,
-      foot.company_name || "Eiko's Delivery Service",
-      foot.support_contact || 'support@eiko-dls.com'
+      foot.company_name || 'YuumeCo',
+      foot.support_contact || 'support@yuume.co'
     )
     doc.fillColor('#111111').font('Helvetica-Bold').fontSize(29).text(meta.title, 48, 116, {
       width: 390,
@@ -366,11 +366,11 @@ export function buildInvoicePdfBuffer(data) {
       lineBreak: false,
     })
     doc.font('Helvetica').fontSize(10)
-    doc.text(esc(truncateText(foot.company_name || "Eiko's Delivery Service", 30)), 48 + boxW + 18, boxY + 18, {
+    doc.text(esc(truncateText(foot.company_name || 'YuumeCo', 30)), 48 + boxW + 18, boxY + 18, {
       width: boxW,
       lineBreak: false,
     })
-    doc.text(esc(truncateText(foot.support_contact || 'support@eiko-dls.com', 32)), 48 + boxW + 18, boxY + 34, {
+    doc.text(esc(truncateText(foot.support_contact || 'support@yuume.co', 32)), 48 + boxW + 18, boxY + 34, {
       width: boxW,
       lineBreak: false,
     })

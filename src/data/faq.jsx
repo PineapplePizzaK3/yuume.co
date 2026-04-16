@@ -8,7 +8,7 @@ import { LocalizedLink } from '../components/LocalizedLink'
 export const FAQ_ITEMS = [
   {
     id: 'servicos',
-    pergunta: "Quais serviços a Eiko's Delivery Service oferece?",
+    pergunta: 'Quais serviços a YuumeCo oferece?',
     resposta: (
       <>
         <p>
@@ -70,7 +70,7 @@ export const FAQ_ITEMS = [
   },
   {
     id: 'loja',
-    pergunta: 'O que é a Loja da Eiko?',
+    pergunta: 'O que é a Loja da YuumeCo?',
     resposta: (
       <>
         <p>
@@ -138,7 +138,7 @@ export const FAQ_ITEMS = [
       <>
         <p>
           Depende do serviço: no <strong>redirecionamento padrão</strong>, você paga a loja japonesa; as taxas de serviço
-          da Eiko costumam ser cobradas na <strong>solicitação de envio</strong>. No <strong>assistido</strong>, o valor
+          da YuumeCo costumam ser cobradas na <strong>solicitação de envio</strong>. No <strong>assistido</strong>, o valor
           dos produtos é pago para realizarmos a compra; taxas de serviço seguem a mesma lógica do padrão no envio, salvo
           indicação contrária na plataforma.
         </p>
@@ -240,7 +240,7 @@ export const FAQ_ITEMS = [
       <>
         <p>
           Não aceitamos produtos ilegais, armas e explosivos, drogas ilícitas, itens proibidos por transportadoras ou por
-          leis de exportação/importação. A Eiko pode recusar outros itens por risco legal ou operacional.
+          leis de exportação/importação. A YuumeCo pode recusar outros itens por risco legal ou operacional.
         </p>
         <p>
           Lista orientativa:{' '}
@@ -271,7 +271,7 @@ export const FAQ_ITEMS = [
     resposta: (
       <>
         <p>
-          Envie e-mail para <strong>support@eiko-dls.com</strong> ou use o telefone <strong>+81 90 3863-9518</strong> (Japão),
+          Envie e-mail para <strong>support@yuume.co</strong> ou use o telefone <strong>+81 90 3863-9518</strong> (Japão),
           em horário comercial. Tenha em mãos o e-mail da conta e, se houver, número do pedido.
         </p>
       </>

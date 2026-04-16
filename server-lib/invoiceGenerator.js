@@ -566,9 +566,9 @@ export async function ensureInvoiceForPaidOrder(supabaseAdmin, orderId, options 
     invoiceNumber = `${invoiceNumber}-CON`
   }
 
-  const companyName = String(process.env.INVOICE_COMPANY_NAME || "Eiko's Delivery Service").trim()
+  const companyName = String(process.env.INVOICE_COMPANY_NAME || 'YuumeCo').trim()
   const supportContact =
-    String(process.env.INVOICE_SUPPORT_EMAIL || process.env.VITE_CONTACT_EMAIL || 'support@eiko-dls.com').trim()
+    String(process.env.INVOICE_SUPPORT_EMAIL || process.env.VITE_CONTACT_EMAIL || 'support@yuume.co').trim()
 
   const invoiceRowId = randomUUID()
 

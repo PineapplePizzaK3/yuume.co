@@ -20,7 +20,7 @@
     "signOut": "Sign out",
     "openMenu": "Open menu",
     "closeMenu": "Close menu",
-    "logoAlt": "Store logo — delivery",
+    "logoAlt": "Yuume.Co — ユウメコ",
     "langPt": "PT-BR",
     "langEn": "EN",
     "langMenuAria": "Language menu"
@@ -1220,123 +1220,123 @@
       "description": "Japan shopping & delivery to your door — fast, secure, and reliable."
     },
     "servicosPrecos": {
-      "title": "Our services | Services & pricing | Eiko's Delivery",
+      "title": "Our services | Services & pricing | YuumeCo",
       "description": "Forwarding, personal shopping, group buying, and our online store — flows and fees for each service."
     },
     "servicosFretes": {
-      "title": "Shipping & timelines | Services & pricing | Eiko's Delivery",
+      "title": "Shipping & timelines | Services & pricing | YuumeCo",
       "description": "Japan Post options for Brazil: EMS, International Parcel Post, and ePacket Light — sample rates and delivery timelines."
     },
     "faqIndex": {
-      "title": "Help | Eiko's Delivery",
+      "title": "Help | YuumeCo",
       "description": "Answers about forwarding, personal shopping, groups, the store, storage, payments, shipping, and customs."
     },
     "legalPrivacy": {
-      "description": "How Eiko's Delivery Service collects, uses, and protects your personal information."
+      "description": "How YuumeCo collects, uses, and protects your personal information."
     },
     "legalTerms": {
-      "description": "Terms of use and services for Eiko's Delivery Service."
+      "description": "Terms of use and services for YuumeCo."
     },
     "legalCommercial": {
-      "description": "Commercial disclosure and legal information for Eiko's Delivery Service."
+      "description": "Commercial disclosure and legal information for YuumeCo."
     },
     "appDashboard": {
       "title": "Account overview | Platform",
-      "description": "Your Eiko's Delivery dashboard: notifications, Japan address, wallet, orders, wishlist, and referrals."
+      "description": "Your YuumeCo dashboard: notifications, Japan address, wallet, orders, wishlist, and referrals."
     },
     "appLounge": {
       "title": "Lounge | Platform",
-      "description": "Orders, shipments, inventory, and wishlist in your Eiko's Delivery account."
+      "description": "Orders, shipments, inventory, and wishlist in your YuumeCo account."
     },
     "appOrders": {
       "title": "Orders | Platform",
-      "description": "Track and pay for your Eiko's Delivery orders."
+      "description": "Track and pay for your YuumeCo orders."
     },
     "appProfile": {
       "title": "Profile | Platform",
-      "description": "Update your account profile on Eiko's Delivery."
+      "description": "Update your account profile on YuumeCo."
     },
     "appWishlist": {
       "title": "Wishlist | Platform",
-      "description": "Track external product links and prices in your Eiko's Delivery wishlist."
+      "description": "Track external product links and prices in your YuumeCo wishlist."
     },
     "appCart": {
       "title": "Payments hub | Platform",
-      "description": "Pay store orders, shipping, and pending charges in your Eiko's Delivery account."
+      "description": "Pay store orders, shipping, and pending charges in your YuumeCo account."
     },
     "appInventory": {
       "title": "My products | Platform",
-      "description": "Items stored in your Eiko's Delivery account after arrival in Japan."
+      "description": "Items stored in your YuumeCo account after arrival in Japan."
     },
     "appPayments": {
       "title": "Payments | Platform",
-      "description": "Payment history for shipping and services in your Eiko's Delivery account."
+      "description": "Payment history for shipping and services in your YuumeCo account."
     },
     "appWallet": {
       "title": "Wallet | Platform",
-      "description": "Wallet balance and top-ups for your Eiko's Delivery account."
+      "description": "Wallet balance and top-ups for your YuumeCo account."
     },
     "appServices": {
       "title": "Book a service | Platform",
-      "description": "Request forwarding or personal shopping on Eiko's Delivery."
+      "description": "Request forwarding or personal shopping on YuumeCo."
     },
     "appStore": {
       "title": "Showcase | Platform",
-      "description": "Showcase buying groups and the in-stock tab at Eiko's Delivery."
+      "description": "Showcase buying groups and the in-stock tab at YuumeCo."
     },
     "appGroupBuy": {
       "title": "Scheduled buying | Platform",
-      "description": "Browse scheduled buying groups on Eiko's Delivery."
+      "description": "Browse scheduled buying groups on YuumeCo."
     },
     "appAffiliate": {
       "title": "Affiliate | Platform",
-      "description": "Your affiliate link, clicks, and commissions on Eiko's Delivery."
+      "description": "Your affiliate link, clicks, and commissions on YuumeCo."
     },
     "appInvoice": {
       "title": "Invoices | Platform",
-      "description": "Download invoices for paid orders on Eiko's Delivery."
+      "description": "Download invoices for paid orders on YuumeCo."
     },
     "appConta": {
       "title": "Account details | Platform",
-      "description": "Profile, addresses, and security settings for your Eiko's Delivery account."
+      "description": "Profile, addresses, and security settings for your YuumeCo account."
     },
     "appShipments": {
       "title": "Shipments | Platform",
-      "description": "Request international shipping from your Eiko's Delivery inventory."
+      "description": "Request international shipping from your YuumeCo inventory."
     },
     "login": {
       "title": "Sign in | Platform",
-      "description": "Sign in to your Eiko's Delivery account."
+      "description": "Sign in to your YuumeCo account."
     },
     "register": {
       "title": "Sign up | Platform",
-      "description": "Create your Eiko's Delivery account."
+      "description": "Create your YuumeCo account."
     },
     "forgotPassword": {
       "title": "Forgot password | Platform",
-      "description": "Reset your Eiko's Delivery account password."
+      "description": "Reset your YuumeCo account password."
     },
     "resetPassword": {
       "title": "New password | Platform",
-      "description": "Set a new password for your Eiko's Delivery account."
+      "description": "Set a new password for your YuumeCo account."
     },
     "completeSocial": {
       "title": "Complete registration | Platform",
-      "description": "Finish setting up your Eiko's Delivery account after social sign-in."
+      "description": "Finish setting up your YuumeCo account after social sign-in."
     },
     "contact": {
-      "title": "Contact | Eiko's Delivery",
-      "description": "Get in touch with Eiko's Delivery. Questions, support, and service requests."
+      "title": "Contact | YuumeCo",
+      "description": "Get in touch with YuumeCo. Questions, support, and service requests."
     },
     "simulador": {
-      "title": "Order simulator | Services & pricing | Eiko's Delivery",
+      "title": "Order simulator | Services & pricing | YuumeCo",
       "description": "Estimate your order total with Japan Post shipping and service fees."
     },
     "ondeComprar": {
-      "title": "Where to buy | Best Japanese shops | Eiko's Delivery",
+      "title": "Where to buy | Best Japanese shops | YuumeCo",
       "description": "Partner stores by category: Amazon, AmiAmi, Pokémon Center, Mercari, and more."
     },
-    "defaultTitle": "Eiko's Delivery Service | Bringing Japan to you"
+    "defaultTitle": "YuumeCo | Bringing Japan to you"
   },
   "faqPage": {
     "heading": "Frequently asked questions",
@@ -1516,7 +1516,7 @@
     "directWhatsApp": "Message on WhatsApp",
     "directTelegram": "Send on Telegram",
     "directInstagram": "Send a DM on Instagram",
-    "emailSubject": "Contact — Eiko's Delivery (from {{name}})"
+    "emailSubject": "Contact — YuumeCo (from {{name}})"
   },
   "publicSimulador": {
     "title": "Order simulator",

@@ -3,11 +3,11 @@
  * Customize these values for your business.
  */
 export const LEGAL_CONFIG = {
-  BUSINESS_NAME: "Eiko's Delivery Service",
+  BUSINESS_NAME: 'YuumeCo',
   BUSINESS_OWNER_JA: 'Aoki Shimada Jonathan',
   BUSINESS_OWNER_PT: 'Aoki Shimada Jonathan',
   BUSINESS_OWNER_EN: 'Aoki Shimada Jonathan',
-  SUPPORT_EMAIL: 'support@eiko-dls.com',
+  SUPPORT_EMAIL: 'support@yuume.co',
   /** Telefone de contato (Japão), exibido nos termos e páginas legais. */
   SUPPORT_PHONE: '+81 90 3863-9518',
 }
@@ -18,7 +18,7 @@ export const LEGAL_CONFIG = {
  * company = nome da empresa (segunda linha do endereço).
  */
 export const SHIPPING_ADDRESS_JAPAN = {
-  company: "Eiko's Delivery Service",
+  company: 'YuumeCo',
   line1: 'Shizunami 183-2',
   line2: 'Belle Soleil 202',
   city: 'Makinohara',

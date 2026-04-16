@@ -13,17 +13,17 @@ import { TermsOfUsePtBrBody } from '../../legal/TermsOfUsePtBrBody'
 const CONTENT = {
   ja: {
     title: '利用規約',
-    subtitle: "Eiko's Delivery Service · 最終更新 2026年3月30日",
+    subtitle: "YuumeCo · 最終更新 2026年3月30日",
     content: (c) => <TermsOfUseJaBody cfg={c} />,
   },
   'pt-BR': {
     title: 'Termos de Uso e Serviços',
-    subtitle: "Eiko's Delivery Service · Última atualização: 30 de março de 2026",
+    subtitle: "YuumeCo · Última atualização: 30 de março de 2026",
     content: (c) => <TermsOfUsePtBrBody cfg={c} />,
   },
   en: {
     title: 'Terms of Use and Services',
-    subtitle: "Eiko's Delivery Service · Last updated March 30, 2026",
+    subtitle: "YuumeCo · Last updated March 30, 2026",
     content: (c) => <TermsOfUseEnBody cfg={c} />,
   },
 }

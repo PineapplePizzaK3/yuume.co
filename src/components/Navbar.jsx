@@ -60,55 +60,55 @@ function Navbar() {
   }, [isAuthenticated, t])
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-earth-50 shadow-sm border-b border-earth-200">
+    <nav className="fixed top-0 left-0 right-0 z-50 overflow-visible bg-earth-50 shadow-sm border-b border-earth-200">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between">
+        <div className="flex h-[4.5rem] items-stretch justify-between">
           <LocalizedLink
             toRoute="home"
-            className={`shrink-0 ${location.pathname === homePath ? 'opacity-100' : 'opacity-90 hover:opacity-100'}`}
+            className={`relative z-10 flex shrink-0 items-center ${location.pathname === homePath ? 'opacity-100' : 'opacity-90 hover:opacity-100'}`}
           >
             <img
-              src="/logo.png"
+              src="/logo.svg?v=ymc-romaji-2"
               alt={t('nav.logoAlt')}
-              className="h-10 w-auto object-contain sm:h-12"
+              className="h-[4.5rem] w-auto max-w-[10rem] object-contain sm:h-[6.1875rem] sm:max-w-[13.5rem]"
             />
           </LocalizedLink>
 
-          <div className="hidden h-16 items-center gap-6 lg:flex">
+          <div className="hidden h-full min-h-0 items-stretch gap-6 lg:flex">
             <LocalizedLink
               toRoute="home"
-              className={location.pathname === homePath ? linkAtivo : linkNormal}
+              className={`flex items-center ${location.pathname === homePath ? linkAtivo : linkNormal}`}
             >
               {t('nav.home')}
             </LocalizedLink>
             <LocalizedLink
               toRoute="servicosPrecos"
-              className={isRouteActive('servicosPrecos', location.pathname, true) ? linkAtivo : linkNormal}
+              className={`flex items-center ${isRouteActive('servicosPrecos', location.pathname, true) ? linkAtivo : linkNormal}`}
             >
               {t('nav.services')}
             </LocalizedLink>
             <LocalizedLink
               toRoute="ondeComprar"
-              className={isRouteActive('ondeComprar', location.pathname) ? linkAtivo : linkNormal}
+              className={`flex items-center ${isRouteActive('ondeComprar', location.pathname) ? linkAtivo : linkNormal}`}
             >
               {t('nav.whereToBuy')}
             </LocalizedLink>
             <LocalizedLink
               toRoute="faqIndex"
-              className={isRouteActive('faqIndex', location.pathname, true) ? linkAtivo : linkNormal}
+              className={`flex items-center ${isRouteActive('faqIndex', location.pathname, true) ? linkAtivo : linkNormal}`}
             >
               {t('nav.faq')}
             </LocalizedLink>
             <LocalizedLink
               toRoute="contact"
-              className={isRouteActive('contact', location.pathname) ? linkAtivo : linkNormal}
+              className={`flex items-center ${isRouteActive('contact', location.pathname) ? linkAtivo : linkNormal}`}
             >
               {t('nav.contact')}
             </LocalizedLink>
-            <div className="group relative flex self-stretch">
+            <div className="group relative flex h-[4.5rem] shrink-0">
               <LocalizedLink
                 toRoute={storeMainRoute}
-                className={`flex items-center px-4 text-sm font-medium text-white transition hover:bg-red-400 ${
+                className={`box-border flex h-full w-full items-center px-4 text-sm font-medium text-white transition hover:bg-red-400 ${
                   isStorePublicRoute || isStoreAppRoute || isStoreServicesRoute
                     ? 'bg-red-500 ring-2 ring-white'
                     : 'bg-red-300'
@@ -139,7 +139,7 @@ function Navbar() {
 
             {isAuthenticated ? (
               <div
-                className="group relative"
+                className="group relative flex items-center self-center"
                 onMouseLeave={(e) => {
                   if (e.currentTarget.contains(e.relatedTarget)) return
                   const active = document.activeElement
@@ -171,13 +171,13 @@ function Navbar() {
             ) : (
               <LocalizedLink
                 toRoute="login"
-                className="rounded-lg bg-earth-900 px-4 py-2 text-sm font-medium text-earth-50 transition hover:bg-earth-800"
+                className="self-center rounded-lg bg-earth-900 px-4 py-2 text-sm font-medium text-earth-50 transition hover:bg-earth-800"
               >
                 {t('nav.loginRegister')}
               </LocalizedLink>
             )}
 
-            <div className="flex items-center gap-3 border-l border-earth-200 pl-4">
+            <div className="flex h-full items-center gap-3 self-stretch border-l border-earth-200 pl-4">
               {REDES_SOCIAIS.map((rede) => (
                 <a
                   key={rede.nome}

@@ -62,7 +62,7 @@ export function TermsOfUsePtBrBody({ cfg, compact = false }) {
 
       <LegalSection title="Art. 1º (Identificação da empresa e contato)" compact={compact}>
         <P>
-          A <strong>{c.BUSINESS_NAME}</strong> (&quot;Eiko&quot;, &quot;nós&quot;), com sede no Japão, presta serviços de
+          A <strong>{c.BUSINESS_NAME}</strong> (&quot;YuumeCo&quot;, &quot;nós&quot;), com sede no Japão, presta serviços de
           intermediação para aquisição de produtos no Japão e comercialização de itens em loja própria.
         </P>
         <P>

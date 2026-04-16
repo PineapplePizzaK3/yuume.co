@@ -294,11 +294,11 @@ export function PlatformLayout() {
     location.pathname === adminBase || location.pathname.startsWith(`${adminBase}/`)
 
   return (
-    <div className="flex min-h-screen flex-col pt-16 lg:flex-row">
+    <div className="flex min-h-screen flex-col pt-[5.5rem] lg:flex-row">
       {showReferralBanner && (
         <div
           id="platform-referral-banner"
-          className="fixed left-0 right-0 top-16 z-30 flex items-center gap-2 bg-green-600 py-2 pl-4 pr-2 text-sm font-medium text-white"
+          className="fixed left-0 right-0 top-[4.5rem] z-30 flex items-center gap-2 bg-green-600 py-2 pl-4 pr-2 text-sm font-medium text-white"
         >
           <div className="min-w-0 flex-1">
             <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-2 text-center">

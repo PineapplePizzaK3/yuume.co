@@ -37,7 +37,7 @@ const CONTENT = {
     title: 'プライバシーポリシー',
     content: (c) => (
       <>
-        <P>Eiko&apos;s Delivery Service（以下「当サービス」）は、お客様の個人情報の保護を重要な責任と考えています。本プライバシーポリシーは、当サービスにおける個人情報の収集、利用、および管理について説明するものです。</P>
+        <P>YuumeCo（以下「当サービス」）は、お客様の個人情報の保護を重要な責任と考えています。本プライバシーポリシーは、当サービスにおける個人情報の収集、利用、および管理について説明するものです。</P>
 
         <LegalSection title="1. 収集する情報">
           <P>当サービスは、以下の情報を収集する場合があります。</P>
@@ -108,7 +108,7 @@ const CONTENT = {
     title: 'Política de Privacidade',
     content: (c) => (
       <>
-        <P>O Eiko&apos;s Delivery Service (&quot;o Serviço&quot;) considera a proteção dos dados pessoais dos clientes uma responsabilidade importante. Esta Política de Privacidade descreve a coleta, uso e gestão de informações pessoais em nosso serviço.</P>
+        <P>A YuumeCo (&quot;o Serviço&quot;) considera a proteção dos dados pessoais dos clientes uma responsabilidade importante. Esta Política de Privacidade descreve a coleta, uso e gestão de informações pessoais em nosso serviço.</P>
 
         <LegalSection title="1. Informações coletadas">
           <P>O Serviço pode coletar as seguintes informações:</P>
@@ -179,7 +179,7 @@ const CONTENT = {
     title: 'Privacy Policy',
     content: (c) => (
       <>
-        <P>Eiko&apos;s Delivery Service (&quot;the Service&quot;) considers the protection of our customers&apos; personal information an important responsibility. This Privacy Policy describes the collection, use, and management of personal information in our service.</P>
+        <P>YuumeCo (&quot;the Service&quot;) considers the protection of our customers&apos; personal information an important responsibility. This Privacy Policy describes the collection, use, and management of personal information in our service.</P>
 
         <LegalSection title="1. Information collected">
           <P>The Service may collect the following information:</P>
