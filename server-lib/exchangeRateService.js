@@ -59,10 +59,21 @@ function normalizeRates(raw) {
 
 async function fetchCurrencyApiUsdBase() {
   const apiKey = String(process.env.CURRENCYAPI_KEY || '').trim()
-  if (!apiKey) return null
+  if (!apiKey) {
+    console.warn('CurrencyAPI: CURRENCYAPI_KEY is not set; skipping primary provider')
+    return null
+  }
   const url = `https://api.currencyapi.com/v3/latest?apikey=${encodeURIComponent(apiKey)}&base_currency=USD&currencies=JPY,BRL`
   const res = await fetch(url, { cache: 'no-store' })
-  if (!res.ok) return null
+  if (!res.ok) {
+    const errBody = await res.text().catch(() => '')
+    console.error(
+      'CurrencyAPI HTTP',
+      res.status,
+      errBody ? errBody.slice(0, 500) : '(no body)'
+    )
+    return null
+  }
   const data = await res.json()
   return normalizeRates({
     usd_jpy: data?.data?.JPY?.value,
