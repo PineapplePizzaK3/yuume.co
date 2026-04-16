@@ -66,31 +66,33 @@ const CONTENT = {
         </LegalSection>
 
         <LegalSection title="3. 決済処理">
-          <P>当サービスの決済は Stripe を通じて処理されます。</P>
-          <P>クレジットカードなどの決済情報は当サービスのサーバーには保存されず、Stripeのセキュリティ基準に従って安全に処理されます。</P>
-          <P>Stripeのプライバシーポリシーについては以下をご参照ください。<br /><a href="https://stripe.com/privacy" target="_blank" rel="noopener noreferrer" className="text-earth-800 underline hover:text-earth-900">https://stripe.com/privacy</a></P>
+          <P>当サービスの決済は、注文内容・地域・選択された支払い方法に応じて、Stripe、Parcelow、PIX（銀行送金）関連の手段を利用して処理されます。</P>
+          <P>クレジットカード等の機微な決済情報は、原則として各決済事業者側で処理され、当サービス側には保存されません（決済状態や取引参照ID等の運用情報のみ保持する場合があります）。</P>
+          <P>詳細は各事業者のポリシーをご確認ください。Stripe: <a href="https://stripe.com/privacy" target="_blank" rel="noopener noreferrer" className="text-earth-800 underline hover:text-earth-900">https://stripe.com/privacy</a></P>
         </LegalSection>
 
         <LegalSection title="4. 個人情報の第三者提供">
-          <P>当サービスは、以下の場合を除き、お客様の個人情報を第三者に提供しません。</P>
+          <P>当サービスは、法令上認められる場合を除き、必要最小限の範囲でのみ外部サービスに情報を共有します。</P>
           <Ul items={[
-            '決済処理のための決済サービスプロバイダー',
-            '配送のための物流会社',
-            '法令に基づく場合',
+            '認証・データ基盤（Supabase）',
+            '決済処理（Stripe、Parcelow、PIX関連事業者）',
+            '配送・通関対応のための物流会社等',
+            'お問い合わせ送信（Web3Forms）',
+            '法令・裁判所命令等に基づく開示が必要な場合',
           ]} />
         </LegalSection>
 
-        <LegalSection title="5. Cookieの使用">
-          <P>当サイトでは、サービスの利便性向上およびアクセス解析のためCookieを使用する場合があります。</P>
-          <P>Cookieの使用を希望しない場合は、ブラウザ設定により無効化することができます。ただし、一部の機能が利用できなくなる場合があります。</P>
+        <LegalSection title="5. Cookie・ローカルストレージの使用">
+          <P>当サイトでは、ログイン状態の維持、言語選択、Cookie同意状態、UI設定等の保存のために、Cookieまたはブラウザのローカルストレージを利用する場合があります。</P>
+          <P>これらを無効化すると、認証維持や一部機能が正しく動作しない可能性があります。</P>
         </LegalSection>
 
         <LegalSection title="6. 個人情報の管理">
-          <P>当サービスは、個人情報の漏洩、紛失、改ざん、不正アクセスを防止するため、適切なセキュリティ対策を講じます。</P>
+          <P>当サービスは、個人情報の漏えい・紛失・改ざん・不正アクセス防止のため、アクセス制御、通信の暗号化、権限分離等の合理的な安全管理措置を実施します。</P>
         </LegalSection>
 
         <LegalSection title="7. 個人情報の開示・訂正・削除">
-          <P>お客様は、ご自身の個人情報について開示、訂正、削除を希望する場合、当サービスまでご連絡いただくことができます。</P>
+          <P>お客様は、ご自身の個人情報について開示、訂正、削除、利用停止等を希望する場合、当サービスまでご連絡いただくことができます。法令に基づき、合理的な範囲で対応します。</P>
         </LegalSection>
 
         <LegalSection title="8. プライバシーポリシーの変更">
@@ -137,31 +139,33 @@ const CONTENT = {
         </LegalSection>
 
         <LegalSection title="3. Processamento de pagamentos">
-          <P>Os pagamentos do Serviço são processados através do Stripe.</P>
-          <P>Informações de pagamento, como dados de cartão de crédito, não são armazenadas em nossos servidores e são processadas de forma segura de acordo com os padrões de segurança do Stripe.</P>
+          <P>Os pagamentos podem ser processados por diferentes meios, conforme o tipo de pedido e a opção escolhida no checkout, incluindo Stripe, Parcelow e fluxos relacionados a PIX.</P>
+          <P>Dados sensíveis de pagamento (como dados completos de cartão) são, em regra, processados pelos provedores de pagamento e não armazenados diretamente pela YuumeCo, que mantém apenas dados operacionais da transação (como status e identificadores).</P>
           <P>Para a política de privacidade do Stripe, consulte: <a href="https://stripe.com/privacy" target="_blank" rel="noopener noreferrer" className="text-earth-800 underline hover:text-earth-900">https://stripe.com/privacy</a></P>
         </LegalSection>
 
-        <LegalSection title="4. Fornecimento a terceiros">
-          <P>O Serviço não fornece dados pessoais a terceiros, exceto nos seguintes casos:</P>
+        <LegalSection title="4. Compartilhamento com terceiros">
+          <P>O Serviço compartilha dados apenas quando necessário para operar a plataforma e cumprir obrigações legais.</P>
           <Ul items={[
-            'Provedores de serviços de pagamento para processamento de pagamentos',
-            'Empresas de logística para entrega',
-            'Casos previstos em lei',
+            'Infraestrutura de autenticação e banco de dados (Supabase)',
+            'Provedores de pagamento (Stripe, Parcelow e operadores relacionados ao PIX)',
+            'Empresas de logística e parceiros necessários ao envio/entrega',
+            'Plataforma de envio de formulário de contato (Web3Forms)',
+            'Situações previstas em lei, ordem judicial ou obrigação regulatória',
           ]} />
         </LegalSection>
 
-        <LegalSection title="5. Uso de cookies">
-          <P>Este site pode usar cookies para melhorar a usabilidade do serviço e análise de acesso.</P>
-          <P>É possível desativar os cookies nas configurações do navegador. No entanto, algumas funcionalidades podem deixar de funcionar.</P>
+        <LegalSection title="5. Uso de cookies e armazenamento local">
+          <P>Este site pode usar cookies e armazenamento local do navegador para manter sessão autenticada, preferências de idioma, estado de consentimento e funcionamento da interface.</P>
+          <P>É possível restringir esse uso nas configurações do navegador, mas isso pode impedir o funcionamento correto de recursos essenciais.</P>
         </LegalSection>
 
-        <LegalSection title="6. Gestão dos dados pessoais">
-          <P>O Serviço adota medidas de segurança apropriadas para evitar vazamento, perda, adulteração e acesso não autorizado aos dados pessoais.</P>
+        <LegalSection title="6. Gestão e segurança dos dados pessoais">
+          <P>O Serviço adota medidas técnicas e organizacionais razoáveis para reduzir riscos de vazamento, perda, alteração indevida e acesso não autorizado, incluindo controle de acesso, segregação de permissões e uso de conexões seguras.</P>
         </LegalSection>
 
-        <LegalSection title="7. Divulgação, correção e exclusão">
-          <P>O cliente pode solicitar divulgação, correção ou exclusão de seus dados pessoais entrando em contato com o Serviço.</P>
+        <LegalSection title="7. Direitos do titular (acesso, correção e exclusão)">
+          <P>O cliente pode solicitar acesso, correção, atualização, anonimização, bloqueio ou exclusão de dados pessoais, quando aplicável, entrando em contato com o Serviço. As solicitações serão tratadas conforme a legislação aplicável (incluindo a LGPD, quando cabível).</P>
         </LegalSection>
 
         <LegalSection title="8. Alterações na política">
@@ -208,31 +212,33 @@ const CONTENT = {
         </LegalSection>
 
         <LegalSection title="3. Payment processing">
-          <P>Payments for the Service are processed through Stripe.</P>
-          <P>Payment information such as credit card details is not stored on our servers and is processed securely in accordance with Stripe&apos;s security standards.</P>
+          <P>Payments may be processed through different providers depending on checkout selection and transaction type, including Stripe, Parcelow, and PIX-related payment flows.</P>
+          <P>Sensitive payment credentials (such as full card data) are generally processed by payment providers, not stored directly on YuumeCo servers. We may retain operational payment metadata (for example, status and transaction reference IDs).</P>
           <P>For Stripe&apos;s privacy policy, please refer to: <a href="https://stripe.com/privacy" target="_blank" rel="noopener noreferrer" className="text-earth-800 underline hover:text-earth-900">https://stripe.com/privacy</a></P>
         </LegalSection>
 
-        <LegalSection title="4. Third-party disclosure">
-          <P>The Service does not provide personal information to third parties, except in the following cases:</P>
+        <LegalSection title="4. Third-party sharing">
+          <P>The Service shares personal data only when necessary to operate the platform and comply with legal obligations.</P>
           <Ul items={[
-            'Payment service providers for payment processing',
-            'Logistics companies for delivery',
-            'Cases required by law',
+            'Authentication and database infrastructure (Supabase)',
+            'Payment providers (Stripe, Parcelow, and PIX-related operators)',
+            'Logistics and shipping partners required for delivery',
+            'Contact form processing platform (Web3Forms)',
+            'Disclosures required by law, court order, or regulatory obligation',
           ]} />
         </LegalSection>
 
-        <LegalSection title="5. Use of cookies">
-          <P>This site may use cookies to improve service usability and for access analysis.</P>
-          <P>You can disable cookies in your browser settings. However, some features may become unavailable.</P>
+        <LegalSection title="5. Use of cookies and local storage">
+          <P>This site may use cookies and browser local storage to keep authenticated sessions, language preference, consent status, and UI state required for service functionality.</P>
+          <P>You may disable these mechanisms in your browser settings, but doing so can prevent essential features from working properly.</P>
         </LegalSection>
 
         <LegalSection title="6. Management of personal information">
-          <P>The Service implements appropriate security measures to prevent leakage, loss, tampering, and unauthorized access to personal information.</P>
+          <P>The Service implements reasonable technical and organizational safeguards to reduce risks of leakage, loss, tampering, and unauthorized access, including access controls, permission segregation, and secure transport.</P>
         </LegalSection>
 
-        <LegalSection title="7. Disclosure, correction, and deletion">
-          <P>Customers may request disclosure, correction, or deletion of their personal information by contacting the Service.</P>
+        <LegalSection title="7. Data subject rights (access, correction, deletion)">
+          <P>Customers may request access, correction, update, restriction, or deletion of personal information, when applicable, by contacting the Service. Requests are handled in accordance with applicable privacy laws.</P>
         </LegalSection>
 
         <LegalSection title="8. Changes to the policy">
