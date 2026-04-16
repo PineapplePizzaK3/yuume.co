@@ -68,7 +68,7 @@ function Navbar() {
             className={`relative z-10 flex shrink-0 items-center ${location.pathname === homePath ? 'opacity-100' : 'opacity-90 hover:opacity-100'}`}
           >
             <img
-              src="/logo.svg?v=ymc-romaji-2"
+              src="/logo.svg?v=yumc-1svg-1"
               alt={t('nav.logoAlt')}
               className="h-[4.5rem] w-auto max-w-[10rem] object-contain sm:h-[6.1875rem] sm:max-w-[13.5rem]"
             />
