@@ -61,20 +61,20 @@ function Navbar() {
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 overflow-visible bg-earth-50 shadow-sm border-b border-earth-200">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-[4.5rem] items-stretch justify-between">
+      <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
+        <div className="flex min-h-[4.5rem] items-center justify-between gap-2 lg:h-[4.5rem] lg:items-stretch">
           <LocalizedLink
             toRoute="home"
-            className={`relative z-10 flex shrink-0 items-center ${location.pathname === homePath ? 'opacity-100' : 'opacity-90 hover:opacity-100'}`}
+            className={`relative z-10 flex min-w-0 max-w-[min(100%,9.5rem)] shrink-0 items-center sm:max-w-[11rem] lg:max-w-none ${location.pathname === homePath ? 'opacity-100' : 'opacity-90 hover:opacity-100'}`}
           >
             <img
               src="/logo.svg?v=yumc-1svg-7"
               alt={t('nav.logoAlt')}
-              className="h-[4.5rem] w-auto max-w-[10rem] object-contain sm:h-[6.1875rem] sm:max-w-[13.5rem]"
+              className="h-9 w-auto max-h-[2.75rem] max-w-full object-contain object-left sm:h-12 sm:max-h-[4.5rem] sm:max-w-[12rem] lg:h-[4.5rem] lg:max-h-none lg:max-w-[13.5rem]"
             />
           </LocalizedLink>
 
-          <div className="hidden h-full min-h-0 items-stretch gap-6 lg:flex">
+          <div className="hidden h-full min-h-0 flex-1 items-stretch gap-6 lg:flex">
             <LocalizedLink
               toRoute="home"
               className={`flex items-center ${location.pathname === homePath ? linkAtivo : linkNormal}`}
@@ -193,12 +193,12 @@ function Navbar() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 lg:hidden">
+          <div className="flex min-w-0 flex-shrink-0 items-center justify-end gap-1 sm:gap-2 lg:hidden">
             {isAuthenticated ? (
               <>
                 <LocalizedLink
                   toRoute="appCart"
-                  className={`relative inline-flex h-10 w-10 items-center justify-center rounded-lg transition focus:outline-none focus-visible:ring-2 focus-visible:ring-earth-400 ${
+                  className={`relative inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition focus:outline-none focus-visible:ring-2 focus-visible:ring-earth-400 sm:h-10 sm:w-10 ${
                     hasCartItems
                       ? 'bg-amber-100 text-amber-800 ring-2 ring-amber-300 hover:bg-amber-200'
                       : 'bg-earth-100 text-earth-700 hover:bg-earth-200 hover:text-earth-900'
@@ -217,20 +217,20 @@ function Navbar() {
                 </LocalizedLink>
                 <LocalizedLink
                   toRoute="appDashboard"
-                  className="relative inline-flex items-center justify-center gap-2 rounded-lg bg-earth-800 px-3 py-2 text-sm font-medium text-earth-50 transition hover:bg-earth-700"
+                  className="relative inline-flex min-w-0 max-w-[5.5rem] items-center justify-center gap-1.5 rounded-lg bg-earth-800 px-2 py-1.5 text-xs font-medium text-earth-50 transition hover:bg-earth-700 sm:max-w-[9rem] sm:gap-2 sm:px-3 sm:py-2 sm:text-sm"
                 >
                   {hasUnreadNotifications && (
                     <span className="absolute -right-1 -top-1 inline-block h-2.5 w-2.5 rounded-full bg-red-600 ring-2 ring-earth-50" aria-hidden />
                   )}
-                  <span className="h-2 w-2 rounded-full bg-green-400" aria-hidden />
-                  <span className="max-w-[7.5rem] truncate">
+                  <span className="h-2 w-2 shrink-0 rounded-full bg-green-400" aria-hidden />
+                  <span className="min-w-0 truncate">
                     {profile?.name || user?.email?.split('@')[0] || t('nav.accountShort')}
                   </span>
                 </LocalizedLink>
                 {isAdmin && (
                   <LocalizedLink
                     toRoute="appAdmin"
-                    className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100 text-amber-800 transition hover:bg-amber-200 hover:text-amber-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-800 transition hover:bg-amber-200 hover:text-amber-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 sm:h-10 sm:w-10"
                     aria-label={t('nav.adminPanel')}
                     title={t('nav.adminPanel')}
                   >
@@ -242,7 +242,7 @@ function Navbar() {
                 <button
                   type="button"
                   onClick={() => signOut()}
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-earth-100 text-earth-700 transition hover:bg-earth-200 hover:text-earth-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-earth-400"
+                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-earth-100 text-earth-700 transition hover:bg-earth-200 hover:text-earth-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-earth-400 sm:h-10 sm:w-10"
                   aria-label={t('nav.signOut')}
                   title={t('nav.signOut')}
                 >
@@ -254,30 +254,29 @@ function Navbar() {
             ) : (
               <LocalizedLink
                 toRoute="login"
-                className="inline-flex items-center justify-center rounded-lg bg-earth-900 px-3 py-2 text-sm font-medium text-earth-50 transition hover:bg-earth-800"
+                className="inline-flex shrink-0 items-center justify-center rounded-lg bg-earth-900 px-2.5 py-1.5 text-xs font-medium text-earth-50 transition hover:bg-earth-800 sm:px-3 sm:py-2 sm:text-sm"
               >
                 {t('nav.loginRegister')}
               </LocalizedLink>
             )}
+            <button
+              type="button"
+              onClick={() => setMenuAberto(!menuAberto)}
+              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-earth-600 hover:bg-earth-100 hover:text-earth-900 sm:h-10 sm:w-10"
+              aria-expanded={menuAberto}
+              aria-label={menuAberto ? t('nav.closeMenu') : t('nav.openMenu')}
+            >
+              {menuAberto ? (
+                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              ) : (
+                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              )}
+            </button>
           </div>
-
-          <button
-            type="button"
-            onClick={() => setMenuAberto(!menuAberto)}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-earth-600 hover:bg-earth-100 hover:text-earth-900 lg:hidden"
-            aria-expanded={menuAberto}
-            aria-label={menuAberto ? t('nav.closeMenu') : t('nav.openMenu')}
-          >
-            {menuAberto ? (
-              <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            ) : (
-              <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            )}
-          </button>
         </div>
 
         {menuAberto && (

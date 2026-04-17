@@ -41,8 +41,9 @@ export function computeRedirecionamentoPadraoFeeJpy(totalItems) {
 }
 
 /**
- * Taxa extra em BRL para itens de Compras Programadas: % sobre subtotal dos produtos do grupo + ¥250 por unidade.
- * @param {number} grupoSubtotalBrl
+ * Taxa extra em BRL para itens de Compras Programadas: % sobre subtotal BRL dos produtos do grupo + ¥250/un. convertido.
+ * O primeiro argumento deve ser o subtotal em BRL (não JPY).
+ * @param {number} grupoSubtotalBrl subtotal dos itens do grupo em BRL
  * @param {number} grupoUnitsQty soma das quantidades (unidades) dos itens do grupo
  * @param {number} brlPerJpy cotação BRL por 1 JPY (ex.: 0,033)
  */

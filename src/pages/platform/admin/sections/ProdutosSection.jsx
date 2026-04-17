@@ -1,6 +1,10 @@
+import { Link } from 'react-router-dom'
+import { useSiteLocale } from '../../../../hooks/useSiteLocale'
+import { appStoreProductPath } from '../../../../lib/localeRoutes'
 import { useAdminContext } from '../AdminContext'
 
 export default function ProdutosSection() {
+  const locale = useSiteLocale()
   const {
     activeTab,
     resetForm,
@@ -66,7 +70,12 @@ export default function ProdutosSection() {
               {filteredStorePublishCandidates.slice(0, 40).map((p) => (
                 <li key={p.id} className="flex items-center justify-between rounded border border-earth-200 px-3 py-2">
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-earth-900">{p.name}</p>
+                    <Link
+                      to={appStoreProductPath(p.id, locale)}
+                      className="truncate text-sm font-medium text-earth-900 hover:text-earth-700 hover:underline"
+                    >
+                      {p.name}
+                    </Link>
                     <p className="text-xs text-earth-600">
                       {formatJPY(getProductBasePriceJpy(p))} • {p.stock_quantity != null ? `Estoque ${p.stock_quantity}` : 'Estoque ilimitado'}
                       {` • ${getProductConditionMeta(p.item_condition).label}`}
@@ -107,7 +116,12 @@ export default function ProdutosSection() {
                         <div className="h-12 w-12 rounded bg-earth-200" />
                       )}
                       <div>
-                        <span className="font-medium text-earth-900">{p.name}</span>
+                        <Link
+                          to={appStoreProductPath(p.id, locale)}
+                          className="font-medium text-earth-900 hover:text-earth-700 hover:underline"
+                        >
+                          {p.name}
+                        </Link>
                         <span className="ml-2 text-sm text-earth-600">{formatJPY(getProductBasePriceJpy(p))}</span>
                         <span className="ml-2 text-xs text-earth-500">
                           {Number(p.weight_kg ?? 0) > 0 ? `• ${formatWeight(p.weight_kg)}` : '• peso nao definido'}

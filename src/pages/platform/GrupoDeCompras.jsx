@@ -16,6 +16,7 @@ import { addToCart } from '../../services/cartService'
 import { jpyToBrl } from '../../lib/fx'
 import LinkifyText from '../../components/LinkifyText'
 import { TriCurrencyDisplay } from '../../components/TriCurrencyDisplay'
+import StoreProductCategorySection from '../../components/StoreProductCategorySection'
 
 function getGroupImages(g) {
   if (Array.isArray(g?.image_urls) && g.image_urls.length > 0) return g.image_urls.filter(Boolean)
@@ -303,74 +304,81 @@ export default function GrupoDeCompras({ embedded = false, hideHeader = false, d
                   {getGroupProducts(detailGroup).length === 0 ? (
                     <p className="mt-2 text-sm text-earth-600">{tt('noProductsLinked')}</p>
                   ) : (
-                    <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                      {getGroupProducts(detailGroup).map((p) => {
-                        const productImgs = getProductImages(p)
-                        const productMainImg = productImgs[0]
-                        const jpy = Number(p.price_jpy ?? p.price) || 0
-                        const brl = Number(p.price_brl)
-                        const usd = Number(p.price_usd)
-                        const hasDeriv = Number.isFinite(brl) && brl > 0 && Number.isFinite(usd) && usd > 0
-                        return (
-                          <div
-                            key={p.id}
-                            className="overflow-hidden rounded-xl border border-earth-200 bg-earth-50 text-left shadow-sm transition hover:border-earth-400 hover:shadow-md"
-                          >
-                            <Link
-                              to={productHref(p.id)}
-                              onClick={(e) => e.stopPropagation()}
-                              className="block focus:outline-none focus:ring-2 focus:ring-earth-500 focus:ring-inset"
+                    <div className="mt-3">
+                      <StoreProductCategorySection
+                        products={getGroupProducts(detailGroup)}
+                        uncategorizedLabel={tt('categoryUncategorized')}
+                        searchPlaceholder={tt('categorySearchPlaceholder')}
+                        filterAllLabel={tt('categoryFilterAll')}
+                        gridClassName="grid gap-3 sm:grid-cols-2"
+                        renderProduct={(p) => {
+                          const productImgs = getProductImages(p)
+                          const productMainImg = productImgs[0]
+                          const jpy = Number(p.price_jpy ?? p.price) || 0
+                          const brl = Number(p.price_brl)
+                          const usd = Number(p.price_usd)
+                          const hasDeriv = Number.isFinite(brl) && brl > 0 && Number.isFinite(usd) && usd > 0
+                          return (
+                            <div
+                              key={p.id}
+                              className="overflow-hidden rounded-xl border border-earth-200 bg-earth-50 text-left shadow-sm transition hover:border-earth-400 hover:shadow-md"
                             >
-                              {productMainImg ? (
-                                <img
-                                  src={productMainImg}
-                                  alt={p.name}
-                                  className="h-32 w-full object-cover"
-                                />
-                              ) : (
-                                <div className="flex h-32 items-center justify-center bg-earth-200 text-earth-500 text-sm">
-                                  {t('platform.store.noImage')}
-                                </div>
-                              )}
-                              <div className="p-3">
-                                <h4 className="line-clamp-2 text-sm font-semibold text-earth-900">{p.name}</h4>
-                                <div className="mt-1">
-                                  {hasDeriv ? (
-                                    <TriCurrencyDisplay brl={brl} jpy={jpy} usd={usd} variant="card" />
-                                  ) : (
-                                    <TriCurrencyDisplay
-                                      brl={jpyToBrl(jpy)}
-                                      jpy={jpy}
-                                      usd={NaN}
-                                      variant="card"
-                                      footnote={t('platform.store.triUpdatingFootnote')}
-                                    />
-                                  )}
-                                </div>
-                                <p className="mt-2 text-xs font-medium text-earth-500">{tt('clickForDetails')}</p>
-                                <div className="mt-3">
-                                  <span className="rounded-lg border border-earth-300 bg-white px-3 py-1.5 text-xs font-medium text-earth-700">
-                                    {tt('viewProduct')}
-                                  </span>
-                                </div>
-                              </div>
-                            </Link>
-                            <div className="border-t border-earth-200 p-3 pt-2">
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  void handleComprar(p)
-                                }}
-                                disabled={isOutOfStock(p)}
-                                className="w-full rounded-lg px-3 py-2 text-xs font-medium disabled:cursor-not-allowed disabled:opacity-60 disabled:bg-earth-300 disabled:text-earth-600 bg-earth-900 text-white hover:bg-earth-800"
+                              <Link
+                                to={productHref(p.id)}
+                                onClick={(e) => e.stopPropagation()}
+                                className="block focus:outline-none focus:ring-2 focus:ring-earth-500 focus:ring-inset"
                               >
-                                {isOutOfStock(p) ? t('platform.store.outOfStock') : tt('buy')}
-                              </button>
+                                {productMainImg ? (
+                                  <img
+                                    src={productMainImg}
+                                    alt={p.name}
+                                    className="h-32 w-full object-cover"
+                                  />
+                                ) : (
+                                  <div className="flex h-32 items-center justify-center bg-earth-200 text-earth-500 text-sm">
+                                    {t('platform.store.noImage')}
+                                  </div>
+                                )}
+                                <div className="p-3">
+                                  <h4 className="line-clamp-2 text-sm font-semibold text-earth-900">{p.name}</h4>
+                                  <div className="mt-1">
+                                    {hasDeriv ? (
+                                      <TriCurrencyDisplay brl={brl} jpy={jpy} usd={usd} variant="card" />
+                                    ) : (
+                                      <TriCurrencyDisplay
+                                        brl={jpyToBrl(jpy)}
+                                        jpy={jpy}
+                                        usd={NaN}
+                                        variant="card"
+                                        footnote={t('platform.store.triUpdatingFootnote')}
+                                      />
+                                    )}
+                                  </div>
+                                  <p className="mt-2 text-xs font-medium text-earth-500">{tt('clickForDetails')}</p>
+                                  <div className="mt-3">
+                                    <span className="rounded-lg border border-earth-300 bg-white px-3 py-1.5 text-xs font-medium text-earth-700">
+                                      {tt('viewProduct')}
+                                    </span>
+                                  </div>
+                                </div>
+                              </Link>
+                              <div className="border-t border-earth-200 p-3 pt-2">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    void handleComprar(p)
+                                  }}
+                                  disabled={isOutOfStock(p)}
+                                  className="w-full rounded-lg px-3 py-2 text-xs font-medium disabled:cursor-not-allowed disabled:opacity-60 disabled:bg-earth-300 disabled:text-earth-600 bg-earth-900 text-white hover:bg-earth-800"
+                                >
+                                  {isOutOfStock(p) ? t('platform.store.outOfStock') : tt('buy')}
+                                </button>
+                              </div>
                             </div>
-                          </div>
-                        )
-                      })}
+                          )
+                        }}
+                      />
                     </div>
                   )}
                 </div>

@@ -8,7 +8,8 @@
     "dev:full": "vercel dev",
     "build": "vite build",
     "preview": "vite preview",
-    "supabase:functions:deploy:catalog-search": "supabase functions deploy catalog-search"
+    "supabase:functions:deploy:catalog-search": "supabase functions deploy catalog-search",
+    "scrape:quality": "node scripts/scrape-quality-report.mjs"
   },
   "dependencies": {
     "@stripe/stripe-js": "^8.9.0",

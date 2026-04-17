@@ -16,6 +16,7 @@ import LinkifyText from '../../components/LinkifyText'
 import ImageLightbox from '../../components/ImageLightbox'
 import { getProductConditionMeta } from '../../lib/productCondition'
 import { ProductPriceBlock, getProductImages, isOutOfStock } from '../../components/StoreProductDisplay'
+import StoreProductCategorySection from '../../components/StoreProductCategorySection'
 import GrupoDeCompras from './GrupoDeCompras'
 
 function LojaEstoqueCatalog({ publicMode = false }) {
@@ -85,74 +86,81 @@ function LojaEstoqueCatalog({ publicMode = false }) {
         <p className="mt-6 text-earth-600">{t('platform.store.empty')}</p>
       )}
       {!loading && products.length > 0 && (
-        <div className="mt-6 grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-          {products.map((p) => {
-            const imgs = getProductImages(p)
-            const mainImg = imgs[0]
-            const thumbUrl = mainImg ? getCardThumbnailUrl(mainImg) : null
-            const condition = getProductConditionMeta(p.item_condition)
-            const condLabel = t(`platform.productCondition.${condition.value}`, {
-              defaultValue: condition.label,
-            })
-            return (
-              <div
-                key={p.id}
-                className="overflow-hidden rounded-md border border-earth-200 bg-earth-50 shadow-sm transition hover:border-earth-400 hover:shadow-md"
-              >
-                <Link
-                  to={productHref(p.id)}
-                  className="block w-full text-left focus:outline-none focus:ring-2 focus:ring-earth-500 focus:ring-inset rounded-t-lg"
+        <div className="mt-6">
+          <StoreProductCategorySection
+            products={products}
+            uncategorizedLabel={t('platform.store.categoryUncategorized')}
+            searchPlaceholder={t('platform.store.categorySearchPlaceholder')}
+            filterAllLabel={t('platform.store.categoryFilterAll')}
+            gridClassName="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+            renderProduct={(p) => {
+              const imgs = getProductImages(p)
+              const mainImg = imgs[0]
+              const thumbUrl = mainImg ? getCardThumbnailUrl(mainImg) : null
+              const condition = getProductConditionMeta(p.item_condition)
+              const condLabel = t(`platform.productCondition.${condition.value}`, {
+                defaultValue: condition.label,
+              })
+              return (
+                <div
+                  key={p.id}
+                  className="overflow-hidden rounded-md border border-earth-200 bg-earth-50 shadow-sm transition hover:border-earth-400 hover:shadow-md"
                 >
-                  {mainImg ? (
-                    <img
-                      src={thumbUrl || mainImg}
-                      alt={p.name}
-                      className="h-28 w-full cursor-zoom-in object-cover"
-                      loading="lazy"
-                      onError={(e) => {
-                        if (e.target.src !== mainImg) e.target.src = mainImg
-                      }}
-                      onClick={(e) => openLightbox(mainImg, p.name, e)}
-                    />
-                  ) : (
-                    <div className="flex h-28 items-center justify-center bg-earth-200 text-earth-500 text-xs">
-                      {t('platform.store.noImage')}
-                    </div>
-                  )}
-                  <div className="p-2">
-                    <h3 className="font-semibold text-earth-900 text-xs leading-snug line-clamp-2 sm:text-sm">{p.name}</h3>
-                    <span className={`mt-1 inline-flex rounded border px-2 py-0.5 text-[11px] font-medium ${condition.className}`}>
-                      {condLabel}
-                    </span>
-                    {p.description && (
-                      <p className="mt-0.5 line-clamp-2 whitespace-pre-wrap text-xs text-earth-600">
-                        <LinkifyText text={p.description} />
-                      </p>
-                    )}
-                    <ProductPriceBlock product={p} />
-                  </div>
-                </Link>
-                <div className="flex gap-1.5 px-2 pb-2" onClick={(e) => e.stopPropagation()}>
-                  <button
-                    type="button"
-                    onClick={() => !isOutOfStock(p) && handleComprar(p)}
-                    disabled={isOutOfStock(p)}
-                    className="flex-1 rounded-md px-2 py-1.5 text-[11px] font-medium disabled:cursor-not-allowed disabled:opacity-60 disabled:bg-earth-300 disabled:text-earth-600 bg-earth-900 text-white hover:bg-earth-800"
+                  <Link
+                    to={productHref(p.id)}
+                    className="block w-full text-left focus:outline-none focus:ring-2 focus:ring-earth-500 focus:ring-inset rounded-t-lg"
                   >
-                    {isOutOfStock(p) ? t('platform.store.outOfStock') : t('platform.store.addToCart')}
-                  </button>
-                  {isOutOfStock(p) && (
-                    <Link
-                      to={lp('appServices')}
-                      className="rounded-md border border-earth-300 bg-white px-2 py-1.5 text-[11px] font-medium text-earth-700 hover:bg-earth-100"
+                    {mainImg ? (
+                      <img
+                        src={thumbUrl || mainImg}
+                        alt={p.name}
+                        className="h-28 w-full cursor-zoom-in object-cover"
+                        loading="lazy"
+                        onError={(e) => {
+                          if (e.target.src !== mainImg) e.target.src = mainImg
+                        }}
+                        onClick={(e) => openLightbox(mainImg, p.name, e)}
+                      />
+                    ) : (
+                      <div className="flex h-28 items-center justify-center bg-earth-200 text-earth-500 text-xs">
+                        {t('platform.store.noImage')}
+                      </div>
+                    )}
+                    <div className="p-2">
+                      <h3 className="font-semibold text-earth-900 text-xs leading-snug line-clamp-2 sm:text-sm">{p.name}</h3>
+                      <span className={`mt-1 inline-flex rounded border px-2 py-0.5 text-[11px] font-medium ${condition.className}`}>
+                        {condLabel}
+                      </span>
+                      {p.description && (
+                        <p className="mt-0.5 line-clamp-2 whitespace-pre-wrap text-xs text-earth-600">
+                          <LinkifyText text={p.description} />
+                        </p>
+                      )}
+                      <ProductPriceBlock product={p} />
+                    </div>
+                  </Link>
+                  <div className="flex gap-1.5 px-2 pb-2" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      type="button"
+                      onClick={() => !isOutOfStock(p) && handleComprar(p)}
+                      disabled={isOutOfStock(p)}
+                      className="flex-1 rounded-md px-2 py-1.5 text-[11px] font-medium disabled:cursor-not-allowed disabled:opacity-60 disabled:bg-earth-300 disabled:text-earth-600 bg-earth-900 text-white hover:bg-earth-800"
                     >
-                      {t('platform.store.requestOrder')}
-                    </Link>
-                  )}
+                      {isOutOfStock(p) ? t('platform.store.outOfStock') : t('platform.store.addToCart')}
+                    </button>
+                    {isOutOfStock(p) && (
+                      <Link
+                        to={lp('appServices')}
+                        className="rounded-md border border-earth-300 bg-white px-2 py-1.5 text-[11px] font-medium text-earth-700 hover:bg-earth-100"
+                      >
+                        {t('platform.store.requestOrder')}
+                      </Link>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )
-          })}
+              )
+            }}
+          />
         </div>
       )}
 

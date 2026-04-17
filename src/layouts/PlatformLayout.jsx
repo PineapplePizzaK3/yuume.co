@@ -536,7 +536,11 @@ export function PlatformLayout() {
         </div>
       </aside>
       <main className={`flex-1 p-4 pb-24 lg:pb-4 ${showReferralBanner ? 'pt-32' : 'pt-20'}`}>
-        <div className={`mx-auto ${isInLoja ? 'max-w-6xl' : 'max-w-4xl'}`}>
+        <div
+          className={`mx-auto w-full min-w-0 ${
+            isInLoja ? 'max-w-6xl' : adminActive ? 'max-w-7xl' : 'max-w-4xl'
+          }`}
+        >
           <Outlet />
         </div>
       </main>

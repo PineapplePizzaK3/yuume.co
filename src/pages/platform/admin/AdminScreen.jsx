@@ -17,6 +17,7 @@ import {
   updateProduct,
   deleteProduct,
   uploadProductImage,
+  listProductCategoriesAdmin,
 } from '../../../services/productService'
 import {
   getAllOrdersAdmin,
@@ -175,6 +176,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     weight_unit: 'g',
     stock_quantity: '',
     item_condition: 'new',
+    category: '',
     image_url: '',
     image_urls: [],
     is_active: true,
@@ -280,6 +282,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     image_url_input: '',
     source_url: '',
     admin_product_url: '',
+    category: '',
     weight_kg: '',
     weight_unit: 'g',
     stock_quantity: '',
@@ -347,12 +350,15 @@ export default function Admin({ routeTabId = 'pedidos' }) {
   const [catalogSearch, setCatalogSearch] = useState('')
   const [catalogStatusFilter, setCatalogStatusFilter] = useState('all')
   const [catalogCreateOpen, setCatalogCreateOpen] = useState(false)
+  const [productCategorySuggestions, setProductCategorySuggestions] = useState([])
   const [productReferenceSearch, setProductReferenceSearch] = useState('')
   const [productReferenceId, setProductReferenceId] = useState('')
   const [groupProductReferenceSearch, setGroupProductReferenceSearch] = useState('')
   const [groupProductReferenceId, setGroupProductReferenceId] = useState('')
   const [groupProductSourceUrlInput, setGroupProductSourceUrlInput] = useState('')
   const [groupProductScraping, setGroupProductScraping] = useState(false)
+  const [groupProductScrapeMeta, setGroupProductScrapeMeta] = useState(null)
+  const [groupProductScrapePreview, setGroupProductScrapePreview] = useState(null)
   const [externalSearchQuery, setExternalSearchQuery] = useState('')
   const [externalSearchStores, setExternalSearchStores] = useState({
     amazon: true,
@@ -486,6 +492,11 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       if (active()) setLoading(false)
     }
   }
+
+  const loadProductCategories = useCallback(async () => {
+    const { data, error } = await listProductCategoriesAdmin()
+    if (!error && Array.isArray(data)) setProductCategorySuggestions(data)
+  }, [])
 
   const loadStoreProducts = async (active = () => true, page = storeProductsPage) => {
     if (active()) setLoading(true)
@@ -965,6 +976,12 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     }
   }, [activeTab, session?.access_token, docsFilterKind, docsFilterUserId])
 
+  useEffect(() => {
+    if (activeTab === 'catalogo_produtos' || activeTab === 'grupos') {
+      loadProductCategories()
+    }
+  }, [activeTab, loadProductCategories])
+
   const resetForm = () => {
     setForm({
       name: '',
@@ -974,6 +991,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       weight_unit: 'g',
       stock_quantity: '',
       item_condition: 'new',
+      category: '',
       image_url: '',
       image_urls: [],
       is_active: true,
@@ -1049,6 +1067,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       image_url_input: '',
       source_url: '',
       admin_product_url: '',
+      category: '',
       weight_kg: '',
       weight_unit: 'g',
       stock_quantity: '',
@@ -1087,6 +1106,8 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     setEditingGroupProductId(null)
     setEditingPendingProductIndex(null)
     setPendingGroupProducts([])
+    setGroupProductScrapeMeta(null)
+    setGroupProductScrapePreview(null)
     setGroupProductForm({
       name: '',
       price: '',
@@ -1096,6 +1117,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       image_url_input: '',
       source_url: '',
       admin_product_url: '',
+      category: '',
       weight_kg: '',
       weight_unit: 'g',
       stock_quantity: '',
@@ -1114,6 +1136,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       image_url_input: '',
       source_url: '',
       admin_product_url: '',
+      category: '',
       weight_kg: '',
       weight_unit: 'g',
       stock_quantity: '',
@@ -1122,6 +1145,8 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     setEditingPendingProductIndex(null)
     setGroupProductReferenceId('')
     setGroupProductSourceUrlInput('')
+    setGroupProductScrapeMeta(null)
+    setGroupProductScrapePreview(null)
   }
 
   const buildGroupProductPayload = () => {
@@ -1154,12 +1179,64 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       image_urls: imageUrls,
       source_url: groupProductForm.source_url?.trim() || null,
       admin_product_url: groupProductForm.admin_product_url?.trim() || null,
+      category:
+        groupProductForm.category != null && String(groupProductForm.category).trim() !== ''
+          ? String(groupProductForm.category).trim()
+          : null,
       weight_kg: weightKg,
       stock_quantity: stockQty,
     }
   }
 
   const isOnlineGroupDestination = groupForm.destination === 'online'
+
+  const applyScrapedGroupProductData = (scrapedData, { force = false } = {}) => {
+    if (!scrapedData) return
+    setGroupProductForm((prev) => {
+      const normalizedPrice =
+        scrapedData?.price != null ? String(Math.round(Number(scrapedData.price) || 0)) : prev.price
+      const scrapedImageUrls = Array.isArray(scrapedData?.imageUrls)
+        ? scrapedData.imageUrls.filter(Boolean)
+        : (scrapedData?.imageUrl ? [scrapedData.imageUrl] : [])
+      const incomingImage = scrapedImageUrls[0] || scrapedData?.imageUrl || prev.image_url
+      const hasExistingCoreData =
+        Boolean(prev.name?.trim()) ||
+        Boolean(prev.price != null && String(prev.price).trim() !== '') ||
+        Boolean(prev.image_url?.trim()) ||
+        (Array.isArray(prev.image_urls) && prev.image_urls.length > 0)
+      const shouldHoldForReview =
+        !force &&
+        hasExistingCoreData &&
+        (scrapedData?.meta?.requiresReview || scrapedData?.meta?.lowConfidence)
+
+      if (shouldHoldForReview) {
+        setGroupProductScrapePreview(scrapedData)
+        return prev
+      }
+
+      setGroupProductScrapePreview(null)
+      return {
+        ...prev,
+        name: scrapedData?.name || prev.name,
+        price: normalizedPrice,
+        image_url: incomingImage,
+        image_urls: scrapedImageUrls.length ? Array.from(new Set(scrapedImageUrls)) : prev.image_urls,
+        image_url_input: '',
+        source_url: scrapedData?.source_url || prev.source_url,
+      }
+    })
+  }
+
+  const applyPendingGroupProductScrape = () => {
+    if (!groupProductScrapePreview) return
+    applyScrapedGroupProductData(groupProductScrapePreview, { force: true })
+    setMessage('Dados do scrape aplicados ao formulário.')
+  }
+
+  const discardPendingGroupProductScrape = () => {
+    setGroupProductScrapePreview(null)
+    setMessage('Dados do scrape descartados. Mantivemos os campos atuais.')
+  }
 
   const handleScrapeOnlineGroupProduct = async () => {
     const url = String(groupProductSourceUrlInput || '').trim()
@@ -1172,23 +1249,33 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       return
     }
     setGroupProductScraping(true)
+    setGroupProductScrapePreview(null)
+    setGroupProductScrapeMeta(null)
     setMessage('')
     try {
       const { data, error } = await scrapeProductUrl(url)
       if (error) {
-        setMessage(error.message || 'Não foi possível extrair dados do produto.')
+        const detail = error?.failureCode ? ` (código: ${error.failureCode})` : ''
+        setMessage((error.message || 'Não foi possível extrair dados do produto.') + detail)
         return
       }
-      setGroupProductForm((prev) => ({
-        ...prev,
-        name: data?.name || prev.name,
-        price: data?.price != null ? String(Math.round(Number(data.price) || 0)) : prev.price,
-        image_url: data?.imageUrl || prev.image_url,
-        image_urls: data?.imageUrl ? [data.imageUrl] : prev.image_urls,
-        image_url_input: '',
+      const normalized = {
+        ...data,
         source_url: url,
-      }))
-      setMessage('Dados do produto preenchidos via scrape.')
+      }
+      setGroupProductScrapeMeta(normalized?.meta || null)
+      applyScrapedGroupProductData(normalized)
+      if (normalized?.meta?.requiresReview) {
+        const confidencePct = Math.round((Number(normalized?.meta?.confidence) || 0) * 100)
+        const origin = normalized?.meta?.source ? `fonte: ${normalized.meta.source}` : 'fonte desconhecida'
+        const warning = Array.isArray(normalized?.meta?.warnings) && normalized.meta.warnings.length > 0
+          ? ` | ${normalized.meta.warnings[0]}`
+          : ''
+        setMessage(`Scrape com revisão recomendada (${confidencePct}% | ${origin})${warning}`)
+      } else {
+        const confidencePct = Math.round((Number(normalized?.meta?.confidence) || 0) * 100)
+        setMessage(`Dados do produto preenchidos via scrape (${confidencePct}% de confiança).`)
+      }
     } catch (e) {
       setMessage(e?.message || 'Erro ao executar scrape do produto.')
     } finally {
@@ -1220,6 +1307,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
           else {
             resetGroupProductForm()
             loadGroupProducts(editingGroupId)
+            loadProductCategories()
           }
         } else {
           const { error } = await createPurchaseGroupProduct(editingGroupId, payload)
@@ -1227,6 +1315,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
           else {
             resetGroupProductForm()
             loadGroupProducts(editingGroupId)
+            loadProductCategories()
           }
         }
       } finally {
@@ -1263,6 +1352,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       image_url_input: '',
       source_url: p.source_url ?? '',
       admin_product_url: p.admin_product_url ?? '',
+      category: p.category ?? '',
       weight_kg: kg > 0 ? (useG ? String(Math.round(kg * 1000)) : String(kg)) : '',
       weight_unit: useG ? 'g' : 'kg',
       stock_quantity: p.stock_quantity != null ? String(p.stock_quantity) : '',
@@ -1270,6 +1360,8 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     setEditingGroupProductId(p.id)
     setGroupProductReferenceId(p.id || '')
     setGroupProductSourceUrlInput(p.source_url || '')
+    setGroupProductScrapeMeta(null)
+    setGroupProductScrapePreview(null)
   }
 
   const handleDeleteGroupProduct = async (productId) => {
@@ -1296,6 +1388,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       image_url_input: '',
       source_url: item.source_url ?? '',
       admin_product_url: item.admin_product_url ?? '',
+      category: item.category ?? '',
       weight_kg: kg > 0 ? (useG ? String(Math.round(kg * 1000)) : String(kg)) : '',
       weight_unit: useG ? 'g' : 'kg',
       stock_quantity: item.stock_quantity != null ? String(item.stock_quantity) : '',
@@ -1303,6 +1396,8 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     setEditingPendingProductIndex(index)
     setGroupProductReferenceId(item.id || '')
     setGroupProductSourceUrlInput(item.source_url || '')
+    setGroupProductScrapeMeta(null)
+    setGroupProductScrapePreview(null)
   }
 
   const handleRemovePendingGroupProduct = (index) => {
@@ -1530,6 +1625,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
           }
         }
         setPendingGroupProducts([])
+        loadProductCategories()
       }
 
       setMessage(editingGroupId ? 'Grupo atualizado com sucesso' : 'Grupo criado com sucesso')
@@ -1586,6 +1682,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       weight_unit: useG ? 'g' : 'kg',
       stock_quantity: refProduct.stock_quantity != null ? String(refProduct.stock_quantity) : prev.stock_quantity,
       item_condition: normalizeProductCondition(refProduct.item_condition ?? prev.item_condition),
+      category: refProduct.category != null && String(refProduct.category).trim() !== '' ? String(refProduct.category) : prev.category,
       image_url: refProduct.image_url ?? urls[0] ?? '',
       image_urls: urls,
     }))
@@ -1605,6 +1702,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       image_url: refProduct.image_url ?? urls[0] ?? '',
       image_urls: urls,
       image_url_input: '',
+      category: refProduct.category != null && String(refProduct.category).trim() !== '' ? String(refProduct.category) : prev.category,
       weight_kg: kg > 0 ? (useG ? String(Math.round(kg * 1000)) : String(kg)) : '',
       weight_unit: useG ? 'g' : 'kg',
     }))
@@ -1623,6 +1721,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       weight_unit: useG ? 'g' : 'kg',
       stock_quantity: p.stock_quantity != null ? String(p.stock_quantity) : '',
       item_condition: normalizeProductCondition(p.item_condition),
+      category: p.category ?? '',
       image_url: p.image_url ?? urls[0] ?? '',
       image_urls: urls,
       is_active: p.is_active ?? true,
@@ -1667,6 +1766,8 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       weight_kg: weightKg,
       stock_quantity: stockQty,
       item_condition: normalizeProductCondition(form.item_condition),
+      category:
+        form.category != null && String(form.category).trim() !== '' ? String(form.category).trim() : null,
       image_url: imageUrls[0] || form.image_url || null,
       image_urls: imageUrls,
       is_active: form.is_active,
@@ -1680,6 +1781,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
           logAdminAction('product_update', 'product', editingId, { name: payload.name })
           resetForm()
           loadProducts()
+          loadProductCategories()
         }
       } else {
         const { data, error } = await createProduct(payload)
@@ -1688,6 +1790,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
           logAdminAction('product_create', 'product', data?.id, { name: payload.name })
           resetForm()
           loadProducts()
+          loadProductCategories()
         }
       }
     } finally {
@@ -1746,6 +1849,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       weight_kg: p.weight_kg ?? 0,
       stock_quantity: p.stock_quantity ?? null,
       item_condition: normalizeProductCondition(p.item_condition),
+      category: p.category != null && String(p.category).trim() !== '' ? String(p.category).trim() : null,
       image_url: urls[0] || p.image_url || '',
       image_urls: urls,
       is_active: p.is_active ?? true,
@@ -1756,6 +1860,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       if (!error) {
         logAdminAction('product_duplicate', 'product', data?.id, { from: p.id, name: payload.name })
         loadProducts()
+        loadProductCategories()
       }
     } finally {
       setDuplicatingId(null)
@@ -2500,7 +2605,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
 
   const filteredProductReferences = masterProductReferences.filter((p) => {
     if (!productReferenceTerm) return true
-    const haystack = [p.id, p.name, p.description]
+    const haystack = [p.id, p.name, p.description, p.category]
       .map((v) => String(v ?? '').toLowerCase())
       .join(' ')
     return haystack.includes(productReferenceTerm)
@@ -2508,7 +2613,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
 
   const filteredGroupProductReferences = masterProductReferences.filter((p) => {
     if (!groupProductReferenceTerm) return true
-    const haystack = [p.id, p.name, p.description]
+    const haystack = [p.id, p.name, p.description, p.category]
       .map((v) => String(v ?? '').toLowerCase())
       .join(' ')
     return haystack.includes(groupProductReferenceTerm)
@@ -2534,6 +2639,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       p.id,
       p.name,
       p.description,
+      p.category,
       p.purchase_group_id ? 'grupo' : 'loja',
     ]
       .map((v) => String(v ?? '').toLowerCase())
@@ -2689,7 +2795,11 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     groupProductSourceUrlInput,
     setGroupProductSourceUrlInput,
     groupProductScraping,
+    groupProductScrapeMeta,
+    groupProductScrapePreview,
     handleScrapeOnlineGroupProduct,
+    applyPendingGroupProductScrape,
+    discardPendingGroupProductScrape,
     isOnlineGroupDestination,
     filteredGroupProductReferences,
     applyReferenceToGroupProductForm,
@@ -2718,6 +2828,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     catalogStatusFilter,
     setCatalogStatusFilter,
     catalogCreateOpen,
+    productCategorySuggestions,
     handleSave,
     form,
     setForm,

@@ -27,7 +27,11 @@ export default function GruposSection() {
     groupProductSourceUrlInput,
     setGroupProductSourceUrlInput,
     groupProductScraping,
+    groupProductScrapeMeta,
+    groupProductScrapePreview,
     handleScrapeOnlineGroupProduct,
+    applyPendingGroupProductScrape,
+    discardPendingGroupProductScrape,
     isOnlineGroupDestination,
     filteredGroupProductReferences,
     applyReferenceToGroupProductForm,
@@ -51,6 +55,7 @@ export default function GruposSection() {
     purchaseGroups,
     handleEditGroup,
     handleDeleteGroup,
+    productCategorySuggestions,
   } = useAdminContext()
 
   if (activeTab !== 'grupos') return null
@@ -198,6 +203,7 @@ export default function GruposSection() {
                       {p.name} — {formatJPY(getProductBasePriceJpy(p))}
                       {Number(p.weight_kg ?? 0) > 0 ? ` • ${formatWeight(p.weight_kg)}` : ''}
                       {` • Estoque: ${p.stock_quantity != null ? p.stock_quantity : 'ilimitado'}`}
+                      {p.category ? ` • ${p.category}` : ''}
                     </span>
                     {p.admin_product_url && /^https?:\/\//i.test(String(p.admin_product_url).trim()) && (
                       <a
@@ -231,6 +237,7 @@ export default function GruposSection() {
                       {p.name} — {formatJPY(getProductBasePriceJpy(p))}
                       {Number(p.weight_kg ?? 0) > 0 ? ` • ${formatWeight(p.weight_kg)}` : ''}
                       {` • Estoque: ${p.stock_quantity != null ? p.stock_quantity : 'ilimitado'}`}
+                      {p.category ? ` • ${p.category}` : ''}
                     </span>
                     {p.admin_product_url && /^https?:\/\//i.test(String(p.admin_product_url).trim()) && (
                       <a
@@ -295,6 +302,44 @@ export default function GruposSection() {
                 >
                   {groupProductScraping ? 'Buscando...' : 'Buscar dados'}
                 </button>
+              </div>
+            )}
+            {groupProductScrapeMeta && (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                <p className="font-medium">
+                  Scrape: {Math.round((Number(groupProductScrapeMeta.confidence) || 0) * 100)}% de confiança
+                  {groupProductScrapeMeta.source ? ` • origem: ${groupProductScrapeMeta.source}` : ''}
+                </p>
+                {Array.isArray(groupProductScrapeMeta.warnings) && groupProductScrapeMeta.warnings.length > 0 && (
+                  <ul className="mt-1 list-disc pl-4">
+                    {groupProductScrapeMeta.warnings.slice(0, 3).map((warn, idx) => (
+                      <li key={`${warn}-${idx}`}>{warn}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+            {groupProductScrapePreview && (
+              <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-900">
+                <p className="font-medium">
+                  Confirmação manual: o scrape encontrou dados com baixa confiança e não sobrescreveu os campos atuais.
+                </p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={applyPendingGroupProductScrape}
+                    className="rounded-md border border-blue-300 bg-white px-2.5 py-1.5 font-medium text-blue-800 hover:bg-blue-100"
+                  >
+                    Aplicar dados do scrape
+                  </button>
+                  <button
+                    type="button"
+                    onClick={discardPendingGroupProductScrape}
+                    className="rounded-md border border-blue-200 bg-blue-100 px-2.5 py-1.5 font-medium text-blue-800 hover:bg-blue-200"
+                  >
+                    Manter meus dados
+                  </button>
+                </div>
               </div>
             )}
             <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-stretch">
@@ -379,6 +424,22 @@ export default function GruposSection() {
                 onChange={(e) => setGroupProductForm((f) => ({ ...f, stock_quantity: e.target.value }))}
                 className="w-28 rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
               />
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm font-medium text-earth-700">Categoria</span>
+              <input
+                type="text"
+                list="grupo-product-category-suggestions"
+                value={groupProductForm.category ?? ''}
+                onChange={(e) => setGroupProductForm((f) => ({ ...f, category: e.target.value }))}
+                placeholder="Nova ou existente"
+                className="min-w-[180px] flex-1 rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
+              />
+              <datalist id="grupo-product-category-suggestions">
+                {(productCategorySuggestions || []).map((c) => (
+                  <option key={c} value={c} />
+                ))}
+              </datalist>
             </div>
             <div>
               <label className="block text-sm font-medium text-earth-700">Descrição do produto</label>

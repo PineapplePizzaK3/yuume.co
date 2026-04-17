@@ -71,6 +71,21 @@ export async function getProductsAdmin(limit = 500, offset = 0) {
   }
 }
 
+/** Admin: nomes de categorias já usados (distinct), para sugestão nos formulários. */
+export async function listProductCategoriesAdmin() {
+  try {
+    const { data, error } = await withDbTimeout(
+      supabase.rpc('admin_list_product_categories'),
+      60000,
+      'products:listProductCategoriesAdmin'
+    )
+    const list = Array.isArray(data) ? data : []
+    return { data: list, error }
+  } catch (e) {
+    return { data: [], error: toServiceError(e) }
+  }
+}
+
 /** Admin: lista produtos publicados na loja virtual (vínculo). */
 export async function getStoreProductsAdmin(limit = 500, offset = 0) {
   try {
@@ -129,6 +144,10 @@ export async function createProduct(product) {
       is_active: product.is_active ?? true,
       ...(Object.prototype.hasOwnProperty.call(product, 'item_condition') && { item_condition: product.item_condition }),
       ...(product.hasOwnProperty('stock_quantity') && { stock_quantity: product.stock_quantity ?? null }),
+      category:
+        product.category != null && String(product.category).trim() !== ''
+          ? String(product.category).trim()
+          : null,
     }
     const { data, error } = await withDbTimeout(
       supabase.rpc('admin_create_product', { p_product: payload })
@@ -153,6 +172,10 @@ export async function updateProduct(id, product) {
       is_active: product.is_active ?? true,
       ...(Object.prototype.hasOwnProperty.call(product, 'item_condition') && { item_condition: product.item_condition }),
       ...(product.hasOwnProperty('stock_quantity') && { stock_quantity: product.stock_quantity ?? null }),
+      category:
+        product.category != null && String(product.category).trim() !== ''
+          ? String(product.category).trim()
+          : null,
     }
     const { data, error } = await withDbTimeout(
       supabase.rpc('admin_update_product', { p_id: id, p_product: payload })

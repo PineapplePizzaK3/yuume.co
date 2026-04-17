@@ -2,7 +2,7 @@
  * Central de Pagamentos - checkout da loja + pagamentos pendentes.
  * Todos os pagamentos da conta são centralizados aqui para melhorar a UX.
  */
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useLocalizedPath } from '../../hooks/useLocalizedPath'
@@ -25,6 +25,7 @@ import {
 } from '../../data/serviceFees'
 import { brlToJpy, formatUSD, jpyToBrl, getFxBrlPerJpy } from '../../lib/fx'
 import { TriCurrencyDisplay } from '../../components/TriCurrencyDisplay'
+import { appStoreProductPath } from '../../lib/localeRoutes'
 import { getSystemSettings } from '../../services/settingsService'
 import { GATEWAY_OPTIONS_META, PAYMENT_METHODS_BY_GATEWAY } from '../../components/paymentModalConstants'
 
@@ -113,6 +114,7 @@ function Cart() {
   const [draggingTabId, setDraggingTabId] = useState('')
   const [tabOrder, setTabOrder] = useState(() => [...CART_TAB_IDS])
   const [exchangeSnapshot, setExchangeSnapshot] = useState(null)
+  const loadCartSeqRef = useRef(0)
 
   const success = searchParams.get('success') === 'true'
   const canceled = searchParams.get('canceled') === 'true'
@@ -144,13 +146,18 @@ function Cart() {
     })
   }
 
-  const loadCart = async () => {
+  const loadCart = async ({ silent = false } = {}) => {
     if (!user?.id) return
-    setLoading(true)
-    const { data, error } = await getCart(user.id)
-    setItems(data ?? [])
-    if (error) setFeedback(error.message)
-    setLoading(false)
+    const seq = ++loadCartSeqRef.current
+    if (!silent) setLoading(true)
+    try {
+      const { data, error } = await getCart(user.id)
+      if (seq !== loadCartSeqRef.current) return
+      setItems(data ?? [])
+      if (error) setFeedback(error.message)
+    } finally {
+      if (seq === loadCartSeqRef.current && !silent) setLoading(false)
+    }
   }
 
   useEffect(() => {
@@ -401,13 +408,8 @@ function Cart() {
         : (() => {
             const fxRaw = Number(systemSettings?.fx_brl_per_jpy?.amount)
             const fx = Number.isFinite(fxRaw) && fxRaw > 0 ? fxRaw : getFxBrlPerJpy()
-            let grupoJpy = 0
-            for (const i of items) {
-              const p = i.products
-              if (!p?.purchase_group_id) continue
-              grupoJpy += (Number(p.price_jpy ?? p.price) || 0) * (Number(i.quantity) || 1)
-            }
-            return computeGrupoComprasFeeBrl(grupoJpy, q, fx)
+            // Subtotal em BRL do grupo — não usar JPY aqui: computeGrupoComprasFeeBrl aplica % sobre BRL.
+            return computeGrupoComprasFeeBrl(grupoBrl, q, fx)
           })()
     return {
       productSubtotalBrl: lojaBrl + grupoBrl,
@@ -420,6 +422,41 @@ function Cart() {
   const totalBrl = productSubtotalBrl + grupoFeeBrl
   const discountBrl = couponApplied?.discount_brl ?? 0
   const totalAfterDiscountBrl = Math.max(0, totalBrl - discountBrl)
+
+  const cartItemsKey = useMemo(
+    () => items.map((i) => `${i.product_id}:${i.quantity}`).join('|'),
+    [items]
+  )
+
+  useEffect(() => {
+    if (!couponApplied?.code || loading) return
+    const code = String(couponApplied.code).trim()
+    if (!code) return
+    let cancelled = false
+    ;(async () => {
+      const { data, error } = await validateCoupon(code, totalBrl)
+      if (cancelled) return
+      if (error || !data) {
+        setCouponApplied(null)
+        setCouponInput('')
+        setFeedback(t('platform.cart.errors.couponInvalidAfterCart'))
+        return
+      }
+      setCouponApplied((prev) => {
+        if (!prev || String(prev.code).trim() !== code) return data
+        if (
+          prev.discount_brl === data.discount_brl
+          && prev.coupon_id === data.coupon_id
+        ) {
+          return prev
+        }
+        return data
+      })
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [cartItemsKey, totalBrl, couponApplied?.code, loading, t])
   const effBrlPerJpyCheckout =
     Number(exchangeSnapshot?.effective_brl_per_jpy) > 0
       ? Number(exchangeSnapshot.effective_brl_per_jpy)
@@ -491,16 +528,20 @@ function Cart() {
         delete next[productId]
         return next
       })
-      loadCart()
+      loadCart({ silent: true })
     }
   }
 
   const handleRemove = async (productId) => {
+    const snapshot = items
+    setItems((prev) => prev.filter((i) => i.product_id !== productId))
     const { error } = await removeFromCart(user.id, productId)
-    if (error) setFeedback(error.message)
-    else {
-      loadCart()
+    if (error) {
+      setFeedback(error.message)
+      setItems(snapshot)
+      return
     }
+    await loadCart({ silent: true })
   }
 
   const handleCheckout = async () => {
@@ -732,7 +773,7 @@ function Cart() {
         setFeedback(t('platform.cart.payWalletSuccess'))
         setCouponApplied(null)
         setCouponInput('')
-        await loadCart()
+        await loadCart({ silent: true })
         await loadPendingOrders()
         await loadPayments()
         await (async () => {
@@ -941,7 +982,14 @@ function Cart() {
                             {sourceTag}
                           </span>
                         </div>
-                        <h3 className="font-semibold text-earth-900">{p.name}</h3>
+                        <h3 className="font-semibold text-earth-900">
+                          <Link
+                            to={appStoreProductPath(p.id, locale)}
+                            className="hover:text-earth-700 hover:underline"
+                          >
+                            {p.name}
+                          </Link>
+                        </h3>
                         <p className="mt-1 text-[11px] font-medium uppercase tracking-wide text-earth-500">
                           {t('platform.cart.unitLabel')}
                         </p>
@@ -1398,21 +1446,30 @@ function Cart() {
                               <span>-{fp.jpy(walletApplied)}</span>
                             </div>
                           )}
-                          <div className="flex justify-between pt-2 border-t border-earth-200 font-medium">
-                            <span className="text-earth-800">{t('platform.cart.modalTotalWalletLine')}</span>
-                            <span className="text-earth-900">{fp.jpy(remainingJpy)}</span>
-                          </div>
-                          <p className="text-sm font-semibold text-earth-900 mt-2">
-                            {t('platform.cart.modalTotalBrl', { amount: fp.brl(remainingBrlUi) })}
-                          </p>
-                          {remainingUsdParcelow != null && remainingUsdParcelow > 0 && (
-                            <p className="text-sm text-earth-700">
-                              {t('platform.cart.modalParcelowUsd', {
-                                amount: formatUSD(remainingUsdParcelow),
-                              })}
+                          <div className="pt-2 border-t border-earth-200 space-y-2">
+                            <p className="text-sm font-medium text-earth-800">
+                              {t('platform.cart.modalTotalWalletLine')}
                             </p>
-                          )}
-                          <p className="text-xs text-earth-500 mt-1">{t('platform.cart.modalBrlNote')}</p>
+                            {remainingJpy > 0 ? (
+                              <TriCurrencyDisplay
+                                brl={remainingBrlUi}
+                                jpy={remainingJpy}
+                                usd={
+                                  remainingUsdParcelow != null &&
+                                  Number.isFinite(remainingUsdParcelow) &&
+                                  remainingUsdParcelow > 0
+                                    ? remainingUsdParcelow
+                                    : undefined
+                                }
+                                variant="modal"
+                                footnote={t('platform.cart.triFootnoteCheckout')}
+                              />
+                            ) : (
+                              <p className="text-sm font-medium text-green-800">
+                                {t('platform.cart.modalTotalCoveredByWallet')}
+                              </p>
+                            )}
+                          </div>
                         </>
                       )}
                     </div>

@@ -126,6 +126,10 @@ export async function createPurchaseGroupProduct(groupId, product) {
       admin_product_url: product.admin_product_url ?? null,
       weight_kg: product.weight_kg ?? 0,
       stock_quantity: product.stock_quantity ?? null,
+      category:
+        product.category != null && String(product.category).trim() !== ''
+          ? String(product.category).trim()
+          : null,
     }
     const { data, error } = await withDbTimeout(
       supabase.rpc('admin_create_purchase_group_product', {
@@ -153,6 +157,10 @@ export async function updatePurchaseGroupProduct(groupId, productId, product) {
       admin_product_url: product.admin_product_url ?? null,
       weight_kg: product.weight_kg ?? 0,
       stock_quantity: product.stock_quantity ?? null,
+      category:
+        product.category != null && String(product.category).trim() !== ''
+          ? String(product.category).trim()
+          : null,
     }
     const { data, error } = await withDbTimeout(
       supabase.rpc('admin_update_purchase_group_product', {

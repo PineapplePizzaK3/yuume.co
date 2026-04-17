@@ -1,0 +1,18 @@
+[
+  {
+    "label": "Amazon JP example",
+    "url": "https://www.amazon.co.jp/dp/B0CHX3C8YH"
+  },
+  {
+    "label": "Mercari JP example",
+    "url": "https://jp.mercari.com/item/m00000000000"
+  },
+  {
+    "label": "Rakuma example",
+    "url": "https://item.fril.jp/00000000000000000000000000000000"
+  },
+  {
+    "label": "Yahoo Shopping example",
+    "url": "https://store.shopping.yahoo.co.jp/example/item.html"
+  }
+]

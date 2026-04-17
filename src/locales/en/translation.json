@@ -622,15 +622,15 @@
         "redirectPay": "Could not redirect to payment.",
         "processPay": "Could not process payment.",
         "noStoreItems": "No store items to complete checkout.",
-        "couponEmpty": "Enter a coupon code."
+        "couponEmpty": "Enter a coupon code.",
+        "couponInvalidAfterCart": "The coupon was removed because it no longer applies to your cart total."
       },
       "modalTitle": "Payment",
       "modalSubtitle": "Choose whether to use your wallet and how to pay any remaining balance.",
       "modalWalletApplied": "Wallet applied",
       "modalTotalWalletLine": "Amount due (after wallet)",
-      "modalTotalBrl": "Total: {{amount}}",
-      "modalParcelowUsd": "Parcelow charge in USD: {{amount}}",
       "modalBrlNote": "BRL is indicative (USD × rate). Your bank may charge a slightly different BRL amount.",
+      "modalTotalCoveredByWallet": "Your wallet covers the full amount; no additional card charge.",
       "modalUseWallet": "Use wallet balance",
       "modalWalletAvailable": "Available balance: {{amount}}",
       "modalWalletFull": "Use maximum wallet amount",
@@ -899,7 +899,10 @@
       "close": "Close",
       "productPageBack": "Back to store",
       "productPageNotFound": "Product not found or unavailable.",
-      "productPageLoadError": "Could not load the product."
+      "productPageLoadError": "Could not load the product.",
+      "categoryUncategorized": "Uncategorized",
+      "categorySearchPlaceholder": "Search product or category…",
+      "categoryFilterAll": "All"
     },
     "storeHub": {
       "pageTitle": "Store",
@@ -929,7 +932,10 @@
       "noProductsLinked": "This group does not have linked products yet.",
       "clickForDetails": "View product page",
       "viewProduct": "View product",
-      "buy": "Buy"
+      "buy": "Buy",
+      "categoryUncategorized": "Uncategorized",
+      "categorySearchPlaceholder": "Search product or category…",
+      "categoryFilterAll": "All"
     },
     "services": {
       "loadError": "Could not load services",

@@ -622,15 +622,15 @@
         "redirectPay": "Erro ao redirecionar para pagamento.",
         "processPay": "Erro ao processar pagamento.",
         "noStoreItems": "Sem itens da loja para finalizar.",
-        "couponEmpty": "Digite um código de cupom."
+        "couponEmpty": "Digite um código de cupom.",
+        "couponInvalidAfterCart": "O cupom foi removido porque não é mais válido para o valor atual do carrinho."
       },
       "modalTitle": "Pagamento",
       "modalSubtitle": "Escolha se deseja usar a carteira e a forma de pagamento do restante, quando houver.",
       "modalWalletApplied": "Carteira aplicada",
       "modalTotalWalletLine": "Total a pagar (carteira)",
-      "modalTotalBrl": "Total: {{amount}}",
-      "modalParcelowUsd": "Cobrança Parcelow em USD: {{amount}}",
       "modalBrlNote": "O valor em BRL é referência (USD × cotação).",
+      "modalTotalCoveredByWallet": "Saldo da carteira cobre o valor total; não há cobrança adicional no cartão.",
       "modalUseWallet": "Usar saldo da carteira",
       "modalWalletAvailable": "Saldo disponível: {{amount}}",
       "modalWalletFull": "Usar saldo máximo possível",
@@ -899,7 +899,10 @@
       "close": "Fechar",
       "productPageBack": "Voltar à loja",
       "productPageNotFound": "Produto não encontrado ou indisponível.",
-      "productPageLoadError": "Não foi possível carregar o produto."
+      "productPageLoadError": "Não foi possível carregar o produto.",
+      "categoryUncategorized": "Sem categoria",
+      "categorySearchPlaceholder": "Buscar produto ou categoria…",
+      "categoryFilterAll": "Todas"
     },
     "storeHub": {
       "pageTitle": "Loja",
@@ -929,7 +932,10 @@
       "noProductsLinked": "Este grupo ainda não possui produtos vinculados.",
       "clickForDetails": "Ver página do produto",
       "viewProduct": "Ver produto",
-      "buy": "Comprar"
+      "buy": "Comprar",
+      "categoryUncategorized": "Sem categoria",
+      "categorySearchPlaceholder": "Buscar produto ou categoria…",
+      "categoryFilterAll": "Todas"
     },
     "services": {
       "loadError": "Erro ao carregar serviços",

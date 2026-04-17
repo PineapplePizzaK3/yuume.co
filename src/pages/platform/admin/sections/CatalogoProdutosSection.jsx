@@ -1,8 +1,12 @@
+import { Link } from 'react-router-dom'
 import { PRODUCT_CONDITION_OPTIONS } from '../../../../lib/productCondition'
 import { uploadProductImage } from '../../../../services/productService'
+import { useSiteLocale } from '../../../../hooks/useSiteLocale'
+import { appStoreProductPath } from '../../../../lib/localeRoutes'
 import { useAdminContext } from '../AdminContext'
 
 export default function CatalogoProdutosSection() {
+  const locale = useSiteLocale()
   const {
     activeTab,
     resetForm,
@@ -42,6 +46,7 @@ export default function CatalogoProdutosSection() {
     productsPage,
     productsHasMore,
     setProductsPage,
+    productCategorySuggestions,
   } = useAdminContext()
 
   if (activeTab !== 'catalogo_produtos') return null
@@ -81,7 +86,7 @@ export default function CatalogoProdutosSection() {
           type="search"
           value={catalogSearch}
           onChange={(e) => setCatalogSearch(e.target.value)}
-          placeholder="Buscar por nome, id, descricao..."
+          placeholder="Buscar por nome, id, descrição, categoria..."
           className="min-w-[220px] flex-1 rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
         />
         <select
@@ -159,6 +164,20 @@ export default function CatalogoProdutosSection() {
                 <option key={option.value} value={option.value}>{option.label}</option>
               ))}
             </select>
+            <span className="text-sm font-medium text-earth-700">Categoria</span>
+            <input
+              type="text"
+              list="catalog-product-category-suggestions"
+              value={form.category ?? ''}
+              onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
+              placeholder="Nova ou existente"
+              className="min-w-[160px] flex-1 rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+            />
+            <datalist id="catalog-product-category-suggestions">
+              {(productCategorySuggestions || []).map((c) => (
+                <option key={c} value={c} />
+              ))}
+            </datalist>
           </div>
 
           <div>
@@ -343,6 +362,7 @@ export default function CatalogoProdutosSection() {
                   <th className="px-3 py-2 font-medium">Publicado na loja</th>
                   <th className="px-3 py-2 font-medium">Preco</th>
                   <th className="px-3 py-2 font-medium">Condicao</th>
+                  <th className="px-3 py-2 font-medium">Categoria</th>
                   <th className="px-3 py-2 font-medium">Estoque</th>
                   <th className="px-3 py-2 font-medium">Status</th>
                   <th className="px-3 py-2 font-medium">ID</th>
@@ -360,7 +380,12 @@ export default function CatalogoProdutosSection() {
                           <div className="h-10 w-10 rounded bg-earth-200" />
                         )}
                         <div className="min-w-0">
-                          <p className="font-medium text-earth-900">{p.name || 'Sem nome'}</p>
+                          <Link
+                            to={appStoreProductPath(p.id, locale)}
+                            className="font-medium text-earth-900 hover:text-earth-700 hover:underline"
+                          >
+                            {p.name || 'Sem nome'}
+                          </Link>
                           {p.description && (
                             <p className="line-clamp-2 text-xs text-earth-600">{p.description}</p>
                           )}
@@ -385,6 +410,9 @@ export default function CatalogoProdutosSection() {
                           </span>
                         )
                       })()}
+                    </td>
+                    <td className="px-3 py-2 text-earth-700">
+                      {p.category ? String(p.category) : '—'}
                     </td>
                     <td className="px-3 py-2 text-earth-700">
                       {p.stock_quantity != null ? p.stock_quantity : 'Ilimitado'}
