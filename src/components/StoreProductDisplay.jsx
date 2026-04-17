@@ -1,9 +1,7 @@
 /**
  * Blocos compartilhados entre vitrine (Loja), página de produto e listagens.
  */
-import { useTranslation } from 'react-i18next'
-import { jpyToBrl } from '../lib/fx'
-import { TriCurrencyDisplay } from './TriCurrencyDisplay'
+import { formatJPY } from '../lib/fx'
 
 export function isOutOfStock(p) {
   return p?.stock_quantity != null && Number(p.stock_quantity) <= 0
@@ -17,31 +15,14 @@ export function getProductImages(p) {
   return []
 }
 
-/** BRL em destaque; JPY e USD na mesma hierarquia visual, com bandeiras. */
+/** Preço unitário do produto sempre em ienes (¥). */
 export function ProductPriceBlock({ product: p, variant = 'card' }) {
-  const { t } = useTranslation()
   const jpy = Number(p.price_jpy ?? p.price) || 0
-  const brl = Number(p.price_brl)
-  const usd = Number(p.price_usd)
-  const hasDeriv = Number.isFinite(brl) && brl > 0 && Number.isFinite(usd) && usd > 0
-  const approxBrlFallback = jpyToBrl(jpy)
-  const triVariant = variant === 'modal' || variant === 'page' ? 'modal' : 'card'
-  if (hasDeriv) {
-    return (
-      <div className="mt-1.5">
-        <TriCurrencyDisplay brl={brl} jpy={jpy} usd={usd} variant={triVariant} />
-      </div>
-    )
-  }
+  const sizeClass =
+    variant === 'modal' || variant === 'page' ? 'text-xl font-bold' : 'text-base font-semibold'
   return (
     <div className="mt-1.5">
-      <TriCurrencyDisplay
-        brl={approxBrlFallback}
-        jpy={jpy}
-        usd={NaN}
-        variant={triVariant}
-        footnote={t('platform.store.triUpdatingFootnote')}
-      />
+      <span className={`tabular-nums text-earth-900 ${sizeClass}`}>{formatJPY(jpy)}</span>
     </div>
   )
 }

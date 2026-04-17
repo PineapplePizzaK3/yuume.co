@@ -695,11 +695,11 @@ export default function Orders() {
                                     <div className="min-w-0 flex-1">
                                       <p className="font-medium text-earth-900">{item.name}</p>
                                       <p className="text-xs text-earth-600">
-                                        {item.qty} × {formatByCurrency(item.unitPrice, 'BRL')}
+                                        {item.qty} × {fp.jpy(item.unitPrice)}
                                       </p>
                                     </div>
                                     <p className="shrink-0 font-medium text-earth-800">
-                                      {formatByCurrency(item.lineTotal, 'BRL')}
+                                      {fp.jpy(item.lineTotal)}
                                     </p>
                                   </li>
                                 ))}
@@ -1118,6 +1118,7 @@ export default function Orders() {
                 if (requestedItems.length === 0) return null
                 const totalRequested = requestedItems.reduce((sum, item) => sum + item.lineTotal, 0)
                 const itemsCurrency = getRequestedItemsCurrency(detailsModal.order)
+                const storeItemsJpy = detailsModal.order?.order_source === 'store'
                 return (
                   <div>
                     <p className="text-xs font-medium uppercase tracking-wide text-earth-500 mb-2">{t('platform.orders.requestedItemsTitle')}</p>
@@ -1143,10 +1144,16 @@ export default function Orders() {
                               </div>
                             </div>
                             <div className="text-right shrink-0">
-                              <p className="text-earth-700">{formatByCurrency(item.lineTotal, itemsCurrency)}</p>
+                              <p className="text-earth-700">
+                                {storeItemsJpy ? fp.jpy(item.lineTotal) : formatByCurrency(item.lineTotal, itemsCurrency)}
+                              </p>
                               {item.qty > 1 && (
                                 <p className="text-xs text-earth-500">
-                                  {t('platform.orders.each', { price: formatByCurrency(item.unitPrice, itemsCurrency) })}
+                                  {t('platform.orders.each', {
+                                    price: storeItemsJpy
+                                      ? fp.jpy(item.unitPrice)
+                                      : formatByCurrency(item.unitPrice, itemsCurrency),
+                                  })}
                                 </p>
                               )}
                             </div>
@@ -1154,7 +1161,8 @@ export default function Orders() {
                         ))}
                       </ul>
                       <p className="mt-3 border-t border-earth-200 pt-2 text-sm font-semibold text-earth-900">
-                        {t('platform.orders.itemsTotal')} {formatByCurrency(totalRequested, itemsCurrency)}
+                        {t('platform.orders.itemsTotal')}{' '}
+                        {storeItemsJpy ? fp.jpy(totalRequested) : formatByCurrency(totalRequested, itemsCurrency)}
                       </p>
                     </div>
                   </div>

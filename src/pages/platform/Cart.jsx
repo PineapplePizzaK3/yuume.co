@@ -25,6 +25,7 @@ import {
 } from '../../data/serviceFees'
 import { brlToJpy, formatUSD, jpyToBrl, getFxBrlPerJpy } from '../../lib/fx'
 import { TriCurrencyDisplay } from '../../components/TriCurrencyDisplay'
+import { formatJPY } from '../../lib/fx'
 import { getSystemSettings } from '../../services/settingsService'
 import { GATEWAY_OPTIONS_META, PAYMENT_METHODS_BY_GATEWAY } from '../../components/paymentModalConstants'
 
@@ -904,15 +905,7 @@ function Cart() {
                   if (!p) return null
                   const qty = Math.max(1, Number(item.quantity) || 1)
                   const jpyUnit = Number(p.price_jpy ?? p.price) || 0
-                  const brlUnit = Number(p.price_brl)
-                  const usdUnit = Number(p.price_usd)
-                  const hasTri =
-                    Number.isFinite(brlUnit) && brlUnit > 0 && Number.isFinite(usdUnit) && usdUnit > 0
-                  const unitBrl = hasTri ? brlUnit : jpyToBrl(jpyUnit)
-                  const unitUsd = hasTri ? usdUnit : NaN
                   const lineJpy = jpyUnit * qty
-                  const lineBrl = unitBrl * qty
-                  const lineUsd = hasTri ? usdUnit * qty : NaN
                   const sourceTag = p.purchase_group_id
                     ? t('platform.cart.sourceGroupBuy')
                     : t('platform.cart.sourceStore')
@@ -945,13 +938,7 @@ function Cart() {
                         <p className="mt-1 text-[11px] font-medium uppercase tracking-wide text-earth-500">
                           {t('platform.cart.unitLabel')}
                         </p>
-                        <TriCurrencyDisplay
-                          brl={unitBrl}
-                          jpy={jpyUnit}
-                          usd={unitUsd}
-                          variant="compact"
-                          footnote={hasTri ? null : t('platform.cart.triFootnoteRates')}
-                        />
+                        <p className="text-sm font-semibold tabular-nums text-earth-900">{formatJPY(jpyUnit)}</p>
                         {lineOutOfStock && (
                           <p className="mt-2 text-sm font-medium text-amber-800">
                             {t('platform.cart.stockLineOutOfStock')}
@@ -985,7 +972,7 @@ function Cart() {
                           <p className="text-[11px] font-medium uppercase tracking-wide text-earth-500">
                             {t('platform.cart.subtotalLine', { qty })}
                           </p>
-                          <TriCurrencyDisplay brl={lineBrl} jpy={lineJpy} usd={lineUsd} variant="compact" />
+                          <p className="text-sm font-semibold tabular-nums text-earth-900">{formatJPY(lineJpy)}</p>
                         </div>
                         <button
                           type="button"

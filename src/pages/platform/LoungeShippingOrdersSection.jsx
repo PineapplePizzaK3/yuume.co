@@ -452,6 +452,7 @@ export default function LoungeShippingOrdersSection() {
               if (requestedItems.length === 0) return null
               const totalRequested = requestedItems.reduce((sum, item) => sum + item.lineTotal, 0)
               const itemsCurrency = getRequestedItemsCurrency(detailsModal.order)
+              const storeItemsJpy = detailsModal.order?.order_source === 'store'
               return (
                 <div className="mt-3">
                   <p className="mb-2 text-xs font-medium uppercase tracking-wide text-earth-500">
@@ -479,10 +480,16 @@ export default function LoungeShippingOrdersSection() {
                             </div>
                           </div>
                           <div className="shrink-0 text-right">
-                            <p className="text-earth-700">{formatByCurrency(item.lineTotal, itemsCurrency)}</p>
+                            <p className="text-earth-700">
+                              {storeItemsJpy ? fp.jpy(item.lineTotal) : formatByCurrency(item.lineTotal, itemsCurrency)}
+                            </p>
                             {item.qty > 1 && (
                               <p className="text-xs text-earth-500">
-                                {t('platform.orders.each', { price: formatByCurrency(item.unitPrice, itemsCurrency) })}
+                                {t('platform.orders.each', {
+                                  price: storeItemsJpy
+                                    ? fp.jpy(item.unitPrice)
+                                    : formatByCurrency(item.unitPrice, itemsCurrency),
+                                })}
                               </p>
                             )}
                           </div>
@@ -490,7 +497,8 @@ export default function LoungeShippingOrdersSection() {
                       ))}
                     </ul>
                     <p className="mt-3 border-t border-earth-200 pt-2 text-sm font-semibold text-earth-900">
-                      {t('platform.orders.itemsTotal')} {formatByCurrency(totalRequested, itemsCurrency)}
+                      {t('platform.orders.itemsTotal')}{' '}
+                      {storeItemsJpy ? fp.jpy(totalRequested) : formatByCurrency(totalRequested, itemsCurrency)}
                     </p>
                   </div>
                 </div>

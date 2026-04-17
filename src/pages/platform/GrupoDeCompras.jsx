@@ -13,9 +13,8 @@ import { PageSeo } from '../../components/PageSeo'
 import { getPurchaseGroups } from '../../services/groupService'
 import { getPurchaseGroupProducts } from '../../services/productService'
 import { addToCart } from '../../services/cartService'
-import { jpyToBrl } from '../../lib/fx'
+import { formatJPY } from '../../lib/fx'
 import LinkifyText from '../../components/LinkifyText'
-import { TriCurrencyDisplay } from '../../components/TriCurrencyDisplay'
 
 function getGroupImages(g) {
   if (Array.isArray(g?.image_urls) && g.image_urls.length > 0) return g.image_urls.filter(Boolean)
@@ -308,9 +307,6 @@ export default function GrupoDeCompras({ embedded = false, hideHeader = false, d
                         const productImgs = getProductImages(p)
                         const productMainImg = productImgs[0]
                         const jpy = Number(p.price_jpy ?? p.price) || 0
-                        const brl = Number(p.price_brl)
-                        const usd = Number(p.price_usd)
-                        const hasDeriv = Number.isFinite(brl) && brl > 0 && Number.isFinite(usd) && usd > 0
                         return (
                           <div
                             key={p.id}
@@ -335,17 +331,9 @@ export default function GrupoDeCompras({ embedded = false, hideHeader = false, d
                               <div className="p-3">
                                 <h4 className="line-clamp-2 text-sm font-semibold text-earth-900">{p.name}</h4>
                                 <div className="mt-1">
-                                  {hasDeriv ? (
-                                    <TriCurrencyDisplay brl={brl} jpy={jpy} usd={usd} variant="card" />
-                                  ) : (
-                                    <TriCurrencyDisplay
-                                      brl={jpyToBrl(jpy)}
-                                      jpy={jpy}
-                                      usd={NaN}
-                                      variant="card"
-                                      footnote={t('platform.store.triUpdatingFootnote')}
-                                    />
-                                  )}
+                                  <span className="text-sm font-semibold tabular-nums text-earth-900">
+                                    {formatJPY(jpy)}
+                                  </span>
                                 </div>
                                 <p className="mt-2 text-xs font-medium text-earth-500">{tt('clickForDetails')}</p>
                                 <div className="mt-3">
