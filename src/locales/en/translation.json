@@ -209,6 +209,7 @@
     "mobileGroups": "Scheduled",
     "mobileLounge": "Lounge",
     "mobileStore": "Store",
+    "mobilePayments": "Payments",
     "mobileAccount": "Account",
     "dashboard": {
       "pageTitle": "Account overview",

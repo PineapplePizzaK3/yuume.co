@@ -3,7 +3,7 @@
  * Menu order is stored by stable route keys (locale-independent).
  */
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { Link, Outlet, useLocation, useSearchParams } from 'react-router-dom'
+import { Link, Outlet, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../hooks/useAuth'
 import { useCartCount } from '../hooks/useCartCount'
@@ -108,7 +108,6 @@ export function PlatformLayout() {
   const path = useLocalizedPath()
   const { user, isAdmin, signOut } = useAuth()
   const location = useLocation()
-  const [searchParams] = useSearchParams()
   const cartCount = useCartCount(user?.id)
   const hasCartItems = cartCount > 0
   const cartBadgeLabel = cartCount > 99 ? '99+' : String(cartCount)
@@ -147,15 +146,6 @@ export function PlatformLayout() {
     [location.pathname, p]
   )
 
-  const lojaTab = searchParams.get('tab')
-  const isLojaEstoqueTab = useMemo(
-    () => isRouteActive('appLoja', location.pathname, true) && lojaTab === 'estoque',
-    [location.pathname, lojaTab]
-  )
-  const isLojaVitrineTab = useMemo(
-    () => isRouteActive('appLoja', location.pathname, true) && lojaTab !== 'estoque',
-    [location.pathname, lojaTab]
-  )
   const isInConta = useMemo(
     () => CONTA_ROUTE_KEYS.some((k) => p(k) === location.pathname),
     [location.pathname, p]
@@ -230,17 +220,17 @@ export function PlatformLayout() {
         ),
       },
       {
-        id: 'vitrine',
+        id: 'loja',
         to: p('appLoja'),
-        label: t('platform.mobileVitrine'),
-        active: isLojaVitrineTab,
+        label: t('platform.mobileStore'),
+        active: isRouteActive('appLoja', location.pathname, true),
         icon: (
           <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
               strokeWidth={2}
-              d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
+              d="M13.5 21v-7.5a.75.75 0 01.75-.75h3a.75.75 0 01.75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349a3.75 3.75 0 00-2.652-3.597L13.5 4.5V3.75A1.5 1.5 0 0012 2.25H9.75A1.5 1.5 0 008.25 3.75V4.5L4.652 5.752A3.75 3.75 0 002.25 9.349V21"
             />
           </svg>
         ),
@@ -257,17 +247,17 @@ export function PlatformLayout() {
         ),
       },
       {
-        id: 'em-estoque',
-        to: `${p('appLoja')}?tab=estoque`,
-        label: t('platform.mobileInStock'),
-        active: isLojaEstoqueTab,
+        id: 'pagamentos',
+        to: p('appCart'),
+        label: t('platform.mobilePayments'),
+        active: isActive('appCart'),
         icon: (
           <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
               strokeWidth={2}
-              d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+              d="M3.75 7.5h16.5a1.5 1.5 0 011.5 1.5v6a1.5 1.5 0 01-1.5 1.5H3.75a1.5 1.5 0 01-1.5-1.5V9a1.5 1.5 0 011.5-1.5zM2.25 11.25h19.5M6.75 14.25h3.75"
             />
           </svg>
         ),
@@ -284,7 +274,7 @@ export function PlatformLayout() {
         ),
       },
     ],
-    [isActive, isLojaEstoqueTab, isLojaVitrineTab, location.pathname, p, t]
+    [isActive, location.pathname, p, t]
   )
 
   const isPlatformHome = location.pathname === dashboardPath
@@ -360,7 +350,14 @@ export function PlatformLayout() {
                 </>
               ) : (
                 <>
-                  {tab.icon}
+                  <span className={tab.id === 'pagamentos' ? 'relative inline-flex' : undefined}>
+                    {tab.icon}
+                    {tab.id === 'pagamentos' && hasCartItems && (
+                      <span className="absolute -right-2 -top-1.5 min-w-[1.15rem] rounded-full bg-red-600 px-1 text-center text-[0.65rem] font-bold leading-5 text-white shadow-md">
+                        {cartBadgeLabel}
+                      </span>
+                    )}
+                  </span>
                   <span className="mt-1 truncate">{tab.label}</span>
                 </>
               )}

@@ -3,7 +3,6 @@ import { useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { REDES_SOCIAIS } from '../data/redesSociais'
 import { useAuth } from '../hooks/useAuth'
-import { useCartCount } from '../hooks/useCartCount'
 import { useUnreadNotifications } from '../hooks/useUnreadNotifications'
 import { useLocalizedPath } from '../hooks/useLocalizedPath'
 import { useSiteLocale } from '../hooks/useSiteLocale'
@@ -17,10 +16,7 @@ function Navbar() {
   const [menuAberto, setMenuAberto] = useState(false)
   const location = useLocation()
   const path = useLocalizedPath()
-  const cartCount = useCartCount(user?.id)
   const unreadNotifications = useUnreadNotifications(user?.id, 20)
-  const hasCartItems = cartCount > 0
-  const cartBadgeLabel = cartCount > 99 ? '99+' : String(cartCount)
   const hasUnreadNotifications = unreadNotifications > 0
 
   const fecharMenu = () => setMenuAberto(false)
@@ -196,25 +192,6 @@ function Navbar() {
           <div className="flex min-w-0 flex-shrink-0 items-center justify-end gap-1 sm:gap-2 lg:hidden">
             {isAuthenticated ? (
               <>
-                <LocalizedLink
-                  toRoute="appCart"
-                  className={`relative inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition focus:outline-none focus-visible:ring-2 focus-visible:ring-earth-400 sm:h-10 sm:w-10 ${
-                    hasCartItems
-                      ? 'bg-amber-100 text-amber-800 ring-2 ring-amber-300 hover:bg-amber-200'
-                      : 'bg-earth-100 text-earth-700 hover:bg-earth-200 hover:text-earth-900'
-                  }`}
-                  aria-label={t('nav.paymentsCenter')}
-                  title={t('nav.paymentsCenter')}
-                >
-                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.75 7.5h16.5a1.5 1.5 0 011.5 1.5v6a1.5 1.5 0 01-1.5 1.5H3.75a1.5 1.5 0 01-1.5-1.5V9a1.5 1.5 0 011.5-1.5zM2.25 11.25h19.5M6.75 14.25h3.75" />
-                  </svg>
-                  {hasCartItems && (
-                    <span className="absolute -right-1.5 -top-1.5 min-w-[1.15rem] rounded-full bg-red-600 px-1 text-center text-[0.65rem] font-bold leading-5 text-white shadow-md">
-                      {cartBadgeLabel}
-                    </span>
-                  )}
-                </LocalizedLink>
                 <LocalizedLink
                   toRoute="appDashboard"
                   className="relative inline-flex min-w-0 max-w-[5.5rem] items-center justify-center gap-1.5 rounded-lg bg-earth-800 px-2 py-1.5 text-xs font-medium text-earth-50 transition hover:bg-earth-700 sm:max-w-[9rem] sm:gap-2 sm:px-3 sm:py-2 sm:text-sm"
