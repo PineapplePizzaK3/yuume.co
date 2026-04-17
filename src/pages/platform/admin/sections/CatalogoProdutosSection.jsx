@@ -119,9 +119,8 @@ export default function CatalogoProdutosSection() {
               onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
               className="w-28 rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
             />
-            <span className="text-sm font-medium text-earth-700">Peso *</span>
+            <span className="text-sm font-medium text-earth-700">Peso (opcional)</span>
             <input
-              required
               type="number"
               step={form.weight_unit === 'g' ? '1' : '0.001'}
               min="0"

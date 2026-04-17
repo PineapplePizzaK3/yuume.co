@@ -148,23 +148,69 @@ export default function GruposSection() {
           </p>
         </div>
 
-        <div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div>
+            <label className="block text-sm font-medium text-earth-700">Frete fixo (¥) no checkout</label>
+            <input
+              type="number"
+              min={0}
+              step={1}
+              value={groupForm.scheduled_shipping_fee_jpy ?? ''}
+              onChange={(e) => setGroupForm((f) => ({ ...f, scheduled_shipping_fee_jpy: e.target.value }))}
+              placeholder="—"
+              className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+            />
+            <p className="mt-1 text-xs text-earth-500">
+              Cobrado uma vez por checkout que incluir itens deste grupo (Compras Programadas). Vazio = sem frete configurado.
+            </p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-earth-700">Subtotal mínimo (¥) para frete zero</label>
+            <input
+              type="number"
+              min={0}
+              step={1}
+              value={groupForm.scheduled_free_shipping_min_jpy ?? ''}
+              onChange={(e) => setGroupForm((f) => ({ ...f, scheduled_free_shipping_min_jpy: e.target.value }))}
+              placeholder="—"
+              className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+            />
+            <p className="mt-1 text-xs text-earth-500">
+              Soma em ¥ dos produtos deste grupo no carrinho; acima ou igual a este valor, o frete fixo não é cobrado. Vazio = sem isenção por piso.
+            </p>
+          </div>
+        </div>
+
+        <div className="min-w-0 rounded-xl border border-earth-200 bg-white p-4 shadow-sm ring-1 ring-earth-900/5">
+        <div className="min-w-0">
           <label className="block text-sm font-medium text-earth-700">Produtos do grupo</label>
           <p className="mt-1 text-xs text-earth-500">
             {editingGroupId
-              ? 'Nome, descrição, preço, peso, estoque e uma ou mais fotos (a primeira é a capa no catálogo).'
+              ? 'Nome, descrição, preço, estoque e uma ou mais fotos (a primeira é a capa). Peso e link interno são opcionais.'
               : 'Adicione produtos antes de criar o grupo'}
           </p>
           {editingGroupId && groupProducts.length > 0 && (
             <ul className="mt-2 space-y-2">
               {groupProducts.map((p) => (
-                <li key={p.id} className="flex items-center justify-between rounded-lg border border-earth-200 bg-white px-3 py-2">
-                  <span className="text-sm text-earth-800">
-                    {p.name} — {formatJPY(getProductBasePriceJpy(p))}
-                    {Number(p.weight_kg ?? 0) > 0 ? ` • ${formatWeight(p.weight_kg)}` : ''}
-                    {` • Estoque: ${p.stock_quantity != null ? p.stock_quantity : 'ilimitado'}`}
-                  </span>
-                  <div className="flex gap-2">
+                <li key={p.id} className="flex items-center justify-between gap-3 rounded-lg border border-earth-200 bg-white px-3 py-2">
+                  <div className="min-w-0 flex-1">
+                    <span className="text-sm text-earth-800">
+                      {p.name} — {formatJPY(getProductBasePriceJpy(p))}
+                      {Number(p.weight_kg ?? 0) > 0 ? ` • ${formatWeight(p.weight_kg)}` : ''}
+                      {` • Estoque: ${p.stock_quantity != null ? p.stock_quantity : 'ilimitado'}`}
+                    </span>
+                    {p.admin_product_url && /^https?:\/\//i.test(String(p.admin_product_url).trim()) && (
+                      <a
+                        href={String(p.admin_product_url).trim()}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-1 block truncate text-xs font-medium text-blue-700 hover:underline"
+                      >
+                        Link interno (admin)
+                      </a>
+                    )}
+                  </div>
+                  <div className="flex shrink-0 gap-2">
                     <button type="button" onClick={() => handleEditGroupProduct(p)} className="text-sm font-medium text-earth-600 hover:text-earth-900">
                       Editar
                     </button>
@@ -179,13 +225,25 @@ export default function GruposSection() {
           {!editingGroupId && pendingGroupProducts.length > 0 && (
             <ul className="mt-2 space-y-2">
               {pendingGroupProducts.map((p, i) => (
-                <li key={p.id} className="flex items-center justify-between rounded-lg border border-earth-200 bg-white px-3 py-2">
-                  <span className="text-sm text-earth-800">
-                    {p.name} — {formatJPY(getProductBasePriceJpy(p))}
-                    {Number(p.weight_kg ?? 0) > 0 ? ` • ${formatWeight(p.weight_kg)}` : ''}
-                    {` • Estoque: ${p.stock_quantity != null ? p.stock_quantity : 'ilimitado'}`}
-                  </span>
-                  <div className="flex gap-2">
+                <li key={p.id} className="flex items-center justify-between gap-3 rounded-lg border border-earth-200 bg-white px-3 py-2">
+                  <div className="min-w-0 flex-1">
+                    <span className="text-sm text-earth-800">
+                      {p.name} — {formatJPY(getProductBasePriceJpy(p))}
+                      {Number(p.weight_kg ?? 0) > 0 ? ` • ${formatWeight(p.weight_kg)}` : ''}
+                      {` • Estoque: ${p.stock_quantity != null ? p.stock_quantity : 'ilimitado'}`}
+                    </span>
+                    {p.admin_product_url && /^https?:\/\//i.test(String(p.admin_product_url).trim()) && (
+                      <a
+                        href={String(p.admin_product_url).trim()}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-1 block truncate text-xs font-medium text-blue-700 hover:underline"
+                      >
+                        Link interno (admin)
+                      </a>
+                    )}
+                  </div>
+                  <div className="flex shrink-0 gap-2">
                     <button type="button" onClick={() => handleEditPendingGroupProduct(p, i)} className="text-sm font-medium text-earth-600 hover:text-earth-900">
                       Editar
                     </button>
@@ -198,7 +256,7 @@ export default function GruposSection() {
             </ul>
           )}
           <div
-            className="mt-3 space-y-2 rounded-lg border border-earth-200 bg-earth-50 p-3"
+            className="mt-3 min-w-0 space-y-2 rounded-lg border border-earth-200 bg-earth-100/50 p-3"
             onKeyDown={(e) => {
               if (e.defaultPrevented) return
               if (e.key === 'Enter') {
@@ -239,13 +297,13 @@ export default function GruposSection() {
                 </button>
               </div>
             )}
-            <div className="grid gap-2 md:grid-cols-[1fr_1fr_auto]">
+            <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-stretch">
               <input
                 type="search"
                 value={groupProductReferenceSearch}
                 onChange={(e) => setGroupProductReferenceSearch(e.target.value)}
                 placeholder="Buscar item na Lista de Produtos..."
-                className="rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
+                className="min-w-0 w-full shrink rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900 sm:flex-1 sm:basis-[min(100%,14rem)]"
               />
               <select
                 value={groupProductReferenceId}
@@ -255,7 +313,7 @@ export default function GruposSection() {
                   const ref = filteredGroupProductReferences.find((p) => p.id === nextId)
                   if (ref) applyReferenceToGroupProductForm(ref)
                 }}
-                className="rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
+                className="min-w-0 w-full max-w-full shrink rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900 sm:flex-1 sm:basis-[min(100%,14rem)]"
               >
                 <option value="">Selecionar referência do catálogo</option>
                 {filteredGroupProductReferences.map((p) => (
@@ -271,7 +329,7 @@ export default function GruposSection() {
                   if (ref) applyReferenceToGroupProductForm(ref)
                 }}
                 disabled={!groupProductReferenceId}
-                className="rounded-lg border border-earth-300 bg-white px-3 py-2 text-sm font-medium text-earth-700 hover:bg-earth-100 disabled:opacity-60"
+                className="w-full shrink-0 rounded-lg border border-earth-300 bg-white px-3 py-2 text-sm font-medium text-earth-700 hover:bg-earth-100 disabled:opacity-60 sm:w-auto sm:self-center"
               >
                 Aplicar referência
               </button>
@@ -293,11 +351,12 @@ export default function GruposSection() {
                 onChange={(e) => setGroupProductForm((f) => ({ ...f, price: e.target.value }))}
                 className="w-24 rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
               />
-              <span className="text-sm font-medium text-earth-700">Peso:</span>
+              <span className="text-sm font-medium text-earth-700">Peso (opcional):</span>
               <input
                 type="number"
                 step={groupProductForm.weight_unit === 'g' ? '1' : '0.001'}
-                placeholder="0"
+                min="0"
+                placeholder="—"
                 value={groupProductForm.weight_kg}
                 onChange={(e) => setGroupProductForm((f) => ({ ...f, weight_kg: e.target.value }))}
                 className="w-20 rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
@@ -330,6 +389,19 @@ export default function GruposSection() {
                 placeholder="Detalhes visíveis para o cliente no modal do produto (opcional)"
                 className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
               />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-earth-700">Link do produto (somente admin)</label>
+              <input
+                type="url"
+                value={groupProductForm.admin_product_url ?? ''}
+                onChange={(e) => setGroupProductForm((f) => ({ ...f, admin_product_url: e.target.value }))}
+                placeholder="https://… (não aparece para clientes)"
+                className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
+              />
+              <p className="mt-1 text-xs text-earth-500">
+                Referência interna para a equipe. Não é exibido na loja nem nas Compras Programadas.
+              </p>
             </div>
             <div className="space-y-2">
               <span className="text-sm font-medium text-earth-700">Fotos do produto</span>
@@ -442,6 +514,7 @@ export default function GruposSection() {
               )}
             </div>
           </div>
+        </div>
         </div>
 
         <div className="flex items-center gap-2">

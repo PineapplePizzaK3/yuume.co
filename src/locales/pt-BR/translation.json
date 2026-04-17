@@ -896,7 +896,10 @@
       "prevPhoto": "Foto anterior",
       "nextPhoto": "Próxima foto",
       "photoDot": "Foto {{n}}",
-      "close": "Fechar"
+      "close": "Fechar",
+      "productPageBack": "Voltar à loja",
+      "productPageNotFound": "Produto não encontrado ou indisponível.",
+      "productPageLoadError": "Não foi possível carregar o produto."
     },
     "storeHub": {
       "pageTitle": "Loja",
@@ -924,7 +927,7 @@
       "viewDetails": "Ver detalhes",
       "productsAvailable": "Produtos disponíveis",
       "noProductsLinked": "Este grupo ainda não possui produtos vinculados.",
-      "clickForDetails": "Clique para ver detalhes",
+      "clickForDetails": "Ver página do produto",
       "viewProduct": "Ver produto",
       "buy": "Comprar"
     },

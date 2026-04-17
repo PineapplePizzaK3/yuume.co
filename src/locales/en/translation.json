@@ -896,7 +896,10 @@
       "prevPhoto": "Previous photo",
       "nextPhoto": "Next photo",
       "photoDot": "Photo {{n}}",
-      "close": "Close"
+      "close": "Close",
+      "productPageBack": "Back to store",
+      "productPageNotFound": "Product not found or unavailable.",
+      "productPageLoadError": "Could not load the product."
     },
     "storeHub": {
       "pageTitle": "Store",
@@ -924,7 +927,7 @@
       "viewDetails": "View details",
       "productsAvailable": "Available products",
       "noProductsLinked": "This group does not have linked products yet.",
-      "clickForDetails": "Click to view details",
+      "clickForDetails": "View product page",
       "viewProduct": "View product",
       "buy": "Buy"
     },

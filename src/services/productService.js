@@ -20,11 +20,33 @@ export async function getProducts() {
   }
 }
 
-/** Produtos de um grupo de compras */
-export async function getPurchaseGroupProducts(groupId) {
+/** Produto público por id (vitrine ou grupo ativo); retorna null se indisponível. */
+export async function getPublicProductById(productId) {
   try {
     const { data, error } = await withDbTimeout(
-      supabase.rpc('get_purchase_group_products', { p_group_id: groupId })
+      supabase.rpc('get_public_product_by_id', { p_product_id: productId }),
+      60000,
+      'products:getPublicProductById'
+    )
+    return { data: data ?? null, error }
+  } catch (e) {
+    return { data: null, error: toServiceError(e) }
+  }
+}
+
+/**
+ * Produtos de um grupo de compras.
+ * @param {string} groupId
+ * @param {{ includeStaffFields?: boolean }} [options] — se true e o usuário for admin, inclui campos internos (ex.: admin_product_url).
+ */
+export async function getPurchaseGroupProducts(groupId, options = {}) {
+  const includeStaffFields = !!options.includeStaffFields
+  try {
+    const { data, error } = await withDbTimeout(
+      supabase.rpc('get_purchase_group_products', {
+        p_group_id: groupId,
+        p_include_staff_fields: includeStaffFields,
+      })
     , 60000, 'products:getPurchaseGroupProducts')
     const list = Array.isArray(data) ? data : (data ?? [])
     return { data: list, error }

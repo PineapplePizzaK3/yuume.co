@@ -261,6 +261,8 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     image_urls: [],
     is_active: true,
     destination: '',
+    scheduled_shipping_fee_jpy: '',
+    scheduled_free_shipping_min_jpy: '',
   })
   const [editingGroupId, setEditingGroupId] = useState(null)
   const [groupImageUploading, setGroupImageUploading] = useState(false)
@@ -277,7 +279,8 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     image_urls: [],
     image_url_input: '',
     source_url: '',
-    weight_kg: '0',
+    admin_product_url: '',
+    weight_kg: '',
     weight_unit: 'g',
     stock_quantity: '',
   })
@@ -1029,6 +1032,8 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       image_urls: [],
       is_active: true,
       destination: '',
+      scheduled_shipping_fee_jpy: '',
+      scheduled_free_shipping_min_jpy: '',
     })
     setEditingGroupId(null)
     setGroupImageUploadError('')
@@ -1043,7 +1048,8 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       image_urls: [],
       image_url_input: '',
       source_url: '',
-      weight_kg: '0',
+      admin_product_url: '',
+      weight_kg: '',
       weight_unit: 'g',
       stock_quantity: '',
     })
@@ -1054,7 +1060,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
 
   const loadGroupProducts = async (groupId) => {
     if (!groupId) return
-    const { data } = await getPurchaseGroupProducts(groupId)
+    const { data } = await getPurchaseGroupProducts(groupId, { includeStaffFields: true })
     setGroupProducts(data ?? [])
   }
 
@@ -1066,6 +1072,14 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       image_urls: Array.isArray(g.image_urls) ? g.image_urls.filter(Boolean) : [],
       is_active: g.is_active ?? true,
       destination: g.destination ?? '',
+      scheduled_shipping_fee_jpy:
+        g.scheduled_shipping_fee_jpy != null && g.scheduled_shipping_fee_jpy !== ''
+          ? String(g.scheduled_shipping_fee_jpy)
+          : '',
+      scheduled_free_shipping_min_jpy:
+        g.scheduled_free_shipping_min_jpy != null && g.scheduled_free_shipping_min_jpy !== ''
+          ? String(g.scheduled_free_shipping_min_jpy)
+          : '',
     })
     setEditingGroupId(g.id)
     setGroupImageUploadError('')
@@ -1081,7 +1095,8 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       image_urls: [],
       image_url_input: '',
       source_url: '',
-      weight_kg: '0',
+      admin_product_url: '',
+      weight_kg: '',
       weight_unit: 'g',
       stock_quantity: '',
     })
@@ -1098,7 +1113,8 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       image_urls: [],
       image_url_input: '',
       source_url: '',
-      weight_kg: '0',
+      admin_product_url: '',
+      weight_kg: '',
       weight_unit: 'g',
       stock_quantity: '',
     })
@@ -1111,8 +1127,13 @@ export default function Admin({ routeTabId = 'pedidos' }) {
   const buildGroupProductPayload = () => {
     const price = parseFloat(groupProductForm.price)
     if (isNaN(price) || price < 0) return null
-    const weightVal = parseFloat(groupProductForm.weight_kg) || 0
-    const weightKg = groupProductForm.weight_unit === 'g' ? weightVal / 1000 : weightVal
+    const weightRaw = groupProductForm.weight_kg
+    let weightInput = 0
+    if (weightRaw !== '' && weightRaw != null && String(weightRaw).trim() !== '') {
+      const parsed = parseFloat(weightRaw)
+      if (!Number.isNaN(parsed) && parsed >= 0) weightInput = parsed
+    }
+    const weightKg = groupProductForm.weight_unit === 'g' ? weightInput / 1000 : weightInput
     const stockQty = groupProductForm.stock_quantity === '' || groupProductForm.stock_quantity == null
       ? null
       : Math.max(0, parseInt(groupProductForm.stock_quantity, 10) || 0)
@@ -1132,6 +1153,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       image_url: imageUrls[0] || groupProductForm.image_url || '',
       image_urls: imageUrls,
       source_url: groupProductForm.source_url?.trim() || null,
+      admin_product_url: groupProductForm.admin_product_url?.trim() || null,
       weight_kg: weightKg,
       stock_quantity: stockQty,
     }
@@ -1240,7 +1262,8 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       image_urls: productImageUrls,
       image_url_input: '',
       source_url: p.source_url ?? '',
-      weight_kg: useG ? String(Math.round(kg * 1000)) : String(kg),
+      admin_product_url: p.admin_product_url ?? '',
+      weight_kg: kg > 0 ? (useG ? String(Math.round(kg * 1000)) : String(kg)) : '',
       weight_unit: useG ? 'g' : 'kg',
       stock_quantity: p.stock_quantity != null ? String(p.stock_quantity) : '',
     })
@@ -1272,7 +1295,8 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       image_urls: itemImageUrls,
       image_url_input: '',
       source_url: item.source_url ?? '',
-      weight_kg: useG ? String(Math.round(kg * 1000)) : String(kg),
+      admin_product_url: item.admin_product_url ?? '',
+      weight_kg: kg > 0 ? (useG ? String(Math.round(kg * 1000)) : String(kg)) : '',
       weight_unit: useG ? 'g' : 'kg',
       stock_quantity: item.stock_quantity != null ? String(item.stock_quantity) : '',
     })
@@ -1455,6 +1479,20 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       return
     }
 
+    const parseOptionalNonNegNumber = (raw) => {
+      const s = String(raw ?? '').trim()
+      if (!s) return null
+      const n = Number(s)
+      if (!Number.isFinite(n) || n < 0) return NaN
+      return n
+    }
+    const feeJpy = parseOptionalNonNegNumber(groupForm.scheduled_shipping_fee_jpy)
+    const minJpy = parseOptionalNonNegNumber(groupForm.scheduled_free_shipping_min_jpy)
+    if (Number.isNaN(feeJpy) || Number.isNaN(minJpy)) {
+      setMessage('Frete e piso para frete zero devem ser números válidos (≥ 0) ou vazios.')
+      return
+    }
+
     setGroupSubmitting(true)
     try {
       const payload = {
@@ -1464,6 +1502,8 @@ export default function Admin({ routeTabId = 'pedidos' }) {
         image_url: groupForm.image_url || imageUrls[0] || '',
         is_active: groupForm.is_active ?? true,
         destination,
+        scheduled_shipping_fee_jpy: feeJpy,
+        scheduled_free_shipping_min_jpy: minJpy,
       }
 
       const { data: groupData, error } = editingGroupId
@@ -1498,7 +1538,16 @@ export default function Admin({ routeTabId = 'pedidos' }) {
         loadGroupProducts(editingGroupId)
       } else {
         setEditingGroupId(groupData?.id)
-        setGroupForm((f) => ({ ...f, ...payload }))
+        setGroupForm((f) => ({
+          ...f,
+          ...payload,
+          scheduled_shipping_fee_jpy:
+            payload.scheduled_shipping_fee_jpy != null ? String(payload.scheduled_shipping_fee_jpy) : '',
+          scheduled_free_shipping_min_jpy:
+            payload.scheduled_free_shipping_min_jpy != null
+              ? String(payload.scheduled_free_shipping_min_jpy)
+              : '',
+        }))
         loadGroupProducts(groupData?.id)
       }
     } finally {
@@ -1556,7 +1605,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       image_url: refProduct.image_url ?? urls[0] ?? '',
       image_urls: urls,
       image_url_input: '',
-      weight_kg: useG ? String(Math.round(kg * 1000)) : String(kg || '0'),
+      weight_kg: kg > 0 ? (useG ? String(Math.round(kg * 1000)) : String(kg)) : '',
       weight_unit: useG ? 'g' : 'kg',
     }))
     setGroupProductReferenceId(refProduct.id || '')
@@ -1570,7 +1619,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       name: p.name,
       description: p.description ?? '',
       price: String(Math.round(getProductBasePriceJpy(p))),
-      weight_kg: useG ? String(Math.round(kg * 1000)) : String(kg),
+      weight_kg: kg > 0 ? (useG ? String(Math.round(kg * 1000)) : String(kg)) : '',
       weight_unit: useG ? 'g' : 'kg',
       stock_quantity: p.stock_quantity != null ? String(p.stock_quantity) : '',
       item_condition: normalizeProductCondition(p.item_condition),
@@ -1592,10 +1641,15 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       setMessage('PreÃ§o invÃ¡lido')
       return
     }
-    const weightVal = parseFloat(form.weight_kg)
-    if (isNaN(weightVal) || weightVal <= 0) {
-      setMessage('Peso invÃ¡lido (informe o peso do produto)')
-      return
+    const weightRaw = form.weight_kg
+    let weightVal = 0
+    if (weightRaw !== '' && weightRaw != null && String(weightRaw).trim() !== '') {
+      const parsed = parseFloat(weightRaw)
+      if (Number.isNaN(parsed) || parsed < 0) {
+        setMessage('Peso inválido (use número ≥ 0 ou deixe em branco)')
+        return
+      }
+      weightVal = parsed
     }
     const weightKg = form.weight_unit === 'g' ? weightVal / 1000 : weightVal
     // Persistimos preÃ§o base em JPY no catÃ¡logo.

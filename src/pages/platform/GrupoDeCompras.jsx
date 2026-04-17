@@ -7,6 +7,8 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../hooks/useAuth'
 import { useLocalizedPath } from '../../hooks/useLocalizedPath'
+import { useSiteLocale } from '../../hooks/useSiteLocale'
+import { appStoreProductPath, publicStoreProductPath } from '../../lib/localeRoutes'
 import { PageSeo } from '../../components/PageSeo'
 import { getPurchaseGroups } from '../../services/groupService'
 import { getPurchaseGroupProducts } from '../../services/productService'
@@ -28,9 +30,10 @@ function getProductImages(p) {
   return []
 }
 
-export default function GrupoDeCompras({ embedded = false, hideHeader = false, destination = 'all' }) {
+export default function GrupoDeCompras({ embedded = false, hideHeader = false, destination = 'all', publicMode = false }) {
   const { t } = useTranslation()
   const lp = useLocalizedPath()
+  const locale = useSiteLocale()
   const { user } = useAuth()
   const tt = (key, options) => t(`platform.groupBuy.${key}`, options)
   const [groups, setGroups] = useState([])
@@ -40,8 +43,6 @@ export default function GrupoDeCompras({ embedded = false, hideHeader = false, d
   const [modalFeedback, setModalFeedback] = useState('')
   const [detailGroup, setDetailGroup] = useState(null)
   const [detailImageIndex, setDetailImageIndex] = useState(0)
-  const [detailProduct, setDetailProduct] = useState(null)
-  const [detailProductImageIndex, setDetailProductImageIndex] = useState(0)
 
   useEffect(() => {
     if (!message) return
@@ -92,22 +93,16 @@ export default function GrupoDeCompras({ embedded = false, hideHeader = false, d
   const openDetail = (g) => {
     setDetailGroup(g)
     setDetailImageIndex(0)
-    setDetailProduct(null)
     setModalFeedback('')
   }
 
-  const openProductDetail = (product) => {
-    setDetailProduct(product)
-    setDetailProductImageIndex(0)
-    setModalFeedback('')
-  }
+  const productHref = (id) => (publicMode ? publicStoreProductPath(id, locale) : appStoreProductPath(id, locale))
 
   const getGroupProducts = (group) => {
     return groupProducts[group?.id] ?? []
   }
 
   const isOutOfStock = (p) => p?.stock_quantity != null && Number(p.stock_quantity) <= 0
-  const detailProductImages = detailProduct ? getProductImages(detailProduct) : []
 
   const handleComprar = async (product) => {
     if (!user?.id) {
@@ -317,57 +312,63 @@ export default function GrupoDeCompras({ embedded = false, hideHeader = false, d
                         const usd = Number(p.price_usd)
                         const hasDeriv = Number.isFinite(brl) && brl > 0 && Number.isFinite(usd) && usd > 0
                         return (
-                          <button
+                          <div
                             key={p.id}
-                            type="button"
-                            onClick={() => openProductDetail(p)}
-                            className="overflow-hidden rounded-xl border border-earth-200 bg-earth-50 text-left shadow-sm transition hover:border-earth-400 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-earth-500"
+                            className="overflow-hidden rounded-xl border border-earth-200 bg-earth-50 text-left shadow-sm transition hover:border-earth-400 hover:shadow-md"
                           >
-                            {productMainImg ? (
-                              <img
-                                src={productMainImg}
-                                alt={p.name}
-                                className="h-32 w-full object-cover"
-                              />
-                            ) : (
-                              <div className="flex h-32 items-center justify-center bg-earth-200 text-earth-500 text-sm">
-                                {t('platform.store.noImage')}
+                            <Link
+                              to={productHref(p.id)}
+                              onClick={(e) => e.stopPropagation()}
+                              className="block focus:outline-none focus:ring-2 focus:ring-earth-500 focus:ring-inset"
+                            >
+                              {productMainImg ? (
+                                <img
+                                  src={productMainImg}
+                                  alt={p.name}
+                                  className="h-32 w-full object-cover"
+                                />
+                              ) : (
+                                <div className="flex h-32 items-center justify-center bg-earth-200 text-earth-500 text-sm">
+                                  {t('platform.store.noImage')}
+                                </div>
+                              )}
+                              <div className="p-3">
+                                <h4 className="line-clamp-2 text-sm font-semibold text-earth-900">{p.name}</h4>
+                                <div className="mt-1">
+                                  {hasDeriv ? (
+                                    <TriCurrencyDisplay brl={brl} jpy={jpy} usd={usd} variant="card" />
+                                  ) : (
+                                    <TriCurrencyDisplay
+                                      brl={jpyToBrl(jpy)}
+                                      jpy={jpy}
+                                      usd={NaN}
+                                      variant="card"
+                                      footnote={t('platform.store.triUpdatingFootnote')}
+                                    />
+                                  )}
+                                </div>
+                                <p className="mt-2 text-xs font-medium text-earth-500">{tt('clickForDetails')}</p>
+                                <div className="mt-3">
+                                  <span className="rounded-lg border border-earth-300 bg-white px-3 py-1.5 text-xs font-medium text-earth-700">
+                                    {tt('viewProduct')}
+                                  </span>
+                                </div>
                               </div>
-                            )}
-                            <div className="p-3">
-                              <h4 className="line-clamp-2 text-sm font-semibold text-earth-900">{p.name}</h4>
-                              <div className="mt-1">
-                                {hasDeriv ? (
-                                  <TriCurrencyDisplay brl={brl} jpy={jpy} usd={usd} variant="card" />
-                                ) : (
-                                  <TriCurrencyDisplay
-                                    brl={jpyToBrl(jpy)}
-                                    jpy={jpy}
-                                    usd={NaN}
-                                    variant="card"
-                                    footnote={t('platform.store.triUpdatingFootnote')}
-                                  />
-                                )}
-                              </div>
-                              <p className="mt-2 text-xs font-medium text-earth-500">
-                                {tt('clickForDetails')}
-                              </p>
-                              <div className="mt-3 flex gap-2">
-                                <span className="rounded-lg border border-earth-300 px-3 py-1.5 text-xs font-medium text-earth-700">
-                                  {tt('viewProduct')}
-                                </span>
-                                <span
-                                  className={`rounded-lg px-3 py-1.5 text-xs font-medium ${
-                                    isOutOfStock(p)
-                                      ? 'bg-earth-300 text-earth-600'
-                                      : 'bg-earth-900 text-white'
-                                  }`}
-                                >
-                                  {isOutOfStock(p) ? t('platform.store.outOfStock') : tt('buy')}
-                                </span>
-                              </div>
+                            </Link>
+                            <div className="border-t border-earth-200 p-3 pt-2">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  void handleComprar(p)
+                                }}
+                                disabled={isOutOfStock(p)}
+                                className="w-full rounded-lg px-3 py-2 text-xs font-medium disabled:cursor-not-allowed disabled:opacity-60 disabled:bg-earth-300 disabled:text-earth-600 bg-earth-900 text-white hover:bg-earth-800"
+                              >
+                                {isOutOfStock(p) ? t('platform.store.outOfStock') : tt('buy')}
+                              </button>
                             </div>
-                          </button>
+                          </div>
                         )
                       })}
                     </div>
@@ -379,136 +380,6 @@ export default function GrupoDeCompras({ embedded = false, hideHeader = false, d
                     type="button"
                     onClick={() => setDetailGroup(null)}
                     className="rounded-xl bg-earth-900 px-6 py-3 font-medium text-white hover:bg-earth-800"
-                  >
-                    {t('platform.store.close')}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Sub-modal do produto (dentro do contexto do grupo) */}
-        {detailGroup && detailProduct && (
-          <div
-            className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 p-4"
-            onClick={() => setDetailProduct(null)}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="group-product-detail-title"
-          >
-            <div
-              className="relative flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-white shadow-xl"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="relative bg-earth-100">
-                {detailProductImages.length > 0 ? (
-                  <>
-                    <img
-                      src={detailProductImages[detailProductImageIndex]}
-                      alt={detailProduct.name}
-                      className="h-64 w-full object-contain sm:h-80"
-                    />
-                    {detailProductImages.length > 1 && (
-                      <>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setDetailProductImageIndex((i) => (i === 0 ? detailProductImages.length - 1 : i - 1))
-                          }}
-                          className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow hover:bg-white"
-                          aria-label={t('platform.store.prevPhoto')}
-                        >
-                          <svg className="h-5 w-5 text-earth-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                          </svg>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setDetailProductImageIndex((i) => (i === detailProductImages.length - 1 ? 0 : i + 1))
-                          }}
-                          className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow hover:bg-white"
-                          aria-label={t('platform.store.nextPhoto')}
-                        >
-                          <svg className="h-5 w-5 text-earth-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                          </svg>
-                        </button>
-                        <div className="flex justify-center gap-1 pb-2">
-                          {detailProductImages.map((_, i) => (
-                            <button
-                              key={i}
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                setDetailProductImageIndex(i)
-                              }}
-                              className={`h-2 w-2 rounded-full ${i === detailProductImageIndex ? 'bg-earth-800' : 'bg-earth-300'}`}
-                              aria-label={t('platform.store.photoDot', { n: i + 1 })}
-                            />
-                          ))}
-                        </div>
-                      </>
-                    )}
-                  </>
-                ) : (
-                  <div className="flex h-64 items-center justify-center bg-earth-200 text-earth-500 sm:h-80">
-                    {t('platform.store.noImage')}
-                  </div>
-                )}
-              </div>
-
-              <div className="flex-1 min-h-0 overflow-y-auto p-5">
-                <h2 id="group-product-detail-title" className="text-xl font-bold text-earth-900">
-                  {detailProduct.name}
-                </h2>
-                {detailProduct.description && (
-                  <div className="mt-3 max-h-44 overflow-y-auto rounded-lg border border-earth-200 bg-earth-50 p-3 text-earth-600">
-                    <p className="whitespace-pre-wrap text-sm">
-                      <LinkifyText text={detailProduct.description} />
-                    </p>
-                  </div>
-                )}
-                {(() => {
-                  const p = detailProduct
-                  const jpy = Number(p.price_jpy ?? p.price) || 0
-                  const brl = Number(p.price_brl)
-                  const usd = Number(p.price_usd)
-                  const hasDeriv = Number.isFinite(brl) && brl > 0 && Number.isFinite(usd) && usd > 0
-                  return (
-                    <div className="mt-4">
-                      {hasDeriv ? (
-                        <TriCurrencyDisplay brl={brl} jpy={jpy} usd={usd} variant="modal" />
-                      ) : (
-                        <TriCurrencyDisplay
-                          brl={jpyToBrl(jpy)}
-                          jpy={jpy}
-                          usd={NaN}
-                          variant="modal"
-                          footnote={t('platform.store.triUpdatingFootnote')}
-                        />
-                      )}
-                    </div>
-                  )
-                })()}
-                <div className="mt-6 flex flex-wrap gap-3">
-                  <button
-                    type="button"
-                    onClick={() => !isOutOfStock(detailProduct) && handleComprar(detailProduct)}
-                    disabled={isOutOfStock(detailProduct)}
-                    className="rounded-xl px-6 py-3 font-medium disabled:cursor-not-allowed disabled:opacity-60 disabled:bg-earth-300 disabled:text-earth-600 bg-earth-900 text-white hover:bg-earth-800"
-                  >
-                    {isOutOfStock(detailProduct)
-                      ? t('platform.store.outOfStock')
-                      : t('platform.store.addToCart')}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setDetailProduct(null)}
-                    className="rounded-xl border border-earth-200 px-6 py-3 font-medium text-earth-600 hover:bg-earth-50"
                   >
                     {t('platform.store.close')}
                   </button>

@@ -218,3 +218,27 @@ export function localizedRoutePath(pathnameAndSearch, targetLocale) {
   if (!key) return pathnameAndSearch
   return localizedPath(key, targetLocale) + qs
 }
+
+/**
+ * Página de detalhe de produto (logado /app ou /en/app).
+ * @param {string} productId
+ * @param {SiteLocale} locale
+ */
+export function appStoreProductPath(productId, locale) {
+  const id = String(productId ?? '').trim()
+  if (!id) return localizedPath('appLoja', locale)
+  const enc = encodeURIComponent(id)
+  return locale === LOCALE_EN ? `/en/app/store/product/${enc}` : `/app/loja/produto/${enc}`
+}
+
+/**
+ * Página de detalhe de produto (vitrine pública).
+ * @param {string} productId
+ * @param {SiteLocale} locale
+ */
+export function publicStoreProductPath(productId, locale) {
+  const id = String(productId ?? '').trim()
+  if (!id) return localizedPath('lojaPublicVitrine', locale)
+  const enc = encodeURIComponent(id)
+  return locale === LOCALE_EN ? `/en/store/storefront/product/${enc}` : `/loja/vitrine/produto/${enc}`
+}

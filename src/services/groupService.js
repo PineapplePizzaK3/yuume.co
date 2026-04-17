@@ -63,6 +63,8 @@ export async function createPurchaseGroup(group) {
       product_ids: [],
       source: 'scheduled',
       destination: group.destination ?? null,
+      scheduled_shipping_fee_jpy: group.scheduled_shipping_fee_jpy ?? null,
+      scheduled_free_shipping_min_jpy: group.scheduled_free_shipping_min_jpy ?? null,
     }
 
     const { data, error } = await withDbTimeout(
@@ -86,6 +88,8 @@ export async function updatePurchaseGroup(id, group) {
       product_ids: [],
       source: 'scheduled',
       destination: group.destination ?? null,
+      scheduled_shipping_fee_jpy: group.scheduled_shipping_fee_jpy ?? null,
+      scheduled_free_shipping_min_jpy: group.scheduled_free_shipping_min_jpy ?? null,
     }
 
     const { data, error } = await withDbTimeout(
@@ -119,6 +123,7 @@ export async function createPurchaseGroupProduct(groupId, product) {
       image_url: product.image_url ?? (imageUrls[0] || ''),
       image_urls: imageUrls,
       source_url: product.source_url ?? null,
+      admin_product_url: product.admin_product_url ?? null,
       weight_kg: product.weight_kg ?? 0,
       stock_quantity: product.stock_quantity ?? null,
     }
@@ -145,6 +150,7 @@ export async function updatePurchaseGroupProduct(groupId, productId, product) {
       image_url: product.image_url ?? (imageUrls[0] || ''),
       image_urls: imageUrls,
       source_url: product.source_url ?? null,
+      admin_product_url: product.admin_product_url ?? null,
       weight_kg: product.weight_kg ?? 0,
       stock_quantity: product.stock_quantity ?? null,
     }
