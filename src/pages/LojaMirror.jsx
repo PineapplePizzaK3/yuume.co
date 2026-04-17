@@ -8,8 +8,9 @@ import { Helmet } from 'react-helmet-async'
 import { Link } from 'react-router-dom'
 import { useLocalizedPath } from '../hooks/useLocalizedPath'
 import { getProducts } from '../services/productService'
-import { formatJPY } from '../lib/fx'
+import { jpyToBrl } from '../lib/fx'
 import { getCardThumbnailUrl } from '../lib/imageUtils'
+import { TriCurrencyDisplay } from '../components/TriCurrencyDisplay'
 import ImageLightbox from '../components/ImageLightbox'
 import { getProductConditionMeta } from '../lib/productCondition'
 
@@ -122,11 +123,27 @@ export default function LojaMirror() {
                         {p.description && (
                           <p className="mt-0.5 line-clamp-2 whitespace-pre-wrap text-xs text-earth-600">{p.description}</p>
                         )}
-                        <div className="mt-1.5">
-                          <span className="text-sm font-semibold tabular-nums text-earth-900">
-                            {formatJPY(Number(p.price_jpy ?? p.price) || 0)}
-                          </span>
-                        </div>
+                        {(() => {
+                          const jpy = Number(p.price_jpy ?? p.price) || 0
+                          const brl = Number(p.price_brl)
+                          const usd = Number(p.price_usd)
+                          const hasDeriv = Number.isFinite(brl) && brl > 0 && Number.isFinite(usd) && usd > 0
+                          return (
+                            <div className="mt-1.5">
+                              {hasDeriv ? (
+                                <TriCurrencyDisplay brl={brl} jpy={jpy} usd={usd} variant="card" />
+                              ) : (
+                                <TriCurrencyDisplay
+                                  brl={jpyToBrl(jpy)}
+                                  jpy={jpy}
+                                  usd={NaN}
+                                  variant="card"
+                                  footnote="Cotação BRL/USD em atualização — valor em dólar após refresh."
+                                />
+                              )}
+                            </div>
+                          )
+                        })()}
                       </div>
                     </button>
                     <div className="px-3 pb-3">
@@ -228,11 +245,28 @@ export default function LojaMirror() {
                   {detailProduct.description && (
                     <p className="mt-2 whitespace-pre-wrap text-earth-600">{detailProduct.description}</p>
                   )}
-                  <div className="mt-4">
-                    <span className="text-xl font-bold tabular-nums text-earth-900">
-                      {formatJPY(Number(detailProduct.price_jpy ?? detailProduct.price) || 0)}
-                    </span>
-                  </div>
+                  {(() => {
+                    const p = detailProduct
+                    const jpy = Number(p.price_jpy ?? p.price) || 0
+                    const brl = Number(p.price_brl)
+                    const usd = Number(p.price_usd)
+                    const hasDeriv = Number.isFinite(brl) && brl > 0 && Number.isFinite(usd) && usd > 0
+                    return (
+                      <div className="mt-4">
+                        {hasDeriv ? (
+                          <TriCurrencyDisplay brl={brl} jpy={jpy} usd={usd} variant="modal" />
+                        ) : (
+                          <TriCurrencyDisplay
+                            brl={jpyToBrl(jpy)}
+                            jpy={jpy}
+                            usd={NaN}
+                            variant="modal"
+                            footnote="Cotação BRL/USD em atualização — valor em dólar após refresh."
+                          />
+                        )}
+                      </div>
+                    )
+                  })()}
                   <div className="mt-6 flex flex-wrap gap-3">
                     <Link
                       to={lp('login')}
