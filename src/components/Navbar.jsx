@@ -5,7 +5,6 @@ import { REDES_SOCIAIS } from '../data/redesSociais'
 import { useAuth } from '../hooks/useAuth'
 import { useUnreadNotifications } from '../hooks/useUnreadNotifications'
 import { useLocalizedPath } from '../hooks/useLocalizedPath'
-import { useSiteLocale } from '../hooks/useSiteLocale'
 import { isRouteActive } from '../lib/localeRoutes'
 import { LocalizedLink } from './LocalizedLink'
 import { LanguageSwitcherDropdown, LanguageSwitcherInline } from './LanguageSwitcher'
@@ -58,15 +57,15 @@ function Navbar() {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 overflow-visible bg-earth-50 shadow-sm border-b border-earth-200">
       <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
-        <div className="flex min-h-[4.5rem] items-center justify-between gap-2 lg:h-[4.5rem] lg:items-stretch">
+        <div className="flex min-h-[4.5rem] w-full items-center gap-1.5 sm:gap-2 lg:h-[4.5rem] lg:items-stretch">
           <LocalizedLink
             toRoute="home"
-            className={`relative z-10 flex min-w-0 max-w-[min(100%,9.5rem)] shrink-0 items-center sm:max-w-[11rem] lg:max-w-none ${location.pathname === homePath ? 'opacity-100' : 'opacity-90 hover:opacity-100'}`}
+            className={`relative z-10 flex min-w-0 max-w-[min(100%,10.5rem)] shrink-0 items-center sm:max-w-[12rem] lg:max-w-none ${location.pathname === homePath ? 'opacity-100' : 'opacity-90 hover:opacity-100'}`}
           >
             <img
               src="/logo.svg?v=yumc-1svg-7"
               alt={t('nav.logoAlt')}
-              className="h-9 w-auto max-h-[2.75rem] max-w-full object-contain object-left sm:h-12 sm:max-h-[4.5rem] sm:max-w-[12rem] lg:h-[4.5rem] lg:max-h-none lg:max-w-[13.5rem]"
+              className="h-10 w-auto max-h-[3rem] max-w-full object-contain object-left sm:h-14 sm:max-h-[4.75rem] sm:max-w-[13rem] lg:h-[5rem] lg:max-h-none lg:max-w-[15rem]"
             />
           </LocalizedLink>
 
@@ -189,21 +188,26 @@ function Navbar() {
             </div>
           </div>
 
-          <div className="flex min-w-0 flex-shrink-0 items-center justify-end gap-1 sm:gap-2 lg:hidden">
+          <div className="flex min-w-0 flex-1 justify-center px-0.5 lg:hidden">
+            {isAuthenticated ? (
+              <LocalizedLink
+                toRoute="appDashboard"
+                className="relative inline-flex min-w-0 max-w-[min(100%,11rem)] items-center justify-center gap-1.5 rounded-lg bg-earth-800 px-2.5 py-1.5 text-xs font-medium text-earth-50 transition hover:bg-earth-700 sm:max-w-[10rem] sm:gap-2 sm:px-3 sm:py-2 sm:text-sm"
+              >
+                {hasUnreadNotifications && (
+                  <span className="absolute -right-1 -top-1 inline-block h-2.5 w-2.5 rounded-full bg-red-600 ring-2 ring-earth-50" aria-hidden />
+                )}
+                <span className="h-2 w-2 shrink-0 rounded-full bg-green-400" aria-hidden />
+                <span className="min-w-0 truncate">
+                  {profile?.name || user?.email?.split('@')[0] || t('nav.accountShort')}
+                </span>
+              </LocalizedLink>
+            ) : null}
+          </div>
+
+          <div className="flex min-w-0 shrink-0 items-center justify-end gap-1 sm:gap-2 lg:hidden">
             {isAuthenticated ? (
               <>
-                <LocalizedLink
-                  toRoute="appDashboard"
-                  className="relative inline-flex min-w-0 max-w-[5.5rem] items-center justify-center gap-1.5 rounded-lg bg-earth-800 px-2 py-1.5 text-xs font-medium text-earth-50 transition hover:bg-earth-700 sm:max-w-[9rem] sm:gap-2 sm:px-3 sm:py-2 sm:text-sm"
-                >
-                  {hasUnreadNotifications && (
-                    <span className="absolute -right-1 -top-1 inline-block h-2.5 w-2.5 rounded-full bg-red-600 ring-2 ring-earth-50" aria-hidden />
-                  )}
-                  <span className="h-2 w-2 shrink-0 rounded-full bg-green-400" aria-hidden />
-                  <span className="min-w-0 truncate">
-                    {profile?.name || user?.email?.split('@')[0] || t('nav.accountShort')}
-                  </span>
-                </LocalizedLink>
                 {isAdmin && (
                   <LocalizedLink
                     toRoute="appAdmin"
