@@ -275,6 +275,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     description: '',
     image_url: '',
     image_urls: [],
+    image_url_input: '',
     source_url: '',
     weight_kg: '0',
     weight_unit: 'g',
@@ -1034,7 +1035,18 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     setNewGroupImageUrl('')
     setGroupProducts([])
     setPendingGroupProducts([])
-    setGroupProductForm({ name: '', price: '', description: '', image_url: '', image_urls: [], source_url: '', weight_kg: '0', weight_unit: 'g', stock_quantity: '' })
+    setGroupProductForm({
+      name: '',
+      price: '',
+      description: '',
+      image_url: '',
+      image_urls: [],
+      image_url_input: '',
+      source_url: '',
+      weight_kg: '0',
+      weight_unit: 'g',
+      stock_quantity: '',
+    })
     setEditingGroupProductId(null)
     setEditingPendingProductIndex(null)
     setGroupProductSourceUrlInput('')
@@ -1061,13 +1073,35 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     setEditingGroupProductId(null)
     setEditingPendingProductIndex(null)
     setPendingGroupProducts([])
-    setGroupProductForm({ name: '', price: '', description: '', image_url: '', image_urls: [], source_url: '', weight_kg: '0', weight_unit: 'g', stock_quantity: '' })
+    setGroupProductForm({
+      name: '',
+      price: '',
+      description: '',
+      image_url: '',
+      image_urls: [],
+      image_url_input: '',
+      source_url: '',
+      weight_kg: '0',
+      weight_unit: 'g',
+      stock_quantity: '',
+    })
     loadGroupProducts(g.id)
     setGroupProductSourceUrlInput('')
   }
 
   const resetGroupProductForm = () => {
-    setGroupProductForm({ name: '', price: '', description: '', image_url: '', image_urls: [], source_url: '', weight_kg: '0', weight_unit: 'g', stock_quantity: '' })
+    setGroupProductForm({
+      name: '',
+      price: '',
+      description: '',
+      image_url: '',
+      image_urls: [],
+      image_url_input: '',
+      source_url: '',
+      weight_kg: '0',
+      weight_unit: 'g',
+      stock_quantity: '',
+    })
     setEditingGroupProductId(null)
     setEditingPendingProductIndex(null)
     setGroupProductReferenceId('')
@@ -1082,9 +1116,14 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     const stockQty = groupProductForm.stock_quantity === '' || groupProductForm.stock_quantity == null
       ? null
       : Math.max(0, parseInt(groupProductForm.stock_quantity, 10) || 0)
-    const imageUrls = Array.isArray(groupProductForm.image_urls)?.length
+    const fromArray = Array.isArray(groupProductForm.image_urls)
       ? groupProductForm.image_urls.filter(Boolean)
-      : groupProductForm.image_url ? [groupProductForm.image_url] : []
+      : []
+    const imageUrls = fromArray.length
+      ? fromArray
+      : groupProductForm.image_url
+        ? [groupProductForm.image_url]
+        : []
     return {
       name: groupProductForm.name.trim(),
       description: groupProductForm.description?.trim() || '',
@@ -1124,6 +1163,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
         price: data?.price != null ? String(Math.round(Number(data.price) || 0)) : prev.price,
         image_url: data?.imageUrl || prev.image_url,
         image_urls: data?.imageUrl ? [data.imageUrl] : prev.image_urls,
+        image_url_input: '',
         source_url: url,
       }))
       setMessage('Dados do produto preenchidos via scrape.')
@@ -1143,6 +1183,10 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     }
     const payload = buildGroupProductPayload()
     if (!payload) return
+    if (!payload.image_urls?.length) {
+      setMessage('Adicione pelo menos uma foto do produto.')
+      return
+    }
 
     if (editingGroupId) {
       setGroupProductSubmitting(true)
@@ -1186,12 +1230,15 @@ export default function Admin({ routeTabId = 'pedidos' }) {
   const handleEditGroupProduct = (p) => {
     const kg = Number(p.weight_kg ?? 0)
     const useG = kg > 0 && kg < 1
+    const urlsFromDb = Array.isArray(p.image_urls) ? p.image_urls.filter(Boolean) : []
+    const productImageUrls = urlsFromDb.length > 0 ? urlsFromDb : p.image_url ? [p.image_url] : []
     setGroupProductForm({
       name: p.name ?? '',
       price: String(Math.round(getProductBasePriceJpy(p))),
       description: p.description ?? '',
-      image_url: p.image_url ?? '',
-      image_urls: Array.isArray(p.image_urls) ? p.image_urls : (p.image_url ? [p.image_url] : []),
+      image_url: productImageUrls[0] || p.image_url || '',
+      image_urls: productImageUrls,
+      image_url_input: '',
       source_url: p.source_url ?? '',
       weight_kg: useG ? String(Math.round(kg * 1000)) : String(kg),
       weight_unit: useG ? 'g' : 'kg',
@@ -1215,12 +1262,15 @@ export default function Admin({ routeTabId = 'pedidos' }) {
   const handleEditPendingGroupProduct = (item, index) => {
     const kg = Number(item.weight_kg ?? 0)
     const useG = kg > 0 && kg < 1
+    const urlsFromItem = Array.isArray(item.image_urls) ? item.image_urls.filter(Boolean) : []
+    const itemImageUrls = urlsFromItem.length > 0 ? urlsFromItem : item.image_url ? [item.image_url] : []
     setGroupProductForm({
       name: item.name ?? '',
       price: String(Math.round(getProductBasePriceJpy(item))),
       description: item.description ?? '',
-      image_url: item.image_url ?? '',
-      image_urls: Array.isArray(item.image_urls) ? item.image_urls : (item.image_url ? [item.image_url] : []),
+      image_url: itemImageUrls[0] || item.image_url || '',
+      image_urls: itemImageUrls,
+      image_url_input: '',
       source_url: item.source_url ?? '',
       weight_kg: useG ? String(Math.round(kg * 1000)) : String(kg),
       weight_unit: useG ? 'g' : 'kg',
@@ -1505,6 +1555,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       price: String(Math.round(getProductBasePriceJpy(refProduct))),
       image_url: refProduct.image_url ?? urls[0] ?? '',
       image_urls: urls,
+      image_url_input: '',
       weight_kg: useG ? String(Math.round(kg * 1000)) : String(kg || '0'),
       weight_unit: useG ? 'g' : 'kg',
     }))

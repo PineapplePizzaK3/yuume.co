@@ -55,6 +55,56 @@ export default function GruposSection() {
 
   if (activeTab !== 'grupos') return null
 
+  const groupProductGalleryUrls = (() => {
+    const fromArr = Array.isArray(groupProductForm.image_urls) ? groupProductForm.image_urls.filter(Boolean) : []
+    if (fromArr.length > 0) return fromArr
+    return groupProductForm.image_url ? [groupProductForm.image_url] : []
+  })()
+
+  const removeGroupProductImageAt = (index) => {
+    setGroupProductForm((f) => {
+      const cur = (() => {
+        const u = [...(f.image_urls || []).filter(Boolean)]
+        if (u.length > 0) return u
+        return f.image_url ? [f.image_url] : []
+      })()
+      if (index < 0 || index >= cur.length) return f
+      cur.splice(index, 1)
+      return {
+        ...f,
+        image_urls: cur,
+        image_url: cur[0] || '',
+      }
+    })
+  }
+
+  const addGroupProductImageFromInput = () => {
+    const raw = (groupProductForm.image_url_input || '').trim()
+    if (!raw) return
+    if (!/^https?:\/\//i.test(raw)) {
+      setMessage('Informe uma URL completa (http:// ou https://).')
+      return
+    }
+    setMessage('')
+    setGroupProductForm((f) => {
+      const cur = (() => {
+        const u = [...(f.image_urls || []).filter(Boolean)]
+        if (u.length > 0) return u
+        return f.image_url ? [f.image_url] : []
+      })()
+      if (cur.includes(raw)) {
+        return { ...f, image_url_input: '' }
+      }
+      const next = [...cur, raw]
+      return {
+        ...f,
+        image_urls: next,
+        image_url: f.image_url || next[0],
+        image_url_input: '',
+      }
+    })
+  }
+
   return (
     <section className="mt-0 rounded-b-xl border border-t-0 border-earth-200 bg-earth-50 p-6">
       <h2 className="text-lg font-semibold text-earth-900">Compras Programadas</h2>
@@ -102,7 +152,7 @@ export default function GruposSection() {
           <label className="block text-sm font-medium text-earth-700">Produtos do grupo</label>
           <p className="mt-1 text-xs text-earth-500">
             {editingGroupId
-              ? 'Produtos do grupo seguem a mesma lógica da loja (nome, preço, peso, estoque e imagem).'
+              ? 'Nome, descrição, preço, peso, estoque e uma ou mais fotos (a primeira é a capa no catálogo).'
               : 'Adicione produtos antes de criar o grupo'}
           </p>
           {editingGroupId && groupProducts.length > 0 && (
@@ -271,44 +321,110 @@ export default function GruposSection() {
                 className="w-28 rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
               />
             </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-sm font-medium text-earth-700">Imagem:</span>
-              <label className="cursor-pointer rounded-lg border border-earth-300 bg-white px-3 py-2 text-sm font-medium text-earth-700 hover:bg-earth-50">
-                {groupProductImageUploading ? 'Enviando...' : 'Enviar do PC'}
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="sr-only"
-                  disabled={groupProductImageUploading}
-                  onChange={async (e) => {
-                    const file = e.target.files?.[0]
-                    if (!file) return
-                    setGroupProductImageUploading(true)
-                    try {
-                      const { data, error } = await uploadProductImage(file)
-                      if (error) setMessage(error.message || 'Falha no upload')
-                      else if (data) {
-                        setGroupProductForm((f) => ({
-                          ...f,
-                          image_urls: [...(f.image_urls || []), data],
-                          image_url: f.image_url || data,
-                        }))
-                      }
-                    } finally {
-                      setGroupProductImageUploading(false)
-                      e.target.value = ''
-                    }
-                  }}
-                />
-              </label>
-              <span className="text-sm text-earth-500">ou</span>
-              <input
-                type="url"
-                placeholder="URL da imagem"
-                value={groupProductForm.image_url}
-                onChange={(e) => setGroupProductForm((f) => ({ ...f, image_url: e.target.value }))}
-                className="min-w-[200px] flex-1 rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
+            <div>
+              <label className="block text-sm font-medium text-earth-700">Descrição do produto</label>
+              <textarea
+                value={groupProductForm.description ?? ''}
+                onChange={(e) => setGroupProductForm((f) => ({ ...f, description: e.target.value }))}
+                rows={3}
+                placeholder="Detalhes visíveis para o cliente no modal do produto (opcional)"
+                className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
               />
+            </div>
+            <div className="space-y-2">
+              <span className="text-sm font-medium text-earth-700">Fotos do produto</span>
+              <p className="text-xs text-earth-500">Envie várias imagens ou adicione por URL. A primeira foto é usada como capa nos cards.</p>
+              {groupProductGalleryUrls.length > 0 && (
+                <ul className="flex flex-wrap gap-2">
+                  {groupProductGalleryUrls.map((url, idx) => (
+                    <li key={`${url}-${idx}`} className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg border border-earth-200 bg-earth-100">
+                      <img src={url} alt="" className="h-full w-full object-cover" />
+                      {idx === 0 && (
+                        <span className="absolute left-1 top-1 rounded bg-earth-900/85 px-1 py-0.5 text-[10px] font-medium text-white">
+                          Capa
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => removeGroupProductImageAt(idx)}
+                        className="absolute right-0.5 top-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-black/55 text-xs font-bold text-white hover:bg-black/75"
+                        aria-label="Remover foto"
+                      >
+                        ×
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <div className="flex flex-wrap items-center gap-2">
+                <label className="cursor-pointer rounded-lg border border-earth-300 bg-white px-3 py-2 text-sm font-medium text-earth-700 hover:bg-earth-50">
+                  {groupProductImageUploading ? 'Enviando...' : 'Enviar do PC (várias)'}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="sr-only"
+                    disabled={groupProductImageUploading}
+                    onChange={async (e) => {
+                      const files = Array.from(e.target.files || []).filter((file) => file.type.startsWith('image/'))
+                      if (!files.length) return
+                      setGroupProductImageUploading(true)
+                      setMessage('')
+                      try {
+                        const uploaded = []
+                        for (const file of files) {
+                          const { data, error } = await uploadProductImage(file)
+                          if (error) {
+                            setMessage(error.message || 'Falha no upload')
+                            break
+                          }
+                          if (data) uploaded.push(data)
+                        }
+                        if (uploaded.length) {
+                          setGroupProductForm((f) => {
+                            const cur = [...(f.image_urls || []).filter(Boolean)]
+                            const base = cur.length ? cur : f.image_url ? [f.image_url] : []
+                            const next = [...base, ...uploaded]
+                            return {
+                              ...f,
+                              image_urls: next,
+                              image_url: f.image_url || next[0] || '',
+                            }
+                          })
+                        }
+                      } finally {
+                        setGroupProductImageUploading(false)
+                        e.target.value = ''
+                      }
+                    }}
+                  />
+                </label>
+              </div>
+              <div className="flex flex-wrap items-end gap-2">
+                <div className="min-w-[200px] flex-1">
+                  <label className="block text-xs font-medium text-earth-600">URL da imagem</label>
+                  <input
+                    type="url"
+                    placeholder="https://..."
+                    value={groupProductForm.image_url_input ?? ''}
+                    onChange={(e) => setGroupProductForm((f) => ({ ...f, image_url_input: e.target.value }))}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        addGroupProductImageFromInput()
+                      }
+                    }}
+                    className="mt-0.5 block w-full rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={addGroupProductImageFromInput}
+                  className="rounded-lg border border-earth-300 bg-white px-3 py-2 text-sm font-medium text-earth-700 hover:bg-earth-100"
+                >
+                  Adicionar URL
+                </button>
+              </div>
             </div>
             <div className="flex gap-2">
               <button
