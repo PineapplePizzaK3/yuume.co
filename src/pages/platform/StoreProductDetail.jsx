@@ -1,10 +1,12 @@
 /**
  * Página individual de produto (vitrine em estoque ou item de grupo).
  */
-import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useLocalizedPath } from '../../hooks/useLocalizedPath'
+import { useSiteLocale } from '../../hooks/useSiteLocale'
+import { appStoreGroupPath, publicStoreGroupPath } from '../../lib/localeRoutes'
 import { PageSeo } from '../../components/PageSeo'
 import { getPublicProductById } from '../../services/productService'
 import { addToCart } from '../../services/cartService'
@@ -18,7 +20,10 @@ export default function StoreProductDetail({ publicMode = false }) {
   const { t } = useTranslation()
   const { productId: rawProductId } = useParams()
   const productId = rawProductId ? decodeURIComponent(rawProductId) : ''
+  const [searchParams] = useSearchParams()
+  const groupIdFromQuery = (searchParams.get('group') || '').trim()
   const lp = useLocalizedPath()
+  const locale = useSiteLocale()
   const { user } = useAuth()
   const [product, setProduct] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -26,7 +31,18 @@ export default function StoreProductDetail({ publicMode = false }) {
   const [imageIndex, setImageIndex] = useState(0)
   const [lightbox, setLightbox] = useState({ open: false, src: '', alt: '' })
 
-  const backHref = publicMode ? lp('lojaPublicVitrine') : lp('appLoja')
+  const backHref = useMemo(() => {
+    if (groupIdFromQuery) {
+      return publicMode
+        ? publicStoreGroupPath(groupIdFromQuery, locale)
+        : appStoreGroupPath(groupIdFromQuery, locale)
+    }
+    return publicMode ? lp('lojaPublicVitrine') : lp('appLoja')
+  }, [groupIdFromQuery, publicMode, locale, lp])
+
+  const backLabel = groupIdFromQuery
+    ? t('platform.store.productPageBackToGroup')
+    : t('platform.store.productPageBack')
   useEffect(() => {
     if (!message) return
     const tmr = setTimeout(() => setMessage(''), 3200)
@@ -106,7 +122,7 @@ export default function StoreProductDetail({ publicMode = false }) {
             to={backHref}
             className="inline-flex text-sm font-medium text-earth-600 hover:text-earth-900"
           >
-            ← {t('platform.store.productPageBack')}
+            ← {backLabel}
           </Link>
 
           {loading && <p className="mt-8 text-earth-600">{t('platform.store.loading')}</p>}

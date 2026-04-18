@@ -232,6 +232,32 @@ export function appStoreProductPath(productId, locale) {
 }
 
 /**
+ * Página de detalhe de grupo de compras (logado /app ou /en/app).
+ * @param {string} groupId
+ * @param {SiteLocale} locale
+ */
+export function appStoreGroupPath(groupId, locale) {
+  const id = String(groupId ?? '').trim()
+  if (!id) return localizedPath('appLoja', locale)
+  const enc = encodeURIComponent(id)
+  return locale === LOCALE_EN ? `/en/app/store/group/${enc}` : `/app/loja/grupo/${enc}`
+}
+
+/**
+ * Página de detalhe de grupo (vitrine pública).
+ * @param {string} groupId
+ * @param {SiteLocale} locale
+ */
+export function publicStoreGroupPath(groupId, locale) {
+  const id = String(groupId ?? '').trim()
+  if (!id) return localizedPath('lojaPublicVitrine', locale)
+  const enc = encodeURIComponent(id)
+  return locale === LOCALE_EN
+    ? `/en/store/storefront/group/${enc}`
+    : `/loja/vitrine/grupo/${enc}`
+}
+
+/**
  * Página de detalhe de produto (vitrine pública).
  * @param {string} productId
  * @param {SiteLocale} locale

@@ -36,6 +36,7 @@ const Dashboard = lazy(() => import('./pages/platform/Dashboard'))
 const Profile = lazy(() => import('./pages/platform/Profile'))
 const Conta = lazy(() => import('./pages/platform/Conta'))
 const Loja = lazy(() => import('./pages/platform/Loja'))
+const GrupoDeCompraPagina = lazy(() => import('./pages/platform/GrupoDeCompraPagina'))
 const Services = lazy(() => import('./pages/platform/Services'))
 const Cart = lazy(() => import('./pages/platform/Cart'))
 const AdminLayout = lazy(() => import('./pages/platform/admin/AdminLayout'))
@@ -147,6 +148,7 @@ function App() {
             <Route path="/contact" element={<Contact />} />
             <Route path="/loja" element={<Navigate to={p('lojaPublicVitrine')} replace />} />
             <Route path="/loja/vitrine" element={<Loja publicMode />} />
+            <Route path="/loja/vitrine/grupo/:groupId" element={<GrupoDeCompraPagina publicMode />} />
             <Route path="/loja/vitrine/produto/:productId" element={<StoreProductDetail publicMode />} />
             <Route path="/loja/compras-programadas" element={<Navigate to={p('lojaPublicVitrine')} replace />} />
             <Route path="/loja/compras-programadas/online" element={<Navigate to={p('lojaPublicVitrine')} replace />} />
@@ -172,6 +174,7 @@ function App() {
               <Route path="conta" element={<Conta />} />
               <Route path="meus-produtos" element={<Navigate to={p('appLounge')} replace />} />
               <Route path="loja" element={<Loja />} />
+              <Route path="loja/grupo/:groupId" element={<GrupoDeCompraPagina />} />
               <Route path="loja/produto/:productId" element={<StoreProductDetail />} />
               <Route path="cart" element={<Cart />} />
               <Route path="invoices" element={<Invoices />} />
@@ -242,6 +245,7 @@ function App() {
             <Route path="/en/contact" element={<Contact />} />
             <Route path="/en/store" element={<Navigate to={e('lojaPublicVitrine')} replace />} />
             <Route path="/en/store/storefront" element={<Loja publicMode />} />
+            <Route path="/en/store/storefront/group/:groupId" element={<GrupoDeCompraPagina publicMode />} />
             <Route path="/en/store/storefront/product/:productId" element={<StoreProductDetail publicMode />} />
             <Route path="/en/store/showcase" element={<Navigate to={e('lojaPublicVitrine')} replace />} />
             <Route path="/en/store/scheduled-buying" element={<Navigate to={e('lojaPublicVitrine')} replace />} />
@@ -268,6 +272,7 @@ function App() {
               <Route path="account" element={<Conta />} />
               <Route path="my-products" element={<Navigate to={e('appLounge')} replace />} />
               <Route path="store" element={<Loja />} />
+              <Route path="store/group/:groupId" element={<GrupoDeCompraPagina />} />
               <Route path="store/product/:productId" element={<StoreProductDetail />} />
               <Route path="cart" element={<Cart />} />
               <Route path="invoices" element={<Invoices />} />

@@ -4,6 +4,25 @@
 import { supabase } from '../lib/supabase'
 import { withDbTimeout, toServiceError } from '../lib/dbGuard'
 
+export async function getPurchaseGroupById(groupId) {
+  const id = String(groupId ?? '').trim()
+  if (!id) return { data: null, error: { message: 'invalid id' } }
+  try {
+    const { data, error } = await withDbTimeout(
+      supabase
+        .from('purchase_groups')
+        .select('*')
+        .eq('id', id)
+        .eq('is_active', true)
+        .eq('source', 'scheduled')
+        .maybeSingle()
+    )
+    return { data: data ?? null, error }
+  } catch (e) {
+    return { data: null, error: toServiceError(e) }
+  }
+}
+
 export async function getPurchaseGroups(destination = 'physical') {
   try {
     if (destination === 'all') {
