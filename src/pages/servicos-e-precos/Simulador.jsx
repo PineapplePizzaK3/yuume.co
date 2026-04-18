@@ -17,6 +17,7 @@ import {
   computeRedirecionamentoPadraoFeeJpy,
   REDIR_ASSISTIDO_FEE_PERCENT,
 } from '../../data/serviceFees'
+import { ShippingTypesGuide } from '../../components/ShippingTypesGuide'
 
 function CollapsibleSection({ title, open, onOpenChange, className, children }) {
   return (
@@ -111,7 +112,7 @@ function Simulador() {
   )
 
   const [produtos, setProdutos] = useState([])
-  const [servicoId, setServicoId] = useState('redirecionamento-padrao')
+  const [servicoProdutoId, setServicoProdutoId] = useState('redirecionamento-padrao')
   const [tipoFrete, setTipoFrete] = useState('ems')
   /** brasil: Japan Post internacional | jp_warehouse: nosso endereço JP (sem frete nesta etapa) | jp_temp: endereço temporário do usuário no JP */
   const [destinoEnvio, setDestinoEnvio] = useState('brasil')
@@ -147,6 +148,7 @@ function Simulador() {
         quantidade: qty,
         peso: pesoNum,
         valor: valorNum,
+        servicoId: servicoProdutoId,
       },
     ])
     setNome('')
@@ -191,29 +193,64 @@ function Simulador() {
   )
   const freteLabel = tipoFreteSelecionado?.label ?? t('publicSimulador.shipEms')
   const prazoEntrega = tipoFreteSelecionado?.prazo ?? ''
-  const totalItens = produtos.reduce((acc, p) => acc + p.quantidade, 0)
-  const servico = SERVICOS.find((s) => s.id === servicoId)
+  const computeServiceFee = (service, subtotalProdutosServico, totalItensServico) => {
+    if (!service) return 0
+    if (service.tipo === 'redir-padrao') {
+      return computeRedirecionamentoPadraoFeeJpy(totalItensServico)
+    }
+    if (service.tipo === 'redir-assistido') {
+      return (
+        subtotalProdutosServico * (REDIR_ASSISTIDO_FEE_PERCENT / 100) +
+        computeRedirecionamentoPadraoFeeJpy(totalItensServico)
+      )
+    }
+    const pct = service.percentual ?? 25
+    return subtotalProdutosServico * (pct / 100) + totalItensServico * SERVICE_FEE_JPY_PER_ITEM
+  }
 
-  let taxaServico = 0
-  let labelTaxaServico = ''
-  if (servico?.tipo === 'redir-padrao') {
-    taxaServico = computeRedirecionamentoPadraoFeeJpy(totalItens)
-    labelTaxaServico = t('publicSimulador.labelFeeRedirPadrao')
-  } else if (servico?.tipo === 'redir-assistido') {
-    taxaServico =
-      totalProdutos * (REDIR_ASSISTIDO_FEE_PERCENT / 100) +
-      computeRedirecionamentoPadraoFeeJpy(totalItens)
-    labelTaxaServico = t('publicSimulador.labelFeeRedirAssistido', {
-      pct: REDIR_ASSISTIDO_FEE_PERCENT,
-    })
-  } else if (servico?.tipo === 'percentual') {
-    const pct = servico?.percentual ?? 25
-    taxaServico = totalProdutos * (pct / 100) + totalItens * SERVICE_FEE_JPY_PER_ITEM
-    labelTaxaServico = t('publicSimulador.labelFeePercent', {
-      pct,
+  const getServiceFeeLabel = (service) => {
+    if (!service) return ''
+    if (service.tipo === 'redir-padrao') return t('publicSimulador.labelFeeRedirPadrao')
+    if (service.tipo === 'redir-assistido') {
+      return t('publicSimulador.labelFeeRedirAssistido', {
+        pct: REDIR_ASSISTIDO_FEE_PERCENT,
+      })
+    }
+    return t('publicSimulador.labelFeePercent', {
+      pct: service.percentual ?? 25,
       perItem: SERVICE_FEE_JPY_PER_ITEM,
     })
   }
+
+  const resumoServicos = SERVICOS
+    .map((servico) => {
+      const produtosServico = produtos.filter(
+        (p) => (p.servicoId ?? 'redirecionamento-padrao') === servico.id,
+      )
+      if (produtosServico.length === 0) return null
+      const subtotalProdutosServico = produtosServico.reduce(
+        (acc, p) => acc + p.quantidade * p.valor,
+        0,
+      )
+      const totalItensServico = produtosServico.reduce(
+        (acc, p) => acc + p.quantidade,
+        0,
+      )
+      const taxaServico = computeServiceFee(
+        servico,
+        subtotalProdutosServico,
+        totalItensServico,
+      )
+      return {
+        servico,
+        subtotalProdutosServico,
+        totalItensServico,
+        taxaServico,
+      }
+    })
+    .filter(Boolean)
+
+  const taxaServico = resumoServicos.reduce((acc, r) => acc + r.taxaServico, 0)
 
   const totalFinal = totalProdutos + freteNoTotal + taxaServico
   const totalBaseBrl = jpyToBrl(totalFinal)
@@ -273,7 +310,7 @@ function Simulador() {
           onOpenChange={(v) => setOpenSections((o) => ({ ...o, form: v }))}
         >
           <form onSubmit={adicionarProduto} className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
             <div className="sm:col-span-2">
               <label
                 htmlFor="nome"
@@ -329,6 +366,27 @@ function Simulador() {
             </div>
             <div>
               <label
+                htmlFor="servicoProduto"
+                className="block text-sm font-medium text-earth-700"
+              >
+                {t('publicSimulador.productService')}
+              </label>
+              <select
+                id="servicoProduto"
+                value={servicoProdutoId}
+                onChange={(e) => setServicoProdutoId(e.target.value)}
+                className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 shadow-sm focus:border-earth-900 focus:outline-none focus:ring-1 focus:ring-earth-900"
+              >
+                {SERVICOS.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.label}
+                    {s.percentual != null ? ` (${s.percentual}%)` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label
                 htmlFor="valor"
                 className="block text-sm font-medium text-earth-700"
               >
@@ -380,6 +438,9 @@ function Simulador() {
                     <th className="hidden px-4 py-3 text-right text-xs font-medium uppercase text-earth-600 sm:table-cell">
                       {t('publicSimulador.thValue')}
                     </th>
+                    <th className="hidden px-4 py-3 text-left text-xs font-medium uppercase text-earth-600 lg:table-cell">
+                      {t('publicSimulador.thService')}
+                    </th>
                     <th className="px-4 py-3 text-right text-xs font-medium uppercase text-earth-600">
                       {t('publicSimulador.thSubtotal')}
                     </th>
@@ -400,6 +461,9 @@ function Simulador() {
                       </td>
                       <td className="hidden px-4 py-3 text-right text-sm text-earth-700 sm:table-cell">
                         {formatarValor(p.valor)}
+                      </td>
+                      <td className="hidden px-4 py-3 text-sm text-earth-700 lg:table-cell">
+                        {SERVICOS.find((s) => s.id === (p.servicoId ?? 'redirecionamento-padrao'))?.label ?? '-'}
                       </td>
                       <td className="px-4 py-3 text-right text-sm font-medium text-earth-900">
                         {formatarValor(p.quantidade * p.valor)}
@@ -507,6 +571,12 @@ function Simulador() {
 
               {destinoEnvio === 'brasil' && (
                 <div className="mt-5">
+                  <ShippingTypesGuide />
+                </div>
+              )}
+
+              {destinoEnvio === 'brasil' && (
+                <div className="mt-5">
                   <label htmlFor="tipoFrete" className="block text-sm font-medium text-earth-700">
                     {t('publicSimulador.shippingType')}
                   </label>
@@ -580,23 +650,32 @@ function Simulador() {
               open={openSections.totals}
               onOpenChange={(v) => setOpenSections((o) => ({ ...o, totals: v }))}
             >
-              <div className="mb-6">
-                <label htmlFor="servico" className="block text-sm font-medium text-earth-700">
-                  {t('publicSimulador.serviceLabel')}
-                </label>
-                <select
-                  id="servico"
-                  value={servicoId}
-                  onChange={(e) => setServicoId(e.target.value)}
-                  className="mt-1 block w-full max-w-xs rounded-lg border border-earth-300 px-3 py-2 shadow-sm focus:border-earth-900 focus:outline-none focus:ring-1 focus:ring-earth-900"
-                >
-                  {SERVICOS.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.label}
-                      {s.percentual != null ? ` (${s.percentual}%)` : ''}
-                    </option>
+              <div className="mb-6 rounded-lg border border-earth-200 bg-earth-50 p-4">
+                <p className="text-sm font-medium text-earth-800">
+                  {t('publicSimulador.servicesSummaryTitle')}
+                </p>
+                <div className="mt-3 space-y-3">
+                  {resumoServicos.map((r) => (
+                    <div key={r.servico.id} className="rounded border border-earth-200 bg-white p-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="font-medium text-earth-900">{r.servico.label}</span>
+                        <span className="text-sm text-earth-600">
+                          {t('publicSimulador.itemsCount', { count: r.totalItensServico })}
+                        </span>
+                      </div>
+                      <div className="mt-2 space-y-1 text-sm">
+                        <div className="flex justify-between text-earth-700">
+                          <span>{t('publicSimulador.subtotalProducts')}</span>
+                          <span>{formatarValor(r.subtotalProdutosServico)}</span>
+                        </div>
+                        <div className="flex justify-between text-earth-700">
+                          <span>{getServiceFeeLabel(r.servico)}</span>
+                          <span>{formatarValor(r.taxaServico)}</span>
+                        </div>
+                      </div>
+                    </div>
                   ))}
-                </select>
+                </div>
               </div>
 
               <div className="space-y-3">
@@ -619,7 +698,7 @@ function Simulador() {
                   </span>
                 </div>
                 <div className="flex justify-between text-earth-700">
-                  <span>{labelTaxaServico}</span>
+                  <span>{t('publicSimulador.serviceFeeTotal')}</span>
                   <span>{formatarValor(taxaServico)}</span>
                 </div>
                 <div className="flex justify-between border-t border-earth-200 pt-4 text-lg font-bold text-earth-900">
