@@ -188,8 +188,8 @@ function Navbar() {
             </div>
           </div>
 
-          {isAuthenticated ? (
-            <div className="pointer-events-none absolute left-1/2 top-0 bottom-0 z-[8] flex -translate-x-1/2 items-center lg:hidden">
+          <div className="pointer-events-none absolute left-1/2 top-0 bottom-0 z-[8] flex -translate-x-1/2 items-center lg:hidden">
+            {isAuthenticated ? (
               <LocalizedLink
                 toRoute="appDashboard"
                 className="pointer-events-auto relative inline-flex min-w-0 max-w-[min(100%,11rem)] items-center justify-center gap-1.5 rounded-lg bg-earth-800 px-2.5 py-1.5 text-xs font-medium text-earth-50 transition hover:bg-earth-700 sm:max-w-[10rem] sm:gap-2 sm:px-3 sm:py-2 sm:text-sm"
@@ -202,8 +202,15 @@ function Navbar() {
                   {profile?.name || user?.email?.split('@')[0] || t('nav.accountShort')}
                 </span>
               </LocalizedLink>
-            </div>
-          ) : null}
+            ) : (
+              <LocalizedLink
+                toRoute="login"
+                className="pointer-events-auto inline-flex shrink-0 items-center justify-center rounded-lg bg-earth-900 px-2.5 py-1.5 text-xs font-medium text-earth-50 transition hover:bg-earth-800 sm:px-3 sm:py-2 sm:text-sm"
+              >
+                {t('nav.loginRegister')}
+              </LocalizedLink>
+            )}
+          </div>
 
           <div className="relative z-10 ml-auto flex min-w-0 shrink-0 items-center justify-end gap-1 sm:gap-2 lg:ml-0 lg:hidden">
             {isAuthenticated ? (
@@ -232,14 +239,7 @@ function Navbar() {
                   </svg>
                 </button>
               </>
-            ) : (
-              <LocalizedLink
-                toRoute="login"
-                className="inline-flex shrink-0 items-center justify-center rounded-lg bg-earth-900 px-2.5 py-1.5 text-xs font-medium text-earth-50 transition hover:bg-earth-800 sm:px-3 sm:py-2 sm:text-sm"
-              >
-                {t('nav.loginRegister')}
-              </LocalizedLink>
-            )}
+            ) : null}
             <button
               type="button"
               onClick={() => setMenuAberto(!menuAberto)}
