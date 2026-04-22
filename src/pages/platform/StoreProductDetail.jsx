@@ -29,7 +29,7 @@ export default function StoreProductDetail({ publicMode = false }) {
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
   const [imageIndex, setImageIndex] = useState(0)
-  const [lightbox, setLightbox] = useState({ open: false, src: '', alt: '' })
+  const [lightboxOpen, setLightboxOpen] = useState(false)
 
   const backHref = useMemo(() => {
     if (groupIdFromQuery) {
@@ -100,12 +100,12 @@ export default function StoreProductDetail({ publicMode = false }) {
     else setMessage(t('platform.store.added'))
   }
 
-  const openLightbox = (src, alt, event) => {
+  const openLightbox = (event) => {
     if (event) {
       event.preventDefault()
       event.stopPropagation()
     }
-    setLightbox({ open: true, src, alt })
+    setLightboxOpen(true)
   }
 
   return (
@@ -142,7 +142,7 @@ export default function StoreProductDetail({ publicMode = false }) {
                       src={images[imageIndex]}
                       alt={product.name}
                       className="h-72 w-full cursor-zoom-in object-contain sm:h-96"
-                      onClick={(e) => openLightbox(images[imageIndex], product.name, e)}
+                      onClick={openLightbox}
                     />
                     {images.length > 1 && (
                       <>
@@ -235,10 +235,15 @@ export default function StoreProductDetail({ publicMode = false }) {
         </div>
       </div>
       <ImageLightbox
-        open={lightbox.open}
-        src={lightbox.src}
-        alt={lightbox.alt}
-        onClose={() => setLightbox({ open: false, src: '', alt: '' })}
+        open={lightboxOpen}
+        src={images[imageIndex]}
+        alt={product?.name}
+        onClose={() => setLightboxOpen(false)}
+        hasNavigation={images.length > 1}
+        onPrev={() => setImageIndex((i) => (i === 0 ? images.length - 1 : i - 1))}
+        onNext={() => setImageIndex((i) => (i === images.length - 1 ? 0 : i + 1))}
+        prevLabel={t('platform.store.prevPhoto')}
+        nextLabel={t('platform.store.nextPhoto')}
       />
     </>
   )

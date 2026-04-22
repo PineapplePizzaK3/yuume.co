@@ -12,7 +12,7 @@ import { isRouteActive } from '../lib/localeRoutes'
 
 const NAV_ROUTE_KEYS = ['appDashboard']
 const CONTA_ROUTE_KEYS = ['appLounge', 'appConta', 'appCart']
-const LOJA_ROUTE_KEYS = ['appServices', 'appLoja']
+const LOJA_ROUTE_KEYS = ['appServices', 'appLoja', 'appLojaEstoque']
 
 const ALL_MENU_KEYS = [...NAV_ROUTE_KEYS, ...CONTA_ROUTE_KEYS, ...LOJA_ROUTE_KEYS]
 
@@ -45,6 +45,7 @@ const LABEL_KEY_BY_ROUTE = {
   appCart: 'platform.navPayments',
   appServices: 'platform.navServices',
   appLoja: 'platform.storeHub.tabShowcase',
+  appLojaEstoque: 'platform.storeHub.tabStock',
 }
 
 const MENU_ORDER_STORAGE_KEY = 'platform_menu_order_v2'
@@ -127,18 +128,23 @@ export function PlatformLayout() {
 
   const isLojaItemActive = useCallback(
     (routeKey) => {
+      if (routeKey === 'appLojaEstoque') {
+        return isRouteActive('appLoja', location.pathname, true)
+          && new URLSearchParams(location.search).get('tab') === 'estoque'
+      }
       if (routeKey === 'appLoja') {
         return isRouteActive('appLoja', location.pathname, true)
+          && new URLSearchParams(location.search).get('tab') !== 'estoque'
       }
       return location.pathname === p(routeKey)
     },
-    [location.pathname, p]
+    [location.pathname, location.search, p]
   )
 
   const isInLoja = useMemo(
     () =>
       LOJA_ROUTE_KEYS.some((k) => {
-        if (k === 'appLoja') {
+        if (k === 'appLoja' || k === 'appLojaEstoque') {
           return isRouteActive('appLoja', location.pathname, true)
         }
         return p(k) === location.pathname
@@ -154,7 +160,7 @@ export function PlatformLayout() {
   const navItemsByKey = useMemo(() => {
     const map = new Map()
     for (const k of ALL_MENU_KEYS) {
-      const to = p(k)
+      const to = k === 'appLojaEstoque' ? `${p('appLoja')}?tab=estoque` : p(k)
       map.set(k, { routeKey: k, to, label: t(LABEL_KEY_BY_ROUTE[k]) })
     }
     return map

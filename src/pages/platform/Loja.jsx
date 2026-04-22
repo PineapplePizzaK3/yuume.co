@@ -27,7 +27,7 @@ function LojaEstoqueCatalog({ publicMode = false }) {
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
-  const [lightbox, setLightbox] = useState({ open: false, src: '', alt: '' })
+  const [lightbox, setLightbox] = useState({ open: false, images: [], index: 0, alt: '' })
 
   useEffect(() => {
     if (!message) return
@@ -69,12 +69,12 @@ function LojaEstoqueCatalog({ publicMode = false }) {
   }
 
   const productHref = (id) => (publicMode ? publicStoreProductPath(id, locale) : appStoreProductPath(id, locale))
-  const openLightbox = (src, alt, event) => {
+  const openLightbox = (images, index, alt, event) => {
     if (event) {
       event.preventDefault()
       event.stopPropagation()
     }
-    setLightbox({ open: true, src, alt })
+    setLightbox({ open: true, images, index, alt })
   }
 
   return (
@@ -119,7 +119,7 @@ function LojaEstoqueCatalog({ publicMode = false }) {
                         onError={(e) => {
                           if (e.target.src !== mainImg) e.target.src = mainImg
                         }}
-                        onClick={(e) => openLightbox(mainImg, p.name, e)}
+                        onClick={(e) => openLightbox(imgs, 0, p.name, e)}
                       />
                     ) : (
                       <div className="flex h-28 items-center justify-center bg-earth-200 text-earth-500 text-xs">
@@ -178,9 +178,24 @@ function LojaEstoqueCatalog({ publicMode = false }) {
 
       <ImageLightbox
         open={lightbox.open}
-        src={lightbox.src}
+        src={lightbox.images[lightbox.index]}
         alt={lightbox.alt}
-        onClose={() => setLightbox({ open: false, src: '', alt: '' })}
+        onClose={() => setLightbox({ open: false, images: [], index: 0, alt: '' })}
+        hasNavigation={lightbox.images.length > 1}
+        onPrev={() => {
+          setLightbox((prev) => ({
+            ...prev,
+            index: prev.index === 0 ? prev.images.length - 1 : prev.index - 1,
+          }))
+        }}
+        onNext={() => {
+          setLightbox((prev) => ({
+            ...prev,
+            index: prev.index === prev.images.length - 1 ? 0 : prev.index + 1,
+          }))
+        }}
+        prevLabel={t('platform.store.prevPhoto')}
+        nextLabel={t('platform.store.nextPhoto')}
       />
     </div>
   )

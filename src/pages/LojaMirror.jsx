@@ -29,7 +29,7 @@ export default function LojaMirror() {
   const [message, setMessage] = useState('')
   const [detailProduct, setDetailProduct] = useState(null)
   const [detailImageIndex, setDetailImageIndex] = useState(0)
-  const [lightbox, setLightbox] = useState({ open: false, src: '', alt: '' })
+  const [lightbox, setLightbox] = useState({ open: false, images: [], index: 0, alt: '' })
 
   useEffect(() => {
     let isActive = true
@@ -55,12 +55,12 @@ export default function LojaMirror() {
   }
 
   const images = detailProduct ? getProductImages(detailProduct) : []
-  const openLightbox = (src, alt, event) => {
+  const openLightbox = (images, index, alt, event) => {
     if (event) {
       event.preventDefault()
       event.stopPropagation()
     }
-    setLightbox({ open: true, src, alt })
+    setLightbox({ open: true, images, index, alt })
   }
 
   return (
@@ -108,7 +108,7 @@ export default function LojaMirror() {
                           className="h-36 w-full cursor-zoom-in object-cover"
                           loading="lazy"
                           onError={(e) => { if (e.target.src !== mainImg) e.target.src = mainImg }}
-                          onClick={(e) => openLightbox(mainImg, p.name, e)}
+                          onClick={(e) => openLightbox(imgs, 0, p.name, e)}
                         />
                       ) : (
                         <div className="flex h-36 items-center justify-center bg-earth-200 text-earth-500 text-sm">
@@ -180,7 +180,7 @@ export default function LojaMirror() {
                         src={images[detailImageIndex]}
                         alt={detailProduct.name}
                         className="h-64 w-full cursor-zoom-in object-contain sm:h-80"
-                        onClick={(e) => openLightbox(images[detailImageIndex], detailProduct.name, e)}
+                        onClick={(e) => openLightbox(images, detailImageIndex, detailProduct.name, e)}
                       />
                       {images.length > 1 && (
                         <>
@@ -288,9 +288,24 @@ export default function LojaMirror() {
           )}
           <ImageLightbox
             open={lightbox.open}
-            src={lightbox.src}
+            src={lightbox.images[lightbox.index]}
             alt={lightbox.alt}
-            onClose={() => setLightbox({ open: false, src: '', alt: '' })}
+            onClose={() => setLightbox({ open: false, images: [], index: 0, alt: '' })}
+            hasNavigation={lightbox.images.length > 1}
+            onPrev={() => {
+              setLightbox((prev) => ({
+                ...prev,
+                index: prev.index === 0 ? prev.images.length - 1 : prev.index - 1,
+              }))
+            }}
+            onNext={() => {
+              setLightbox((prev) => ({
+                ...prev,
+                index: prev.index === prev.images.length - 1 ? 0 : prev.index + 1,
+              }))
+            }}
+            prevLabel="Foto anterior"
+            nextLabel="Próxima foto"
           />
         </div>
       </div>
