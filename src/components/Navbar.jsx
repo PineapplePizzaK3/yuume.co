@@ -57,7 +57,7 @@ function Navbar() {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 overflow-visible bg-earth-50 shadow-sm border-b border-earth-200">
       <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
-        <div className="flex min-h-[4.5rem] w-full items-center gap-1.5 sm:gap-2 lg:h-[4.5rem] lg:items-stretch">
+        <div className="relative flex min-h-[4.5rem] w-full items-center gap-1.5 sm:gap-2 lg:h-[4.5rem] lg:items-stretch">
           <LocalizedLink
             toRoute="home"
             className={`relative z-10 flex min-w-0 max-w-[min(100%,10.5rem)] shrink-0 items-center sm:max-w-[12rem] lg:max-w-none ${location.pathname === homePath ? 'opacity-100' : 'opacity-90 hover:opacity-100'}`}
@@ -188,11 +188,11 @@ function Navbar() {
             </div>
           </div>
 
-          <div className="flex min-w-0 flex-1 justify-center px-0.5 lg:hidden">
-            {isAuthenticated ? (
+          {isAuthenticated ? (
+            <div className="pointer-events-none absolute left-1/2 top-0 bottom-0 z-[8] flex -translate-x-1/2 items-center lg:hidden">
               <LocalizedLink
                 toRoute="appDashboard"
-                className="relative inline-flex min-w-0 max-w-[min(100%,11rem)] items-center justify-center gap-1.5 rounded-lg bg-earth-800 px-2.5 py-1.5 text-xs font-medium text-earth-50 transition hover:bg-earth-700 sm:max-w-[10rem] sm:gap-2 sm:px-3 sm:py-2 sm:text-sm"
+                className="pointer-events-auto relative inline-flex min-w-0 max-w-[min(100%,11rem)] items-center justify-center gap-1.5 rounded-lg bg-earth-800 px-2.5 py-1.5 text-xs font-medium text-earth-50 transition hover:bg-earth-700 sm:max-w-[10rem] sm:gap-2 sm:px-3 sm:py-2 sm:text-sm"
               >
                 {hasUnreadNotifications && (
                   <span className="absolute -right-1 -top-1 inline-block h-2.5 w-2.5 rounded-full bg-red-600 ring-2 ring-earth-50" aria-hidden />
@@ -202,10 +202,10 @@ function Navbar() {
                   {profile?.name || user?.email?.split('@')[0] || t('nav.accountShort')}
                 </span>
               </LocalizedLink>
-            ) : null}
-          </div>
+            </div>
+          ) : null}
 
-          <div className="flex min-w-0 shrink-0 items-center justify-end gap-1 sm:gap-2 lg:hidden">
+          <div className="relative z-10 ml-auto flex min-w-0 shrink-0 items-center justify-end gap-1 sm:gap-2 lg:ml-0 lg:hidden">
             {isAuthenticated ? (
               <>
                 {isAdmin && (
