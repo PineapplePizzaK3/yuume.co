@@ -25,6 +25,26 @@ import {
 import StoreProductCategorySection from '../../components/StoreProductCategorySection'
 import GrupoDeCompras from './GrupoDeCompras'
 
+function readVariantCategory(variant) {
+  const attrs = variant?.attributes && typeof variant.attributes === 'object' ? variant.attributes : {}
+  const raw = variant?.category ?? attrs?.category
+  const value = String(raw || '').trim()
+  return value || ''
+}
+
+function getEffectiveCardCategory(product, preferredVariant = null) {
+  const parentCategory = String(product?.category || '').trim()
+  if (parentCategory) return parentCategory
+  const preferred = readVariantCategory(preferredVariant)
+  if (preferred) return preferred
+  const active = Array.isArray(product?.variants) ? product.variants.filter((v) => v?.is_active !== false) : []
+  for (const variant of active) {
+    const fromVariant = readVariantCategory(variant)
+    if (fromVariant) return fromVariant
+  }
+  return ''
+}
+
 /** 1 card por versão ativa; produtos sem versão ativa viram 1 card legado. */
 function flattenCatalogProductsToVariantCards(products) {
   const out = []
@@ -37,6 +57,7 @@ function flattenCatalogProductsToVariantCards(products) {
         __cardKey: String(p.id),
         __variantId: null,
         __displayName: p.name,
+        category: getEffectiveCardCategory(p, null),
       })
       continue
     }
@@ -49,6 +70,7 @@ function flattenCatalogProductsToVariantCards(products) {
         __cardKey: `${p.id}:${v.id}`,
         __variantId: v.id,
         __displayName,
+        category: getEffectiveCardCategory(p, v),
       })
     }
   }
