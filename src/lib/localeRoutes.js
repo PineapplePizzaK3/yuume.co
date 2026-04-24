@@ -223,12 +223,16 @@ export function localizedRoutePath(pathnameAndSearch, targetLocale) {
  * Página de detalhe de produto (logado /app ou /en/app).
  * @param {string} productId
  * @param {SiteLocale} locale
+ * @param {{ variantId?: string }} [options] — `variantId` vira query `?v=` (compartilhar versão).
  */
-export function appStoreProductPath(productId, locale) {
+export function appStoreProductPath(productId, locale, options = {}) {
   const id = String(productId ?? '').trim()
   if (!id) return localizedPath('appLoja', locale)
   const enc = encodeURIComponent(id)
-  return locale === LOCALE_EN ? `/en/app/store/product/${enc}` : `/app/loja/produto/${enc}`
+  const base = locale === LOCALE_EN ? `/en/app/store/product/${enc}` : `/app/loja/produto/${enc}`
+  const vid = options?.variantId != null ? String(options.variantId).trim() : ''
+  if (!vid) return base
+  return `${base}?v=${encodeURIComponent(vid)}`
 }
 
 /**
@@ -261,10 +265,14 @@ export function publicStoreGroupPath(groupId, locale) {
  * Página de detalhe de produto (vitrine pública).
  * @param {string} productId
  * @param {SiteLocale} locale
+ * @param {{ variantId?: string }} [options] — `variantId` vira query `?v=` (compartilhar versão).
  */
-export function publicStoreProductPath(productId, locale) {
+export function publicStoreProductPath(productId, locale, options = {}) {
   const id = String(productId ?? '').trim()
   if (!id) return localizedPath('lojaPublicVitrine', locale)
   const enc = encodeURIComponent(id)
-  return locale === LOCALE_EN ? `/en/store/storefront/product/${enc}` : `/loja/vitrine/produto/${enc}`
+  const base = locale === LOCALE_EN ? `/en/store/storefront/product/${enc}` : `/loja/vitrine/produto/${enc}`
+  const vid = options?.variantId != null ? String(options.variantId).trim() : ''
+  if (!vid) return base
+  return `${base}?v=${encodeURIComponent(vid)}`
 }

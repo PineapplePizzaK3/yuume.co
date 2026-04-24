@@ -15,9 +15,54 @@ import { getCardThumbnailUrl } from '../../lib/imageUtils'
 import LinkifyText from '../../components/LinkifyText'
 import ImageLightbox from '../../components/ImageLightbox'
 import { getProductConditionMeta } from '../../lib/productCondition'
-import { ProductPriceBlock, getProductImages, isOutOfStock } from '../../components/StoreProductDisplay'
+import {
+  ProductPriceBlock,
+  getProductImages,
+  isOutOfStock,
+  isVariantOutOfStock,
+  variantDisplayLabel,
+} from '../../components/StoreProductDisplay'
 import StoreProductCategorySection from '../../components/StoreProductCategorySection'
 import GrupoDeCompras from './GrupoDeCompras'
+
+/** 1 card por versão ativa; produtos sem versão ativa viram 1 card legado. */
+function flattenCatalogProductsToVariantCards(products) {
+  const out = []
+  for (const p of products || []) {
+    const all = Array.isArray(p.variants) ? p.variants : []
+    const active = all.filter((v) => v?.is_active !== false)
+    if (active.length === 0) {
+      out.push({
+        ...p,
+        __cardKey: String(p.id),
+        __variantId: null,
+        __displayName: p.name,
+      })
+      continue
+    }
+    for (const v of active) {
+      const lab = variantDisplayLabel(v)
+      const __displayName = active.length === 1 && lab === 'Padrão' ? p.name : `${p.name} — ${lab}`
+      out.push({
+        ...p,
+        variants: [v],
+        __cardKey: `${p.id}:${v.id}`,
+        __variantId: v.id,
+        __displayName,
+      })
+    }
+  }
+  return out
+}
+
+function getStoreCardImages(card) {
+  const v = Array.isArray(card.variants) ? card.variants[0] : null
+  if (v) {
+    const fromVar = getProductImages({ image_url: v.image_url, image_urls: v.image_urls })
+    if (fromVar.length > 0) return fromVar
+  }
+  return getProductImages(card)
+}
 
 function LojaEstoqueCatalog({ publicMode = false }) {
   const { t } = useTranslation()
@@ -55,12 +100,22 @@ function LojaEstoqueCatalog({ publicMode = false }) {
     }
   }, [t])
 
-  const handleComprar = async (p) => {
+  const productCards = useMemo(() => flattenCatalogProductsToVariantCards(products), [products])
+
+  const handleComprar = async (card) => {
     if (!user?.id) {
       setMessage(t('platform.groupBuy.loginToBuy'))
       return
     }
-    const { error } = await addToCart(user.id, p.id, 1)
+    const variants = Array.isArray(card?.variants) ? card.variants.filter((v) => v?.is_active !== false) : []
+    const variant = card.__variantId
+      ? variants.find((v) => v.id === card.__variantId) || variants[0]
+      : variants.find((v) => v?.is_default) || variants[0]
+    if (!variant?.id) {
+      setMessage('Produto sem versão disponível no momento.')
+      return
+    }
+    const { error } = await addToCart(user.id, card.id, 1, variant.id)
     if (error) {
       setMessage(error.message)
       return
@@ -68,7 +123,10 @@ function LojaEstoqueCatalog({ publicMode = false }) {
     setMessage(t('platform.store.added'))
   }
 
-  const productHref = (id) => (publicMode ? publicStoreProductPath(id, locale) : appStoreProductPath(id, locale))
+  const productHref = (productId, variantId) =>
+    publicMode
+      ? publicStoreProductPath(productId, locale, variantId ? { variantId } : {})
+      : appStoreProductPath(productId, locale, variantId ? { variantId } : {})
   const openLightbox = (images, index, alt, event) => {
     if (event) {
       event.preventDefault()
@@ -88,38 +146,45 @@ function LojaEstoqueCatalog({ publicMode = false }) {
       {!loading && products.length > 0 && (
         <div className="mt-6">
           <StoreProductCategorySection
-            products={products}
+            products={productCards}
             uncategorizedLabel={t('platform.store.categoryUncategorized')}
             searchPlaceholder={t('platform.store.categorySearchPlaceholder')}
             filterAllLabel={t('platform.store.categoryFilterAll')}
             gridClassName="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
             renderProduct={(p) => {
-              const imgs = getProductImages(p)
+              const imgs = getStoreCardImages(p)
               const mainImg = imgs[0]
               const thumbUrl = mainImg ? getCardThumbnailUrl(mainImg) : null
               const condition = getProductConditionMeta(p.item_condition)
               const condLabel = t(`platform.productCondition.${condition.value}`, {
                 defaultValue: condition.label,
               })
+              const activeVariants = Array.isArray(p.variants) ? p.variants.filter((v) => v?.is_active !== false) : []
+              const primaryVariant = p.__variantId
+                ? activeVariants.find((v) => v.id === p.__variantId) || activeVariants[0]
+                : activeVariants.find((v) => v?.is_default) || activeVariants[0]
+              const cardOut =
+                primaryVariant != null ? isVariantOutOfStock(primaryVariant) : isOutOfStock(p)
+              const displayName = p.__displayName || p.name
               return (
                 <div
-                  key={p.id}
+                  key={p.__cardKey || p.id}
                   className="overflow-hidden rounded-md border border-earth-200 bg-earth-50 shadow-sm transition hover:border-earth-400 hover:shadow-md"
                 >
                   <Link
-                    to={productHref(p.id)}
+                    to={productHref(p.id, p.__variantId)}
                     className="block w-full text-left focus:outline-none focus:ring-2 focus:ring-earth-500 focus:ring-inset rounded-t-lg"
                   >
                     {mainImg ? (
                       <img
                         src={thumbUrl || mainImg}
-                        alt={p.name}
+                        alt={displayName}
                         className="h-28 w-full cursor-zoom-in object-cover"
                         loading="lazy"
                         onError={(e) => {
                           if (e.target.src !== mainImg) e.target.src = mainImg
                         }}
-                        onClick={(e) => openLightbox(imgs, 0, p.name, e)}
+                        onClick={(e) => openLightbox(imgs, 0, displayName, e)}
                       />
                     ) : (
                       <div className="flex h-28 items-center justify-center bg-earth-200 text-earth-500 text-xs">
@@ -127,7 +192,7 @@ function LojaEstoqueCatalog({ publicMode = false }) {
                       </div>
                     )}
                     <div className="p-2">
-                      <h3 className="font-semibold text-earth-900 text-xs leading-snug line-clamp-2 sm:text-sm">{p.name}</h3>
+                      <h3 className="font-semibold text-earth-900 text-xs leading-snug line-clamp-2 sm:text-sm">{displayName}</h3>
                       <span className={`mt-1 inline-flex rounded border px-2 py-0.5 text-[11px] font-medium ${condition.className}`}>
                         {condLabel}
                       </span>
@@ -142,13 +207,13 @@ function LojaEstoqueCatalog({ publicMode = false }) {
                   <div className="flex gap-1.5 px-2 pb-2" onClick={(e) => e.stopPropagation()}>
                     <button
                       type="button"
-                      onClick={() => !isOutOfStock(p) && handleComprar(p)}
-                      disabled={isOutOfStock(p)}
+                      onClick={() => !cardOut && handleComprar(p)}
+                      disabled={cardOut}
                       className="flex-1 rounded-md px-2 py-1.5 text-[11px] font-medium disabled:cursor-not-allowed disabled:opacity-60 disabled:bg-earth-300 disabled:text-earth-600 bg-earth-900 text-white hover:bg-earth-800"
                     >
-                      {isOutOfStock(p) ? t('platform.store.outOfStock') : t('platform.store.addToCart')}
+                      {cardOut ? t('platform.store.outOfStock') : t('platform.store.addToCart')}
                     </button>
-                    {isOutOfStock(p) && (
+                    {cardOut && (
                       <Link
                         to={lp('appServices')}
                         className="rounded-md border border-earth-300 bg-white px-2 py-1.5 text-[11px] font-medium text-earth-700 hover:bg-earth-100"

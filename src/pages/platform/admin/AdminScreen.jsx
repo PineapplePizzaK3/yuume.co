@@ -177,8 +177,11 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     stock_quantity: '',
     item_condition: 'new',
     category: '',
+    admin_product_url: '',
     image_url: '',
+    image_url_input: '',
     image_urls: [],
+    variants: [{ title: 'Padrão', version: 'Padrão', price_jpy: '', stock_quantity: '', sku: '', image_url: '', image_urls: [], is_active: true, is_default: true }],
     is_active: true,
   })
   const [imageUploading, setImageUploading] = useState(false)
@@ -275,6 +278,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
   const [pendingGroupProducts, setPendingGroupProducts] = useState([])
   const [groupProductForm, setGroupProductForm] = useState({
     name: '',
+    version_name: '',
     price: '',
     description: '',
     image_url: '',
@@ -283,6 +287,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     source_url: '',
     admin_product_url: '',
     category: '',
+    item_condition: 'new',
     weight_kg: '',
     weight_unit: 'g',
     stock_quantity: '',
@@ -992,8 +997,11 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       stock_quantity: '',
       item_condition: 'new',
       category: '',
+      admin_product_url: '',
       image_url: '',
+      image_url_input: '',
       image_urls: [],
+      variants: [{ title: 'Padrão', version: 'Padrão', price_jpy: '', stock_quantity: '', sku: '', image_url: '', image_urls: [], is_active: true, is_default: true }],
       is_active: true,
     })
     setEditingId(null)
@@ -1060,6 +1068,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     setPendingGroupProducts([])
     setGroupProductForm({
       name: '',
+      version_name: '',
       price: '',
       description: '',
       image_url: '',
@@ -1068,6 +1077,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       source_url: '',
       admin_product_url: '',
       category: '',
+      item_condition: 'new',
       weight_kg: '',
       weight_unit: 'g',
       stock_quantity: '',
@@ -1110,6 +1120,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     setGroupProductScrapePreview(null)
     setGroupProductForm({
       name: '',
+      version_name: '',
       price: '',
       description: '',
       image_url: '',
@@ -1118,6 +1129,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       source_url: '',
       admin_product_url: '',
       category: '',
+      item_condition: 'new',
       weight_kg: '',
       weight_unit: 'g',
       stock_quantity: '',
@@ -1129,6 +1141,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
   const resetGroupProductForm = () => {
     setGroupProductForm({
       name: '',
+      version_name: '',
       price: '',
       description: '',
       image_url: '',
@@ -1170,8 +1183,10 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       : groupProductForm.image_url
         ? [groupProductForm.image_url]
         : []
+    const versionName = String(groupProductForm.version_name ?? '').trim()
+    const parentName = String(groupProductForm.name ?? '').trim()
     return {
-      name: groupProductForm.name.trim(),
+      name: versionName || parentName,
       description: groupProductForm.description?.trim() || '',
       // Persistimos preÃ§o base em JPY no catÃ¡logo.
       price,
@@ -1183,6 +1198,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
         groupProductForm.category != null && String(groupProductForm.category).trim() !== ''
           ? String(groupProductForm.category).trim()
           : null,
+      item_condition: normalizeProductCondition(groupProductForm.item_condition),
       weight_kg: weightKg,
       stock_quantity: stockQty,
     }
@@ -1200,7 +1216,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
         : (scrapedData?.imageUrl ? [scrapedData.imageUrl] : [])
       const incomingImage = scrapedImageUrls[0] || scrapedData?.imageUrl || prev.image_url
       const hasExistingCoreData =
-        Boolean(prev.name?.trim()) ||
+        Boolean(prev.version_name?.trim()) ||
         Boolean(prev.price != null && String(prev.price).trim() !== '') ||
         Boolean(prev.image_url?.trim()) ||
         (Array.isArray(prev.image_urls) && prev.image_urls.length > 0)
@@ -1217,7 +1233,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       setGroupProductScrapePreview(null)
       return {
         ...prev,
-        name: scrapedData?.name || prev.name,
+        version_name: scrapedData?.name || prev.version_name,
         price: normalizedPrice,
         image_url: incomingImage,
         image_urls: scrapedImageUrls.length ? Array.from(new Set(scrapedImageUrls)) : prev.image_urls,
@@ -1345,6 +1361,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     const productImageUrls = urlsFromDb.length > 0 ? urlsFromDb : p.image_url ? [p.image_url] : []
     setGroupProductForm({
       name: p.name ?? '',
+      version_name: p.name ?? '',
       price: String(Math.round(getProductBasePriceJpy(p))),
       description: p.description ?? '',
       image_url: productImageUrls[0] || p.image_url || '',
@@ -1353,6 +1370,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       source_url: p.source_url ?? '',
       admin_product_url: p.admin_product_url ?? '',
       category: p.category ?? '',
+      item_condition: normalizeProductCondition(p.item_condition),
       weight_kg: kg > 0 ? (useG ? String(Math.round(kg * 1000)) : String(kg)) : '',
       weight_unit: useG ? 'g' : 'kg',
       stock_quantity: p.stock_quantity != null ? String(p.stock_quantity) : '',
@@ -1381,6 +1399,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     const itemImageUrls = urlsFromItem.length > 0 ? urlsFromItem : item.image_url ? [item.image_url] : []
     setGroupProductForm({
       name: item.name ?? '',
+      version_name: item.name ?? '',
       price: String(Math.round(getProductBasePriceJpy(item))),
       description: item.description ?? '',
       image_url: itemImageUrls[0] || item.image_url || '',
@@ -1389,6 +1408,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       source_url: item.source_url ?? '',
       admin_product_url: item.admin_product_url ?? '',
       category: item.category ?? '',
+      item_condition: normalizeProductCondition(item.item_condition),
       weight_kg: kg > 0 ? (useG ? String(Math.round(kg * 1000)) : String(kg)) : '',
       weight_unit: useG ? 'g' : 'kg',
       stock_quantity: item.stock_quantity != null ? String(item.stock_quantity) : '',
@@ -1675,7 +1695,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     const useG = kg > 0 && kg < 1
     setForm((prev) => ({
       ...prev,
-      name: refProduct.name ?? prev.name,
+      version_name: refProduct.name ?? prev.version_name,
       description: refProduct.description ?? prev.description,
       price: String(Math.round(getProductBasePriceJpy(refProduct))),
       weight_kg: useG ? String(Math.round(kg * 1000)) : String(kg || ''),
@@ -1722,8 +1742,23 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       stock_quantity: p.stock_quantity != null ? String(p.stock_quantity) : '',
       item_condition: normalizeProductCondition(p.item_condition),
       category: p.category ?? '',
+      admin_product_url: p.admin_product_url ?? '',
       image_url: p.image_url ?? urls[0] ?? '',
+      image_url_input: '',
       image_urls: urls,
+      variants: Array.isArray(p.variants) && p.variants.length > 0
+        ? p.variants.map((v, index) => ({
+          title: v?.title ?? '',
+          version: v?.attributes?.versao ?? v?.title ?? '',
+          price_jpy: String(Number(v?.price_jpy ?? getProductBasePriceJpy(p)) || 0),
+          stock_quantity: v?.stock_quantity == null ? '' : String(v.stock_quantity),
+          sku: v?.sku ?? '',
+          image_url: v?.image_url ?? '',
+          image_urls: Array.isArray(v?.image_urls) ? v.image_urls.filter(Boolean) : (v?.image_url ? [v.image_url] : []),
+          is_active: v?.is_active ?? true,
+          is_default: v?.is_default ?? index === 0,
+        }))
+        : [{ title: 'Padrão', version: 'Padrão', price_jpy: String(Math.round(getProductBasePriceJpy(p))), stock_quantity: p.stock_quantity != null ? String(p.stock_quantity) : '', sku: '', image_url: p.image_url ?? '', image_urls: Array.isArray(p.image_urls) ? p.image_urls.filter(Boolean) : (p.image_url ? [p.image_url] : []), is_active: true, is_default: true }],
       is_active: p.is_active ?? true,
     })
     setEditingId(p.id)
@@ -1768,9 +1803,31 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       item_condition: normalizeProductCondition(form.item_condition),
       category:
         form.category != null && String(form.category).trim() !== '' ? String(form.category).trim() : null,
+      admin_product_url: form.admin_product_url != null && String(form.admin_product_url).trim() !== '' ? String(form.admin_product_url).trim() : null,
       image_url: imageUrls[0] || form.image_url || null,
       image_urls: imageUrls,
+      variants: (Array.isArray(form.variants) ? form.variants : [])
+        .filter((v) => String(v?.version || v?.title || '').trim() !== '')
+        .map((v, index) => ({
+          title: String(v.title || v.version || '').trim() || null,
+          attributes: { versao: String(v.version || v.title || '').trim() || 'Padrão' },
+          sku: String(v.sku || '').trim() || null,
+          image_url: String(v.image_url || '').trim() || null,
+          image_urls: Array.isArray(v.image_urls) ? v.image_urls.filter(Boolean) : (String(v.image_url || '').trim() ? [String(v.image_url || '').trim()] : []),
+          price_jpy: Math.max(0, Number(v.price_jpy || price) || 0),
+          stock_quantity: v.stock_quantity === '' || v.stock_quantity == null ? null : Math.max(0, Number(v.stock_quantity) || 0),
+          is_active: v.is_active ?? true,
+          is_default: v.is_default ?? index === 0,
+        })),
       is_active: form.is_active,
+    }
+    if (!Array.isArray(payload.variants) || payload.variants.length === 0) {
+      setMessage('Adicione pelo menos uma versão do produto.')
+      return
+    }
+    if (!payload.variants.some((v) => v.is_active)) {
+      setMessage('Mantenha pelo menos uma versão ativa.')
+      return
     }
     setSubmitting(true)
     try {
@@ -1850,8 +1907,20 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       stock_quantity: p.stock_quantity ?? null,
       item_condition: normalizeProductCondition(p.item_condition),
       category: p.category != null && String(p.category).trim() !== '' ? String(p.category).trim() : null,
+      admin_product_url: p.admin_product_url != null && String(p.admin_product_url).trim() !== '' ? String(p.admin_product_url).trim() : null,
       image_url: urls[0] || p.image_url || '',
       image_urls: urls,
+      variants: (Array.isArray(p.variants) ? p.variants : []).map((v, index) => ({
+        title: v?.title ?? null,
+        attributes: v?.attributes && typeof v.attributes === 'object' ? v.attributes : { versao: v?.title || 'Padrão' },
+        sku: v?.sku ?? null,
+        image_url: v?.image_url ?? null,
+        image_urls: Array.isArray(v?.image_urls) ? v.image_urls.filter(Boolean) : (v?.image_url ? [v.image_url] : []),
+        price_jpy: Number(v?.price_jpy ?? p.price ?? 0) || 0,
+        stock_quantity: v?.stock_quantity == null ? null : Number(v.stock_quantity),
+        is_active: v?.is_active ?? true,
+        is_default: v?.is_default ?? index === 0,
+      })),
       is_active: p.is_active ?? true,
     }
     try {

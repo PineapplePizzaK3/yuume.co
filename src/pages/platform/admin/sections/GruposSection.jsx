@@ -1,5 +1,8 @@
 import { uploadProductImage } from '../../../../services/productService'
+import { PRODUCT_CONDITION_OPTIONS } from '../../../../lib/productCondition'
 import { useAdminContext } from '../AdminContext'
+import ProductCoreFields from './ProductCoreFields'
+import ProductScrapeBlock from './ProductScrapeBlock'
 
 export default function GruposSection() {
   const {
@@ -38,7 +41,6 @@ export default function GruposSection() {
     masterProductReferences,
     groupProductImageUploading,
     setGroupProductImageUploading,
-    setMessage,
     setGroupProductForm,
     editingGroupProductId,
     editingPendingProductIndex,
@@ -105,29 +107,21 @@ export default function GruposSection() {
     moveGroupProductImage(index, 0)
   }
 
-  const addGroupProductImageFromInput = () => {
-    const raw = (groupProductForm.image_url_input || '').trim()
-    if (!raw) return
-    if (!/^https?:\/\//i.test(raw)) {
-      setMessage('Informe uma URL completa (http:// ou https://).')
-      return
-    }
-    setMessage('')
-    setGroupProductForm((f) => {
-      const cur = (() => {
-        const u = [...(f.image_urls || []).filter(Boolean)]
-        if (u.length > 0) return u
-        return f.image_url ? [f.image_url] : []
-      })()
-      if (cur.includes(raw)) {
-        return { ...f, image_url_input: '' }
-      }
-      const next = [...cur, raw]
+  const groupProductVersionForm = {
+    ...groupProductForm,
+    name: groupProductForm.version_name ?? '',
+  }
+
+  const setGroupProductVersionForm = (updater) => {
+    setGroupProductForm((prev) => {
+      const current = { ...prev, name: prev.version_name ?? '' }
+      const next = typeof updater === 'function' ? updater(current) : { ...current, ...updater }
+      const nextVersionName = String(next?.name ?? '')
       return {
-        ...f,
-        image_urls: next,
-        image_url: f.image_url || next[0],
-        image_url_input: '',
+        ...prev,
+        ...next,
+        name: prev.name,
+        version_name: nextVersionName,
       }
     })
   }
@@ -284,86 +278,115 @@ export default function GruposSection() {
               ))}
             </ul>
           )}
-          <div
-            className="mt-3 min-w-0 space-y-2 rounded-lg border border-earth-200 bg-earth-100/50 p-3"
-            onKeyDown={(e) => {
-              if (e.defaultPrevented) return
-              if (e.key === 'Enter') {
-                e.preventDefault()
-                e.stopPropagation()
-                if (groupProductForm.name?.trim() && !groupProductSubmitting) {
-                  handleSaveGroupProduct({ ...e, preventDefault: () => {} })
-                }
-              }
-            }}
-          >
-            {isOnlineGroupDestination && (
-              <div className="grid gap-2 md:grid-cols-[1fr_auto]">
-                <input
-                  type="url"
-                  value={groupProductSourceUrlInput}
-                  onChange={(e) => {
-                    const next = e.target.value
-                    setGroupProductSourceUrlInput(next)
-                    setGroupProductForm((f) => ({ ...f, source_url: next }))
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault()
-                      void handleScrapeOnlineGroupProduct()
-                    }
-                  }}
-                  placeholder="URL do produto para scrape (Online)"
-                  className="rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
-                />
-                <button
-                  type="button"
-                  onClick={() => void handleScrapeOnlineGroupProduct()}
-                  disabled={groupProductScraping || !groupProductSourceUrlInput.trim()}
-                  className="rounded-lg border border-earth-300 bg-white px-3 py-2 text-sm font-medium text-earth-700 hover:bg-earth-100 disabled:opacity-60"
-                >
-                  {groupProductScraping ? 'Buscando...' : 'Buscar dados'}
-                </button>
-              </div>
-            )}
-            {groupProductScrapeMeta && (
-              <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
-                <p className="font-medium">
-                  Scrape: {Math.round((Number(groupProductScrapeMeta.confidence) || 0) * 100)}% de confiança
-                  {groupProductScrapeMeta.source ? ` • origem: ${groupProductScrapeMeta.source}` : ''}
-                </p>
-                {Array.isArray(groupProductScrapeMeta.warnings) && groupProductScrapeMeta.warnings.length > 0 && (
-                  <ul className="mt-1 list-disc pl-4">
-                    {groupProductScrapeMeta.warnings.slice(0, 3).map((warn, idx) => (
-                      <li key={`${warn}-${idx}`}>{warn}</li>
+          <div className="mt-3 min-w-0 space-y-3 rounded-lg border border-earth-200 bg-white p-4 shadow-sm">
+            <div className="flex items-center justify-between gap-2 border-b border-earth-100 pb-2">
+              <p className="text-sm font-semibold text-earth-800">
+                {editingGroupProductId || editingPendingProductIndex != null ? 'Editar produto do grupo' : 'Novo produto do grupo'}
+              </p>
+              <span className="text-xs text-earth-500">Mesmo formato da Lista de Produtos</span>
+            </div>
+            <div className="rounded-lg border border-earth-200 bg-earth-50 p-3">
+              <p className="mb-2 text-sm font-medium text-earth-800">Dados globais do produto pai</p>
+              <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                <label className="text-xs text-earth-700">
+                  Nome do produto pai
+                  <input
+                    required
+                    type="text"
+                    value={groupProductForm.name}
+                    onChange={(e) => setGroupProductForm((f) => ({ ...f, name: e.target.value }))}
+                    className="mt-1 block w-full rounded border border-earth-300 px-2 py-1 text-sm text-earth-900"
+                  />
+                </label>
+                <label className="text-xs text-earth-700">
+                  Categoria global
+                  <div className="mt-1 grid grid-cols-1 gap-1">
+                    <select
+                      value=""
+                      onChange={(e) => {
+                        if (!e.target.value) return
+                        setGroupProductForm((f) => ({ ...f, category: e.target.value }))
+                        e.target.value = ''
+                      }}
+                      className="block w-full rounded border border-earth-300 bg-white px-2 py-1 text-sm text-earth-900"
+                    >
+                      <option value="">Selecionar existente</option>
+                      {(productCategorySuggestions || []).map((c) => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
+                    <input
+                      type="text"
+                      value={groupProductForm.category ?? ''}
+                      onChange={(e) => setGroupProductForm((f) => ({ ...f, category: e.target.value }))}
+                      placeholder="Ou digite nova categoria"
+                      className="block w-full rounded border border-earth-300 px-2 py-1 text-sm text-earth-900"
+                      autoComplete="off"
+                    />
+                  </div>
+                </label>
+                <label className="text-xs text-earth-700">
+                  Condição global
+                  <select
+                    value={groupProductForm.item_condition}
+                    onChange={(e) => setGroupProductForm((f) => ({ ...f, item_condition: e.target.value }))}
+                    className="mt-1 block w-full rounded border border-earth-300 px-2 py-1 text-sm text-earth-900"
+                  >
+                    {PRODUCT_CONDITION_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
                     ))}
-                  </ul>
-                )}
+                  </select>
+                </label>
+                <label className="text-xs text-earth-700">
+                  Link interno (admin)
+                  <input
+                    type="url"
+                    value={groupProductForm.admin_product_url ?? ''}
+                    onChange={(e) => setGroupProductForm((f) => ({ ...f, admin_product_url: e.target.value }))}
+                    placeholder="https://... (interno)"
+                    className="mt-1 block w-full rounded border border-earth-300 px-2 py-1 text-sm text-earth-900"
+                  />
+                </label>
               </div>
-            )}
-            {groupProductScrapePreview && (
-              <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-900">
-                <p className="font-medium">
-                  Confirmação manual: o scrape encontrou dados com baixa confiança e não sobrescreveu os campos atuais.
-                </p>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={applyPendingGroupProductScrape}
-                    className="rounded-md border border-blue-300 bg-white px-2.5 py-1.5 font-medium text-blue-800 hover:bg-blue-100"
-                  >
-                    Aplicar dados do scrape
-                  </button>
-                  <button
-                    type="button"
-                    onClick={discardPendingGroupProductScrape}
-                    className="rounded-md border border-blue-200 bg-blue-100 px-2.5 py-1.5 font-medium text-blue-800 hover:bg-blue-200"
-                  >
-                    Manter meus dados
-                  </button>
+              <label className="mt-2 block text-xs text-earth-700">
+                Descrição global
+                <textarea
+                  value={groupProductForm.description ?? ''}
+                  onChange={(e) => setGroupProductForm((f) => ({ ...f, description: e.target.value }))}
+                  rows={3}
+                  className="mt-1 block w-full rounded border border-earth-300 px-2 py-1 text-sm text-earth-900"
+                />
+              </label>
+              <p className="mt-2 text-xs text-earth-600">
+                Preço, estoque e imagens são definidos por versão abaixo.
+              </p>
+            </div>
+
+            <ProductScrapeBlock
+              sourceUrl={groupProductSourceUrlInput}
+              setSourceUrl={(next) => {
+                setGroupProductSourceUrlInput(next)
+                setGroupProductForm((f) => ({ ...f, source_url: next }))
+              }}
+              onScrape={handleScrapeOnlineGroupProduct}
+              scraping={groupProductScraping}
+              scrapeMeta={groupProductScrapeMeta}
+              scrapePreview={groupProductScrapePreview}
+              onApplyPreview={applyPendingGroupProductScrape}
+              onDiscardPreview={discardPendingGroupProductScrape}
+              placeholder="URL do produto para scrape (Online)"
+              previewText="Confirmação manual: o scrape encontrou dados com baixa confiança e não sobrescreveu os campos atuais."
+              showWarnings
+              disabled={!isOnlineGroupDestination}
+            />
+            <div className="rounded-lg border border-earth-200 p-3">
+              <div className="mb-2 flex items-center justify-between">
+                <p className="text-sm font-medium text-earth-800">Versões do produto</p>
+              </div>
+              <div className="rounded-lg border border-earth-200 bg-white p-3">
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <p className="text-sm font-semibold text-earth-800">Versão 1 • Padrão</p>
                 </div>
-              </div>
-            )}
             <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-stretch">
               <input
                 type="search"
@@ -401,216 +424,42 @@ export default function GruposSection() {
                 Aplicar referência
               </button>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-sm font-medium text-earth-700">Nome:</span>
-              <input
-                type="text"
-                placeholder="Nome do produto"
-                value={groupProductForm.name}
-                onChange={(e) => setGroupProductForm((f) => ({ ...f, name: e.target.value }))}
-                className="min-w-[140px] flex-1 rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
-              />
-              <span className="text-sm font-medium text-earth-700">Preço (¥):</span>
-              <input
-                type="number"
-                placeholder="0"
-                value={groupProductForm.price}
-                onChange={(e) => setGroupProductForm((f) => ({ ...f, price: e.target.value }))}
-                className="w-24 rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
-              />
-              <span className="text-sm font-medium text-earth-700">Peso (opcional):</span>
-              <input
-                type="number"
-                step={groupProductForm.weight_unit === 'g' ? '1' : '0.001'}
-                min="0"
-                placeholder="—"
-                value={groupProductForm.weight_kg}
-                onChange={(e) => setGroupProductForm((f) => ({ ...f, weight_kg: e.target.value }))}
-                className="w-20 rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
-              />
-              <select
-                value={groupProductForm.weight_unit}
-                onChange={(e) => setGroupProductForm((f) => ({ ...f, weight_unit: e.target.value }))}
-                className="rounded-lg border border-earth-300 px-2 py-2 text-sm text-earth-900"
-              >
-                <option value="g">g</option>
-                <option value="kg">kg</option>
-              </select>
-              <span className="text-sm font-medium text-earth-700">Estoque:</span>
-              <input
-                type="number"
-                min="0"
-                step="1"
-                placeholder="Ilimitado"
-                value={groupProductForm.stock_quantity}
-                onChange={(e) => setGroupProductForm((f) => ({ ...f, stock_quantity: e.target.value }))}
-                className="w-28 rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
+            <div className="rounded-lg border border-earth-200 bg-earth-50 p-3">
+              <ProductCoreFields
+                form={groupProductVersionForm}
+                setForm={setGroupProductVersionForm}
+                productCategorySuggestions={productCategorySuggestions}
+                images={groupProductGalleryUrls}
+                imageUploading={groupProductImageUploading}
+                setImageUploading={setGroupProductImageUploading}
+                imageUploadError={''}
+                setImageUploadError={() => {}}
+                newImageUrl={groupProductForm.image_url_input ?? ''}
+                setNewImageUrl={(v) => setGroupProductForm((f) => ({ ...f, image_url_input: v }))}
+                addImage={(url) => {
+                  const raw = String(url || '').trim()
+                  if (!raw) return
+                  setGroupProductForm((f) => {
+                    const cur = normalizeGroupProductGallery(f)
+                    if (cur.includes(raw)) return { ...f, image_url_input: '' }
+                    const next = [...cur, raw]
+                    return { ...f, image_urls: next, image_url: f.image_url || next[0], image_url_input: '' }
+                  })
+                }}
+                moveImage={moveGroupProductImage}
+                setCover={setGroupProductCover}
+                removeImageAt={removeGroupProductImageAt}
+                showCondition
+                conditionOptions={PRODUCT_CONDITION_OPTIONS}
               />
             </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-sm font-medium text-earth-700">Categoria</span>
-              <input
-                type="text"
-                list="grupo-product-category-suggestions"
-                value={groupProductForm.category ?? ''}
-                onChange={(e) => setGroupProductForm((f) => ({ ...f, category: e.target.value }))}
-                placeholder="Nova ou existente"
-                className="min-w-[180px] flex-1 rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
-              />
-              <datalist id="grupo-product-category-suggestions">
-                {(productCategorySuggestions || []).map((c) => (
-                  <option key={c} value={c} />
-                ))}
-              </datalist>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-earth-700">Descrição do produto</label>
-              <textarea
-                value={groupProductForm.description ?? ''}
-                onChange={(e) => setGroupProductForm((f) => ({ ...f, description: e.target.value }))}
-                rows={3}
-                placeholder="Detalhes visíveis para o cliente no modal do produto (opcional)"
-                className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-earth-700">Link do produto (somente admin)</label>
-              <input
-                type="url"
-                value={groupProductForm.admin_product_url ?? ''}
-                onChange={(e) => setGroupProductForm((f) => ({ ...f, admin_product_url: e.target.value }))}
-                placeholder="https://… (não aparece para clientes)"
-                className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
-              />
-              <p className="mt-1 text-xs text-earth-500">
-                Referência interna para a equipe. Não é exibido na loja nem nas Compras Programadas.
-              </p>
-            </div>
-            <div className="space-y-2">
-              <span className="text-sm font-medium text-earth-700">Fotos do produto</span>
-              <p className="text-xs text-earth-500">
-                Envie várias imagens ou adicione por URL. Arraste para reordenar; a primeira foto é a capa nos cards.
-              </p>
-              {groupProductGalleryUrls.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {groupProductGalleryUrls.map((url, idx) => (
-                    <div
-                      key={idx}
-                      draggable
-                      onDragStart={(e) => {
-                        e.dataTransfer.setData('text/plain', String(idx))
-                        e.dataTransfer.effectAllowed = 'move'
-                      }}
-                      onDragOver={(e) => e.preventDefault()}
-                      onDrop={(e) => {
-                        e.preventDefault()
-                        const from = parseInt(e.dataTransfer.getData('text/plain'), 10)
-                        if (Number.isInteger(from)) moveGroupProductImage(from, idx)
-                      }}
-                      className="group relative h-20 w-20 shrink-0 cursor-grab overflow-hidden rounded-lg border border-earth-200 bg-earth-100 active:cursor-grabbing"
-                    >
-                      <img src={url} alt="" className="h-full w-full object-cover" draggable={false} />
-                      {idx === 0 && (
-                        <span className="absolute left-1 top-1 rounded bg-earth-900/85 px-1 py-0.5 text-[10px] font-medium text-white">
-                          Capa
-                        </span>
-                      )}
-                      {idx > 0 && (
-                        <button
-                          type="button"
-                          onClick={() => setGroupProductCover(idx)}
-                          className="absolute bottom-1 left-1 rounded bg-white/90 px-1 py-0.5 text-[10px] font-medium text-earth-800 hover:bg-white"
-                        >
-                          Definir capa
-                        </button>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => removeGroupProductImageAt(idx)}
-                        className="absolute right-0.5 top-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-black/55 text-xs font-bold text-white hover:bg-black/75"
-                        aria-label="Remover foto"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-              <div className="flex flex-wrap items-center gap-2">
-                <label className="cursor-pointer rounded-lg border border-earth-300 bg-white px-3 py-2 text-sm font-medium text-earth-700 hover:bg-earth-50">
-                  {groupProductImageUploading ? 'Enviando...' : 'Enviar do PC (várias)'}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    className="sr-only"
-                    disabled={groupProductImageUploading}
-                    onChange={async (e) => {
-                      const files = Array.from(e.target.files || []).filter((file) => file.type.startsWith('image/'))
-                      if (!files.length) return
-                      setGroupProductImageUploading(true)
-                      setMessage('')
-                      try {
-                        const uploaded = []
-                        for (const file of files) {
-                          const { data, error } = await uploadProductImage(file)
-                          if (error) {
-                            setMessage(error.message || 'Falha no upload')
-                            break
-                          }
-                          if (data) uploaded.push(data)
-                        }
-                        if (uploaded.length) {
-                          setGroupProductForm((f) => {
-                            const cur = [...(f.image_urls || []).filter(Boolean)]
-                            const base = cur.length ? cur : f.image_url ? [f.image_url] : []
-                            const next = [...base, ...uploaded]
-                            return {
-                              ...f,
-                              image_urls: next,
-                              image_url: f.image_url || next[0] || '',
-                            }
-                          })
-                        }
-                      } finally {
-                        setGroupProductImageUploading(false)
-                        e.target.value = ''
-                      }
-                    }}
-                  />
-                </label>
-              </div>
-              <div className="flex flex-wrap items-end gap-2">
-                <div className="min-w-[200px] flex-1">
-                  <label className="block text-xs font-medium text-earth-600">URL da imagem</label>
-                  <input
-                    type="url"
-                    placeholder="https://..."
-                    value={groupProductForm.image_url_input ?? ''}
-                    onChange={(e) => setGroupProductForm((f) => ({ ...f, image_url_input: e.target.value }))}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault()
-                        addGroupProductImageFromInput()
-                      }
-                    }}
-                    className="mt-0.5 block w-full rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
-                  />
-                </div>
-                <button
-                  type="button"
-                  onClick={addGroupProductImageFromInput}
-                  className="rounded-lg border border-earth-300 bg-white px-3 py-2 text-sm font-medium text-earth-700 hover:bg-earth-100"
-                >
-                  Adicionar URL
-                </button>
               </div>
             </div>
             <div className="flex gap-2">
               <button
                 type="button"
                 onClick={(e) => handleSaveGroupProduct({ ...e, preventDefault: () => {} })}
-                disabled={groupProductSubmitting || !groupProductForm.name?.trim()}
+                disabled={groupProductSubmitting || !(groupProductForm.version_name || groupProductForm.name)?.trim()}
                 className="rounded-lg bg-earth-800 px-3 py-1.5 text-sm font-medium text-white hover:bg-earth-900 disabled:opacity-60"
               >
                 {editingGroupProductId || editingPendingProductIndex != null ? 'Salvar' : 'Adicionar'} produto

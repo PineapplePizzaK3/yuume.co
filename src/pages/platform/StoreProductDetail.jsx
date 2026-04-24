@@ -14,20 +14,28 @@ import { useAuth } from '../../hooks/useAuth'
 import LinkifyText from '../../components/LinkifyText'
 import ImageLightbox from '../../components/ImageLightbox'
 import { getProductConditionMeta } from '../../lib/productCondition'
-import { ProductPriceBlock, getProductImages, isOutOfStock } from '../../components/StoreProductDisplay'
+import {
+  ProductPriceBlock,
+  getProductImages,
+  isOutOfStock,
+  isVariantOutOfStock,
+  variantDisplayLabel,
+} from '../../components/StoreProductDisplay'
 
 export default function StoreProductDetail({ publicMode = false }) {
   const { t } = useTranslation()
   const { productId: rawProductId } = useParams()
   const productId = rawProductId ? decodeURIComponent(rawProductId) : ''
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const groupIdFromQuery = (searchParams.get('group') || '').trim()
+  const variantIdFromQuery = (searchParams.get('v') || '').trim()
   const lp = useLocalizedPath()
   const locale = useSiteLocale()
   const { user } = useAuth()
   const [product, setProduct] = useState(null)
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
+  const [selectedVariantId, setSelectedVariantId] = useState('')
   const [imageIndex, setImageIndex] = useState(0)
   const [lightboxOpen, setLightboxOpen] = useState(false)
 
@@ -85,9 +93,61 @@ export default function StoreProductDetail({ publicMode = false }) {
 
   useEffect(() => {
     setImageIndex(0)
-  }, [product?.id])
+  }, [product?.id, selectedVariantId])
 
-  const images = product ? getProductImages(product) : []
+  /** Sincroniza variante com `?v=` na URL (ou remove `v` inválido). */
+  useEffect(() => {
+    if (!product) return
+    const variants = Array.isArray(product.variants) ? product.variants : []
+    const active = variants.filter((v) => v?.is_active !== false)
+    if (active.length === 0) {
+      setSelectedVariantId('')
+      return
+    }
+    const fromUrl = variantIdFromQuery && active.some((v) => v.id === variantIdFromQuery)
+    if (fromUrl) {
+      setSelectedVariantId(variantIdFromQuery)
+      return
+    }
+    const def = active.find((v) => v?.is_default) || active[0]
+    setSelectedVariantId(def?.id || '')
+    if (variantIdFromQuery) {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev)
+          next.delete('v')
+          return next
+        },
+        { replace: true }
+      )
+    }
+  }, [product, variantIdFromQuery, setSearchParams])
+
+  const selectedVariant = useMemo(() => {
+    const variants = Array.isArray(product?.variants) ? product.variants : []
+    const active = variants.filter((v) => v?.is_active !== false)
+    if (!selectedVariantId) return active.find((v) => v?.is_default) || active[0] || null
+    return active.find((v) => v?.id === selectedVariantId) || null
+  }, [product?.variants, selectedVariantId])
+
+  const headingTitle = useMemo(() => {
+    if (!product) return ''
+    const active = Array.isArray(product.variants)
+      ? product.variants.filter((v) => v?.is_active !== false)
+      : []
+    if (active.length <= 1) return product.name
+    const sv = selectedVariant || active[0]
+    const lab = sv ? variantDisplayLabel(sv) : ''
+    return lab ? `${product.name} — ${lab}` : product.name
+  }, [product, selectedVariant])
+
+  const images = useMemo(() => {
+    const variantImages = selectedVariant
+      ? getProductImages({ image_url: selectedVariant.image_url, image_urls: selectedVariant.image_urls })
+      : []
+    if (variantImages.length > 0) return variantImages
+    return product ? getProductImages(product) : []
+  }, [product, selectedVariant])
 
   const handleComprar = async () => {
     if (!user?.id) {
@@ -95,7 +155,16 @@ export default function StoreProductDetail({ publicMode = false }) {
       return
     }
     if (!product?.id) return
-    const { error } = await addToCart(user.id, product.id, 1)
+    if (!selectedVariantId) {
+      setMessage('Selecione uma versão do produto.')
+      return
+    }
+    const vid = selectedVariant?.id || selectedVariantId
+    if (!vid) {
+      setMessage('Selecione uma versão do produto.')
+      return
+    }
+    const { error } = await addToCart(user.id, product.id, 1, vid)
     if (error) setMessage(error.message || t('platform.store.addError'))
     else setMessage(t('platform.store.added'))
   }
@@ -112,7 +181,7 @@ export default function StoreProductDetail({ publicMode = false }) {
     <>
       <PageSeo
         routeKey={publicMode ? 'lojaPublicVitrine' : 'appLoja'}
-        title={product?.name ? `${product.name} | ${t('platform.storeHub.pageTitle')}` : t('platform.store.metaTitle')}
+        title={headingTitle ? `${headingTitle} | ${t('platform.storeHub.pageTitle')}` : t('platform.store.metaTitle')}
         description={t('meta.appStore.description')}
         noindex
       />
@@ -140,7 +209,7 @@ export default function StoreProductDetail({ publicMode = false }) {
                   <>
                     <img
                       src={images[imageIndex]}
-                      alt={product.name}
+                      alt={headingTitle || product.name}
                       className="h-72 w-full cursor-zoom-in object-contain sm:h-96"
                       onClick={openLightbox}
                     />
@@ -199,15 +268,55 @@ export default function StoreProductDetail({ publicMode = false }) {
                     </span>
                   )
                 })()}
-                <h1 className="mt-3 text-2xl font-bold text-earth-900">{product.name}</h1>
+                <h1 className="mt-3 text-2xl font-bold text-earth-900">{headingTitle}</h1>
                 {product.description && (
                   <div className="mt-4 whitespace-pre-wrap text-earth-600">
                     <LinkifyText text={product.description} />
                   </div>
                 )}
                 <div className="mt-6">
-                  <ProductPriceBlock product={product} variant="page" />
+                  <ProductPriceBlock
+                    product={
+                      selectedVariant ? { ...product, variants: [selectedVariant] } : product
+                    }
+                    variant="page"
+                  />
                 </div>
+                {Array.isArray(product.variants) && product.variants.length > 0 && (
+                  <div className="mt-4">
+                    <label className="mb-1 block text-sm font-medium text-earth-700">Versão</label>
+                    <select
+                      value={selectedVariantId}
+                      onChange={(e) => {
+                        const next = e.target.value
+                        setSelectedVariantId(next)
+                        setImageIndex(0)
+                        setSearchParams(
+                          (prev) => {
+                            const nextParams = new URLSearchParams(prev)
+                            if (next) nextParams.set('v', next)
+                            else nextParams.delete('v')
+                            return nextParams
+                          },
+                          { replace: true }
+                        )
+                      }}
+                      className="w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                    >
+                      {product.variants
+                        .filter((v) => v?.is_active !== false)
+                        .map((v) => {
+                          const versao = variantDisplayLabel(v)
+                          const out = isVariantOutOfStock(v)
+                          return (
+                            <option key={v.id} value={v.id} disabled={out}>
+                              {versao}{out ? ' (Sem estoque)' : ''}
+                            </option>
+                          )
+                        })}
+                    </select>
+                  </div>
+                )}
                 {message && (
                   <p className="mt-4 rounded-lg bg-earth-100 px-4 py-2 text-sm text-earth-800">{message}</p>
                 )}
@@ -215,12 +324,24 @@ export default function StoreProductDetail({ publicMode = false }) {
                   <button
                     type="button"
                     onClick={() => void handleComprar()}
-                    disabled={isOutOfStock(product)}
+                    disabled={
+                      selectedVariant != null
+                        ? isVariantOutOfStock(selectedVariant)
+                        : isOutOfStock(product)
+                    }
                     className="rounded-xl px-6 py-3 font-medium disabled:cursor-not-allowed disabled:opacity-60 disabled:bg-earth-300 disabled:text-earth-600 bg-earth-900 text-white hover:bg-earth-800"
                   >
-                    {isOutOfStock(product) ? t('platform.store.outOfStock') : t('platform.store.addToCart')}
+                    {selectedVariant != null
+                      ? isVariantOutOfStock(selectedVariant)
+                        ? t('platform.store.outOfStock')
+                        : t('platform.store.addToCart')
+                      : isOutOfStock(product)
+                        ? t('platform.store.outOfStock')
+                        : t('platform.store.addToCart')}
                   </button>
-                  {isOutOfStock(product) && (
+                  {(selectedVariant != null
+                    ? isVariantOutOfStock(selectedVariant)
+                    : isOutOfStock(product)) && (
                     <Link
                       to={lp('appServices')}
                       className="rounded-xl border border-earth-300 bg-white px-6 py-3 font-medium text-earth-700 hover:bg-earth-50"
@@ -237,7 +358,7 @@ export default function StoreProductDetail({ publicMode = false }) {
       <ImageLightbox
         open={lightboxOpen}
         src={images[imageIndex]}
-        alt={product?.name}
+        alt={headingTitle || product?.name}
         onClose={() => setLightboxOpen(false)}
         hasNavigation={images.length > 1}
         onPrev={() => setImageIndex((i) => (i === 0 ? images.length - 1 : i - 1))}

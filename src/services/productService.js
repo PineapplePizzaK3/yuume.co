@@ -134,6 +134,7 @@ export async function removeProductFromStoreAdmin(productId) {
 export async function createProduct(product) {
   try {
     const imageUrls = Array.isArray(product.image_urls) ? product.image_urls : []
+    const variants = Array.isArray(product.variants) ? product.variants : []
     const payload = {
       name: product.name,
       description: product.description ?? '',
@@ -148,6 +149,21 @@ export async function createProduct(product) {
         product.category != null && String(product.category).trim() !== ''
           ? String(product.category).trim()
           : null,
+      admin_product_url:
+        product.admin_product_url != null && String(product.admin_product_url).trim() !== ''
+          ? String(product.admin_product_url).trim()
+          : null,
+      variants: variants.map((v, index) => ({
+        title: v?.title ?? '',
+        attributes: v?.attributes && typeof v.attributes === 'object' ? v.attributes : {},
+        sku: v?.sku ?? null,
+        image_url: v?.image_url ?? null,
+        image_urls: Array.isArray(v?.image_urls) ? v.image_urls.filter(Boolean) : (v?.image_url ? [v.image_url] : []),
+        price_jpy: Number(v?.price_jpy ?? product.price ?? 0) || 0,
+        stock_quantity: v?.stock_quantity === '' || v?.stock_quantity == null ? null : Math.max(0, Number(v.stock_quantity) || 0),
+        is_active: v?.is_active ?? true,
+        is_default: v?.is_default ?? index === 0,
+      })),
     }
     const { data, error } = await withDbTimeout(
       supabase.rpc('admin_create_product', { p_product: payload })
@@ -162,6 +178,7 @@ export async function createProduct(product) {
 export async function updateProduct(id, product) {
   try {
     const imageUrls = Array.isArray(product.image_urls) ? product.image_urls : []
+    const variants = Array.isArray(product.variants) ? product.variants : []
     const payload = {
       name: product.name,
       description: product.description ?? '',
@@ -176,6 +193,21 @@ export async function updateProduct(id, product) {
         product.category != null && String(product.category).trim() !== ''
           ? String(product.category).trim()
           : null,
+      admin_product_url:
+        product.admin_product_url != null && String(product.admin_product_url).trim() !== ''
+          ? String(product.admin_product_url).trim()
+          : null,
+      variants: variants.map((v, index) => ({
+        title: v?.title ?? '',
+        attributes: v?.attributes && typeof v.attributes === 'object' ? v.attributes : {},
+        sku: v?.sku ?? null,
+        image_url: v?.image_url ?? null,
+        image_urls: Array.isArray(v?.image_urls) ? v.image_urls.filter(Boolean) : (v?.image_url ? [v.image_url] : []),
+        price_jpy: Number(v?.price_jpy ?? product.price ?? 0) || 0,
+        stock_quantity: v?.stock_quantity === '' || v?.stock_quantity == null ? null : Math.max(0, Number(v.stock_quantity) || 0),
+        is_active: v?.is_active ?? true,
+        is_default: v?.is_default ?? index === 0,
+      })),
     }
     const { data, error } = await withDbTimeout(
       supabase.rpc('admin_update_product', { p_id: id, p_product: payload })

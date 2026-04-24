@@ -1,12 +1,23 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { PRODUCT_CONDITION_OPTIONS } from '../../../../lib/productCondition'
-import { uploadProductImage } from '../../../../services/productService'
 import { useSiteLocale } from '../../../../hooks/useSiteLocale'
 import { appStoreProductPath } from '../../../../lib/localeRoutes'
 import { useAdminContext } from '../AdminContext'
+import ProductCoreFields from './ProductCoreFields'
+import ProductScrapeBlock from './ProductScrapeBlock'
+import { scrapeProductUrl } from '../../../../services/wishlistLinkService'
 
 export default function CatalogoProdutosSection() {
   const locale = useSiteLocale()
+  const [catalogSourceUrlInput, setCatalogSourceUrlInput] = useState('')
+  const [catalogScraping, setCatalogScraping] = useState(false)
+  const [catalogScrapeMeta, setCatalogScrapeMeta] = useState(null)
+  const [catalogScrapePreview, setCatalogScrapePreview] = useState(null)
+  const [catalogScrapeFeedback, setCatalogScrapeFeedback] = useState('')
+  const [variantImageDrafts, setVariantImageDrafts] = useState({})
+  const [variantReferenceSearch, setVariantReferenceSearch] = useState({})
+  const [variantReferenceId, setVariantReferenceId] = useState({})
   const {
     activeTab,
     resetForm,
@@ -50,6 +61,254 @@ export default function CatalogoProdutosSection() {
   } = useAdminContext()
 
   if (activeTab !== 'catalogo_produtos') return null
+
+  const applyScrapedCatalogData = (scrapedData, { force = false } = {}) => {
+    if (!scrapedData) return
+    const rawPrice = Number(scrapedData?.price)
+    const normalizedPrice = Number.isFinite(rawPrice) && rawPrice > 0
+      ? String(Math.round(rawPrice))
+      : ''
+    const scrapedImageUrls = Array.isArray(scrapedData?.image_urls)
+      ? scrapedData.image_urls.filter(Boolean)
+      : []
+    const incomingImage = scrapedImageUrls[0] || scrapedData?.image_url || ''
+    setForm((prev) => {
+      const hasExistingCoreData =
+        Boolean(prev.name?.trim()) ||
+        Boolean(prev.price != null && String(prev.price).trim() !== '') ||
+        Boolean(prev.image_url?.trim()) ||
+        (Array.isArray(prev.image_urls) && prev.image_urls.length > 0)
+      const shouldHoldForReview =
+        !force &&
+        hasExistingCoreData &&
+        (scrapedData?.meta?.requiresReview || scrapedData?.meta?.lowConfidence)
+
+      if (shouldHoldForReview) {
+        setCatalogScrapePreview(scrapedData)
+        return prev
+      }
+
+      setCatalogScrapePreview(null)
+      return {
+        ...prev,
+        name: scrapedData?.name || prev.name,
+        price: normalizedPrice || prev.price,
+        image_url: incomingImage || prev.image_url,
+        image_urls: scrapedImageUrls.length ? Array.from(new Set(scrapedImageUrls)) : prev.image_urls,
+        source_url: scrapedData?.source_url || prev.source_url,
+      }
+    })
+  }
+
+  const updateVariantAt = (index, updater) => {
+    setForm((f) => {
+      const next = Array.isArray(f.variants) ? [...f.variants] : []
+      if (!next[index]) return f
+      const prevVariant = next[index]
+      const updated = typeof updater === 'function' ? updater(prevVariant) : { ...prevVariant, ...updater }
+      next[index] = updated
+      return { ...f, variants: next }
+    })
+  }
+
+  const getVariantImages = (variant) => {
+    const list = Array.isArray(variant?.image_urls) ? variant.image_urls.filter(Boolean) : []
+    if (list.length > 0) return list
+    return variant?.image_url ? [variant.image_url] : []
+  }
+
+  const addVariantImage = (index, url) => {
+    const raw = String(url || '').trim()
+    if (!raw) return
+    updateVariantAt(index, (variant) => {
+      const cur = getVariantImages(variant)
+      if (cur.includes(raw)) return { ...variant }
+      const next = [...cur, raw]
+      return {
+        ...variant,
+        image_url: next[0] || '',
+        image_urls: next,
+      }
+    })
+  }
+
+  const removeVariantImageAt = (variantIndex, imageIndex) => {
+    updateVariantAt(variantIndex, (variant) => {
+      const cur = getVariantImages(variant)
+      if (imageIndex < 0 || imageIndex >= cur.length) return { ...variant }
+      const next = cur.filter((_, i) => i !== imageIndex)
+      return {
+        ...variant,
+        image_url: next[0] || '',
+        image_urls: next,
+      }
+    })
+  }
+
+  const moveVariantImage = (variantIndex, fromIndex, toIndex) => {
+    if (fromIndex === toIndex) return
+    updateVariantAt(variantIndex, (variant) => {
+      const cur = getVariantImages(variant)
+      if (fromIndex < 0 || fromIndex >= cur.length || toIndex < 0 || toIndex >= cur.length) return { ...variant }
+      const list = [...cur]
+      const [moved] = list.splice(fromIndex, 1)
+      list.splice(toIndex, 0, moved)
+      return {
+        ...variant,
+        image_url: list[0] || '',
+        image_urls: list,
+      }
+    })
+  }
+
+  const getVariantForm = (variant) => ({
+    name: variant?.version ?? variant?.title ?? '',
+    price: variant?.price_jpy ?? '',
+    weight_kg: variant?.weight_kg ?? '',
+    weight_unit: variant?.weight_unit ?? 'g',
+    stock_quantity: variant?.stock_quantity ?? '',
+    item_condition: variant?.item_condition ?? 'new',
+    category: variant?.category ?? '',
+    description: variant?.description ?? '',
+    admin_product_url: variant?.admin_product_url ?? '',
+    image_url: variant?.image_url ?? '',
+    image_urls: getVariantImages(variant),
+  })
+
+  const setVariantForm = (index, updater) => {
+    updateVariantAt(index, (prev) => {
+      const current = getVariantForm(prev)
+      const next = typeof updater === 'function' ? updater(current) : { ...current, ...updater }
+      const nextImages = Array.isArray(next.image_urls) ? next.image_urls.filter(Boolean) : []
+      const nextName = String(next.name || '').trim()
+      return {
+        ...prev,
+        title: nextName || prev?.title || '',
+        version: nextName || prev?.version || '',
+        price_jpy: next.price,
+        stock_quantity: next.stock_quantity,
+        sku: next.sku ?? prev?.sku ?? '',
+        weight_kg: next.weight_kg,
+        weight_unit: next.weight_unit || 'g',
+        item_condition: next.item_condition ?? 'new',
+        category: next.category ?? '',
+        description: next.description ?? '',
+        admin_product_url: next.admin_product_url ?? '',
+        image_url: next.image_url || nextImages[0] || '',
+        image_urls: nextImages,
+      }
+    })
+  }
+
+  const applyReferenceToVariant = (index, refProduct) => {
+    if (!refProduct) return
+    const imageUrls = Array.isArray(refProduct?.image_urls) && refProduct.image_urls.length > 0
+      ? refProduct.image_urls.filter(Boolean)
+      : (refProduct?.image_url ? [refProduct.image_url] : [])
+    setVariantForm(index, (prev) => ({
+      ...prev,
+      name: refProduct.name ?? prev.name,
+      price: String(Math.round(Number(refProduct.price_jpy ?? refProduct.price ?? prev.price ?? 0) || 0)),
+      category: refProduct.category ?? prev.category,
+      description: refProduct.description ?? prev.description,
+      admin_product_url: refProduct.admin_product_url ?? prev.admin_product_url,
+      image_url: imageUrls[0] || prev.image_url,
+      image_urls: imageUrls.length ? imageUrls : prev.image_urls,
+      stock_quantity:
+        refProduct.stock_quantity != null
+          ? String(refProduct.stock_quantity)
+          : prev.stock_quantity,
+      item_condition: refProduct.item_condition ?? prev.item_condition,
+      weight_kg:
+        refProduct.weight_kg != null
+          ? String(refProduct.weight_kg)
+          : prev.weight_kg,
+      weight_unit: 'kg',
+    }))
+    setVariantReferenceId((prev) => ({ ...prev, [index]: refProduct.id || '' }))
+  }
+
+  const getVariantSummary = (product) => {
+    const variants = Array.isArray(product?.variants) ? product.variants : []
+    const active = variants.filter((v) => v?.is_active !== false)
+    const minPrice = active.reduce((acc, v) => {
+      const n = Number(v?.price_jpy)
+      if (!Number.isFinite(n) || n < 0) return acc
+      return acc == null ? n : Math.min(acc, n)
+    }, null)
+    const limitedStocks = active
+      .map((v) => (v?.stock_quantity == null ? null : Math.max(0, Number(v.stock_quantity) || 0)))
+      .filter((s) => s != null)
+    const stockLabel = limitedStocks.length > 0
+      ? String(limitedStocks.reduce((sum, s) => sum + s, 0))
+      : 'Ilimitado'
+    return {
+      variantsCount: variants.length,
+      activeCount: active.length,
+      minPrice,
+      stockLabel,
+    }
+  }
+
+  useEffect(() => {
+    const variants = Array.isArray(form?.variants) ? form.variants : []
+    const defaultVariant = variants.find((v) => v?.is_default) || variants[0]
+    if (!defaultVariant) return
+
+    const nextPrice = String(defaultVariant?.price_jpy ?? '')
+    const nextStock = defaultVariant?.stock_quantity == null ? '' : String(defaultVariant.stock_quantity)
+    const nextImages = Array.isArray(defaultVariant?.image_urls)
+      ? defaultVariant.image_urls.filter(Boolean)
+      : (defaultVariant?.image_url ? [defaultVariant.image_url] : [])
+    const nextImageUrl = defaultVariant?.image_url || nextImages[0] || ''
+
+    setForm((prev) => {
+      if (
+        String(prev.price ?? '') === nextPrice &&
+        String(prev.stock_quantity ?? '') === nextStock &&
+        String(prev.image_url ?? '') === String(nextImageUrl ?? '') &&
+        JSON.stringify(Array.isArray(prev.image_urls) ? prev.image_urls.filter(Boolean) : []) === JSON.stringify(nextImages)
+      ) {
+        return prev
+      }
+      return {
+        ...prev,
+        price: nextPrice,
+        stock_quantity: nextStock,
+        image_url: nextImageUrl,
+        image_urls: nextImages,
+      }
+    })
+  }, [form?.variants, setForm])
+
+  const handleScrapeCatalogProduct = async () => {
+    const url = String(catalogSourceUrlInput || '').trim()
+    if (!/^https?:\/\//i.test(url)) {
+      setCatalogScrapeFeedback('Use uma URL completa começando com http:// ou https://')
+      return
+    }
+    setCatalogScraping(true)
+    setCatalogScrapePreview(null)
+    setCatalogScrapeMeta(null)
+    setCatalogScrapeFeedback('')
+    try {
+      const { data, error } = await scrapeProductUrl(url)
+      if (error) {
+        const detail = error?.failureCode ? ` (código: ${error.failureCode})` : ''
+        setCatalogScrapeFeedback((error.message || 'Não foi possível extrair dados do produto.') + detail)
+        return
+      }
+      const normalized = { ...data, source_url: url }
+      setCatalogScrapeMeta(normalized?.meta || null)
+      applyScrapedCatalogData(normalized)
+      const confidencePct = Math.round((Number(normalized?.meta?.confidence) || 0) * 100)
+      setCatalogScrapeFeedback(`Dados preenchidos via scrape (${confidencePct}% de confiança).`)
+    } catch (e) {
+      setCatalogScrapeFeedback(e?.message || 'Erro ao executar scrape do produto.')
+    } finally {
+      setCatalogScraping(false)
+    }
+  }
 
   return (
     <section className="mt-0 rounded-b-xl border border-t-0 border-earth-200 bg-earth-50 p-6">
@@ -105,206 +364,247 @@ export default function CatalogoProdutosSection() {
           onSubmit={handleSave}
           className="mt-4 space-y-3 rounded-lg border border-earth-200 bg-white p-4"
         >
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="text-sm font-medium text-earth-700">Nome *</span>
-            <input
-              required
-              type="text"
-              value={form.name}
-              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-              className="min-w-[180px] flex-1 rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
-            />
-            <span className="text-sm font-medium text-earth-700">Preço (¥) *</span>
-            <input
-              required
-              type="number"
-              step="1"
-              min="0"
-              value={form.price}
-              onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
-              className="w-28 rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
-            />
-            <span className="text-sm font-medium text-earth-700">Peso (opcional)</span>
-            <input
-              type="number"
-              step={form.weight_unit === 'g' ? '1' : '0.001'}
-              min="0"
-              value={form.weight_kg}
-              onChange={(e) => setForm((f) => ({ ...f, weight_kg: e.target.value }))}
-              className="w-24 rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
-            />
-            <select
-              value={form.weight_unit}
-              onChange={(e) => setForm((f) => ({ ...f, weight_unit: e.target.value }))}
-              className="rounded-lg border border-earth-300 px-2 py-2 text-earth-900"
-            >
-              <option value="g">g</option>
-              <option value="kg">kg</option>
-            </select>
-          </div>
+          <ProductScrapeBlock
+            sourceUrl={catalogSourceUrlInput}
+            setSourceUrl={(next) => {
+              setCatalogSourceUrlInput(next)
+              setForm((f) => ({ ...f, source_url: next }))
+            }}
+            onScrape={handleScrapeCatalogProduct}
+            scraping={catalogScraping}
+            scrapeMeta={catalogScrapeMeta}
+            scrapePreview={catalogScrapePreview}
+            onApplyPreview={() => {
+              applyScrapedCatalogData(catalogScrapePreview, { force: true })
+              setCatalogScrapeFeedback('Dados do scrape aplicados ao formulário.')
+            }}
+            onDiscardPreview={() => {
+              setCatalogScrapePreview(null)
+              setCatalogScrapeFeedback('Dados do scrape descartados.')
+            }}
+            feedback={catalogScrapeFeedback}
+            placeholder="URL do produto para preencher dados automaticamente"
+          />
 
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="text-sm font-medium text-earth-700">Estoque</span>
-            <input
-              type="number"
-              min="0"
-              step="1"
-              value={form.stock_quantity}
-              onChange={(e) => setForm((f) => ({ ...f, stock_quantity: e.target.value }))}
-              placeholder="Ilimitado"
-              className="w-28 rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
-            />
-            <span className="text-sm font-medium text-earth-700">Condicao</span>
-            <select
-              value={form.item_condition}
-              onChange={(e) => setForm((f) => ({ ...f, item_condition: e.target.value }))}
-              className="rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
-            >
-              {PRODUCT_CONDITION_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>{option.label}</option>
-              ))}
-            </select>
-            <span className="text-sm font-medium text-earth-700">Categoria</span>
-            <input
-              type="text"
-              list="catalog-product-category-suggestions"
-              value={form.category ?? ''}
-              onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
-              placeholder="Nova ou existente"
-              className="min-w-[160px] flex-1 rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
-            />
-            <datalist id="catalog-product-category-suggestions">
-              {(productCategorySuggestions || []).map((c) => (
-                <option key={c} value={c} />
-              ))}
-            </datalist>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-earth-700">Imagens do produto</label>
-            <div className="mt-2 flex flex-wrap items-center gap-3">
-              <label className="cursor-pointer rounded-lg border border-earth-300 bg-white px-3 py-2 text-sm font-medium text-earth-700 hover:bg-earth-50">
-                {imageUploading ? 'Enviando...' : 'Enviar arquivo'}
+          <div className="rounded-lg border border-earth-200 bg-earth-50 p-3">
+            <p className="mb-2 text-sm font-medium text-earth-800">Dados globais do produto pai</p>
+            <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+              <label className="text-xs text-earth-700">
+                Nome do produto pai
                 <input
-                  type="file"
-                  accept="image/*"
-                  className="sr-only"
-                  disabled={imageUploading}
-                  onChange={async (e) => {
-                    const file = e.target.files?.[0]
-                    if (!file) return
-                    setImageUploadError('')
-                    setImageUploading(true)
-                    try {
-                      const { data, error } = await uploadProductImage(file)
-                      if (error) {
-                        setImageUploadError(error.message || 'Falha no upload')
-                        return
-                      }
-                      if (data) {
-                        addProductImage(data)
-                      }
-                    } finally {
-                      setImageUploading(false)
-                      e.target.value = ''
-                    }
-                  }}
+                  required
+                  type="text"
+                  value={form.name}
+                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                  className="mt-1 block w-full rounded border border-earth-300 px-2 py-1 text-sm text-earth-900"
                 />
               </label>
-
-              <input
-                type="url"
-                value={newImageUrl}
-                onChange={(e) => {
-                  setNewImageUrl(e.target.value)
-                  setImageUploadError('')
-                }}
-                placeholder="Cole a URL e pressione Enter"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault()
-                    const url = newImageUrl?.trim()
-                    if (!url) return
-                    addProductImage(url)
-                    setNewImageUrl('')
-                  }
-                }}
-                className="min-w-[220px] flex-1 rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
-              />
-
-              <button
-                type="button"
-                onClick={() => {
-                  const url = newImageUrl?.trim()
-                  if (!url) return
-                  addProductImage(url)
-                  setNewImageUrl('')
-                }}
-                className="rounded-lg border border-earth-300 bg-white px-3 py-2 text-sm font-medium text-earth-700 hover:bg-earth-50"
-              >
-                Adicionar URL
-              </button>
-            </div>
-
-            {imageUploadError && <p className="mt-2 text-sm text-red-600">{imageUploadError}</p>}
-
-            {form.image_urls?.length > 0 && (
-              <div className="mt-3">
-                <p className="mb-2 text-xs text-earth-600">
-                  Arraste para reordenar. A primeira imagem e a capa do produto.
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {(form.image_urls || []).filter(Boolean).map((url, i) => (
-                    <div
-                      key={i}
-                      draggable
-                      onDragStart={(e) => e.dataTransfer.setData('text/plain', String(i))}
-                      onDragOver={(e) => e.preventDefault()}
-                      onDrop={(e) => {
-                        e.preventDefault()
-                        const from = parseInt(e.dataTransfer.getData('text/plain'), 10)
-                        if (Number.isInteger(from)) moveProductImage(from, i)
-                      }}
-                      className="group relative inline-block cursor-grab active:cursor-grabbing"
-                    >
-                      <img src={url} alt="" className="h-20 w-20 rounded border border-earth-200 object-cover" />
-                      {i === 0 && (
-                        <span className="absolute left-1 top-1 rounded bg-earth-900 px-1.5 py-0.5 text-[10px] font-semibold text-white">
-                          Capa
-                        </span>
-                      )}
-                      {i > 0 && (
-                        <button
-                          type="button"
-                          onClick={() => setProductCover(i)}
-                          className="absolute bottom-1 left-1 rounded bg-white/90 px-1.5 py-0.5 text-[10px] font-medium text-earth-800 hover:bg-white"
-                        >
-                          Definir capa
-                        </button>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => removeProductImageAt(i)}
-                        className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white hover:bg-red-600"
-                        aria-label="Remover foto"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
+              <label className="text-xs text-earth-700">
+                Categoria global
+                <div className="mt-1 grid grid-cols-1 gap-1">
+                  <select
+                    value=""
+                    onChange={(e) => {
+                      if (!e.target.value) return
+                      setForm((f) => ({ ...f, category: e.target.value }))
+                      e.target.value = ''
+                    }}
+                    className="block w-full rounded border border-earth-300 bg-white px-2 py-1 text-sm text-earth-900"
+                  >
+                    <option value="">Selecionar existente</option>
+                    {(productCategorySuggestions || []).map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                  <input
+                    type="text"
+                    value={form.category ?? ''}
+                    onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
+                    placeholder="Ou digite nova categoria"
+                    className="block w-full rounded border border-earth-300 px-2 py-1 text-sm text-earth-900"
+                    autoComplete="off"
+                  />
                 </div>
-              </div>
-            )}
+              </label>
+              <label className="text-xs text-earth-700">
+                Condição global
+                <select
+                  value={form.item_condition}
+                  onChange={(e) => setForm((f) => ({ ...f, item_condition: e.target.value }))}
+                  className="mt-1 block w-full rounded border border-earth-300 px-2 py-1 text-sm text-earth-900"
+                >
+                  {PRODUCT_CONDITION_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="text-xs text-earth-700">
+                Link interno (admin)
+                <input
+                  type="url"
+                  value={form.admin_product_url ?? ''}
+                  onChange={(e) => setForm((f) => ({ ...f, admin_product_url: e.target.value }))}
+                  placeholder="https://... (interno)"
+                  className="mt-1 block w-full rounded border border-earth-300 px-2 py-1 text-sm text-earth-900"
+                />
+              </label>
+            </div>
+            <label className="mt-2 block text-xs text-earth-700">
+              Descrição global
+              <textarea
+                value={form.description}
+                onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+                rows={3}
+                className="mt-1 block w-full rounded border border-earth-300 px-2 py-1 text-sm text-earth-900"
+              />
+            </label>
+            <p className="mt-2 text-xs text-earth-600">
+              Preço, estoque e imagens são definidos por versão abaixo.
+            </p>
           </div>
 
-          <div className="flex flex-wrap items-start gap-2">
-            <span className="pt-2 text-sm font-medium text-earth-700">Descrição</span>
-            <textarea
-              value={form.description}
-              onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-              rows={2}
-              className="min-w-[240px] flex-1 rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
-            />
+          <div className="rounded-lg border border-earth-200 p-3">
+            <div className="mb-2 flex items-center justify-between">
+              <p className="text-sm font-medium text-earth-800">Versões do produto</p>
+              <button
+                type="button"
+                onClick={() => setForm((f) => ({
+                  ...f,
+                  variants: [...(Array.isArray(f.variants) ? f.variants : []), { title: '', version: '', price_jpy: f.price || '0', stock_quantity: '', sku: '', image_url: '', image_urls: [], is_active: true, is_default: false }],
+                }))}
+                className="rounded border border-earth-300 px-2 py-1 text-xs font-medium text-earth-700 hover:bg-earth-50"
+              >
+                Adicionar versão
+              </button>
+            </div>
+            <div className="space-y-2">
+              {(Array.isArray(form.variants) ? form.variants : []).map((variant, index) => (
+                <div key={index} className="rounded-lg border border-earth-200 bg-white p-3">
+                  <div className="mb-2 flex items-center justify-between">
+                    <p className="text-sm font-semibold text-earth-800">
+                      Versão {index + 1}{variant.version ? ` • ${variant.version}` : ''}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <label className="inline-flex items-center gap-1 text-xs text-earth-700">
+                        <input
+                          type="checkbox"
+                          checked={variant.is_active ?? true}
+                          onChange={(e) => updateVariantAt(index, { is_active: e.target.checked })}
+                        />
+                        Ativa
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setForm((f) => {
+                          const next = (Array.isArray(f.variants) ? [...f.variants] : []).map((it, i) => ({ ...it, is_default: i === index }))
+                          return { ...f, variants: next }
+                        })}
+                        className="rounded border border-earth-300 px-2 py-1 text-xs hover:bg-earth-50"
+                      >
+                        {variant.is_default ? 'Padrão' : 'Definir padrão'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setForm((f) => {
+                          const next = (Array.isArray(f.variants) ? [...f.variants] : []).filter((_, i) => i !== index)
+                          if (next.length > 0 && !next.some((v) => v.is_default)) next[0] = { ...next[0], is_default: true }
+                          return { ...f, variants: next }
+                        })}
+                        className="rounded border border-red-200 px-2 py-1 text-xs text-red-700 hover:bg-red-50"
+                      >
+                        Remover
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="mb-3 flex min-w-0 flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-stretch">
+                    <input
+                      type="search"
+                      value={variantReferenceSearch[index] ?? ''}
+                      onChange={(e) => setVariantReferenceSearch((prev) => ({ ...prev, [index]: e.target.value }))}
+                      placeholder="Buscar item na Lista de Produtos..."
+                      className="min-w-0 w-full shrink rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900 sm:flex-1 sm:basis-[min(100%,14rem)]"
+                    />
+                    <select
+                      value={variantReferenceId[index] ?? ''}
+                      onChange={(e) => {
+                        const nextId = e.target.value
+                        setVariantReferenceId((prev) => ({ ...prev, [index]: nextId }))
+                        const ref = (products || []).find((p) => p.id === nextId)
+                        if (ref) applyReferenceToVariant(index, ref)
+                      }}
+                      className="min-w-0 w-full max-w-full shrink rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900 sm:flex-1 sm:basis-[min(100%,14rem)]"
+                    >
+                      <option value="">Selecionar referência do catálogo</option>
+                      {(products || [])
+                        .filter((p) => {
+                          const term = String(variantReferenceSearch[index] || '').trim().toLowerCase()
+                          if (!term) return true
+                          const hay = [
+                            p?.name,
+                            p?.id,
+                            p?.description,
+                            p?.category,
+                          ].map((v) => String(v || '').toLowerCase())
+                          return hay.some((v) => v.includes(term))
+                        })
+                        .slice(0, 80)
+                        .map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.name} ({String(p.id).slice(0, 8)}…)
+                          </option>
+                        ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const ref = (products || []).find((p) => p.id === (variantReferenceId[index] ?? ''))
+                        if (ref) applyReferenceToVariant(index, ref)
+                      }}
+                      disabled={!variantReferenceId[index]}
+                      className="w-full shrink-0 rounded-lg border border-earth-300 bg-white px-3 py-2 text-sm font-medium text-earth-700 hover:bg-earth-100 disabled:opacity-60 sm:w-auto sm:self-center"
+                    >
+                      Aplicar referência
+                    </button>
+                  </div>
+
+                  <ProductCoreFields
+                    form={getVariantForm(variant)}
+                    setForm={(updater) => setVariantForm(index, updater)}
+                    productCategorySuggestions={productCategorySuggestions}
+                    images={getVariantImages(variant)}
+                    imageUploading={imageUploading}
+                    setImageUploading={setImageUploading}
+                    imageUploadError={imageUploadError}
+                    setImageUploadError={setImageUploadError}
+                    newImageUrl={variantImageDrafts[index] ?? ''}
+                    setNewImageUrl={(val) => setVariantImageDrafts((prev) => ({ ...prev, [index]: val }))}
+                    addImage={(url) => {
+                      addVariantImage(index, url)
+                      setVariantImageDrafts((prev) => ({ ...prev, [index]: '' }))
+                    }}
+                    moveImage={(from, to) => moveVariantImage(index, from, to)}
+                    setCover={(imgIndex) => moveVariantImage(index, imgIndex, 0)}
+                    removeImageAt={(imgIndex) => removeVariantImageAt(index, imgIndex)}
+                    showCondition
+                    conditionOptions={PRODUCT_CONDITION_OPTIONS}
+                  />
+
+                  <div className="mt-2">
+                    <label className="text-xs text-earth-700">
+                      SKU da versão
+                      <input
+                        type="text"
+                        value={variant.sku ?? ''}
+                        onChange={(e) => updateVariantAt(index, { sku: e.target.value })}
+                        placeholder="SKU (opcional)"
+                        className="mt-1 block w-full rounded border border-earth-300 px-2 py-1 text-sm"
+                      />
+                    </label>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
           <div className="flex items-center gap-2">
@@ -326,7 +626,7 @@ export default function CatalogoProdutosSection() {
               disabled={submitting}
               className="rounded-lg bg-earth-900 px-4 py-2 text-sm font-medium text-white hover:bg-earth-800 disabled:opacity-60"
             >
-              {submitting ? 'Salvando...' : (editingId ? 'Atualizar produto' : 'Criar produto')}
+              {submitting ? 'Salvando...' : (editingId ? 'Salvar produto' : 'Adicionar produto')}
             </button>
             <button
               type="button"
@@ -336,7 +636,7 @@ export default function CatalogoProdutosSection() {
               }}
               className="rounded-lg border border-earth-300 px-4 py-2 text-sm font-medium text-earth-700 hover:bg-earth-100"
             >
-              Fechar
+              Cancelar
             </button>
           </div>
         </form>
@@ -372,6 +672,10 @@ export default function CatalogoProdutosSection() {
               <tbody className="divide-y divide-earth-100">
                 {catalogProducts.map((p) => (
                   <tr key={p.id} className="align-top">
+                    {(() => {
+                      const v = getVariantSummary(p)
+                      return (
+                        <>
                     <td className="px-3 py-2">
                       <div className="flex items-center gap-3">
                         {p.image_url ? (
@@ -386,6 +690,19 @@ export default function CatalogoProdutosSection() {
                           >
                             {p.name || 'Sem nome'}
                           </Link>
+                          <div className="mt-1">
+                            <span
+                              className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                                v.activeCount <= 0
+                                  ? 'bg-red-100 text-red-800'
+                                  : v.activeCount < v.variantsCount
+                                    ? 'bg-amber-100 text-amber-800'
+                                    : 'bg-emerald-100 text-emerald-800'
+                              }`}
+                            >
+                              {v.variantsCount} versões ({v.activeCount} ativas)
+                            </span>
+                          </div>
                           {p.description && (
                             <p className="line-clamp-2 text-xs text-earth-600">{p.description}</p>
                           )}
@@ -399,7 +716,7 @@ export default function CatalogoProdutosSection() {
                       {!p.purchase_group_id && p.store_linked ? 'Sim' : 'Não'}
                     </td>
                     <td className="px-3 py-2 text-earth-700">
-                      {formatJPY(getProductBasePriceJpy(p))}
+                      {v.minPrice != null ? `${formatJPY(v.minPrice)} (a partir de)` : formatJPY(getProductBasePriceJpy(p))}
                     </td>
                     <td className="px-3 py-2">
                       {(() => {
@@ -415,7 +732,10 @@ export default function CatalogoProdutosSection() {
                       {p.category ? String(p.category) : '—'}
                     </td>
                     <td className="px-3 py-2 text-earth-700">
-                      {p.stock_quantity != null ? p.stock_quantity : 'Ilimitado'}
+                      {v.stockLabel}
+                      <div className="text-xs text-earth-500">
+                        {v.activeCount}/{v.variantsCount} versões ativas
+                      </div>
                     </td>
                     <td className="px-3 py-2">
                       <span className={`rounded px-2 py-0.5 text-xs ${p.is_active ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'}`}>
@@ -450,6 +770,9 @@ export default function CatalogoProdutosSection() {
                         Remover
                       </button>
                     </td>
+                        </>
+                      )
+                    })()}
                   </tr>
                 ))}
               </tbody>

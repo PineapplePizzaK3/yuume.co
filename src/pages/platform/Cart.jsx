@@ -258,8 +258,9 @@ function Cart() {
     setQtyDrafts((prev) => {
       const next = {}
       for (const item of items) {
-        if (Object.prototype.hasOwnProperty.call(prev, item.product_id)) {
-          next[item.product_id] = prev[item.product_id]
+        const key = item.variant_id || item.product_id
+        if (Object.prototype.hasOwnProperty.call(prev, key)) {
+          next[key] = prev[key]
         }
       }
       return next
@@ -424,7 +425,7 @@ function Cart() {
   const totalAfterDiscountBrl = Math.max(0, totalBrl - discountBrl)
 
   const cartItemsKey = useMemo(
-    () => items.map((i) => `${i.product_id}:${i.quantity}`).join('|'),
+    () => items.map((i) => `${i.variant_id || i.product_id}:${i.quantity}`).join('|'),
     [items]
   )
 
@@ -508,34 +509,34 @@ function Cart() {
     setFeedback('')
   }
 
-  const handleUpdateQty = async (productId, quantity) => {
+  const handleUpdateQty = async (variantId, quantity) => {
     const qty = Math.max(1, Math.min(99, Number(quantity) || 1))
-    const currentItem = items.find((i) => i.product_id === productId)
+    const currentItem = items.find((i) => (i.variant_id || i.product_id) === variantId)
     const currentQty = Number(currentItem?.quantity || 1)
     if (qty === currentQty) {
       setQtyDrafts((d) => {
         const next = { ...d }
-        delete next[productId]
+        delete next[variantId]
         return next
       })
       return
     }
-    const { error } = await updateCartItem(user.id, productId, qty)
+    const { error } = await updateCartItem(user.id, variantId, qty)
     if (error) setFeedback(error.message)
     else {
       setQtyDrafts((d) => {
         const next = { ...d }
-        delete next[productId]
+        delete next[variantId]
         return next
       })
       loadCart({ silent: true })
     }
   }
 
-  const handleRemove = async (productId) => {
+  const handleRemove = async (variantId) => {
     const snapshot = items
-    setItems((prev) => prev.filter((i) => i.product_id !== productId))
-    const { error } = await removeFromCart(user.id, productId)
+    setItems((prev) => prev.filter((i) => (i.variant_id || i.product_id) !== variantId))
+    const { error } = await removeFromCart(user.id, variantId)
     if (error) {
       setFeedback(error.message)
       setItems(snapshot)
@@ -942,6 +943,7 @@ function Cart() {
               <div className="space-y-4">
                 {items.map((item) => {
                   const p = item.products
+                  const variant = item.product_variants
                   if (!p) return null
                   const qty = Math.max(1, Number(item.quantity) || 1)
                   const jpyUnit = Number(p.price_jpy ?? p.price) || 0
@@ -990,6 +992,11 @@ function Cart() {
                             {p.name}
                           </Link>
                         </h3>
+                        {variant && (
+                          <p className="text-xs text-earth-600">
+                            Versão: {variant?.attributes?.versao || variant?.title || 'Padrão'}
+                          </p>
+                        )}
                         <p className="mt-1 text-[11px] font-medium uppercase tracking-wide text-earth-500">
                           {t('platform.cart.unitLabel')}
                         </p>
@@ -1016,15 +1023,15 @@ function Cart() {
                           type="number"
                           min="1"
                           max="99"
-                          value={qtyDrafts[item.product_id] ?? item.quantity}
+                          value={qtyDrafts[item.variant_id || item.product_id] ?? item.quantity}
                           onChange={(e) =>
-                            setQtyDrafts((d) => ({ ...d, [item.product_id]: e.target.value }))
+                            setQtyDrafts((d) => ({ ...d, [item.variant_id || item.product_id]: e.target.value }))
                           }
-                          onBlur={(e) => handleUpdateQty(item.product_id, e.target.value)}
+                          onBlur={(e) => handleUpdateQty(item.variant_id || item.product_id, e.target.value)}
                           onKeyDown={(e) => {
                             if (e.key === 'Enter') {
                               e.preventDefault()
-                              handleUpdateQty(item.product_id, e.currentTarget.value)
+                              handleUpdateQty(item.variant_id || item.product_id, e.currentTarget.value)
                             }
                           }}
                           className="w-16 rounded border border-earth-300 px-2 py-1 text-center text-earth-900"
@@ -1037,7 +1044,7 @@ function Cart() {
                         </div>
                         <button
                           type="button"
-                          onClick={() => handleRemove(item.product_id)}
+                          onClick={() => handleRemove(item.variant_id || item.product_id)}
                           className="text-sm text-red-600 hover:text-red-800 sm:ml-1"
                         >
                           {t('platform.cart.remove')}

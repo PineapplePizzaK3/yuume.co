@@ -20,6 +20,7 @@ export async function getCart(userId) {
           id,
           user_id,
           product_id,
+          variant_id,
           quantity,
           created_at,
           products(
@@ -33,6 +34,16 @@ export async function getCart(userId) {
             is_active,
             stock_quantity,
             purchase_group_id
+          ),
+          product_variants:variant_id(
+            id,
+            product_id,
+            title,
+            attributes,
+            price_jpy,
+            stock_quantity,
+            is_active,
+            is_default
           )
         `)
         .eq('user_id', userId)
@@ -44,15 +55,18 @@ export async function getCart(userId) {
   }
 }
 
-export async function addToCart(userId, productId, quantity = 1) {
+export async function addToCart(userId, productId, quantity = 1, variantId = null) {
   try {
     const qty = Math.max(1, Math.min(99, Math.floor(Number(quantity) || 1)))
+    if (!variantId) {
+      return { data: null, error: { message: 'Selecione uma variante do produto.' } }
+    }
     const { data, error } = await withDbTimeout(
       supabase
         .from('cart_items')
         .upsert(
-          { user_id: userId, product_id: productId, quantity: qty },
-          { onConflict: 'user_id,product_id' }
+          { user_id: userId, product_id: productId, variant_id: variantId, quantity: qty },
+          { onConflict: 'user_id,variant_id' }
         )
         .select()
         .single()
@@ -64,7 +78,7 @@ export async function addToCart(userId, productId, quantity = 1) {
   }
 }
 
-export async function updateCartItem(userId, productId, quantity) {
+export async function updateCartItem(userId, variantId, quantity) {
   try {
     const qty = Math.max(1, Math.min(99, Math.floor(Number(quantity) || 1)))
     const { data, error } = await withDbTimeout(
@@ -72,7 +86,7 @@ export async function updateCartItem(userId, productId, quantity) {
         .from('cart_items')
         .update({ quantity: qty })
         .eq('user_id', userId)
-        .eq('product_id', productId)
+        .eq('variant_id', variantId)
         .select()
         .single()
     )
@@ -83,14 +97,14 @@ export async function updateCartItem(userId, productId, quantity) {
   }
 }
 
-export async function removeFromCart(userId, productId) {
+export async function removeFromCart(userId, variantId) {
   try {
     const { error } = await withDbTimeout(
       supabase
         .from('cart_items')
         .delete()
         .eq('user_id', userId)
-        .eq('product_id', productId)
+        .eq('variant_id', variantId)
     )
     if (!error) emitCartUpdated(userId)
     return { error }

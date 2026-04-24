@@ -131,6 +131,9 @@ export async function getMyOrders(userId, options = {}) {
       order_items(
         id,
         product_id,
+        variant_id,
+        variant_title,
+        variant_attributes,
         quantity,
         price_at_purchase,
         product:products(name, image_url, image_urls)
@@ -209,6 +212,9 @@ export async function getOrderById(orderId, userId) {
       order_items(
         id,
         product_id,
+        variant_id,
+        variant_title,
+        variant_attributes,
         quantity,
         price_at_purchase,
         product:products(name, image_url, image_urls)
