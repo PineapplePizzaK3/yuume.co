@@ -1195,9 +1195,13 @@ export default function Admin({ routeTabId = 'pedidos' }) {
   }
 
   const buildGroupProductPayload = () => {
-    const parentName = String(groupProductForm.name ?? '').trim()
+    const rawVariants = Array.isArray(groupProductForm?.variants) ? groupProductForm.variants : []
+    const fallbackParentName = rawVariants
+      .map((v) => String(v?.version || v?.title || '').trim())
+      .find(Boolean) || ''
+    const parentName = String(groupProductForm.name ?? '').trim() || fallbackParentName
     if (!parentName) return null
-    const normalizedVariants = normalizeVariantForms(groupProductForm.variants, {
+    const normalizedVariants = normalizeVariantForms(rawVariants, {
       name: parentName,
       category: groupProductForm.category,
       item_condition: groupProductForm.item_condition,

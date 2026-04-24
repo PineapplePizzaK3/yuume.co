@@ -226,6 +226,12 @@ export default function GruposSection() {
   const displayedGroupVariants = groupProductFormMode === 'simple'
     ? (allGroupVariants.length > 0 ? [allGroupVariants[0]] : [])
     : allGroupVariants
+  const simplePrimaryVariantName = String(
+    displayedGroupVariants[0]?.version || displayedGroupVariants[0]?.title || ''
+  ).trim()
+  const canSaveGroupProduct = groupProductFormMode === 'simple'
+    ? Boolean(simplePrimaryVariantName)
+    : Boolean(String(groupProductForm.name || '').trim())
 
   return (
     <section className="mt-0 rounded-b-xl border border-t-0 border-earth-200 bg-earth-50 p-6">
@@ -389,90 +395,6 @@ export default function GruposSection() {
               <span className="text-xs text-earth-500">Mesmo formato da Lista de Produtos</span>
             </div>
             <div className="rounded-lg border border-earth-200 bg-earth-50 p-3">
-              <p className="mb-2 text-sm font-medium text-earth-800">Dados globais do produto pai</p>
-              <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-                <label className="text-xs text-earth-700">
-                  Nome do produto pai
-                  <input
-                    required
-                    type="text"
-                    value={groupProductForm.name}
-                    onChange={(e) => setGroupProductForm((f) => ({ ...f, name: e.target.value }))}
-                    className="mt-1 block w-full rounded border border-earth-300 px-2 py-1 text-sm text-earth-900"
-                  />
-                </label>
-                <label className="text-xs text-earth-700">
-                  Categoria global
-                  <div className="mt-1 grid grid-cols-1 gap-1">
-                    <select
-                      value=""
-                      onChange={(e) => {
-                        if (!e.target.value) return
-                        setGroupProductForm((f) => ({ ...f, category: e.target.value }))
-                        e.target.value = ''
-                      }}
-                      className="block w-full rounded border border-earth-300 bg-white px-2 py-1 text-sm text-earth-900"
-                    >
-                      <option value="">Selecionar existente</option>
-                      {(productCategorySuggestions || []).map((c) => (
-                        <option key={c} value={c}>{c}</option>
-                      ))}
-                    </select>
-                    <input
-                      type="text"
-                      value={groupProductForm.category ?? ''}
-                      onChange={(e) => setGroupProductForm((f) => ({ ...f, category: e.target.value }))}
-                      placeholder="Ou digite nova categoria"
-                      className="block w-full rounded border border-earth-300 px-2 py-1 text-sm text-earth-900"
-                      autoComplete="off"
-                    />
-                  </div>
-                </label>
-                <label className="text-xs text-earth-700">
-                  Condição global
-                  <select
-                    value={groupProductForm.item_condition}
-                    onChange={(e) => setGroupProductForm((f) => ({ ...f, item_condition: e.target.value }))}
-                    className="mt-1 block w-full rounded border border-earth-300 px-2 py-1 text-sm text-earth-900"
-                  >
-                    {PRODUCT_CONDITION_OPTIONS.map((option) => (
-                      <option key={option.value} value={option.value}>{option.label}</option>
-                    ))}
-                  </select>
-                </label>
-              </div>
-              <label className="mt-2 block text-xs text-earth-700">
-                Descrição global
-                <textarea
-                  value={groupProductForm.description ?? ''}
-                  onChange={(e) => setGroupProductForm((f) => ({ ...f, description: e.target.value }))}
-                  rows={3}
-                  className="mt-1 block w-full rounded border border-earth-300 px-2 py-1 text-sm text-earth-900"
-                />
-              </label>
-              <p className="mt-2 text-xs text-earth-600">
-                Preço, estoque e imagens são definidos por versão abaixo.
-              </p>
-            </div>
-
-            <ProductScrapeBlock
-              sourceUrl={groupProductSourceUrlInput}
-              setSourceUrl={(next) => {
-                setGroupProductSourceUrlInput(next)
-                setGroupProductForm((f) => ({ ...f, source_url: next }))
-              }}
-              onScrape={handleScrapeOnlineGroupProduct}
-              scraping={groupProductScraping}
-              scrapeMeta={groupProductScrapeMeta}
-              scrapePreview={groupProductScrapePreview}
-              onApplyPreview={applyPendingGroupProductScrape}
-              onDiscardPreview={discardPendingGroupProductScrape}
-              placeholder="URL do produto para scrape (Online)"
-              previewText="Confirmação manual: o scrape encontrou dados com baixa confiança e não sobrescreveu os campos atuais."
-              showWarnings
-              disabled={!isOnlineGroupDestination}
-            />
-            <div className="rounded-lg border border-earth-200 bg-earth-50 p-3">
               <p className="mb-2 text-sm font-medium text-earth-800">Modo de formulário</p>
               <div className="inline-flex rounded-lg border border-earth-300 bg-white p-1 text-sm">
                 <button
@@ -498,6 +420,92 @@ export default function GruposSection() {
                 </span>
               </div>
             </div>
+            {groupProductFormMode === 'variants' && (
+              <div className="rounded-lg border border-earth-200 bg-earth-50 p-3">
+                <p className="mb-2 text-sm font-medium text-earth-800">Dados globais do produto pai</p>
+                <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                  <label className="text-xs text-earth-700">
+                    Nome do produto pai
+                    <input
+                      required
+                      type="text"
+                      value={groupProductForm.name}
+                      onChange={(e) => setGroupProductForm((f) => ({ ...f, name: e.target.value }))}
+                      className="mt-1 block w-full rounded border border-earth-300 px-2 py-1 text-sm text-earth-900"
+                    />
+                  </label>
+                  <label className="text-xs text-earth-700">
+                    Categoria global
+                    <div className="mt-1 grid grid-cols-1 gap-1">
+                      <select
+                        value=""
+                        onChange={(e) => {
+                          if (!e.target.value) return
+                          setGroupProductForm((f) => ({ ...f, category: e.target.value }))
+                          e.target.value = ''
+                        }}
+                        className="block w-full rounded border border-earth-300 bg-white px-2 py-1 text-sm text-earth-900"
+                      >
+                        <option value="">Selecionar existente</option>
+                        {(productCategorySuggestions || []).map((c) => (
+                          <option key={c} value={c}>{c}</option>
+                        ))}
+                      </select>
+                      <input
+                        type="text"
+                        value={groupProductForm.category ?? ''}
+                        onChange={(e) => setGroupProductForm((f) => ({ ...f, category: e.target.value }))}
+                        placeholder="Ou digite nova categoria"
+                        className="block w-full rounded border border-earth-300 px-2 py-1 text-sm text-earth-900"
+                        autoComplete="off"
+                      />
+                    </div>
+                  </label>
+                  <label className="text-xs text-earth-700">
+                    Condição global
+                    <select
+                      value={groupProductForm.item_condition}
+                      onChange={(e) => setGroupProductForm((f) => ({ ...f, item_condition: e.target.value }))}
+                      className="mt-1 block w-full rounded border border-earth-300 px-2 py-1 text-sm text-earth-900"
+                    >
+                      {PRODUCT_CONDITION_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+                <label className="mt-2 block text-xs text-earth-700">
+                  Descrição global
+                  <textarea
+                    value={groupProductForm.description ?? ''}
+                    onChange={(e) => setGroupProductForm((f) => ({ ...f, description: e.target.value }))}
+                    rows={3}
+                    className="mt-1 block w-full rounded border border-earth-300 px-2 py-1 text-sm text-earth-900"
+                  />
+                </label>
+                <p className="mt-2 text-xs text-earth-600">
+                  Preço, estoque e imagens são definidos por versão abaixo.
+                </p>
+              </div>
+            )}
+
+            <ProductScrapeBlock
+              sourceUrl={groupProductSourceUrlInput}
+              setSourceUrl={(next) => {
+                setGroupProductSourceUrlInput(next)
+                setGroupProductForm((f) => ({ ...f, source_url: next }))
+              }}
+              onScrape={handleScrapeOnlineGroupProduct}
+              scraping={groupProductScraping}
+              scrapeMeta={groupProductScrapeMeta}
+              scrapePreview={groupProductScrapePreview}
+              onApplyPreview={applyPendingGroupProductScrape}
+              onDiscardPreview={discardPendingGroupProductScrape}
+              placeholder="URL do produto para scrape (Online)"
+              previewText="Confirmação manual: o scrape encontrou dados com baixa confiança e não sobrescreveu os campos atuais."
+              showWarnings
+              disabled={!isOnlineGroupDestination}
+            />
             <div className="rounded-lg border border-earth-200 p-3">
               <div className="mb-2 flex items-center justify-between">
                 <p className="text-sm font-medium text-earth-800">
@@ -665,7 +673,7 @@ export default function GruposSection() {
               <button
                 type="button"
                 onClick={(e) => handleSaveGroupProduct({ ...e, preventDefault: () => {} })}
-                disabled={groupProductSubmitting || !groupProductForm.name?.trim()}
+                disabled={groupProductSubmitting || !canSaveGroupProduct}
                 className="rounded-lg bg-earth-800 px-3 py-1.5 text-sm font-medium text-white hover:bg-earth-900 disabled:opacity-60"
               >
                 {editingGroupProductId || editingPendingProductIndex != null ? 'Salvar' : 'Adicionar'} produto
