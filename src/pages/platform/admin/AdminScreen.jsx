@@ -184,6 +184,23 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     return single ? [single] : []
   }
 
+  const resolveVariantImages = (variant, fallback = {}) => {
+    const attrs = variant?.attributes && typeof variant.attributes === 'object' ? variant.attributes : {}
+    const candidateUrls =
+      variant?.image_urls
+      ?? attrs?.image_urls
+      ?? fallback?.image_urls
+      ?? []
+    const candidateUrl =
+      variant?.image_url
+      ?? attrs?.image_url
+      ?? fallback?.image_url
+      ?? ''
+    const urls = normalizeImageArray(candidateUrls, candidateUrl)
+    const cover = String(candidateUrl || '').trim() || urls[0] || ''
+    return { cover, urls }
+  }
+
   const createDefaultVariantForm = (seed = {}) => ({
     title: seed.title ?? 'Padrão',
     version: seed.version ?? seed.title ?? 'Padrão',
@@ -1270,7 +1287,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       item_condition: parentItemCondition,
       variants: normalizedVariants.map((v, index) => {
         const title = String(v.version || v.title || `Versão ${index + 1}`).trim()
-        const imageUrls = Array.isArray(v.image_urls) ? v.image_urls.filter(Boolean) : (v.image_url ? [v.image_url] : [])
+        const { cover, urls: imageUrls } = resolveVariantImages(v)
         const stockQty = v.stock_quantity === '' || v.stock_quantity == null
           ? null
           : Math.max(0, parseInt(v.stock_quantity, 10) || 0)
@@ -1286,7 +1303,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
             weight_unit: v?.weight_unit || 'g',
           },
           sku: String(v.sku || '').trim() || null,
-          image_url: String(v.image_url || '').trim() || imageUrls[0] || null,
+          image_url: cover || null,
           image_urls: imageUrls,
           price_jpy: Math.max(0, Number(v.price_jpy || 0) || 0),
           stock_quantity: stockQty,
@@ -1943,10 +1960,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
         .filter((v) => String(v?.version || v?.title || '').trim() !== '')
         .map((v, index) => ({
           ...(function () {
-            const vUrls = Array.isArray(v.image_urls)
-              ? v.image_urls.filter(Boolean)
-              : (String(v.image_url || '').trim() ? [String(v.image_url || '').trim()] : [])
-            const cover = String(v.image_url || '').trim() || vUrls[0] || null
+            const { cover, urls: vUrls } = resolveVariantImages(v)
             return {
               title: String(v.title || v.version || '').trim() || null,
               attributes: {
@@ -1963,7 +1977,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
                 weight_unit: v.weight_unit || 'g',
               },
               sku: String(v.sku || '').trim() || null,
-              image_url: cover,
+              image_url: cover || null,
               image_urls: vUrls,
               price_jpy: Math.max(0, Number(v.price_jpy || price) || 0),
               stock_quantity: v.stock_quantity === '' || v.stock_quantity == null ? null : Math.max(0, Number(v.stock_quantity) || 0),

@@ -174,6 +174,11 @@ export default function GruposSection() {
       const current = getVariantForm(prev)
       const next = typeof updater === 'function' ? updater(current) : { ...current, ...updater }
       const nextImages = Array.isArray(next.image_urls) ? next.image_urls.filter(Boolean) : []
+      const prevImages = getVariantImages(prev)
+      const finalImages = nextImages.length > 0
+        ? nextImages
+        : (String(next.image_url || '').trim() ? [String(next.image_url || '').trim()] : prevImages)
+      const finalCover = String(next.image_url || '').trim() || finalImages[0] || prev?.image_url || ''
       const nextName = String(next.name || '').trim()
       return {
         ...prev,
@@ -188,8 +193,8 @@ export default function GruposSection() {
         category: next.category ?? '',
         description: next.description ?? '',
         admin_product_url: next.admin_product_url ?? '',
-        image_url: next.image_url || nextImages[0] || '',
-        image_urls: nextImages,
+        image_url: finalCover,
+        image_urls: finalImages,
       }
     })
   }
