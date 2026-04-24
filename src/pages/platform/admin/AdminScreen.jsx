@@ -226,6 +226,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
   const [message, setMessage] = useState('')
   const [editingId, setEditingId] = useState(null)
   const [form, setForm] = useState({
+    form_mode: 'simple',
     name: '',
     description: '',
     price: '',
@@ -334,6 +335,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
   const [groupProducts, setGroupProducts] = useState([])
   const [pendingGroupProducts, setPendingGroupProducts] = useState([])
   const [groupProductForm, setGroupProductForm] = useState({
+    form_mode: 'simple',
     name: '',
     source_url: '',
     description: '',
@@ -1038,6 +1040,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
 
   const resetForm = () => {
     setForm({
+      form_mode: 'simple',
       name: '',
       description: '',
       price: '',
@@ -1116,6 +1119,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     setGroupProducts([])
     setPendingGroupProducts([])
     setGroupProductForm({
+      form_mode: 'simple',
       name: '',
       source_url: '',
       description: '',
@@ -1160,6 +1164,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     setGroupProductScrapeMeta(null)
     setGroupProductScrapePreview(null)
     setGroupProductForm({
+      form_mode: 'simple',
       name: '',
       source_url: '',
       description: '',
@@ -1173,6 +1178,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
 
   const resetGroupProductForm = () => {
     setGroupProductForm({
+      form_mode: 'simple',
       name: '',
       source_url: '',
       description: '',
@@ -1436,6 +1442,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       weight_unit: 'kg',
     })
     setGroupProductForm({
+      form_mode: (Array.isArray(p?.variants) ? p.variants.filter((v) => v?.is_active !== false).length : 0) > 1 ? 'variants' : 'simple',
       name: p.name ?? '',
       source_url: p.source_url ?? '',
       description: p.description ?? '',
@@ -1475,6 +1482,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       weight_unit: 'kg',
     })
     setGroupProductForm({
+      form_mode: (Array.isArray(item?.variants) ? item.variants.filter((v) => v?.is_active !== false).length : 0) > 1 ? 'variants' : 'simple',
       name: item.name ?? '',
       source_url: item.source_url ?? '',
       description: item.description ?? '',
@@ -1795,6 +1803,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     })
     setGroupProductForm((prev) => ({
       ...prev,
+      form_mode: 'variants',
       name: refProduct.name ?? prev.name,
       description: refProduct.description ?? prev.description,
       category: refProduct.category != null && String(refProduct.category).trim() !== '' ? String(refProduct.category) : prev.category,
@@ -1809,6 +1818,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     const kg = Number(p.weight_kg ?? 0)
     const useG = kg > 0 && kg < 1
     setForm({
+      form_mode: (Array.isArray(p?.variants) ? p.variants.filter((v) => v?.is_active !== false).length : 0) > 1 ? 'variants' : 'simple',
       name: p.name,
       description: p.description ?? '',
       price: String(Math.round(getProductBasePriceJpy(p))),
@@ -1869,19 +1879,28 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     const stockQty = form.stock_quantity === '' || form.stock_quantity == null
       ? null
       : Math.max(0, parseInt(form.stock_quantity, 10) || 0)
-    const payload = {
-      name: form.name,
-      description: form.description || null,
-      price,
-      weight_kg: weightKg,
-      stock_quantity: stockQty,
-      item_condition: normalizeProductCondition(form.item_condition),
-      category:
-        form.category != null && String(form.category).trim() !== '' ? String(form.category).trim() : null,
-      admin_product_url: form.admin_product_url != null && String(form.admin_product_url).trim() !== '' ? String(form.admin_product_url).trim() : null,
+    const simpleModeVariant = {
+      title: String(form.name || '').trim() || 'Padrão',
+      attributes: {
+        versao: String(form.name || '').trim() || 'Padrão',
+        admin_product_url: String(form.admin_product_url || '').trim() || null,
+        category: String(form.category || '').trim() || null,
+        item_condition: normalizeProductCondition(form.item_condition),
+        description: String(form.description || '').trim() || null,
+        weight_kg: weightKg,
+        weight_unit: form.weight_unit || 'g',
+      },
+      sku: null,
       image_url: imageUrls[0] || form.image_url || null,
       image_urls: imageUrls,
-      variants: (Array.isArray(form.variants) ? form.variants : [])
+      price_jpy: Math.max(0, Number(price) || 0),
+      stock_quantity: stockQty,
+      is_active: true,
+      is_default: true,
+    }
+    const variantsPayload = form.form_mode === 'simple'
+      ? [simpleModeVariant]
+      : (Array.isArray(form.variants) ? form.variants : [])
         .filter((v) => String(v?.version || v?.title || '').trim() !== '')
         .map((v, index) => ({
           title: String(v.title || v.version || '').trim() || null,
@@ -1905,7 +1924,21 @@ export default function Admin({ routeTabId = 'pedidos' }) {
           stock_quantity: v.stock_quantity === '' || v.stock_quantity == null ? null : Math.max(0, Number(v.stock_quantity) || 0),
           is_active: v.is_active ?? true,
           is_default: v.is_default ?? index === 0,
-        })),
+        }))
+
+    const payload = {
+      name: form.name,
+      description: form.description || null,
+      price,
+      weight_kg: weightKg,
+      stock_quantity: stockQty,
+      item_condition: normalizeProductCondition(form.item_condition),
+      category:
+        form.category != null && String(form.category).trim() !== '' ? String(form.category).trim() : null,
+      admin_product_url: form.admin_product_url != null && String(form.admin_product_url).trim() !== '' ? String(form.admin_product_url).trim() : null,
+      image_url: imageUrls[0] || form.image_url || null,
+      image_urls: imageUrls,
+      variants: variantsPayload,
       is_active: form.is_active,
     }
     if (!Array.isArray(payload.variants) || payload.variants.length === 0) {

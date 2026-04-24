@@ -174,6 +174,59 @@ export default function GruposSection() {
     })
   }
 
+  const ensureSimpleGroupVariant = (f) => {
+    const existing = Array.isArray(f?.variants) ? f.variants : []
+    const active = existing.filter((v) => v?.is_active !== false)
+    if (active.length > 0) return existing
+    return [{
+      title: String(f?.name || '').trim() || 'Padrão',
+      version: String(f?.name || '').trim() || 'Padrão',
+      price_jpy: '',
+      stock_quantity: '',
+      sku: '',
+      image_url: '',
+      image_urls: [],
+      is_active: true,
+      is_default: true,
+      item_condition: f?.item_condition ?? 'new',
+      category: f?.category ?? '',
+      description: f?.description ?? '',
+      admin_product_url: '',
+      weight_kg: '',
+      weight_unit: 'g',
+    }]
+  }
+
+  const switchGroupProductFormMode = (nextMode) => {
+    setGroupProductForm((prev) => {
+      const mode = nextMode === 'variants' ? 'variants' : 'simple'
+      if (mode === prev.form_mode) return prev
+      if (mode === 'variants') {
+        return {
+          ...prev,
+          form_mode: mode,
+          variants: ensureSimpleGroupVariant(prev),
+        }
+      }
+      const variants = Array.isArray(prev.variants) ? prev.variants : []
+      const defaultVariant = variants.find((v) => v?.is_default) || variants[0]
+      if (!defaultVariant) return { ...prev, form_mode: mode }
+      return {
+        ...prev,
+        form_mode: mode,
+        category: defaultVariant.category ?? prev.category,
+        item_condition: defaultVariant.item_condition ?? prev.item_condition,
+        description: defaultVariant.description ?? prev.description,
+      }
+    })
+  }
+
+  const groupProductFormMode = groupProductForm?.form_mode === 'variants' ? 'variants' : 'simple'
+  const allGroupVariants = Array.isArray(groupProductForm?.variants) ? groupProductForm.variants : []
+  const displayedGroupVariants = groupProductFormMode === 'simple'
+    ? (allGroupVariants.length > 0 ? [allGroupVariants[0]] : [])
+    : allGroupVariants
+
   return (
     <section className="mt-0 rounded-b-xl border border-t-0 border-earth-200 bg-earth-50 p-6">
       <h2 className="text-lg font-semibold text-earth-900">Compras Programadas</h2>
@@ -419,40 +472,70 @@ export default function GruposSection() {
               showWarnings
               disabled={!isOnlineGroupDestination}
             />
-            <div className="rounded-lg border border-earth-200 p-3">
-              <div className="mb-2 flex items-center justify-between">
-                <p className="text-sm font-medium text-earth-800">Versões do produto</p>
+            <div className="rounded-lg border border-earth-200 bg-earth-50 p-3">
+              <p className="mb-2 text-sm font-medium text-earth-800">Modo de formulário</p>
+              <div className="inline-flex rounded-lg border border-earth-300 bg-white p-1 text-sm">
                 <button
                   type="button"
-                  onClick={() =>
-                    setGroupProductForm((f) => ({
-                      ...f,
-                      variants: [
-                        ...(Array.isArray(f.variants) ? f.variants : []),
-                        {
-                          title: '',
-                          version: '',
-                          price_jpy: '',
-                          stock_quantity: '',
-                          sku: '',
-                          image_url: '',
-                          image_urls: [],
-                          is_active: true,
-                          is_default: false,
-                          item_condition: f.item_condition ?? 'new',
-                          category: f.category ?? '',
-                          description: '',
-                          admin_product_url: '',
-                          weight_kg: '',
-                          weight_unit: 'g',
-                        },
-                      ],
-                    }))
-                  }
-                  className="rounded border border-earth-300 px-2 py-1 text-xs font-medium text-earth-700 hover:bg-earth-50"
+                  onClick={() => switchGroupProductFormMode('simple')}
+                  className={`rounded-md px-3 py-1.5 ${groupProductFormMode === 'simple' ? 'bg-earth-900 text-white' : 'text-earth-700 hover:bg-earth-100'}`}
                 >
-                  Adicionar versão
+                  Simples (padrão)
                 </button>
+                <button
+                  type="button"
+                  onClick={() => switchGroupProductFormMode('variants')}
+                  className={`rounded-md px-3 py-1.5 ${groupProductFormMode === 'variants' ? 'bg-earth-900 text-white' : 'text-earth-700 hover:bg-earth-100'}`}
+                >
+                  Com versões
+                </button>
+              </div>
+              <div className="mt-2">
+                <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
+                  groupProductFormMode === 'simple' ? 'bg-sky-100 text-sky-800' : 'bg-violet-100 text-violet-800'
+                }`}>
+                  Modo atual: {groupProductFormMode === 'simple' ? 'Simples' : 'Com versões'}
+                </span>
+              </div>
+            </div>
+            <div className="rounded-lg border border-earth-200 p-3">
+              <div className="mb-2 flex items-center justify-between">
+                <p className="text-sm font-medium text-earth-800">
+                  {groupProductFormMode === 'simple' ? 'Produto (modo simples)' : 'Versões do produto'}
+                </p>
+                {groupProductFormMode === 'variants' && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setGroupProductForm((f) => ({
+                        ...f,
+                        variants: [
+                          ...(Array.isArray(f.variants) ? f.variants : []),
+                          {
+                            title: '',
+                            version: '',
+                            price_jpy: '',
+                            stock_quantity: '',
+                            sku: '',
+                            image_url: '',
+                            image_urls: [],
+                            is_active: true,
+                            is_default: false,
+                            item_condition: f.item_condition ?? 'new',
+                            category: f.category ?? '',
+                            description: '',
+                            admin_product_url: '',
+                            weight_kg: '',
+                            weight_unit: 'g',
+                          },
+                        ],
+                      }))
+                    }
+                    className="rounded border border-earth-300 px-2 py-1 text-xs font-medium text-earth-700 hover:bg-earth-50"
+                  >
+                    Adicionar versão
+                  </button>
+                )}
               </div>
               <div className="mb-3 flex min-w-0 flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-stretch">
                 <input
@@ -492,50 +575,54 @@ export default function GruposSection() {
                 </button>
               </div>
               <div className="space-y-2">
-                {(Array.isArray(groupProductForm.variants) ? groupProductForm.variants : []).map((variant, index) => (
+                {displayedGroupVariants.map((variant, index) => (
                   <div key={index} className="rounded-lg border border-earth-200 bg-white p-3">
                     <div className="mb-2 flex items-center justify-between gap-2">
                       <p className="text-sm font-semibold text-earth-800">
-                        Versão {index + 1}{variant.version ? ` • ${variant.version}` : ''}
+                        {groupProductFormMode === 'simple'
+                          ? `Produto${variant.version ? ` • ${variant.version}` : ''}`
+                          : `Versão ${index + 1}${variant.version ? ` • ${variant.version}` : ''}`}
                       </p>
-                      <div className="flex items-center gap-2">
-                        <label className="inline-flex items-center gap-1 text-xs text-earth-700">
-                          <input
-                            type="checkbox"
-                            checked={variant.is_active ?? true}
-                            onChange={(e) => updateVariantAt(index, { is_active: e.target.checked })}
-                          />
-                          Ativa
-                        </label>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setGroupProductForm((f) => ({
-                              ...f,
-                              variants: (Array.isArray(f.variants) ? [...f.variants] : []).map((it, i) => ({
-                                ...it,
-                                is_default: i === index,
-                              })),
-                            }))
-                          }
-                          className="rounded border border-earth-300 px-2 py-1 text-xs hover:bg-earth-50"
-                        >
-                          {variant.is_default ? 'Padrão' : 'Definir padrão'}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setGroupProductForm((f) => {
-                              const next = (Array.isArray(f.variants) ? [...f.variants] : []).filter((_, i) => i !== index)
-                              if (next.length > 0 && !next.some((v) => v.is_default)) next[0] = { ...next[0], is_default: true }
-                              return { ...f, variants: next }
-                            })
-                          }
-                          className="rounded border border-red-200 px-2 py-1 text-xs text-red-700 hover:bg-red-50"
-                        >
-                          Remover
-                        </button>
-                      </div>
+                      {groupProductFormMode === 'variants' && (
+                        <div className="flex items-center gap-2">
+                          <label className="inline-flex items-center gap-1 text-xs text-earth-700">
+                            <input
+                              type="checkbox"
+                              checked={variant.is_active ?? true}
+                              onChange={(e) => updateVariantAt(index, { is_active: e.target.checked })}
+                            />
+                            Ativa
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setGroupProductForm((f) => ({
+                                ...f,
+                                variants: (Array.isArray(f.variants) ? [...f.variants] : []).map((it, i) => ({
+                                  ...it,
+                                  is_default: i === index,
+                                })),
+                              }))
+                            }
+                            className="rounded border border-earth-300 px-2 py-1 text-xs hover:bg-earth-50"
+                          >
+                            {variant.is_default ? 'Padrão' : 'Definir padrão'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setGroupProductForm((f) => {
+                                const next = (Array.isArray(f.variants) ? [...f.variants] : []).filter((_, i) => i !== index)
+                                if (next.length > 0 && !next.some((v) => v.is_default)) next[0] = { ...next[0], is_default: true }
+                                return { ...f, variants: next }
+                              })
+                            }
+                            className="rounded border border-red-200 px-2 py-1 text-xs text-red-700 hover:bg-red-50"
+                          >
+                            Remover
+                          </button>
+                        </div>
+                      )}
                     </div>
                     <ProductCoreFields
                       form={getVariantForm(variant)}

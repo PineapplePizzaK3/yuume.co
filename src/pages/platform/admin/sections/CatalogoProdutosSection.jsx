@@ -200,6 +200,64 @@ export default function CatalogoProdutosSection() {
     })
   }
 
+  const ensureSimpleCatalogVariant = (f) => {
+    const existing = Array.isArray(f?.variants) ? f.variants : []
+    const active = existing.filter((v) => v?.is_active !== false)
+    if (active.length > 0) return existing
+    return [{
+      title: String(f?.name || '').trim() || 'Padrão',
+      version: String(f?.name || '').trim() || 'Padrão',
+      price_jpy: f?.price ?? '',
+      stock_quantity: f?.stock_quantity ?? '',
+      sku: '',
+      image_url: f?.image_url ?? '',
+      image_urls: Array.isArray(f?.image_urls) ? f.image_urls.filter(Boolean) : (f?.image_url ? [f.image_url] : []),
+      is_active: true,
+      is_default: true,
+      item_condition: f?.item_condition ?? 'new',
+      category: f?.category ?? '',
+      description: f?.description ?? '',
+      admin_product_url: f?.admin_product_url ?? '',
+      weight_kg: f?.weight_kg ?? '',
+      weight_unit: f?.weight_unit ?? 'g',
+    }]
+  }
+
+  const switchCatalogFormMode = (nextMode) => {
+    setForm((prev) => {
+      const mode = nextMode === 'variants' ? 'variants' : 'simple'
+      if (mode === prev.form_mode) return prev
+      if (mode === 'variants') {
+        return {
+          ...prev,
+          form_mode: mode,
+          variants: ensureSimpleCatalogVariant(prev),
+        }
+      }
+      const variants = Array.isArray(prev.variants) ? prev.variants : []
+      const defaultVariant = variants.find((v) => v?.is_default) || variants[0]
+      if (!defaultVariant) return { ...prev, form_mode: mode }
+      const nextImages = Array.isArray(defaultVariant.image_urls)
+        ? defaultVariant.image_urls.filter(Boolean)
+        : (defaultVariant.image_url ? [defaultVariant.image_url] : [])
+      return {
+        ...prev,
+        form_mode: mode,
+        name: prev.name || defaultVariant.version || defaultVariant.title || '',
+        price: String(defaultVariant.price_jpy ?? prev.price ?? ''),
+        stock_quantity: defaultVariant.stock_quantity == null ? '' : String(defaultVariant.stock_quantity),
+        image_url: defaultVariant.image_url || nextImages[0] || prev.image_url || '',
+        image_urls: nextImages.length ? nextImages : (Array.isArray(prev.image_urls) ? prev.image_urls : []),
+        category: defaultVariant.category ?? prev.category,
+        item_condition: defaultVariant.item_condition ?? prev.item_condition,
+        description: defaultVariant.description ?? prev.description,
+        admin_product_url: defaultVariant.admin_product_url ?? prev.admin_product_url,
+        weight_kg: defaultVariant.weight_kg ?? prev.weight_kg,
+        weight_unit: defaultVariant.weight_unit ?? prev.weight_unit,
+      }
+    })
+  }
+
   const applyReferenceToVariant = (index, refProduct) => {
     if (!refProduct) return
     const imageUrls = Array.isArray(refProduct?.image_urls) && refProduct.image_urls.length > 0
@@ -251,6 +309,7 @@ export default function CatalogoProdutosSection() {
   }
 
   useEffect(() => {
+    if (form?.form_mode !== 'variants') return
     const variants = Array.isArray(form?.variants) ? form.variants : []
     const defaultVariant = variants.find((v) => v?.is_default) || variants[0]
     if (!defaultVariant) return
@@ -309,6 +368,8 @@ export default function CatalogoProdutosSection() {
       setCatalogScraping(false)
     }
   }
+
+  const catalogFormMode = form?.form_mode === 'variants' ? 'variants' : 'simple'
 
   return (
     <section className="mt-0 rounded-b-xl border border-t-0 border-earth-200 bg-earth-50 p-6">
@@ -386,6 +447,35 @@ export default function CatalogoProdutosSection() {
             placeholder="URL do produto para preencher dados automaticamente"
           />
 
+          <div className="rounded-lg border border-earth-200 bg-earth-50 p-3">
+            <p className="mb-2 text-sm font-medium text-earth-800">Modo de formulário</p>
+            <div className="inline-flex rounded-lg border border-earth-300 bg-white p-1 text-sm">
+              <button
+                type="button"
+                onClick={() => switchCatalogFormMode('simple')}
+                className={`rounded-md px-3 py-1.5 ${catalogFormMode === 'simple' ? 'bg-earth-900 text-white' : 'text-earth-700 hover:bg-earth-100'}`}
+              >
+                Simples (padrão)
+              </button>
+              <button
+                type="button"
+                onClick={() => switchCatalogFormMode('variants')}
+                className={`rounded-md px-3 py-1.5 ${catalogFormMode === 'variants' ? 'bg-earth-900 text-white' : 'text-earth-700 hover:bg-earth-100'}`}
+              >
+                Com versões
+              </button>
+            </div>
+            <div className="mt-2">
+              <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
+                catalogFormMode === 'simple' ? 'bg-sky-100 text-sky-800' : 'bg-violet-100 text-violet-800'
+              }`}>
+                Modo atual: {catalogFormMode === 'simple' ? 'Simples' : 'Com versões'}
+              </span>
+            </div>
+          </div>
+
+          {catalogFormMode === 'variants' ? (
+            <>
           <div className="rounded-lg border border-earth-200 bg-earth-50 p-3">
             <p className="mb-2 text-sm font-medium text-earth-800">Dados globais do produto pai</p>
             <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
@@ -606,6 +696,30 @@ export default function CatalogoProdutosSection() {
               ))}
             </div>
           </div>
+            </>
+          ) : (
+            <div className="rounded-lg border border-earth-200 bg-earth-50 p-3">
+              <p className="mb-2 text-sm font-medium text-earth-800">Produto simples</p>
+              <ProductCoreFields
+                form={form}
+                setForm={setForm}
+                productCategorySuggestions={productCategorySuggestions}
+                images={Array.isArray(form.image_urls) ? form.image_urls.filter(Boolean) : (form.image_url ? [form.image_url] : [])}
+                imageUploading={imageUploading}
+                setImageUploading={setImageUploading}
+                imageUploadError={imageUploadError}
+                setImageUploadError={setImageUploadError}
+                newImageUrl={newImageUrl}
+                setNewImageUrl={setNewImageUrl}
+                addImage={addProductImage}
+                moveImage={moveProductImage}
+                setCover={setProductCover}
+                removeImageAt={removeProductImageAt}
+                showCondition
+                conditionOptions={PRODUCT_CONDITION_OPTIONS}
+              />
+            </div>
+          )}
 
           <div className="flex items-center gap-2">
             <input
