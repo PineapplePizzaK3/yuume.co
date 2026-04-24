@@ -35,14 +35,16 @@ export default function GroupPurchaseDetailContent({
 
   return (
     <>
-      <div className="relative bg-earth-100">
+      <div className="relative w-full overflow-hidden bg-earth-100">
         {images.length > 0 ? (
           <>
-            <img
-              src={images[imageIndex]}
-              alt={group.name}
-              className="h-64 w-full object-contain sm:h-80"
-            />
+            <div className="flex w-full max-w-full items-center justify-center">
+              <img
+                src={images[imageIndex]}
+                alt={group.name}
+                className="h-auto w-auto max-h-64 max-w-full object-contain sm:max-h-80"
+              />
+            </div>
             {images.length > 1 && (
               <>
                 <button
@@ -80,7 +82,7 @@ export default function GroupPurchaseDetailContent({
             )}
           </>
         ) : (
-          <div className="flex h-64 items-center justify-center bg-earth-200 text-earth-500 sm:h-80">
+          <div className="flex h-64 w-full items-center justify-center bg-earth-200 text-earth-500 sm:h-80">
             {t('platform.store.noImage')}
           </div>
         )}

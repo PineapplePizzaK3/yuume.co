@@ -66,13 +66,15 @@ export default function GruposSection() {
     return groupProductForm.image_url ? [groupProductForm.image_url] : []
   })()
 
+  const normalizeGroupProductGallery = (f) => {
+    const u = [...(f.image_urls || []).filter(Boolean)]
+    if (u.length > 0) return u
+    return f.image_url ? [f.image_url] : []
+  }
+
   const removeGroupProductImageAt = (index) => {
     setGroupProductForm((f) => {
-      const cur = (() => {
-        const u = [...(f.image_urls || []).filter(Boolean)]
-        if (u.length > 0) return u
-        return f.image_url ? [f.image_url] : []
-      })()
+      const cur = normalizeGroupProductGallery(f)
       if (index < 0 || index >= cur.length) return f
       cur.splice(index, 1)
       return {
@@ -81,6 +83,26 @@ export default function GruposSection() {
         image_url: cur[0] || '',
       }
     })
+  }
+
+  const moveGroupProductImage = (fromIndex, toIndex) => {
+    if (fromIndex === toIndex) return
+    setGroupProductForm((f) => {
+      const cur = normalizeGroupProductGallery(f)
+      if (fromIndex < 0 || fromIndex >= cur.length || toIndex < 0 || toIndex >= cur.length) return f
+      const list = [...cur]
+      const [moved] = list.splice(fromIndex, 1)
+      list.splice(toIndex, 0, moved)
+      return {
+        ...f,
+        image_urls: list,
+        image_url: list[0] || '',
+      }
+    })
+  }
+
+  const setGroupProductCover = (index) => {
+    moveGroupProductImage(index, 0)
   }
 
   const addGroupProductImageFromInput = () => {
@@ -466,16 +488,41 @@ export default function GruposSection() {
             </div>
             <div className="space-y-2">
               <span className="text-sm font-medium text-earth-700">Fotos do produto</span>
-              <p className="text-xs text-earth-500">Envie várias imagens ou adicione por URL. A primeira foto é usada como capa nos cards.</p>
+              <p className="text-xs text-earth-500">
+                Envie várias imagens ou adicione por URL. Arraste para reordenar; a primeira foto é a capa nos cards.
+              </p>
               {groupProductGalleryUrls.length > 0 && (
-                <ul className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2">
                   {groupProductGalleryUrls.map((url, idx) => (
-                    <li key={`${url}-${idx}`} className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg border border-earth-200 bg-earth-100">
-                      <img src={url} alt="" className="h-full w-full object-cover" />
+                    <div
+                      key={idx}
+                      draggable
+                      onDragStart={(e) => {
+                        e.dataTransfer.setData('text/plain', String(idx))
+                        e.dataTransfer.effectAllowed = 'move'
+                      }}
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={(e) => {
+                        e.preventDefault()
+                        const from = parseInt(e.dataTransfer.getData('text/plain'), 10)
+                        if (Number.isInteger(from)) moveGroupProductImage(from, idx)
+                      }}
+                      className="group relative h-20 w-20 shrink-0 cursor-grab overflow-hidden rounded-lg border border-earth-200 bg-earth-100 active:cursor-grabbing"
+                    >
+                      <img src={url} alt="" className="h-full w-full object-cover" draggable={false} />
                       {idx === 0 && (
                         <span className="absolute left-1 top-1 rounded bg-earth-900/85 px-1 py-0.5 text-[10px] font-medium text-white">
                           Capa
                         </span>
+                      )}
+                      {idx > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setGroupProductCover(idx)}
+                          className="absolute bottom-1 left-1 rounded bg-white/90 px-1 py-0.5 text-[10px] font-medium text-earth-800 hover:bg-white"
+                        >
+                          Definir capa
+                        </button>
                       )}
                       <button
                         type="button"
@@ -485,9 +532,9 @@ export default function GruposSection() {
                       >
                         ×
                       </button>
-                    </li>
+                    </div>
                   ))}
-                </ul>
+                </div>
               )}
               <div className="flex flex-wrap items-center gap-2">
                 <label className="cursor-pointer rounded-lg border border-earth-300 bg-white px-3 py-2 text-sm font-medium text-earth-700 hover:bg-earth-50">
