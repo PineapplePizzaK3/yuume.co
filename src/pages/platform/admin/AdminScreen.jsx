@@ -1249,6 +1249,9 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     const defaultImages = Array.isArray(defaultVariant.image_urls) ? defaultVariant.image_urls.filter(Boolean) : []
     const parentImageUrls = defaultImages.length ? defaultImages : (defaultVariant.image_url ? [defaultVariant.image_url] : [])
     const parentPrice = Math.max(0, Number(defaultVariant.price_jpy || 0) || 0)
+    const parentCategory = String(groupProductForm.category || '').trim() || String(defaultVariant.category || '').trim() || null
+    const parentDescription = String(groupProductForm.description || '').trim() || String(defaultVariant.description || '').trim() || ''
+    const parentItemCondition = normalizeProductCondition(groupProductForm.item_condition || defaultVariant.item_condition)
     const parseVariantWeightKg = (v) => {
       const raw = v?.weight_kg
       if (raw == null || String(raw).trim() === '') return 0
@@ -1258,16 +1261,13 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     }
     return {
       name: parentName,
-      description: groupProductForm.description?.trim() || '',
+      description: parentDescription,
       price: parentPrice,
       image_url: parentImageUrls[0] || '',
       image_urls: parentImageUrls,
       source_url: groupProductForm.source_url?.trim() || null,
-      category:
-        groupProductForm.category != null && String(groupProductForm.category).trim() !== ''
-          ? String(groupProductForm.category).trim()
-          : null,
-      item_condition: normalizeProductCondition(groupProductForm.item_condition),
+      category: parentCategory,
+      item_condition: parentItemCondition,
       variants: normalizedVariants.map((v, index) => {
         const title = String(v.version || v.title || `Versão ${index + 1}`).trim()
         const imageUrls = Array.isArray(v.image_urls) ? v.image_urls.filter(Boolean) : (v.image_url ? [v.image_url] : [])
@@ -1280,7 +1280,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
             versao: title,
             admin_product_url: String(v.admin_product_url || '').trim() || null,
             category: String(v.category || '').trim() || null,
-            item_condition: normalizeProductCondition(v.item_condition || groupProductForm.item_condition),
+            item_condition: normalizeProductCondition(v.item_condition || parentItemCondition),
             description: String(v.description || '').trim() || null,
             weight_kg: parseVariantWeightKg(v),
             weight_unit: v?.weight_unit || 'g',
