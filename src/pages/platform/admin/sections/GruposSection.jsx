@@ -241,6 +241,18 @@ export default function GruposSection() {
     })
   }
 
+  const applyGroupGlobalCategory = (nextCategoryRaw) => {
+    const nextCategory = String(nextCategoryRaw || '')
+    setGroupProductForm((prev) => ({
+      ...prev,
+      category: nextCategory,
+      variants: (Array.isArray(prev.variants) ? prev.variants : []).map((variant) => ({
+        ...variant,
+        category: nextCategory,
+      })),
+    }))
+  }
+
   const groupProductFormMode = groupProductForm?.form_mode === 'variants' ? 'variants' : 'simple'
   const allGroupVariants = Array.isArray(groupProductForm?.variants) ? groupProductForm.variants : []
   const displayedGroupVariants = groupProductFormMode === 'simple'
@@ -461,7 +473,7 @@ export default function GruposSection() {
                         value=""
                         onChange={(e) => {
                           if (!e.target.value) return
-                          setGroupProductForm((f) => ({ ...f, category: e.target.value }))
+                          applyGroupGlobalCategory(e.target.value)
                           e.target.value = ''
                         }}
                         className="block w-full rounded border border-earth-300 bg-white px-2 py-1 text-sm text-earth-900"
@@ -474,7 +486,7 @@ export default function GruposSection() {
                       <input
                         type="text"
                         value={groupProductForm.category ?? ''}
-                        onChange={(e) => setGroupProductForm((f) => ({ ...f, category: e.target.value }))}
+                        onChange={(e) => applyGroupGlobalCategory(e.target.value)}
                         placeholder="Ou digite nova categoria"
                         className="block w-full rounded border border-earth-300 px-2 py-1 text-sm text-earth-900"
                         autoComplete="off"

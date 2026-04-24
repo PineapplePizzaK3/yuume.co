@@ -258,6 +258,18 @@ export default function CatalogoProdutosSection() {
     })
   }
 
+  const applyCatalogGlobalCategory = (nextCategoryRaw) => {
+    const nextCategory = String(nextCategoryRaw || '')
+    setForm((prev) => ({
+      ...prev,
+      category: nextCategory,
+      variants: (Array.isArray(prev.variants) ? prev.variants : []).map((variant) => ({
+        ...variant,
+        category: nextCategory,
+      })),
+    }))
+  }
+
   const applyReferenceToVariant = (index, refProduct) => {
     if (!refProduct) return
     const imageUrls = Array.isArray(refProduct?.image_urls) && refProduct.image_urls.length > 0
@@ -496,7 +508,7 @@ export default function CatalogoProdutosSection() {
                     value=""
                     onChange={(e) => {
                       if (!e.target.value) return
-                      setForm((f) => ({ ...f, category: e.target.value }))
+                      applyCatalogGlobalCategory(e.target.value)
                       e.target.value = ''
                     }}
                     className="block w-full rounded border border-earth-300 bg-white px-2 py-1 text-sm text-earth-900"
@@ -509,7 +521,7 @@ export default function CatalogoProdutosSection() {
                   <input
                     type="text"
                     value={form.category ?? ''}
-                    onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
+                    onChange={(e) => applyCatalogGlobalCategory(e.target.value)}
                     placeholder="Ou digite nova categoria"
                     className="block w-full rounded border border-earth-300 px-2 py-1 text-sm text-earth-900"
                     autoComplete="off"
