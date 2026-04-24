@@ -1942,27 +1942,35 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       : (Array.isArray(form.variants) ? form.variants : [])
         .filter((v) => String(v?.version || v?.title || '').trim() !== '')
         .map((v, index) => ({
-          title: String(v.title || v.version || '').trim() || null,
-          attributes: {
-            versao: String(v.version || v.title || '').trim() || 'Padrão',
-            admin_product_url: String(v.admin_product_url || '').trim() || null,
-            category: String(v.category || '').trim() || null,
-            item_condition: normalizeProductCondition(v.item_condition || form.item_condition),
-            description: String(v.description || '').trim() || null,
-            weight_kg: (() => {
-              const raw = Number(v.weight_kg)
-              if (!Number.isFinite(raw) || raw < 0) return null
-              return v.weight_unit === 'g' ? raw / 1000 : raw
-            })(),
-            weight_unit: v.weight_unit || 'g',
-          },
-          sku: String(v.sku || '').trim() || null,
-          image_url: String(v.image_url || '').trim() || null,
-          image_urls: Array.isArray(v.image_urls) ? v.image_urls.filter(Boolean) : (String(v.image_url || '').trim() ? [String(v.image_url || '').trim()] : []),
-          price_jpy: Math.max(0, Number(v.price_jpy || price) || 0),
-          stock_quantity: v.stock_quantity === '' || v.stock_quantity == null ? null : Math.max(0, Number(v.stock_quantity) || 0),
-          is_active: v.is_active ?? true,
-          is_default: v.is_default ?? index === 0,
+          ...(function () {
+            const vUrls = Array.isArray(v.image_urls)
+              ? v.image_urls.filter(Boolean)
+              : (String(v.image_url || '').trim() ? [String(v.image_url || '').trim()] : [])
+            const cover = String(v.image_url || '').trim() || vUrls[0] || null
+            return {
+              title: String(v.title || v.version || '').trim() || null,
+              attributes: {
+                versao: String(v.version || v.title || '').trim() || 'Padrão',
+                admin_product_url: String(v.admin_product_url || '').trim() || null,
+                category: String(v.category || '').trim() || null,
+                item_condition: normalizeProductCondition(v.item_condition || form.item_condition),
+                description: String(v.description || '').trim() || null,
+                weight_kg: (() => {
+                  const raw = Number(v.weight_kg)
+                  if (!Number.isFinite(raw) || raw < 0) return null
+                  return v.weight_unit === 'g' ? raw / 1000 : raw
+                })(),
+                weight_unit: v.weight_unit || 'g',
+              },
+              sku: String(v.sku || '').trim() || null,
+              image_url: cover,
+              image_urls: vUrls,
+              price_jpy: Math.max(0, Number(v.price_jpy || price) || 0),
+              stock_quantity: v.stock_quantity === '' || v.stock_quantity == null ? null : Math.max(0, Number(v.stock_quantity) || 0),
+              is_active: v.is_active ?? true,
+              is_default: v.is_default ?? index === 0,
+            }
+          })(),
         }))
 
     const payload = {

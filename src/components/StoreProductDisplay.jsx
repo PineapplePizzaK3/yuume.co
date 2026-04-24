@@ -33,6 +33,21 @@ export function getProductImages(p) {
   if (Array.isArray(p?.image_urls) && p.image_urls.length > 0) {
     return p.image_urls.filter(Boolean)
   }
+  if (typeof p?.image_urls === 'string') {
+    const raw = p.image_urls.trim()
+    if (raw) {
+      if (raw.startsWith('[') && raw.endsWith(']')) {
+        try {
+          const parsed = JSON.parse(raw)
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed.filter(Boolean)
+        } catch {
+          // ignore malformed legacy payload
+        }
+      } else {
+        return [raw]
+      }
+    }
+  }
   if (p?.image_url) return [p.image_url]
   return []
 }

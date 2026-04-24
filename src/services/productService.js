@@ -154,15 +154,21 @@ export async function createProduct(product) {
           ? String(product.admin_product_url).trim()
           : null,
       variants: variants.map((v, index) => ({
-        title: v?.title ?? '',
-        attributes: v?.attributes && typeof v.attributes === 'object' ? v.attributes : {},
-        sku: v?.sku ?? null,
-        image_url: v?.image_url ?? null,
-        image_urls: Array.isArray(v?.image_urls) ? v.image_urls.filter(Boolean) : (v?.image_url ? [v.image_url] : []),
-        price_jpy: Number(v?.price_jpy ?? product.price ?? 0) || 0,
-        stock_quantity: v?.stock_quantity === '' || v?.stock_quantity == null ? null : Math.max(0, Number(v.stock_quantity) || 0),
-        is_active: v?.is_active ?? true,
-        is_default: v?.is_default ?? index === 0,
+        ...(function () {
+          const urls = Array.isArray(v?.image_urls) ? v.image_urls.filter(Boolean) : (v?.image_url ? [v.image_url] : [])
+          const cover = (v?.image_url ?? urls[0] ?? null)
+          return {
+            title: v?.title ?? '',
+            attributes: v?.attributes && typeof v.attributes === 'object' ? v.attributes : {},
+            sku: v?.sku ?? null,
+            image_url: cover,
+            image_urls: urls,
+            price_jpy: Number(v?.price_jpy ?? product.price ?? 0) || 0,
+            stock_quantity: v?.stock_quantity === '' || v?.stock_quantity == null ? null : Math.max(0, Number(v.stock_quantity) || 0),
+            is_active: v?.is_active ?? true,
+            is_default: v?.is_default ?? index === 0,
+          }
+        })(),
       })),
     }
     const { data, error } = await withDbTimeout(
@@ -198,15 +204,21 @@ export async function updateProduct(id, product) {
           ? String(product.admin_product_url).trim()
           : null,
       variants: variants.map((v, index) => ({
-        title: v?.title ?? '',
-        attributes: v?.attributes && typeof v.attributes === 'object' ? v.attributes : {},
-        sku: v?.sku ?? null,
-        image_url: v?.image_url ?? null,
-        image_urls: Array.isArray(v?.image_urls) ? v.image_urls.filter(Boolean) : (v?.image_url ? [v.image_url] : []),
-        price_jpy: Number(v?.price_jpy ?? product.price ?? 0) || 0,
-        stock_quantity: v?.stock_quantity === '' || v?.stock_quantity == null ? null : Math.max(0, Number(v.stock_quantity) || 0),
-        is_active: v?.is_active ?? true,
-        is_default: v?.is_default ?? index === 0,
+        ...(function () {
+          const urls = Array.isArray(v?.image_urls) ? v.image_urls.filter(Boolean) : (v?.image_url ? [v.image_url] : [])
+          const cover = (v?.image_url ?? urls[0] ?? null)
+          return {
+            title: v?.title ?? '',
+            attributes: v?.attributes && typeof v.attributes === 'object' ? v.attributes : {},
+            sku: v?.sku ?? null,
+            image_url: cover,
+            image_urls: urls,
+            price_jpy: Number(v?.price_jpy ?? product.price ?? 0) || 0,
+            stock_quantity: v?.stock_quantity === '' || v?.stock_quantity == null ? null : Math.max(0, Number(v.stock_quantity) || 0),
+            is_active: v?.is_active ?? true,
+            is_default: v?.is_default ?? index === 0,
+          }
+        })(),
       })),
     }
     const { data, error } = await withDbTimeout(
