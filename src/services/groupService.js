@@ -135,6 +135,7 @@ export async function deletePurchaseGroup(id) {
 export async function createPurchaseGroupProduct(groupId, product) {
   try {
     const imageUrls = Array.isArray(product.image_urls) ? product.image_urls : []
+    const variants = Array.isArray(product.variants) ? product.variants : []
     const payload = {
       name: product.name,
       description: product.description ?? '',
@@ -142,13 +143,29 @@ export async function createPurchaseGroupProduct(groupId, product) {
       image_url: product.image_url ?? (imageUrls[0] || ''),
       image_urls: imageUrls,
       source_url: product.source_url ?? null,
-      admin_product_url: product.admin_product_url ?? null,
       weight_kg: product.weight_kg ?? 0,
       stock_quantity: product.stock_quantity ?? null,
       category:
         product.category != null && String(product.category).trim() !== ''
           ? String(product.category).trim()
           : null,
+      item_condition: product.item_condition ?? null,
+      variants: variants.map((v, index) => ({
+        title: v?.title ?? '',
+        attributes: v?.attributes && typeof v.attributes === 'object' ? v.attributes : { versao: v?.title ?? '' },
+        sku: v?.sku ?? null,
+        image_url: v?.image_url ?? null,
+        image_urls: Array.isArray(v?.image_urls) ? v.image_urls.filter(Boolean) : (v?.image_url ? [v.image_url] : []),
+        price_jpy: Math.max(0, Number(v?.price_jpy || product.price || 0) || 0),
+        stock_quantity: v?.stock_quantity === '' || v?.stock_quantity == null ? null : Math.max(0, Number(v.stock_quantity) || 0),
+        is_active: v?.is_active ?? true,
+        is_default: v?.is_default ?? index === 0,
+        admin_product_url: v?.admin_product_url ?? null,
+        category: v?.category ?? null,
+        item_condition: v?.item_condition ?? null,
+        description: v?.description ?? null,
+        weight_kg: v?.weight_kg ?? null,
+      })),
     }
     const { data, error } = await withDbTimeout(
       supabase.rpc('admin_create_purchase_group_product', {
@@ -166,6 +183,7 @@ export async function createPurchaseGroupProduct(groupId, product) {
 export async function updatePurchaseGroupProduct(groupId, productId, product) {
   try {
     const imageUrls = Array.isArray(product.image_urls) ? product.image_urls : []
+    const variants = Array.isArray(product.variants) ? product.variants : []
     const payload = {
       name: product.name,
       description: product.description ?? '',
@@ -173,13 +191,29 @@ export async function updatePurchaseGroupProduct(groupId, productId, product) {
       image_url: product.image_url ?? (imageUrls[0] || ''),
       image_urls: imageUrls,
       source_url: product.source_url ?? null,
-      admin_product_url: product.admin_product_url ?? null,
       weight_kg: product.weight_kg ?? 0,
       stock_quantity: product.stock_quantity ?? null,
       category:
         product.category != null && String(product.category).trim() !== ''
           ? String(product.category).trim()
           : null,
+      item_condition: product.item_condition ?? null,
+      variants: variants.map((v, index) => ({
+        title: v?.title ?? '',
+        attributes: v?.attributes && typeof v.attributes === 'object' ? v.attributes : { versao: v?.title ?? '' },
+        sku: v?.sku ?? null,
+        image_url: v?.image_url ?? null,
+        image_urls: Array.isArray(v?.image_urls) ? v.image_urls.filter(Boolean) : (v?.image_url ? [v.image_url] : []),
+        price_jpy: Math.max(0, Number(v?.price_jpy || product.price || 0) || 0),
+        stock_quantity: v?.stock_quantity === '' || v?.stock_quantity == null ? null : Math.max(0, Number(v.stock_quantity) || 0),
+        is_active: v?.is_active ?? true,
+        is_default: v?.is_default ?? index === 0,
+        admin_product_url: v?.admin_product_url ?? null,
+        category: v?.category ?? null,
+        item_condition: v?.item_condition ?? null,
+        description: v?.description ?? null,
+        weight_kg: v?.weight_kg ?? null,
+      })),
     }
     const { data, error } = await withDbTimeout(
       supabase.rpc('admin_update_purchase_group_product', {

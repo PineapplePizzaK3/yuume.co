@@ -1,10 +1,27 @@
+import { useState } from 'react'
 import { uploadProductImage } from '../../../../services/productService'
 import { PRODUCT_CONDITION_OPTIONS } from '../../../../lib/productCondition'
 import { useAdminContext } from '../AdminContext'
 import ProductCoreFields from './ProductCoreFields'
 import ProductScrapeBlock from './ProductScrapeBlock'
 
+function parseAdminLinks(value, variants = []) {
+  const direct = String(value || '')
+    .split(/\r?\n/)
+    .map((item) => item.trim())
+    .filter((url) => /^https?:\/\//i.test(url))
+  const fromVariants = (Array.isArray(variants) ? variants : []).flatMap((variant) => {
+    const attrs = variant?.attributes && typeof variant.attributes === 'object' ? variant.attributes : {}
+    return String(attrs?.admin_product_url || '')
+      .split(/\r?\n/)
+      .map((item) => item.trim())
+      .filter((url) => /^https?:\/\//i.test(url))
+  })
+  return Array.from(new Set([...direct, ...fromVariants]))
+}
+
 export default function GruposSection() {
+  const [variantImageDrafts, setVariantImageDrafts] = useState({})
   const {
     activeTab,
     handleSaveGroup,
@@ -62,66 +79,97 @@ export default function GruposSection() {
 
   if (activeTab !== 'grupos') return null
 
-  const groupProductGalleryUrls = (() => {
-    const fromArr = Array.isArray(groupProductForm.image_urls) ? groupProductForm.image_urls.filter(Boolean) : []
-    if (fromArr.length > 0) return fromArr
-    return groupProductForm.image_url ? [groupProductForm.image_url] : []
-  })()
-
-  const normalizeGroupProductGallery = (f) => {
-    const u = [...(f.image_urls || []).filter(Boolean)]
-    if (u.length > 0) return u
-    return f.image_url ? [f.image_url] : []
-  }
-
-  const removeGroupProductImageAt = (index) => {
+  const updateVariantAt = (index, updater) => {
     setGroupProductForm((f) => {
-      const cur = normalizeGroupProductGallery(f)
-      if (index < 0 || index >= cur.length) return f
-      cur.splice(index, 1)
-      return {
-        ...f,
-        image_urls: cur,
-        image_url: cur[0] || '',
-      }
+      const next = Array.isArray(f.variants) ? [...f.variants] : []
+      if (!next[index]) return f
+      const current = next[index]
+      next[index] = typeof updater === 'function' ? updater(current) : { ...current, ...updater }
+      return { ...f, variants: next }
     })
   }
 
-  const moveGroupProductImage = (fromIndex, toIndex) => {
+  const getVariantImages = (variant) => {
+    const list = Array.isArray(variant?.image_urls) ? variant.image_urls.filter(Boolean) : []
+    if (list.length > 0) return list
+    return variant?.image_url ? [variant.image_url] : []
+  }
+
+  const moveVariantImage = (variantIndex, fromIndex, toIndex) => {
     if (fromIndex === toIndex) return
-    setGroupProductForm((f) => {
-      const cur = normalizeGroupProductGallery(f)
-      if (fromIndex < 0 || fromIndex >= cur.length || toIndex < 0 || toIndex >= cur.length) return f
+    updateVariantAt(variantIndex, (variant) => {
+      const cur = getVariantImages(variant)
+      if (fromIndex < 0 || fromIndex >= cur.length || toIndex < 0 || toIndex >= cur.length) return variant
       const list = [...cur]
       const [moved] = list.splice(fromIndex, 1)
       list.splice(toIndex, 0, moved)
       return {
-        ...f,
-        image_urls: list,
+        ...variant,
         image_url: list[0] || '',
+        image_urls: list,
       }
     })
   }
 
-  const setGroupProductCover = (index) => {
-    moveGroupProductImage(index, 0)
+  const removeVariantImageAt = (variantIndex, imageIndex) => {
+    updateVariantAt(variantIndex, (variant) => {
+      const cur = getVariantImages(variant)
+      if (imageIndex < 0 || imageIndex >= cur.length) return variant
+      const next = cur.filter((_, i) => i !== imageIndex)
+      return {
+        ...variant,
+        image_url: next[0] || '',
+        image_urls: next,
+      }
+    })
   }
 
-  const groupProductVersionForm = {
-    ...groupProductForm,
-    name: groupProductForm.version_name ?? '',
+  const addVariantImage = (variantIndex, url) => {
+    const safeUrl = String(url || '').trim()
+    if (!safeUrl) return
+    updateVariantAt(variantIndex, (variant) => {
+      const cur = getVariantImages(variant)
+      if (cur.includes(safeUrl)) return variant
+      const next = [...cur, safeUrl]
+      return { ...variant, image_url: next[0] || '', image_urls: next }
+    })
   }
 
-  const setGroupProductVersionForm = (updater) => {
-    setGroupProductForm((prev) => {
-      const current = { ...prev, name: prev.version_name ?? '' }
+  const getVariantForm = (variant) => ({
+    name: variant?.version ?? variant?.title ?? '',
+    price: variant?.price_jpy ?? '',
+    weight_kg: variant?.weight_kg ?? '',
+    weight_unit: variant?.weight_unit ?? 'g',
+    stock_quantity: variant?.stock_quantity ?? '',
+    item_condition: variant?.item_condition ?? groupProductForm.item_condition ?? 'new',
+    category: variant?.category ?? groupProductForm.category ?? '',
+    description: variant?.description ?? groupProductForm.description ?? '',
+    admin_product_url: variant?.admin_product_url ?? '',
+    image_url: variant?.image_url ?? '',
+    image_urls: getVariantImages(variant),
+  })
+
+  const setVariantForm = (index, updater) => {
+    updateVariantAt(index, (prev) => {
+      const current = getVariantForm(prev)
       const next = typeof updater === 'function' ? updater(current) : { ...current, ...updater }
-      const nextVersionName = String(next?.name ?? '')
+      const nextImages = Array.isArray(next.image_urls) ? next.image_urls.filter(Boolean) : []
+      const nextName = String(next.name || '').trim()
       return {
         ...prev,
-        ...next,
-        name: prev.name,
-        version_name: nextVersionName,
+        title: nextName || prev?.title || '',
+        version: nextName || prev?.version || '',
+        price_jpy: next.price,
+        stock_quantity: next.stock_quantity,
+        sku: next.sku ?? prev?.sku ?? '',
+        weight_kg: next.weight_kg,
+        weight_unit: next.weight_unit || 'g',
+        item_condition: next.item_condition ?? 'new',
+        category: next.category ?? '',
+        description: next.description ?? '',
+        admin_product_url: next.admin_product_url ?? '',
+        image_url: next.image_url || nextImages[0] || '',
+        image_urls: nextImages,
       }
     })
   }
@@ -221,16 +269,17 @@ export default function GruposSection() {
                       {` • Estoque: ${p.stock_quantity != null ? p.stock_quantity : 'ilimitado'}`}
                       {p.category ? ` • ${p.category}` : ''}
                     </span>
-                    {p.admin_product_url && /^https?:\/\//i.test(String(p.admin_product_url).trim()) && (
+                    {parseAdminLinks(p.admin_product_url, p.variants).map((url, idx) => (
                       <a
-                        href={String(p.admin_product_url).trim()}
+                        key={`${p.id}-admin-link-${idx}`}
+                        href={url}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="mt-1 block truncate text-xs font-medium text-blue-700 hover:underline"
                       >
-                        Link interno (admin)
+                        Link interno (admin) {idx + 1}
                       </a>
-                    )}
+                    ))}
                   </div>
                   <div className="flex shrink-0 gap-2">
                     <button type="button" onClick={() => handleEditGroupProduct(p)} className="text-sm font-medium text-earth-600 hover:text-earth-900">
@@ -255,16 +304,17 @@ export default function GruposSection() {
                       {` • Estoque: ${p.stock_quantity != null ? p.stock_quantity : 'ilimitado'}`}
                       {p.category ? ` • ${p.category}` : ''}
                     </span>
-                    {p.admin_product_url && /^https?:\/\//i.test(String(p.admin_product_url).trim()) && (
+                    {parseAdminLinks(p.admin_product_url, p.variants).map((url, idx) => (
                       <a
-                        href={String(p.admin_product_url).trim()}
+                        key={`${p.id || i}-pending-admin-link-${idx}`}
+                        href={url}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="mt-1 block truncate text-xs font-medium text-blue-700 hover:underline"
                       >
-                        Link interno (admin)
+                        Link interno (admin) {idx + 1}
                       </a>
-                    )}
+                    ))}
                   </div>
                   <div className="flex shrink-0 gap-2">
                     <button type="button" onClick={() => handleEditPendingGroupProduct(p, i)} className="text-sm font-medium text-earth-600 hover:text-earth-900">
@@ -337,16 +387,6 @@ export default function GruposSection() {
                     ))}
                   </select>
                 </label>
-                <label className="text-xs text-earth-700">
-                  Link interno (admin)
-                  <input
-                    type="url"
-                    value={groupProductForm.admin_product_url ?? ''}
-                    onChange={(e) => setGroupProductForm((f) => ({ ...f, admin_product_url: e.target.value }))}
-                    placeholder="https://... (interno)"
-                    className="mt-1 block w-full rounded border border-earth-300 px-2 py-1 text-sm text-earth-900"
-                  />
-                </label>
               </div>
               <label className="mt-2 block text-xs text-earth-700">
                 Descrição global
@@ -382,84 +422,163 @@ export default function GruposSection() {
             <div className="rounded-lg border border-earth-200 p-3">
               <div className="mb-2 flex items-center justify-between">
                 <p className="text-sm font-medium text-earth-800">Versões do produto</p>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setGroupProductForm((f) => ({
+                      ...f,
+                      variants: [
+                        ...(Array.isArray(f.variants) ? f.variants : []),
+                        {
+                          title: '',
+                          version: '',
+                          price_jpy: '',
+                          stock_quantity: '',
+                          sku: '',
+                          image_url: '',
+                          image_urls: [],
+                          is_active: true,
+                          is_default: false,
+                          item_condition: f.item_condition ?? 'new',
+                          category: f.category ?? '',
+                          description: '',
+                          admin_product_url: '',
+                          weight_kg: '',
+                          weight_unit: 'g',
+                        },
+                      ],
+                    }))
+                  }
+                  className="rounded border border-earth-300 px-2 py-1 text-xs font-medium text-earth-700 hover:bg-earth-50"
+                >
+                  Adicionar versão
+                </button>
               </div>
-              <div className="rounded-lg border border-earth-200 bg-white p-3">
-                <div className="mb-2 flex items-center justify-between gap-2">
-                  <p className="text-sm font-semibold text-earth-800">Versão 1 • Padrão</p>
-                </div>
-            <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-stretch">
-              <input
-                type="search"
-                value={groupProductReferenceSearch}
-                onChange={(e) => setGroupProductReferenceSearch(e.target.value)}
-                placeholder="Buscar item na Lista de Produtos..."
-                className="min-w-0 w-full shrink rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900 sm:flex-1 sm:basis-[min(100%,14rem)]"
-              />
-              <select
-                value={groupProductReferenceId}
-                onChange={(e) => {
-                  const nextId = e.target.value
-                  setGroupProductReferenceId(nextId)
-                  const ref = filteredGroupProductReferences.find((p) => p.id === nextId)
-                  if (ref) applyReferenceToGroupProductForm(ref)
-                }}
-                className="min-w-0 w-full max-w-full shrink rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900 sm:flex-1 sm:basis-[min(100%,14rem)]"
-              >
-                <option value="">Selecionar referência do catálogo</option>
-                {filteredGroupProductReferences.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name} ({String(p.id).slice(0, 8)}…)
-                  </option>
+              <div className="mb-3 flex min-w-0 flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-stretch">
+                <input
+                  type="search"
+                  value={groupProductReferenceSearch}
+                  onChange={(e) => setGroupProductReferenceSearch(e.target.value)}
+                  placeholder="Buscar item na Lista de Produtos..."
+                  className="min-w-0 w-full shrink rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900 sm:flex-1 sm:basis-[min(100%,14rem)]"
+                />
+                <select
+                  value={groupProductReferenceId}
+                  onChange={(e) => {
+                    const nextId = e.target.value
+                    setGroupProductReferenceId(nextId)
+                    const ref = filteredGroupProductReferences.find((p) => p.id === nextId)
+                    if (ref) applyReferenceToGroupProductForm(ref)
+                  }}
+                  className="min-w-0 w-full max-w-full shrink rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900 sm:flex-1 sm:basis-[min(100%,14rem)]"
+                >
+                  <option value="">Selecionar referência do catálogo</option>
+                  {filteredGroupProductReferences.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name} ({String(p.id).slice(0, 8)}…)
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const ref = masterProductReferences.find((p) => p.id === groupProductReferenceId)
+                    if (ref) applyReferenceToGroupProductForm(ref)
+                  }}
+                  disabled={!groupProductReferenceId}
+                  className="w-full shrink-0 rounded-lg border border-earth-300 bg-white px-3 py-2 text-sm font-medium text-earth-700 hover:bg-earth-100 disabled:opacity-60 sm:w-auto sm:self-center"
+                >
+                  Aplicar referência
+                </button>
+              </div>
+              <div className="space-y-2">
+                {(Array.isArray(groupProductForm.variants) ? groupProductForm.variants : []).map((variant, index) => (
+                  <div key={index} className="rounded-lg border border-earth-200 bg-white p-3">
+                    <div className="mb-2 flex items-center justify-between gap-2">
+                      <p className="text-sm font-semibold text-earth-800">
+                        Versão {index + 1}{variant.version ? ` • ${variant.version}` : ''}
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <label className="inline-flex items-center gap-1 text-xs text-earth-700">
+                          <input
+                            type="checkbox"
+                            checked={variant.is_active ?? true}
+                            onChange={(e) => updateVariantAt(index, { is_active: e.target.checked })}
+                          />
+                          Ativa
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setGroupProductForm((f) => ({
+                              ...f,
+                              variants: (Array.isArray(f.variants) ? [...f.variants] : []).map((it, i) => ({
+                                ...it,
+                                is_default: i === index,
+                              })),
+                            }))
+                          }
+                          className="rounded border border-earth-300 px-2 py-1 text-xs hover:bg-earth-50"
+                        >
+                          {variant.is_default ? 'Padrão' : 'Definir padrão'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setGroupProductForm((f) => {
+                              const next = (Array.isArray(f.variants) ? [...f.variants] : []).filter((_, i) => i !== index)
+                              if (next.length > 0 && !next.some((v) => v.is_default)) next[0] = { ...next[0], is_default: true }
+                              return { ...f, variants: next }
+                            })
+                          }
+                          className="rounded border border-red-200 px-2 py-1 text-xs text-red-700 hover:bg-red-50"
+                        >
+                          Remover
+                        </button>
+                      </div>
+                    </div>
+                    <ProductCoreFields
+                      form={getVariantForm(variant)}
+                      setForm={(updater) => setVariantForm(index, updater)}
+                      productCategorySuggestions={productCategorySuggestions}
+                      images={getVariantImages(variant)}
+                      imageUploading={groupProductImageUploading}
+                      setImageUploading={setGroupProductImageUploading}
+                      imageUploadError={''}
+                      setImageUploadError={() => {}}
+                      newImageUrl={variantImageDrafts[index] ?? ''}
+                      setNewImageUrl={(val) => setVariantImageDrafts((prev) => ({ ...prev, [index]: val }))}
+                      addImage={(url) => {
+                        addVariantImage(index, url)
+                        setVariantImageDrafts((prev) => ({ ...prev, [index]: '' }))
+                      }}
+                      moveImage={(from, to) => moveVariantImage(index, from, to)}
+                      setCover={(imgIndex) => moveVariantImage(index, imgIndex, 0)}
+                      removeImageAt={(imgIndex) => removeVariantImageAt(index, imgIndex)}
+                      showCondition
+                      conditionOptions={PRODUCT_CONDITION_OPTIONS}
+                    />
+                    <div className="mt-2">
+                      <label className="text-xs text-earth-700">
+                        SKU da versão
+                        <input
+                          type="text"
+                          value={variant.sku ?? ''}
+                          onChange={(e) => updateVariantAt(index, { sku: e.target.value })}
+                          placeholder="SKU (opcional)"
+                          className="mt-1 block w-full rounded border border-earth-300 px-2 py-1 text-sm"
+                        />
+                      </label>
+                    </div>
+                  </div>
                 ))}
-              </select>
-              <button
-                type="button"
-                onClick={() => {
-                  const ref = masterProductReferences.find((p) => p.id === groupProductReferenceId)
-                  if (ref) applyReferenceToGroupProductForm(ref)
-                }}
-                disabled={!groupProductReferenceId}
-                className="w-full shrink-0 rounded-lg border border-earth-300 bg-white px-3 py-2 text-sm font-medium text-earth-700 hover:bg-earth-100 disabled:opacity-60 sm:w-auto sm:self-center"
-              >
-                Aplicar referência
-              </button>
-            </div>
-            <div className="rounded-lg border border-earth-200 bg-earth-50 p-3">
-              <ProductCoreFields
-                form={groupProductVersionForm}
-                setForm={setGroupProductVersionForm}
-                productCategorySuggestions={productCategorySuggestions}
-                images={groupProductGalleryUrls}
-                imageUploading={groupProductImageUploading}
-                setImageUploading={setGroupProductImageUploading}
-                imageUploadError={''}
-                setImageUploadError={() => {}}
-                newImageUrl={groupProductForm.image_url_input ?? ''}
-                setNewImageUrl={(v) => setGroupProductForm((f) => ({ ...f, image_url_input: v }))}
-                addImage={(url) => {
-                  const raw = String(url || '').trim()
-                  if (!raw) return
-                  setGroupProductForm((f) => {
-                    const cur = normalizeGroupProductGallery(f)
-                    if (cur.includes(raw)) return { ...f, image_url_input: '' }
-                    const next = [...cur, raw]
-                    return { ...f, image_urls: next, image_url: f.image_url || next[0], image_url_input: '' }
-                  })
-                }}
-                moveImage={moveGroupProductImage}
-                setCover={setGroupProductCover}
-                removeImageAt={removeGroupProductImageAt}
-                showCondition
-                conditionOptions={PRODUCT_CONDITION_OPTIONS}
-              />
-            </div>
               </div>
             </div>
             <div className="flex gap-2">
               <button
                 type="button"
                 onClick={(e) => handleSaveGroupProduct({ ...e, preventDefault: () => {} })}
-                disabled={groupProductSubmitting || !(groupProductForm.version_name || groupProductForm.name)?.trim()}
+                disabled={groupProductSubmitting || !groupProductForm.name?.trim()}
                 className="rounded-lg bg-earth-800 px-3 py-1.5 text-sm font-medium text-white hover:bg-earth-900 disabled:opacity-60"
               >
                 {editingGroupProductId || editingPendingProductIndex != null ? 'Salvar' : 'Adicionar'} produto

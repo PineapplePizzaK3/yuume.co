@@ -29,8 +29,16 @@ export default function GrupoDeCompraPagina({ publicMode = false }) {
   const [message, setMessage] = useState('')
 
   const backHref = publicMode ? lp('lojaPublicVitrine') : lp('appLoja')
-  const productHref = (id) =>
-    publicMode ? publicStoreProductPath(id, locale) : appStoreProductPath(id, locale)
+  const getDefaultVariantId = (product) => {
+    const variants = Array.isArray(product?.variants) ? product.variants.filter((v) => v?.is_active !== false) : []
+    return (variants.find((v) => v?.is_default) || variants[0])?.id || ''
+  }
+  const productHref = (product) => {
+    const variantId = getDefaultVariantId(product)
+    return publicMode
+      ? publicStoreProductPath(product?.id, locale, variantId ? { variantId } : {})
+      : appStoreProductPath(product?.id, locale, variantId ? { variantId } : {})
+  }
 
   useEffect(() => {
     if (!message) return
@@ -79,14 +87,25 @@ export default function GrupoDeCompraPagina({ publicMode = false }) {
     }
   }, [groupId, t])
 
-  const isOutOfStock = (p) => p?.stock_quantity != null && Number(p.stock_quantity) <= 0
+  const isOutOfStock = (p) => {
+    const variants = Array.isArray(p?.variants) ? p.variants.filter((v) => v?.is_active !== false) : []
+    if (variants.length > 0) {
+      return variants.every((v) => v?.stock_quantity != null && Number(v.stock_quantity) <= 0)
+    }
+    return p?.stock_quantity != null && Number(p.stock_quantity) <= 0
+  }
 
   const handleComprar = async (product) => {
     if (!user?.id) {
       setMessage(tt('loginToBuy'))
       return
     }
-    const { error } = await addToCart(user.id, product.id, 1)
+    const variantId = getDefaultVariantId(product)
+    if (!variantId) {
+      setMessage('Produto sem versão disponível no momento.')
+      return
+    }
+    const { error } = await addToCart(user.id, product.id, 1, variantId)
     if (error) setMessage(error.message || tt('addError'))
     else setMessage(tt('added'))
   }

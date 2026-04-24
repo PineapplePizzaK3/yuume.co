@@ -1,4 +1,12 @@
+import { useMemo, useState } from 'react'
 import { uploadProductImage } from '../../../../services/productService'
+
+function parseAdminProductUrls(value) {
+  return String(value || '')
+    .split(/\r?\n/)
+    .map((item) => item.trim())
+    .filter(Boolean)
+}
 
 export default function ProductCoreFields({
   form,
@@ -18,6 +26,16 @@ export default function ProductCoreFields({
   showCondition = false,
   conditionOptions = [],
 }) {
+  const [newAdminUrl, setNewAdminUrl] = useState('')
+  const adminUrls = useMemo(() => parseAdminProductUrls(form.admin_product_url), [form.admin_product_url])
+
+  const persistAdminUrls = (nextUrls) => {
+    const clean = nextUrls
+      .map((item) => String(item || '').trim())
+      .filter(Boolean)
+    setForm((f) => ({ ...f, admin_product_url: clean.join('\n') }))
+  }
+
   return (
     <>
       <div className="flex flex-wrap items-center gap-2">
@@ -124,15 +142,57 @@ export default function ProductCoreFields({
 
       <div>
         <label className="block text-sm font-medium text-earth-700">Link do produto (somente admin)</label>
-        <input
-          type="url"
-          value={form.admin_product_url ?? ''}
-          onChange={(e) => setForm((f) => ({ ...f, admin_product_url: e.target.value }))}
-          placeholder="https://… (não aparece para clientes)"
-          className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
-        />
+        <div className="mt-1 flex flex-wrap items-end gap-2">
+          <input
+            type="url"
+            value={newAdminUrl}
+            onChange={(e) => setNewAdminUrl(e.target.value)}
+            placeholder="https://... (não aparece para clientes)"
+            className="block min-w-[220px] flex-1 rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
+            autoComplete="off"
+          />
+          <button
+            type="button"
+            onClick={() => {
+              const raw = String(newAdminUrl || '').trim()
+              if (!raw) return
+              if (adminUrls.includes(raw)) {
+                setNewAdminUrl('')
+                return
+              }
+              persistAdminUrls([...adminUrls, raw])
+              setNewAdminUrl('')
+            }}
+            className="rounded-lg border border-earth-300 bg-white px-3 py-2 text-sm font-medium text-earth-700 hover:bg-earth-50"
+          >
+            Adicionar link
+          </button>
+        </div>
+        {adminUrls.length > 0 && (
+          <div className="mt-2 space-y-1">
+            {adminUrls.map((url, index) => (
+              <div key={`${url}-${index}`} className="flex items-center gap-2 text-xs">
+                <a
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="truncate font-medium text-blue-700 hover:underline"
+                >
+                  {url}
+                </a>
+                <button
+                  type="button"
+                  onClick={() => persistAdminUrls(adminUrls.filter((_, i) => i !== index))}
+                  className="rounded border border-red-200 px-1.5 py-0.5 text-[11px] text-red-700 hover:bg-red-50"
+                >
+                  Remover
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
         <p className="mt-1 text-xs text-earth-500">
-          Referência interna para a equipe. Não é exibido na loja.
+          Referência interna para a equipe. Não é exibido na loja. Você pode adicionar mais de um link.
         </p>
       </div>
 

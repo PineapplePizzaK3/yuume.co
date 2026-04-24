@@ -125,7 +125,7 @@ export default function GroupPurchaseDetailContent({
                       className="overflow-hidden rounded-xl border border-earth-200 bg-earth-50 text-left shadow-sm transition hover:border-earth-400 hover:shadow-md"
                     >
                       <Link
-                        to={`${productHref(p.id)}?group=${encodeURIComponent(group.id)}`}
+                        to={`${productHref(p)}${productHref(p).includes('?') ? '&' : '?'}group=${encodeURIComponent(group.id)}`}
                         className="block focus:outline-none focus:ring-2 focus:ring-earth-500 focus:ring-inset"
                       >
                         {productMainImg ? (
