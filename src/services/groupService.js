@@ -4,6 +4,39 @@
 import { supabase } from '../lib/supabase'
 import { withDbTimeout, toServiceError } from '../lib/dbGuard'
 
+function normalizeImageUrls(value, fallbackUrl = '') {
+  if (Array.isArray(value)) {
+    const clean = value.map((item) => String(item || '').trim()).filter(Boolean)
+    if (clean.length > 0) return clean
+  } else if (typeof value === 'string') {
+    const raw = value.trim()
+    if (raw.startsWith('[') && raw.endsWith(']')) {
+      try {
+        const parsed = JSON.parse(raw)
+        if (Array.isArray(parsed)) {
+          const clean = parsed.map((item) => String(item || '').trim()).filter(Boolean)
+          if (clean.length > 0) return clean
+        }
+      } catch {
+        // ignore malformed legacy payload
+      }
+    } else if (raw) {
+      return [raw]
+    }
+  }
+  const single = String(fallbackUrl || '').trim()
+  return single ? [single] : []
+}
+
+function normalizeVariantImages(variant) {
+  const attrs = variant?.attributes && typeof variant.attributes === 'object' ? variant.attributes : {}
+  const coverCandidate = variant?.image_url ?? attrs?.image_url ?? ''
+  const urlsCandidate = variant?.image_urls ?? attrs?.image_urls ?? []
+  const image_urls = normalizeImageUrls(urlsCandidate, coverCandidate)
+  const image_url = String(coverCandidate || '').trim() || image_urls[0] || null
+  return { image_url, image_urls }
+}
+
 export async function getPurchaseGroupById(groupId) {
   const id = String(groupId ?? '').trim()
   if (!id) return { data: null, error: { message: 'invalid id' } }
@@ -72,7 +105,7 @@ export async function getPurchaseGroupsAdmin() {
 
 export async function createPurchaseGroup(group) {
   try {
-    const imageUrls = Array.isArray(group.image_urls) ? group.image_urls : []
+    const imageUrls = normalizeImageUrls(group.image_urls, group.image_url)
     const payload = {
       name: group.name,
       description: group.description ?? '',
@@ -97,7 +130,7 @@ export async function createPurchaseGroup(group) {
 
 export async function updatePurchaseGroup(id, group) {
   try {
-    const imageUrls = Array.isArray(group.image_urls) ? group.image_urls : []
+    const imageUrls = normalizeImageUrls(group.image_urls, group.image_url)
     const payload = {
       name: group.name,
       description: group.description ?? '',
@@ -134,7 +167,7 @@ export async function deletePurchaseGroup(id) {
 /** Admin: cria produto específico do grupo */
 export async function createPurchaseGroupProduct(groupId, product) {
   try {
-    const imageUrls = Array.isArray(product.image_urls) ? product.image_urls : []
+    const imageUrls = normalizeImageUrls(product.image_urls, product.image_url)
     const variants = Array.isArray(product.variants) ? product.variants : []
     const payload = {
       name: product.name,
@@ -150,28 +183,25 @@ export async function createPurchaseGroupProduct(groupId, product) {
           ? String(product.category).trim()
           : null,
       item_condition: product.item_condition ?? null,
-      variants: variants.map((v, index) => ({
-        ...(function () {
-          const urls = Array.isArray(v?.image_urls) ? v.image_urls.filter(Boolean) : (v?.image_url ? [v.image_url] : [])
-          const cover = v?.image_url ?? urls[0] ?? null
-          return {
-            title: v?.title ?? '',
-            attributes: v?.attributes && typeof v.attributes === 'object' ? v.attributes : { versao: v?.title ?? '' },
-            sku: v?.sku ?? null,
-            image_url: cover,
-            image_urls: urls,
-            price_jpy: Math.max(0, Number(v?.price_jpy || product.price || 0) || 0),
-            stock_quantity: v?.stock_quantity === '' || v?.stock_quantity == null ? null : Math.max(0, Number(v.stock_quantity) || 0),
-            is_active: v?.is_active ?? true,
-            is_default: v?.is_default ?? index === 0,
-            admin_product_url: v?.admin_product_url ?? null,
-            category: v?.category ?? null,
-            item_condition: v?.item_condition ?? null,
-            description: v?.description ?? null,
-            weight_kg: v?.weight_kg ?? null,
-          }
-        })(),
-      })),
+      variants: variants.map((v, index) => {
+        const { image_url, image_urls } = normalizeVariantImages(v)
+        return {
+          title: v?.title ?? '',
+          attributes: v?.attributes && typeof v.attributes === 'object' ? v.attributes : { versao: v?.title ?? '' },
+          sku: v?.sku ?? null,
+          image_url,
+          image_urls,
+          price_jpy: Math.max(0, Number(v?.price_jpy || product.price || 0) || 0),
+          stock_quantity: v?.stock_quantity === '' || v?.stock_quantity == null ? null : Math.max(0, Number(v.stock_quantity) || 0),
+          is_active: v?.is_active ?? true,
+          is_default: v?.is_default ?? index === 0,
+          admin_product_url: v?.admin_product_url ?? null,
+          category: v?.category ?? null,
+          item_condition: v?.item_condition ?? null,
+          description: v?.description ?? null,
+          weight_kg: v?.weight_kg ?? null,
+        }
+      }),
     }
     const { data, error } = await withDbTimeout(
       supabase.rpc('admin_create_purchase_group_product', {
@@ -188,7 +218,7 @@ export async function createPurchaseGroupProduct(groupId, product) {
 /** Admin: atualiza produto do grupo */
 export async function updatePurchaseGroupProduct(groupId, productId, product) {
   try {
-    const imageUrls = Array.isArray(product.image_urls) ? product.image_urls : []
+    const imageUrls = normalizeImageUrls(product.image_urls, product.image_url)
     const variants = Array.isArray(product.variants) ? product.variants : []
     const payload = {
       name: product.name,
@@ -204,28 +234,25 @@ export async function updatePurchaseGroupProduct(groupId, productId, product) {
           ? String(product.category).trim()
           : null,
       item_condition: product.item_condition ?? null,
-      variants: variants.map((v, index) => ({
-        ...(function () {
-          const urls = Array.isArray(v?.image_urls) ? v.image_urls.filter(Boolean) : (v?.image_url ? [v.image_url] : [])
-          const cover = v?.image_url ?? urls[0] ?? null
-          return {
-            title: v?.title ?? '',
-            attributes: v?.attributes && typeof v.attributes === 'object' ? v.attributes : { versao: v?.title ?? '' },
-            sku: v?.sku ?? null,
-            image_url: cover,
-            image_urls: urls,
-            price_jpy: Math.max(0, Number(v?.price_jpy || product.price || 0) || 0),
-            stock_quantity: v?.stock_quantity === '' || v?.stock_quantity == null ? null : Math.max(0, Number(v.stock_quantity) || 0),
-            is_active: v?.is_active ?? true,
-            is_default: v?.is_default ?? index === 0,
-            admin_product_url: v?.admin_product_url ?? null,
-            category: v?.category ?? null,
-            item_condition: v?.item_condition ?? null,
-            description: v?.description ?? null,
-            weight_kg: v?.weight_kg ?? null,
-          }
-        })(),
-      })),
+      variants: variants.map((v, index) => {
+        const { image_url, image_urls } = normalizeVariantImages(v)
+        return {
+          title: v?.title ?? '',
+          attributes: v?.attributes && typeof v.attributes === 'object' ? v.attributes : { versao: v?.title ?? '' },
+          sku: v?.sku ?? null,
+          image_url,
+          image_urls,
+          price_jpy: Math.max(0, Number(v?.price_jpy || product.price || 0) || 0),
+          stock_quantity: v?.stock_quantity === '' || v?.stock_quantity == null ? null : Math.max(0, Number(v.stock_quantity) || 0),
+          is_active: v?.is_active ?? true,
+          is_default: v?.is_default ?? index === 0,
+          admin_product_url: v?.admin_product_url ?? null,
+          category: v?.category ?? null,
+          item_condition: v?.item_condition ?? null,
+          description: v?.description ?? null,
+          weight_kg: v?.weight_kg ?? null,
+        }
+      }),
     }
     const { data, error } = await withDbTimeout(
       supabase.rpc('admin_update_purchase_group_product', {

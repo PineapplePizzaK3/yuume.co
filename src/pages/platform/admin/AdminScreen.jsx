@@ -1489,7 +1489,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       price: String(Math.round(getProductBasePriceJpy(p))),
       stock_quantity: p?.stock_quantity != null ? String(p.stock_quantity) : '',
       image_url: p?.image_url ?? '',
-      image_urls: Array.isArray(p?.image_urls) ? p.image_urls.filter(Boolean) : (p?.image_url ? [p.image_url] : []),
+      image_urls: getProductImageUrls(p),
       category: p?.category ?? '',
       item_condition: normalizeProductCondition(p?.item_condition),
       description: p?.description ?? '',
@@ -1529,7 +1529,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       price: String(Math.round(getProductBasePriceJpy(item))),
       stock_quantity: item?.stock_quantity != null ? String(item.stock_quantity) : '',
       image_url: item?.image_url ?? '',
-      image_urls: Array.isArray(item?.image_urls) ? item.image_urls.filter(Boolean) : (item?.image_url ? [item.image_url] : []),
+      image_urls: getProductImageUrls(item),
       category: item?.category ?? '',
       item_condition: normalizeProductCondition(item?.item_condition),
       description: item?.description ?? '',
@@ -1817,6 +1817,19 @@ export default function Admin({ routeTabId = 'pedidos' }) {
 
   const getProductImageUrls = (p) => {
     if (Array.isArray(p?.image_urls) && p.image_urls.length > 0) return [...p.image_urls]
+    if (typeof p?.image_urls === 'string') {
+      const raw = p.image_urls.trim()
+      if (raw.startsWith('[') && raw.endsWith(']')) {
+        try {
+          const parsed = JSON.parse(raw)
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed.filter(Boolean)
+        } catch {
+          // ignore malformed value
+        }
+      } else if (raw) {
+        return [raw]
+      }
+    }
     if (p?.image_url) return [p.image_url]
     return []
   }
