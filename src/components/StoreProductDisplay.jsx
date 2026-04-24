@@ -30,11 +30,13 @@ export function isVariantOutOfStock(variant) {
 }
 
 export function getProductImages(p) {
-  if (Array.isArray(p?.image_urls) && p.image_urls.length > 0) {
-    return p.image_urls.filter(Boolean)
+  const attrs = p?.attributes && typeof p.attributes === 'object' ? p.attributes : {}
+  const rawImageUrls = p?.image_urls ?? attrs?.image_urls
+  if (Array.isArray(rawImageUrls) && rawImageUrls.length > 0) {
+    return rawImageUrls.filter(Boolean)
   }
-  if (typeof p?.image_urls === 'string') {
-    const raw = p.image_urls.trim()
+  if (typeof rawImageUrls === 'string') {
+    const raw = rawImageUrls.trim()
     if (raw) {
       if (raw.startsWith('[') && raw.endsWith(']')) {
         try {
@@ -48,7 +50,8 @@ export function getProductImages(p) {
       }
     }
   }
-  if (p?.image_url) return [p.image_url]
+  const single = String(p?.image_url ?? attrs?.image_url ?? '').trim()
+  if (single) return [single]
   return []
 }
 

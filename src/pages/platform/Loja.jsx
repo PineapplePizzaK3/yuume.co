@@ -80,7 +80,7 @@ function flattenCatalogProductsToVariantCards(products) {
 function getStoreCardImages(card) {
   const v = Array.isArray(card.variants) ? card.variants[0] : null
   if (v) {
-    const fromVar = getProductImages({ image_url: v.image_url, image_urls: v.image_urls })
+    const fromVar = getProductImages(v)
     if (fromVar.length > 0) return fromVar
   }
   return getProductImages(card)

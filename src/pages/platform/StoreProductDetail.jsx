@@ -149,7 +149,7 @@ export default function StoreProductDetail({ publicMode = false }) {
 
   const images = useMemo(() => {
     const variantImages = selectedVariant
-      ? getProductImages({ image_url: selectedVariant.image_url, image_urls: selectedVariant.image_urls })
+      ? getProductImages(selectedVariant)
       : []
     if (variantImages.length > 0) return variantImages
     return product ? getProductImages(product) : []
@@ -315,7 +315,7 @@ export default function StoreProductDetail({ publicMode = false }) {
                       {activeVariants.map((v) => {
                         const versao = variantDisplayLabel(v)
                         const out = isVariantOutOfStock(v)
-                        const varImgs = getProductImages({ image_url: v.image_url, image_urls: v.image_urls })
+                        const varImgs = getProductImages(v)
                         const thumb = varImgs[0] || fallbackProductImage
                         const selected = selectedVariantId === v.id
                         return (
