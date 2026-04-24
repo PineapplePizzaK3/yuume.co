@@ -160,6 +160,30 @@ export default function Admin({ routeTabId = 'pedidos' }) {
   const siteLocale = useSiteLocale()
   const formatJpyAdmin = useCallback((v) => formatJpyForSite(siteLocale, v, null), [siteLocale])
 
+  const normalizeImageArray = (value, fallbackUrl = '') => {
+    if (Array.isArray(value)) {
+      const clean = value.map((item) => String(item || '').trim()).filter(Boolean)
+      if (clean.length > 0) return clean
+    } else if (typeof value === 'string') {
+      const raw = value.trim()
+      if (raw.startsWith('[') && raw.endsWith(']')) {
+        try {
+          const parsed = JSON.parse(raw)
+          if (Array.isArray(parsed)) {
+            const clean = parsed.map((item) => String(item || '').trim()).filter(Boolean)
+            if (clean.length > 0) return clean
+          }
+        } catch {
+          // ignore malformed legacy payloads
+        }
+      } else if (raw) {
+        return [raw]
+      }
+    }
+    const single = String(fallbackUrl || '').trim()
+    return single ? [single] : []
+  }
+
   const createDefaultVariantForm = (seed = {}) => ({
     title: seed.title ?? 'Padrão',
     version: seed.version ?? seed.title ?? 'Padrão',
@@ -167,7 +191,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     stock_quantity: seed.stock_quantity ?? '',
     sku: seed.sku ?? '',
     image_url: seed.image_url ?? '',
-    image_urls: Array.isArray(seed.image_urls) ? seed.image_urls.filter(Boolean) : (seed.image_url ? [seed.image_url] : []),
+    image_urls: normalizeImageArray(seed.image_urls, seed.image_url),
     is_active: seed.is_active ?? true,
     is_default: seed.is_default ?? true,
     admin_product_url: seed.admin_product_url ?? '',
@@ -183,9 +207,18 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     const normalized = input
       .map((v, index) => {
         const attrs = v?.attributes && typeof v.attributes === 'object' ? v.attributes : {}
+        const variantImageUrl = String(
+          v?.image_url
+          ?? attrs?.image_url
+          ?? (index === 0 ? fallback.image_url : '')
+          ?? ''
+        ).trim()
+        const variantImageUrls = normalizeImageArray(
+          v?.image_urls ?? attrs?.image_urls ?? (index === 0 ? fallback.image_urls : []),
+          variantImageUrl
+        )
         return ({
         ...createDefaultVariantForm({
-          ...fallback,
           ...v,
           title: v?.title ?? v?.version ?? attrs.versao ?? fallback.name ?? 'Padrão',
           version: v?.version ?? v?.title ?? attrs.versao ?? 'Padrão',
@@ -197,6 +230,8 @@ export default function Admin({ routeTabId = 'pedidos' }) {
           description: v?.description ?? attrs.description ?? fallback.description ?? '',
           weight_kg: v?.weight_kg ?? attrs.weight_kg ?? '',
           weight_unit: v?.weight_unit ?? attrs.weight_unit ?? 'g',
+          image_url: variantImageUrl,
+          image_urls: variantImageUrls,
         }),
       })
       })

@@ -90,9 +90,29 @@ export default function GruposSection() {
   }
 
   const getVariantImages = (variant) => {
-    const list = Array.isArray(variant?.image_urls) ? variant.image_urls.filter(Boolean) : []
+    const attrs = variant?.attributes && typeof variant.attributes === 'object' ? variant.attributes : {}
+    const rawList = variant?.image_urls ?? attrs?.image_urls
+    const list = Array.isArray(rawList)
+      ? rawList.map((item) => String(item || '').trim()).filter(Boolean)
+      : (() => {
+          if (typeof rawList !== 'string') return []
+          const trimmed = rawList.trim()
+          if (!trimmed) return []
+          if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+            try {
+              const parsed = JSON.parse(trimmed)
+              return Array.isArray(parsed)
+                ? parsed.map((item) => String(item || '').trim()).filter(Boolean)
+                : []
+            } catch {
+              return []
+            }
+          }
+          return [trimmed]
+        })()
     if (list.length > 0) return list
-    return variant?.image_url ? [variant.image_url] : []
+    const single = String(variant?.image_url ?? attrs?.image_url ?? '').trim()
+    return single ? [single] : []
   }
 
   const moveVariantImage = (variantIndex, fromIndex, toIndex) => {
