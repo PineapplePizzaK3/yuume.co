@@ -18,6 +18,23 @@ function getProductImages(p) {
   return []
 }
 
+function getActiveVariants(p) {
+  return Array.isArray(p?.variants) ? p.variants.filter((v) => v?.is_active !== false) : []
+}
+
+function getVariantPriceRangeJpy(p) {
+  const active = getActiveVariants(p)
+  let min = null
+  let max = null
+  for (const v of active) {
+    const price = Number(v?.price_jpy)
+    if (!Number.isFinite(price) || price < 0) continue
+    min = min == null ? price : Math.min(min, price)
+    max = max == null ? price : Math.max(max, price)
+  }
+  return { min, max, hasRange: min != null && max != null && max > min }
+}
+
 /**
  * Galeria + descrição + grade de produtos de um grupo (vitrine).
  */
@@ -115,10 +132,14 @@ export default function GroupPurchaseDetailContent({
                 renderProduct={(p) => {
                   const productImgs = getProductImages(p)
                   const productMainImg = productImgs[0]
-                  const jpy = Number(p.price_jpy ?? p.price) || 0
+                  const priceRange = getVariantPriceRangeJpy(p)
+                  const jpy = Number(priceRange.min ?? p.price_jpy ?? p.price) || 0
                   const brl = Number(p.price_brl)
                   const usd = Number(p.price_usd)
-                  const hasDeriv = Number.isFinite(brl) && brl > 0 && Number.isFinite(usd) && usd > 0
+                  const hasDeriv =
+                    !priceRange.hasRange &&
+                    Number.isFinite(brl) && brl > 0 &&
+                    Number.isFinite(usd) && usd > 0
                   return (
                     <div
                       key={p.id}
@@ -150,6 +171,9 @@ export default function GroupPurchaseDetailContent({
                               />
                             )}
                           </div>
+                          {priceRange.hasRange && (
+                            <p className="mt-1 text-[11px] font-medium text-earth-500">A partir de</p>
+                          )}
                           <p className="mt-2 text-xs font-medium text-earth-500">{tt('clickForDetails')}</p>
                           <div className="mt-3">
                             <span className="rounded-lg border border-earth-300 bg-white px-3 py-1.5 text-xs font-medium text-earth-700">

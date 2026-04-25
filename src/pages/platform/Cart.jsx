@@ -396,9 +396,10 @@ function Cart() {
     let cartJpy = 0
     for (const i of items) {
       const p = i.products
+      const variant = i.product_variants
       if (!p) continue
       const qty = Number(i.quantity) || 1
-      const jpyUnit = Number(p.price_jpy ?? p.price) || 0
+      const jpyUnit = Number(variant?.price_jpy ?? p.price_jpy ?? p.price) || 0
       cartJpy += jpyUnit * qty
       const brlUnit = Number(p.price_brl)
       const usdUnit = Number(p.price_usd)
@@ -578,9 +579,10 @@ function Cart() {
       const orderItemsPreview = items
         .map((i) => {
           const p = i.products
+          const variant = i.product_variants
           if (!p) return null
           const qty = Math.max(1, Number(i.quantity) || 1)
-          const jpyUnit = Number(p.price_jpy ?? p.price) || 0
+          const jpyUnit = Number(variant?.price_jpy ?? p.price_jpy ?? p.price) || 0
           return { quantity: qty, price_at_purchase: jpyUnit }
         })
         .filter(Boolean)
