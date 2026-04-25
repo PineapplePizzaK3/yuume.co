@@ -61,13 +61,53 @@ export async function addToCart(userId, productId, quantity = 1, variantId = nul
     if (!variantId) {
       return { data: null, error: { message: 'Selecione uma variante do produto.' } }
     }
+
+    // Fallback robusto: evita depender de ON CONFLICT quando o índice ainda não foi migrado.
+    const { data: existingRows, error: existingError } = await withDbTimeout(
+      supabase
+        .from('cart_items')
+        .select('id, quantity')
+        .eq('user_id', userId)
+        .eq('variant_id', variantId)
+        .order('created_at', { ascending: false })
+        .limit(5)
+    )
+    if (existingError) return { data: null, error: existingError }
+
+    if (Array.isArray(existingRows) && existingRows.length > 0) {
+      const primary = existingRows[0]
+      const currentQty = Math.max(0, Number(primary?.quantity) || 0)
+      const nextQty = Math.max(1, Math.min(99, currentQty + qty))
+      const { data: updated, error: updateError } = await withDbTimeout(
+        supabase
+          .from('cart_items')
+          .update({ quantity: nextQty, product_id: productId })
+          .eq('id', primary.id)
+          .select()
+          .single()
+      )
+      if (updateError) return { data: null, error: updateError }
+
+      // Segurança para bases que chegaram a criar duplicados.
+      if (existingRows.length > 1) {
+        const duplicateIds = existingRows.slice(1).map((row) => row?.id).filter(Boolean)
+        if (duplicateIds.length > 0) {
+          await withDbTimeout(
+            supabase
+              .from('cart_items')
+              .delete()
+              .in('id', duplicateIds)
+          )
+        }
+      }
+      emitCartUpdated(userId)
+      return { data: updated, error: null }
+    }
+
     const { data, error } = await withDbTimeout(
       supabase
         .from('cart_items')
-        .upsert(
-          { user_id: userId, product_id: productId, variant_id: variantId, quantity: qty },
-          { onConflict: 'user_id,variant_id' }
-        )
+        .insert({ user_id: userId, product_id: productId, variant_id: variantId, quantity: qty })
         .select()
         .single()
     )
@@ -128,7 +168,7 @@ export async function clearCart(userId) {
 export async function createStoreOrder(userId, shipImmediately, shippingCostJpy = null, shippingAddressId = null, couponCode = null) {
   try {
     const { data, error } = await withDbTimeout(
-      supabase.rpc('create_store_order', {
+      supabase.rpc('create_store_order_safe', {
         p_user_id: userId,
         p_ship_immediately: shipImmediately,
         p_shipping_cost: shipImmediately ? shippingCostJpy : null,
