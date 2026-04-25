@@ -31,10 +31,6 @@ export default function GrupoDeCompraPagina({ publicMode = false }) {
   const backHref = publicMode ? lp('lojaPublicVitrine') : lp('appLoja')
   const getPreferredVariantId = (product) => {
     const variants = Array.isArray(product?.variants) ? product.variants.filter((v) => v?.is_active !== false) : []
-    if (product?.__variantId) {
-      const selected = variants.find((v) => v?.id === product.__variantId)
-      if (selected?.id) return selected.id
-    }
     return (variants.find((v) => v?.is_default) || variants[0])?.id || ''
   }
   const productHref = (product) => {

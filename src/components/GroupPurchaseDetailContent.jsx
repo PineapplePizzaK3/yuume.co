@@ -13,6 +13,13 @@ function getGroupImages(g) {
 }
 
 function getProductImages(p) {
+  const active = Array.isArray(p?.variants) ? p.variants.filter((v) => v?.is_active !== false) : []
+  const preferred = active.find((v) => v?.is_default) || active[0] || null
+  if (preferred) {
+    const variantImages = Array.isArray(preferred?.image_urls) ? preferred.image_urls.filter(Boolean) : []
+    if (variantImages.length > 0) return variantImages
+    if (preferred?.image_url) return [preferred.image_url]
+  }
   if (Array.isArray(p?.image_urls) && p.image_urls.length > 0) return p.image_urls.filter(Boolean)
   if (p?.image_url) return [p.image_url]
   return []
@@ -132,17 +139,22 @@ export default function GroupPurchaseDetailContent({
                 renderProduct={(p) => {
                   const productImgs = getProductImages(p)
                   const productMainImg = productImgs[0]
+                  const variantsCount = getActiveVariants(p).length
                   const priceRange = getVariantPriceRangeJpy(p)
                   const jpy = Number(priceRange.min ?? p.price_jpy ?? p.price) || 0
-                  const brl = Number(p.price_brl)
-                  const usd = Number(p.price_usd)
+                  const baseJpy = Number(p.price_jpy ?? p.price) || 0
+                  const baseBrl = Number(p.price_brl)
+                  const baseUsd = Number(p.price_usd)
+                  const impliedBrlPerJpy = baseJpy > 0 && Number.isFinite(baseBrl) && baseBrl > 0 ? (baseBrl / baseJpy) : null
+                  const impliedUsdPerJpy = baseJpy > 0 && Number.isFinite(baseUsd) && baseUsd > 0 ? (baseUsd / baseJpy) : null
+                  const brl = impliedBrlPerJpy != null ? jpy * impliedBrlPerJpy : baseBrl
+                  const usd = impliedUsdPerJpy != null ? jpy * impliedUsdPerJpy : baseUsd
                   const hasDeriv =
-                    !priceRange.hasRange &&
                     Number.isFinite(brl) && brl > 0 &&
                     Number.isFinite(usd) && usd > 0
                   return (
                     <div
-                      key={p.id}
+                      key={p.__cardKey || p.id}
                       className="overflow-hidden rounded-xl border border-earth-200 bg-earth-50 text-left shadow-sm transition hover:border-earth-400 hover:shadow-md"
                     >
                       <Link
@@ -157,7 +169,12 @@ export default function GroupPurchaseDetailContent({
                           </div>
                         )}
                         <div className="p-3">
-                          <h3 className="line-clamp-2 text-sm font-semibold text-earth-900">{p.name}</h3>
+                          <h3 className="line-clamp-2 text-sm font-semibold text-earth-900">{p.__displayName || p.name}</h3>
+                          {variantsCount > 1 && (
+                            <p className="mt-1 text-[11px] font-medium text-earth-500">
+                              {variantsCount} versões disponíveis
+                            </p>
+                          )}
                           <div className="mt-1">
                             {hasDeriv ? (
                               <TriCurrencyDisplay brl={brl} jpy={jpy} usd={usd} variant="card" />
@@ -165,7 +182,7 @@ export default function GroupPurchaseDetailContent({
                               <TriCurrencyDisplay
                                 brl={jpyToBrl(jpy)}
                                 jpy={jpy}
-                                usd={NaN}
+                                usd={Number.isFinite(usd) && usd > 0 ? usd : NaN}
                                 variant="card"
                                 footnote={t('platform.store.triUpdatingFootnote')}
                               />

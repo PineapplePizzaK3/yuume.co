@@ -67,10 +67,15 @@ export function ProductPriceBlock({ product: p, variant = 'card' }) {
       return min == null ? price : Math.min(min, price)
     }, null)
   const jpy = Number(minVariantPrice ?? p.price_jpy ?? p.price) || 0
-  const brl = Number(p.price_brl)
-  const usd = Number(p.price_usd)
+  const baseJpy = Number(p.price_jpy ?? p.price) || 0
+  const baseBrl = Number(p.price_brl)
+  const baseUsd = Number(p.price_usd)
+  const impliedBrlPerJpy = baseJpy > 0 && Number.isFinite(baseBrl) && baseBrl > 0 ? (baseBrl / baseJpy) : null
+  const impliedUsdPerJpy = baseJpy > 0 && Number.isFinite(baseUsd) && baseUsd > 0 ? (baseUsd / baseJpy) : null
+  const brl = impliedBrlPerJpy != null ? jpy * impliedBrlPerJpy : baseBrl
+  const usd = impliedUsdPerJpy != null ? jpy * impliedUsdPerJpy : baseUsd
   const hasVariantPricing = minVariantPrice != null
-  const hasDeriv = !hasVariantPricing && Number.isFinite(brl) && brl > 0 && Number.isFinite(usd) && usd > 0
+  const hasDeriv = Number.isFinite(brl) && brl > 0 && Number.isFinite(usd) && usd > 0
   const approxBrlFallback = jpyToBrl(jpy)
   const triVariant = variant === 'modal' || variant === 'page' ? 'modal' : 'card'
   if (hasDeriv) {
@@ -85,9 +90,9 @@ export function ProductPriceBlock({ product: p, variant = 'card' }) {
       <TriCurrencyDisplay
         brl={approxBrlFallback}
         jpy={jpy}
-        usd={NaN}
+        usd={Number.isFinite(usd) && usd > 0 ? usd : NaN}
         variant={triVariant}
-        footnote={t('platform.store.triUpdatingFootnote')}
+        footnote={!hasVariantPricing ? t('platform.store.triUpdatingFootnote') : null}
       />
     </div>
   )
