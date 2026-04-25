@@ -29,12 +29,16 @@ export default function GrupoDeCompraPagina({ publicMode = false }) {
   const [message, setMessage] = useState('')
 
   const backHref = publicMode ? lp('lojaPublicVitrine') : lp('appLoja')
-  const getDefaultVariantId = (product) => {
+  const getPreferredVariantId = (product) => {
     const variants = Array.isArray(product?.variants) ? product.variants.filter((v) => v?.is_active !== false) : []
+    if (product?.__variantId) {
+      const selected = variants.find((v) => v?.id === product.__variantId)
+      if (selected?.id) return selected.id
+    }
     return (variants.find((v) => v?.is_default) || variants[0])?.id || ''
   }
   const productHref = (product) => {
-    const variantId = getDefaultVariantId(product)
+    const variantId = getPreferredVariantId(product)
     return publicMode
       ? publicStoreProductPath(product?.id, locale, variantId ? { variantId } : {})
       : appStoreProductPath(product?.id, locale, variantId ? { variantId } : {})
@@ -100,7 +104,7 @@ export default function GrupoDeCompraPagina({ publicMode = false }) {
       setMessage(tt('loginToBuy'))
       return
     }
-    const variantId = getDefaultVariantId(product)
+    const variantId = getPreferredVariantId(product)
     if (!variantId) {
       setMessage('Produto sem versão disponível no momento.')
       return

@@ -29,6 +29,16 @@ import { appStoreProductPath } from '../../lib/localeRoutes'
 import { getSystemSettings } from '../../services/settingsService'
 import { GATEWAY_OPTIONS_META, PAYMENT_METHODS_BY_GATEWAY } from '../../components/paymentModalConstants'
 
+function getCartItemImages(product, variant) {
+  const variantList = Array.isArray(variant?.image_urls) ? variant.image_urls.filter(Boolean) : []
+  if (variantList.length > 0) return variantList
+  if (variant?.image_url) return [variant.image_url]
+  const productList = Array.isArray(product?.image_urls) ? product.image_urls.filter(Boolean) : []
+  if (productList.length > 0) return productList
+  if (product?.image_url) return [product.image_url]
+  return []
+}
+
 function formatPriceBrlAsJpy(brl) {
   const jpy = Math.round(brlToJpy(brl))
   const approxBrl = jpyToBrl(jpy)
@@ -946,7 +956,7 @@ function Cart() {
                   const variant = item.product_variants
                   if (!p) return null
                   const qty = Math.max(1, Number(item.quantity) || 1)
-                  const jpyUnit = Number(p.price_jpy ?? p.price) || 0
+                  const jpyUnit = Number(variant?.price_jpy ?? p.price_jpy ?? p.price) || 0
                   const brlUnit = Number(p.price_brl)
                   const usdUnit = Number(p.price_usd)
                   const hasTri =
@@ -962,17 +972,19 @@ function Cart() {
                   const sourceTagClass = p.purchase_group_id
                     ? 'bg-amber-100 text-amber-800'
                     : 'bg-sky-100 text-sky-800'
-                  const stockCap = getProductStockCap(p)
+                  const stockCap = getProductStockCap(variant || p)
                   const qtyOverStock =
                     stockCap != null && stockCap > 0 && qty > stockCap
                   const lineOutOfStock = stockCap != null && stockCap <= 0
+                  const itemImages = getCartItemImages(p, variant)
+                  const cartImage = itemImages[0] || ''
                   return (
                     <div
                       key={item.id}
                       className="flex flex-wrap items-start gap-4 rounded-xl border border-earth-200 bg-earth-50 p-4"
                     >
-                      {p.image_url ? (
-                        <img src={p.image_url} alt={p.name} className="h-20 w-20 rounded-lg object-cover" />
+                      {cartImage ? (
+                        <img src={cartImage} alt={p.name} className="h-20 w-20 rounded-lg bg-white object-contain" />
                       ) : (
                         <div className="flex h-20 w-20 items-center justify-center rounded-lg bg-earth-200 text-earth-500 text-sm">
                           {t('platform.cart.noImage')}
@@ -986,7 +998,7 @@ function Cart() {
                         </div>
                         <h3 className="font-semibold text-earth-900">
                           <Link
-                            to={appStoreProductPath(p.id, locale)}
+                            to={appStoreProductPath(p.id, locale, item.variant_id ? { variantId: item.variant_id } : {})}
                             className="hover:text-earth-700 hover:underline"
                           >
                             {p.name}

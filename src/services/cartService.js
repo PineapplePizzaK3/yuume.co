@@ -40,6 +40,8 @@ export async function getCart(userId) {
             product_id,
             title,
             attributes,
+            image_url,
+            image_urls,
             price_jpy,
             stock_quantity,
             is_active,
