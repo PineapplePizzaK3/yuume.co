@@ -39,6 +39,16 @@ export default function ImageLightbox({
         className="relative flex h-full w-full items-center justify-center"
         onClick={(e) => e.stopPropagation()}
       >
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute right-2 top-2 rounded-full bg-white/90 p-2 shadow hover:bg-white"
+          aria-label="Fechar imagem ampliada"
+        >
+          <svg className="h-5 w-5 text-earth-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
         <img
           src={src}
           alt={alt ?? 'Imagem ampliada'}

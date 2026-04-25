@@ -179,11 +179,11 @@ export default function GruposSection() {
         ? nextImages
         : (String(next.image_url || '').trim() ? [String(next.image_url || '').trim()] : prevImages)
       const finalCover = String(next.image_url || '').trim() || finalImages[0] || prev?.image_url || ''
-      const nextName = String(next.name || '').trim()
+      const nextName = String(next.name ?? '')
       return {
         ...prev,
-        title: nextName || prev?.title || '',
-        version: nextName || prev?.version || '',
+        title: nextName,
+        version: nextName,
         price_jpy: next.price,
         stock_quantity: next.stock_quantity,
         sku: next.sku ?? prev?.sku ?? '',

@@ -1,7 +1,7 @@
 /**
  * Página individual de produto (vitrine em estoque ou item de grupo).
  */
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useLocalizedPath } from '../../hooks/useLocalizedPath'
@@ -36,6 +36,7 @@ export default function StoreProductDetail({ publicMode = false }) {
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
   const [selectedVariantId, setSelectedVariantId] = useState('')
+  const selectedVariantIdRef = useRef('')
   const [imageIndex, setImageIndex] = useState(0)
   const [lightboxOpen, setLightboxOpen] = useState(false)
 
@@ -94,6 +95,10 @@ export default function StoreProductDetail({ publicMode = false }) {
   useEffect(() => {
     setImageIndex(0)
   }, [product?.id, selectedVariantId])
+
+  useEffect(() => {
+    selectedVariantIdRef.current = selectedVariantId || ''
+  }, [selectedVariantId])
 
   /** Sincroniza variante com `?v=` na URL (ou remove `v` inválido). */
   useEffect(() => {
@@ -172,11 +177,12 @@ export default function StoreProductDetail({ publicMode = false }) {
       return
     }
     const vid = selectedVariant?.id || selectedVariantId
-    if (!vid) {
+    const nextVid = vid || selectedVariantIdRef.current || variantIdFromQuery
+    if (!nextVid) {
       setMessage('Selecione uma versão do produto.')
       return
     }
-    const { error } = await addToCart(user.id, product.id, 1, vid)
+    const { error } = await addToCart(user.id, product.id, 1, nextVid)
     if (error) setMessage(error.message || t('platform.store.addError'))
     else setMessage(t('platform.store.added'))
   }
@@ -190,6 +196,7 @@ export default function StoreProductDetail({ publicMode = false }) {
   }
 
   const selectVariant = (nextId) => {
+    selectedVariantIdRef.current = nextId || ''
     setSelectedVariantId(nextId)
     setImageIndex(0)
     setSearchParams(

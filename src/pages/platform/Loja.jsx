@@ -130,14 +130,13 @@ function LojaEstoqueCatalog({ publicMode = false }) {
       return
     }
     const variants = Array.isArray(card?.variants) ? card.variants.filter((v) => v?.is_active !== false) : []
-    const variant = card.__variantId
-      ? variants.find((v) => v.id === card.__variantId) || variants[0]
-      : variants.find((v) => v?.is_default) || variants[0]
-    if (!variant?.id) {
+    const fallback = variants.find((v) => v?.is_default) || variants[0]
+    const variantId = card?.__variantId || fallback?.id || ''
+    if (!variantId) {
       setMessage('Produto sem versão disponível no momento.')
       return
     }
-    const { error } = await addToCart(user.id, card.id, 1, variant.id)
+    const { error } = await addToCart(user.id, card.id, 1, variantId)
     if (error) {
       setMessage(error.message)
       return
