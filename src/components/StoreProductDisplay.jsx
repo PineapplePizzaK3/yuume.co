@@ -69,7 +69,8 @@ export function ProductPriceBlock({ product: p, variant = 'card' }) {
   const jpy = Number(minVariantPrice ?? p.price_jpy ?? p.price) || 0
   const brl = Number(p.price_brl)
   const usd = Number(p.price_usd)
-  const hasDeriv = Number.isFinite(brl) && brl > 0 && Number.isFinite(usd) && usd > 0
+  const hasVariantPricing = minVariantPrice != null
+  const hasDeriv = !hasVariantPricing && Number.isFinite(brl) && brl > 0 && Number.isFinite(usd) && usd > 0
   const approxBrlFallback = jpyToBrl(jpy)
   const triVariant = variant === 'modal' || variant === 'page' ? 'modal' : 'card'
   if (hasDeriv) {

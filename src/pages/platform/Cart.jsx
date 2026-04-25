@@ -403,8 +403,14 @@ function Cart() {
       cartJpy += jpyUnit * qty
       const brlUnit = Number(p.price_brl)
       const usdUnit = Number(p.price_usd)
-      const lineBrl = Number.isFinite(brlUnit) && brlUnit > 0 ? brlUnit * qty : jpyToBrl(jpyUnit) * qty
-      const lineUsd = Number.isFinite(usdUnit) && usdUnit > 0 ? usdUnit * qty : 0
+      const hasVariant = !!variant?.id
+      const jpyUsd = Number(exchangeSnapshot?.jpy_usd_charge ?? exchangeSnapshot?.jpy_usd)
+      const lineBrl = (hasVariant || !(Number.isFinite(brlUnit) && brlUnit > 0))
+        ? jpyToBrl(jpyUnit) * qty
+        : brlUnit * qty
+      const lineUsd = (hasVariant || !(Number.isFinite(usdUnit) && usdUnit > 0))
+        ? (Number.isFinite(jpyUsd) && jpyUsd > 0 ? jpyUnit * qty * jpyUsd : 0)
+        : usdUnit * qty
       if (p.purchase_group_id) {
         grupoBrl += lineBrl
         grupoUsd += lineUsd
@@ -961,10 +967,15 @@ function Cart() {
                   const jpyUnit = Number(variant?.price_jpy ?? p.price_jpy ?? p.price) || 0
                   const brlUnit = Number(p.price_brl)
                   const usdUnit = Number(p.price_usd)
+                  const hasVariant = !!variant?.id
+                  const jpyUsd = Number(exchangeSnapshot?.jpy_usd_charge ?? exchangeSnapshot?.jpy_usd)
                   const hasTri =
+                    !hasVariant &&
                     Number.isFinite(brlUnit) && brlUnit > 0 && Number.isFinite(usdUnit) && usdUnit > 0
                   const unitBrl = hasTri ? brlUnit : jpyToBrl(jpyUnit)
-                  const unitUsd = hasTri ? usdUnit : NaN
+                  const unitUsd = hasTri
+                    ? usdUnit
+                    : (Number.isFinite(jpyUsd) && jpyUsd > 0 ? jpyUnit * jpyUsd : NaN)
                   const lineJpy = jpyUnit * qty
                   const lineBrl = unitBrl * qty
                   const lineUsd = hasTri ? usdUnit * qty : NaN
