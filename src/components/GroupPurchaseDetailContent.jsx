@@ -35,7 +35,7 @@ export default function GroupPurchaseDetailContent({
 
   return (
     <>
-      <div className="relative w-full overflow-hidden bg-earth-100">
+      <div className="relative w-full overflow-hidden bg-white">
         {images.length > 0 ? (
           <>
             <div className="flex w-full max-w-full items-center justify-center">
@@ -129,7 +129,7 @@ export default function GroupPurchaseDetailContent({
                         className="block focus:outline-none focus:ring-2 focus:ring-earth-500 focus:ring-inset"
                       >
                         {productMainImg ? (
-                          <img src={productMainImg} alt={p.name} className="h-32 w-full object-cover" />
+                          <img src={productMainImg} alt={p.name} className="h-32 w-full bg-white object-contain" />
                         ) : (
                           <div className="flex h-32 items-center justify-center bg-earth-200 text-earth-500 text-sm">
                             {t('platform.store.noImage')}

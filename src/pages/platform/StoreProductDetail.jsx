@@ -230,7 +230,7 @@ export default function StoreProductDetail({ publicMode = false }) {
 
           {!loading && product && (
             <article className="mt-6 overflow-hidden rounded-2xl border border-earth-200 bg-white shadow-sm">
-              <div className="relative bg-earth-100">
+              <div className="relative bg-white">
                 {images.length > 0 ? (
                   <>
                     <img

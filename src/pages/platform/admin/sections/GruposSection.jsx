@@ -822,7 +822,7 @@ export default function GruposSection() {
             <div className="mt-3 flex flex-wrap gap-2">
               {(groupForm.image_urls || []).filter(Boolean).map((url, i) => (
                 <div key={i} className="relative inline-block">
-                  <img src={url} alt="" className="h-20 w-20 rounded border border-earth-200 object-cover" />
+                  <img src={url} alt="" className="h-20 w-20 rounded border border-earth-200 bg-white object-cover" />
                   <button
                     type="button"
                     onClick={() => {

@@ -291,7 +291,7 @@ export default function ProductCoreFields({
                   }}
                   className="group relative inline-block cursor-grab active:cursor-grabbing"
                 >
-                  <img src={url} alt="" className="h-20 w-20 rounded border border-earth-200 object-cover" />
+                  <img src={url} alt="" className="h-20 w-20 rounded border border-earth-200 bg-white object-cover" />
                   {i === 0 && (
                     <span className="absolute left-1 top-1 rounded bg-earth-900 px-1.5 py-0.5 text-[10px] font-semibold text-white">
                       Capa

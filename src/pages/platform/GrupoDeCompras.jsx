@@ -113,7 +113,7 @@ export default function GrupoDeCompras({ embedded = false, hideHeader = false, d
                     className="block w-full text-left focus:outline-none focus:ring-2 focus:ring-earth-500 focus:ring-inset rounded-t-xl"
                   >
                     {mainImg ? (
-                      <img src={mainImg} alt={g.name} className="h-48 w-full object-cover" />
+                      <img src={mainImg} alt={g.name} className="h-48 w-full bg-white object-contain" />
                     ) : (
                       <div className="flex h-48 items-center justify-center bg-earth-200 text-earth-500">
                         {t('platform.store.noImage')}
