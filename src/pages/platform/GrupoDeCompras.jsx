@@ -17,6 +17,12 @@ function getGroupImages(g) {
   return []
 }
 
+function formatGroupJpy(value) {
+  const n = Number(value)
+  if (!Number.isFinite(n) || n < 0) return null
+  return `¥${Math.round(n).toLocaleString('ja-JP')}`
+}
+
 export default function GrupoDeCompras({ embedded = false, hideHeader = false, destination = 'all', publicMode = false }) {
   const { t } = useTranslation()
   const locale = useSiteLocale()
@@ -102,6 +108,12 @@ export default function GrupoDeCompras({ embedded = false, hideHeader = false, d
               const imgs = getGroupImages(g)
               const mainImg = imgs[0]
               const prods = getGroupProducts(g)
+              const shippingFee = Number(g?.scheduled_shipping_fee_jpy)
+              const freeShippingMin = Number(g?.scheduled_free_shipping_min_jpy)
+              const hasScheduledFee = Number.isFinite(shippingFee) && shippingFee > 0
+              const hasFreeShippingMin = Number.isFinite(freeShippingMin) && freeShippingMin > 0
+              const feeLabel = formatGroupJpy(shippingFee)
+              const minLabel = formatGroupJpy(freeShippingMin)
 
               return (
                 <div
@@ -129,6 +141,17 @@ export default function GrupoDeCompras({ embedded = false, hideHeader = false, d
                       <p className="mt-2 text-xs text-earth-500">
                         {tt('productsInGroup', { count: prods.length })}
                       </p>
+                      {(hasScheduledFee || hasFreeShippingMin) && (
+                        <div className="mt-2 rounded-lg border border-blue-200 bg-blue-50 px-2 py-2 text-xs text-blue-900">
+                          <p className="font-semibold">Regras de frete deste grupo</p>
+                          {hasScheduledFee && (
+                            <p className="mt-1">Frete fixo por pedido: {feeLabel}</p>
+                          )}
+                          {hasFreeShippingMin && (
+                            <p className="mt-1">Frete zero a partir de {minLabel} no subtotal deste grupo.</p>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </Link>
 

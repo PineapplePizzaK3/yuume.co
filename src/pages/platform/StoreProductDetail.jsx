@@ -152,6 +152,16 @@ export default function StoreProductDetail({ publicMode = false }) {
     return lab ? `${product.name} — ${lab}` : product.name
   }, [product, selectedVariant])
 
+  const displayDescription = useMemo(() => {
+    const attrs = selectedVariant?.attributes && typeof selectedVariant.attributes === 'object'
+      ? selectedVariant.attributes
+      : {}
+    const variantDescription = String(selectedVariant?.description ?? attrs?.description ?? '').trim()
+    if (variantDescription) return variantDescription
+    const productDescription = String(product?.description ?? '').trim()
+    return productDescription
+  }, [product?.description, selectedVariant])
+
   const images = useMemo(() => {
     const variantImages = selectedVariant
       ? getProductImages(selectedVariant)
@@ -302,9 +312,9 @@ export default function StoreProductDetail({ publicMode = false }) {
                   )
                 })()}
                 <h1 className="mt-3 text-2xl font-bold text-earth-900">{headingTitle}</h1>
-                {product.description && (
+                {displayDescription && (
                   <div className="mt-4 whitespace-pre-wrap text-earth-600">
-                    <LinkifyText text={product.description} />
+                    <LinkifyText text={displayDescription} />
                   </div>
                 )}
                 <div className="mt-6">

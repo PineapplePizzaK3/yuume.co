@@ -28,6 +28,25 @@ export default function ProductCoreFields({
 }) {
   const [newAdminUrl, setNewAdminUrl] = useState('')
   const adminUrls = useMemo(() => parseAdminProductUrls(form.admin_product_url), [form.admin_product_url])
+  const categoryOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          (Array.isArray(productCategorySuggestions) ? productCategorySuggestions : [])
+            .map((item) => String(item || '').trim())
+            .filter(Boolean)
+        )
+      ),
+    [productCategorySuggestions]
+  )
+  const selectedCategoryOption = useMemo(() => {
+    const current = String(form?.category ?? '').trim()
+    if (!current) return ''
+    const direct = categoryOptions.find((option) => option === current)
+    if (direct) return direct
+    const lower = current.toLowerCase()
+    return categoryOptions.find((option) => option.toLowerCase() === lower) || ''
+  }, [categoryOptions, form?.category])
 
   const persistAdminUrls = (nextUrls) => {
     const clean = nextUrls
@@ -106,16 +125,15 @@ export default function ProductCoreFields({
         )}
         <span className="text-sm font-medium text-earth-700">Categoria:</span>
         <select
-          value=""
+          value={selectedCategoryOption}
           onChange={(e) => {
-            if (!e.target.value) return
-            setForm((f) => ({ ...f, category: e.target.value }))
-            e.target.value = ''
+            const nextCategory = e.target.value
+            setForm((f) => ({ ...f, category: nextCategory }))
           }}
           className="min-w-[180px] rounded-lg border border-earth-300 bg-white px-3 py-2 text-sm text-earth-900"
         >
           <option value="">Selecionar existente</option>
-          {(productCategorySuggestions || []).map((c) => (
+          {categoryOptions.map((c) => (
             <option key={c} value={c}>{c}</option>
           ))}
         </select>

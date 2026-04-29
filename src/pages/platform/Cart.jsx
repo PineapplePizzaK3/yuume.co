@@ -28,6 +28,7 @@ import { TriCurrencyDisplay } from '../../components/TriCurrencyDisplay'
 import { appStoreProductPath } from '../../lib/localeRoutes'
 import { getSystemSettings } from '../../services/settingsService'
 import { GATEWAY_OPTIONS_META, PAYMENT_METHODS_BY_GATEWAY } from '../../components/paymentModalConstants'
+import { getPurchaseGroups } from '../../services/groupService'
 
 function getCartItemImages(product, variant) {
   const variantList = Array.isArray(variant?.image_urls) ? variant.image_urls.filter(Boolean) : []
@@ -124,6 +125,7 @@ function Cart() {
   const [draggingTabId, setDraggingTabId] = useState('')
   const [tabOrder, setTabOrder] = useState(() => [...CART_TAB_IDS])
   const [exchangeSnapshot, setExchangeSnapshot] = useState(null)
+  const [scheduledGroupsById, setScheduledGroupsById] = useState({})
   const loadCartSeqRef = useRef(0)
 
   const success = searchParams.get('success') === 'true'
@@ -388,6 +390,43 @@ function Cart() {
     }
   }, [selectedGateway, selectedMethodGroup])
 
+  const scheduledGroupIds = useMemo(() => {
+    const ids = new Set()
+    for (const item of items) {
+      const gid = item?.products?.purchase_group_id
+      if (gid) ids.add(gid)
+    }
+    return Array.from(ids)
+  }, [items])
+
+  useEffect(() => {
+    let active = true
+    const loadScheduledGroups = async () => {
+      if (scheduledGroupIds.length === 0) {
+        setScheduledGroupsById({})
+        return
+      }
+      const { data, error } = await getPurchaseGroups('all')
+      if (!active) return
+      if (error || !Array.isArray(data)) {
+        setScheduledGroupsById({})
+        return
+      }
+      const idSet = new Set(scheduledGroupIds)
+      const next = {}
+      for (const group of data) {
+        if (group?.id && idSet.has(group.id)) {
+          next[group.id] = group
+        }
+      }
+      setScheduledGroupsById(next)
+    }
+    loadScheduledGroups()
+    return () => {
+      active = false
+    }
+  }, [scheduledGroupIds])
+
   const { productSubtotalBrl, grupoFeeBrl, grupoQty, cartSubtotalJpy } = useMemo(() => {
     let lojaBrl = 0
     let grupoBrl = 0
@@ -499,6 +538,44 @@ function Cart() {
       : Math.round(totalAfterDiscountBrl / effBrlPerJpyCheckout)
   const totalUsdEstimate =
     exchangeSnapshot?.usd_brl > 0 ? totalAfterDiscountBrl / Number(exchangeSnapshot.usd_brl) : null
+
+  const scheduledShippingBreakdown = useMemo(() => {
+    const subtotalsByGroup = {}
+    for (const item of items) {
+      const product = item?.products
+      const groupId = product?.purchase_group_id
+      if (!product || !groupId) continue
+      const variant = item?.product_variants
+      const qty = Math.max(1, Number(item?.quantity) || 1)
+      const unitJpy = Number(variant?.price_jpy ?? product?.price_jpy ?? product?.price) || 0
+      subtotalsByGroup[groupId] = (subtotalsByGroup[groupId] || 0) + (unitJpy * qty)
+    }
+    const details = Object.entries(subtotalsByGroup).map(([groupId, subtotalJpy]) => {
+      const group = scheduledGroupsById[groupId]
+      const feeRaw = Number(group?.scheduled_shipping_fee_jpy)
+      const minRaw = Number(group?.scheduled_free_shipping_min_jpy)
+      const hasFee = Number.isFinite(feeRaw) && feeRaw > 0
+      const hasFreeMin = Number.isFinite(minRaw) && minRaw > 0
+      const feeJpy = hasFee ? Math.round(feeRaw) : 0
+      const freeMinJpy = hasFreeMin ? Math.round(minRaw) : null
+      const isFree = hasFee && freeMinJpy != null && subtotalJpy >= freeMinJpy
+      return {
+        groupId,
+        groupName: group?.name || `Grupo ${String(groupId).slice(0, 8)}`,
+        subtotalJpy: Math.round(subtotalJpy),
+        feeJpy,
+        freeMinJpy,
+        hasRule: hasFee || hasFreeMin,
+        appliedJpy: hasFee ? (isFree ? 0 : feeJpy) : 0,
+        isFree,
+      }
+    })
+    const applicable = details.filter((row) => row.hasRule)
+    return {
+      totalJpy: applicable.reduce((sum, row) => sum + row.appliedJpy, 0),
+      details: applicable,
+    }
+  }, [items, scheduledGroupsById])
 
   const handleApplyCoupon = async (inputCode = null) => {
     const code = String(inputCode ?? couponInput).trim()
@@ -1166,6 +1243,25 @@ function Cart() {
                       total: fp.brl(grupoFeeBrl),
                     })}
                   </p>
+                </div>
+              )}
+              {scheduledShippingBreakdown.details.length > 0 && (
+                <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-900">
+                  <p className="font-medium text-blue-950">Frete programado (grupos de compras)</p>
+                  <p className="mt-1">
+                    Total aplicado: {fp.jpy(scheduledShippingBreakdown.totalJpy)} (~{fp.brl(scheduledShippingBreakdown.totalJpy * feeJpyConversionRate)})
+                  </p>
+                  <div className="mt-2 space-y-1 text-xs text-blue-900">
+                    {scheduledShippingBreakdown.details.map((row) => (
+                      <p key={row.groupId}>
+                        <span className="font-semibold">{row.groupName}</span>: subtotal {fp.jpy(row.subtotalJpy)}
+                        {row.freeMinJpy != null ? ` | frete zero >= ${fp.jpy(row.freeMinJpy)}` : ''}
+                        {row.feeJpy > 0 ? ` | frete fixo ${fp.jpy(row.feeJpy)}` : ''}
+                        {` | aplicado ${fp.jpy(row.appliedJpy)}`}
+                        {row.isFree ? ' (isenção atingida)' : ''}
+                      </p>
+                    ))}
+                  </div>
                 </div>
               )}
               <div className="flex flex-col gap-4 border-t border-earth-200 pt-4 sm:flex-row sm:items-end sm:justify-between">

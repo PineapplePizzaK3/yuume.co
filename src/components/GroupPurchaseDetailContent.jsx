@@ -42,6 +42,12 @@ function getVariantPriceRangeJpy(p) {
   return { min, max, hasRange: min != null && max != null && max > min }
 }
 
+function formatGroupJpy(value) {
+  const n = Number(value)
+  if (!Number.isFinite(n) || n < 0) return null
+  return `¥${Math.round(n).toLocaleString('ja-JP')}`
+}
+
 /**
  * Galeria + descrição + grade de produtos de um grupo (vitrine).
  */
@@ -56,6 +62,12 @@ export default function GroupPurchaseDetailContent({
   const { t } = useTranslation()
   const images = getGroupImages(group)
   const [imageIndex, setImageIndex] = useState(0)
+  const shippingFee = Number(group?.scheduled_shipping_fee_jpy)
+  const freeShippingMin = Number(group?.scheduled_free_shipping_min_jpy)
+  const hasScheduledFee = Number.isFinite(shippingFee) && shippingFee > 0
+  const hasFreeShippingMin = Number.isFinite(freeShippingMin) && freeShippingMin > 0
+  const feeLabel = formatGroupJpy(shippingFee)
+  const minLabel = formatGroupJpy(freeShippingMin)
 
   return (
     <>
@@ -120,6 +132,13 @@ export default function GroupPurchaseDetailContent({
           <p className="mt-2 whitespace-pre-wrap text-earth-600">
             <LinkifyText text={group.description} />
           </p>
+        )}
+        {(hasScheduledFee || hasFreeShippingMin) && (
+          <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-900">
+            <p className="font-semibold">Regras de frete deste grupo</p>
+            {hasScheduledFee && <p className="mt-1">Frete fixo por pedido: {feeLabel}</p>}
+            {hasFreeShippingMin && <p className="mt-1">Frete zero a partir de {minLabel} no subtotal deste grupo.</p>}
+          </div>
         )}
 
         <div className="mt-5">

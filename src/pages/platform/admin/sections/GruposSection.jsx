@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { uploadProductImage } from '../../../../services/productService'
 import { PRODUCT_CONDITION_OPTIONS } from '../../../../lib/productCondition'
 import { useAdminContext } from '../AdminContext'
@@ -75,9 +75,70 @@ export default function GruposSection() {
     handleEditGroup,
     handleDeleteGroup,
     productCategorySuggestions,
+    sectionMessages,
   } = useAdminContext()
 
+  const groupEditorRef = useRef(null)
+  const groupProductEditorRef = useRef(null)
+
+  const scrollEditorIntoView = useCallback((containerRef) => {
+    const node = containerRef?.current
+    if (!node) return
+    node.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    const focusTarget = node.querySelector('input, textarea, select, button')
+    if (focusTarget && typeof focusTarget.focus === 'function') {
+      focusTarget.focus({ preventScroll: true })
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!editingGroupId) return
+    scrollEditorIntoView(groupEditorRef)
+  }, [editingGroupId, scrollEditorIntoView])
+
+  useEffect(() => {
+    if (!editingGroupProductId && editingPendingProductIndex == null) return
+    scrollEditorIntoView(groupProductEditorRef)
+  }, [editingGroupProductId, editingPendingProductIndex, scrollEditorIntoView])
+
+  const localMessage = String(sectionMessages?.grupos || '')
+  const localMessageIsError = /erro|inválid|obrigat|falha|não foi possível|selecione|preencha/i.test(localMessage.toLowerCase())
+  const categoryOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          (Array.isArray(productCategorySuggestions) ? productCategorySuggestions : [])
+            .map((item) => String(item || '').trim())
+            .filter(Boolean)
+        )
+      ),
+    [productCategorySuggestions]
+  )
+  const selectedGlobalCategoryOption = useMemo(() => {
+    const current = String(groupProductForm?.category ?? '').trim()
+    if (!current) return ''
+    const direct = categoryOptions.find((option) => option === current)
+    if (direct) return direct
+    const lower = current.toLowerCase()
+    return categoryOptions.find((option) => option.toLowerCase() === lower) || ''
+  }, [categoryOptions, groupProductForm?.category])
+
   if (activeTab !== 'grupos') return null
+
+  const editGroupAndScroll = (group) => {
+    handleEditGroup(group)
+    requestAnimationFrame(() => scrollEditorIntoView(groupEditorRef))
+  }
+
+  const editGroupProductAndScroll = (product) => {
+    handleEditGroupProduct(product)
+    requestAnimationFrame(() => scrollEditorIntoView(groupProductEditorRef))
+  }
+
+  const editPendingGroupProductAndScroll = (item, index) => {
+    handleEditPendingGroupProduct(item, index)
+    requestAnimationFrame(() => scrollEditorIntoView(groupProductEditorRef))
+  }
 
   const updateVariantAt = (index, updater) => {
     setGroupProductForm((f) => {
@@ -274,7 +335,15 @@ export default function GruposSection() {
     <section className="mt-0 rounded-b-xl border border-t-0 border-earth-200 bg-earth-50 p-6">
       <h2 className="text-lg font-semibold text-earth-900">Compras Programadas</h2>
 
-      <form onSubmit={handleSaveGroup} className="mt-4 space-y-3">
+      {localMessage && (
+        <p className={`mt-3 rounded-lg px-4 py-2 text-sm ${
+          localMessageIsError ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
+        }`}>
+          {localMessage}
+        </p>
+      )}
+
+      <form ref={groupEditorRef} onSubmit={handleSaveGroup} className="mt-4 space-y-3">
         <div>
           <label className="block text-sm font-medium text-earth-700">Nome *</label>
           <input
@@ -378,7 +447,7 @@ export default function GruposSection() {
                     ))}
                   </div>
                   <div className="flex shrink-0 gap-2">
-                    <button type="button" onClick={() => handleEditGroupProduct(p)} className="text-sm font-medium text-earth-600 hover:text-earth-900">
+                    <button type="button" onClick={() => editGroupProductAndScroll(p)} className="text-sm font-medium text-earth-600 hover:text-earth-900">
                       Editar
                     </button>
                     <button type="button" onClick={() => handleDeleteGroupProduct(p.id)} className="text-sm font-medium text-red-600 hover:text-red-800">
@@ -413,7 +482,7 @@ export default function GruposSection() {
                     ))}
                   </div>
                   <div className="flex shrink-0 gap-2">
-                    <button type="button" onClick={() => handleEditPendingGroupProduct(p, i)} className="text-sm font-medium text-earth-600 hover:text-earth-900">
+                    <button type="button" onClick={() => editPendingGroupProductAndScroll(p, i)} className="text-sm font-medium text-earth-600 hover:text-earth-900">
                       Editar
                     </button>
                     <button type="button" onClick={() => handleRemovePendingGroupProduct(i)} className="text-sm font-medium text-red-600 hover:text-red-800">
@@ -424,7 +493,7 @@ export default function GruposSection() {
               ))}
             </ul>
           )}
-          <div className="mt-3 min-w-0 space-y-3 rounded-lg border border-earth-200 bg-white p-4 shadow-sm">
+          <div ref={groupProductEditorRef} className="mt-3 min-w-0 space-y-3 rounded-lg border border-earth-200 bg-white p-4 shadow-sm">
             <div className="flex items-center justify-between gap-2 border-b border-earth-100 pb-2">
               <p className="text-sm font-semibold text-earth-800">
                 {editingGroupProductId || editingPendingProductIndex != null ? 'Editar produto do grupo' : 'Novo produto do grupo'}
@@ -475,16 +544,15 @@ export default function GruposSection() {
                     Categoria global
                     <div className="mt-1 grid grid-cols-1 gap-1">
                       <select
-                        value=""
+                        value={selectedGlobalCategoryOption}
                         onChange={(e) => {
-                          if (!e.target.value) return
-                          applyGroupGlobalCategory(e.target.value)
-                          e.target.value = ''
+                          const nextCategory = e.target.value
+                          applyGroupGlobalCategory(nextCategory)
                         }}
                         className="block w-full rounded border border-earth-300 bg-white px-2 py-1 text-sm text-earth-900"
                       >
                         <option value="">Selecionar existente</option>
-                        {(productCategorySuggestions || []).map((c) => (
+                        {categoryOptions.map((c) => (
                           <option key={c} value={c}>{c}</option>
                         ))}
                       </select>
@@ -912,7 +980,7 @@ export default function GruposSection() {
                   )}
                   <button
                     type="button"
-                    onClick={() => handleEditGroup(g)}
+                    onClick={() => editGroupAndScroll(g)}
                     className="text-sm font-medium text-earth-600 hover:text-earth-900"
                   >
                     Editar

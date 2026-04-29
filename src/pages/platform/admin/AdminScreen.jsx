@@ -276,6 +276,10 @@ export default function Admin({ routeTabId = 'pedidos' }) {
   const [ordersLoading, setOrdersLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [message, setMessage] = useState('')
+  const [sectionMessages, setSectionMessages] = useState({
+    grupos: '',
+    catalogo: '',
+  })
   const [editingId, setEditingId] = useState(null)
   const [form, setForm] = useState({
     form_mode: 'simple',
@@ -400,6 +404,13 @@ export default function Admin({ routeTabId = 'pedidos' }) {
   const [groupProductSubmitting, setGroupProductSubmitting] = useState(false)
 
   const TABS = ADMIN_TABS
+
+  const setScopedMessage = useCallback((scope, value) => {
+    const text = String(value || '')
+    setMessage(text)
+    if (!scope) return
+    setSectionMessages((prev) => ({ ...prev, [scope]: text }))
+  }, [])
 
   const [usersList, setUsersList] = useState([])
   const [usersListLoading, setUsersListLoading] = useState(false)
@@ -593,9 +604,9 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       const list = data ?? []
       setProducts(list)
       setProductsHasMore(list.length === ADMIN_PAGE_SIZE.products)
-      if (error) setMessage(error.message)
+      if (error) setScopedMessage('catalogo', error.message)
     } catch (e) {
-      if (active()) setMessage(e?.message || 'Erro ao carregar produtos')
+      if (active()) setScopedMessage('catalogo', e?.message || 'Erro ao carregar produtos')
     } finally {
       if (active()) setLoading(false)
     }
@@ -1112,6 +1123,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     setImageUploadError('')
     setNewImageUrl('')
     setProductReferenceId('')
+    setSectionMessages((prev) => ({ ...prev, catalogo: '' }))
   }
 
   const normalizeProductImageList = (list) => (Array.isArray(list) ? list.filter(Boolean) : [])
@@ -1182,6 +1194,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     setEditingGroupProductId(null)
     setEditingPendingProductIndex(null)
     setGroupProductSourceUrlInput('')
+    setSectionMessages((prev) => ({ ...prev, grupos: '' }))
   }
 
   const loadGroupProducts = async (groupId) => {
@@ -1369,33 +1382,33 @@ export default function Admin({ routeTabId = 'pedidos' }) {
   const applyPendingGroupProductScrape = () => {
     if (!groupProductScrapePreview) return
     applyScrapedGroupProductData(groupProductScrapePreview, { force: true })
-    setMessage('Dados do scrape aplicados ao formulário.')
+    setScopedMessage('grupos', 'Dados do scrape aplicados ao formulário.')
   }
 
   const discardPendingGroupProductScrape = () => {
     setGroupProductScrapePreview(null)
-    setMessage('Dados do scrape descartados. Mantivemos os campos atuais.')
+    setScopedMessage('grupos', 'Dados do scrape descartados. Mantivemos os campos atuais.')
   }
 
   const handleScrapeOnlineGroupProduct = async () => {
     const url = String(groupProductSourceUrlInput || '').trim()
     if (!isOnlineGroupDestination) {
-      setMessage('Scrape automático disponível apenas para grupos Online.')
+      setScopedMessage('grupos', 'Scrape automático disponível apenas para grupos Online.')
       return
     }
     if (!/^https?:\/\//i.test(url)) {
-      setMessage('Use uma URL completa começando com http:// ou https://')
+      setScopedMessage('grupos', 'Use uma URL completa começando com http:// ou https://')
       return
     }
     setGroupProductScraping(true)
     setGroupProductScrapePreview(null)
     setGroupProductScrapeMeta(null)
-    setMessage('')
+    setScopedMessage('grupos', '')
     try {
       const { data, error } = await scrapeProductUrl(url)
       if (error) {
         const detail = error?.failureCode ? ` (código: ${error.failureCode})` : ''
-        setMessage((error.message || 'Não foi possível extrair dados do produto.') + detail)
+        setScopedMessage('grupos', (error.message || 'Não foi possível extrair dados do produto.') + detail)
         return
       }
       const normalized = {
@@ -1410,13 +1423,13 @@ export default function Admin({ routeTabId = 'pedidos' }) {
         const warning = Array.isArray(normalized?.meta?.warnings) && normalized.meta.warnings.length > 0
           ? ` | ${normalized.meta.warnings[0]}`
           : ''
-        setMessage(`Scrape com revisão recomendada (${confidencePct}% | ${origin})${warning}`)
+        setScopedMessage('grupos', `Scrape com revisão recomendada (${confidencePct}% | ${origin})${warning}`)
       } else {
         const confidencePct = Math.round((Number(normalized?.meta?.confidence) || 0) * 100)
-        setMessage(`Dados do produto preenchidos via scrape (${confidencePct}% de confiança).`)
+        setScopedMessage('grupos', `Dados do produto preenchidos via scrape (${confidencePct}% de confiança).`)
       }
     } catch (e) {
-      setMessage(e?.message || 'Erro ao executar scrape do produto.')
+      setScopedMessage('grupos', e?.message || 'Erro ao executar scrape do produto.')
     } finally {
       setGroupProductScraping(false)
     }
@@ -1426,29 +1439,29 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     e.preventDefault()
     const payload = buildGroupProductPayload()
     if (!payload) {
-      setMessage('Preencha o nome do produto pai e pelo menos uma versão válida.')
+      setScopedMessage('grupos', 'Preencha o nome do produto pai e pelo menos uma versão válida.')
       return
     }
     if (!Array.isArray(payload.variants) || payload.variants.length === 0) {
-      setMessage('Adicione pelo menos uma versão.')
+      setScopedMessage('grupos', 'Adicione pelo menos uma versão.')
       return
     }
     if (!payload.variants.some((v) => v.is_active)) {
-      setMessage('Mantenha pelo menos uma versão ativa.')
+      setScopedMessage('grupos', 'Mantenha pelo menos uma versão ativa.')
       return
     }
     if (!payload.variants.some((v) => Array.isArray(v.image_urls) && v.image_urls.length > 0)) {
-      setMessage('Adicione foto em pelo menos uma versão.')
+      setScopedMessage('grupos', 'Adicione foto em pelo menos uma versão.')
       return
     }
 
     if (editingGroupId) {
       setGroupProductSubmitting(true)
-      setMessage('')
+      setScopedMessage('grupos', '')
       try {
         if (editingGroupProductId) {
           const { error } = await updatePurchaseGroupProduct(editingGroupId, editingGroupProductId, payload)
-          if (error) setMessage(error.message)
+          if (error) setScopedMessage('grupos', error.message)
           else {
             resetGroupProductForm()
             loadGroupProducts(editingGroupId)
@@ -1456,7 +1469,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
           }
         } else {
           const { error } = await createPurchaseGroupProduct(editingGroupId, payload)
-          if (error) setMessage(error.message)
+          if (error) setScopedMessage('grupos', error.message)
           else {
             resetGroupProductForm()
             loadGroupProducts(editingGroupId)
@@ -1479,7 +1492,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
         setPendingGroupProducts((prev) => [...prev, item])
       }
       resetGroupProductForm()
-      setMessage('')
+      setScopedMessage('grupos', '')
     }
   }
 
@@ -1516,7 +1529,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
   const handleDeleteGroupProduct = async (productId) => {
     if (!editingGroupId || !confirm('Remover este produto do grupo?')) return
     const { error } = await deletePurchaseGroupProduct(editingGroupId, productId)
-    if (error) setMessage(error.message)
+    if (error) setScopedMessage('grupos', error.message)
     else {
       loadGroupProducts(editingGroupId)
       resetGroupProductForm()
@@ -1571,9 +1584,9 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       setPurchaseGroups(
         (data ?? []).filter((group) => !group?.source || group.source === 'scheduled')
       )
-      if (error) setMessage(error.message)
+      if (error) setScopedMessage('grupos', error.message)
     } catch (e) {
-      if (active()) setMessage(e?.message || 'Erro ao carregar grupos de compra')
+      if (active()) setScopedMessage('grupos', e?.message || 'Erro ao carregar grupos de compra')
     } finally {
       if (active()) setGroupsLoading(false)
     }
@@ -1708,22 +1721,22 @@ export default function Admin({ routeTabId = 'pedidos' }) {
 
   const handleSaveGroup = async (e) => {
     e.preventDefault()
-    setMessage('')
+    setScopedMessage('grupos', '')
 
     const name = groupForm.name?.trim()
     const destination = String(groupForm.destination || '').trim().toLowerCase()
     if (!name) {
-      setMessage('Nome do grupo Ã© obrigatÃ³rio')
+      setScopedMessage('grupos', 'Nome do grupo Ã© obrigatÃ³rio')
       return
     }
     if (destination !== 'online' && destination !== 'physical') {
-      setMessage('Selecione o destino do grupo: Online ou Física.')
+      setScopedMessage('grupos', 'Selecione o destino do grupo: Online ou Física.')
       return
     }
 
     const imageUrls = Array.isArray(groupForm.image_urls) ? groupForm.image_urls.filter(Boolean) : []
     if (!imageUrls.length) {
-      setMessage('Fotos do grupo sÃ£o obrigatÃ³rias')
+      setScopedMessage('grupos', 'Fotos do grupo sÃ£o obrigatÃ³rias')
       return
     }
 
@@ -1737,7 +1750,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     const feeJpy = parseOptionalNonNegNumber(groupForm.scheduled_shipping_fee_jpy)
     const minJpy = parseOptionalNonNegNumber(groupForm.scheduled_free_shipping_min_jpy)
     if (Number.isNaN(feeJpy) || Number.isNaN(minJpy)) {
-      setMessage('Frete e piso para frete zero devem ser números válidos (≥ 0) ou vazios.')
+      setScopedMessage('grupos', 'Frete e piso para frete zero devem ser números válidos (≥ 0) ou vazios.')
       return
     }
 
@@ -1758,7 +1771,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
         ? await updatePurchaseGroup(editingGroupId, payload)
         : await createPurchaseGroup(payload)
       if (error) {
-        setMessage(error.message || (editingGroupId ? 'Erro ao atualizar grupo' : 'Erro ao criar grupo'))
+        setScopedMessage('grupos', error.message || (editingGroupId ? 'Erro ao atualizar grupo' : 'Erro ao criar grupo'))
         return
       }
 
@@ -1773,7 +1786,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
         for (const prod of pendingGroupProducts) {
           const { error: prodErr } = await createPurchaseGroupProduct(groupData?.id, prod)
           if (prodErr) {
-            setMessage(prodErr.message || 'Erro ao criar alguns produtos')
+            setScopedMessage('grupos', prodErr.message || 'Erro ao criar alguns produtos')
             return
           }
         }
@@ -1781,7 +1794,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
         loadProductCategories()
       }
 
-      setMessage(editingGroupId ? 'Grupo atualizado com sucesso' : 'Grupo criado com sucesso')
+      setScopedMessage('grupos', editingGroupId ? 'Grupo atualizado com sucesso' : 'Grupo criado com sucesso')
       if (editingGroupId) {
         loadGroups()
         loadGroupProducts(editingGroupId)
@@ -1807,7 +1820,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
   const handleDeleteGroup = async (groupId) => {
     if (!confirm('Remover este grupo de compras?')) return
     const { error } = await deletePurchaseGroup(groupId)
-    setMessage(error ? error.message : 'Grupo removido')
+    setScopedMessage('grupos', error ? error.message : 'Grupo removido')
     if (!error) {
       logAdminAction('group_delete', 'purchase_group', groupId)
       if (editingGroupId === groupId) resetGroupForm()
@@ -1923,10 +1936,10 @@ export default function Admin({ routeTabId = 'pedidos' }) {
 
   const handleSave = async (e) => {
     e.preventDefault()
-    setMessage('')
+    setScopedMessage('catalogo', '')
     const priceJpy = parseFloat(form.price)
     if (isNaN(priceJpy) || priceJpy < 0) {
-      setMessage('PreÃ§o invÃ¡lido')
+      setScopedMessage('catalogo', 'PreÃ§o invÃ¡lido')
       return
     }
     const weightRaw = form.weight_kg
@@ -1934,7 +1947,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     if (weightRaw !== '' && weightRaw != null && String(weightRaw).trim() !== '') {
       const parsed = parseFloat(weightRaw)
       if (Number.isNaN(parsed) || parsed < 0) {
-        setMessage('Peso inválido (use número ≥ 0 ou deixe em branco)')
+        setScopedMessage('catalogo', 'Peso inválido (use número ≥ 0 ou deixe em branco)')
         return
       }
       weightVal = parsed
@@ -2016,18 +2029,18 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       is_active: form.is_active,
     }
     if (!Array.isArray(payload.variants) || payload.variants.length === 0) {
-      setMessage('Adicione pelo menos uma versão do produto.')
+      setScopedMessage('catalogo', 'Adicione pelo menos uma versão do produto.')
       return
     }
     if (!payload.variants.some((v) => v.is_active)) {
-      setMessage('Mantenha pelo menos uma versão ativa.')
+      setScopedMessage('catalogo', 'Mantenha pelo menos uma versão ativa.')
       return
     }
     setSubmitting(true)
     try {
       if (editingId) {
         const { error } = await updateProduct(editingId, payload)
-        setMessage(error ? error.message : 'Produto atualizado')
+        setScopedMessage('catalogo', error ? error.message : 'Produto atualizado')
         if (!error) {
           logAdminAction('product_update', 'product', editingId, { name: payload.name })
           resetForm()
@@ -2036,7 +2049,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
         }
       } else {
         const { data, error } = await createProduct(payload)
-        setMessage(error ? error.message : 'Produto criado')
+        setScopedMessage('catalogo', error ? error.message : 'Produto criado')
         if (!error) {
           logAdminAction('product_create', 'product', data?.id, { name: payload.name })
           resetForm()
@@ -2053,11 +2066,11 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     if (!confirm('Remover este produto?')) return
     const { error } = await deleteProduct(id)
     if (error) {
-      setMessage(error.message || 'Erro ao remover produto')
+      setScopedMessage('catalogo', error.message || 'Erro ao remover produto')
       return
     }
 
-    setMessage('Produto removido')
+    setScopedMessage('catalogo', 'Produto removido')
     loadProducts()
     // Log nÃ£o deve interferir no UX de remoÃ§Ã£o.
     logAdminAction('product_delete', 'product', id).catch(() => {})
@@ -2091,7 +2104,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
 
   const handleDuplicate = async (p) => {
     setDuplicatingId(p.id)
-    setMessage('')
+    setScopedMessage('catalogo', '')
     const urls = Array.isArray(p.image_urls)?.length ? p.image_urls.filter(Boolean) : (p.image_url ? [p.image_url] : [])
     const payload = {
       name: `${(p.name || '').trim()} (cÃ³pia)`,
@@ -2119,7 +2132,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     }
     try {
       const { data, error } = await createProduct(payload)
-      setMessage(error ? error.message : 'Produto duplicado')
+      setScopedMessage('catalogo', error ? error.message : 'Produto duplicado')
       if (!error) {
         logAdminAction('product_duplicate', 'product', data?.id, { from: p.id, name: payload.name })
         loadProducts()
@@ -3120,6 +3133,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     settingsForm,
     setSettingsForm,
     setMessage,
+    sectionMessages,
     topupLoading,
     topupRequests,
     formatMoney,
@@ -3178,7 +3192,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
           <span className="text-sm text-earth-600">{user?.email}</span>
         </div>
 
-        {message && (
+        {message && !(activeTab === 'grupos' && sectionMessages.grupos) && !(activeTab === 'catalogo_produtos' && sectionMessages.catalogo) && (
           <div className="mt-4 rounded-lg bg-earth-100 px-4 py-2 text-sm text-earth-800">
             {message}
           </div>

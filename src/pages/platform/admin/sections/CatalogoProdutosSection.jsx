@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { PRODUCT_CONDITION_OPTIONS } from '../../../../lib/productCondition'
 import { useSiteLocale } from '../../../../hooks/useSiteLocale'
@@ -58,9 +58,40 @@ export default function CatalogoProdutosSection() {
     productsHasMore,
     setProductsPage,
     productCategorySuggestions,
+    sectionMessages,
   } = useAdminContext()
 
+  const catalogEditorRef = useRef(null)
+
+  useEffect(() => {
+    if (!catalogCreateOpen || !editingId) return
+    const node = catalogEditorRef.current
+    if (!node) return
+    node.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    const focusTarget = node.querySelector('input, textarea, select, button')
+    if (focusTarget && typeof focusTarget.focus === 'function') {
+      focusTarget.focus({ preventScroll: true })
+    }
+  }, [catalogCreateOpen, editingId])
+
+  const localMessage = String(sectionMessages?.catalogo || '')
+  const localMessageIsError = /erro|inválid|obrigat|falha|não foi possível|selecione|preencha/i.test(localMessage.toLowerCase())
+
   if (activeTab !== 'catalogo_produtos') return null
+
+  const openCatalogEditorForProduct = (product) => {
+    handleEdit(product)
+    setCatalogCreateOpen(true)
+    requestAnimationFrame(() => {
+      const node = catalogEditorRef.current
+      if (!node) return
+      node.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      const focusTarget = node.querySelector('input, textarea, select, button')
+      if (focusTarget && typeof focusTarget.focus === 'function') {
+        focusTarget.focus({ preventScroll: true })
+      }
+    })
+  }
 
   const applyScrapedCatalogData = (scrapedData, { force = false } = {}) => {
     if (!scrapedData) return
@@ -387,6 +418,25 @@ export default function CatalogoProdutosSection() {
   }
 
   const catalogFormMode = form?.form_mode === 'variants' ? 'variants' : 'simple'
+  const categoryOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          (Array.isArray(productCategorySuggestions) ? productCategorySuggestions : [])
+            .map((item) => String(item || '').trim())
+            .filter(Boolean)
+        )
+      ),
+    [productCategorySuggestions]
+  )
+  const selectedGlobalCategoryOption = useMemo(() => {
+    const current = String(form?.category ?? '').trim()
+    if (!current) return ''
+    const direct = categoryOptions.find((option) => option === current)
+    if (direct) return direct
+    const lower = current.toLowerCase()
+    return categoryOptions.find((option) => option.toLowerCase() === lower) || ''
+  }, [categoryOptions, form?.category])
 
   return (
     <section className="mt-0 rounded-b-xl border border-t-0 border-earth-200 bg-earth-50 p-6">
@@ -437,8 +487,17 @@ export default function CatalogoProdutosSection() {
         </select>
       </div>
 
+      {localMessage && (
+        <p className={`mt-3 rounded-lg px-4 py-2 text-sm ${
+          localMessageIsError ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
+        }`}>
+          {localMessage}
+        </p>
+      )}
+
       {catalogCreateOpen && (
         <form
+          ref={catalogEditorRef}
           onSubmit={handleSave}
           className="mt-4 space-y-3 rounded-lg border border-earth-200 bg-white p-4"
         >
@@ -510,16 +569,15 @@ export default function CatalogoProdutosSection() {
                 Categoria global
                 <div className="mt-1 grid grid-cols-1 gap-1">
                   <select
-                    value=""
+                    value={selectedGlobalCategoryOption}
                     onChange={(e) => {
-                      if (!e.target.value) return
-                      applyCatalogGlobalCategory(e.target.value)
-                      e.target.value = ''
+                      const nextCategory = e.target.value
+                      applyCatalogGlobalCategory(nextCategory)
                     }}
                     className="block w-full rounded border border-earth-300 bg-white px-2 py-1 text-sm text-earth-900"
                   >
                     <option value="">Selecionar existente</option>
-                    {(productCategorySuggestions || []).map((c) => (
+                    {categoryOptions.map((c) => (
                       <option key={c} value={c}>{c}</option>
                     ))}
                   </select>
@@ -877,10 +935,7 @@ export default function CatalogoProdutosSection() {
                     <td className="px-3 py-2">
                       <button
                         type="button"
-                        onClick={() => {
-                          handleEdit(p)
-                          setCatalogCreateOpen(true)
-                        }}
+                        onClick={() => openCatalogEditorForProduct(p)}
                         className="mr-3 text-sm font-medium text-earth-600 hover:text-earth-900"
                       >
                         Editar
