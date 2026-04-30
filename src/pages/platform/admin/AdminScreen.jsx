@@ -244,7 +244,8 @@ export default function Admin({ routeTabId = 'pedidos' }) {
           admin_product_url: v?.admin_product_url ?? attrs.admin_product_url ?? '',
           category: v?.category ?? attrs.category ?? fallback.category ?? '',
           item_condition: v?.item_condition ?? attrs.item_condition ?? fallback.item_condition ?? 'new',
-          description: v?.description ?? attrs.description ?? fallback.description ?? '',
+          /* Sem fallback da descrição do pai (evita replicar a global em cada versão). */
+          description: v?.description ?? attrs.description ?? '',
           weight_kg: v?.weight_kg ?? attrs.weight_kg ?? '',
           weight_unit: v?.weight_unit ?? attrs.weight_unit ?? 'g',
           image_url: variantImageUrl,

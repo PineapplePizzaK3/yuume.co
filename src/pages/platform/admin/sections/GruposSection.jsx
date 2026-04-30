@@ -226,7 +226,7 @@ export default function GruposSection() {
     stock_quantity: variant?.stock_quantity ?? '',
     item_condition: variant?.item_condition ?? groupProductForm.item_condition ?? 'new',
     category: variant?.category ?? groupProductForm.category ?? '',
-    description: variant?.description ?? groupProductForm.description ?? '',
+    description: variant?.description ?? '',
     admin_product_url: variant?.admin_product_url ?? '',
     image_url: variant?.image_url ?? '',
     image_urls: getVariantImages(variant),
