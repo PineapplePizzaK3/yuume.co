@@ -202,6 +202,8 @@ export default function RichTextEditor({
   const textColorInputRef = useRef(null)
   const highlightInputRef = useRef(null)
   const toolbarSyncRaf = useRef(0)
+  /** Último HTML sanitizado enviado ao pai; evita re-sync do DOM ao clicar/selecionar. */
+  const lastEmittedRef = useRef(null)
   const normalized = useMemo(() => sanitizeRichTextHtml(value), [value])
   const [activeBlock, setActiveBlock] = useState('')
   const [marks, setMarks] = useState(createEmptyMarks)
@@ -222,21 +224,29 @@ export default function RichTextEditor({
   useLayoutEffect(() => {
     const el = editorRef.current
     if (!el) return
-    /* Comparar via sanitize nos dois lados: o browser serializa innerHTML de
-       forma diferente do nosso parser (espaços em style, b vs strong, etc.).
-       Igualdade “semântica” evita regravar innerHTML a cada render — isso
-       destruía seleção e fazia negrito/alinhamento “voltarem” sozinhos. */
+    const focusedHere = document.activeElement === el
+    /* Prop ainda é o que acabamos de emitir: não regravar innerHTML com o foco
+       no editor (clique/seleção dispara re-render e o DOM do browser pode
+       diferir do sanitize só por serialização ou <br> interno). */
+    if (focusedHere && normalized === lastEmittedRef.current) {
+      adjustEditorHeight()
+      return
+    }
+    /* Comparar via sanitize nos dois lados (serialização do browser vs parser). */
     const domSanitized = sanitizeRichTextHtml(el.innerHTML)
     if (domSanitized !== normalized) {
       el.innerHTML = normalized || ''
     }
+    lastEmittedRef.current = normalized
     adjustEditorHeight()
   }, [normalized, adjustEditorHeight])
 
   const emitChange = useCallback(() => {
     const el = editorRef.current
     if (!el) return
-    onChange(sanitizeRichTextHtml(el.innerHTML))
+    const next = sanitizeRichTextHtml(el.innerHTML)
+    lastEmittedRef.current = next
+    onChange(next)
     requestAnimationFrame(() => adjustEditorHeight())
   }, [onChange, adjustEditorHeight])
 

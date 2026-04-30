@@ -581,14 +581,14 @@ export default function GruposSection() {
                     </select>
                   </label>
                 </div>
-                <label className="mt-2 block text-xs text-earth-700">
-                  Descrição global
+                <div className="mt-2 block text-xs text-earth-700">
+                  <span className="block font-medium text-earth-700">Descrição global</span>
                   <RichTextEditor
                     value={groupProductForm.description ?? ''}
                     onChange={(nextHtml) => setGroupProductForm((f) => ({ ...f, description: nextHtml }))}
                     placeholder="Detalhes visíveis ao cliente; valem para todas as versões (opcional)"
                   />
-                </label>
+                </div>
                 <p className="mt-2 text-xs text-earth-600">
                   Preço, estoque e imagens são definidos por versão abaixo.
                 </p>
