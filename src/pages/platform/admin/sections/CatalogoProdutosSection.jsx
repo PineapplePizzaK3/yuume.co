@@ -621,7 +621,6 @@ export default function CatalogoProdutosSection() {
               <RichTextEditor
                 value={form.description}
                 onChange={(nextHtml) => setForm((f) => ({ ...f, description: nextHtml }))}
-                minHeightClassName="min-h-[110px]"
               />
             </label>
             <p className="mt-2 text-xs text-earth-600">

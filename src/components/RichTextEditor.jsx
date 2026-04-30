@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { sanitizeRichTextHtml } from '../lib/richText'
 
 /** Cor padrão do texto (earth-900) — “redefinir cor” volta para isso. */
@@ -193,7 +193,10 @@ export default function RichTextEditor({
   onChange = () => {},
   placeholder = '',
   className = '',
-  minHeightClassName = 'min-h-[96px]',
+  /** Altura mínima da área editável (px). */
+  editorMinHeightPx = 110,
+  /** Altura máxima antes de rolar por dentro (px). */
+  editorMaxHeightPx = 320,
 }) {
   const editorRef = useRef(null)
   const textColorInputRef = useRef(null)
@@ -203,19 +206,34 @@ export default function RichTextEditor({
   const [activeBlock, setActiveBlock] = useState('')
   const [marks, setMarks] = useState(createEmptyMarks)
 
-  useEffect(() => {
+  const adjustEditorHeight = useCallback(() => {
+    const el = editorRef.current
+    if (!el) return
+    const minH = Math.max(48, Number(editorMinHeightPx) || 110)
+    const maxH = Math.max(minH, Number(editorMaxHeightPx) || 320)
+    el.style.height = 'auto'
+    const scrollH = el.scrollHeight
+    const next = Math.min(Math.max(scrollH, minH), maxH)
+    el.style.height = `${next}px`
+    el.style.overflowY = scrollH > maxH ? 'auto' : 'hidden'
+    el.style.overflowX = 'hidden'
+  }, [editorMinHeightPx, editorMaxHeightPx])
+
+  useLayoutEffect(() => {
     const el = editorRef.current
     if (!el) return
     if (el.innerHTML !== normalized) {
       el.innerHTML = normalized || ''
     }
-  }, [normalized])
+    adjustEditorHeight()
+  }, [normalized, adjustEditorHeight])
 
   const emitChange = useCallback(() => {
     const el = editorRef.current
     if (!el) return
     onChange(sanitizeRichTextHtml(el.innerHTML))
-  }, [onChange])
+    requestAnimationFrame(() => adjustEditorHeight())
+  }, [onChange, adjustEditorHeight])
 
   const readFormatBlock = useCallback(() => {
     try {
@@ -540,7 +558,7 @@ export default function RichTextEditor({
             window.requestAnimationFrame(() => emitChange())
           }
         }}
-        className={`rich-text-editor prose prose-sm max-w-none px-3 py-2 text-sm text-earth-900 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-earth-400/60 ${minHeightClassName} empty:before:pointer-events-none empty:before:text-earth-400 empty:before:content-[attr(data-placeholder)]`}
+        className="rich-text-editor prose prose-sm max-w-none min-h-0 resize-none px-3 py-2 text-sm text-earth-900 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-earth-400/60 empty:before:pointer-events-none empty:before:text-earth-400 empty:before:content-[attr(data-placeholder)]"
       />
     </div>
   )

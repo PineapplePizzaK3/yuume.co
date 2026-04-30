@@ -154,7 +154,6 @@ export default function ProductCoreFields({
           value={form.description}
           onChange={(nextHtml) => setForm((f) => ({ ...f, description: nextHtml }))}
           placeholder="Detalhes visíveis para o cliente no modal do produto (opcional)"
-          minHeightClassName="min-h-[110px]"
         />
       </div>
 
