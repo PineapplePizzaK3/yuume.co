@@ -1,3 +1,4 @@
+import { createClient } from '@supabase/supabase-js'
 import { getAuthenticatedUser, getSupabaseAdmin, isAdminUser } from '../../server-lib/antiFraud.js'
 
 const ALLOWED_RPCS = new Set([
@@ -99,7 +100,25 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'RPC not allowed' })
   }
 
-  const { data, error } = await supabase.rpc(fn, params)
+  /**
+   * As funções admin usam `public.is_admin()` → `auth.uid()` no JWT da requisição.
+   * O cliente `service_role` não envia o usuário final, então `auth.uid()` fica NULL
+   * e o Postgres levanta "Acesso negado". Chamamos o RPC com anon + Bearer do admin.
+   */
+  const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
+  const anonKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY
+  if (!url || !anonKey) {
+    return res.status(500).json({ error: 'Supabase not configured' })
+  }
+  const authHeader = String(req.headers.authorization || '')
+  if (!authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Unauthorized' })
+  }
+  const userSupabase = createClient(url, anonKey, {
+    global: { headers: { Authorization: authHeader } },
+  })
+
+  const { data, error } = await userSupabase.rpc(fn, params)
   if (error) {
     return res.status(400).json({ error: error.message || 'RPC failed' })
   }
