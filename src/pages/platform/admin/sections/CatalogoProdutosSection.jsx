@@ -7,6 +7,8 @@ import { useAdminContext } from '../AdminContext'
 import ProductCoreFields from './ProductCoreFields'
 import ProductScrapeBlock from './ProductScrapeBlock'
 import { scrapeProductUrl } from '../../../../services/wishlistLinkService'
+import RichTextEditor from '../../../../components/RichTextEditor'
+import { richTextToPlainText } from '../../../../lib/richText'
 
 export default function CatalogoProdutosSection() {
   const locale = useSiteLocale()
@@ -616,11 +618,10 @@ export default function CatalogoProdutosSection() {
             </div>
             <label className="mt-2 block text-xs text-earth-700">
               Descrição global
-              <textarea
+              <RichTextEditor
                 value={form.description}
-                onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-                rows={3}
-                className="mt-1 block w-full rounded border border-earth-300 px-2 py-1 text-sm text-earth-900"
+                onChange={(nextHtml) => setForm((f) => ({ ...f, description: nextHtml }))}
+                minHeightClassName="min-h-[110px]"
               />
             </label>
             <p className="mt-2 text-xs text-earth-600">
@@ -893,7 +894,7 @@ export default function CatalogoProdutosSection() {
                             </span>
                           </div>
                           {p.description && (
-                            <p className="line-clamp-2 text-xs text-earth-600">{p.description}</p>
+                            <p className="line-clamp-2 text-xs text-earth-600">{richTextToPlainText(p.description)}</p>
                           )}
                         </div>
                       </div>

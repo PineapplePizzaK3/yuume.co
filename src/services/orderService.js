@@ -5,6 +5,7 @@
  */
 import { supabase } from '../lib/supabase'
 import { withDbTimeout, toServiceError } from '../lib/dbGuard'
+import { callAdminRpc } from './adminRpcService'
 
 /** Statuses do pedido */
 export const ORDER_STATUS = {
@@ -247,7 +248,7 @@ export async function getAllOrdersAdmin(limit = 300, offset = 0, statusFilter = 
     }
 
     const { data, error } = await withDbTimeout(
-      supabase.rpc('admin_orders_with_users', rpcParams)
+      callAdminRpc('admin_orders_with_users', rpcParams)
     )
     const orders = Array.isArray(data) ? data : []
     return { data: orders, error }
@@ -267,7 +268,7 @@ export async function updateOrderStatusAdmin(orderId, status) {
 
   try {
     const { data, error } = await withDbTimeout(
-      supabase.rpc('admin_update_order_status', {
+      callAdminRpc('admin_update_order_status', {
         p_order_id: orderId,
         p_status: status,
       })
@@ -295,7 +296,7 @@ export async function setShippingAndAwaitPaymentAdmin(
 
   try {
     const { data, error } = await withDbTimeout(
-      supabase.rpc('admin_set_shipping_await_payment', {
+      callAdminRpc('admin_set_shipping_await_payment', {
         p_order_id: orderId,
         p_shipping_cost: cost,
         p_currency: currency || 'JPY',
@@ -317,7 +318,7 @@ export async function setShippingAndAwaitPaymentAdmin(
 export async function updateOrderAdmin(orderId, updates) {
   try {
     const { data, error } = await withDbTimeout(
-      supabase.rpc('admin_update_order', {
+      callAdminRpc('admin_update_order', {
         p_order_id: orderId,
         p_payload: updates,
       })
@@ -334,7 +335,7 @@ export async function updateOrderAdmin(orderId, updates) {
 export async function approveOrderAdmin(orderId) {
   try {
     const { data, error } = await withDbTimeout(
-      supabase.rpc('admin_approve_order', { p_order_id: orderId })
+      callAdminRpc('admin_approve_order', { p_order_id: orderId })
     )
     return { data: data ?? null, error }
   } catch (e) {
@@ -352,7 +353,7 @@ export async function setQuoteAdmin(orderId, quoteAmount, currency = 'BRL', mess
   }
   try {
     const { data, error } = await withDbTimeout(
-      supabase.rpc('admin_set_quote', {
+      callAdminRpc('admin_set_quote', {
         p_order_id: orderId,
         p_quote_amount: amount,
         p_currency: currency || 'BRL',
@@ -371,7 +372,7 @@ export async function setQuoteAdmin(orderId, quoteAmount, currency = 'BRL', mess
 export async function rejectOrderAdmin(orderId, reason = null) {
   try {
     const { data, error } = await withDbTimeout(
-      supabase.rpc('admin_reject_order', { p_order_id: orderId, p_reason: reason })
+      callAdminRpc('admin_reject_order', { p_order_id: orderId, p_reason: reason })
     )
     return { data: data ?? null, error }
   } catch (e) {
@@ -385,7 +386,7 @@ export async function rejectOrderAdmin(orderId, reason = null) {
 export async function createOrderForUserAdmin(userId, { service_id, message } = {}) {
   try {
     const { data, error } = await withDbTimeout(
-      supabase.rpc('admin_create_order_for_user', {
+      callAdminRpc('admin_create_order_for_user', {
         p_user_id: userId,
         p_service_id: service_id ?? null,
         p_message: message ?? null,
@@ -403,7 +404,7 @@ export async function createOrderForUserAdmin(userId, { service_id, message } = 
 export async function deleteOrderAdmin(orderId) {
   try {
     const { error } = await withDbTimeout(
-      supabase.rpc('admin_delete_order', {
+      callAdminRpc('admin_delete_order', {
         p_order_id: orderId,
       })
     )

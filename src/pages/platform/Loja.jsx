@@ -13,9 +13,9 @@ import { addToCart } from '../../services/cartService'
 import { useAuth } from '../../hooks/useAuth'
 import { getCardThumbnailUrl } from '../../lib/imageUtils'
 import { showCartToast } from '../../lib/cartToast'
-import LinkifyText from '../../components/LinkifyText'
 import ImageLightbox from '../../components/ImageLightbox'
 import { getProductConditionMeta } from '../../lib/productCondition'
+import { richTextToPlainText } from '../../lib/richText'
 import {
   ProductPriceBlock,
   getProductImages,
@@ -220,7 +220,7 @@ function LojaEstoqueCatalog({ publicMode = false }) {
                       </span>
                       {p.description && (
                         <p className="mt-0.5 line-clamp-2 whitespace-pre-wrap text-xs text-earth-600">
-                          <LinkifyText text={p.description} />
+                          {richTextToPlainText(p.description)}
                         </p>
                       )}
                       <ProductPriceBlock product={p} />

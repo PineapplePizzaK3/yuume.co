@@ -12,9 +12,9 @@ import { getPublicProductById } from '../../services/productService'
 import { addToCart } from '../../services/cartService'
 import { useAuth } from '../../hooks/useAuth'
 import { showCartToast } from '../../lib/cartToast'
-import LinkifyText from '../../components/LinkifyText'
 import ImageLightbox from '../../components/ImageLightbox'
 import { getProductConditionMeta } from '../../lib/productCondition'
+import RichTextContent from '../../components/RichTextContent'
 import {
   ProductPriceBlock,
   getProductImages,
@@ -314,9 +314,7 @@ export default function StoreProductDetail({ publicMode = false }) {
                 })()}
                 <h1 className="mt-3 text-2xl font-bold text-earth-900">{headingTitle}</h1>
                 {displayDescription && (
-                  <div className="mt-4 whitespace-pre-wrap text-earth-600">
-                    <LinkifyText text={displayDescription} />
-                  </div>
+                  <RichTextContent html={displayDescription} className="mt-4 text-earth-600" />
                 )}
                 <div className="mt-6">
                   <ProductPriceBlock

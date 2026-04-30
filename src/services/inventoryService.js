@@ -4,6 +4,7 @@
  */
 import { supabase } from '../lib/supabase'
 import { withDbTimeout, toServiceError } from '../lib/dbGuard'
+import { callAdminRpc } from './adminRpcService'
 
 /**
  * Lista itens do inventário do usuário (status stored ou ready_for_shipment).
@@ -210,7 +211,7 @@ export async function updateUserInventoryAdmin(inventoryId, payload) {
 
   try {
     const { data, error } = await withDbTimeout(
-      supabase.rpc('admin_update_user_inventory', {
+      callAdminRpc('admin_update_user_inventory', {
         p_inventory_id: inventoryId,
         p_name: finalName,
         p_notes: notes != null && String(notes).trim() !== '' ? String(notes).trim() : null,
@@ -233,7 +234,7 @@ export async function updateUserInventoryAdmin(inventoryId, payload) {
 export async function deleteUserInventoryAdmin(inventoryId) {
   try {
     const { error } = await withDbTimeout(
-      supabase.rpc('admin_delete_user_inventory', { p_inventory_id: inventoryId })
+      callAdminRpc('admin_delete_user_inventory', { p_inventory_id: inventoryId })
     )
     if (error && /admin_delete_user_inventory|function/i.test(String(error.message || ''))) {
       // Fallback para ambientes sem o RPC aplicado.
@@ -293,7 +294,7 @@ export async function registerPackageAdmin(userId, payload) {
     if (items_count != null) rpcPayload.p_items_count = items_count
 
     const { data, error } = await withDbTimeout(
-      supabase.rpc('admin_register_package', rpcPayload)
+      callAdminRpc('admin_register_package', rpcPayload)
     )
     return { data: data ?? null, error }
   } catch (e) {
@@ -307,7 +308,7 @@ export async function registerPackageAdmin(userId, payload) {
 export async function addInventoryFromOrderAdmin(orderId, { name, notes, weight_kg, photo_url, video_url }) {
   try {
     const { data, error } = await withDbTimeout(
-      supabase.rpc('admin_add_inventory_from_order', {
+      callAdminRpc('admin_add_inventory_from_order', {
         p_order_id: orderId,
         p_name: name || '',
         p_notes: notes || null,
@@ -328,7 +329,7 @@ export async function addInventoryFromOrderAdmin(orderId, { name, notes, weight_
 export async function setShipmentFreightAdmin(shipmentId, cost, currency = 'JPY', breakdown = null) {
   try {
     const { error } = await withDbTimeout(
-      supabase.rpc('admin_set_shipment_freight', {
+      callAdminRpc('admin_set_shipment_freight', {
         p_shipment_id: shipmentId,
         p_shipping_cost: cost,
         p_currency: currency || 'JPY',
@@ -347,7 +348,7 @@ export async function setShipmentFreightAdmin(shipmentId, cost, currency = 'JPY'
 export async function setShipmentShippedAdmin(shipmentId, trackingCode = '') {
   try {
     const { error } = await withDbTimeout(
-      supabase.rpc('admin_set_shipment_shipped', {
+      callAdminRpc('admin_set_shipment_shipped', {
         p_shipment_id: shipmentId,
         p_tracking_code: trackingCode || null,
       })
@@ -364,7 +365,7 @@ export async function setShipmentShippedAdmin(shipmentId, trackingCode = '') {
 export async function setShipmentCompletedAdmin(shipmentId) {
   try {
     const { error } = await withDbTimeout(
-      supabase.rpc('admin_set_shipment_completed', { p_shipment_id: shipmentId })
+      callAdminRpc('admin_set_shipment_completed', { p_shipment_id: shipmentId })
     )
     return { error }
   } catch (e) {
@@ -378,7 +379,7 @@ export async function setShipmentCompletedAdmin(shipmentId) {
 export async function setShipmentPaidAdmin(shipmentId) {
   try {
     const { error } = await withDbTimeout(
-      supabase.rpc('admin_set_shipment_paid', { p_shipment_id: shipmentId })
+      callAdminRpc('admin_set_shipment_paid', { p_shipment_id: shipmentId })
     )
     return { error }
   } catch (e) {
@@ -392,7 +393,7 @@ export async function setShipmentPaidAdmin(shipmentId) {
 export async function deleteShipmentAdmin(shipmentId) {
   try {
     const { error } = await withDbTimeout(
-      supabase.rpc('admin_delete_shipment', { p_shipment_id: shipmentId })
+      callAdminRpc('admin_delete_shipment', { p_shipment_id: shipmentId })
     )
     if (error && /admin_delete_shipment|function/i.test(String(error.message || ''))) {
       // Fallback para ambientes onde o RPC ainda não foi aplicado.
@@ -416,7 +417,7 @@ export async function getShippingPanelAdmin(options = {}) {
   const inventoryLimit = Number(options?.inventoryLimit) || 300
   try {
     const { data, error } = await withDbTimeout(
-      supabase.rpc('admin_get_shipping_panel', {
+      callAdminRpc('admin_get_shipping_panel', {
         p_limit_shipments: shipmentsLimit,
         p_limit_orders: ordersLimit,
         p_limit_inventory_ready: inventoryLimit,

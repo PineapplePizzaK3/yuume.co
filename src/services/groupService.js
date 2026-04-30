@@ -3,6 +3,7 @@
  */
 import { supabase } from '../lib/supabase'
 import { withDbTimeout, toServiceError } from '../lib/dbGuard'
+import { callAdminRpc } from './adminRpcService'
 
 function normalizeImageUrls(value, fallbackUrl = '') {
   if (Array.isArray(value)) {
@@ -94,7 +95,7 @@ export async function getPurchaseGroups(destination = 'physical') {
 export async function getPurchaseGroupsAdmin() {
   try {
     const { data, error } = await withDbTimeout(
-      supabase.rpc('admin_list_purchase_groups')
+      callAdminRpc('admin_list_purchase_groups')
     )
     const list = Array.isArray(data) ? data : (data ?? [])
     return { data: list, error }
@@ -120,7 +121,7 @@ export async function createPurchaseGroup(group) {
     }
 
     const { data, error } = await withDbTimeout(
-      supabase.rpc('admin_create_purchase_group', { p_group: payload })
+      callAdminRpc('admin_create_purchase_group', { p_group: payload })
     )
     return { data: data ?? null, error }
   } catch (e) {
@@ -145,7 +146,7 @@ export async function updatePurchaseGroup(id, group) {
     }
 
     const { data, error } = await withDbTimeout(
-      supabase.rpc('admin_update_purchase_group', { p_id: id, p_group: payload })
+      callAdminRpc('admin_update_purchase_group', { p_id: id, p_group: payload })
     )
     return { data: data ?? null, error }
   } catch (e) {
@@ -156,7 +157,7 @@ export async function updatePurchaseGroup(id, group) {
 export async function deletePurchaseGroup(id) {
   try {
     const { error } = await withDbTimeout(
-      supabase.rpc('admin_delete_purchase_group', { p_id: id })
+      callAdminRpc('admin_delete_purchase_group', { p_id: id })
     )
     return { error }
   } catch (e) {
@@ -204,7 +205,7 @@ export async function createPurchaseGroupProduct(groupId, product) {
       }),
     }
     const { data, error } = await withDbTimeout(
-      supabase.rpc('admin_create_purchase_group_product', {
+      callAdminRpc('admin_create_purchase_group_product', {
         p_group_id: groupId,
         p_product: payload,
       })
@@ -255,7 +256,7 @@ export async function updatePurchaseGroupProduct(groupId, productId, product) {
       }),
     }
     const { data, error } = await withDbTimeout(
-      supabase.rpc('admin_update_purchase_group_product', {
+      callAdminRpc('admin_update_purchase_group_product', {
         p_group_id: groupId,
         p_product_id: productId,
         p_product: payload,
@@ -271,7 +272,7 @@ export async function updatePurchaseGroupProduct(groupId, productId, product) {
 export async function deletePurchaseGroupProduct(groupId, productId) {
   try {
     const { error } = await withDbTimeout(
-      supabase.rpc('admin_delete_purchase_group_product', {
+      callAdminRpc('admin_delete_purchase_group_product', {
         p_group_id: groupId,
         p_product_id: productId,
       })

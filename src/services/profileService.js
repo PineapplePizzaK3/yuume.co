@@ -4,6 +4,7 @@
  */
 import { supabase } from '../lib/supabase'
 import { withDbTimeout, toServiceError } from '../lib/dbGuard'
+import { callAdminRpc } from './adminRpcService'
 
 const KYC_BUCKET = 'kyc-documents'
 const KYC_MAX_BYTES = 10 * 1024 * 1024
@@ -100,7 +101,7 @@ export async function getOrCreateProfile(userId, { email, name } = {}) {
 export async function getUsersAdmin(limit = 500, offset = 0) {
   try {
     const { data, error } = await withDbTimeout(
-      supabase.rpc('admin_list_users', {
+      callAdminRpc('admin_list_users', {
         p_limit: limit,
         p_offset: offset,
       })
@@ -118,7 +119,7 @@ export async function getUsersAdmin(limit = 500, offset = 0) {
 export async function getUserFullAdmin(userId) {
   try {
     const { data, error } = await withDbTimeout(
-      supabase.rpc('admin_get_user_full', { p_user_id: userId })
+      callAdminRpc('admin_get_user_full', { p_user_id: userId })
     )
     return { data: data ?? null, error }
   } catch (e) {
@@ -132,7 +133,7 @@ export async function getUserFullAdmin(userId) {
 export async function updateProfileAdmin(userId, updates) {
   try {
     const { data, error } = await withDbTimeout(
-      supabase.rpc('admin_update_profile', {
+      callAdminRpc('admin_update_profile', {
         p_user_id: userId,
         p_updates: updates,
       })

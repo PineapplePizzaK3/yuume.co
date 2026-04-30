@@ -3,6 +3,7 @@
  */
 import { supabase } from '../lib/supabase'
 import { withDbTimeout, toServiceError } from '../lib/dbGuard'
+import { callAdminRpc } from './adminRpcService'
 
 /**
  * Registra uma ação do admin.
@@ -14,7 +15,7 @@ import { withDbTimeout, toServiceError } from '../lib/dbGuard'
 export async function logAdminAction(action, entityType = null, entityId = null, details = {}) {
   try {
     const { data, error } = await withDbTimeout(
-      supabase.rpc('admin_insert_log', {
+      callAdminRpc('admin_insert_log', {
         p_action: action,
         p_entity_type: entityType,
         p_entity_id: entityId || null,
@@ -33,7 +34,7 @@ export async function logAdminAction(action, entityType = null, entityId = null,
 export async function getAdminLogs(limit = 100, offset = 0) {
   try {
     const { data, error } = await withDbTimeout(
-      supabase.rpc('admin_list_logs', { p_limit: limit, p_offset: offset })
+      callAdminRpc('admin_list_logs', { p_limit: limit, p_offset: offset })
     )
     const list = Array.isArray(data) ? data : (data ?? [])
     return { data: list, error }
@@ -48,7 +49,7 @@ export async function getAdminLogs(limit = 100, offset = 0) {
 export async function getUserLogs(limit = 100, offset = 0) {
   try {
     const { data, error } = await withDbTimeout(
-      supabase.rpc('admin_list_user_logs', { p_limit: limit, p_offset: offset })
+      callAdminRpc('admin_list_user_logs', { p_limit: limit, p_offset: offset })
     )
     const list = Array.isArray(data) ? data : (data ?? [])
     return { data: list, error }
@@ -63,7 +64,7 @@ export async function getUserLogs(limit = 100, offset = 0) {
 export async function getAuthLogs(limit = 100, offset = 0) {
   try {
     const { data, error } = await withDbTimeout(
-      supabase.rpc('admin_list_auth_logs', { p_limit: limit, p_offset: offset })
+      callAdminRpc('admin_list_auth_logs', { p_limit: limit, p_offset: offset })
     )
     const list = Array.isArray(data) ? data : (data ?? [])
     return { data: list, error }

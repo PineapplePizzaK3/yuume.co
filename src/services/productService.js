@@ -4,6 +4,7 @@
  */
 import { supabase } from '../lib/supabase'
 import { withDbTimeout, toServiceError } from '../lib/dbGuard'
+import { callAdminRpc } from './adminRpcService'
 
 function normalizeImageUrls(value, fallbackUrl = '') {
   if (Array.isArray(value)) {
@@ -92,7 +93,7 @@ export async function getPurchaseGroupProducts(groupId, options = {}) {
 export async function getProductsAdmin(limit = 500, offset = 0) {
   try {
     const { data, error } = await withDbTimeout(
-      supabase.rpc('admin_list_products', {
+      callAdminRpc('admin_list_products', {
         p_limit: limit,
         p_offset: offset,
       })
@@ -108,7 +109,7 @@ export async function getProductsAdmin(limit = 500, offset = 0) {
 export async function listProductCategoriesAdmin() {
   try {
     const { data, error } = await withDbTimeout(
-      supabase.rpc('admin_list_product_categories'),
+      callAdminRpc('admin_list_product_categories'),
       60000,
       'products:listProductCategoriesAdmin'
     )
@@ -123,7 +124,7 @@ export async function listProductCategoriesAdmin() {
 export async function getStoreProductsAdmin(limit = 500, offset = 0) {
   try {
     const { data, error } = await withDbTimeout(
-      supabase.rpc('admin_list_store_products', {
+      callAdminRpc('admin_list_store_products', {
         p_limit: limit,
         p_offset: offset,
       })
@@ -139,7 +140,7 @@ export async function getStoreProductsAdmin(limit = 500, offset = 0) {
 export async function addProductToStoreAdmin(productId) {
   try {
     const { data, error } = await withDbTimeout(
-      supabase.rpc('admin_add_product_to_store', {
+      callAdminRpc('admin_add_product_to_store', {
         p_product_id: productId,
       })
     , 60000, 'products:addProductToStoreAdmin')
@@ -153,7 +154,7 @@ export async function addProductToStoreAdmin(productId) {
 export async function removeProductFromStoreAdmin(productId) {
   try {
     const { data, error } = await withDbTimeout(
-      supabase.rpc('admin_remove_product_from_store', {
+      callAdminRpc('admin_remove_product_from_store', {
         p_product_id: productId,
       })
     , 60000, 'products:removeProductFromStoreAdmin')
@@ -202,7 +203,7 @@ export async function createProduct(product) {
       }),
     }
     const { data, error } = await withDbTimeout(
-      supabase.rpc('admin_create_product', { p_product: payload })
+      callAdminRpc('admin_create_product', { p_product: payload })
     , 60000, 'products:createProduct')
     return { data: data ?? null, error }
   } catch (e) {
@@ -249,7 +250,7 @@ export async function updateProduct(id, product) {
       }),
     }
     const { data, error } = await withDbTimeout(
-      supabase.rpc('admin_update_product', { p_id: id, p_product: payload })
+      callAdminRpc('admin_update_product', { p_id: id, p_product: payload })
     , 60000, 'products:updateProduct')
     return { data: data ?? null, error }
   } catch (e) {
@@ -261,7 +262,7 @@ export async function updateProduct(id, product) {
 export async function deleteProduct(id) {
   try {
     const { error } = await withDbTimeout(
-      supabase.rpc('admin_delete_product', { p_id: id })
+      callAdminRpc('admin_delete_product', { p_id: id })
     , 60000, 'products:deleteProduct')
     return { error }
   } catch (e) {

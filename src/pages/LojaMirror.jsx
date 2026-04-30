@@ -13,6 +13,8 @@ import { getCardThumbnailUrl } from '../lib/imageUtils'
 import { TriCurrencyDisplay } from '../components/TriCurrencyDisplay'
 import ImageLightbox from '../components/ImageLightbox'
 import { getProductConditionMeta } from '../lib/productCondition'
+import RichTextContent from '../components/RichTextContent'
+import { richTextToPlainText } from '../lib/richText'
 
 function getProductImages(p) {
   if (Array.isArray(p?.image_urls) && p.image_urls.length > 0) {
@@ -121,7 +123,9 @@ export default function LojaMirror() {
                           {condition.label}
                         </span>
                         {p.description && (
-                          <p className="mt-0.5 line-clamp-2 whitespace-pre-wrap text-xs text-earth-600">{p.description}</p>
+                          <p className="mt-0.5 line-clamp-2 whitespace-pre-wrap text-xs text-earth-600">
+                            {richTextToPlainText(p.description)}
+                          </p>
                         )}
                         {(() => {
                           const jpy = Number(p.price_jpy ?? p.price) || 0
@@ -243,7 +247,7 @@ export default function LojaMirror() {
                     {detailProduct.name}
                   </h2>
                   {detailProduct.description && (
-                    <p className="mt-2 whitespace-pre-wrap text-earth-600">{detailProduct.description}</p>
+                    <RichTextContent html={detailProduct.description} className="mt-2 text-earth-600" />
                   )}
                   {(() => {
                     const p = detailProduct

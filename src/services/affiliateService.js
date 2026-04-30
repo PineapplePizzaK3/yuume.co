@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase'
 import { withDbTimeout, toServiceError } from '../lib/dbGuard'
+import { callAdminRpc } from './adminRpcService'
 
 export async function getOrCreateMyAffiliate(userId) {
   try {
@@ -179,7 +180,7 @@ export async function getAffiliateAdminOverview() {
 
 export async function createAffiliatePayoutCandidates() {
   try {
-    const { data, error } = await withDbTimeout(supabase.rpc('create_affiliate_payout_candidates'))
+    const { data, error } = await withDbTimeout(callAdminRpc('create_affiliate_payout_candidates'))
     return { data: Number(data) || 0, error }
   } catch (e) {
     return { data: 0, error: toServiceError(e) }
@@ -188,7 +189,7 @@ export async function createAffiliatePayoutCandidates() {
 
 export async function processAffiliateAutoPayouts() {
   try {
-    const { data, error } = await withDbTimeout(supabase.rpc('admin_process_affiliate_auto_payouts'))
+    const { data, error } = await withDbTimeout(callAdminRpc('admin_process_affiliate_auto_payouts'))
     return { data: Number(data) || 0, error }
   } catch (e) {
     return { data: 0, error: toServiceError(e) }

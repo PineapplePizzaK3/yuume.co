@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { uploadProductImage } from '../../../../services/productService'
+import RichTextEditor from '../../../../components/RichTextEditor'
 
 function parseAdminProductUrls(value) {
   return String(value || '')
@@ -149,12 +150,11 @@ export default function ProductCoreFields({
 
       <div>
         <label className="block text-sm font-medium text-earth-700">Descrição do produto</label>
-        <textarea
+        <RichTextEditor
           value={form.description}
-          onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-          rows={3}
+          onChange={(nextHtml) => setForm((f) => ({ ...f, description: nextHtml }))}
           placeholder="Detalhes visíveis para o cliente no modal do produto (opcional)"
-          className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
+          minHeightClassName="min-h-[110px]"
         />
       </div>
 

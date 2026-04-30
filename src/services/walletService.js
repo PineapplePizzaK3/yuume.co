@@ -4,6 +4,7 @@
  */
 import { supabase } from '../lib/supabase'
 import { withDbTimeout, toServiceError } from '../lib/dbGuard'
+import { callAdminRpc } from './adminRpcService'
 
 /**
  * Retorna a carteira do usuário (saldo e moeda). Se não existir linha, retorna saldo 0.
@@ -54,7 +55,7 @@ export async function getWalletTransactions(userId, limit = 50) {
 export async function addWalletBalanceAdmin(userId, amount, description = null) {
   try {
     const { data, error } = await withDbTimeout(
-      supabase.rpc('admin_wallet_credit', {
+      callAdminRpc('admin_wallet_credit', {
         p_user_id: userId,
         p_amount: Number(amount),
         p_description: description || null,
@@ -72,7 +73,7 @@ export async function addWalletBalanceAdmin(userId, amount, description = null) 
 export async function removeWalletBalanceAdmin(userId, amount, description = null) {
   try {
     const { data, error } = await withDbTimeout(
-      supabase.rpc('admin_wallet_debit', {
+      callAdminRpc('admin_wallet_debit', {
         p_user_id: userId,
         p_amount: Number(amount),
         p_description: description || null,
@@ -127,7 +128,7 @@ export async function submitWalletTopupComprovante(requestId, comprovanteUrl) {
 export async function getWalletTopupRequestsAdmin(status = 'pending') {
   try {
     const { data, error } = await withDbTimeout(
-      supabase.rpc('admin_list_wallet_topup_requests', {
+      callAdminRpc('admin_list_wallet_topup_requests', {
         p_status: status || null,
       })
     )
@@ -143,7 +144,7 @@ export async function getWalletTopupRequestsAdmin(status = 'pending') {
 export async function approveWalletTopupAdmin(requestId) {
   try {
     const { data, error } = await withDbTimeout(
-      supabase.rpc('admin_approve_wallet_topup', { p_request_id: requestId })
+      callAdminRpc('admin_approve_wallet_topup', { p_request_id: requestId })
     )
     return { data: data ?? null, error }
   } catch (e) {
@@ -157,7 +158,7 @@ export async function approveWalletTopupAdmin(requestId) {
 export async function rejectWalletTopupAdmin(requestId) {
   try {
     const { data, error } = await withDbTimeout(
-      supabase.rpc('admin_reject_wallet_topup', { p_request_id: requestId })
+      callAdminRpc('admin_reject_wallet_topup', { p_request_id: requestId })
     )
     return { data: data ?? null, error }
   } catch (e) {

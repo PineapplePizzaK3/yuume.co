@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase'
 import { withDbTimeout, toServiceError } from '../lib/dbGuard'
+import { callAdminRpc } from './adminRpcService'
 
 const SETTINGS_KEYS = [
   'referral_discount_value',
@@ -39,7 +40,7 @@ export async function getSystemSettings() {
 export async function saveSystemSettingsAdmin(payload) {
   try {
     const { error } = await withDbTimeout(
-      supabase.rpc('admin_save_system_settings', { p_payload: payload || {} })
+      callAdminRpc('admin_save_system_settings', { p_payload: payload || {} })
     )
     return { error }
   } catch (e) {
