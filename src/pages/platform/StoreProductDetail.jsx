@@ -11,6 +11,7 @@ import { PageSeo } from '../../components/PageSeo'
 import { getPublicProductById } from '../../services/productService'
 import { addToCart } from '../../services/cartService'
 import { useAuth } from '../../hooks/useAuth'
+import { showCartToast } from '../../lib/cartToast'
 import LinkifyText from '../../components/LinkifyText'
 import ImageLightbox from '../../components/ImageLightbox'
 import { getProductConditionMeta } from '../../lib/productCondition'
@@ -194,7 +195,7 @@ export default function StoreProductDetail({ publicMode = false }) {
     }
     const { error } = await addToCart(user.id, product.id, 1, nextVid)
     if (error) setMessage(error.message || t('platform.store.addError'))
-    else setMessage(t('platform.store.added'))
+    else showCartToast(t('platform.store.added'))
   }
 
   const openLightbox = (event) => {

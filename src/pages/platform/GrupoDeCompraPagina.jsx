@@ -12,6 +12,7 @@ import { PageSeo } from '../../components/PageSeo'
 import { getPurchaseGroupById } from '../../services/groupService'
 import { getPurchaseGroupProducts } from '../../services/productService'
 import { addToCart } from '../../services/cartService'
+import { showCartToast } from '../../lib/cartToast'
 import GroupPurchaseDetailContent from '../../components/GroupPurchaseDetailContent'
 
 export default function GrupoDeCompraPagina({ publicMode = false }) {
@@ -107,7 +108,7 @@ export default function GrupoDeCompraPagina({ publicMode = false }) {
     }
     const { error } = await addToCart(user.id, product.id, 1, variantId)
     if (error) setMessage(error.message || tt('addError'))
-    else setMessage(tt('added'))
+    else showCartToast(tt('added'))
   }
 
   const pageTitle = group?.name

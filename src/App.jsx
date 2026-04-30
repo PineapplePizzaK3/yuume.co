@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect } from 'react'
+import { Suspense, lazy, useEffect, useRef, useState } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import Navbar from './components/Navbar'
@@ -8,6 +8,7 @@ import CookieConsentBanner from './components/CookieConsentBanner'
 import { LocaleSync } from './components/LocaleSync'
 import { recordAffiliateClick } from './services/affiliateService'
 import { LOCALE_EN, LOCALE_PT_BR, localizedPath } from './lib/localeRoutes'
+import { CART_TOAST_EVENT } from './lib/cartToast'
 
 const Home = lazy(() => import('./pages/Home'))
 const Contact = lazy(() => import('./pages/Contact'))
@@ -73,6 +74,34 @@ function SuspenseLoading() {
 }
 
 function App() {
+  const toastTimerRef = useRef(null)
+  const toastFadeTimerRef = useRef(null)
+  const [cartToast, setCartToast] = useState({ visible: false, message: '' })
+
+  useEffect(() => {
+    const onCartToast = (event) => {
+      const message = String(event?.detail?.message || '').trim()
+      if (!message) return
+      const durationMs = Number(event?.detail?.durationMs) || 2800
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
+      if (toastFadeTimerRef.current) clearTimeout(toastFadeTimerRef.current)
+      setCartToast({ visible: true, message })
+      toastTimerRef.current = setTimeout(() => {
+        setCartToast((prev) => ({ ...prev, visible: false }))
+        toastFadeTimerRef.current = setTimeout(() => {
+          setCartToast({ visible: false, message: '' })
+        }, 140)
+      }, durationMs)
+    }
+
+    window.addEventListener(CART_TOAST_EVENT, onCartToast)
+    return () => {
+      window.removeEventListener(CART_TOAST_EVENT, onCartToast)
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
+      if (toastFadeTimerRef.current) clearTimeout(toastFadeTimerRef.current)
+    }
+  }, [])
+
   useEffect(() => {
     const url = new URL(window.location.href)
     const referralCode = (url.searchParams.get('invite') || url.searchParams.get('referral') || '').trim().toUpperCase()
@@ -342,6 +371,17 @@ function App() {
       <Footer />
       <CookieConsentBanner />
       <WhatsAppFloating />
+      {cartToast.message && (
+        <div className="pointer-events-none fixed inset-0 z-[12000] flex items-center justify-center p-4">
+          <p
+            className={`rounded-xl bg-earth-900/95 px-5 py-3 text-sm font-medium text-white shadow-lg transition-opacity duration-100 sm:text-base ${
+              cartToast.visible ? 'opacity-100' : 'opacity-0'
+            }`}
+          >
+            {cartToast.message}
+          </p>
+        </div>
+      )}
     </div>
   )
 }

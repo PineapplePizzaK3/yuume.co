@@ -1055,7 +1055,10 @@ function Cart() {
                     : (Number.isFinite(jpyUsd) && jpyUsd > 0 ? jpyUnit * jpyUsd : NaN)
                   const lineJpy = jpyUnit * qty
                   const lineBrl = unitBrl * qty
-                  const lineUsd = hasTri ? usdUnit * qty : NaN
+                  const lineUsd =
+                    Number.isFinite(unitUsd) && unitUsd > 0
+                      ? unitUsd * qty
+                      : NaN
                   const sourceTag = p.purchase_group_id
                     ? t('platform.cart.sourceGroupBuy')
                     : t('platform.cart.sourceStore')

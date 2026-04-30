@@ -12,6 +12,7 @@ import { getProducts } from '../../services/productService'
 import { addToCart } from '../../services/cartService'
 import { useAuth } from '../../hooks/useAuth'
 import { getCardThumbnailUrl } from '../../lib/imageUtils'
+import { showCartToast } from '../../lib/cartToast'
 import LinkifyText from '../../components/LinkifyText'
 import ImageLightbox from '../../components/ImageLightbox'
 import { getProductConditionMeta } from '../../lib/productCondition'
@@ -141,7 +142,7 @@ function LojaEstoqueCatalog({ publicMode = false }) {
       setMessage(error.message)
       return
     }
-    setMessage(t('platform.store.added'))
+    showCartToast(t('platform.store.added'))
   }
 
   const productHref = (productId, variantId) =>
