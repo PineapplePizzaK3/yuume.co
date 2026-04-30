@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase'
-import { toServiceError } from './_serviceError'
+import { toServiceError } from '../lib/dbGuard'
 
 async function getAccessToken() {
   const { data, error } = await supabase.auth.getSession()
