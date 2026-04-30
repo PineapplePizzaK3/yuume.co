@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { uploadProductImage } from '../../../../services/productService'
 import { PRODUCT_CONDITION_OPTIONS } from '../../../../lib/productCondition'
 import { useAdminContext } from '../AdminContext'
+import RichTextEditor from '../../../../components/RichTextEditor'
+import { richTextToPlainText } from '../../../../lib/richText'
 import ProductCoreFields from './ProductCoreFields'
 import ProductScrapeBlock from './ProductScrapeBlock'
 
@@ -581,11 +583,10 @@ export default function GruposSection() {
                 </div>
                 <label className="mt-2 block text-xs text-earth-700">
                   Descrição global
-                  <textarea
+                  <RichTextEditor
                     value={groupProductForm.description ?? ''}
-                    onChange={(e) => setGroupProductForm((f) => ({ ...f, description: e.target.value }))}
-                    rows={3}
-                    className="mt-1 block w-full rounded border border-earth-300 px-2 py-1 text-sm text-earth-900"
+                    onChange={(nextHtml) => setGroupProductForm((f) => ({ ...f, description: nextHtml }))}
+                    placeholder="Detalhes visíveis ao cliente; valem para todas as versões (opcional)"
                   />
                 </label>
                 <p className="mt-2 text-xs text-earth-600">
@@ -968,7 +969,11 @@ export default function GruposSection() {
                             : 'Sem destino'}
                       </span>
                     </p>
-                    {g.description && <p className="mt-1 line-clamp-2 whitespace-pre-wrap text-sm text-earth-600">{g.description}</p>}
+                    {g.description && (
+                      <p className="mt-1 line-clamp-2 whitespace-pre-wrap text-sm text-earth-600">
+                        {richTextToPlainText(g.description)}
+                      </p>
+                    )}
                     <p className="mt-1 text-xs text-earth-500">
                       Produtos: {g.products_count ?? 0}
                     </p>

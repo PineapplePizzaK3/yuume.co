@@ -621,6 +621,7 @@ export default function CatalogoProdutosSection() {
               <RichTextEditor
                 value={form.description}
                 onChange={(nextHtml) => setForm((f) => ({ ...f, description: nextHtml }))}
+                placeholder="Detalhes visíveis ao cliente; valem para todas as versões (opcional)"
               />
             </label>
             <p className="mt-2 text-xs text-earth-600">
