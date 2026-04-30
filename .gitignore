@@ -29,3 +29,9 @@ icons/
 imgs/
 logo/
 *.mp4
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+!.env.example
