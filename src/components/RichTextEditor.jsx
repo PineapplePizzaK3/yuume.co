@@ -222,7 +222,12 @@ export default function RichTextEditor({
   useLayoutEffect(() => {
     const el = editorRef.current
     if (!el) return
-    if (el.innerHTML !== normalized) {
+    /* Comparar via sanitize nos dois lados: o browser serializa innerHTML de
+       forma diferente do nosso parser (espaços em style, b vs strong, etc.).
+       Igualdade “semântica” evita regravar innerHTML a cada render — isso
+       destruía seleção e fazia negrito/alinhamento “voltarem” sozinhos. */
+    const domSanitized = sanitizeRichTextHtml(el.innerHTML)
+    if (domSanitized !== normalized) {
       el.innerHTML = normalized || ''
     }
     adjustEditorHeight()
@@ -558,7 +563,7 @@ export default function RichTextEditor({
             window.requestAnimationFrame(() => emitChange())
           }
         }}
-        className="rich-text-editor prose prose-sm max-w-none min-h-0 resize-none px-3 py-2 text-sm text-earth-900 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-earth-400/60 empty:before:pointer-events-none empty:before:text-earth-400 empty:before:content-[attr(data-placeholder)]"
+        className="rich-text-editor prose prose-sm max-w-none min-h-0 resize-none px-3 py-2 text-sm text-earth-900 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-earth-400/60 empty:before:pointer-events-none empty:before:text-earth-400 empty:before:content-[attr(data-placeholder)] [&_b]:font-bold [&_strong]:font-bold"
       />
     </div>
   )
