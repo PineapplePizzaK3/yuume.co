@@ -427,12 +427,15 @@ function Cart() {
     }
   }, [scheduledGroupIds])
 
-  const { productSubtotalBrl, grupoFeeBrl, grupoQty, cartSubtotalJpy } = useMemo(() => {
+  const { productSubtotalBrl, grupoFeeBrl, grupoQty, cartSubtotalJpy, totalBrl } = useMemo(() => {
     let lojaBrl = 0
     let grupoBrl = 0
+    let lojaUsd = 0
     let grupoUsd = 0
     let q = 0
     let cartJpy = 0
+    const jpyUsd = Number(exchangeSnapshot?.jpy_usd_charge ?? exchangeSnapshot?.jpy_usd)
+    const usdBrl = Number(exchangeSnapshot?.usd_brl)
     for (const i of items) {
       const p = i.products
       const variant = i.product_variants
@@ -443,7 +446,6 @@ function Cart() {
       const brlUnit = Number(p.price_brl)
       const usdUnit = Number(p.price_usd)
       const hasVariant = !!variant?.id
-      const jpyUsd = Number(exchangeSnapshot?.jpy_usd_charge ?? exchangeSnapshot?.jpy_usd)
       const lineBrl = (hasVariant || !(Number.isFinite(brlUnit) && brlUnit > 0))
         ? jpyToBrl(jpyUnit) * qty
         : brlUnit * qty
@@ -456,10 +458,10 @@ function Cart() {
         q += qty
       } else {
         lojaBrl += lineBrl
+        lojaUsd += lineUsd
       }
     }
-    const usdBrl = Number(exchangeSnapshot?.usd_brl)
-    const fee =
+    const feeDisplayBrl =
       usdBrl > 0 && grupoUsd > 0
         ? computeGrupoComprasFeeDisplayBrl(grupoUsd, q, usdBrl)
         : (() => {
@@ -468,15 +470,19 @@ function Cart() {
             // Subtotal em BRL do grupo — não usar JPY aqui: computeGrupoComprasFeeBrl aplica % sobre BRL.
             return computeGrupoComprasFeeBrl(grupoBrl, q, fx)
           })()
+    const backendLikeTotalBrl =
+      usdBrl > 0
+        ? Math.round(((lojaUsd + grupoUsd + ((grupoUsd * 0.20) + (GRUPO_COMPRAS_FEE_PER_UNIT_USD * q))) * usdBrl) * 100) / 100
+        : lojaBrl + grupoBrl + feeDisplayBrl
     return {
       productSubtotalBrl: lojaBrl + grupoBrl,
-      grupoFeeBrl: fee,
+      grupoFeeBrl: feeDisplayBrl,
       grupoQty: q,
       cartSubtotalJpy: cartJpy,
+      totalBrl: backendLikeTotalBrl,
     }
   }, [items, systemSettings, exchangeSnapshot])
 
-  const totalBrl = productSubtotalBrl + grupoFeeBrl
   const discountBrl = couponApplied?.discount_brl ?? 0
   const totalAfterDiscountBrl = Math.max(0, totalBrl - discountBrl)
 
