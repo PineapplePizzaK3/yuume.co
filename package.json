@@ -7,9 +7,10 @@
     "dev": "vite",
     "dev:full": "vercel dev",
     "build": "vite build",
-    "preview": "vite preview",
+    "preview": "npm run build && wrangler dev",
     "supabase:functions:deploy:catalog-search": "supabase functions deploy catalog-search",
-    "scrape:quality": "node scripts/scrape-quality-report.mjs"
+    "scrape:quality": "node scripts/scrape-quality-report.mjs",
+    "deploy": "npm run build && wrangler deploy"
   },
   "dependencies": {
     "@stripe/stripe-js": "^8.9.0",
@@ -26,13 +27,15 @@
     "stripe": "^20.4.1"
   },
   "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.35.0",
     "@vitejs/plugin-react": "^4.3.3",
     "@vitejs/plugin-react-swc": "^4.2.3",
     "autoprefixer": "^10.4.20",
     "postcss": "^8.4.47",
-    "tailwindcss": "^3.4.14",
     "supabase": "^2.89.0",
+    "tailwindcss": "^3.4.14",
     "vercel": "^39.4.2",
-    "vite": "^7.3.1"
+    "vite": "^7.3.1",
+    "wrangler": "^4.87.0"
   }
 }
