@@ -21,6 +21,12 @@ export function getPaymentsApiBase() {
   return String(import.meta.env.VITE_API_URL || '/api').trim().replace(/\/$/, '') || '/api'
 }
 
+export function isGlinSdkEnabled() {
+  return String(import.meta.env.VITE_GLIN_SDK_ENABLED || '')
+    .trim()
+    .toLowerCase() === 'true'
+}
+
 async function parseApiPayload(res) {
   const contentType = (res.headers.get('content-type') || '').toLowerCase()
   const rawText = await res.text()
@@ -103,6 +109,10 @@ export async function createCheckoutSession(orderId, accessToken) {
         useWallet: !!options?.useWallet,
         walletAmountJpy: options?.walletAmountJpy != null ? Number(options.walletAmountJpy) : null,
         provider: options?.provider || null,
+        glinMode:
+          isGlinSdkEnabled() && options?.provider === 'glin' && options?.glinMode === 'sdk'
+            ? 'sdk'
+            : null,
       }),
       credentials: 'same-origin',
     })
@@ -170,7 +180,7 @@ export async function createCartCheckoutSession(items, accessToken) {
 /**
  * Create checkout session para adicionar saldo na carteira (¥ em JPY).
  * amountJpy: valor inteiro em ienes (ex.: 1000 = ¥1.000).
- * provider: 'stripe' | 'parcelow' (fallback no backend para stripe).
+ * provider: 'stripe' | 'parcelow' | 'glin' (fallback no backend para stripe).
  */
 export async function createTopUpCheckoutSession(amountJpy, accessToken, provider = null) {
   const headers = { 'Content-Type': 'application/json' }

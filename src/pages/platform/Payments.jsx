@@ -47,6 +47,7 @@ export default function Payments() {
     if (!paymentId) return '—'
     if (paymentId.startsWith('wallet')) return t('platform.cart.payMethod.wallet')
     if (paymentId === 'referral_discount' || paymentId === 'coupon_discount') return t('platform.cart.payMethod.discount')
+    if (paymentId.startsWith('glin')) return 'Glin'
     if (paymentId.startsWith('parcelow')) return 'Parcelow'
     if (paymentId.includes('pix')) return 'PIX'
     if (paymentId.startsWith('pi_') || paymentId.startsWith('cs_') || paymentId.startsWith('ch_')) {

@@ -32,6 +32,7 @@ const TED_BADGE_SRC = buildBadgeSrc('TED', { bg: '#f8fafc', fg: '#0f172a', strok
 
 export const GATEWAY_OPTIONS_META = [
   { id: 'parcelow', label: 'Parcelow', icon: '🇧🇷' },
+  { id: 'glin', label: 'Glin', icon: '🇧🇷' },
   { id: 'stripe', label: 'Stripe', icon: '🌐' },
 ]
 
@@ -45,6 +46,15 @@ export const PAYMENT_METHODS_BY_GATEWAY = {
       group: 'card',
       src: PARCELOW_CARD_BRANDS_IMG,
       layout: 'strip',
+    },
+  ],
+  glin: [
+    { id: 'pix', label: 'PIX', group: 'pix', src: PIX_OFFICIAL_LOGO_IMG, fallbackSrc: PIX_BADGE_SRC_FALLBACK },
+    {
+      id: 'glin_installments',
+      label: 'Cartão de crédito (até 12x)',
+      group: 'card',
+      src: buildBadgeSrc('CARD 12X', { bg: '#eef2ff', fg: '#1e3a8a', stroke: '#c7d2fe' }),
     },
   ],
   stripe: [

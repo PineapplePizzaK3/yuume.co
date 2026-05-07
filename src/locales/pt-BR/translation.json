@@ -397,6 +397,7 @@
       "itemFallback": "Item {{n}}",
       "gateway": {
         "parcelow": "Cartão até 21x, PIX, TED",
+        "glin": "Cartão até 12x, PIX",
         "stripe": "Cartão internacional"
       },
       "payable": {
@@ -839,7 +840,7 @@
       "topupUsdRef": "Referência USD",
       "topupBrlRef": "Referência BRL (aprox.)",
       "topupPaymentSubtitle": "Valor principal em JPY e referências em USD/BRL no pipeline JPY → USD → BRL.",
-      "topupParcelowUnavailable": "Recarga de carteira só via Stripe. Parcelow segue disponível para pedidos na Central de Pagamentos.",
+      "topupParcelowUnavailable": "Recarga de carteira disponível via Stripe, Parcelow e Glin.",
       "topupMethodsFootnote": "Cada gateway exibe suas próprias formas aceitas para pagamento.",
       "types": {
         "topup": "Adição de saldo",

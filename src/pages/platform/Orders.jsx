@@ -67,6 +67,7 @@ export default function Orders() {
   const gatewayOptions = useMemo(
     () => [
       { id: 'parcelow', label: 'Parcelow', icon: '🇧🇷', details: t('platform.orders.gateway.parcelow') },
+      { id: 'glin', label: 'Glin', icon: '🇧🇷', details: t('platform.orders.gateway.glin') },
       { id: 'stripe', label: 'Stripe', icon: '🌐', details: t('platform.orders.gateway.stripe') },
     ],
     [t]

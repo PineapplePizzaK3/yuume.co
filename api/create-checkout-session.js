@@ -21,6 +21,8 @@ const rateLimitMemory = globalThis.__checkoutRateLimitMap ?? new Map()
 globalThis.__checkoutRateLimitMap = rateLimitMemory
 const parcelowTokenCache = globalThis.__parcelowAccessTokenCache ?? { token: null, expiresAt: 0 }
 globalThis.__parcelowAccessTokenCache = parcelowTokenCache
+const glinTokenCache = globalThis.__glinAccessTokenCache ?? { token: null, expiresAt: 0 }
+globalThis.__glinAccessTokenCache = glinTokenCache
 
 function getStripeClient() {
   const key = process.env.STRIPE_SECRET_KEY
@@ -70,7 +72,7 @@ function getSupabaseUser(accessToken) {
 
 function normalizeProvider(raw) {
   const p = String(raw || '').trim().toLowerCase()
-  if (p === 'stripe' || p === 'parcelow') return p
+  if (p === 'stripe' || p === 'parcelow' || p === 'glin') return p
   return null
 }
 
@@ -83,6 +85,11 @@ function shouldPreferParcelow(order, currency) {
 
 function normalizeParcelowBaseUrl() {
   const raw = process.env.PARCELOW_API_BASE_URL || 'https://staging.parcelow.com'
+  return String(raw).trim().replace(/\/$/, '')
+}
+
+function normalizeGlinBaseUrl() {
+  const raw = process.env.GLIN_API_BASE_URL || 'https://pay.staging.glin.com.br'
   return String(raw).trim().replace(/\/$/, '')
 }
 
@@ -166,9 +173,29 @@ function getParcelowClientConfig() {
   }
 }
 
+function getGlinClientConfig() {
+  const apiKey = String(process.env.GLIN_API_KEY || '').trim()
+  if (!apiKey) return null
+  const remittancesPathRaw = String(process.env.GLIN_REMITTANCES_PATH || '/merchant-api/remittances/').trim()
+  const remittancesPath = remittancesPathRaw.startsWith('/') ? remittancesPathRaw : `/${remittancesPathRaw}`
+  return {
+    apiKey,
+    baseUrl: normalizeGlinBaseUrl(),
+    remittancesPath,
+  }
+}
+
 async function parseJsonSafe(res) {
   try {
     return await res.json()
+  } catch {
+    return null
+  }
+}
+
+async function parseJsonTextSafe(rawText) {
+  try {
+    return rawText ? JSON.parse(rawText) : null
   } catch {
     return null
   }
@@ -196,6 +223,42 @@ async function fetchParcelow(url, init = {}) {
   } finally {
     clearTimeout(timer)
   }
+}
+
+const GLIN_FETCH_TIMEOUT_MS = Math.min(
+  Math.max(Number(process.env.GLIN_FETCH_TIMEOUT_MS) || 28000, 5000),
+  55000
+)
+
+async function fetchGlin(url, init = {}) {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), GLIN_FETCH_TIMEOUT_MS)
+  try {
+    return await fetch(url, { ...init, signal: controller.signal })
+  } catch (e) {
+    const name = e?.name || ''
+    const msg = e?.message || String(e)
+    if (name === 'AbortError' || /aborted/i.test(msg)) {
+      throw new Error(
+        `Timeout ao contatar Glin (${Math.round(GLIN_FETCH_TIMEOUT_MS / 1000)}s). Verifique GLIN_API_BASE_URL.`
+      )
+    }
+    throw new Error(`Erro de rede com Glin: ${msg}`)
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
+async function getGlinAccessToken() {
+  const cfg = getGlinClientConfig()
+  if (!cfg) return null
+  const now = Date.now()
+  if (glinTokenCache.token && glinTokenCache.expiresAt - 60_000 > now) {
+    return glinTokenCache.token
+  }
+  glinTokenCache.token = cfg.apiKey
+  glinTokenCache.expiresAt = now + (12 * 60 * 60 * 1000)
+  return glinTokenCache.token
 }
 
 async function getParcelowAccessToken() {
@@ -516,6 +579,145 @@ async function createParcelowOrderCheckout({
   }
 }
 
+function extractGlinCheckoutResponse(json) {
+  if (!json || typeof json !== 'object') {
+    return { checkoutUrl: null, remittanceId: null, externalId: null }
+  }
+  const block = json.data && typeof json.data === 'object' ? json.data : json
+  const checkoutUrl =
+    block.checkoutUrl
+    || block.checkout_url
+    || block.url_checkout
+    || block.redirectUrl
+    || block.redirect_url
+    || block.paymentUrl
+    || block.payment_url
+    || block.url
+    || null
+  const remittanceId = block.remittanceId || block.remittance_id || block.id || null
+  const externalId =
+    block.externalReference
+    || block.external_reference
+    || block.partner_reference
+    || block.reference
+    || null
+  return { checkoutUrl, remittanceId, externalId }
+}
+
+async function createGlinRemittanceCheckout({
+  orderId,
+  user,
+  profile,
+  remainingJpy,
+  amountUsdOverride,
+  productName,
+  baseUrl,
+  rates,
+  wiseMarkup,
+  debugContext,
+  successPath = '/app/cart',
+  cancelPath = '/app/cart',
+}) {
+  const cfg = getGlinClientConfig()
+  if (!cfg) {
+    throw new Error('Glin não configurado no servidor')
+  }
+  const token = await getGlinAccessToken()
+  if (!token) {
+    throw new Error('Token Glin indisponível')
+  }
+  if (!rates?.jpy_usd || !rates?.usd_brl) {
+    throw new Error('Câmbio indisponível para cobrança Glin em USD')
+  }
+
+  const rj = Math.max(0, Number(remainingJpy) || 0)
+  const overrideUsd = Number(amountUsdOverride)
+  const amountUsd =
+    Number.isFinite(overrideUsd) && overrideUsd > 0
+      ? overrideUsd
+      : jpyToFinalUsd(rj, rates.jpy_usd, wiseMarkup)
+  if (!Number.isFinite(amountUsd) || amountUsd <= 0) {
+    throw new Error('Valor inválido para criar cobrança Glin (USD)')
+  }
+
+  const customerName = String(profile?.name || user?.user_metadata?.name || user?.email || 'Cliente').trim()
+  const customerEmail = String(user?.email || profile?.email || '').trim()
+  if (!customerEmail) {
+    throw new Error('E-mail do cliente obrigatório para checkout Glin.')
+  }
+
+  const payload = {
+    amount: Number(amountUsd.toFixed(2)),
+    currency: 'USD',
+    externalReference: String(orderId),
+    description: (productName || `Pedido ${String(orderId).slice(0, 8)}`).slice(0, 255),
+    customer: {
+      name: customerName,
+      email: customerEmail,
+      phone: parsePhone(profile?.phone),
+      cpf: digitsOnly(profile?.cpf_cnpj),
+    },
+    redirect: {
+      successUrl: `${baseUrl}${successPath}?success=true`,
+      cancelUrl: `${baseUrl}${cancelPath}?canceled=true`,
+    },
+  }
+
+  const endpoint = `${cfg.baseUrl}${cfg.remittancesPath}`
+  const createRes = await fetchGlin(endpoint, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  })
+  const rawText = await createRes.text()
+  const createData = await parseJsonTextSafe(rawText)
+  if (!createRes.ok) {
+    const hint = createData?.message || createData?.error || rawText?.slice(0, 280) || '(corpo vazio)'
+    throw new Error(`Falha ao criar remittance na Glin (HTTP ${createRes.status}): ${hint}`)
+  }
+  if (!createData) {
+    throw new Error(
+      `Glin retornou resposta não-JSON (HTTP ${createRes.status}). Início: ${String(rawText).slice(0, 200)}`
+    )
+  }
+  const { checkoutUrl, remittanceId, externalId } = extractGlinCheckoutResponse(createData)
+  if (!checkoutUrl) {
+    const preview = JSON.stringify(createData).slice(0, 500)
+    throw new Error(`Glin não retornou URL de checkout. Corpo (trecho): ${preview}`)
+  }
+
+  const brlDisplay = amountUsd * (rates.usd_brl || 0)
+  const debugPayload = {
+    orderId,
+    endpoint,
+    request: {
+      amountUsd: Number(amountUsd.toFixed(4)),
+      remainingJpy: Number(rj.toFixed(2)),
+      jpyUsdSpot: Number((Number(rates?.jpy_usd) || 0).toFixed(8)),
+      wiseMarkupPercent: Number((Number(wiseMarkup) || 0).toFixed(4)),
+      usdBrl: Number((Number(rates?.usd_brl) || 0).toFixed(6)),
+    },
+    response: {
+      remittanceId,
+      externalId,
+    },
+    pricingContext: debugContext || null,
+  }
+  console.info('Glin checkout debug', JSON.stringify(debugPayload))
+
+  return {
+    url: checkoutUrl,
+    provider: 'glin',
+    chargeUsd: Number(amountUsd.toFixed(2)),
+    approxBrl: Number(brlDisplay.toFixed(2)),
+    debug: debugPayload,
+  }
+}
+
 function toChargeAmountJpyFromRates(amount, currency, rates, wiseMarkup) {
   const c = (currency || 'jpy').toLowerCase()
   const n = Number(amount) || 0
@@ -687,12 +889,13 @@ export default async function handler(req, res) {
       if (amountJpy < minJpy || amountJpy > maxJpy) {
         return res.status(400).json({ error: 'Valor deve ser entre ¥500 e ¥500.000' })
       }
-      if (selectedProvider === 'parcelow') {
+      if (selectedProvider === 'parcelow' || selectedProvider === 'glin') {
         const ratesTopup = await getExchangeRates(supabase)
         const wiseTopup = await resolveWiseWithdrawalMarkupPercent(supabase)
+        const providerLabel = selectedProvider === 'glin' ? 'Glin' : 'Parcelow'
         if (!ratesTopup?.jpy_usd || !ratesTopup?.usd_brl) {
           return res.status(503).json({
-            error: 'Câmbio indisponível para cobrança Parcelow em USD na recarga.',
+            error: `Câmbio indisponível para cobrança ${providerLabel} em USD na recarga.`,
           })
         }
         const amountUsdTopup = jpyToFinalUsd(amountJpy, ratesTopup.jpy_usd, wiseTopup)
@@ -705,15 +908,18 @@ export default async function handler(req, res) {
             amount_brl: amountBrlTopup,
             status: 'pending',
             // Marca origem automática para rastreio (sem depender de comprovante manual).
-            comprovante_url: 'parcelow:auto',
+            comprovante_url: `${selectedProvider}:auto`,
           })
           .select('id, amount_jpy, amount_brl')
           .single()
         if (topupErr || !topupRequest?.id) {
-          return res.status(500).json({ error: topupErr?.message || 'Falha ao iniciar recarga Parcelow' })
+          return res.status(500).json({ error: topupErr?.message || `Falha ao iniciar recarga ${providerLabel}` })
         }
         try {
-          const parcelowCheckout = await createParcelowOrderCheckout({
+          const checkoutFactory = selectedProvider === 'glin'
+            ? createGlinRemittanceCheckout
+            : createParcelowOrderCheckout
+          const providerCheckout = await checkoutFactory({
             orderId: topupRequest.id,
             user,
             profile,
@@ -724,8 +930,11 @@ export default async function handler(req, res) {
             supabase,
             rates: ratesTopup,
             wiseMarkup: wiseTopup,
+            successPath: '/app/wallet',
+            cancelPath: '/app/wallet',
             debugContext: {
               flow: 'wallet_topup',
+              gateway: selectedProvider,
               topupRequestId: topupRequest.id,
               amountJpy,
               amountUsd: Number(amountUsdTopup.toFixed(4)),
@@ -733,13 +942,13 @@ export default async function handler(req, res) {
             },
           })
           return res.status(200).json({
-            ...parcelowCheckout,
-            provider: 'parcelow',
+            ...providerCheckout,
+            provider: selectedProvider,
             topup_request_id: topupRequest.id,
           })
-        } catch (parcelowErr) {
+        } catch (providerErr) {
           await supabase.from('wallet_topup_requests').delete().eq('id', topupRequest.id)
-          throw parcelowErr
+          throw providerErr
         }
       }
       if (!stripe) {
@@ -1208,6 +1417,45 @@ export default async function handler(req, res) {
         },
       })
       return res.status(200).json(parcelowCheckout)
+    }
+    if (selectedProvider === 'glin') {
+      if (!rates?.jpy_usd || !rates?.usd_brl) {
+        return res.status(503).json({
+          error: 'Glin (USD) indisponível: cotações não carregadas. Use outro método ou aguarde.',
+        })
+      }
+      const storeUsd = Number(order?.total_amount_usd)
+      const amountUsdOverride =
+        order?.order_source === 'store' &&
+        Number.isFinite(storeUsd) &&
+        storeUsd > 0 &&
+        Number.isFinite(chargeJpy) &&
+        chargeJpy > 0
+          ? storeUsd * (Math.max(0, Number(remainingJpy) || 0) / chargeJpy)
+          : null
+      const glinCheckout = await createGlinRemittanceCheckout({
+        orderId,
+        user,
+        profile,
+        remainingJpy,
+        amountUsdOverride,
+        productName,
+        baseUrl,
+        rates,
+        wiseMarkup,
+        successPath,
+        cancelPath,
+        debugContext: {
+          orderSource: order?.order_source || null,
+          totalAmountBrl: Number(order?.total_amount) || 0,
+          totalAmountUsd: Number(order?.total_amount_usd) || 0,
+          chargeJpy: Number(chargeJpy) || 0,
+          walletAppliedExistingJpy: Number(alreadyAppliedJpy) || 0,
+          remainingJpy: Number(remainingJpy) || 0,
+          amountUsdOverride: Number(amountUsdOverride) || 0,
+        },
+      })
+      return res.status(200).json(glinCheckout)
     }
     if (!stripe) {
       return res.status(500).json({ error: 'Stripe not configured' })

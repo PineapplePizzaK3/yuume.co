@@ -21,6 +21,12 @@ Copie `.env.example` para `.env` e preencha:
 - `PARCELOW_API_BASE_URL` – URL base da API Parcelow (`https://staging.parcelow.com` no staging; sem `/api` no final, a menos que a Parcelow indique)
 - `PARCELOW_ORDERS_PATH` – opcional; padrão `POST /api/orders` (moeda USD no JSON; o path `/api/orders/usd` foi descontinuado na API atual)
 - `PARCELOW_WEBHOOK_SECRET` – segredo compartilhado opcional para validar webhook Parcelow
+- `GLIN_API_KEY` – chave Bearer da Merchant API da Glin
+- `GLIN_API_BASE_URL` – URL base da Glin (`https://pay.staging.glin.com.br` em staging; `https://pay.glin.com.br` em produção)
+- `GLIN_REMITTANCES_PATH` – opcional; padrão `POST /merchant-api/remittances/`
+- `GLIN_WEBHOOK_SECRET` – segredo compartilhado para validar webhook Glin
+- `GLIN_FETCH_TIMEOUT_MS` – timeout HTTP opcional para chamadas Glin
+- `VITE_GLIN_SDK_ENABLED` – feature flag para preparação do SDK embutido (fase 2)
 
 ## Supabase
 
@@ -60,6 +66,22 @@ Copie `.env.example` para `.env` e preencha:
    - `PARCELOW_WEBHOOK_SECRET` (se adotarem segredo compartilhado via header)
 3. Configure endpoint de webhook para `POST /api/webhook-parcelow`.
 4. Parcelow será priorizado para pedidos BRL/loja; Stripe segue como fallback.
+
+## Glin
+
+1. Gere a `GLIN_API_KEY` no dashboard da Glin (staging/produção com chaves distintas).
+2. Configure no Vercel:
+   - `GLIN_API_KEY`
+   - `GLIN_API_BASE_URL`
+   - `GLIN_REMITTANCES_PATH` (opcional)
+   - `GLIN_WEBHOOK_SECRET`
+3. Configure endpoint de webhook para `POST /api/webhook-glin`.
+4. Homologação recomendada em staging:
+   - Cartão aprovado: titular `APRO`
+   - Cartão rejeitado: titular `OTHE`
+   - Cartão pendente: titular `CONT`
+   - Fluxo PIX (QR/copia e cola + confirmação)
+5. O checkout Redirect da Glin pode ser selecionado na mesma central de pagamentos que Stripe/Parcelow.
 
 ## Vercel
 

@@ -397,6 +397,7 @@
       "itemFallback": "Item {{n}}",
       "gateway": {
         "parcelow": "Card up to 21x, PIX, TED",
+        "glin": "Card up to 12x, PIX",
         "stripe": "International card"
       },
       "payable": {
@@ -839,7 +840,7 @@
       "topupUsdRef": "USD reference (billing pipeline)",
       "topupBrlRef": "BRL reference (approx.)",
       "topupPaymentSubtitle": "Main amount in JPY with USD/BRL references from the JPY → USD → BRL pipeline.",
-      "topupParcelowUnavailable": "Wallet top-up is Stripe-only. Parcelow remains for orders in the Payments hub.",
+      "topupParcelowUnavailable": "Wallet top-up is available via Stripe, Parcelow, and Glin.",
       "topupMethodsFootnote": "Each gateway shows its own accepted payment methods.",
       "types": {
         "topup": "Top-up",

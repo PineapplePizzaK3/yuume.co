@@ -15,6 +15,10 @@
       "source": "/api/cron-refresh-online-group-prices",
       "destination": "/api/create-checkout-session?x_dispatch=cron-refresh-online-group-prices"
     },
+    {
+      "source": "/api/webhook-glin",
+      "destination": "/api/webhook-glin"
+    },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }

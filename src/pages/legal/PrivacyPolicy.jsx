@@ -66,7 +66,7 @@ const CONTENT = {
         </LegalSection>
 
         <LegalSection title="3. 決済処理">
-          <P>当サービスの決済は、注文内容・地域・選択された支払い方法に応じて、Stripe、Parcelow、PIX（銀行送金）関連の手段を利用して処理されます。</P>
+          <P>当サービスの決済は、注文内容・地域・選択された支払い方法に応じて、Stripe、Parcelow、Glin、PIX（銀行送金）関連の手段を利用して処理されます。</P>
           <P>クレジットカード等の機微な決済情報は、原則として各決済事業者側で処理され、当サービス側には保存されません（決済状態や取引参照ID等の運用情報のみ保持する場合があります）。</P>
           <P>詳細は各事業者のポリシーをご確認ください。Stripe: <a href="https://stripe.com/privacy" target="_blank" rel="noopener noreferrer" className="text-earth-800 underline hover:text-earth-900">https://stripe.com/privacy</a></P>
         </LegalSection>
@@ -75,7 +75,7 @@ const CONTENT = {
           <P>当サービスは、法令上認められる場合を除き、必要最小限の範囲でのみ外部サービスに情報を共有します。</P>
           <Ul items={[
             '認証・データ基盤（Supabase）',
-            '決済処理（Stripe、Parcelow、PIX関連事業者）',
+            '決済処理（Stripe、Parcelow、Glin、PIX関連事業者）',
             '配送・通関対応のための物流会社等',
             'お問い合わせ送信（Web3Forms）',
             '法令・裁判所命令等に基づく開示が必要な場合',
@@ -139,7 +139,7 @@ const CONTENT = {
         </LegalSection>
 
         <LegalSection title="3. Processamento de pagamentos">
-          <P>Os pagamentos podem ser processados por diferentes meios, conforme o tipo de pedido e a opção escolhida no checkout, incluindo Stripe, Parcelow e fluxos relacionados a PIX.</P>
+          <P>Os pagamentos podem ser processados por diferentes meios, conforme o tipo de pedido e a opção escolhida no checkout, incluindo Stripe, Parcelow, Glin e fluxos relacionados a PIX.</P>
           <P>Dados sensíveis de pagamento (como dados completos de cartão) são, em regra, processados pelos provedores de pagamento e não armazenados diretamente pela YuumeCo, que mantém apenas dados operacionais da transação (como status e identificadores).</P>
           <P>Para a política de privacidade do Stripe, consulte: <a href="https://stripe.com/privacy" target="_blank" rel="noopener noreferrer" className="text-earth-800 underline hover:text-earth-900">https://stripe.com/privacy</a></P>
         </LegalSection>
@@ -148,7 +148,7 @@ const CONTENT = {
           <P>O Serviço compartilha dados apenas quando necessário para operar a plataforma e cumprir obrigações legais.</P>
           <Ul items={[
             'Infraestrutura de autenticação e banco de dados (Supabase)',
-            'Provedores de pagamento (Stripe, Parcelow e operadores relacionados ao PIX)',
+            'Provedores de pagamento (Stripe, Parcelow, Glin e operadores relacionados ao PIX)',
             'Empresas de logística e parceiros necessários ao envio/entrega',
             'Plataforma de envio de formulário de contato (Web3Forms)',
             'Situações previstas em lei, ordem judicial ou obrigação regulatória',
@@ -212,7 +212,7 @@ const CONTENT = {
         </LegalSection>
 
         <LegalSection title="3. Payment processing">
-          <P>Payments may be processed through different providers depending on checkout selection and transaction type, including Stripe, Parcelow, and PIX-related payment flows.</P>
+          <P>Payments may be processed through different providers depending on checkout selection and transaction type, including Stripe, Parcelow, Glin, and PIX-related payment flows.</P>
           <P>Sensitive payment credentials (such as full card data) are generally processed by payment providers, not stored directly on YuumeCo servers. We may retain operational payment metadata (for example, status and transaction reference IDs).</P>
           <P>For Stripe&apos;s privacy policy, please refer to: <a href="https://stripe.com/privacy" target="_blank" rel="noopener noreferrer" className="text-earth-800 underline hover:text-earth-900">https://stripe.com/privacy</a></P>
         </LegalSection>
@@ -221,7 +221,7 @@ const CONTENT = {
           <P>The Service shares personal data only when necessary to operate the platform and comply with legal obligations.</P>
           <Ul items={[
             'Authentication and database infrastructure (Supabase)',
-            'Payment providers (Stripe, Parcelow, and PIX-related operators)',
+            'Payment providers (Stripe, Parcelow, Glin, and PIX-related operators)',
             'Logistics and shipping partners required for delivery',
             'Contact form processing platform (Web3Forms)',
             'Disclosures required by law, court order, or regulatory obligation',

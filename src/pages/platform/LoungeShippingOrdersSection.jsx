@@ -26,6 +26,7 @@ const PAGE_SIZE = 12
 
 const GATEWAY_OPTIONS_META = [
   { id: 'parcelow', label: 'Parcelow', icon: '🇧🇷' },
+  { id: 'glin', label: 'Glin', icon: '🇧🇷' },
   { id: 'stripe', label: 'Stripe', icon: '🌐' },
 ]
 
