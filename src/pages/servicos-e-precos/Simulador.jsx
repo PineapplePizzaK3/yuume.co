@@ -43,6 +43,89 @@ function CollapsibleSection({ title, open, onOpenChange, className, children }) 
   )
 }
 
+const SIMULADOR_STORAGE_KEY = 'public-order-simulator-state-v1'
+const DEFAULT_OPEN_SECTIONS = {
+  form: true,
+  products: true,
+  shipping: true,
+  totals: true,
+  customs: true,
+}
+
+function sanitizeDecimalInput(value) {
+  return String(value ?? '').replace(/[^0-9,.]/g, '')
+}
+
+function parseDecimal(value) {
+  return parseFloat(String(value ?? '').replace(',', '.')) || 0
+}
+
+function buildDefaultState() {
+  return {
+    produtos: [],
+    servicoProdutoId: 'redirecionamento-padrao',
+    tipoFrete: 'ems',
+    destinoEnvio: 'brasil',
+    nome: '',
+    quantidade: '1',
+    peso: '',
+    valor: '',
+    ufDestino: 'SP',
+    modeloTributario: 'remessa',
+    iiPercentFormal: '20',
+    ipiPercentFormal: '0',
+    pisPercentFormal: '2.1',
+    cofinsPercentFormal: '9.65',
+    openSections: DEFAULT_OPEN_SECTIONS,
+  }
+}
+
+function loadSavedState() {
+  if (typeof window === 'undefined') return buildDefaultState()
+
+  const fallback = buildDefaultState()
+  const raw = window.localStorage.getItem(SIMULADOR_STORAGE_KEY)
+  if (!raw) return fallback
+
+  try {
+    const parsed = JSON.parse(raw)
+    if (!parsed || typeof parsed !== 'object') return fallback
+
+    const produtos = Array.isArray(parsed.produtos)
+      ? parsed.produtos
+          .map((produto, index) => {
+            const nome = String(produto?.nome ?? '').trim()
+            const quantidade = Math.max(1, parseInt(produto?.quantidade, 10) || 1)
+            const peso = Math.max(parseDecimal(produto?.peso), 0)
+            const valor = Math.max(parseDecimal(produto?.valor), 0)
+            return {
+              id:
+                typeof produto?.id === 'string' && produto.id.trim()
+                  ? produto.id
+                  : `item-${index}-${Date.now()}`,
+              nome,
+              quantidade,
+              peso,
+              valor,
+              servicoId:
+                typeof produto?.servicoId === 'string' && produto.servicoId.trim()
+                  ? produto.servicoId
+                  : 'redirecionamento-padrao',
+            }
+          })
+      : []
+
+    return {
+      ...fallback,
+      ...parsed,
+      produtos,
+      openSections: { ...DEFAULT_OPEN_SECTIONS, ...(parsed.openSections ?? {}) },
+    }
+  } catch {
+    return fallback
+  }
+}
+
 /**
  * Simulador de pedidos - sub-página de Serviços e Preços.
  */
@@ -111,34 +194,29 @@ function Simulador() {
     [t],
   )
 
-  const [produtos, setProdutos] = useState([])
-  const [servicoProdutoId, setServicoProdutoId] = useState('redirecionamento-padrao')
-  const [tipoFrete, setTipoFrete] = useState('ems')
+  const initialState = useMemo(() => loadSavedState(), [])
+  const [produtos, setProdutos] = useState(initialState.produtos)
+  const [servicoProdutoId, setServicoProdutoId] = useState(initialState.servicoProdutoId)
+  const [tipoFrete, setTipoFrete] = useState(initialState.tipoFrete)
   /** brasil: Japan Post internacional | jp_warehouse: nosso endereço JP (sem frete nesta etapa) | jp_temp: endereço temporário do usuário no JP */
-  const [destinoEnvio, setDestinoEnvio] = useState('brasil')
-  const [nome, setNome] = useState('')
-  const [quantidade, setQuantidade] = useState('1')
-  const [peso, setPeso] = useState('')
-  const [valor, setValor] = useState('')
-  const [ufDestino, setUfDestino] = useState('SP')
-  const [modeloTributario, setModeloTributario] = useState('remessa')
-  const [iiPercentFormal, setIiPercentFormal] = useState('20')
-  const [ipiPercentFormal, setIpiPercentFormal] = useState('0')
-  const [pisPercentFormal, setPisPercentFormal] = useState('2.1')
-  const [cofinsPercentFormal, setCofinsPercentFormal] = useState('9.65')
-  const [openSections, setOpenSections] = useState({
-    form: true,
-    products: true,
-    shipping: true,
-    totals: true,
-    customs: true,
-  })
+  const [destinoEnvio, setDestinoEnvio] = useState(initialState.destinoEnvio)
+  const [nome, setNome] = useState(initialState.nome)
+  const [quantidade, setQuantidade] = useState(initialState.quantidade)
+  const [peso, setPeso] = useState(initialState.peso)
+  const [valor, setValor] = useState(initialState.valor)
+  const [ufDestino, setUfDestino] = useState(initialState.ufDestino)
+  const [modeloTributario, setModeloTributario] = useState(initialState.modeloTributario)
+  const [iiPercentFormal, setIiPercentFormal] = useState(initialState.iiPercentFormal)
+  const [ipiPercentFormal, setIpiPercentFormal] = useState(initialState.ipiPercentFormal)
+  const [pisPercentFormal, setPisPercentFormal] = useState(initialState.pisPercentFormal)
+  const [cofinsPercentFormal, setCofinsPercentFormal] = useState(initialState.cofinsPercentFormal)
+  const [openSections, setOpenSections] = useState(initialState.openSections)
 
   const adicionarProduto = (e) => {
     e.preventDefault()
     const qty = Math.max(1, parseInt(quantidade, 10) || 1)
-    const pesoNum = parseFloat(peso?.replace(',', '.')) || 0
-    const valorNum = parseFloat(valor?.replace(',', '.')) || 0
+    const pesoNum = parseDecimal(peso)
+    const valorNum = parseDecimal(valor)
     if (!nome.trim() || qty < 1 || pesoNum <= 0 || valorNum <= 0) return
     setProdutos([
       ...produtos,
@@ -159,6 +237,116 @@ function Simulador() {
 
   const removerProduto = (id) => {
     setProdutos(produtos.filter((p) => p.id !== id))
+  }
+
+  const atualizarProduto = (id, changes) => {
+    setProdutos((current) =>
+      current.map((produto) =>
+        produto.id === id
+          ? {
+              ...produto,
+              ...changes,
+            }
+          : produto,
+      ),
+    )
+  }
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    window.localStorage.setItem(
+      SIMULADOR_STORAGE_KEY,
+      JSON.stringify({
+        produtos,
+        servicoProdutoId,
+        tipoFrete,
+        destinoEnvio,
+        nome,
+        quantidade,
+        peso,
+        valor,
+        ufDestino,
+        modeloTributario,
+        iiPercentFormal,
+        ipiPercentFormal,
+        pisPercentFormal,
+        cofinsPercentFormal,
+        openSections,
+      }),
+    )
+  }, [
+    produtos,
+    servicoProdutoId,
+    tipoFrete,
+    destinoEnvio,
+    nome,
+    quantidade,
+    peso,
+    valor,
+    ufDestino,
+    modeloTributario,
+    iiPercentFormal,
+    ipiPercentFormal,
+    pisPercentFormal,
+    cofinsPercentFormal,
+    openSections,
+  ])
+
+  const exportarSimulacao = () => {
+    if (typeof window === 'undefined') return
+    const payload = {
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      produtos,
+      servicoProdutoId,
+      tipoFrete,
+      destinoEnvio,
+      nome,
+      quantidade,
+      peso,
+      valor,
+      ufDestino,
+      modeloTributario,
+      iiPercentFormal,
+      ipiPercentFormal,
+      pisPercentFormal,
+      cofinsPercentFormal,
+      openSections,
+    }
+
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {
+      type: 'application/json;charset=utf-8',
+    })
+    const url = window.URL.createObjectURL(blob)
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = `simulador-pedido-${new Date().toISOString().replace(/:/g, '-').slice(0, 19)}.json`
+    document.body.append(anchor)
+    anchor.click()
+    anchor.remove()
+    window.URL.revokeObjectURL(url)
+  }
+
+  const resetarSalvamentos = () => {
+    if (typeof window === 'undefined') return
+    if (!window.confirm(t('publicSimulador.resetConfirm'))) return
+    window.localStorage.removeItem(SIMULADOR_STORAGE_KEY)
+    const defaults = buildDefaultState()
+    setProdutos(defaults.produtos)
+    setServicoProdutoId(defaults.servicoProdutoId)
+    setTipoFrete(defaults.tipoFrete)
+    setDestinoEnvio(defaults.destinoEnvio)
+    setNome(defaults.nome)
+    setQuantidade(defaults.quantidade)
+    setPeso(defaults.peso)
+    setValor(defaults.valor)
+    setUfDestino(defaults.ufDestino)
+    setModeloTributario(defaults.modeloTributario)
+    setIiPercentFormal(defaults.iiPercentFormal)
+    setIpiPercentFormal(defaults.ipiPercentFormal)
+    setPisPercentFormal(defaults.pisPercentFormal)
+    setCofinsPercentFormal(defaults.cofinsPercentFormal)
+    setOpenSections(defaults.openSections)
   }
 
   const totalProdutos = produtos.reduce(
@@ -261,10 +449,10 @@ function Simulador() {
   const aliqIcmsPercent = ICMS_INTERNAL_RATE_BY_STATE_2026[ufDestino] ?? 17
   const aliqIcms = aliqIcmsPercent / 100
 
-  const iiFormal = Number(iiPercentFormal.replace(',', '.')) || 0
-  const ipiFormal = Number(ipiPercentFormal.replace(',', '.')) || 0
-  const pisFormal = Number(pisPercentFormal.replace(',', '.')) || 0
-  const cofinsFormal = Number(cofinsPercentFormal.replace(',', '.')) || 0
+  const iiFormal = parseDecimal(iiPercentFormal)
+  const ipiFormal = parseDecimal(ipiPercentFormal)
+  const pisFormal = parseDecimal(pisPercentFormal)
+  const cofinsFormal = parseDecimal(cofinsPercentFormal)
 
   let iiBrl = 0
   let ipiBrl = 0
@@ -302,6 +490,23 @@ function Simulador() {
           {t('publicSimulador.title')}
         </h2>
         <p className="mt-2 text-earth-600">{t('publicSimulador.subtitle')}</p>
+        <div className="mt-4 flex flex-wrap items-center gap-3 rounded-lg border border-earth-200 bg-earth-50 px-4 py-3">
+          <span className="text-sm text-earth-700">{t('publicSimulador.saveAuto')}</span>
+          <button
+            type="button"
+            onClick={exportarSimulacao}
+            className="rounded-md border border-earth-300 bg-white px-3 py-1.5 text-sm font-medium text-earth-800 transition hover:bg-earth-100"
+          >
+            {t('publicSimulador.exportBtn')}
+          </button>
+          <button
+            type="button"
+            onClick={resetarSalvamentos}
+            className="rounded-md border border-red-200 bg-white px-3 py-1.5 text-sm font-medium text-red-700 transition hover:bg-red-50"
+          >
+            {t('publicSimulador.resetBtn')}
+          </button>
+        </div>
 
         <CollapsibleSection
           className="mt-8 border-earth-200 bg-earth-100"
@@ -359,7 +564,7 @@ function Simulador() {
                 inputMode="decimal"
                 id="peso"
                 value={peso}
-                onChange={(e) => setPeso(e.target.value.replace(/[^0-9,.]/g, ''))}
+                onChange={(e) => setPeso(sanitizeDecimalInput(e.target.value))}
                 className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 shadow-sm focus:border-earth-900 focus:outline-none focus:ring-1 focus:ring-earth-900"
                 placeholder={t('publicSimulador.weightPh')}
               />
@@ -397,9 +602,7 @@ function Simulador() {
                 inputMode="decimal"
                 id="valor"
                 value={valor}
-                onChange={(e) =>
-                  setValor(e.target.value.replace(/[^0-9,.]/g, ''))
-                }
+                onChange={(e) => setValor(sanitizeDecimalInput(e.target.value))}
                 className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 shadow-sm focus:border-earth-900 focus:outline-none focus:ring-1 focus:ring-earth-900"
                 placeholder={t('publicSimulador.valuePh')}
               />
@@ -432,13 +635,13 @@ function Simulador() {
                     <th className="px-4 py-3 text-right text-xs font-medium uppercase text-earth-600">
                       {t('publicSimulador.thQty')}
                     </th>
-                    <th className="hidden px-4 py-3 text-right text-xs font-medium uppercase text-earth-600 sm:table-cell">
+                    <th className="px-4 py-3 text-right text-xs font-medium uppercase text-earth-600">
                       {t('publicSimulador.thWeight')}
                     </th>
-                    <th className="hidden px-4 py-3 text-right text-xs font-medium uppercase text-earth-600 sm:table-cell">
+                    <th className="px-4 py-3 text-right text-xs font-medium uppercase text-earth-600">
                       {t('publicSimulador.thValue')}
                     </th>
-                    <th className="hidden px-4 py-3 text-left text-xs font-medium uppercase text-earth-600 lg:table-cell">
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-earth-600">
                       {t('publicSimulador.thService')}
                     </th>
                     <th className="px-4 py-3 text-right text-xs font-medium uppercase text-earth-600">
@@ -451,19 +654,70 @@ function Simulador() {
                   {produtos.map((p) => (
                     <tr key={p.id} className="hover:bg-earth-200">
                       <td className="px-4 py-3 text-sm text-earth-900">
-                        {p.nome}
+                        <input
+                          type="text"
+                          value={p.nome}
+                          onChange={(e) => atualizarProduto(p.id, { nome: e.target.value })}
+                          className="w-full min-w-[180px] rounded border border-earth-300 bg-white px-2 py-1.5 text-sm text-earth-900 focus:border-earth-900 focus:outline-none focus:ring-1 focus:ring-earth-900"
+                          aria-label={t('publicSimulador.productName')}
+                        />
                       </td>
                       <td className="px-4 py-3 text-right text-sm text-earth-700">
-                        {p.quantidade}
+                        <input
+                          type="number"
+                          min="1"
+                          value={p.quantidade}
+                          onChange={(e) =>
+                            atualizarProduto(p.id, {
+                              quantidade: Math.max(1, parseInt(e.target.value, 10) || 1),
+                            })
+                          }
+                          className="w-20 rounded border border-earth-300 bg-white px-2 py-1.5 text-right text-sm text-earth-900 focus:border-earth-900 focus:outline-none focus:ring-1 focus:ring-earth-900"
+                          aria-label={t('publicSimulador.qty')}
+                        />
                       </td>
-                      <td className="hidden px-4 py-3 text-right text-sm text-earth-700 sm:table-cell">
-                        {p.peso.toLocaleString(numberLocale)}g
+                      <td className="px-4 py-3 text-right text-sm text-earth-700">
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          value={p.peso}
+                          onChange={(e) =>
+                            atualizarProduto(p.id, {
+                              peso: parseDecimal(sanitizeDecimalInput(e.target.value)),
+                            })
+                          }
+                          className="w-24 rounded border border-earth-300 bg-white px-2 py-1.5 text-right text-sm text-earth-900 focus:border-earth-900 focus:outline-none focus:ring-1 focus:ring-earth-900"
+                          aria-label={t('publicSimulador.weightG')}
+                        />
                       </td>
-                      <td className="hidden px-4 py-3 text-right text-sm text-earth-700 sm:table-cell">
-                        {formatarValor(p.valor)}
+                      <td className="px-4 py-3 text-right text-sm text-earth-700">
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          value={p.valor}
+                          onChange={(e) =>
+                            atualizarProduto(p.id, {
+                              valor: parseDecimal(sanitizeDecimalInput(e.target.value)),
+                            })
+                          }
+                          className="w-28 rounded border border-earth-300 bg-white px-2 py-1.5 text-right text-sm text-earth-900 focus:border-earth-900 focus:outline-none focus:ring-1 focus:ring-earth-900"
+                          aria-label={t('publicSimulador.valueYen')}
+                        />
                       </td>
-                      <td className="hidden px-4 py-3 text-sm text-earth-700 lg:table-cell">
-                        {SERVICOS.find((s) => s.id === (p.servicoId ?? 'redirecionamento-padrao'))?.label ?? '-'}
+                      <td className="px-4 py-3 text-sm text-earth-700">
+                        <select
+                          value={p.servicoId ?? 'redirecionamento-padrao'}
+                          onChange={(e) => atualizarProduto(p.id, { servicoId: e.target.value })}
+                          className="min-w-[210px] rounded border border-earth-300 bg-white px-2 py-1.5 text-sm text-earth-900 focus:border-earth-900 focus:outline-none focus:ring-1 focus:ring-earth-900"
+                          aria-label={t('publicSimulador.productService')}
+                        >
+                          {SERVICOS.map((s) => (
+                            <option key={s.id} value={s.id}>
+                              {s.label}
+                              {s.percentual != null ? ` (${s.percentual}%)` : ''}
+                            </option>
+                          ))}
+                        </select>
                       </td>
                       <td className="px-4 py-3 text-right text-sm font-medium text-earth-900">
                         {formatarValor(p.quantidade * p.valor)}
@@ -772,7 +1026,7 @@ function Simulador() {
                       type="text"
                       inputMode="decimal"
                       value={iiPercentFormal}
-                      onChange={(e) => setIiPercentFormal(e.target.value.replace(/[^0-9,.]/g, ''))}
+                      onChange={(e) => setIiPercentFormal(sanitizeDecimalInput(e.target.value))}
                       className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 shadow-sm focus:border-earth-900 focus:outline-none focus:ring-1 focus:ring-earth-900"
                     />
                   </div>
@@ -785,7 +1039,7 @@ function Simulador() {
                       type="text"
                       inputMode="decimal"
                       value={ipiPercentFormal}
-                      onChange={(e) => setIpiPercentFormal(e.target.value.replace(/[^0-9,.]/g, ''))}
+                      onChange={(e) => setIpiPercentFormal(sanitizeDecimalInput(e.target.value))}
                       className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 shadow-sm focus:border-earth-900 focus:outline-none focus:ring-1 focus:ring-earth-900"
                     />
                   </div>
@@ -798,7 +1052,7 @@ function Simulador() {
                       type="text"
                       inputMode="decimal"
                       value={pisPercentFormal}
-                      onChange={(e) => setPisPercentFormal(e.target.value.replace(/[^0-9,.]/g, ''))}
+                      onChange={(e) => setPisPercentFormal(sanitizeDecimalInput(e.target.value))}
                       className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 shadow-sm focus:border-earth-900 focus:outline-none focus:ring-1 focus:ring-earth-900"
                     />
                   </div>
@@ -814,9 +1068,7 @@ function Simulador() {
                       type="text"
                       inputMode="decimal"
                       value={cofinsPercentFormal}
-                      onChange={(e) =>
-                        setCofinsPercentFormal(e.target.value.replace(/[^0-9,.]/g, ''))
-                      }
+                      onChange={(e) => setCofinsPercentFormal(sanitizeDecimalInput(e.target.value))}
                       className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 shadow-sm focus:border-earth-900 focus:outline-none focus:ring-1 focus:ring-earth-900"
                     />
                   </div>

@@ -16,6 +16,11 @@ Copie `.env.example` para `.env` e preencha:
 **Apenas no servidor (Vercel Environment Variables):**
 - `STRIPE_SECRET_KEY` – nunca exponha no frontend
 - `STRIPE_WEBHOOK_SECRET` – para o webhook de pagamento
+- `RESEND_API_KEY` – chave da API de envio de e-mail (alertas do admin)
+- `ADMIN_ALERT_FROM` – remetente dos alertas (ex.: `YuumeCo Alerts <alerts@seudominio.com>`)
+- `ADMIN_ALERT_EMAILS` – lista opcional (separada por vírgula) de e-mails para receber alertas; se vazio, usa admins da tabela `profiles`
+- `ADMIN_PANEL_URL` – URL opcional para link direto no e-mail (padrão: `${VITE_SITE_URL}/platform/admin`)
+- `CRON_SECRET` – segredo para proteger endpoints de cron (incluindo alertas por e-mail)
 - `PARCELOW_CLIENT_ID` – Client ID da API Parcelow
 - `PARCELOW_CLIENT_SECRET` – Client Secret da API Parcelow
 - `PARCELOW_API_BASE_URL` – URL base da API Parcelow (`https://staging.parcelow.com` no staging; sem `/api` no final, a menos que a Parcelow indique)
@@ -88,3 +93,10 @@ Copie `.env.example` para `.env` e preencha:
 1. Conecte o repositório
 2. Configure as variáveis de ambiente
 3. Deploy – as funções em `api/` serão expostas em `/api/*`
+4. Alertas de admin por e-mail:
+   - Endpoint: `GET/POST /api/cron-admin-action-emails`
+   - O `vercel.json` já agenda execução automática a cada 5 minutos.
+   - Teste manual (com segredo):
+     ```bash
+     curl -H "Authorization: Bearer $CRON_SECRET" "https://SEU_DOMINIO/api/cron-admin-action-emails?dry_run=1"
+     ```
