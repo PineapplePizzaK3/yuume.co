@@ -1,14 +1,197 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useAdminContext } from '../AdminContext'
 import { getAdminEmailTemplates, saveAdminEmailTemplates } from '../../../../services/adminEmailTemplateService'
+import { buildProfessionalEmailPreview } from '../../../../lib/emailTemplatePreview'
 
 const TEMPLATE_CATEGORIES = [
   { value: 'geral', label: 'Geral' },
+  { value: 'prospeccao', label: 'Prospeccao' },
+  { value: 'prospeccao_b2b', label: 'Prospeccao B2B' },
+  { value: 'prospeccao_b2c', label: 'Prospeccao B2C' },
   { value: 'pedido', label: 'Pedido' },
   { value: 'pagamento', label: 'Pagamento' },
   { value: 'envio', label: 'Envio' },
   { value: 'pos_venda', label: 'Pos-venda' },
   { value: 'carrinho', label: 'Carrinho' },
+]
+
+const PROSPECTING_EMAIL_TEMPLATES = [
+  {
+    id: 'intro_store_presentation',
+    label: 'Apresentacao da loja (primeiro contato)',
+    category: 'prospeccao',
+    subject: 'Prazer, somos a Yuume | Importacao do Japao com suporte completo',
+    preheader: 'Conheca como ajudamos clientes e parceiros a comprar no Japao com seguranca.',
+    headline: 'Prazer em te conhecer',
+    text: `Ola!
+
+Somos a Yuume, uma loja especializada em compras internacionais com foco em produtos do Japao.
+
+Ajudamos desde a busca de itens ate acompanhamento de pedido e suporte pos-venda, com processo transparente e atendimento proximo.
+
+Se fizer sentido para voce, podemos te mostrar em poucos minutos como funciona nosso fluxo e quais vantagens voce pode ter.
+
+Atenciosamente,
+Time Yuume`,
+    cta_label: 'Conhecer a Yuume',
+    cta_url: 'https://yuume.co',
+    signature_name: 'Time Yuume',
+  },
+  {
+    id: 'partnership_invite',
+    label: 'Convite de parceria comercial',
+    category: 'prospeccao',
+    subject: 'Parceria comercial com a Yuume',
+    preheader: 'Gostariamos de avaliar uma colaboracao com beneficios para ambos os lados.',
+    headline: 'Convite para parceria',
+    text: `Ola!
+
+Estamos entrando em contato para avaliar uma parceria entre sua empresa e a Yuume.
+
+Nosso objetivo e criar uma colaboracao de longo prazo, com operacao organizada, comunicacao clara e foco em resultado para os dois lados.
+
+Se voce tiver interesse, podemos agendar uma conversa rapida para alinhar oportunidades e proximos passos.
+
+Atenciosamente,
+Time Yuume`,
+    cta_label: 'Agendar conversa',
+    cta_url: 'https://yuume.co/contact',
+    signature_name: 'Time Yuume',
+  },
+  {
+    id: 'curated_offer_intro',
+    label: 'Oferta inicial para novos clientes',
+    category: 'prospeccao',
+    subject: 'Uma forma simples de comprar no Japao com suporte da Yuume',
+    preheader: 'Apresentamos uma proposta inicial para seu primeiro pedido conosco.',
+    headline: 'Proposta para seu primeiro pedido',
+    text: `Ola!
+
+Percebemos que voce ainda nao conhece a Yuume e quisemos apresentar uma proposta objetiva para seu primeiro pedido.
+
+Nosso time cuida do processo completo para reduzir atrito, aumentar previsibilidade e dar mais seguranca na compra.
+
+Se quiser, te enviamos uma simulacao personalizada com base no que voce procura.
+
+Atenciosamente,
+Time Yuume`,
+    cta_label: 'Solicitar simulacao',
+    cta_url: 'https://yuume.co/contact',
+    signature_name: 'Time Yuume',
+  },
+  {
+    id: 'followup_new_lead',
+    label: 'Follow-up de primeiro contato',
+    category: 'prospeccao',
+    subject: 'Posso te enviar uma proposta personalizada?',
+    preheader: 'Retomando nosso contato para te apresentar a melhor opcao para seu perfil.',
+    headline: 'Seguimos a disposicao para te ajudar',
+    text: `Ola!
+
+Passando para retomar nosso contato e reforcar que estamos a disposicao para montar uma proposta personalizada para voce.
+
+Caso queira, nos diga qual tipo de produto ou objetivo voce tem e retornamos com uma sugestao direta.
+
+Obrigado pelo seu tempo.
+
+Atenciosamente,
+Time Yuume`,
+    cta_label: 'Falar com especialista',
+    cta_url: 'https://yuume.co/contact',
+    signature_name: 'Time Yuume',
+  },
+]
+
+const PROSPECTING_B2B_EMAIL_TEMPLATES = [
+  {
+    id: 'b2b_partnership_supply_chain',
+    label: 'B2B | Parceria operacional',
+    category: 'prospeccao_b2b',
+    subject: 'Proposta de parceria operacional com a Yuume',
+    preheader: 'Avaliamos sinergias para ganho de escala e previsibilidade operacional.',
+    headline: 'Proposta de parceria B2B',
+    text: `Ola!
+
+Meu nome e [NOME] e falo em nome da Yuume.
+
+Gostariamos de apresentar uma proposta de parceria operacional para apoiar sua empresa em demandas relacionadas a compras no Japao, consolidacao e suporte no fluxo de pedidos.
+
+Temos interesse em construir um formato de colaboracao com SLA claro, comunicacao estruturada e foco em previsibilidade.
+
+Se fizer sentido, podemos agendar uma reuniao de 20 minutos para alinharmos escopo e proximos passos.
+
+Atenciosamente,
+Time Yuume`,
+    cta_label: 'Agendar reuniao',
+    cta_url: 'https://yuume.co/contact',
+    signature_name: 'Time Yuume',
+  },
+  {
+    id: 'b2b_wholesale_catalog',
+    label: 'B2B | Catalogo e condicoes comerciais',
+    category: 'prospeccao_b2b',
+    subject: 'Catalogo e condicoes comerciais para sua operacao',
+    preheader: 'Podemos compartilhar opcoes de produtos e modelo comercial sob demanda.',
+    headline: 'Condicoes comerciais B2B',
+    text: `Ola!
+
+Preparamos um contato inicial para avaliar interesse no nosso modelo comercial B2B.
+
+Podemos montar uma proposta com produtos, condicoes e estrutura de atendimento alinhada ao seu volume e perfil de operacao.
+
+Caso tenha interesse, nos envie seu contexto atual para retornarmos com uma proposta objetiva.
+
+Atenciosamente,
+Time Yuume`,
+    cta_label: 'Solicitar proposta B2B',
+    cta_url: 'https://yuume.co/contact',
+    signature_name: 'Time Yuume',
+  },
+]
+
+const PROSPECTING_B2C_EMAIL_TEMPLATES = [
+  {
+    id: 'b2c_first_purchase_intro',
+    label: 'B2C | Primeira compra com confianca',
+    category: 'prospeccao_b2c',
+    subject: 'Sua primeira compra no Japao com suporte da Yuume',
+    preheader: 'Te mostramos um caminho simples para comprar com seguranca.',
+    headline: 'Comece sua primeira compra com seguranca',
+    text: `Ola!
+
+Se esta pensando em comprar produtos do Japao, a Yuume pode te ajudar em todo o processo.
+
+Nosso time orienta desde a escolha dos itens ate acompanhamento do pedido, com transparencia e suporte humano.
+
+Se quiser, podemos te enviar uma sugestao inicial personalizada para o que voce procura.
+
+Atenciosamente,
+Time Yuume`,
+    cta_label: 'Quero minha sugestao',
+    cta_url: 'https://yuume.co/contact',
+    signature_name: 'Time Yuume',
+  },
+  {
+    id: 'b2c_brand_story_intro',
+    label: 'B2C | Conheca a Yuume',
+    category: 'prospeccao_b2c',
+    subject: 'Prazer, somos a Yuume',
+    preheader: 'Um jeito mais simples de comprar produtos do Japao.',
+    headline: 'Muito prazer, somos a Yuume',
+    text: `Ola!
+
+Somos a Yuume, uma loja focada em conectar clientes aos melhores produtos do Japao com atendimento proximo e processo claro.
+
+Criamos uma experiencia para quem quer comprar com mais seguranca, previsibilidade e suporte de verdade.
+
+Se quiser conhecer melhor, estamos a disposicao para te ajudar no primeiro pedido.
+
+Atenciosamente,
+Time Yuume`,
+    cta_label: 'Conhecer a loja',
+    cta_url: 'https://yuume.co',
+    signature_name: 'Time Yuume',
+  },
 ]
 
 const DEFAULT_EMAIL_TEMPLATES = [
@@ -193,6 +376,7 @@ export default function MarketingSection() {
   const [templatesLoading, setTemplatesLoading] = useState(false)
   const [templatesSaving, setTemplatesSaving] = useState(false)
   const [templatesLoaded, setTemplatesLoaded] = useState(false)
+  const [previewMode, setPreviewMode] = useState('html')
 
   useEffect(() => {
     if (activeTab !== 'marketing' || templatesLoaded) return
@@ -221,6 +405,29 @@ export default function MarketingSection() {
   const visibleTemplates = templateCategoryFilter === 'all'
     ? templateLibrary
     : templateLibrary.filter((item) => item.category === templateCategoryFilter)
+  const emailPreview = useMemo(() => {
+    const subject = String(emailForm.subject || '').trim()
+    const text = String(emailForm.text || '').trim()
+    const html = String(emailForm.html || '').trim()
+    if (Boolean(emailForm.use_professional_template)) {
+      return buildProfessionalEmailPreview({
+        subject,
+        bodyText: text,
+        bodyHtml: html,
+        preheader: String(emailForm.preheader || '').trim(),
+        headline: String(emailForm.headline || '').trim(),
+        ctaLabel: String(emailForm.cta_label || '').trim(),
+        ctaUrl: String(emailForm.cta_url || '').trim(),
+        signatureName: String(emailForm.signature_name || '').trim(),
+        from: String(emailForm.from || '').trim(),
+      })
+    }
+    const fallbackHtml = html || `<pre style="white-space:pre-wrap;font-family:Arial,Helvetica,sans-serif;">${text}</pre>`
+    return {
+      html: `<!doctype html><html><body style="font-family:Arial,Helvetica,sans-serif;background:#fff;padding:20px;">${fallbackHtml}</body></html>`,
+      text: text || String(html || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim(),
+    }
+  }, [emailForm])
 
   const resetCouponForm = () => {
     setCouponForm({
@@ -382,6 +589,54 @@ export default function MarketingSection() {
     setSelectedTemplateId('')
     setTemplateLabelInput('')
     setTemplateCategoryInput('geral')
+  }
+
+  const handleAddProspectingTemplates = async () => {
+    const existingIds = new Set(templateLibrary.map((item) => item.id))
+    const toAdd = PROSPECTING_EMAIL_TEMPLATES
+      .map((template, index) => normalizeTemplate(template, index))
+      .filter((template) => !existingIds.has(template.id))
+    if (toAdd.length === 0) {
+      setMessage('Os templates de prospeccao ja estao na sua biblioteca.')
+      return
+    }
+    const next = [...templateLibrary, ...toAdd]
+    const ok = await persistTemplates(next, `${toAdd.length} template(s) de prospeccao adicionados.`)
+    if (ok) {
+      setTemplateCategoryFilter('prospeccao')
+    }
+  }
+
+  const handleAddProspectingB2BTemplates = async () => {
+    const existingIds = new Set(templateLibrary.map((item) => item.id))
+    const toAdd = PROSPECTING_B2B_EMAIL_TEMPLATES
+      .map((template, index) => normalizeTemplate(template, index))
+      .filter((template) => !existingIds.has(template.id))
+    if (toAdd.length === 0) {
+      setMessage('Os templates B2B ja estao na sua biblioteca.')
+      return
+    }
+    const next = [...templateLibrary, ...toAdd]
+    const ok = await persistTemplates(next, `${toAdd.length} template(s) B2B adicionados.`)
+    if (ok) {
+      setTemplateCategoryFilter('prospeccao_b2b')
+    }
+  }
+
+  const handleAddProspectingB2CTemplates = async () => {
+    const existingIds = new Set(templateLibrary.map((item) => item.id))
+    const toAdd = PROSPECTING_B2C_EMAIL_TEMPLATES
+      .map((template, index) => normalizeTemplate(template, index))
+      .filter((template) => !existingIds.has(template.id))
+    if (toAdd.length === 0) {
+      setMessage('Os templates B2C ja estao na sua biblioteca.')
+      return
+    }
+    const next = [...templateLibrary, ...toAdd]
+    const ok = await persistTemplates(next, `${toAdd.length} template(s) B2C adicionados.`)
+    if (ok) {
+      setTemplateCategoryFilter('prospeccao_b2c')
+    }
   }
 
   const moveSelectedTemplate = async (direction) => {
@@ -749,6 +1004,30 @@ export default function MarketingSection() {
               >
                 Restaurar padrao
               </button>
+              <button
+                type="button"
+                onClick={handleAddProspectingTemplates}
+                disabled={templatesSaving}
+                className="rounded-lg border border-earth-300 px-3 py-2 text-xs font-medium text-earth-700 hover:bg-earth-100 disabled:opacity-70"
+              >
+                Adicionar prospeccao
+              </button>
+              <button
+                type="button"
+                onClick={handleAddProspectingB2BTemplates}
+                disabled={templatesSaving}
+                className="rounded-lg border border-earth-300 px-3 py-2 text-xs font-medium text-earth-700 hover:bg-earth-100 disabled:opacity-70"
+              >
+                Adicionar B2B
+              </button>
+              <button
+                type="button"
+                onClick={handleAddProspectingB2CTemplates}
+                disabled={templatesSaving}
+                className="rounded-lg border border-earth-300 px-3 py-2 text-xs font-medium text-earth-700 hover:bg-earth-100 disabled:opacity-70"
+              >
+                Adicionar B2C
+              </button>
             </div>
             <p className="mt-1 text-xs text-earth-600">
               Templates ficam salvos no banco e podem ser alterados sem novo deploy.
@@ -890,6 +1169,42 @@ export default function MarketingSection() {
           >
             Limpar
           </button>
+        </div>
+
+        <div className="mt-5 rounded-lg border border-earth-200 bg-earth-50 p-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h4 className="text-sm font-semibold text-earth-800">Preview antes de enviar</h4>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setPreviewMode('html')}
+                className={`rounded border px-3 py-1.5 text-xs font-medium ${previewMode === 'html' ? 'border-earth-700 bg-earth-800 text-white' : 'border-earth-300 text-earth-700 hover:bg-earth-100'}`}
+              >
+                HTML
+              </button>
+              <button
+                type="button"
+                onClick={() => setPreviewMode('text')}
+                className={`rounded border px-3 py-1.5 text-xs font-medium ${previewMode === 'text' ? 'border-earth-700 bg-earth-800 text-white' : 'border-earth-300 text-earth-700 hover:bg-earth-100'}`}
+              >
+                Texto
+              </button>
+            </div>
+          </div>
+          {previewMode === 'html' ? (
+            <div className="mt-3 overflow-hidden rounded border border-earth-200 bg-white">
+              <iframe
+                title="Preview do e-mail"
+                srcDoc={emailPreview.html}
+                sandbox=""
+                className="h-[520px] w-full bg-white"
+              />
+            </div>
+          ) : (
+            <pre className="mt-3 max-h-[520px] overflow-auto whitespace-pre-wrap rounded border border-earth-200 bg-white p-3 text-xs text-earth-800">
+              {emailPreview.text || 'Sem conteudo para preview em texto.'}
+            </pre>
+          )}
         </div>
       </div>
     </section>
