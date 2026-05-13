@@ -50,6 +50,7 @@ const AdminCatalogoProdutosTab = lazy(() => import('./pages/platform/admin/tabs/
 const AdminBuscaCatalogoTab = lazy(() => import('./pages/platform/admin/tabs/BuscaCatalogoTab'))
 const AdminGruposTab = lazy(() => import('./pages/platform/admin/tabs/GruposTab'))
 const AdminMarketingTab = lazy(() => import('./pages/platform/admin/tabs/MarketingTab'))
+const AdminEmailsTab = lazy(() => import('./pages/platform/admin/tabs/EmailsTab'))
 const AdminFraudeTab = lazy(() => import('./pages/platform/admin/tabs/FraudeTab'))
 const AdminNotificacoesTab = lazy(() => import('./pages/platform/admin/tabs/NotificacoesTab'))
 const AdminRecargasTab = lazy(() => import('./pages/platform/admin/tabs/RecargasTab'))
@@ -224,6 +225,7 @@ function App() {
                 <Route path="busca-catalogo" element={<AdminBuscaCatalogoTab />} />
                 <Route path="grupos" element={<AdminGruposTab />} />
                 <Route path="marketing" element={<AdminMarketingTab />} />
+                <Route path="emails" element={<AdminEmailsTab />} />
                 <Route path="fraude" element={<AdminFraudeTab />} />
                 <Route path="notificacoes" element={<AdminNotificacoesTab />} />
                 <Route path="recargas" element={<AdminRecargasTab />} />
@@ -238,6 +240,7 @@ function App() {
                 <Route path="catalogo/busca-catalogo" element={<AdminBuscaCatalogoTab />} />
                 <Route path="catalogo/grupos" element={<AdminGruposTab />} />
                 <Route path="growth/marketing" element={<AdminMarketingTab />} />
+                <Route path="growth/emails" element={<AdminEmailsTab />} />
                 <Route path="growth/fraude" element={<AdminFraudeTab />} />
                 <Route path="growth/notificacoes" element={<AdminNotificacoesTab />} />
                 <Route path="financeiro/recargas" element={<AdminRecargasTab />} />
@@ -322,6 +325,7 @@ function App() {
                 <Route path="catalog-search" element={<AdminBuscaCatalogoTab />} />
                 <Route path="groups" element={<AdminGruposTab />} />
                 <Route path="marketing" element={<AdminMarketingTab />} />
+                <Route path="emails" element={<AdminEmailsTab />} />
                 <Route path="fraud" element={<AdminFraudeTab />} />
                 <Route path="notifications" element={<AdminNotificacoesTab />} />
                 <Route path="top-ups" element={<AdminRecargasTab />} />
@@ -336,6 +340,7 @@ function App() {
                 <Route path="catalog/catalog-search" element={<AdminBuscaCatalogoTab />} />
                 <Route path="catalog/groups" element={<AdminGruposTab />} />
                 <Route path="growth/marketing" element={<AdminMarketingTab />} />
+                <Route path="growth/emails" element={<AdminEmailsTab />} />
                 <Route path="growth/fraud" element={<AdminFraudeTab />} />
                 <Route path="growth/notifications" element={<AdminNotificacoesTab />} />
                 <Route path="finance/top-ups" element={<AdminRecargasTab />} />
