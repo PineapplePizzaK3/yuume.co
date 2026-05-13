@@ -23,14 +23,22 @@ function buildFooterSocialLinks({ websiteUrl, instagramUrl }) {
   if (websiteUrl) {
     links.push(
       `<a href="${escapeHtml(websiteUrl)}" title="Website ${escapeHtml(websiteUrl)}" aria-label="Website ${escapeHtml(websiteUrl)}" style="display:inline-block;margin-right:8px;text-decoration:none;">
-        <span style="display:inline-block;width:34px;height:34px;line-height:34px;text-align:center;border:1px solid #d1d5db;border-radius:9999px;color:#374151;font-size:16px;font-weight:600;">W</span>
+        <span style="display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border:1px solid #d1d5db;border-radius:9999px;color:#374151;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" role="img" aria-hidden="true" style="display:block;fill:#374151;">
+            <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm7.93 9h-3.1a15.9 15.9 0 0 0-1.16-5.02A8.03 8.03 0 0 1 19.93 11ZM12 4c.9 0 2.46 2.06 2.86 7H9.14c.4-4.94 1.96-7 2.86-7ZM8.33 5.98A15.9 15.9 0 0 0 7.17 11h-3.1a8.03 8.03 0 0 1 4.26-5.02ZM4.07 13h3.1a15.9 15.9 0 0 0 1.16 5.02A8.03 8.03 0 0 1 4.07 13ZM12 20c-.9 0-2.46-2.06-2.86-7h5.72c-.4 4.94-1.96 7-2.86 7Zm3.67-1.98A15.9 15.9 0 0 0 16.83 13h3.1a8.03 8.03 0 0 1-4.26 5.02Z"/>
+          </svg>
+        </span>
       </a>`
     )
   }
   if (instagramUrl) {
     links.push(
       `<a href="${escapeHtml(instagramUrl)}" title="Instagram YuumeCo" aria-label="Instagram YuumeCo" style="display:inline-block;text-decoration:none;">
-        <span style="display:inline-block;width:34px;height:34px;line-height:34px;text-align:center;border:1px solid #d1d5db;border-radius:9999px;color:#374151;font-size:13px;font-weight:700;">IG</span>
+        <span style="display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border:1px solid #d1d5db;border-radius:9999px;color:#374151;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" role="img" aria-hidden="true" style="display:block;fill:#374151;">
+            <path d="M7.75 2h8.5A5.75 5.75 0 0 1 22 7.75v8.5A5.75 5.75 0 0 1 16.25 22h-8.5A5.75 5.75 0 0 1 2 16.25v-8.5A5.75 5.75 0 0 1 7.75 2Zm0 1.8A3.95 3.95 0 0 0 3.8 7.75v8.5a3.95 3.95 0 0 0 3.95 3.95h8.5a3.95 3.95 0 0 0 3.95-3.95v-8.5a3.95 3.95 0 0 0-3.95-3.95h-8.5Zm8.95 1.35a1.2 1.2 0 1 1 0 2.4 1.2 1.2 0 0 1 0-2.4ZM12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10Zm0 1.8a3.2 3.2 0 1 0 0 6.4 3.2 3.2 0 0 0 0-6.4Z"/>
+          </svg>
+        </span>
       </a>`
     )
   }
