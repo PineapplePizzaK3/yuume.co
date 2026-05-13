@@ -76,6 +76,7 @@ import { getDefaultRedirectFeePerItem } from '../../../lib/shippingRedirectFee'
 import QuoteProductsList from '../../../components/QuoteProductsList'
 import OrderAttachments from '../../../components/OrderAttachments'
 import { createCheckoutCouponAdmin, listCheckoutCouponsAdmin } from '../../../services/adminCouponService'
+import { sendAdminManualEmail } from '../../../services/adminEmailService'
 import { getPaymentsApiBase } from '../../../services/paymentService'
 import { PRODUCT_CONDITION_OPTIONS, getProductConditionMeta, normalizeProductCondition } from '../../../lib/productCondition'
 import AdminTabsNav from './AdminTabsNav'
@@ -1007,6 +1008,19 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     }
     setMessage(`Cupom ${data?.code || ''} criado com sucesso.`.trim())
     await loadMarketingData()
+    return { data, error: null }
+  }
+
+  const sendManualAdminEmail = async (payload) => {
+    const { data, error } = await sendAdminManualEmail(payload)
+    if (error) {
+      setMessage(error.message || 'Erro ao enviar e-mail')
+      return { data: null, error }
+    }
+    const recipientsCount = Number(data?.recipients_count || 0)
+    const emailId = String(data?.id || '').trim()
+    const idLabel = emailId ? ` (id: ${emailId})` : ''
+    setMessage(`E-mail enviado para ${recipientsCount} destinatario(s)${idLabel}.`)
     return { data, error: null }
   }
 
@@ -3135,6 +3149,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     marketingLoading,
     loadMarketingData,
     createCheckoutCoupon,
+    sendManualAdminEmail,
     checkoutCouponsLoading,
     checkoutCoupons,
     setMessage,

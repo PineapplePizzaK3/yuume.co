@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { sendResendEmail } from './resendEmail.js'
 
 function getSupabaseAdmin() {
   const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
@@ -132,34 +133,6 @@ async function markNotificationsAsEmailed(supabase, notifications, sentAtIso, re
       throw new Error(`Falha ao marcar notificacao ${n.id}: ${error.message || 'erro desconhecido'}`)
     }
   }
-}
-
-async function sendResendEmail({ to, subject, text }) {
-  const apiKey = String(process.env.RESEND_API_KEY || '').trim()
-  if (!apiKey) {
-    throw new Error('RESEND_API_KEY nao configurado')
-  }
-
-  const from = String(process.env.ADMIN_ALERT_FROM || 'Admin Alerts <onboarding@resend.dev>').trim()
-  const response = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      from,
-      to,
-      subject,
-      text,
-    }),
-  })
-
-  const payload = await response.json().catch(() => null)
-  if (!response.ok) {
-    throw new Error(payload?.message || `Resend HTTP ${response.status}`)
-  }
-  return payload
 }
 
 export async function runAdminActionEmailNotifier(req) {

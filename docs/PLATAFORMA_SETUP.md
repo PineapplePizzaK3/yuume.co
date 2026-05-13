@@ -101,3 +101,16 @@ Copie `.env.example` para `.env` e preencha:
      ```bash
      curl -H "Authorization: Bearer $CRON_SECRET" "https://SEU_DOMINIO/api/cron-admin-action-emails?dry_run=1"
      ```
+
+## Resend (domínio próprio)
+
+1. Em Resend, adicione e valide seu domínio de envio (ex.: `seudominio.com`).
+2. Publique todos os DNS exigidos pelo painel do Resend:
+   - SPF
+   - DKIM
+   - Tracking domain (opcional, recomendado)
+3. Configure `ADMIN_ALERT_FROM` com remetente no domínio validado:
+   - Ex.: `Loja <no-reply@seudominio.com>`
+4. Envio manual no admin:
+   - Endpoint seguro: `POST /api/admin-send-email` (somente usuário admin autenticado)
+   - Interface: aba **Marketing** no painel admin.

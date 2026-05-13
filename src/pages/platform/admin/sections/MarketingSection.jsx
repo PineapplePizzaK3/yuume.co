@@ -7,6 +7,7 @@ export default function MarketingSection() {
     marketingLoading,
     loadMarketingData,
     createCheckoutCoupon,
+    sendManualAdminEmail,
     checkoutCoupons,
     checkoutCouponsLoading,
     setMessage,
@@ -22,6 +23,14 @@ export default function MarketingSection() {
     description: '',
   })
   const [couponSubmitting, setCouponSubmitting] = useState(false)
+  const [emailSubmitting, setEmailSubmitting] = useState(false)
+  const [emailForm, setEmailForm] = useState({
+    to: '',
+    subject: '',
+    text: '',
+    html: '',
+    from: '',
+  })
 
   if (activeTab !== 'marketing') return null
 
@@ -66,6 +75,58 @@ export default function MarketingSection() {
     })
     setCouponSubmitting(false)
     if (!error) resetCouponForm()
+  }
+
+  const resetEmailForm = () => {
+    setEmailForm({
+      to: '',
+      subject: '',
+      text: '',
+      html: '',
+      from: '',
+    })
+  }
+
+  const handleSendEmail = async () => {
+    const recipients = String(emailForm.to || '')
+      .split(',')
+      .map((value) => value.trim())
+      .filter(Boolean)
+    const subject = String(emailForm.subject || '').trim()
+    const text = String(emailForm.text || '').trim()
+    const html = String(emailForm.html || '').trim()
+    const from = String(emailForm.from || '').trim()
+
+    if (recipients.length === 0) {
+      setMessage('Informe ao menos um destinatário.')
+      return
+    }
+    if (!subject) {
+      setMessage('Informe o assunto do e-mail.')
+      return
+    }
+    if (!text && !html) {
+      setMessage('Informe uma mensagem em texto ou HTML.')
+      return
+    }
+
+    setEmailSubmitting(true)
+    const { error } = await sendManualAdminEmail({
+      to: recipients,
+      subject,
+      text,
+      html,
+      from: from || undefined,
+    })
+    setEmailSubmitting(false)
+    if (!error) {
+      setEmailForm((prev) => ({
+        ...prev,
+        subject: '',
+        text: '',
+        html: '',
+      }))
+    }
   }
 
   return (
@@ -241,6 +302,82 @@ export default function MarketingSection() {
               </table>
             </div>
           )}
+        </div>
+      </div>
+
+      <div className="rounded-lg border border-earth-200 bg-white p-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h3 className="font-medium text-earth-900">Envio manual de e-mail</h3>
+          <span className="text-xs text-earth-600">Use vírgula para múltiplos destinatários</span>
+        </div>
+
+        <div className="mt-4 grid gap-3 md:grid-cols-2">
+          <label className="text-sm md:col-span-2">
+            <span className="text-earth-700">Para</span>
+            <input
+              type="text"
+              value={emailForm.to}
+              onChange={(e) => setEmailForm((s) => ({ ...s, to: e.target.value }))}
+              className="mt-1 w-full rounded border border-earth-300 px-3 py-2"
+              placeholder="cliente@exemplo.com, suporte@exemplo.com"
+            />
+          </label>
+          <label className="text-sm md:col-span-2">
+            <span className="text-earth-700">Assunto</span>
+            <input
+              type="text"
+              value={emailForm.subject}
+              onChange={(e) => setEmailForm((s) => ({ ...s, subject: e.target.value }))}
+              className="mt-1 w-full rounded border border-earth-300 px-3 py-2"
+              placeholder="Ex: Atualização do seu pedido"
+            />
+          </label>
+          <label className="text-sm md:col-span-2">
+            <span className="text-earth-700">Mensagem (texto)</span>
+            <textarea
+              value={emailForm.text}
+              onChange={(e) => setEmailForm((s) => ({ ...s, text: e.target.value }))}
+              className="mt-1 min-h-28 w-full rounded border border-earth-300 px-3 py-2"
+              placeholder="Mensagem em texto puro"
+            />
+          </label>
+          <label className="text-sm md:col-span-2">
+            <span className="text-earth-700">Mensagem HTML (opcional)</span>
+            <textarea
+              value={emailForm.html}
+              onChange={(e) => setEmailForm((s) => ({ ...s, html: e.target.value }))}
+              className="mt-1 min-h-28 w-full rounded border border-earth-300 px-3 py-2 font-mono text-xs"
+              placeholder="<p>Mensagem em HTML</p>"
+            />
+          </label>
+          <label className="text-sm md:col-span-2">
+            <span className="text-earth-700">Remetente (opcional)</span>
+            <input
+              type="text"
+              value={emailForm.from}
+              onChange={(e) => setEmailForm((s) => ({ ...s, from: e.target.value }))}
+              className="mt-1 w-full rounded border border-earth-300 px-3 py-2"
+              placeholder="Loja <no-reply@seudominio.com>"
+            />
+          </label>
+        </div>
+
+        <div className="mt-4 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={handleSendEmail}
+            disabled={emailSubmitting}
+            className="rounded-lg bg-earth-900 px-4 py-2 text-sm font-medium text-white hover:bg-earth-800 disabled:opacity-70"
+          >
+            {emailSubmitting ? 'Enviando...' : 'Enviar e-mail'}
+          </button>
+          <button
+            type="button"
+            onClick={resetEmailForm}
+            className="rounded-lg border border-earth-300 px-4 py-2 text-sm font-medium text-earth-700 hover:bg-earth-100"
+          >
+            Limpar
+          </button>
         </div>
       </div>
     </section>
