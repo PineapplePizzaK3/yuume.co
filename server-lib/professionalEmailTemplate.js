@@ -28,6 +28,26 @@ function normalizeUrl(value) {
   return url
 }
 
+function buildFooterSocialLinks({ websiteUrl, instagramUrl }) {
+  const links = []
+  if (websiteUrl) {
+    links.push(
+      `<a href="${escapeHtml(websiteUrl)}" title="Website ${escapeHtml(websiteUrl)}" aria-label="Website ${escapeHtml(websiteUrl)}" style="display:inline-block;margin-right:8px;text-decoration:none;">
+        <span style="display:inline-block;width:34px;height:34px;line-height:34px;text-align:center;border:1px solid #d1d5db;border-radius:9999px;color:#374151;font-size:16px;font-weight:600;">W</span>
+      </a>`
+    )
+  }
+  if (instagramUrl) {
+    links.push(
+      `<a href="${escapeHtml(instagramUrl)}" title="Instagram YuumeCo" aria-label="Instagram YuumeCo" style="display:inline-block;text-decoration:none;">
+        <span style="display:inline-block;width:34px;height:34px;line-height:34px;text-align:center;border:1px solid #d1d5db;border-radius:9999px;color:#374151;font-size:13px;font-weight:700;">IG</span>
+      </a>`
+    )
+  }
+  if (links.length === 0) return ''
+  return `<div style="margin:10px 0 2px;">${links.join('')}</div>`
+}
+
 export function buildProfessionalEmailTemplate({
   subject,
   bodyText,
@@ -43,6 +63,7 @@ export function buildProfessionalEmailTemplate({
   const supportEmail = trimString(process.env.EMAIL_SUPPORT_EMAIL || process.env.ADMIN_ALERT_EMAILS || '')
   const companyAddress = trimString(process.env.EMAIL_COMPANY_ADDRESS || '')
   const websiteUrl = normalizeUrl(process.env.VITE_SITE_URL || process.env.SITE_URL || '')
+  const instagramUrl = normalizeUrl(process.env.EMAIL_INSTAGRAM_URL || 'https://instagram.com/yuume_co')
   const logoUrl = normalizeUrl(process.env.EMAIL_LOGO_URL || '')
 
   const safeSubject = trimString(subject) || `Mensagem de ${brandName}`
@@ -72,9 +93,7 @@ export function buildProfessionalEmailTemplate({
   const addressBlock = companyAddress
     ? `<p style="margin:6px 0 0;color:#6b7280;font-size:12px;line-height:1.5;">${escapeHtml(companyAddress)}</p>`
     : ''
-  const websiteBlock = websiteUrl
-    ? `<p style="margin:6px 0 0;color:#6b7280;font-size:12px;line-height:1.5;"><a href="${escapeHtml(websiteUrl)}" style="color:#4b5563;text-decoration:underline;">${escapeHtml(websiteUrl)}</a></p>`
-    : ''
+  const socialLinksBlock = buildFooterSocialLinks({ websiteUrl, instagramUrl })
   const fromBlock = safeFrom
     ? `<p style="margin:6px 0 0;color:#6b7280;font-size:12px;line-height:1.5;">Remetente: ${escapeHtml(safeFrom)}</p>`
     : ''
@@ -111,7 +130,7 @@ export function buildProfessionalEmailTemplate({
             <tr>
               <td style="padding:20px 32px 28px;border-top:1px solid #f3f4f6;">
                 ${supportBlock}
-                ${websiteBlock}
+                ${socialLinksBlock}
                 ${addressBlock}
                 ${fromBlock}
               </td>
@@ -135,6 +154,7 @@ export function buildProfessionalEmailTemplate({
     '',
     supportEmail ? `Suporte: ${supportEmail}` : '',
     websiteUrl ? `Site: ${websiteUrl}` : '',
+    instagramUrl ? `Instagram: ${instagramUrl}` : '',
     companyAddress || '',
   ].filter(Boolean)
 
