@@ -4,6 +4,14 @@
 import { supabase } from '../lib/supabase'
 import { withDbTimeout, toServiceError } from '../lib/dbGuard'
 
+const COUPON_SCHEMA_MISSING_COLUMNS = ['owner_user_id', 'origin_type', 'origin_referral_id']
+
+function isMissingCouponSchemaColumnError(error) {
+  const raw = String(error?.message || '').toLowerCase()
+  if (!raw) return false
+  return COUPON_SCHEMA_MISSING_COLUMNS.some((col) => raw.includes(`coupons.${col}`) || raw.includes(col))
+}
+
 /**
  * Valida um cupom e retorna o desconto aplicável.
  * @param {string} code - Código do cupom
@@ -19,6 +27,9 @@ export async function validateCoupon(code, subtotalBrl) {
       })
     )
     if (error) {
+      if (isMissingCouponSchemaColumnError(error)) {
+        return { data: null, error: { message: 'Sistema de cupons em atualização. Tente novamente em instantes.' } }
+      }
       return { data: null, error: { message: error.message } }
     }
     const result = data ?? {}
@@ -64,11 +75,18 @@ export async function getMyCoupons(userId) {
           used_count,
           valid_from,
           valid_until,
-          description
+          description,
+          origin_type
         `)
         .eq('owner_user_id', userId)
         .order('created_at', { ascending: false })
     )
+    if (error && isMissingCouponSchemaColumnError(error)) {
+      return {
+        data: [],
+        error: { message: 'Sistema de cupons em atualização. Seus cupons voltarão a aparecer em breve.' },
+      }
+    }
     return { data: data ?? [], error }
   } catch (e) {
     return { data: [], error: toServiceError(e) }

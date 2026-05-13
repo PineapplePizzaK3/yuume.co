@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../hooks/useAuth'
 import { useSiteLocale } from '../../hooks/useSiteLocale'
 import { PageSeo } from '../../components/PageSeo'
+import { PasswordInput } from '../../components/PasswordInput'
 import { localizedPath } from '../../lib/localeRoutes'
 import {
   getProfile,
@@ -939,35 +940,44 @@ export default function Conta() {
               ) : (
                 <form onSubmit={handleChangePassword} className="mt-4 max-w-md space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-earth-700">{t('platform.conta.currentPassword')}</label>
-                    <input
-                      type="password"
+                    <label htmlFor="conta-current-password" className="block text-sm font-medium text-earth-700">
+                      {t('platform.conta.currentPassword')}
+                    </label>
+                    <PasswordInput
+                      id="conta-current-password"
                       value={passwordForm.currentPassword}
                       onChange={(e) => setPasswordForm((f) => ({ ...f, currentPassword: e.target.value }))}
+                      autoComplete="current-password"
                       placeholder={t('platform.conta.currentPasswordPlaceholder')}
-                      className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                      className="mt-1"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-earth-700">{t('platform.conta.newPassword')}</label>
-                    <input
-                      type="password"
+                    <label htmlFor="conta-new-password" className="block text-sm font-medium text-earth-700">
+                      {t('platform.conta.newPassword')}
+                    </label>
+                    <PasswordInput
+                      id="conta-new-password"
                       value={passwordForm.newPassword}
                       onChange={(e) => setPasswordForm((f) => ({ ...f, newPassword: e.target.value }))}
                       minLength={8}
+                      autoComplete="new-password"
                       placeholder={t('auth.passwordValidation.placeholder')}
-                      className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                      className="mt-1"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-earth-700">{t('platform.conta.confirmNewPassword')}</label>
-                    <input
-                      type="password"
+                    <label htmlFor="conta-confirm-password" className="block text-sm font-medium text-earth-700">
+                      {t('platform.conta.confirmNewPassword')}
+                    </label>
+                    <PasswordInput
+                      id="conta-confirm-password"
                       value={passwordForm.confirm}
                       onChange={(e) => setPasswordForm((f) => ({ ...f, confirm: e.target.value }))}
                       minLength={8}
+                      autoComplete="new-password"
                       placeholder={t('platform.conta.repeatPasswordPlaceholder')}
-                      className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                      className="mt-1"
                     />
                   </div>
                   {securityMessage && (

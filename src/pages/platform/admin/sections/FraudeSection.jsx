@@ -1,4 +1,4 @@
-﻿import { useAdminContext } from '../AdminContext'
+import { useAdminContext } from '../AdminContext'
 
 export default function FraudeSection() {
   const {
@@ -11,7 +11,6 @@ export default function FraudeSection() {
     setFraudStatusFilter,
     fraudSearchTerm,
     setFraudSearchTerm,
-    filteredFraudReferrals,
     filteredFraudAffiliateOrders,
     fraudQueue,
     handleFraudDecision,
@@ -26,7 +25,7 @@ export default function FraudeSection() {
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h2 className="text-lg font-semibold text-earth-900">Revisão antifraude</h2>
-          <p className="mt-1 text-sm text-earth-600">Casos de referral e affiliate com risco elevado para decisão manual.</p>
+          <p className="mt-1 text-sm text-earth-600">Casos de affiliate com risco elevado para decisão manual.</p>
         </div>
         <button
           type="button"
@@ -60,48 +59,9 @@ export default function FraudeSection() {
               </label>
               <label className="text-sm">
                 <span className="text-earth-700">Busca (ID / flags)</span>
-                <input type="search" value={fraudSearchTerm} onChange={(e) => setFraudSearchTerm(e.target.value)} placeholder="pedido, referral, user..." className="mt-1 w-full rounded border border-earth-300 px-3 py-2" />
+                <input type="search" value={fraudSearchTerm} onChange={(e) => setFraudSearchTerm(e.target.value)} placeholder="pedido, affiliate, user..." className="mt-1 w-full rounded border border-earth-300 px-3 py-2" />
               </label>
             </div>
-          </div>
-
-          <div className="rounded-lg border border-earth-200 bg-white p-4">
-            <h3 className="font-medium text-earth-900">Referrals em revisão</h3>
-            <p className="mt-1 text-xs text-earth-500">Exibindo {filteredFraudReferrals.length} de {(fraudQueue.referrals || []).length}</p>
-            {filteredFraudReferrals.length === 0 ? (
-              <p className="mt-2 text-sm text-earth-600">Nenhum referral pendente.</p>
-            ) : (
-              <ul className="mt-3 space-y-2">
-                {filteredFraudReferrals.map((row) => (
-                  <li key={row.id} className="rounded border border-earth-200 bg-earth-50 p-3">
-                    <p className="text-sm font-medium text-earth-900">Referral {String(row.id).slice(0, 8)}… • score {Number(row.risk_score || 0).toFixed(1)}</p>
-                    <p className="mt-1 text-xs text-earth-600">{row.status} • referrer {String(row.referrer_id || '').slice(0, 8)}… • referred {String(row.referred_id || '').slice(0, 8)}…</p>
-                    <p className="mt-1 break-all text-xs text-earth-500">flags: {JSON.stringify(row.fraud_flags || {})}</p>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {[
-                        ['approve', 'Aprovar'],
-                        ['reject', 'Rejeitar'],
-                        ['flag', 'Flag'],
-                        ['pending', 'Pendente'],
-                      ].map(([decision, label]) => {
-                        const key = `referral:${row.id}:${decision}`
-                        return (
-                          <button
-                            key={decision}
-                            type="button"
-                            onClick={() => handleFraudDecision('referral', row.id, decision)}
-                            disabled={fraudDecisionLoadingId === key}
-                            className="rounded border border-earth-300 bg-white px-2.5 py-1 text-xs font-medium text-earth-700 hover:bg-earth-100 disabled:opacity-60"
-                          >
-                            {label}
-                          </button>
-                        )
-                      })}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
           </div>
 
           <div className="rounded-lg border border-earth-200 bg-white p-4">

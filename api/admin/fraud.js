@@ -21,14 +21,7 @@ async function ensureAdmin(req, res, supabase) {
 
 async function handleReview(req, res, supabase) {
   const limit = Math.max(1, Math.min(300, Number(req.query.limit) || 100))
-  const [referralsRes, affiliateOrdersRes, logsRes] = await Promise.all([
-    supabase
-      .from('referrals')
-      .select('id, referrer_id, referred_id, status, risk_score, fraud_flags, reward_given, reward_release_at, created_at')
-      .in('status', ['pending', 'flagged', 'rejected'])
-      .order('risk_score', { ascending: false })
-      .order('created_at', { ascending: false })
-      .limit(limit),
+  const [affiliateOrdersRes, logsRes] = await Promise.all([
     supabase
       .from('affiliate_orders')
       .select('id, affiliate_id, order_id, status, risk_score, flags, commission_amount, reward_release_at, created_at')
@@ -45,7 +38,7 @@ async function handleReview(req, res, supabase) {
 
   return res.status(200).json({
     ok: true,
-    referrals: referralsRes.data || [],
+    referrals: [],
     affiliate_orders: affiliateOrdersRes.data || [],
     fraud_logs: logsRes.data || [],
   })
@@ -70,36 +63,7 @@ async function handleDecision(req, res, supabase, user) {
   const releaseAtIso = new Date(Date.now() + holdDays * 24 * 60 * 60 * 1000).toISOString()
 
   if (entityType === 'referral') {
-    const status = decision === 'approve'
-      ? 'approved'
-      : decision === 'reject'
-        ? 'rejected'
-        : decision === 'flag'
-          ? 'flagged'
-          : 'pending'
-
-    const { data: updated, error } = await supabase
-      .from('referrals')
-      .update({
-        status,
-        reviewed_by: user.id,
-        reviewed_at: nowIso,
-        reward_release_at: decision === 'approve' ? releaseAtIso : null,
-        fraud_flags: note ? { admin_note: note } : undefined,
-        updated_at: nowIso,
-      })
-      .eq('id', entityId)
-      .select('id, status, risk_score, reviewed_by, reviewed_at, referred_id')
-      .single()
-
-    if (error) return res.status(400).json({ error: error.message || 'Failed to update referral' })
-    await insertFraudLog(supabase, {
-      userId: updated?.referred_id || null,
-      actionType: 'admin_fraud_decision_referral',
-      riskScore: Number(updated?.risk_score || 0),
-      flags: { entity_id: entityId, decision, note },
-    })
-    return res.status(200).json({ ok: true, entity: updated })
+    return res.status(503).json({ error: 'Referral system is temporarily disabled' })
   }
 
   if (entityType === 'affiliate_order') {

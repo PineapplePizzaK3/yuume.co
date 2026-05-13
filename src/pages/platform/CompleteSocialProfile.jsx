@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { LocalizedLink } from '../../components/LocalizedLink'
+import { PasswordInput } from '../../components/PasswordInput'
 import { PageSeo } from '../../components/PageSeo'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../hooks/useAuth'
@@ -133,24 +134,30 @@ export default function CompleteSocialProfile() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-earth-700">{t('auth.password')}</label>
-            <input
-              type="password"
+            <label htmlFor="complete-social-password" className="block text-sm font-medium text-earth-700">
+              {t('auth.password')}
+            </label>
+            <PasswordInput
+              id="complete-social-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+              className="mt-1"
               placeholder={t('auth.passwordValidation.placeholder')}
+              autoComplete="new-password"
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-earth-700">{t('auth.confirmPasswordShort')}</label>
-            <input
-              type="password"
+            <label htmlFor="complete-social-password-confirm" className="block text-sm font-medium text-earth-700">
+              {t('auth.confirmPasswordShort')}
+            </label>
+            <PasswordInput
+              id="complete-social-password-confirm"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+              className="mt-1"
               placeholder={t('auth.repeatPasswordPlaceholder')}
+              autoComplete="new-password"
               required
             />
           </div>

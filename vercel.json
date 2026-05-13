@@ -22,6 +22,10 @@
       "destination": "/api/create-checkout-session?x_dispatch=cron-refresh-online-group-prices"
     },
     {
+      "source": "/api/cron-admin-action-emails",
+      "destination": "/api/create-checkout-session?x_dispatch=cron-admin-action-emails"
+    },
+    {
       "source": "/api/webhook-glin",
       "destination": "/api/webhook-glin"
     },

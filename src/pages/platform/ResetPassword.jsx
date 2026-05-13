@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { LocalizedLink } from '../../components/LocalizedLink'
+import { PasswordInput } from '../../components/PasswordInput'
 import { PageSeo } from '../../components/PageSeo'
 import { useLocalizedPath } from '../../hooks/useLocalizedPath'
 import { supabase } from '../../lib/supabase'
@@ -112,14 +113,14 @@ export default function ResetPassword() {
               <label htmlFor="password" className="block text-sm font-medium text-earth-700">
                 {t('auth.newPassword')}
               </label>
-              <input
+              <PasswordInput
                 id="password"
-                type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength={8}
-                className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                autoComplete="new-password"
+                className="mt-1"
                 placeholder={t('auth.passwordValidation.placeholder')}
               />
             </div>
@@ -127,14 +128,14 @@ export default function ResetPassword() {
               <label htmlFor="confirm" className="block text-sm font-medium text-earth-700">
                 {t('auth.confirmNewPassword')}
               </label>
-              <input
+              <PasswordInput
                 id="confirm"
-                type="password"
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
                 required
                 minLength={8}
-                className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                autoComplete="new-password"
+                className="mt-1"
               />
             </div>
             {error && <p className="text-sm text-red-600">{error}</p>}

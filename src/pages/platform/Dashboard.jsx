@@ -17,10 +17,6 @@ import { getMyNotifications, markNotificationRead } from '../../services/notific
 import { getMyInventoryCount, getMyShipments } from '../../services/inventoryService'
 import { SHIPPING_ADDRESS_JAPAN } from '../../data/legalConfig'
 import { cacheKey, readCache, writeCache } from '../../lib/cache'
-import { getMyReferralOverview } from '../../services/referralService'
-import { getSystemSettings } from '../../services/settingsService'
-import { brlToJpy } from '../../lib/fx'
-import { useFormatPrice } from '../../hooks/useFormatPrice'
 
 /** Mesmos status da aba "Envios em processo" em Lounge → Envios. */
 const SHIPMENT_IN_PROCESS_STATUSES = ['requested', 'awaiting_payment', 'paid', 'shipped']
@@ -108,7 +104,6 @@ export default function Dashboard() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const siteLocale = useSiteLocale()
-  const fp = useFormatPrice()
   const dateLocale = siteLocale === LOCALE_EN ? 'en-US' : 'pt-BR'
   const { user, profile } = useAuth()
   const lp = useLocalizedPath()
@@ -119,15 +114,6 @@ export default function Dashboard() {
   const [shipmentsInProcessCount, setShipmentsInProcessCount] = useState(0)
   const [inventoryCount, setInventoryCount] = useState(0)
   const [notifications, setNotifications] = useState([])
-  const [referral, setReferral] = useState({
-    code: null,
-    referrals: [],
-    credits: 0,
-    stats: { total: 0, awaitingReferrerCredit: 0, rewarded: 0 },
-  })
-  const [referralRewards, setReferralRewards] = useState({ discountBrl: 0, creditBrl: 0 })
-  const [referralLoadError, setReferralLoadError] = useState('')
-  const [referralRefreshing, setReferralRefreshing] = useState(false)
   const [loading, setLoading] = useState(true)
   const [notifsLoading, setNotifsLoading] = useState(true)
   const [showCustomizer, setShowCustomizer] = useState(false)
@@ -210,43 +196,14 @@ export default function Dashboard() {
 
   useEffect(() => {
     let isActive = true
-    const run = async () => {
-      if (!user?.id) return
-      const [overviewRes, settingsRes] = await Promise.all([
-        getMyReferralOverview(user.id),
-        getSystemSettings(),
-      ])
-      if (!isActive) return
-      if (overviewRes.data) setReferral(overviewRes.data)
-      setReferralLoadError(overviewRes.error?.message || '')
-      const s = settingsRes.data || {}
-      setReferralRewards({
-        discountBrl: Math.max(0, Number(s?.referral_discount_value?.amount) || 0),
-        creditBrl: Math.max(0, Number(s?.referral_credit_value?.amount) || 0),
-      })
-    }
-    run()
-    return () => { isActive = false }
-  }, [user?.id])
-
-  const refreshReferralCode = async () => {
-    if (!user?.id) return
-    setReferralRefreshing(true)
-    try {
-      const { data: overviewData, error: overviewError } = await getMyReferralOverview(user.id)
-      if (overviewData) setReferral(overviewData)
-      setReferralLoadError(overviewError?.message || '')
-    } finally {
-      setReferralRefreshing(false)
-    }
-  }
-
-  useEffect(() => {
-    let isActive = true
+    let isFirstRun = true
     const run = async () => {
       if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return
       if (!user?.id) {
-        if (isActive) setNotifsLoading(false)
+        if (isActive) {
+          setNotifsLoading(false)
+          isFirstRun = false
+        }
         return
       }
       const k = cacheKey(user.id, 'notifications_v1')
@@ -255,14 +212,17 @@ export default function Dashboard() {
         setNotifications(Array.isArray(cached) ? cached : [])
         setNotifsLoading(false)
       }
-      if (isActive) setNotifsLoading(true)
+      if (isActive && isFirstRun) setNotifsLoading(true)
       try {
         const { data } = await getMyNotifications(user.id, 20)
         if (!isActive) return
         setNotifications(data ?? [])
         writeCache(k, data ?? [])
       } finally {
-        if (isActive) setNotifsLoading(false)
+        if (isActive) {
+          setNotifsLoading(false)
+          isFirstRun = false
+        }
       }
     }
     run()
@@ -278,9 +238,6 @@ export default function Dashboard() {
   const recipientLine = accountCode ? `${name} - ${accountCode}` : name
   const balance = wallet?.balance ?? 0
   const currency = wallet?.currency ?? 'JPY'
-  const referralDiscountJpy = Math.round(brlToJpy(referralRewards.discountBrl || 0))
-  const referralCreditJpy = Math.round(brlToJpy(referralRewards.creditBrl || 0))
-  const referralCreditsJpy = Math.round(brlToJpy(referral.credits || 0))
   const unreadCount = notifications.filter((n) => !n.read_at).length
   const addressForUser = {
     recipient: recipientLine,
@@ -664,58 +621,6 @@ export default function Dashboard() {
               <CopyAddressButton address={addressForUser} />
             </section>}
 
-            <section id="referral-section" className="rounded-xl border border-green-200 bg-green-50 p-4 sm:p-5">
-              <h2 className="text-lg font-semibold text-earth-900">{t('platform.dashboard.referralTitle')}</h2>
-              {referralLoadError && (
-                <p className="mt-2 rounded bg-amber-100 px-3 py-2 text-xs text-amber-800">
-                  {referralLoadError}
-                </p>
-              )}
-              <p className="mt-2 text-sm text-earth-800">
-                <strong>{t('platform.dashboard.referralThemStrong')}</strong>
-                {t('platform.dashboard.referralThemBody', { amount: fp.jpy(referralDiscountJpy) })}
-              </p>
-              <p className="mt-2 text-sm text-earth-800">
-                <strong>{t('platform.dashboard.referralYouStrong')}</strong>
-                {t('platform.dashboard.referralYouBody', { amount: fp.jpy(referralCreditJpy) })}
-              </p>
-              <div className="mt-4 flex flex-wrap items-center gap-2">
-                <span className="rounded bg-white px-3 py-1.5 text-sm font-semibold text-earth-900 border border-green-200">
-                  {t('platform.dashboard.yourCode', { code: referral.code || '—' })}
-                </span>
-                <button
-                  type="button"
-                  onClick={refreshReferralCode}
-                  disabled={referralRefreshing}
-                  className="rounded border border-green-300 bg-white px-3 py-1.5 text-sm font-medium text-green-700 hover:bg-green-100 disabled:opacity-70"
-                >
-                  {referralRefreshing ? t('platform.dashboard.referralGenLoading') : t('platform.dashboard.referralGenAgain')}
-                </button>
-                {referral.code && (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      navigator.clipboard.writeText(
-                        `${window.location.origin}${lp('register')}?invite=${referral.code}`
-                      )
-                    }
-                    className="rounded border border-green-300 bg-white px-3 py-1.5 text-sm font-medium text-green-700 hover:bg-green-100"
-                  >
-                    {t('platform.dashboard.referralCopySignup')}
-                  </button>
-                )}
-              </div>
-              <p className="mt-3 text-sm text-earth-700">
-                {t('platform.dashboard.referralWalletLine', { amount: fp.jpy(referralCreditsJpy) })}
-              </p>
-              <p className="mt-1 text-xs text-earth-600">
-                {t('platform.dashboard.referralStats', {
-                  total: referral.stats?.total || 0,
-                  awaiting: referral.stats?.awaitingReferrerCredit ?? 0,
-                  rewarded: referral.stats?.rewarded || 0,
-                })}
-              </p>
-            </section>
           </div>
         )}
       </div>

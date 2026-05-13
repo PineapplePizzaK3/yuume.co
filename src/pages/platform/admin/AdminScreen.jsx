@@ -75,7 +75,7 @@ import { parseQuoteMessage, serializeQuoteProducts } from '../../../lib/quotePro
 import { getDefaultRedirectFeePerItem } from '../../../lib/shippingRedirectFee'
 import QuoteProductsList from '../../../components/QuoteProductsList'
 import OrderAttachments from '../../../components/OrderAttachments'
-import { getSystemSettings, saveSystemSettingsAdmin } from '../../../services/settingsService'
+import { createCheckoutCouponAdmin, listCheckoutCouponsAdmin } from '../../../services/adminCouponService'
 import { getPaymentsApiBase } from '../../../services/paymentService'
 import { PRODUCT_CONDITION_OPTIONS, getProductConditionMeta, normalizeProductCondition } from '../../../lib/productCondition'
 import AdminTabsNav from './AdminTabsNav'
@@ -418,14 +418,11 @@ export default function Admin({ routeTabId = 'pedidos' }) {
   const [topupRequests, setTopupRequests] = useState([])
   const [topupLoading, setTopupLoading] = useState(false)
   const [marketingLoading, setMarketingLoading] = useState(false)
-  const [settingsForm, setSettingsForm] = useState({
-    referral_discount_value: '',
-    referral_credit_value: '',
-    fx_brl_per_jpy: '0.033',
-  })
+  const [checkoutCoupons, setCheckoutCoupons] = useState([])
+  const [checkoutCouponsLoading, setCheckoutCouponsLoading] = useState(false)
   const [adminNotifications, setAdminNotifications] = useState([])
   const [adminNotificationsLoading, setAdminNotificationsLoading] = useState(false)
-  const [fraudQueue, setFraudQueue] = useState({ referrals: [], affiliate_orders: [], fraud_logs: [] })
+  const [fraudQueue, setFraudQueue] = useState({ affiliate_orders: [], fraud_logs: [] })
   const [fraudQueueLoading, setFraudQueueLoading] = useState(false)
   const [fraudDecisionLoadingId, setFraudDecisionLoadingId] = useState('')
   const [fraudMinScore, setFraudMinScore] = useState('0')
@@ -984,23 +981,33 @@ export default function Admin({ routeTabId = 'pedidos' }) {
 
   const loadMarketingData = async (active = () => true) => {
     setMarketingLoading(true)
+    setCheckoutCouponsLoading(true)
     try {
-      const settingsRes = await getSystemSettings()
+      const couponsRes = await listCheckoutCouponsAdmin()
       if (!active()) return
-      const settings = settingsRes.data || {}
-      setSettingsForm({
-        referral_discount_value: String(settings?.referral_discount_value?.amount ?? ''),
-        referral_credit_value: String(settings?.referral_credit_value?.amount ?? ''),
-        fx_brl_per_jpy: String(settings?.fx_brl_per_jpy?.amount ?? '0.033'),
-      })
-      if (settingsRes.error) {
-        setMessage(settingsRes.error?.message || 'Erro ao carregar referral')
+      setCheckoutCoupons(Array.isArray(couponsRes.data) ? couponsRes.data : [])
+      if (couponsRes.error) {
+        setMessage(couponsRes.error?.message || 'Erro ao carregar cupons')
       }
     } catch (e) {
-      if (active()) setMessage(e?.message || 'Erro ao carregar dados de referral')
+      if (active()) setMessage(e?.message || 'Erro ao carregar cupons')
     } finally {
-      if (active()) setMarketingLoading(false)
+      if (active()) {
+        setMarketingLoading(false)
+        setCheckoutCouponsLoading(false)
+      }
     }
+  }
+
+  const createCheckoutCoupon = async (payload) => {
+    const { data, error } = await createCheckoutCouponAdmin(payload)
+    if (error) {
+      setMessage(error.message || 'Erro ao criar cupom')
+      return { data: null, error }
+    }
+    setMessage(`Cupom ${data?.code || ''} criado com sucesso.`.trim())
+    await loadMarketingData()
+    return { data, error: null }
   }
 
   const loadAdminNotifications = async (active = () => true) => {
@@ -1027,7 +1034,6 @@ export default function Admin({ routeTabId = 'pedidos' }) {
         return
       }
       setFraudQueue({
-        referrals: Array.isArray(data?.referrals) ? data.referrals : [],
         affiliate_orders: Array.isArray(data?.affiliate_orders) ? data.affiliate_orders : [],
         fraud_logs: Array.isArray(data?.fraud_logs) ? data.fraud_logs : [],
       })
@@ -2941,9 +2947,6 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     return haystack.includes(fraudSearch)
   }
 
-  const filteredFraudReferrals = (fraudQueue.referrals || []).filter((row) =>
-    passesFraudFilters(row, ['id', 'referrer_id', 'referred_id'])
-  )
   const filteredFraudAffiliateOrders = (fraudQueue.affiliate_orders || []).filter((row) =>
     passesFraudFilters(row, ['id', 'order_id', 'affiliate_id'])
   )
@@ -3131,8 +3134,9 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     setProductsPage,
     marketingLoading,
     loadMarketingData,
-    settingsForm,
-    setSettingsForm,
+    createCheckoutCoupon,
+    checkoutCouponsLoading,
+    checkoutCoupons,
     setMessage,
     sectionMessages,
     topupLoading,
@@ -3152,7 +3156,6 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     setFraudStatusFilter,
     fraudSearchTerm,
     setFraudSearchTerm,
-    filteredFraudReferrals,
     filteredFraudAffiliateOrders,
     fraudQueue,
     handleFraudDecision,

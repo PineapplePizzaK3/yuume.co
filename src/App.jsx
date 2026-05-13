@@ -104,11 +104,6 @@ function App() {
 
   useEffect(() => {
     const url = new URL(window.location.href)
-    const referralCode = (url.searchParams.get('invite') || url.searchParams.get('referral') || '').trim().toUpperCase()
-    if (referralCode) {
-      localStorage.setItem('referral_signup_code', referralCode)
-    }
-
     const affiliateCode = (url.searchParams.get('ref') || '').trim().toLowerCase()
     if (affiliateCode) {
       localStorage.setItem('affiliate_code', affiliateCode)

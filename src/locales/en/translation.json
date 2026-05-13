@@ -55,6 +55,8 @@
     "emailPlaceholder": "you@email.com",
     "password": "Password",
     "forgotPassword": "Forgot your password?",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
     "signingIn": "Signing in…",
     "signIn": "Sign in",
     "noAccount": "Don't have an account?",
@@ -73,8 +75,6 @@
     "goToLogin": "Go to sign in",
     "name": "Name",
     "namePlaceholder": "Your name",
-    "referralCode": "Referral code (optional)",
-    "referralCodePlaceholder": "E.g. ABC123",
     "confirmPassword": "Confirm password",
     "confirmPasswordPlaceholder": "Enter the password again",
     "passwordMismatchHint": "Passwords do not match.",
@@ -154,9 +154,6 @@
     }
   },
   "platform": {
-    "referralBanner": "Invite a friend — you both earn rewards",
-    "referralCta": "See my code",
-    "referralClose": "Dismiss referral notice",
     "mfaGate": {
       "title": "Two-step verification",
       "intro": "Enter the 6-digit code from your authenticator app (Google Authenticator, etc.).",
@@ -269,18 +266,7 @@
       "labelLine2": "Address (line 2):",
       "labelCountry": "Country:",
       "copyAddress": "Copy address",
-      "copyDone": "Copied!",
-      "referralTitle": "Referral program",
-      "referralThemStrong": "For people you refer:",
-      "referralThemBody": " when they sign up with your link, they receive a coupon in their coupon box in the payments hub and can use it to get up to {{amount}} off an eligible order.",
-      "referralYouStrong": "For you:",
-      "referralYouBody": " when your referral completes shipping for the order where they used the referral coupon (status shipped or completed in the system), you receive {{amount}} in wallet credit.",
-      "yourCode": "Your code: {{code}}",
-      "referralGenLoading": "Generating…",
-      "referralGenAgain": "Generate again",
-      "referralCopySignup": "Copy signup link",
-      "referralWalletLine": "Wallet credits: {{amount}}",
-      "referralStats": "Referrals: {{total}} • Awaiting your credit (e.g. after their shipment): {{awaiting}} • Credit already earned: {{rewarded}}"
+      "copyDone": "Copied!"
     },
     "lounge": {
       "metaTitle": "Lounge | Platform",
@@ -556,8 +542,11 @@
       "couponPlaceholder": "Enter code",
       "couponBoxTitle": "My coupon box",
       "couponBoxLoading": "Loading coupons…",
+      "couponBoxEmpty": "No coupons available right now.",
       "couponBoxPercent": "{{value}}% off",
       "couponBoxFixed": "{{value}} off",
+      "couponApplyHint": "How to apply: select a coupon from your box or type the code above and click Apply. The discount is automatically calculated on eligible order totals.",
+      "couponApplyCtaInline": "Click to apply this coupon",
       "apply": "Apply",
       "applyingDots": "…",
       "removeCoupon": "Remove",
@@ -1255,7 +1244,7 @@
     },
     "appDashboard": {
       "title": "Account overview | Platform",
-      "description": "Your YuumeCo dashboard: notifications, Japan address, wallet, orders, wishlist, and referrals."
+      "description": "Your YuumeCo dashboard: notifications, Japan address, wallet, orders, and wishlist."
     },
     "appLounge": {
       "title": "Lounge | Platform",

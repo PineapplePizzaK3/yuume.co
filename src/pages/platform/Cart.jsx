@@ -122,11 +122,14 @@ function Cart() {
   const [couponLoading, setCouponLoading] = useState(false)
   const [myCoupons, setMyCoupons] = useState([])
   const [myCouponsLoading, setMyCouponsLoading] = useState(false)
+  const [myCouponsNotice, setMyCouponsNotice] = useState('')
+  const [couponBoxHighlight, setCouponBoxHighlight] = useState(false)
   const [draggingTabId, setDraggingTabId] = useState('')
   const [tabOrder, setTabOrder] = useState(() => [...CART_TAB_IDS])
   const [exchangeSnapshot, setExchangeSnapshot] = useState(null)
   const [scheduledGroupsById, setScheduledGroupsById] = useState({})
   const loadCartSeqRef = useRef(0)
+  const couponBoxRef = useRef(null)
 
   const success = searchParams.get('success') === 'true'
   const canceled = searchParams.get('canceled') === 'true'
@@ -310,14 +313,38 @@ function Cart() {
       if (!active) return
       if (error) {
         setMyCoupons([])
+        setMyCouponsNotice(error.message || '')
       } else {
         setMyCoupons(data ?? [])
+        setMyCouponsNotice('')
       }
       setMyCouponsLoading(false)
     }
     run()
     return () => { active = false }
   }, [user?.id])
+
+  useEffect(() => {
+    if (!user?.id) return
+    const focusTarget = searchParams.get('focus')
+    if (focusTarget !== 'coupons') return
+    if (activeTab !== 'checkout') {
+      const next = new URLSearchParams(searchParams)
+      next.delete('tab')
+      setSearchParams(next, { replace: true })
+      return
+    }
+    if (loading) return
+    const el = couponBoxRef.current
+    if (!el) return
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    setCouponBoxHighlight(true)
+    const clearHighlight = setTimeout(() => setCouponBoxHighlight(false), 2200)
+    const next = new URLSearchParams(searchParams)
+    next.delete('focus')
+    setSearchParams(next, { replace: true })
+    return () => clearTimeout(clearHighlight)
+  }, [searchParams, activeTab, loading, setSearchParams, user?.id])
 
   useEffect(() => {
     if (!success && !canceled) return
@@ -939,7 +966,6 @@ function Cart() {
   }
 
   const feedbackTonePositive = (msg) => /success|sucesso/i.test(String(msg || ''))
-
   if (!user) {
     return (
       <div className="py-8">
@@ -1168,7 +1194,13 @@ function Cart() {
               </div>
             </section>
 
-            <div className="rounded-xl border border-earth-200 bg-earth-50 p-6 space-y-4">
+            <div
+              id="coupon-box"
+              ref={couponBoxRef}
+              className={`rounded-xl border bg-earth-50 p-6 space-y-4 transition ${
+                couponBoxHighlight ? 'border-green-400 ring-2 ring-green-200' : 'border-earth-200'
+              }`}
+            >
               <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                 <label className="text-sm font-medium text-earth-700">{t('platform.cart.couponLabel')}</label>
                 <div className="flex gap-2 flex-1">
@@ -1201,6 +1233,10 @@ function Cart() {
                   )}
                 </div>
               </div>
+              <p className="text-xs text-earth-600">{t('platform.cart.couponApplyHint')}</p>
+              {myCouponsNotice && (
+                <p className="text-sm text-amber-700">{myCouponsNotice}</p>
+              )}
               {myCouponsLoading ? (
                 <p className="text-sm text-earth-600">{t('platform.cart.couponBoxLoading')}</p>
               ) : myCoupons.length > 0 ? (
@@ -1227,12 +1263,17 @@ function Cart() {
                               ? t('platform.cart.couponBoxPercent', { value: Number(cp.discount_value) || 0 })
                               : t('platform.cart.couponBoxFixed', { value: fp.brl(Number(cp.discount_value) || 0) })}
                           </span>
+                          <span className="mt-1 block text-[11px] text-earth-500">
+                            {t('platform.cart.couponApplyCtaInline')}
+                          </span>
                         </button>
                       )
                     })}
                   </div>
                 </div>
-              ) : null}
+              ) : (
+                <p className="text-sm text-earth-600">{t('platform.cart.couponBoxEmpty')}</p>
+              )}
               {couponApplied && (
                 <p className="text-sm text-green-700 font-medium">
                   {t('platform.cart.couponApplied', {

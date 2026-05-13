@@ -1,7 +1,7 @@
 /**
  * Lightbox para maximizar imagem dentro da própria página.
  */
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 
 export default function ImageLightbox({
   src,
@@ -14,6 +14,9 @@ export default function ImageLightbox({
   prevLabel = 'Imagem anterior',
   nextLabel = 'Próxima imagem',
 }) {
+  const touchStartRef = useRef({ x: 0, y: 0 })
+  const touchDeltaRef = useRef({ x: 0, y: 0 })
+
   useEffect(() => {
     if (!open) return
     const handleEscape = (e) => {
@@ -27,6 +30,34 @@ export default function ImageLightbox({
 
   if (!open || !src) return null
 
+  const handleTouchStart = (event) => {
+    if (!hasNavigation || event.touches.length !== 1) return
+    const touch = event.touches[0]
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY }
+    touchDeltaRef.current = { x: 0, y: 0 }
+  }
+
+  const handleTouchMove = (event) => {
+    if (!hasNavigation || event.touches.length !== 1) return
+    const touch = event.touches[0]
+    touchDeltaRef.current = {
+      x: touch.clientX - touchStartRef.current.x,
+      y: touch.clientY - touchStartRef.current.y,
+    }
+  }
+
+  const handleTouchEnd = () => {
+    if (!hasNavigation) return
+    const { x, y } = touchDeltaRef.current
+    const absX = Math.abs(x)
+    const absY = Math.abs(y)
+    const isHorizontalSwipe = absX >= 50 && absX > absY * 1.2
+    if (!isHorizontalSwipe) return
+    if (x < 0) onNext?.()
+    else onPrev?.()
+    touchDeltaRef.current = { x: 0, y: 0 }
+  }
+
   return (
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4"
@@ -38,6 +69,10 @@ export default function ImageLightbox({
       <div
         className="relative flex h-full w-full items-center justify-center"
         onClick={(e) => e.stopPropagation()}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        style={{ touchAction: 'pan-y pinch-zoom' }}
       >
         <button
           type="button"

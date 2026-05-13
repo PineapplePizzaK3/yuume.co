@@ -55,6 +55,8 @@
     "emailPlaceholder": "seu@email.com",
     "password": "Senha",
     "forgotPassword": "Esqueceu sua senha?",
+    "showPassword": "Mostrar senha",
+    "hidePassword": "Ocultar senha",
     "signingIn": "Entrando...",
     "signIn": "Entrar",
     "noAccount": "Não tem conta?",
@@ -73,8 +75,6 @@
     "goToLogin": "Ir para login",
     "name": "Nome",
     "namePlaceholder": "Seu nome",
-    "referralCode": "Código de indicação (opcional)",
-    "referralCodePlaceholder": "Ex: ABC123",
     "confirmPassword": "Confirmar senha",
     "confirmPasswordPlaceholder": "Digite a senha novamente",
     "passwordMismatchHint": "As senhas não coincidem.",
@@ -154,9 +154,6 @@
     }
   },
   "platform": {
-    "referralBanner": "Convide um amigo e vocês dois ganham",
-    "referralCta": "Ver meu código",
-    "referralClose": "Fechar aviso de indicação",
     "mfaGate": {
       "title": "Verificação em duas etapas",
       "intro": "Digite o código de 6 dígitos do seu app autenticador (Google Authenticator, etc).",
@@ -269,18 +266,7 @@
       "labelLine2": "Complemento (linha 2):",
       "labelCountry": "País:",
       "copyAddress": "Copiar endereço",
-      "copyDone": "Copiado!",
-      "referralTitle": "Programa de indicação",
-      "referralThemStrong": "Para quem você indica:",
-      "referralThemBody": " ao se cadastrar com seu link, a pessoa recebe um cupom na caixa de cupons da central de pagamentos e pode usar esse cupom para ganhar até {{amount}} de desconto em um pedido elegível.",
-      "referralYouStrong": "Para você:",
-      "referralYouBody": " quando o indicado finalizar o envio do pedido em que usou o cupom de indicação (status enviado ou concluído no sistema), você recebe {{amount}} em crédito na carteira.",
-      "yourCode": "Seu código: {{code}}",
-      "referralGenLoading": "Gerando...",
-      "referralGenAgain": "Gerar novamente",
-      "referralCopySignup": "Copiar link de cadastro",
-      "referralWalletLine": "Créditos na carteira: {{amount}}",
-      "referralStats": "Indicados: {{total}} • Aguardando seu crédito (ex.: após o envio do indicado): {{awaiting}} • Crédito já recebido por indicação: {{rewarded}}"
+      "copyDone": "Copiado!"
     },
     "lounge": {
       "metaTitle": "Lounge | Plataforma",
@@ -556,8 +542,11 @@
       "couponPlaceholder": "Digite o código",
       "couponBoxTitle": "Minha caixa de cupons",
       "couponBoxLoading": "Carregando cupons...",
+      "couponBoxEmpty": "Nenhum cupom disponível no momento.",
       "couponBoxPercent": "{{value}}% de desconto",
       "couponBoxFixed": "{{value}} de desconto",
+      "couponApplyHint": "Como aplicar: selecione um cupom da sua caixa ou digite o código acima e clique em Aplicar. O desconto é calculado automaticamente no total do pedido elegível.",
+      "couponApplyCtaInline": "Clique para aplicar este cupom",
       "apply": "Aplicar",
       "applyingDots": "...",
       "removeCoupon": "Remover",
@@ -1255,7 +1244,7 @@
     },
     "appDashboard": {
       "title": "Resumo da conta | Plataforma",
-      "description": "Seu painel YuumeCo: notificações, endereço no Japão, carteira, pedidos, lista de desejos e indicações."
+      "description": "Seu painel YuumeCo: notificações, endereço no Japão, carteira, pedidos e lista de desejos."
     },
     "appLounge": {
       "title": "Lounge | Plataforma",

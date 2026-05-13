@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { LocalizedLink } from '../../components/LocalizedLink'
+import { PasswordInput } from '../../components/PasswordInput'
 import { PageSeo } from '../../components/PageSeo'
 import { useAuth } from '../../hooks/useAuth'
 import { getLocaleFromPathname, localizedPath } from '../../lib/localeRoutes'
@@ -137,13 +138,13 @@ export default function Login() {
                   {t('auth.forgotPassword')}
                 </LocalizedLink>
               </div>
-              <input
+              <PasswordInput
                 id="password"
-                type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
+                autoComplete="current-password"
+                className="mt-1"
               />
             </div>
             <button

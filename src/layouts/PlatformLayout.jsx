@@ -116,11 +116,6 @@ export function PlatformLayout() {
   const [contaOpen, setContaOpen] = useState(true)
   const [menuOrder, setMenuOrder] = useState(DEFAULT_MENU_ORDER)
   const [draggingItem, setDraggingItem] = useState(null)
-  const [referralBannerDismissed, setReferralBannerDismissed] = useState(false)
-
-  const dismissReferralBanner = () => {
-    setReferralBannerDismissed(true)
-  }
 
   const p = path
 
@@ -204,7 +199,6 @@ export function PlatformLayout() {
     })
   }
 
-  const dashboardPath = p('appDashboard')
   const adminBase = p('appAdmin')
 
   const mobileTabs = useMemo(
@@ -283,42 +277,11 @@ export function PlatformLayout() {
     [isActive, location.pathname, p, t]
   )
 
-  const isPlatformHome = location.pathname === dashboardPath
-  const showReferralBanner = isPlatformHome && !referralBannerDismissed
-
   const adminActive =
     location.pathname === adminBase || location.pathname.startsWith(`${adminBase}/`)
 
   return (
     <div className="flex min-h-screen flex-col pt-[5.5rem] lg:flex-row">
-      {showReferralBanner && (
-        <div
-          id="platform-referral-banner"
-          className="fixed left-0 right-0 top-[4.5rem] z-30 flex items-center gap-2 bg-green-600 py-2 pl-4 pr-2 text-sm font-medium text-white"
-        >
-          <div className="min-w-0 flex-1">
-            <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-2 text-center">
-              <span>{t('platform.referralBanner')}</span>
-              <Link
-                to={`${dashboardPath}#referral-section`}
-                className="rounded border border-white/70 px-2.5 py-0.5 text-xs font-semibold text-white hover:bg-white/10"
-              >
-                {t('platform.referralCta')}
-              </Link>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={dismissReferralBanner}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-white hover:bg-white/15 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
-            aria-label={t('platform.referralClose')}
-          >
-            <span className="text-lg leading-none" aria-hidden>
-              ×
-            </span>
-          </button>
-        </div>
-      )}
       <nav
         id="platform-mobile-bottom-nav"
         className="fixed bottom-0 left-0 right-0 z-40 border-t border-earth-200 bg-earth-50/98 backdrop-blur lg:hidden"
@@ -373,7 +336,7 @@ export function PlatformLayout() {
       </nav>
 
       <aside
-        className={`hidden w-56 shrink-0 border-r border-earth-200 bg-earth-100 lg:block lg:min-h-screen ${showReferralBanner ? 'mt-9' : 'mt-0'}`}
+        className="hidden w-56 shrink-0 border-r border-earth-200 bg-earth-100 lg:block lg:min-h-screen mt-0"
       >
         <div className="flex flex-col gap-0 p-4">
           {orderedNavItems.map((item) => (
@@ -538,7 +501,7 @@ export function PlatformLayout() {
           </button>
         </div>
       </aside>
-      <main className={`flex-1 p-4 pb-24 lg:pb-4 ${showReferralBanner ? 'pt-32' : 'pt-20'}`}>
+      <main className="flex-1 p-4 pb-24 pt-20 lg:pb-4">
         <div
           className={`mx-auto w-full min-w-0 ${
             isInLoja ? 'max-w-6xl' : adminActive ? 'max-w-7xl' : 'max-w-4xl'

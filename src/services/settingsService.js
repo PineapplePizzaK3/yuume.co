@@ -3,8 +3,6 @@ import { withDbTimeout, toServiceError } from '../lib/dbGuard'
 import { callAdminRpc } from './adminRpcService'
 
 const SETTINGS_KEYS = [
-  'referral_discount_value',
-  'referral_credit_value',
   'default_commission_rate',
   'minimum_payout',
   'affiliate_enabled',

@@ -17,7 +17,7 @@ export const ADMIN_TABS = [
   { id: 'catalogo_produtos', path: 'catalogo-produtos', label: 'Lista de Produtos', icon: '📚', category: 'catalogo' },
   { id: 'busca_catalogo', path: 'busca-catalogo', label: 'Busca em Catálogos', icon: '🔎', category: 'catalogo' },
   { id: 'grupos', path: 'grupos', label: 'Compras Programadas', icon: '👥', category: 'catalogo' },
-  { id: 'marketing', path: 'marketing', label: 'Referral', icon: '🎯', category: 'growth' },
+  { id: 'marketing', path: 'marketing', label: 'Cupons', icon: '🎯', category: 'growth' },
   { id: 'fraude', path: 'fraude', label: 'Fraude', icon: '🛡️', category: 'growth' },
   { id: 'notificacoes', path: 'notificacoes', label: 'Notificações', icon: '🔔', category: 'growth' },
   { id: 'recargas', path: 'recargas', label: 'Recargas PIX', icon: '💰', category: 'financeiro' },
