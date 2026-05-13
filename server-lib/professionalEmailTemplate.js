@@ -39,7 +39,7 @@ export function buildProfessionalEmailTemplate({
   signatureName,
   from,
 }) {
-  const brandName = trimString(process.env.EMAIL_BRAND_NAME || process.env.BUSINESS_NAME || 'Yuume')
+  const brandName = trimString(process.env.EMAIL_BRAND_NAME || process.env.BUSINESS_NAME || 'YuumeCo')
   const supportEmail = trimString(process.env.EMAIL_SUPPORT_EMAIL || process.env.ADMIN_ALERT_EMAILS || '')
   const companyAddress = trimString(process.env.EMAIL_COMPANY_ADDRESS || '')
   const websiteUrl = normalizeUrl(process.env.VITE_SITE_URL || process.env.SITE_URL || '')

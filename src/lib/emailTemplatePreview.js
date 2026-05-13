@@ -39,7 +39,7 @@ export function buildProfessionalEmailPreview({
   signatureName,
   from,
 }) {
-  const brandName = trimString(import.meta.env.VITE_EMAIL_BRAND_NAME || 'Yuume')
+  const brandName = trimString(import.meta.env.VITE_EMAIL_BRAND_NAME || 'YuumeCo')
   const supportEmail = trimString(import.meta.env.VITE_EMAIL_SUPPORT_EMAIL || '')
   const companyAddress = trimString(import.meta.env.VITE_EMAIL_COMPANY_ADDRESS || '')
   const websiteUrl = normalizeUrl(import.meta.env.VITE_SITE_URL || '')

@@ -82,7 +82,8 @@ import { PRODUCT_CONDITION_OPTIONS, getProductConditionMeta, normalizeProductCon
 import AdminTabsNav from './AdminTabsNav'
 import { ADMIN_TABS, adminGroupedTabPathFromId, getAdminCategoryByTabId, normalizeAdminTabId } from './adminTabs'
 import { AdminContextProvider } from './AdminContext'
-import MarketingSection from './sections/MarketingSection'
+import CouponsSection from './sections/CouponsSection'
+import EmailsSection from './sections/EmailsSection'
 import FraudeSection from './sections/FraudeSection'
 import NotificacoesSection from './sections/NotificacoesSection'
 import RecargasSection from './sections/RecargasSection'
@@ -3268,8 +3269,11 @@ export default function Admin({ routeTabId = 'pedidos' }) {
         {/* Compras Programadas */}
         <GruposSection />
 
-        {/* Referral */}
-        <MarketingSection />
+        {/* Cupons */}
+        <CouponsSection />
+
+        {/* E-mails */}
+        <EmailsSection />
 
         {/* Fila antifraude */}
         <FraudeSection />
