@@ -20,6 +20,10 @@ Copie `.env.example` para `.env` e preencha:
 - `ADMIN_ALERT_FROM` – remetente dos alertas (ex.: `YuumeCo Alerts <alerts@seudominio.com>`)
 - `ADMIN_ALERT_EMAILS` – lista opcional (separada por vírgula) de e-mails para receber alertas; se vazio, usa admins da tabela `profiles`
 - `ADMIN_PANEL_URL` – URL opcional para link direto no e-mail (padrão: `${VITE_SITE_URL}/platform/admin`)
+- `EMAIL_BRAND_NAME` – nome da marca para template profissional (ex.: `Yuume`)
+- `EMAIL_SUPPORT_EMAIL` – e-mail exibido no rodapé do template (ex.: `suporte@seudominio.com`)
+- `EMAIL_COMPANY_ADDRESS` – endereço/rodapé institucional opcional
+- `EMAIL_LOGO_URL` – URL HTTPS do logotipo para cabeçalho de e-mails
 - `CRON_SECRET` – segredo para proteger endpoints de cron (incluindo alertas por e-mail)
 - `PARCELOW_CLIENT_ID` – Client ID da API Parcelow
 - `PARCELOW_CLIENT_SECRET` – Client Secret da API Parcelow
@@ -114,3 +118,4 @@ Copie `.env.example` para `.env` e preencha:
 4. Envio manual no admin:
    - Endpoint seguro: `POST /api/admin-send-email` (somente usuário admin autenticado)
    - Interface: aba **Marketing** no painel admin.
+   - A seção já suporta `template profissional`, `preheader`, `headline`, `CTA` e `reply-to`.

@@ -1,5 +1,6 @@
 import { getAuthenticatedUser, getSupabaseAdmin, isAdminUser } from '../server-lib/antiFraud.js'
 import { sendResendEmail } from '../server-lib/resendEmail.js'
+import { buildProfessionalEmailTemplate } from '../server-lib/professionalEmailTemplate.js'
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -42,6 +43,23 @@ function validateRecipients(recipients) {
   return ''
 }
 
+function toBool(input) {
+  const value = String(input || '').trim().toLowerCase()
+  return value === '1' || value === 'true' || value === 'yes' || value === 'on'
+}
+
+function normalizeReplyTo(value) {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => String(item || '').trim().toLowerCase())
+      .filter(Boolean)
+  }
+  return String(value || '')
+    .split(',')
+    .map((item) => item.trim().toLowerCase())
+    .filter(Boolean)
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
@@ -72,6 +90,13 @@ export default async function handler(req, res) {
   const text = String(body.text || '').trim()
   const html = String(body.html || '').trim()
   const from = String(body.from || '').trim()
+  const replyTo = normalizeReplyTo(body.reply_to || body.replyTo)
+  const useProfessionalTemplate = toBool(body.use_professional_template)
+  const preheader = String(body.preheader || '').trim()
+  const headline = String(body.headline || '').trim()
+  const ctaLabel = String(body.cta_label || '').trim()
+  const ctaUrl = String(body.cta_url || '').trim()
+  const signatureName = String(body.signature_name || '').trim()
 
   const recipientError = validateRecipients(to)
   if (recipientError) {
@@ -83,14 +108,40 @@ export default async function handler(req, res) {
   if (!text && !html) {
     return res.status(400).json({ error: 'Informe ao menos "text" ou "html"' })
   }
+  const invalidReplyTo = replyTo.find((email) => !EMAIL_REGEX.test(String(email)))
+  if (invalidReplyTo) {
+    return res.status(400).json({ error: `reply_to invalido: ${invalidReplyTo}` })
+  }
+  if (ctaUrl && !/^https?:\/\//i.test(ctaUrl)) {
+    return res.status(400).json({ error: 'cta_url deve comecar com http:// ou https://' })
+  }
+
+  let finalHtml = html
+  let finalText = text
+  if (useProfessionalTemplate) {
+    const professional = buildProfessionalEmailTemplate({
+      subject,
+      bodyText: text,
+      bodyHtml: html,
+      preheader,
+      headline,
+      ctaLabel,
+      ctaUrl,
+      signatureName,
+      from,
+    })
+    finalHtml = professional.html
+    finalText = professional.text
+  }
 
   try {
     const result = await sendResendEmail({
       to,
       subject,
-      text,
-      html,
+      text: finalText,
+      html: finalHtml,
       from: from || undefined,
+      replyTo,
     })
     console.info('admin-send-email:sent', {
       by_user_id: user.id,

@@ -14,11 +14,18 @@ function normalizeRecipients(value) {
     .filter(Boolean)
 }
 
+function normalizeReplyTo(value) {
+  const items = ensureArray(value)
+    .map((item) => trimString(item).toLowerCase())
+    .filter(Boolean)
+  return items
+}
+
 export function getDefaultResendFrom() {
   return trimString(process.env.ADMIN_ALERT_FROM || 'Admin Alerts <onboarding@resend.dev>')
 }
 
-export async function sendResendEmail({ to, subject, text, html, from }) {
+export async function sendResendEmail({ to, subject, text, html, from, replyTo }) {
   const apiKey = trimString(process.env.RESEND_API_KEY)
   if (!apiKey) {
     throw new Error('RESEND_API_KEY nao configurado')
@@ -41,6 +48,7 @@ export async function sendResendEmail({ to, subject, text, html, from }) {
   }
 
   const safeFrom = trimString(from || getDefaultResendFrom())
+  const safeReplyTo = normalizeReplyTo(replyTo)
   const payload = {
     from: safeFrom,
     to: recipients,
@@ -48,6 +56,7 @@ export async function sendResendEmail({ to, subject, text, html, from }) {
   }
   if (safeText) payload.text = safeText
   if (safeHtml) payload.html = safeHtml
+  if (safeReplyTo.length > 0) payload.reply_to = safeReplyTo
 
   const response = await fetch('https://api.resend.com/emails', {
     method: 'POST',
