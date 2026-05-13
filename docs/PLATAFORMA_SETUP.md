@@ -95,7 +95,8 @@ Copie `.env.example` para `.env` e preencha:
 3. Deploy – as funções em `api/` serão expostas em `/api/*`
 4. Alertas de admin por e-mail:
    - Endpoint: `GET/POST /api/cron-admin-action-emails`
-   - O `vercel.json` já agenda execução automática a cada 5 minutos.
+   - O agendamento automatico roda via GitHub Actions (`.github/workflows/cron-admin-action-emails.yml`) a cada 10 minutos.
+   - Segredos necessarios no repositorio: `CRON_SITE_URL` e `CRON_SECRET`.
    - Teste manual (com segredo):
      ```bash
      curl -H "Authorization: Bearer $CRON_SECRET" "https://SEU_DOMINIO/api/cron-admin-action-emails?dry_run=1"

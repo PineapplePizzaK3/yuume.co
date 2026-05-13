@@ -1,0 +1,45 @@
+name: Admin Email Notifications Cron
+
+on:
+  schedule:
+    # Every 10 minutes
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Set to 1 to simulate without sending emails"
+        required: false
+        default: "1"
+      limit:
+        description: "Max pending notifications to process (1-200)"
+        required: false
+        default: "20"
+
+jobs:
+  call-admin-email-cron:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger admin action email endpoint
+        env:
+          SITE_URL: ${{ secrets.CRON_SITE_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          INPUT_DRY_RUN: ${{ github.event.inputs.dry_run }}
+          INPUT_LIMIT: ${{ github.event.inputs.limit }}
+        run: |
+          if [ -z "$SITE_URL" ] || [ -z "$CRON_SECRET" ]; then
+            echo "Missing required secrets: CRON_SITE_URL and/or CRON_SECRET"
+            exit 1
+          fi
+
+          URL="${SITE_URL%/}/api/cron-admin-action-emails"
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            DRY_RUN="${INPUT_DRY_RUN:-1}"
+            LIMIT="${INPUT_LIMIT:-20}"
+            URL="$URL?dry_run=$DRY_RUN&limit=$LIMIT"
+          fi
+
+          echo "Calling $URL"
+          curl --fail --show-error --silent \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            "$URL"
