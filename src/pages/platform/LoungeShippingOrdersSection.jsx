@@ -241,7 +241,13 @@ export default function LoungeShippingOrdersSection() {
       const url = result?.url
       if (url) {
         const opened = window.open(url, '_blank', 'noopener,noreferrer')
-        if (!opened) window.location.href = url
+        if (!opened) {
+          setBanner({
+            text: 'O navegador bloqueou a nova aba de pagamento. Libere pop-ups para este site e tente novamente.',
+            variant: 'info',
+          })
+          return
+        }
       }
       else setBanner({ text: t('platform.shippingOrders.sessionError'), variant: 'info' })
     } catch (err) {

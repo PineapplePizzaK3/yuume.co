@@ -920,7 +920,10 @@ function Cart() {
           // noop
         }
         const opened = window.open(result.url, '_blank', 'noopener,noreferrer')
-        if (!opened) window.location.href = result.url
+        if (!opened) {
+          setFeedback('O navegador bloqueou a nova aba de pagamento. Libere pop-ups para este site e tente novamente.')
+          return
+        }
       } else setFeedback(t('platform.cart.errors.redirectPay'))
     } catch (err) {
       setFeedback(err.message || t('platform.cart.errors.processPay'))
