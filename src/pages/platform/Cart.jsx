@@ -29,7 +29,6 @@ import { appStoreProductPath } from '../../lib/localeRoutes'
 import { getSystemSettings } from '../../services/settingsService'
 import { GATEWAY_OPTIONS_META, PAYMENT_METHODS_BY_GATEWAY } from '../../components/paymentModalConstants'
 import { getPurchaseGroups } from '../../services/groupService'
-import GlinEmbeddedCheckoutModal from '../../components/GlinEmbeddedCheckoutModal'
 
 function getCartItemImages(product, variant) {
   const variantList = Array.isArray(variant?.image_urls) ? variant.image_urls.filter(Boolean) : []
@@ -129,7 +128,6 @@ function Cart() {
   const [tabOrder, setTabOrder] = useState(() => [...CART_TAB_IDS])
   const [exchangeSnapshot, setExchangeSnapshot] = useState(null)
   const [scheduledGroupsById, setScheduledGroupsById] = useState({})
-  const [glinEmbeddedCheckout, setGlinEmbeddedCheckout] = useState({ open: false, url: '' })
   const loadCartSeqRef = useRef(0)
   const couponBoxRef = useRef(null)
 
@@ -897,10 +895,6 @@ function Cart() {
           useWallet: shouldUseWallet,
           walletAmountJpy: walletAmountJpyForApi,
           provider: provider || null,
-          glinMode:
-            (provider || '').toLowerCase() === 'glin'
-              ? 'sdk'
-              : null,
         }
       )
       if (result?.paid) {
@@ -925,11 +919,8 @@ function Cart() {
         } catch {
           // noop
         }
-        if ((provider || '').toLowerCase() === 'glin') {
-          setGlinEmbeddedCheckout({ open: true, url: result.url })
-          return
-        }
-        window.location.href = result.url
+        const opened = window.open(result.url, '_blank', 'noopener,noreferrer')
+        if (!opened) window.location.href = result.url
       } else setFeedback(t('platform.cart.errors.redirectPay'))
     } catch (err) {
       setFeedback(err.message || t('platform.cart.errors.processPay'))
@@ -946,16 +937,6 @@ function Cart() {
     next.delete('success')
     next.delete('canceled')
     setSearchParams(next, { replace: true })
-  }
-
-  const refreshAfterEmbeddedCheckout = async () => {
-    await loadCart({ silent: true })
-    await loadPendingOrders()
-    await loadPayments()
-    const { data: box } = await getMyCoupons(user.id)
-    setMyCoupons(box ?? [])
-    const { data: w } = await getWallet(user.id)
-    setWallet(w ?? null)
   }
 
   const payableKindLabel = (kind) =>
@@ -1898,12 +1879,6 @@ function Cart() {
           </div>,
           document.body
         )}
-      <GlinEmbeddedCheckoutModal
-        open={glinEmbeddedCheckout.open}
-        checkoutUrl={glinEmbeddedCheckout.url}
-        onClose={() => setGlinEmbeddedCheckout({ open: false, url: '' })}
-        onRefresh={refreshAfterEmbeddedCheckout}
-      />
     </>
   )
 }

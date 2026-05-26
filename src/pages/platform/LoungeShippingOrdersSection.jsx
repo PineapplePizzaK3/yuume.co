@@ -21,7 +21,6 @@ import {
 } from '../../lib/loungeOrderRouting'
 import { fetchLoungeOrderPage } from '../../lib/loungeOrdersPagedFetch'
 import { PARCELOW_CARD_BRANDS_IMG, PIX_OFFICIAL_LOGO_IMG } from '../../components/paymentModalConstants'
-import GlinEmbeddedCheckoutModal from '../../components/GlinEmbeddedCheckoutModal'
 
 const PAGE_SIZE = 12
 
@@ -112,7 +111,6 @@ export default function LoungeShippingOrdersSection() {
   const [detailsModal, setDetailsModal] = useState({ open: false, order: null })
   const [targetOrderId, setTargetOrderId] = useState(null)
   const [hasOpenedTargetOrder, setHasOpenedTargetOrder] = useState(false)
-  const [glinEmbeddedCheckout, setGlinEmbeddedCheckout] = useState({ open: false, url: '' })
 
   const gatewayOptions = useMemo(
     () =>
@@ -223,10 +221,6 @@ export default function LoungeShippingOrdersSection() {
       const result = await createCheckoutSession(order.id, accessToken, {
         useWallet,
         provider,
-        glinMode:
-          (provider || '').toLowerCase() === 'glin'
-            ? 'sdk'
-            : null,
       })
       if (result?.paid) {
         setBanner({ text: t('platform.shippingOrders.paySuccess'), variant: 'success' })
@@ -246,11 +240,8 @@ export default function LoungeShippingOrdersSection() {
       }
       const url = result?.url
       if (url) {
-        if ((provider || '').toLowerCase() === 'glin') {
-          setGlinEmbeddedCheckout({ open: true, url })
-          return
-        }
-        window.location.href = url
+        const opened = window.open(url, '_blank', 'noopener,noreferrer')
+        if (!opened) window.location.href = url
       }
       else setBanner({ text: t('platform.shippingOrders.sessionError'), variant: 'info' })
     } catch (err) {
@@ -668,23 +659,6 @@ export default function LoungeShippingOrdersSection() {
           </div>
         </div>
       )}
-      <GlinEmbeddedCheckoutModal
-        open={glinEmbeddedCheckout.open}
-        checkoutUrl={glinEmbeddedCheckout.url}
-        onClose={() => setGlinEmbeddedCheckout({ open: false, url: '' })}
-        onRefresh={async () => {
-          const { data, hasMore: more } = await fetchLoungeOrderPage(user.id, {
-            page,
-            pageSize: PAGE_SIZE,
-            matchFn: isOrderInLoungeShippingTab,
-            excludeStatus: 'completed',
-          })
-          setOrders(data)
-          setHasMore(more)
-          const { data: w } = await getWallet(user.id)
-          setWallet(w ?? null)
-        }}
-      />
     </section>
   )
 }
