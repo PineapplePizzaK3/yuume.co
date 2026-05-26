@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { createPublicKey, createVerify } from 'node:crypto'
 import { ensureInvoiceForPaidOrder } from '../server-lib/invoiceGenerator.js'
 
 function getSupabaseAdmin() {
@@ -32,19 +33,70 @@ function parseMoneyAmount(value, { assumeCents = false } = {}) {
   return Number(n.toFixed(2))
 }
 
-function isWebhookAuthorized(req) {
-  const expected = String(process.env.GLIN_WEBHOOK_SECRET || '').trim()
-  if (!expected) return true
-  const headerSecret = String(
-    req.headers['x-glin-webhook-secret']
-      || req.headers['x-glin-signature']
-      || req.headers['x-webhook-secret']
-      || ''
-  ).trim()
-  if (headerSecret && headerSecret === expected) return true
-  const authHeader = String(req.headers.authorization || '').trim()
-  if (authHeader.toLowerCase() === `bearer ${expected.toLowerCase()}`) return true
-  return false
+const jwksCache = globalThis.__glinJwksCache ?? { keys: null, expiresAt: 0 }
+globalThis.__glinJwksCache = jwksCache
+
+function decodeBase64UrlToBuffer(input) {
+  const s = String(input || '').replace(/-/g, '+').replace(/_/g, '/')
+  const pad = s.length % 4 === 0 ? '' : '='.repeat(4 - (s.length % 4))
+  return Buffer.from(s + pad, 'base64')
+}
+
+function decodeBase64UrlToJson(input) {
+  try {
+    return JSON.parse(decodeBase64UrlToBuffer(input).toString('utf8'))
+  } catch {
+    return null
+  }
+}
+
+async function getGlinJwks() {
+  const now = Date.now()
+  if (jwksCache.keys && jwksCache.expiresAt > now) return jwksCache.keys
+  const url = String(process.env.GLIN_JWKS_URL || 'https://pay.glin.com.br/merchant-api/jwks.json').trim()
+  const res = await fetch(url, { method: 'GET', headers: { Accept: 'application/json' } })
+  if (!res.ok) {
+    throw new Error(`Falha ao baixar JWKS da Glin (HTTP ${res.status})`)
+  }
+  const json = await res.json().catch(() => null)
+  const keys = Array.isArray(json?.keys) ? json.keys : []
+  if (!keys.length) {
+    throw new Error('JWKS da Glin retornou sem chaves')
+  }
+  jwksCache.keys = keys
+  jwksCache.expiresAt = now + 10 * 60 * 1000
+  return keys
+}
+
+async function verifyWebhookJws(req, rawBody) {
+  const compact = String(req.headers['x-jws-signature'] || '').trim()
+  if (!compact) return false
+
+  const parts = compact.split('.')
+  if (parts.length !== 3) return false
+  const [protectedB64, payloadB64, signatureB64] = parts
+  if (!protectedB64 || !signatureB64) return false
+
+  const header = decodeBase64UrlToJson(protectedB64)
+  if (!header || String(header.alg || '').toUpperCase() !== 'RS256') return false
+
+  const keys = await getGlinJwks()
+  const kid = String(header.kid || '').trim()
+  const jwk = kid ? keys.find((k) => String(k?.kid || '').trim() === kid) : keys[0]
+  if (!jwk) return false
+
+  const key = createPublicKey({ key: jwk, format: 'jwk' })
+  const verifier = createVerify('RSA-SHA256')
+  if (payloadB64) {
+    // Compact padrão (payload em base64url dentro do token).
+    verifier.update(`${protectedB64}.${payloadB64}`, 'utf8')
+  } else {
+    // Detached payload (RFC 7797): assinatura sobre "<protected>.<rawBody>".
+    verifier.update(`${protectedB64}.`, 'utf8')
+    verifier.update(rawBody, 'utf8')
+  }
+  verifier.end()
+  return verifier.verify(key, decodeBase64UrlToBuffer(signatureB64))
 }
 
 function extractEvent(payload) {
@@ -68,30 +120,30 @@ function extractOrderData(payload) {
 }
 
 function extractOrderId(payload, orderData) {
-  const value = orderData?.externalReference
+  const value = orderData?.clientReferenceId
+    ?? orderData?.client_reference_id
+    ?? orderData?.externalReference
     ?? orderData?.clientReference
-    ?? orderData?.clientReferenceId
     ?? orderData?.external_reference
     ?? orderData?.client_reference
-    ?? orderData?.client_reference_id
     ?? orderData?.partner_reference
     ?? orderData?.reference
     ?? orderData?.order_id
+    ?? payload?.clientReferenceId
+    ?? payload?.client_reference_id
     ?? payload?.externalReference
     ?? payload?.clientReference
-    ?? payload?.clientReferenceId
     ?? payload?.external_reference
     ?? payload?.client_reference
-    ?? payload?.client_reference_id
     ?? payload?.partner_reference
     ?? payload?.reference
     ?? payload?.order_id
+    ?? payload?.data?.clientReferenceId
+    ?? payload?.data?.client_reference_id
     ?? payload?.data?.externalReference
     ?? payload?.data?.clientReference
-    ?? payload?.data?.clientReferenceId
     ?? payload?.data?.external_reference
     ?? payload?.data?.client_reference
-    ?? payload?.data?.client_reference_id
     ?? payload?.data?.order_id
   if (value == null) return null
   const normalized = String(value).trim()
@@ -100,14 +152,7 @@ function extractOrderId(payload, orderData) {
 }
 
 function isPaidEvent(eventName, payload, orderData) {
-  if (
-    eventName.includes('paid')
-    || eventName.includes('approved')
-    || eventName.includes('captured')
-    || eventName.includes('succeeded')
-  ) {
-    return true
-  }
+  if (eventName === 'remittance_paid') return true
   const statusText = String(
     orderData?.status
       || orderData?.status_text
@@ -116,7 +161,7 @@ function isPaidEvent(eventName, payload, orderData) {
       || payload?.status_text
       || ''
   ).trim().toLowerCase()
-  return ['paid', 'approved', 'confirmed', 'succeeded', 'captured', 'pago'].includes(statusText)
+  return statusText === 'paid'
 }
 
 function buildPaymentId(payload, orderData, orderId) {
@@ -136,15 +181,22 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
-  if (!isWebhookAuthorized(req)) {
-    return res.status(401).json({ error: 'Unauthorized webhook' })
-  }
 
   let rawBody
   try {
     rawBody = await getRawBody(req)
   } catch {
     rawBody = typeof req.body === 'string' ? req.body : JSON.stringify(req.body || {})
+  }
+  let authorized = false
+  try {
+    authorized = await verifyWebhookJws(req, rawBody)
+  } catch (e) {
+    console.error('Glin webhook signature verify failed:', e?.message || e)
+    authorized = false
+  }
+  if (!authorized) {
+    return res.status(401).json({ error: 'Unauthorized webhook signature' })
   }
 
   const payload = parseJsonSafe(rawBody) || {}

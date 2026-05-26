@@ -35,7 +35,10 @@ Copie `.env.example` para `.env` e preencha:
 - `GLIN_PRODUCTION_API_KEY` – opcional; chave específica para produção
 - `GLIN_API_BASE_URL` – URL base da Glin (`https://pay.staging.glin.com.br` em staging; `https://pay.glin.com.br` em produção)
 - `GLIN_REMITTANCES_PATH` – opcional; padrão `POST /merchant-api/remittances/`
-- `GLIN_WEBHOOK_SECRET` – segredo compartilhado para validar webhook Glin
+- `GLIN_REMITTANCE_CURRENCY` – opcional; moeda enviada na remittance (`JPY`, padrão `JPY` para esta conta)
+- `GLIN_REMITTANCE_MIN_JPY` – opcional; valor mínimo aceito em JPY (padrão `2000`)
+- `GLIN_REMITTANCE_MAX_JPY` – opcional; valor máximo aceito em JPY (padrão `500000`)
+- `GLIN_JWKS_URL` – opcional; URL do JWKS para validar assinatura JWS do webhook (padrão `https://pay.glin.com.br/merchant-api/jwks.json`)
 - `GLIN_FETCH_TIMEOUT_MS` – timeout HTTP opcional para chamadas Glin
 - `VITE_GLIN_SDK_ENABLED` – feature flag para preparação do SDK embutido (fase 2)
 
@@ -87,14 +90,17 @@ Copie `.env.example` para `.env` e preencha:
    - `GLIN_PRODUCTION_API_KEY` (recomendado para produção)
    - `GLIN_API_BASE_URL`
    - `GLIN_REMITTANCES_PATH` (opcional)
-   - `GLIN_WEBHOOK_SECRET`
-3. Configure endpoint de webhook para `POST /api/webhook-glin`.
-4. Homologação recomendada em staging:
+   - `GLIN_REMITTANCE_CURRENCY=JPY`
+3. Cadastre o webhook via API Merchant:
+   - `POST /merchant-api/webhooks/`
+   - body exemplo: `{ "url": "https://SEU_DOMINIO/api/webhook-glin", "eventTypes": ["remittance_paid"] }`
+4. O webhook da Glin usa assinatura JWS no header `x-jws-signature` (RS256 + payload cru). O backend valida via JWKS.
+5. Homologação recomendada em staging:
    - Cartão aprovado: titular `APRO`
    - Cartão rejeitado: titular `OTHE`
    - Cartão pendente: titular `CONT`
    - Fluxo PIX (QR/copia e cola + confirmação)
-5. O checkout Redirect da Glin pode ser selecionado na mesma central de pagamentos que Stripe/Parcelow.
+6. O checkout Redirect da Glin pode ser selecionado na mesma central de pagamentos que Stripe/Parcelow.
 
 ## Vercel
 

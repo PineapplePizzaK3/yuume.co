@@ -94,6 +94,14 @@ function normalizeGlinBaseUrl() {
   return String(raw).trim().replace(/\/$/, '')
 }
 
+function normalizeGlinRemittanceCurrency() {
+  const raw = String(process.env.GLIN_REMITTANCE_CURRENCY || 'JPY')
+    .trim()
+    .toUpperCase()
+  if (raw === 'JPY' || raw === 'USD' || raw === 'BRL') return raw
+  return 'JPY'
+}
+
 function resolveGlinApiKey(baseUrl) {
   const normalizedBase = String(baseUrl || '').toLowerCase()
   const isStaging = normalizedBase.includes('staging')
@@ -212,6 +220,38 @@ async function parseJsonTextSafe(rawText) {
   } catch {
     return null
   }
+}
+
+function formatGlinApiError(rawJson, rawText) {
+  const body = rawJson && typeof rawJson === 'object' ? rawJson : null
+  const type = String(body?.type || '').trim()
+  const detail = String(body?.detail || body?.message || body?.error || '').trim()
+  const status = Number(body?.status)
+  const correlationId = String(body?.correlationId || body?.correlation_id || '').trim()
+  const violations = Array.isArray(body?.violations) ? body.violations : []
+  const violationSummary = violations
+    .map((v) => {
+      const property = String(v?.property || '').trim()
+      const message = String(v?.message || '').trim()
+      if (!property && !message) return null
+      return property ? `${property}: ${message || 'inválido'}` : message
+    })
+    .filter(Boolean)
+    .join('; ')
+
+  const base =
+    detail
+    || String(body?.title || '').trim()
+    || String(body?.error_description || '').trim()
+    || String(rawText || '').slice(0, 280)
+    || '(corpo vazio)'
+
+  const parts = [base]
+  if (type) parts.push(`type=${type}`)
+  if (Number.isFinite(status) && status > 0) parts.push(`status=${status}`)
+  if (violationSummary) parts.push(`violations=${violationSummary}`)
+  if (correlationId) parts.push(`correlationId=${correlationId}`)
+  return parts.join(' | ')
 }
 
 const PARCELOW_FETCH_TIMEOUT_MS = Math.min(
@@ -609,12 +649,12 @@ function extractGlinCheckoutResponse(json) {
     || null
   const remittanceId = block.remittanceId || block.remittance_id || block.id || null
   const externalId =
-    block.externalReference
+    block.clientReferenceId
+    || block.client_reference_id
+    || block.externalReference
     || block.clientReference
-    || block.clientReferenceId
     || block.external_reference
     || block.client_reference
-    || block.client_reference_id
     || block.partner_reference
     || block.reference
     || null
@@ -643,59 +683,36 @@ async function createGlinRemittanceCheckout({
   if (!token) {
     throw new Error('Token Glin indisponível')
   }
-  if (!rates?.jpy_usd || !rates?.usd_brl) {
-    throw new Error('Câmbio indisponível para cobrança Glin em BRL')
-  }
-
   const rj = Math.max(0, Number(remainingJpy) || 0)
-  const overrideUsd = Number(amountUsdOverride)
-  const amountUsd =
-    Number.isFinite(overrideUsd) && overrideUsd > 0
-      ? overrideUsd
-      : jpyToFinalUsd(rj, rates.jpy_usd, wiseMarkup)
-  if (!Number.isFinite(amountUsd) || amountUsd <= 0) {
-    throw new Error('Valor inválido para criar cobrança Glin (USD)')
+  const remittanceCurrency = normalizeGlinRemittanceCurrency()
+  if (remittanceCurrency !== 'JPY') {
+    throw new Error(
+      `Moeda de remittance inválida para esta conta Glin: ${remittanceCurrency}. Configure GLIN_REMITTANCE_CURRENCY=JPY`
+    )
   }
-  const amountBrl = Number((amountUsd * (rates.usd_brl || 0)).toFixed(2))
-  if (!Number.isFinite(amountBrl) || amountBrl <= 0) {
-    throw new Error('Valor inválido para criar cobrança Glin (BRL)')
+  const amountJpy = Math.round(rj)
+  if (!Number.isFinite(amountJpy) || amountJpy <= 0) {
+    throw new Error('Valor inválido para criar cobrança Glin (JPY)')
   }
+  const minJpy = Math.max(1, Number(process.env.GLIN_REMITTANCE_MIN_JPY) || 2000)
+  const maxJpy = Math.max(minJpy, Number(process.env.GLIN_REMITTANCE_MAX_JPY) || 500000)
+  if (amountJpy < minJpy || amountJpy > maxJpy) {
+    throw new Error(`Glin aceita remittances entre ¥${minJpy} e ¥${maxJpy}`)
+  }
+  const amountUsd = rates?.jpy_usd
+    ? jpyToFinalUsd(amountJpy, rates.jpy_usd, wiseMarkup)
+    : null
+  const amountBrl = amountUsd != null && rates?.usd_brl
+    ? Number((amountUsd * rates.usd_brl).toFixed(2))
+    : null
 
-  const customerName = String(profile?.name || user?.user_metadata?.name || user?.email || 'Cliente').trim()
-  const customerEmail = String(user?.email || profile?.email || '').trim()
-  if (!customerEmail) {
-    throw new Error('E-mail do cliente obrigatório para checkout Glin.')
-  }
-
+  const clientReferenceId = `${String(orderId)}-${Date.now()}`
   const payload = {
-    amount: amountBrl,
-    currency: 'BRL',
-    clientReference: String(orderId),
-    clientReferenceId: String(orderId),
-    client_reference: String(orderId),
-    client_reference_id: String(orderId),
-    // Compatibilidade defensiva: alguns ambientes da Glin retornam validação com typo (`cientReference`).
-    cientReference: String(orderId),
-    cient_reference: String(orderId),
-    externalReference: String(orderId),
-    description: (productName || `Pedido ${String(orderId).slice(0, 8)}`).slice(0, 255),
-    customer: {
-      name: customerName,
-      email: customerEmail,
-      phone: parsePhone(profile?.phone),
-      cpf: digitsOnly(profile?.cpf_cnpj),
-      // Compatibilidade: alguns contratos podem validar referência dentro de `customer`.
-      clientReference: String(orderId),
-      clientReferenceId: String(orderId),
-      client_reference: String(orderId),
-      client_reference_id: String(orderId),
-      cientReference: String(orderId),
-      cient_reference: String(orderId),
-    },
-    redirect: {
-      successUrl: `${baseUrl}${successPath}?success=true`,
-      cancelUrl: `${baseUrl}${cancelPath}?canceled=true`,
-    },
+    clientReferenceId,
+    amount: amountJpy,
+    currency: 'JPY',
+    successUrl: `${baseUrl}${successPath}?success=true`,
+    cancelUrl: `${baseUrl}${cancelPath}?canceled=true`,
   }
 
   const endpoint = `${cfg.baseUrl}${cfg.remittancesPath}`
@@ -711,17 +728,8 @@ async function createGlinRemittanceCheckout({
   const rawText = await createRes.text()
   const createData = await parseJsonTextSafe(rawText)
   if (!createRes.ok) {
-    const hint = createData?.message || createData?.error || rawText?.slice(0, 280) || '(corpo vazio)'
-    const refsDebug = JSON.stringify({
-      clientReference: payload.clientReference,
-      clientReferenceId: payload.clientReferenceId,
-      client_reference: payload.client_reference,
-      client_reference_id: payload.client_reference_id,
-      cientReference: payload.cientReference,
-      customerClientReference: payload.customer?.clientReference,
-      customerClientReferenceId: payload.customer?.clientReferenceId,
-      customerCientReference: payload.customer?.cientReference,
-    })
+    const hint = formatGlinApiError(createData, rawText)
+    const refsDebug = JSON.stringify({ clientReferenceId: payload.clientReferenceId })
     throw new Error(
       `Falha ao criar remittance na Glin (HTTP ${createRes.status}): ${hint}. refs_enviadas=${refsDebug}`
     )
@@ -737,18 +745,20 @@ async function createGlinRemittanceCheckout({
     throw new Error(`Glin não retornou URL de checkout. Corpo (trecho): ${preview}`)
   }
 
-  const brlDisplay = amountUsd * (rates.usd_brl || 0)
+  const brlDisplay = amountBrl != null ? amountBrl : 0
   const debugPayload = {
     orderId,
     endpoint,
     request: {
-      amountUsd: Number(amountUsd.toFixed(4)),
+      clientReferenceId,
+      amountJpy,
+      amountUsd: amountUsd != null ? Number(amountUsd.toFixed(4)) : null,
       amountBrl,
       currency: payload.currency,
       remainingJpy: Number(rj.toFixed(2)),
-      jpyUsdSpot: Number((Number(rates?.jpy_usd) || 0).toFixed(8)),
+      jpyUsdSpot: rates?.jpy_usd ? Number((Number(rates?.jpy_usd) || 0).toFixed(8)) : null,
       wiseMarkupPercent: Number((Number(wiseMarkup) || 0).toFixed(4)),
-      usdBrl: Number((Number(rates?.usd_brl) || 0).toFixed(6)),
+      usdBrl: rates?.usd_brl ? Number((Number(rates?.usd_brl) || 0).toFixed(6)) : null,
     },
     response: {
       remittanceId,
@@ -761,7 +771,7 @@ async function createGlinRemittanceCheckout({
   return {
     url: checkoutUrl,
     provider: 'glin',
-    chargeUsd: Number(amountUsd.toFixed(2)),
+    chargeUsd: amountUsd != null ? Number(amountUsd.toFixed(2)) : null,
     approxBrl: Number(brlDisplay.toFixed(2)),
     debug: debugPayload,
   }
@@ -1488,26 +1498,12 @@ export default async function handler(req, res) {
       return res.status(200).json(parcelowCheckout)
     }
     if (selectedProvider === 'glin') {
-      if (!rates?.jpy_usd || !rates?.usd_brl) {
-        return res.status(503).json({
-          error: 'Glin (BRL) indisponível: cotações não carregadas. Use outro método ou aguarde.',
-        })
-      }
-      const storeUsd = Number(order?.total_amount_usd)
-      const amountUsdOverride =
-        order?.order_source === 'store' &&
-        Number.isFinite(storeUsd) &&
-        storeUsd > 0 &&
-        Number.isFinite(chargeJpy) &&
-        chargeJpy > 0
-          ? storeUsd * (Math.max(0, Number(remainingJpy) || 0) / chargeJpy)
-          : null
       const glinCheckout = await createGlinRemittanceCheckout({
         orderId,
         user,
         profile,
         remainingJpy,
-        amountUsdOverride,
+        amountUsdOverride: null,
         productName,
         baseUrl,
         rates,
@@ -1521,7 +1517,7 @@ export default async function handler(req, res) {
           chargeJpy: Number(chargeJpy) || 0,
           walletAppliedExistingJpy: Number(alreadyAppliedJpy) || 0,
           remainingJpy: Number(remainingJpy) || 0,
-          amountUsdOverride: Number(amountUsdOverride) || 0,
+          remittanceCurrency: normalizeGlinRemittanceCurrency(),
         },
       })
       return res.status(200).json(glinCheckout)
