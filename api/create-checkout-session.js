@@ -676,6 +676,11 @@ async function createGlinRemittanceCheckout({
       email: customerEmail,
       phone: parsePhone(profile?.phone),
       cpf: digitsOnly(profile?.cpf_cnpj),
+      // Compatibilidade: alguns contratos podem validar referência dentro de `customer`.
+      clientReference: String(orderId),
+      client_reference: String(orderId),
+      cientReference: String(orderId),
+      cient_reference: String(orderId),
     },
     redirect: {
       successUrl: `${baseUrl}${successPath}?success=true`,
@@ -697,7 +702,16 @@ async function createGlinRemittanceCheckout({
   const createData = await parseJsonTextSafe(rawText)
   if (!createRes.ok) {
     const hint = createData?.message || createData?.error || rawText?.slice(0, 280) || '(corpo vazio)'
-    throw new Error(`Falha ao criar remittance na Glin (HTTP ${createRes.status}): ${hint}`)
+    const refsDebug = JSON.stringify({
+      clientReference: payload.clientReference,
+      client_reference: payload.client_reference,
+      cientReference: payload.cientReference,
+      customerClientReference: payload.customer?.clientReference,
+      customerCientReference: payload.customer?.cientReference,
+    })
+    throw new Error(
+      `Falha ao criar remittance na Glin (HTTP ${createRes.status}): ${hint}. refs_enviadas=${refsDebug}`
+    )
   }
   if (!createData) {
     throw new Error(
