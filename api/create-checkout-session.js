@@ -610,7 +610,9 @@ function extractGlinCheckoutResponse(json) {
   const remittanceId = block.remittanceId || block.remittance_id || block.id || null
   const externalId =
     block.externalReference
+    || block.clientReference
     || block.external_reference
+    || block.client_reference
     || block.partner_reference
     || block.reference
     || null
@@ -662,6 +664,7 @@ async function createGlinRemittanceCheckout({
   const payload = {
     amount: Number(amountUsd.toFixed(2)),
     currency: 'USD',
+    clientReference: String(orderId),
     externalReference: String(orderId),
     description: (productName || `Pedido ${String(orderId).slice(0, 8)}`).slice(0, 255),
     customer: {

@@ -69,17 +69,23 @@ function extractOrderData(payload) {
 
 function extractOrderId(payload, orderData) {
   const value = orderData?.externalReference
+    ?? orderData?.clientReference
     ?? orderData?.external_reference
+    ?? orderData?.client_reference
     ?? orderData?.partner_reference
     ?? orderData?.reference
     ?? orderData?.order_id
     ?? payload?.externalReference
+    ?? payload?.clientReference
     ?? payload?.external_reference
+    ?? payload?.client_reference
     ?? payload?.partner_reference
     ?? payload?.reference
     ?? payload?.order_id
     ?? payload?.data?.externalReference
+    ?? payload?.data?.clientReference
     ?? payload?.data?.external_reference
+    ?? payload?.data?.client_reference
     ?? payload?.data?.order_id
   if (value == null) return null
   const normalized = String(value).trim()
