@@ -90,8 +90,19 @@ function normalizeParcelowBaseUrl() {
 }
 
 function normalizeGlinBaseUrl() {
-  const raw = process.env.GLIN_API_BASE_URL || 'https://pay.staging.glin.com.br'
+  const raw = process.env.GLIN_API_BASE_URL || 'https://pay.glin.com.br'
   return String(raw).trim().replace(/\/$/, '')
+}
+
+function resolveGlinApiKey(baseUrl) {
+  const normalizedBase = String(baseUrl || '').toLowerCase()
+  const isStaging = normalizedBase.includes('staging')
+  const stagedKey = String(process.env.GLIN_STAGING_API_KEY || process.env.GLIN_API_KEY_STAGING || '').trim()
+  const productionKey = String(process.env.GLIN_PRODUCTION_API_KEY || process.env.GLIN_API_KEY_PRODUCTION || '').trim()
+  const genericKey = String(process.env.GLIN_API_KEY || '').trim()
+
+  if (isStaging) return stagedKey || genericKey || productionKey
+  return productionKey || genericKey || stagedKey
 }
 
 function parsePhone(raw) {
@@ -175,13 +186,14 @@ function getParcelowClientConfig() {
 }
 
 function getGlinClientConfig() {
-  const apiKey = String(process.env.GLIN_API_KEY || '').trim()
+  const baseUrl = normalizeGlinBaseUrl()
+  const apiKey = resolveGlinApiKey(baseUrl)
   if (!apiKey) return null
   const remittancesPathRaw = String(process.env.GLIN_REMITTANCES_PATH || '/merchant-api/remittances/').trim()
   const remittancesPath = remittancesPathRaw.startsWith('/') ? remittancesPathRaw : `/${remittancesPathRaw}`
   return {
     apiKey,
-    baseUrl: normalizeGlinBaseUrl(),
+    baseUrl,
     remittancesPath,
   }
 }

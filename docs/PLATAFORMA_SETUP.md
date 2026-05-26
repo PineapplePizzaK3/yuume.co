@@ -30,7 +30,9 @@ Copie `.env.example` para `.env` e preencha:
 - `PARCELOW_API_BASE_URL` – URL base da API Parcelow (`https://staging.parcelow.com` no staging; sem `/api` no final, a menos que a Parcelow indique)
 - `PARCELOW_ORDERS_PATH` – opcional; padrão `POST /api/orders` (moeda USD no JSON; o path `/api/orders/usd` foi descontinuado na API atual)
 - `PARCELOW_WEBHOOK_SECRET` – segredo compartilhado opcional para validar webhook Parcelow
-- `GLIN_API_KEY` – chave Bearer da Merchant API da Glin
+- `GLIN_API_KEY` – chave Bearer da Merchant API da Glin (fallback para qualquer ambiente)
+- `GLIN_STAGING_API_KEY` – opcional; chave específica para staging (priorizada quando `GLIN_API_BASE_URL` contém `staging`)
+- `GLIN_PRODUCTION_API_KEY` – opcional; chave específica para produção
 - `GLIN_API_BASE_URL` – URL base da Glin (`https://pay.staging.glin.com.br` em staging; `https://pay.glin.com.br` em produção)
 - `GLIN_REMITTANCES_PATH` – opcional; padrão `POST /merchant-api/remittances/`
 - `GLIN_WEBHOOK_SECRET` – segredo compartilhado para validar webhook Glin
@@ -81,6 +83,8 @@ Copie `.env.example` para `.env` e preencha:
 1. Gere a `GLIN_API_KEY` no dashboard da Glin (staging/produção com chaves distintas).
 2. Configure no Vercel:
    - `GLIN_API_KEY`
+   - `GLIN_STAGING_API_KEY` (recomendado para homologação)
+   - `GLIN_PRODUCTION_API_KEY` (recomendado para produção)
    - `GLIN_API_BASE_URL`
    - `GLIN_REMITTANCES_PATH` (opcional)
    - `GLIN_WEBHOOK_SECRET`
