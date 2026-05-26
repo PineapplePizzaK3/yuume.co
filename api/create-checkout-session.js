@@ -549,7 +549,7 @@ async function createParcelowOrderCheckout({
     )
   }
 
-  const brlDisplay = amountUsd * (rates.usd_brl || 0)
+  const brlDisplay = amountBrl
   const endpoint = `${parcelowUrlBase}${parcelowPath}`
   let byReference = null
   try {
@@ -644,7 +644,7 @@ async function createGlinRemittanceCheckout({
     throw new Error('Token Glin indisponível')
   }
   if (!rates?.jpy_usd || !rates?.usd_brl) {
-    throw new Error('Câmbio indisponível para cobrança Glin em USD')
+    throw new Error('Câmbio indisponível para cobrança Glin em BRL')
   }
 
   const rj = Math.max(0, Number(remainingJpy) || 0)
@@ -656,6 +656,10 @@ async function createGlinRemittanceCheckout({
   if (!Number.isFinite(amountUsd) || amountUsd <= 0) {
     throw new Error('Valor inválido para criar cobrança Glin (USD)')
   }
+  const amountBrl = Number((amountUsd * (rates.usd_brl || 0)).toFixed(2))
+  if (!Number.isFinite(amountBrl) || amountBrl <= 0) {
+    throw new Error('Valor inválido para criar cobrança Glin (BRL)')
+  }
 
   const customerName = String(profile?.name || user?.user_metadata?.name || user?.email || 'Cliente').trim()
   const customerEmail = String(user?.email || profile?.email || '').trim()
@@ -664,8 +668,8 @@ async function createGlinRemittanceCheckout({
   }
 
   const payload = {
-    amount: Number(amountUsd.toFixed(2)),
-    currency: 'USD',
+    amount: amountBrl,
+    currency: 'BRL',
     clientReference: String(orderId),
     clientReferenceId: String(orderId),
     client_reference: String(orderId),
@@ -739,6 +743,8 @@ async function createGlinRemittanceCheckout({
     endpoint,
     request: {
       amountUsd: Number(amountUsd.toFixed(4)),
+      amountBrl,
+      currency: payload.currency,
       remainingJpy: Number(rj.toFixed(2)),
       jpyUsdSpot: Number((Number(rates?.jpy_usd) || 0).toFixed(8)),
       wiseMarkupPercent: Number((Number(wiseMarkup) || 0).toFixed(4)),
@@ -1484,7 +1490,7 @@ export default async function handler(req, res) {
     if (selectedProvider === 'glin') {
       if (!rates?.jpy_usd || !rates?.usd_brl) {
         return res.status(503).json({
-          error: 'Glin (USD) indisponível: cotações não carregadas. Use outro método ou aguarde.',
+          error: 'Glin (BRL) indisponível: cotações não carregadas. Use outro método ou aguarde.',
         })
       }
       const storeUsd = Number(order?.total_amount_usd)
