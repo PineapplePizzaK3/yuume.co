@@ -665,6 +665,10 @@ async function createGlinRemittanceCheckout({
     amount: Number(amountUsd.toFixed(2)),
     currency: 'USD',
     clientReference: String(orderId),
+    client_reference: String(orderId),
+    // Compatibilidade defensiva: alguns ambientes da Glin retornam validação com typo (`cientReference`).
+    cientReference: String(orderId),
+    cient_reference: String(orderId),
     externalReference: String(orderId),
     description: (productName || `Pedido ${String(orderId).slice(0, 8)}`).slice(0, 255),
     customer: {
