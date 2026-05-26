@@ -8,7 +8,7 @@ import { useLocalizedPath } from '../../hooks/useLocalizedPath'
 import { useFormatPrice } from '../../hooks/useFormatPrice'
 import { useAuth } from '../../hooks/useAuth'
 import { getOrderById } from '../../services/orderService'
-import { createCheckoutSession } from '../../services/paymentService'
+import { createCheckoutSession, isGlinSdkEnabled } from '../../services/paymentService'
 import { getWallet } from '../../services/walletService'
 import { brlToJpy, jpyToBrl } from '../../lib/fx'
 import { TriCurrencyDisplay } from '../../components/TriCurrencyDisplay'
@@ -21,6 +21,7 @@ import {
 } from '../../lib/loungeOrderRouting'
 import { fetchLoungeOrderPage } from '../../lib/loungeOrdersPagedFetch'
 import { PARCELOW_CARD_BRANDS_IMG, PIX_OFFICIAL_LOGO_IMG } from '../../components/paymentModalConstants'
+import GlinEmbeddedCheckoutModal from '../../components/GlinEmbeddedCheckoutModal'
 
 const PAGE_SIZE = 12
 
@@ -111,6 +112,7 @@ export default function LoungeShippingOrdersSection() {
   const [detailsModal, setDetailsModal] = useState({ open: false, order: null })
   const [targetOrderId, setTargetOrderId] = useState(null)
   const [hasOpenedTargetOrder, setHasOpenedTargetOrder] = useState(false)
+  const [glinEmbeddedCheckout, setGlinEmbeddedCheckout] = useState({ open: false, url: '' })
 
   const gatewayOptions = useMemo(
     () =>
@@ -218,7 +220,14 @@ export default function LoungeShippingOrdersSection() {
         setPayingId(null)
         return
       }
-      const result = await createCheckoutSession(order.id, accessToken, { useWallet, provider })
+      const result = await createCheckoutSession(order.id, accessToken, {
+        useWallet,
+        provider,
+        glinMode:
+          (provider || '').toLowerCase() === 'glin' && isGlinSdkEnabled()
+            ? 'sdk'
+            : null,
+      })
       if (result?.paid) {
         setBanner({ text: t('platform.shippingOrders.paySuccess'), variant: 'success' })
         setPayModal({ open: false, order: null, useWallet: true })
@@ -236,7 +245,13 @@ export default function LoungeShippingOrdersSection() {
         return
       }
       const url = result?.url
-      if (url) window.location.href = url
+      if (url) {
+        if ((provider || '').toLowerCase() === 'glin' && isGlinSdkEnabled()) {
+          setGlinEmbeddedCheckout({ open: true, url })
+          return
+        }
+        window.location.href = url
+      }
       else setBanner({ text: t('platform.shippingOrders.sessionError'), variant: 'info' })
     } catch (err) {
       setBanner({ text: err.message || t('platform.shippingOrders.payError'), variant: 'info' })
@@ -653,6 +668,23 @@ export default function LoungeShippingOrdersSection() {
           </div>
         </div>
       )}
+      <GlinEmbeddedCheckoutModal
+        open={glinEmbeddedCheckout.open}
+        checkoutUrl={glinEmbeddedCheckout.url}
+        onClose={() => setGlinEmbeddedCheckout({ open: false, url: '' })}
+        onRefresh={async () => {
+          const { data, hasMore: more } = await fetchLoungeOrderPage(user.id, {
+            page,
+            pageSize: PAGE_SIZE,
+            matchFn: isOrderInLoungeShippingTab,
+            excludeStatus: 'completed',
+          })
+          setOrders(data)
+          setHasMore(more)
+          const { data: w } = await getWallet(user.id)
+          setWallet(w ?? null)
+        }}
+      />
     </section>
   )
 }
