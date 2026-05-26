@@ -611,8 +611,10 @@ function extractGlinCheckoutResponse(json) {
   const externalId =
     block.externalReference
     || block.clientReference
+    || block.clientReferenceId
     || block.external_reference
     || block.client_reference
+    || block.client_reference_id
     || block.partner_reference
     || block.reference
     || null
@@ -665,7 +667,9 @@ async function createGlinRemittanceCheckout({
     amount: Number(amountUsd.toFixed(2)),
     currency: 'USD',
     clientReference: String(orderId),
+    clientReferenceId: String(orderId),
     client_reference: String(orderId),
+    client_reference_id: String(orderId),
     // Compatibilidade defensiva: alguns ambientes da Glin retornam validação com typo (`cientReference`).
     cientReference: String(orderId),
     cient_reference: String(orderId),
@@ -678,7 +682,9 @@ async function createGlinRemittanceCheckout({
       cpf: digitsOnly(profile?.cpf_cnpj),
       // Compatibilidade: alguns contratos podem validar referência dentro de `customer`.
       clientReference: String(orderId),
+      clientReferenceId: String(orderId),
       client_reference: String(orderId),
+      client_reference_id: String(orderId),
       cientReference: String(orderId),
       cient_reference: String(orderId),
     },
@@ -704,9 +710,12 @@ async function createGlinRemittanceCheckout({
     const hint = createData?.message || createData?.error || rawText?.slice(0, 280) || '(corpo vazio)'
     const refsDebug = JSON.stringify({
       clientReference: payload.clientReference,
+      clientReferenceId: payload.clientReferenceId,
       client_reference: payload.client_reference,
+      client_reference_id: payload.client_reference_id,
       cientReference: payload.cientReference,
       customerClientReference: payload.customer?.clientReference,
+      customerClientReferenceId: payload.customer?.clientReferenceId,
       customerCientReference: payload.customer?.cientReference,
     })
     throw new Error(
