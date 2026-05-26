@@ -13,7 +13,7 @@ import { createPortal } from 'react-dom'
 import { useAuth } from '../../hooks/useAuth'
 import { getCart, updateCartItem, removeFromCart, getLatestPendingStoreOrder } from '../../services/cartService'
 import { getMyCoupons, validateCoupon } from '../../services/couponService'
-import { createCheckoutSession, fetchExchangeRates, getMyPayments, isGlinSdkEnabled } from '../../services/paymentService'
+import { createCheckoutSession, fetchExchangeRates, getMyPayments } from '../../services/paymentService'
 import { getMyOrders } from '../../services/orderService'
 import { getWallet } from '../../services/walletService'
 import {
@@ -898,7 +898,7 @@ function Cart() {
           walletAmountJpy: walletAmountJpyForApi,
           provider: provider || null,
           glinMode:
-            (provider || '').toLowerCase() === 'glin' && isGlinSdkEnabled()
+            (provider || '').toLowerCase() === 'glin'
               ? 'sdk'
               : null,
         }
@@ -925,7 +925,7 @@ function Cart() {
         } catch {
           // noop
         }
-        if ((provider || '').toLowerCase() === 'glin' && isGlinSdkEnabled()) {
+        if ((provider || '').toLowerCase() === 'glin') {
           setGlinEmbeddedCheckout({ open: true, url: result.url })
           return
         }

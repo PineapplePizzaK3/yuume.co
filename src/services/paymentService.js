@@ -110,7 +110,7 @@ export async function createCheckoutSession(orderId, accessToken) {
         walletAmountJpy: options?.walletAmountJpy != null ? Number(options.walletAmountJpy) : null,
         provider: options?.provider || null,
         glinMode:
-          isGlinSdkEnabled() && options?.provider === 'glin' && options?.glinMode === 'sdk'
+          options?.provider === 'glin' && options?.glinMode === 'sdk'
             ? 'sdk'
             : null,
       }),

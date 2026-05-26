@@ -54,7 +54,8 @@ export const PAYMENT_METHODS_BY_GATEWAY = {
       id: 'glin_installments',
       label: 'Cartão de crédito (até 12x)',
       group: 'card',
-      src: buildBadgeSrc('CARD 12X', { bg: '#eef2ff', fg: '#1e3a8a', stroke: '#c7d2fe' }),
+      src: PARCELOW_CARD_BRANDS_IMG,
+      layout: 'strip',
     },
   ],
   stripe: [

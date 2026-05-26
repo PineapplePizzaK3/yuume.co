@@ -8,7 +8,7 @@ import { useLocalizedPath } from '../../hooks/useLocalizedPath'
 import { useFormatPrice } from '../../hooks/useFormatPrice'
 import { useAuth } from '../../hooks/useAuth'
 import { getOrderById } from '../../services/orderService'
-import { createCheckoutSession, isGlinSdkEnabled } from '../../services/paymentService'
+import { createCheckoutSession } from '../../services/paymentService'
 import { getWallet } from '../../services/walletService'
 import { brlToJpy, jpyToBrl } from '../../lib/fx'
 import { TriCurrencyDisplay } from '../../components/TriCurrencyDisplay'
@@ -224,7 +224,7 @@ export default function LoungeShippingOrdersSection() {
         useWallet,
         provider,
         glinMode:
-          (provider || '').toLowerCase() === 'glin' && isGlinSdkEnabled()
+          (provider || '').toLowerCase() === 'glin'
             ? 'sdk'
             : null,
       })
@@ -246,7 +246,7 @@ export default function LoungeShippingOrdersSection() {
       }
       const url = result?.url
       if (url) {
-        if ((provider || '').toLowerCase() === 'glin' && isGlinSdkEnabled()) {
+        if ((provider || '').toLowerCase() === 'glin') {
           setGlinEmbeddedCheckout({ open: true, url })
           return
         }
