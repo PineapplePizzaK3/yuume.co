@@ -116,6 +116,10 @@ function getOrdersUrl(req) {
   return `https://${normalized}/platform/orders`
 }
 
+function getEmailSignatureName() {
+  return String(process.env.EMAIL_BRAND_NAME || process.env.BUSINESS_NAME || 'YuumeCo').trim()
+}
+
 function formatOrderAmount(orderRow) {
   const quoteAmount = Number(orderRow?.quote_amount)
   if (Number.isFinite(quoteAmount) && quoteAmount > 0) {
@@ -229,6 +233,7 @@ async function notifyOrderCustomerByEmail(supabase, req, fn, orderRow) {
   const greeting = customerName ? `Olá, ${customerName}!` : 'Olá!'
   const ordersUrl = getOrdersUrl(req)
   const copy = buildOrderEmailCopy(fn, orderRow, orderShortId)
+  const signatureName = getEmailSignatureName()
 
   const baseText = [
     greeting,
@@ -237,7 +242,7 @@ async function notifyOrderCustomerByEmail(supabase, req, fn, orderRow) {
     '',
     `Acompanhe em: ${ordersUrl}`,
     '',
-    'Equipe D-Delivery',
+    signatureName,
   ]
     .filter(Boolean)
     .join('\n')
@@ -249,7 +254,7 @@ async function notifyOrderCustomerByEmail(supabase, req, fn, orderRow) {
     headline: copy.headline,
     ctaLabel: 'Ver meus pedidos',
     ctaUrl: ordersUrl,
-    signatureName: 'Equipe D-Delivery',
+    signatureName,
   })
 
   try {

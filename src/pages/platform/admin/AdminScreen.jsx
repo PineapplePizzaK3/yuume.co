@@ -2607,10 +2607,15 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     const normalizedOrderModule = isEditRedirection
       ? (orderEditModal.order_module === 'assisted_buy' ? 'assisted_buy' : 'self_buy')
       : null
+    const normalizedStatus =
+      normalizedOrderModule === 'assisted_buy' &&
+      [ORDER_STATUS.PENDING_APPROVAL, ORDER_STATUS.APPROVED, ORDER_STATUS.REJECTED].includes(orderEditModal.status)
+        ? ORDER_STATUS.AWAITING_QUOTE
+        : orderEditModal.status
 
     const payload = {
       service_id: orderEditModal.service_id || null,
-      status: orderEditModal.status,
+      status: normalizedStatus,
       message: orderEditModal.message,
       shipping_cost: shippingCost,
       shipping_currency: orderEditModal.shipping_currency || 'JPY',

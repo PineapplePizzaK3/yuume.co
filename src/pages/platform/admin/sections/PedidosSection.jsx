@@ -422,6 +422,18 @@ export default function PedidosSection() {
                       Definir orçamento
                     </button>
                   )}
+                  {o.status !== ORDER_STATUS.AWAITING_QUOTE &&
+                    o.order_module === 'assisted_buy' &&
+                    o.status !== ORDER_STATUS.COMPLETED &&
+                    o.status !== ORDER_STATUS.REJECTED && (
+                      <button
+                        type="button"
+                        onClick={() => openQuoteModalFromOrder(o)}
+                        className="rounded bg-amber-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-amber-700"
+                      >
+                        Definir orçamento
+                      </button>
+                    )}
                   {o.status === ORDER_STATUS.PRODUCTS_PAID && (
                     <button
                       type="button"
@@ -1080,7 +1092,19 @@ export default function PedidosSection() {
               {isOrderEditRedirection && (
                 <select
                   value={orderEditModal.order_module || 'self_buy'}
-                  onChange={(e) => setOrderEditModal((m) => ({ ...m, order_module: e.target.value }))}
+                  onChange={(e) =>
+                    setOrderEditModal((m) => {
+                      const nextModule = e.target.value
+                      const shouldMoveToQuote =
+                        nextModule === 'assisted_buy' &&
+                        [ORDER_STATUS.PENDING_APPROVAL, ORDER_STATUS.APPROVED, ORDER_STATUS.REJECTED].includes(m.status)
+                      return {
+                        ...m,
+                        order_module: nextModule,
+                        status: shouldMoveToQuote ? ORDER_STATUS.AWAITING_QUOTE : m.status,
+                      }
+                    })
+                  }
                   className="rounded-lg border border-earth-300 px-3 py-2 text-earth-900 sm:col-span-2"
                 >
                   <option value="self_buy">Redirecionamento · Padrão</option>
