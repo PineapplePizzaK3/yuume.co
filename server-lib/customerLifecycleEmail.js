@@ -49,7 +49,8 @@ export async function sendOrderPaymentConfirmedEmail(supabase, orderRow) {
   const status = String(orderRow?.status || '')
   const ordersUrl = getPlatformUrl('/platform/orders')
   const signatureName = getSignatureName()
-  const greeting = profile.name ? `Olá, ${profile.name}!` : 'Olá!'
+  const orderDisplayName = profile.name || 'cliente'
+  const greeting = `Olá, ${orderDisplayName}!`
 
   const subject = `Pagamento confirmado do pedido ${orderShort || ''}`.trim()
   const headline = 'Pagamento recebido'
@@ -101,7 +102,8 @@ export async function sendWalletTopupDecisionEmail(supabase, topupRow, decision)
     : ''
   const walletUrl = getPlatformUrl('/platform/payments')
   const signatureName = getSignatureName()
-  const greeting = profile.name ? `Olá, ${profile.name}!` : 'Olá!'
+  const walletDisplayName = profile.name || 'cliente'
+  const greeting = `Olá, ${walletDisplayName}!`
 
   const subject = isApproved
     ? `Recarga aprovada ${requestShort ? `(${requestShort})` : ''}`.trim()

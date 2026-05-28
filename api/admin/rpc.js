@@ -237,7 +237,8 @@ async function notifyOrderCustomerByEmail(supabase, req, fn, orderRow) {
   const orderId = String(orderRow?.id || '')
   const orderShortId = orderId ? orderId.slice(0, 8) : ''
   const customerName = String(profile?.name || '').trim()
-  const greeting = customerName ? `Olá, ${customerName}!` : 'Olá!'
+  const displayName = customerName || 'cliente'
+  const greeting = `Olá, ${displayName}!`
   const ordersUrl = getOrdersUrl(req)
   const copy = buildOrderEmailCopy(fn, orderRow, orderShortId)
   const signatureName = getEmailSignatureName()

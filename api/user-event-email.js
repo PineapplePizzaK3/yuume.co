@@ -153,7 +153,8 @@ export default async function handler(req, res) {
   if (!to) return res.status(200).json({ ok: false, reason: 'missing_recipient_email' })
 
   const name = String(profile?.name || '').trim()
-  const greeting = name ? `Olá, ${name}!` : 'Olá!'
+  const displayName = name || 'cliente'
+  const greeting = `Olá, ${displayName}!`
   const copy = buildEventCopy(eventType, orderRow, shipmentRow)
   const ordersUrl = getSiteOrdersUrl()
   const signatureName = getSignatureName()
