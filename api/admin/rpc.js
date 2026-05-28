@@ -207,7 +207,7 @@ function buildOrderEmailCopy(fn, orderRow, orderShortId) {
 
 async function notifyOrderCustomerByEmail(supabase, req, fn, orderRow) {
   const userId = String(orderRow?.user_id || '').trim()
-  if (!userId) return
+  if (!userId) return { ok: false, reason: 'missing_user_id' }
 
   const { data: profile, error } = await supabase
     .from('profiles')
@@ -217,11 +217,11 @@ async function notifyOrderCustomerByEmail(supabase, req, fn, orderRow) {
 
   if (error) {
     console.warn('admin-rpc:order-email:profile_lookup_failed', { user_id: userId, error: error.message })
-    return
+    return { ok: false, reason: 'profile_lookup_failed' }
   }
 
   const to = String(profile?.email || '').trim().toLowerCase()
-  if (!to) return
+  if (!to) return { ok: false, reason: 'missing_recipient_email', user_id: userId }
 
   const orderId = String(orderRow?.id || '')
   const orderShortId = orderId ? orderId.slice(0, 8) : ''
@@ -259,6 +259,7 @@ async function notifyOrderCustomerByEmail(supabase, req, fn, orderRow) {
       text: template.text,
       html: template.html,
     })
+    return { ok: true, to, subject: copy.subject, order_id: orderId }
   } catch (mailError) {
     console.warn('admin-rpc:order-email:send_failed', {
       order_id: orderId,
@@ -266,6 +267,13 @@ async function notifyOrderCustomerByEmail(supabase, req, fn, orderRow) {
       email: to,
       error: mailError?.message || String(mailError),
     })
+    return {
+      ok: false,
+      reason: 'send_failed',
+      to,
+      order_id: orderId,
+      error: mailError?.message || String(mailError),
+    }
   }
 }
 
@@ -326,7 +334,19 @@ export default async function handler(req, res) {
   }
 
   if (shouldSendOrderEmail(fn, data)) {
-    void notifyOrderCustomerByEmail(supabase, req, fn, data)
+    const emailResult = await notifyOrderCustomerByEmail(supabase, req, fn, data)
+    if (!emailResult?.ok) {
+      console.warn('admin-rpc:order-email:not_sent', {
+        fn,
+        result: emailResult,
+      })
+    } else {
+      console.info('admin-rpc:order-email:sent', {
+        fn,
+        to: emailResult.to,
+        order_id: emailResult.order_id,
+      })
+    }
   }
 
   return res.status(200).json({ ok: true, data: data ?? null })

@@ -1119,8 +1119,12 @@ export default function PedidosSection() {
               )}
             </div>
             <div className="mt-6 flex gap-2">
-              <button type="submit" className="rounded-lg bg-earth-900 px-4 py-2 font-medium text-earth-50 hover:bg-earth-800">
-                Salvar alterações
+              <button
+                type="submit"
+                disabled={submitting}
+                className="rounded-lg bg-earth-900 px-4 py-2 font-medium text-earth-50 hover:bg-earth-800 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {submitting ? 'Salvando...' : 'Salvar alterações'}
               </button>
               <button
                 type="button"

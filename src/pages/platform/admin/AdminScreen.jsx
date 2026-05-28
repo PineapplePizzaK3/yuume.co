@@ -2593,6 +2593,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
 
   const handleSaveOrderEdit = async (e) => {
     e.preventDefault()
+    if (submitting) return
     const hasShipping = orderEditModal.shipping_cost.trim() !== ''
     const shippingCost = hasShipping ? parseFloat(orderEditModal.shipping_cost) : null
     if (hasShipping && (isNaN(shippingCost) || shippingCost < 0)) {
@@ -2617,12 +2618,18 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       extra_services: orderEditModal.extra_services,
     }
 
-    const { error } = await updateOrderAdmin(orderEditModal.orderId, payload)
-    setMessage(error ? error.message : 'Pedido atualizado')
-    if (!error) {
-      logAdminAction('order_edit', 'order', orderEditModal.orderId, { status: payload.status })
-      closeOrderEditModal()
-      loadOrders()
+    setSubmitting(true)
+    setMessage('')
+    try {
+      const { error } = await updateOrderAdmin(orderEditModal.orderId, payload)
+      setMessage(error ? error.message : 'Pedido atualizado')
+      if (!error) {
+        logAdminAction('order_edit', 'order', orderEditModal.orderId, { status: payload.status })
+        closeOrderEditModal()
+        loadOrders()
+      }
+    } finally {
+      setSubmitting(false)
     }
   }
 
