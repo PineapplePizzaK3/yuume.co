@@ -6,6 +6,8 @@ import { useTranslation } from 'react-i18next'
 import { useSiteLocale } from '../hooks/useSiteLocale'
 import { parseQuoteMessage } from '../lib/quoteProducts'
 import { formatBrlForSite, formatJpyForSite } from '../lib/moneyDisplay'
+import { jpyAmountToTri } from '../lib/quoteMoneyTri'
+import { TriCurrencyDisplay } from './TriCurrencyDisplay'
 import LinkifyText from './LinkifyText'
 import {
   SERVICE_FEE_JPY_PER_ITEM,
@@ -68,6 +70,14 @@ export default function QuoteProductsList({ message, quoteCurrency = 'JPY', form
     return formatJpyForSite(siteLocale, v, null)
   }
 
+  const fmtTri = (v) => {
+    const tri = jpyAmountToTri(v)
+    if (!tri) return fmt(v)
+    return (
+      <TriCurrencyDisplay brl={tri.brl} jpy={tri.jpy} usd={tri.usd} variant="compact" primary="jpy" />
+    )
+  }
+
   return (
     <div className="mt-2 rounded-lg border border-earth-200 bg-white p-3">
       {orderDescription?.trim() && (
@@ -89,7 +99,7 @@ export default function QuoteProductsList({ message, quoteCurrency = 'JPY', form
                 {p.name || t('platform.quoteList.itemFallback', { n: i + 1 })}
                 {qty > 1 && <span className="ml-1 font-normal text-earth-600">× {qty}</span>}
               </span>
-              <span className="text-earth-700">{fmt(lineTotal)}</span>
+              <span className="text-earth-700">{fmtTri(lineTotal)}</span>
               {p.descricao && (
                 <span className="w-full text-xs text-earth-500 whitespace-pre-wrap">
                   <LinkifyText text={p.descricao} />
@@ -102,29 +112,29 @@ export default function QuoteProductsList({ message, quoteCurrency = 'JPY', form
 
       <div className="mt-4 border-t border-earth-200 pt-3 text-sm">
         <div className="space-y-1 text-earth-600">
-          <div className="flex justify-between">
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
             <span>{t('platform.quoteList.productBase')}</span>
-            <span>{fmt(baseTotal)}</span>
+            <span>{fmtTri(baseTotal)}</span>
           </div>
-          <div className="flex justify-between">
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
             <span>{t('platform.quoteList.serviceFeePercent', { percent: servicePercent })}</span>
-            <span>{fmt(serviceFeePercent)}</span>
+            <span>{fmtTri(serviceFeePercent)}</span>
           </div>
           {!isAssistedBuy && (
-            <div className="flex justify-between">
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
               <span>
                 {t('platform.quoteList.perItemTimes', {
                   fee: fmt(SERVICE_FEE_JPY_PER_ITEM),
                   count: totalItems,
                 })}
               </span>
-              <span>{fmt(serviceFeeFixed)}</span>
+              <span>{fmtTri(serviceFeeFixed)}</span>
             </div>
           )}
         </div>
-        <div className="mt-3 border-t border-earth-900 pt-2 flex justify-between font-semibold text-earth-900">
+        <div className="mt-3 border-t border-earth-900 pt-2 flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between font-semibold text-earth-900">
           <span>{t('platform.quoteList.quoteTotal')}</span>
-          <span>{fmt(grandTotal)}</span>
+          <span>{fmtTri(grandTotal)}</span>
         </div>
       </div>
     </div>

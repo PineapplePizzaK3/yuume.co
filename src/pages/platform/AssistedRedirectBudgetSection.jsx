@@ -1,10 +1,12 @@
 /**
  * Orçamento indicado pelo cliente — Redirecionamento Assistido (links + scrape-product).
  */
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { scrapeProductUrl } from '../../services/wishlistLinkService'
-import { getFxBrlPerJpy } from '../../lib/fx'
+import { TriCurrencyDisplay } from '../../components/TriCurrencyDisplay'
+import { getFxBrlPerJpy, refreshFxRate } from '../../lib/fx'
+import { amountToTri, jpyAmountToTri } from '../../lib/quoteMoneyTri'
 import {
   REDIR_ASSISTIDO_FEE_PERCENT,
   computeAssistedEarlyPrepayDebitJpy,
@@ -128,12 +130,21 @@ export default function AssistedRedirectBudgetSection({ lines, onLinesChange, fp
   const [failedThumbs, setFailedThumbs] = useState(() => new Set())
 
   const fxBrlPerJpy = getFxBrlPerJpy()
+  useEffect(() => {
+    void refreshFxRate()
+  }, [])
   const subtotalJpy = useMemo(() => computeAssistedBudgetSubtotalJpy(lines, fxBrlPerJpy), [lines, fxBrlPerJpy])
+  const subtotalTri = useMemo(() => jpyAmountToTri(subtotalJpy), [subtotalJpy])
   const hasBrlLines = useMemo(() => lines.some((l) => l.currency === 'BRL' && l.price), [lines])
   const feePreview = useMemo(() => {
     if (subtotalJpy < 1) return null
     return computeAssistedEarlyPrepayDebitJpy(String(subtotalJpy), REDIR_ASSISTIDO_FEE_PERCENT)
   }, [subtotalJpy])
+  const feePreviewTri = useMemo(
+    () => (feePreview ? jpyAmountToTri(feePreview.totalDebitJpy) : null),
+    [feePreview],
+  )
+  const feeOnlyTri = useMemo(() => (feePreview ? jpyAmountToTri(feePreview.feeJpy) : null), [feePreview])
 
   const pushLine = (line) => {
     onLinesChange([...lines, { ...line, id: line.id || newLineId() }])
@@ -366,29 +377,48 @@ export default function AssistedRedirectBudgetSection({ lines, onLinesChange, fp
                 >
                   {line.url}
                 </a>
-                <div className="flex flex-wrap items-end gap-2">
+                <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-end">
                   <div>
                     <label className="text-[10px] font-medium uppercase text-earth-500">{t('platform.services.budgetLinePrice')}</label>
-                    <input
-                      type="text"
-                      value={line.price != null ? String(line.price) : ''}
-                      onChange={(e) => {
-                        const v = e.target.value.trim()
-                        updateLine(line.id, {
-                          price: v ? parsePriceInput(v) : null,
-                        })
-                      }}
-                      className="mt-0.5 w-28 rounded border border-earth-200 px-2 py-1 text-sm tabular-nums"
-                    />
+                    <div className="mt-0.5 flex flex-wrap items-center gap-2">
+                      <input
+                        type="text"
+                        value={line.price != null ? String(line.price) : ''}
+                        onChange={(e) => {
+                          const v = e.target.value.trim()
+                          updateLine(line.id, {
+                            price: v ? parsePriceInput(v) : null,
+                          })
+                        }}
+                        className="w-28 rounded border border-earth-200 px-2 py-1 text-sm tabular-nums"
+                        aria-describedby={line.price ? `budget-line-tri-${line.id}` : undefined}
+                      />
+                      <select
+                        value={line.currency === 'BRL' ? 'BRL' : 'JPY'}
+                        onChange={(e) => updateLine(line.id, { currency: e.target.value })}
+                        className="rounded border border-earth-200 px-2 py-1 text-sm"
+                        aria-label={t('platform.services.budgetManualCurrency')}
+                      >
+                        <option value="JPY">JPY</option>
+                        <option value="BRL">BRL</option>
+                      </select>
+                    </div>
                   </div>
-                  <select
-                    value={line.currency === 'BRL' ? 'BRL' : 'JPY'}
-                    onChange={(e) => updateLine(line.id, { currency: e.target.value })}
-                    className="rounded border border-earth-200 px-2 py-1 text-sm"
-                  >
-                    <option value="JPY">JPY</option>
-                    <option value="BRL">BRL</option>
-                  </select>
+                  {(() => {
+                    const tri = amountToTri(line.price, line.currency, fxBrlPerJpy)
+                    if (!tri) return null
+                    return (
+                      <div id={`budget-line-tri-${line.id}`} className="min-w-[10rem] flex-1">
+                        <TriCurrencyDisplay
+                          brl={tri.brl}
+                          jpy={tri.jpy}
+                          usd={tri.usd}
+                          variant="compact"
+                          primary="jpy"
+                        />
+                      </div>
+                    )
+                  })()}
                   <button
                     type="button"
                     onClick={() => removeLine(line.id)}
@@ -402,22 +432,50 @@ export default function AssistedRedirectBudgetSection({ lines, onLinesChange, fp
           ))}
 
           <div className="rounded-lg border border-earth-200 bg-earth-50/90 px-3 py-3 text-sm text-earth-800">
-            <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
               <span className="font-medium">{t('platform.services.budgetSubtotalJpy')}</span>
-              <span className="text-lg font-semibold tabular-nums text-earth-900">{fp.jpy(subtotalJpy)}</span>
+              {subtotalTri ? (
+                <TriCurrencyDisplay
+                  brl={subtotalTri.brl}
+                  jpy={subtotalTri.jpy}
+                  usd={subtotalTri.usd}
+                  variant="checkout"
+                  primary="jpy"
+                  footnote={hasBrlLines ? t('platform.services.budgetFxNote') : null}
+                />
+              ) : (
+                <span className="text-lg font-semibold tabular-nums text-earth-900">{fp.jpy(subtotalJpy)}</span>
+              )}
             </div>
-            {hasBrlLines && (
-              <p className="mt-2 text-xs text-earth-600">{t('platform.services.budgetFxNote')}</p>
-            )}
             {feePreview && (
-              <ul className="mt-3 space-y-1 border-t border-earth-200 pt-3 text-xs text-earth-700">
-                <li className="flex justify-between gap-2">
+              <ul className="mt-3 space-y-3 border-t border-earth-200 pt-3 text-xs text-earth-700">
+                <li className="flex flex-col gap-1.5 sm:flex-row sm:items-start sm:justify-between">
                   <span>{t('platform.services.budgetPreviewFee', { pct: REDIR_ASSISTIDO_FEE_PERCENT })}</span>
-                  <span className="tabular-nums">{fp.jpy(feePreview.feeJpy)}</span>
+                  {feeOnlyTri ? (
+                    <TriCurrencyDisplay
+                      brl={feeOnlyTri.brl}
+                      jpy={feeOnlyTri.jpy}
+                      usd={feeOnlyTri.usd}
+                      variant="compact"
+                      primary="jpy"
+                    />
+                  ) : (
+                    <span className="tabular-nums">{fp.jpy(feePreview.feeJpy)}</span>
+                  )}
                 </li>
-                <li className="flex justify-between gap-2 font-medium text-earth-900">
+                <li className="flex flex-col gap-1.5 sm:flex-row sm:items-start sm:justify-between font-medium text-earth-900">
                   <span>{t('platform.services.budgetPreviewPrepayTotal')}</span>
-                  <span className="tabular-nums">{fp.jpy(feePreview.totalDebitJpy)}</span>
+                  {feePreviewTri ? (
+                    <TriCurrencyDisplay
+                      brl={feePreviewTri.brl}
+                      jpy={feePreviewTri.jpy}
+                      usd={feePreviewTri.usd}
+                      variant="compact"
+                      primary="jpy"
+                    />
+                  ) : (
+                    <span className="tabular-nums">{fp.jpy(feePreview.totalDebitJpy)}</span>
+                  )}
                 </li>
               </ul>
             )}

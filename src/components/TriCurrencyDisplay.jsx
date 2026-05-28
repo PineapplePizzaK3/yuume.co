@@ -21,6 +21,8 @@ export function TriCurrencyDisplay({
   className = '',
   /** Texto curto abaixo da linha secundária (ex.: cupom aplicado) */
   footnote = null,
+  /** 'auto' = BRL (PT) ou USD (EN); 'jpy' = iene em destaque com BRL/USD secundários */
+  primary = 'auto',
 }) {
   const { t } = useTranslation()
   const siteLocale = useSiteLocale()
@@ -41,14 +43,56 @@ export function TriCurrencyDisplay({
   const showJpy = isPos(jpy)
   const showUsdExplicit = isPos(usd)
   const effectiveUsd = resolvedUsdForTri(brl, jpy, usd)
-  const showPrimaryUsd = isEn && isPos(effectiveUsd)
+  const showPrimaryUsd = primary === 'auto' && isEn && isPos(effectiveUsd)
+  const showPrimaryJpy = primary === 'jpy' && isPos(jpy)
 
   const flagSize =
     variant === 'modal' ? 22 : variant === 'checkout' ? 20 : variant === 'compact' ? 14 : 18
 
-  const aria = isEn
-    ? t('platform.triCurrency.ariaLabelUsdPrimary')
-    : t('platform.triCurrency.ariaLabel')
+  const aria = showPrimaryJpy
+    ? t('platform.triCurrency.ariaLabelJpyPrimary')
+    : isEn
+      ? t('platform.triCurrency.ariaLabelUsdPrimary')
+      : t('platform.triCurrency.ariaLabel')
+
+  if (showPrimaryJpy) {
+    const usdSecondary = isPos(usd) ? usd : effectiveUsd
+    return (
+      <div
+        className={`space-y-1.5 ${className}`}
+        role="group"
+        aria-label={aria}
+      >
+        <div
+          className={`flex items-center gap-2 font-bold text-earth-900 ${brlCls}`}
+          title={t('platform.triCurrency.jpyPrimaryTitle')}
+        >
+          <FlagIcon code="JP" size={flagSize + 2} title={t('platform.triCurrency.flagJp')} className="self-center" />
+          <span className="tabular-nums">{formatJPY(jpy)}</span>
+          <span className="sr-only">{t('platform.triCurrency.srJpy')}</span>
+        </div>
+        <div className={`flex flex-wrap items-baseline gap-x-5 gap-y-1 ${secondaryCls}`}>
+          <span
+            className="inline-flex items-center gap-1.5 tabular-nums"
+            title={t('platform.triCurrency.brlTitle')}
+          >
+            <FlagIcon code="BR" size={flagSize} title={t('platform.triCurrency.flagBr')} className="self-center" />
+            <span>{showBrl ? formatBRL(brl) : '—'}</span>
+            <span className="sr-only">{t('platform.triCurrency.srBrl')}</span>
+          </span>
+          <span
+            className="inline-flex items-center gap-1.5 tabular-nums"
+            title={t('platform.triCurrency.usdTitle')}
+          >
+            <FlagIcon code="US" size={flagSize} title={t('platform.triCurrency.flagUs')} className="self-center" />
+            <span>{isPos(usdSecondary) ? formatUSD(usdSecondary) : '—'}</span>
+            <span className="sr-only">{t('platform.triCurrency.srUsd')}</span>
+          </span>
+        </div>
+        {footnote ? <p className="text-xs text-earth-500">{footnote}</p> : null}
+      </div>
+    )
+  }
 
   if (showPrimaryUsd) {
     return (

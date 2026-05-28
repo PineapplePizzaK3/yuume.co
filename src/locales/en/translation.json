@@ -165,6 +165,8 @@
     },
     "triCurrency": {
       "ariaLabel": "Prices: Brazilian real (reference), Japanese yen (Japan base), US dollar (charge)",
+      "ariaLabelJpyPrimary": "Prices: Japanese yen (main amount), Brazilian real and US dollar (reference)",
+      "jpyPrimaryTitle": "Main amount in Japanese yen (Japan base)",
       "ariaLabelUsdPrimary": "Prices: US dollar (main display), Japanese yen (Japan base), Brazilian real (reference)",
       "usdPrimaryTitle": "Main amount in US dollars (charge or approximate from yen/real rates)",
       "usdApproxHint": "USD is approximate when converted from yen or real for display.",

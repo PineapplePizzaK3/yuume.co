@@ -86,6 +86,10 @@ const WALLET_TOPUP_EMAIL_RPCS = new Set([
   'admin_reject_wallet_topup',
 ])
 
+const ORDER_EMAIL_COOLDOWN_MS = 2 * 60 * 1000
+const orderEmailCooldownStore = globalThis.__orderEmailCooldownStore || new Map()
+globalThis.__orderEmailCooldownStore = orderEmailCooldownStore
+
 function parseBody(req) {
   if (!req?.body) return {}
   if (typeof req.body === 'string') {
@@ -99,10 +103,105 @@ function parseBody(req) {
   return {}
 }
 
-function shouldSendOrderEmail(fn, data) {
+function getOrderIdFromRpcParams(fn, params) {
+  if (!params || typeof params !== 'object') return ''
+  if (fn === 'admin_update_order_status') return String(params.p_order_id || '').trim()
+  if (fn === 'admin_set_quote') return String(params.p_order_id || '').trim()
+  if (fn === 'admin_set_shipping_await_payment') return String(params.p_order_id || '').trim()
+  if (fn === 'admin_update_order') return String(params.p_order_id || '').trim()
+  return ''
+}
+
+async function fetchOrderSnapshot(supabase, orderId) {
+  if (!orderId) return null
+  const { data } = await supabase
+    .from('orders')
+    .select('id,status,quote_amount,quote_currency,shipping_cost,shipping_currency')
+    .eq('id', orderId)
+    .maybeSingle()
+  return data || null
+}
+
+function numbersEqual(a, b) {
+  const na = Number(a)
+  const nb = Number(b)
+  if (!Number.isFinite(na) && !Number.isFinite(nb)) return true
+  if (!Number.isFinite(na) || !Number.isFinite(nb)) return false
+  return Math.abs(na - nb) < 0.000001
+}
+
+function shouldSendOrderEmail(fn, data, beforeSnapshot, params) {
   if (!ORDER_EMAIL_RPCS.has(fn)) return false
   if (!data || typeof data !== 'object') return false
-  return Boolean(data.user_id && data.id && data.status)
+  if (!data.user_id || !data.id || !data.status) return false
+
+  // If we have no "before", be conservative and only send for explicit status APIs.
+  if (!beforeSnapshot) return fn === 'admin_update_order_status'
+
+  const statusChanged = String(beforeSnapshot.status || '') !== String(data.status || '')
+
+  if (fn === 'admin_update_order_status') {
+    return statusChanged
+  }
+
+  if (fn === 'admin_set_quote') {
+    const quoteChanged =
+      !numbersEqual(beforeSnapshot.quote_amount, data.quote_amount) ||
+      String(beforeSnapshot.quote_currency || '') !== String(data.quote_currency || '')
+    return statusChanged || quoteChanged
+  }
+
+  if (fn === 'admin_set_shipping_await_payment') {
+    const shippingChanged =
+      !numbersEqual(beforeSnapshot.shipping_cost, data.shipping_cost) ||
+      String(beforeSnapshot.shipping_currency || '') !== String(data.shipping_currency || '')
+    return statusChanged || shippingChanged
+  }
+
+  if (fn === 'admin_update_order') {
+    const payload = params?.p_payload && typeof params.p_payload === 'object' ? params.p_payload : null
+    // For generic update, only notify when admin explicitly changed status and it really changed.
+    if (!payload || !Object.prototype.hasOwnProperty.call(payload, 'status')) return false
+    return statusChanged
+  }
+
+  return false
+}
+
+function buildOrderEmailCooldownKey(fn, orderRow) {
+  const orderId = String(orderRow?.id || '').trim()
+  const status = String(orderRow?.status || '').trim()
+  const quoteAmount = Number(orderRow?.quote_amount)
+  const shippingCost = Number(orderRow?.shipping_cost)
+  return [
+    fn,
+    orderId,
+    status,
+    Number.isFinite(quoteAmount) ? quoteAmount.toFixed(2) : '-',
+    Number.isFinite(shippingCost) ? shippingCost.toFixed(2) : '-',
+  ].join('|')
+}
+
+function isOrderEmailInCooldown(fn, orderRow) {
+  const key = buildOrderEmailCooldownKey(fn, orderRow)
+  const now = Date.now()
+
+  for (const [storedKey, ts] of orderEmailCooldownStore.entries()) {
+    if (now - ts > ORDER_EMAIL_COOLDOWN_MS) {
+      orderEmailCooldownStore.delete(storedKey)
+    }
+  }
+
+  const lastSentAt = orderEmailCooldownStore.get(key)
+  if (lastSentAt && now - lastSentAt < ORDER_EMAIL_COOLDOWN_MS) {
+    return true
+  }
+  return false
+}
+
+function markOrderEmailCooldown(fn, orderRow) {
+  const key = buildOrderEmailCooldownKey(fn, orderRow)
+  orderEmailCooldownStore.set(key, Date.now())
 }
 
 function getOrderStatusLabel(status) {
@@ -342,12 +441,24 @@ export default async function handler(req, res) {
     global: { headers: { Authorization: authHeader } },
   })
 
+  let orderBefore = null
+  if (ORDER_EMAIL_RPCS.has(fn)) {
+    const beforeOrderId = getOrderIdFromRpcParams(fn, params)
+    orderBefore = await fetchOrderSnapshot(supabase, beforeOrderId)
+  }
+
   const { data, error } = await userSupabase.rpc(fn, params)
   if (error) {
     return res.status(400).json({ error: error.message || 'RPC failed' })
   }
 
-  if (shouldSendOrderEmail(fn, data)) {
+  if (shouldSendOrderEmail(fn, data, orderBefore, params)) {
+    if (isOrderEmailInCooldown(fn, data)) {
+      console.info('admin-rpc:order-email:cooldown_skip', {
+        fn,
+        order_id: data?.id || null,
+      })
+    } else {
     const emailResult = await notifyOrderCustomerByEmail(supabase, req, fn, data)
     if (!emailResult?.ok) {
       console.warn('admin-rpc:order-email:not_sent', {
@@ -355,11 +466,13 @@ export default async function handler(req, res) {
         result: emailResult,
       })
     } else {
+      markOrderEmailCooldown(fn, data)
       console.info('admin-rpc:order-email:sent', {
         fn,
         to: emailResult.to,
         order_id: emailResult.order_id,
       })
+    }
     }
   }
 

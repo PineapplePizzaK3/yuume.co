@@ -3,7 +3,9 @@ import { ORDER_STATUS, ORDER_STATUS_LABELS, approveOrderAdmin, rejectOrderAdmin 
 import { logAdminAction } from '../../../../services/logService'
 import { parseQuoteMessage, serializeQuoteProducts } from '../../../../lib/quoteProducts'
 import QuoteProductsList from '../../../../components/QuoteProductsList'
+import { TriCurrencyDisplay } from '../../../../components/TriCurrencyDisplay'
 import OrderAttachments from '../../../../components/OrderAttachments'
+import { jpyAmountToTri } from '../../../../lib/quoteMoneyTri'
 import { useAdminContext } from '../AdminContext'
 import { REDIR_ASSISTIDO_FEE_PERCENT, computeAssistedEarlyPrepayDebitJpy } from '../../../../data/serviceFees'
 
@@ -980,20 +982,35 @@ export default function PedidosSection() {
                       placeholder="Nome"
                       className="sm:col-span-2 rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
                     />
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={item.valor}
-                      onChange={(e) =>
-                        setQuoteModal((m) => ({
-                          ...m,
-                          products: m.products.map((p, i) => (i === idx ? { ...p, valor: e.target.value } : p)),
-                        }))
-                      }
-                      placeholder="Valor (¥)"
-                      className="rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
-                    />
+                    <div className="space-y-2">
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={item.valor}
+                        onChange={(e) =>
+                          setQuoteModal((m) => ({
+                            ...m,
+                            products: m.products.map((p, i) => (i === idx ? { ...p, valor: e.target.value } : p)),
+                          }))
+                        }
+                        placeholder="Valor (¥)"
+                        className="w-full rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
+                      />
+                      {(() => {
+                        const tri = jpyAmountToTri(parseFloat(item.valor))
+                        if (!tri) return null
+                        return (
+                          <TriCurrencyDisplay
+                            brl={tri.brl}
+                            jpy={tri.jpy}
+                            usd={tri.usd}
+                            variant="compact"
+                            primary="jpy"
+                          />
+                        )
+                      })()}
+                    </div>
                     <input
                       type="number"
                       min="1"

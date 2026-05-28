@@ -165,6 +165,8 @@
     },
     "triCurrency": {
       "ariaLabel": "Preços: real (referência), iene (base Japão), dólar (cobrança)",
+      "ariaLabelJpyPrimary": "Preços: iene (valor principal), real e dólar (referência)",
+      "jpyPrimaryTitle": "Valor principal em ienes (base Japão)",
       "ariaLabelUsdPrimary": "Preços: dólar (valor principal), iene (base Japão), real (referência)",
       "usdPrimaryTitle": "Valor principal em dólares (cobrança ou aproximação a partir de iene/real)",
       "usdApproxHint": "USD aproximado quando convertido de iene ou real para exibição.",
