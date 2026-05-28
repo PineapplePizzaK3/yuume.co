@@ -1,5 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { getAuthenticatedUser, getSupabaseAdmin, isAdminUser } from '../../server-lib/antiFraud.js'
+import { sendResendEmail } from '../../server-lib/resendEmail.js'
+import { buildProfessionalEmailTemplate } from '../../server-lib/professionalEmailTemplate.js'
 
 const ALLOWED_RPCS = new Set([
   'admin_add_inventory_from_order',
@@ -54,6 +56,30 @@ const ALLOWED_RPCS = new Set([
   'create_affiliate_payout_candidates',
 ])
 
+const ORDER_STATUS_LABELS = {
+  pending_approval: 'Aguardando aprovação',
+  approved: 'Aprovado',
+  rejected: 'Rejeitado',
+  awaiting_quote: 'Aguardando orçamento',
+  quoted: 'Orçamento enviado',
+  awaiting_arrival: 'Aguardando chegada',
+  item_received: 'Pacotes recebidos',
+  stored: 'Em armazenamento',
+  ready_for_shipment: 'Pronto para envio',
+  awaiting_payment: 'Aguardando pagamento',
+  paid: 'Pago',
+  products_paid: 'Produtos pagos (frete pendente)',
+  shipped: 'Enviado',
+  completed: 'Finalizado',
+}
+
+const ORDER_EMAIL_RPCS = new Set([
+  'admin_update_order_status',
+  'admin_set_quote',
+  'admin_set_shipping_await_payment',
+  'admin_update_order',
+])
+
 function parseBody(req) {
   if (!req?.body) return {}
   if (typeof req.body === 'string') {
@@ -65,6 +91,182 @@ function parseBody(req) {
   }
   if (typeof req.body === 'object') return req.body
   return {}
+}
+
+function shouldSendOrderEmail(fn, data) {
+  if (!ORDER_EMAIL_RPCS.has(fn)) return false
+  if (!data || typeof data !== 'object') return false
+  return Boolean(data.user_id && data.id && data.status)
+}
+
+function getOrderStatusLabel(status) {
+  const key = String(status || '').trim()
+  return ORDER_STATUS_LABELS[key] || key || 'Atualizado'
+}
+
+function getOrdersUrl(req) {
+  const baseUrl =
+    process.env.VITE_SITE_URL ||
+    process.env.SITE_URL ||
+    process.env.VERCEL_PROJECT_PRODUCTION_URL ||
+    ''
+  const normalized = String(baseUrl || '').trim().replace(/\/+$/, '')
+  if (!normalized) return '/platform/orders'
+  if (/^https?:\/\//i.test(normalized)) return `${normalized}/platform/orders`
+  return `https://${normalized}/platform/orders`
+}
+
+function formatOrderAmount(orderRow) {
+  const quoteAmount = Number(orderRow?.quote_amount)
+  if (Number.isFinite(quoteAmount) && quoteAmount > 0) {
+    const currency = String(orderRow?.quote_currency || 'BRL')
+    return `Orçamento: ${currency} ${quoteAmount.toFixed(2)}`
+  }
+  const shippingCost = Number(orderRow?.shipping_cost)
+  if (Number.isFinite(shippingCost) && shippingCost > 0) {
+    const currency = String(orderRow?.shipping_currency || 'JPY')
+    return `Frete: ${currency} ${shippingCost.toFixed(2)}`
+  }
+  return ''
+}
+
+function buildOrderEmailCopy(fn, orderRow, orderShortId) {
+  const status = String(orderRow?.status || '').trim()
+  const amountLine = formatOrderAmount(orderRow)
+
+  if (fn === 'admin_set_quote') {
+    return {
+      subject: `Orçamento disponível para o pedido ${orderShortId || ''}`.trim(),
+      preheader: `Seu orçamento do pedido ${orderShortId || ''} já está disponível.`.trim(),
+      headline: 'Seu orçamento está disponível',
+      bodyLines: [
+        `Seu pedido ${orderShortId || ''} recebeu um orçamento e está aguardando seu pagamento.`.trim(),
+        amountLine || '',
+      ],
+    }
+  }
+
+  if (fn === 'admin_set_shipping_await_payment') {
+    return {
+      subject: `Frete definido para o pedido ${orderShortId || ''}`.trim(),
+      preheader: `O frete do seu pedido ${orderShortId || ''} foi definido.`.trim(),
+      headline: 'Seu frete foi definido',
+      bodyLines: [
+        `Seu pedido ${orderShortId || ''} já possui valor de frete e está aguardando pagamento.`.trim(),
+        amountLine || '',
+      ],
+    }
+  }
+
+  if (status === 'shipped') {
+    return {
+      subject: `Pedido ${orderShortId || ''} enviado`.trim(),
+      preheader: `Seu pedido ${orderShortId || ''} foi enviado.`.trim(),
+      headline: 'Seu pedido foi enviado',
+      bodyLines: [
+        `Seu pedido ${orderShortId || ''} foi enviado com sucesso.`,
+      ],
+    }
+  }
+
+  if (status === 'completed') {
+    return {
+      subject: `Pedido ${orderShortId || ''} finalizado`.trim(),
+      preheader: `Seu pedido ${orderShortId || ''} foi finalizado.`.trim(),
+      headline: 'Pedido finalizado',
+      bodyLines: [
+        `Seu pedido ${orderShortId || ''} foi concluído.`,
+      ],
+    }
+  }
+
+  if (status === 'rejected') {
+    return {
+      subject: `Atualização importante do pedido ${orderShortId || ''}`.trim(),
+      preheader: `Seu pedido ${orderShortId || ''} foi atualizado para rejeitado.`.trim(),
+      headline: 'Seu pedido foi rejeitado',
+      bodyLines: [
+        `Seu pedido ${orderShortId || ''} foi rejeitado. Verifique os detalhes na plataforma.`,
+      ],
+    }
+  }
+
+  const statusLabel = getOrderStatusLabel(status)
+  return {
+    subject: `Atualização do pedido ${orderShortId || ''}`.trim(),
+    preheader: `Pedido ${orderShortId || ''} atualizado para ${statusLabel}`.trim(),
+    headline: 'Seu pedido foi atualizado',
+    bodyLines: [
+      `Seu pedido ${orderShortId || ''} foi atualizado e agora está em: ${statusLabel}.`
+        .replace(/\s+/g, ' ')
+        .trim(),
+      amountLine || '',
+    ],
+  }
+}
+
+async function notifyOrderCustomerByEmail(supabase, req, fn, orderRow) {
+  const userId = String(orderRow?.user_id || '').trim()
+  if (!userId) return
+
+  const { data: profile, error } = await supabase
+    .from('profiles')
+    .select('email,name')
+    .eq('id', userId)
+    .maybeSingle()
+
+  if (error) {
+    console.warn('admin-rpc:order-email:profile_lookup_failed', { user_id: userId, error: error.message })
+    return
+  }
+
+  const to = String(profile?.email || '').trim().toLowerCase()
+  if (!to) return
+
+  const orderId = String(orderRow?.id || '')
+  const orderShortId = orderId ? orderId.slice(0, 8) : ''
+  const customerName = String(profile?.name || '').trim()
+  const greeting = customerName ? `Olá, ${customerName}!` : 'Olá!'
+  const ordersUrl = getOrdersUrl(req)
+  const copy = buildOrderEmailCopy(fn, orderRow, orderShortId)
+
+  const baseText = [
+    greeting,
+    '',
+    ...copy.bodyLines.filter(Boolean),
+    '',
+    `Acompanhe em: ${ordersUrl}`,
+    '',
+    'Equipe D-Delivery',
+  ]
+    .filter(Boolean)
+    .join('\n')
+
+  const template = buildProfessionalEmailTemplate({
+    subject: copy.subject,
+    bodyText: baseText,
+    preheader: copy.preheader,
+    headline: copy.headline,
+    ctaLabel: 'Ver meus pedidos',
+    ctaUrl: ordersUrl,
+    signatureName: 'Equipe D-Delivery',
+  })
+
+  try {
+    await sendResendEmail({
+      to: [to],
+      subject: copy.subject,
+      text: template.text,
+      html: template.html,
+    })
+  } catch (mailError) {
+    console.warn('admin-rpc:order-email:send_failed', {
+      order_id: orderId,
+      user_id: userId,
+      email: to,
+      error: mailError?.message || String(mailError),
+    })
+  }
 }
 
 export default async function handler(req, res) {
@@ -122,5 +324,10 @@ export default async function handler(req, res) {
   if (error) {
     return res.status(400).json({ error: error.message || 'RPC failed' })
   }
+
+  if (shouldSendOrderEmail(fn, data)) {
+    void notifyOrderCustomerByEmail(supabase, req, fn, data)
+  }
+
   return res.status(200).json({ ok: true, data: data ?? null })
 }
