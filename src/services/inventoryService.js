@@ -5,6 +5,7 @@
 import { supabase } from '../lib/supabase'
 import { withDbTimeout, toServiceError } from '../lib/dbGuard'
 import { callAdminRpc } from './adminRpcService'
+import { triggerUserTransactionalEmail } from './userTransactionalEmailService'
 
 /**
  * Lista itens do inventário do usuário (status stored ou ready_for_shipment).
@@ -127,6 +128,10 @@ export async function createShipment(userId, inventoryIds, options = {}) {
       return { data: shipment, error: quoteErr }
     }
 
+    void triggerUserTransactionalEmail({
+      event_type: 'shipment_requested',
+      shipment_id: shipment.id,
+    })
     return { data: shipment, error: null }
   } catch (e) {
     return { data: null, error: toServiceError(e) }

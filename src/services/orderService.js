@@ -6,6 +6,7 @@
 import { supabase } from '../lib/supabase'
 import { withDbTimeout, toServiceError } from '../lib/dbGuard'
 import { callAdminRpc } from './adminRpcService'
+import { triggerUserTransactionalEmail } from './userTransactionalEmailService'
 
 /** Statuses do pedido */
 export const ORDER_STATUS = {
@@ -108,6 +109,12 @@ export async function createOrder(userId, { service_id, message, attachment_urls
         .select()
         .single()
     )
+    if (!error && data?.id) {
+      void triggerUserTransactionalEmail({
+        event_type: 'order_created',
+        order_id: data.id,
+      })
+    }
     return { data, error }
   } catch (e) {
     return { data: null, error: toServiceError(e) }
@@ -425,6 +432,12 @@ export async function requestOrderExtraServices(orderId, extraServices) {
         p_extra_services: extraServices || {},
       })
     )
+    if (!error && data?.id) {
+      void triggerUserTransactionalEmail({
+        event_type: 'extra_services_requested',
+        order_id: data.id,
+      })
+    }
     return { data: data ?? null, error }
   } catch (e) {
     return { data: null, error: toServiceError(e) }

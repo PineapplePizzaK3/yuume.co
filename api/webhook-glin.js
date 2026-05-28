@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { createPublicKey, createVerify } from 'node:crypto'
 import { ensureInvoiceForPaidOrder } from '../server-lib/invoiceGenerator.js'
+import { sendOrderPaymentConfirmedEmail } from '../server-lib/customerLifecycleEmail.js'
 
 function getSupabaseAdmin() {
   const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
@@ -177,6 +178,25 @@ function buildPaymentId(payload, orderData, orderId) {
   return `glin_${externalId}`
 }
 
+async function trySendPaidOrderEmail(supabase, orderId) {
+  if (!orderId) return
+  try {
+    const { data: order } = await supabase
+      .from('orders')
+      .select('id,user_id,status,order_source,ship_immediately')
+      .eq('id', orderId)
+      .maybeSingle()
+    if (!order) return
+    if (order.status !== 'paid' && order.status !== 'products_paid') return
+    await sendOrderPaymentConfirmedEmail(supabase, order)
+  } catch (e) {
+    console.warn('glin-webhook:paid-email:not_sent', {
+      order_id: orderId,
+      error: e?.message || String(e),
+    })
+  }
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
@@ -322,6 +342,7 @@ export default async function handler(req, res) {
       await ensureInvoiceForPaidOrder(supabase, resolvedOrderId).catch((e) =>
         console.error('ensureInvoice (glin webhook intent):', e?.message || e)
       )
+      await trySendPaidOrderEmail(supabase, resolvedOrderId)
     }
     return res.status(200).json({ received: true })
   }
@@ -350,6 +371,7 @@ export default async function handler(req, res) {
     await ensureInvoiceForPaidOrder(supabase, resolvedOrderId).catch((e) =>
       console.error('ensureInvoice (glin webhook):', e?.message || e)
     )
+    await trySendPaidOrderEmail(supabase, resolvedOrderId)
   }
 
   return res.status(200).json({ received: true })

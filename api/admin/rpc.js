@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import { getAuthenticatedUser, getSupabaseAdmin, isAdminUser } from '../../server-lib/antiFraud.js'
 import { sendResendEmail } from '../../server-lib/resendEmail.js'
 import { buildProfessionalEmailTemplate } from '../../server-lib/professionalEmailTemplate.js'
+import { sendWalletTopupDecisionEmail } from '../../server-lib/customerLifecycleEmail.js'
 
 const ALLOWED_RPCS = new Set([
   'admin_add_inventory_from_order',
@@ -80,6 +81,11 @@ const ORDER_EMAIL_RPCS = new Set([
   'admin_update_order',
 ])
 
+const WALLET_TOPUP_EMAIL_RPCS = new Set([
+  'admin_approve_wallet_topup',
+  'admin_reject_wallet_topup',
+])
+
 function parseBody(req) {
   if (!req?.body) return {}
   if (typeof req.body === 'string') {
@@ -141,10 +147,10 @@ function buildOrderEmailCopy(fn, orderRow, orderShortId) {
   if (fn === 'admin_set_quote') {
     return {
       subject: `Orçamento disponível para o pedido ${orderShortId || ''}`.trim(),
-      preheader: `Seu orçamento do pedido ${orderShortId || ''} já está disponível.`.trim(),
+      preheader: `Seu orçamento do pedido ${orderShortId || ''} já está prontinho.`.trim(),
       headline: 'Seu orçamento está disponível',
       bodyLines: [
-        `Seu pedido ${orderShortId || ''} recebeu um orçamento e está aguardando seu pagamento.`.trim(),
+        `Seu pedido ${orderShortId || ''} já recebeu orçamento e agora está aguardando seu pagamento.`.trim(),
         amountLine || '',
       ],
     }
@@ -153,10 +159,10 @@ function buildOrderEmailCopy(fn, orderRow, orderShortId) {
   if (fn === 'admin_set_shipping_await_payment') {
     return {
       subject: `Frete definido para o pedido ${orderShortId || ''}`.trim(),
-      preheader: `O frete do seu pedido ${orderShortId || ''} foi definido.`.trim(),
+      preheader: `O frete do seu pedido ${orderShortId || ''} foi calculado.`.trim(),
       headline: 'Seu frete foi definido',
       bodyLines: [
-        `Seu pedido ${orderShortId || ''} já possui valor de frete e está aguardando pagamento.`.trim(),
+        `Seu pedido ${orderShortId || ''} já tem valor de frete e está aguardando pagamento.`.trim(),
         amountLine || '',
       ],
     }
@@ -168,7 +174,7 @@ function buildOrderEmailCopy(fn, orderRow, orderShortId) {
       preheader: `Seu pedido ${orderShortId || ''} foi enviado.`.trim(),
       headline: 'Seu pedido foi enviado',
       bodyLines: [
-        `Seu pedido ${orderShortId || ''} foi enviado com sucesso.`,
+        `Seu pedido ${orderShortId || ''} foi enviado. Agora é só acompanhar as próximas atualizações.`,
       ],
     }
   }
@@ -179,7 +185,8 @@ function buildOrderEmailCopy(fn, orderRow, orderShortId) {
       preheader: `Seu pedido ${orderShortId || ''} foi finalizado.`.trim(),
       headline: 'Pedido finalizado',
       bodyLines: [
-        `Seu pedido ${orderShortId || ''} foi concluído.`,
+        `Seu pedido ${orderShortId || ''} foi concluído com sucesso.`,
+        'Obrigada(o) por comprar com a gente!',
       ],
     }
   }
@@ -190,7 +197,7 @@ function buildOrderEmailCopy(fn, orderRow, orderShortId) {
       preheader: `Seu pedido ${orderShortId || ''} foi atualizado para rejeitado.`.trim(),
       headline: 'Seu pedido foi rejeitado',
       bodyLines: [
-        `Seu pedido ${orderShortId || ''} foi rejeitado. Verifique os detalhes na plataforma.`,
+        `Seu pedido ${orderShortId || ''} foi rejeitado. Dá uma olhada nos detalhes na plataforma e, se quiser, fale com a gente.`,
       ],
     }
   }
@@ -240,8 +247,9 @@ async function notifyOrderCustomerByEmail(supabase, req, fn, orderRow) {
     '',
     ...copy.bodyLines.filter(Boolean),
     '',
-    `Acompanhe em: ${ordersUrl}`,
+    `Você pode acompanhar por aqui: ${ordersUrl}`,
     '',
+    'Obrigada(o) pela confiança!',
     signatureName,
   ]
     .filter(Boolean)
@@ -350,6 +358,22 @@ export default async function handler(req, res) {
         fn,
         to: emailResult.to,
         order_id: emailResult.order_id,
+      })
+    }
+  }
+
+  if (WALLET_TOPUP_EMAIL_RPCS.has(fn) && data?.user_id && data?.id) {
+    try {
+      await sendWalletTopupDecisionEmail(
+        supabase,
+        data,
+        fn === 'admin_approve_wallet_topup' ? 'approved' : 'rejected'
+      )
+    } catch (e) {
+      console.warn('admin-rpc:wallet-topup-email:not_sent', {
+        fn,
+        topup_id: data?.id || null,
+        error: e?.message || String(e),
       })
     }
   }

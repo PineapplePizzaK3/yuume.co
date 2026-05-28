@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { ensureInvoiceForPaidOrder } from '../server-lib/invoiceGenerator.js'
+import { sendOrderPaymentConfirmedEmail } from '../server-lib/customerLifecycleEmail.js'
 
 function getSupabaseAdmin() {
   const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
@@ -94,6 +95,25 @@ function isWebhookAuthorized(req) {
   const authHeader = String(req.headers.authorization || '').trim()
   if (authHeader.toLowerCase() === `bearer ${expected.toLowerCase()}`) return true
   return false
+}
+
+async function trySendPaidOrderEmail(supabase, orderId) {
+  if (!orderId) return
+  try {
+    const { data: order } = await supabase
+      .from('orders')
+      .select('id,user_id,status,order_source,ship_immediately')
+      .eq('id', orderId)
+      .maybeSingle()
+    if (!order) return
+    if (order.status !== 'paid' && order.status !== 'products_paid') return
+    await sendOrderPaymentConfirmedEmail(supabase, order)
+  } catch (e) {
+    console.warn('parcelow-webhook:paid-email:not_sent', {
+      order_id: orderId,
+      error: e?.message || String(e),
+    })
+  }
 }
 
 export default async function handler(req, res) {
@@ -271,6 +291,7 @@ export default async function handler(req, res) {
       await ensureInvoiceForPaidOrder(supabase, resolvedOrderId).catch((e) =>
         console.error('ensureInvoice (parcelow webhook intent):', e?.message || e)
       )
+      await trySendPaidOrderEmail(supabase, resolvedOrderId)
     }
     return res.status(200).json({ received: true })
   }
@@ -298,6 +319,7 @@ export default async function handler(req, res) {
     await ensureInvoiceForPaidOrder(supabase, resolvedOrderId).catch((e) =>
       console.error('ensureInvoice (parcelow webhook):', e?.message || e)
     )
+    await trySendPaidOrderEmail(supabase, resolvedOrderId)
   }
 
   return res.status(200).json({ received: true })

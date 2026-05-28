@@ -3,6 +3,7 @@
  */
 import { supabase } from '../lib/supabase'
 import { withDbTimeout, toServiceError } from '../lib/dbGuard'
+import { triggerUserTransactionalEmail } from './userTransactionalEmailService'
 
 export const CART_UPDATED_EVENT = 'cart:updated'
 
@@ -179,7 +180,15 @@ export async function createStoreOrder(userId, shipImmediately, shippingCostJpy 
         p_coupon_code: couponCode && String(couponCode).trim() ? String(couponCode).trim() : null,
       })
     )
-    if (!error) emitCartUpdated(userId)
+    if (!error) {
+      emitCartUpdated(userId)
+      if (data?.id) {
+        void triggerUserTransactionalEmail({
+          event_type: 'order_created',
+          order_id: data.id,
+        })
+      }
+    }
     return { data: data ?? null, error }
   } catch (e) {
     return { data: null, error: toServiceError(e) }

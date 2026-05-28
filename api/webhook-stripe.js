@@ -9,6 +9,7 @@
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 import { ensureInvoiceForPaidOrder } from '../server-lib/invoiceGenerator.js'
+import { sendOrderPaymentConfirmedEmail } from '../server-lib/customerLifecycleEmail.js'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '')
 
@@ -26,6 +27,25 @@ function getRawBody(req) {
     req.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')))
     req.on('error', reject)
   })
+}
+
+async function trySendPaidOrderEmail(supabase, orderId) {
+  if (!orderId) return
+  try {
+    const { data: order } = await supabase
+      .from('orders')
+      .select('id,user_id,status,order_source,ship_immediately')
+      .eq('id', orderId)
+      .maybeSingle()
+    if (!order) return
+    if (order.status !== 'paid' && order.status !== 'products_paid') return
+    await sendOrderPaymentConfirmedEmail(supabase, order)
+  } catch (e) {
+    console.warn('stripe-webhook:paid-email:not_sent', {
+      order_id: orderId,
+      error: e?.message || String(e),
+    })
+  }
 }
 
 export default async function handler(req, res) {
@@ -128,6 +148,7 @@ export default async function handler(req, res) {
         await ensureInvoiceForPaidOrder(supabase, payOrderId).catch((e) =>
           console.error('ensureInvoice (stripe webhook intent):', e?.message || e)
         )
+        await trySendPaidOrderEmail(supabase, payOrderId)
       }
       return res.status(200).json({ received: true })
     }
@@ -172,6 +193,7 @@ export default async function handler(req, res) {
         await ensureInvoiceForPaidOrder(supabase, orderId).catch((e) =>
           console.error('ensureInvoice (stripe webhook):', e?.message || e)
         )
+        await trySendPaidOrderEmail(supabase, orderId)
       }
 
       // Loja: se ship_immediately=false, adiciona produtos ao inventário
