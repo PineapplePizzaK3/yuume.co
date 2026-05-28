@@ -181,13 +181,17 @@ export default function GroupPurchaseDetailContent({
                         className="block focus:outline-none focus:ring-2 focus:ring-earth-500 focus:ring-inset"
                       >
                         {productMainImg ? (
-                          <img src={productMainImg} alt={p.name} className="h-32 w-full bg-white object-contain" />
+                          <img
+                            src={productMainImg}
+                            alt={p.name}
+                            className="aspect-[4/5] w-full bg-white object-contain p-2"
+                          />
                         ) : (
-                          <div className="flex h-32 items-center justify-center bg-earth-200 text-earth-500 text-sm">
+                          <div className="flex aspect-[4/5] w-full items-center justify-center bg-earth-200 text-earth-500 text-sm">
                             {t('platform.store.noImage')}
                           </div>
                         )}
-                        <div className="p-3">
+                        <div className="p-2.5">
                           <h3 className="line-clamp-2 text-sm font-semibold text-earth-900">{p.__displayName || p.name}</h3>
                           {variantsCount > 1 && (
                             <p className="mt-1 text-[11px] font-medium text-earth-500">
@@ -210,12 +214,6 @@ export default function GroupPurchaseDetailContent({
                           {priceRange.hasRange && (
                             <p className="mt-1 text-[11px] font-medium text-earth-500">A partir de</p>
                           )}
-                          <p className="mt-2 text-xs font-medium text-earth-500">{tt('clickForDetails')}</p>
-                          <div className="mt-3">
-                            <span className="rounded-lg border border-earth-300 bg-white px-3 py-1.5 text-xs font-medium text-earth-700">
-                              {tt('viewProduct')}
-                            </span>
-                          </div>
                         </div>
                       </Link>
                       <div className="border-t border-earth-200 p-3 pt-2">
@@ -225,7 +223,7 @@ export default function GroupPurchaseDetailContent({
                           disabled={isOutOfStock(p)}
                           className="w-full rounded-lg px-3 py-2 text-xs font-medium disabled:cursor-not-allowed disabled:opacity-60 disabled:bg-earth-300 disabled:text-earth-600 bg-earth-900 text-white hover:bg-earth-800"
                         >
-                          {isOutOfStock(p) ? t('platform.store.outOfStock') : tt('buy')}
+                          {isOutOfStock(p) ? t('platform.store.outOfStock') : t('platform.store.addToCart')}
                         </button>
                       </div>
                     </div>

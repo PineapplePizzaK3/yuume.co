@@ -1,19 +1,25 @@
 import { useMemo, useState } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { REDES_SOCIAIS } from '../data/redesSociais'
 import { useAuth } from '../hooks/useAuth'
 import { useUnreadNotifications } from '../hooks/useUnreadNotifications'
 import { useLocalizedPath } from '../hooks/useLocalizedPath'
+import { useSiteLocale } from '../hooks/useSiteLocale'
 import { isRouteActive } from '../lib/localeRoutes'
+import { buildStaticSearchIndex } from '../services/globalSearchService'
 import { LocalizedLink } from './LocalizedLink'
 import { LanguageSwitcherDropdown, LanguageSwitcherInline } from './LanguageSwitcher'
+import { GlobalSearchModal } from './search/GlobalSearchModal'
 
 function Navbar() {
   const { t } = useTranslation()
   const { isAuthenticated, user, profile, isAdmin, signOut } = useAuth()
   const [menuAberto, setMenuAberto] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
   const location = useLocation()
+  const navigate = useNavigate()
+  const locale = useSiteLocale()
   const path = useLocalizedPath()
   const unreadNotifications = useUnreadNotifications(user?.id, 20)
   const hasUnreadNotifications = unreadNotifications > 0
@@ -53,12 +59,26 @@ function Navbar() {
     }
     return [vitrine]
   }, [isAuthenticated, t])
+  const staticSearchIndex = useMemo(() => buildStaticSearchIndex({ t, path }), [t, path])
+  const searchButtonLabel = locale === 'en' ? 'Search site' : 'Pesquisar no site'
+  const searchButtonTitle = locale === 'en' ? 'Search' : 'Pesquisar'
+
+  const handleOpenSearch = () => {
+    setMenuAberto(false)
+    setSearchOpen(true)
+  }
+
+  const handleSearchNavigate = (to) => {
+    if (!to) return
+    navigate(to)
+  }
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 overflow-visible bg-earth-50 shadow-sm border-b border-earth-200">
-      <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
-        <div className="relative flex min-h-[4.5rem] w-full items-center gap-1.5 sm:gap-2 lg:h-[4.5rem] lg:items-stretch">
-          <LocalizedLink
+    <>
+      <nav className="fixed top-0 left-0 right-0 z-50 overflow-visible bg-earth-50 shadow-sm border-b border-earth-200">
+        <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
+          <div className="relative flex min-h-[4.5rem] w-full items-center gap-1.5 sm:gap-2 lg:h-[4.5rem] lg:items-stretch">
+            <LocalizedLink
             toRoute="home"
             className={`relative z-10 flex min-w-0 max-w-[min(100%,10.5rem)] shrink-0 items-center sm:max-w-[12rem] lg:max-w-none ${location.pathname === homePath ? 'opacity-100' : 'opacity-90 hover:opacity-100'}`}
           >
@@ -129,6 +149,23 @@ function Navbar() {
                 </div>
               </div>
             </div>
+
+            <button
+              type="button"
+              onClick={handleOpenSearch}
+              className="flex h-full items-center text-earth-600 transition hover:text-earth-900"
+              aria-label={t('nav.searchAria', { defaultValue: searchButtonLabel })}
+              title={t('nav.searchTitle', { defaultValue: searchButtonTitle })}
+            >
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+            </button>
 
             <LanguageSwitcherDropdown />
 
@@ -213,6 +250,22 @@ function Navbar() {
           </div>
 
           <div className="relative z-10 ml-auto flex min-w-0 shrink-0 items-center justify-end gap-1 sm:gap-2 lg:ml-0 lg:hidden">
+            <button
+              type="button"
+              onClick={handleOpenSearch}
+              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-earth-100 text-earth-700 transition hover:bg-earth-200 hover:text-earth-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-earth-400 sm:h-10 sm:w-10"
+              aria-label={t('nav.searchAria', { defaultValue: searchButtonLabel })}
+              title={t('nav.searchTitle', { defaultValue: searchButtonTitle })}
+            >
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+            </button>
             {isAuthenticated ? (
               <>
                 {isAdmin && (
@@ -330,8 +383,16 @@ function Navbar() {
             </div>
           </div>
         )}
-      </div>
-    </nav>
+        </div>
+      </nav>
+      <GlobalSearchModal
+        open={searchOpen}
+        onClose={() => setSearchOpen(false)}
+        onNavigate={handleSearchNavigate}
+        staticIndex={staticSearchIndex}
+        locale={locale}
+      />
+    </>
   )
 }
 

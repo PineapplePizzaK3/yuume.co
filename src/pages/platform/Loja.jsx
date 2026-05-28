@@ -201,7 +201,7 @@ function LojaEstoqueCatalog({ publicMode = false }) {
                       <img
                         src={thumbUrl || mainImg}
                         alt={displayName}
-                        className="h-28 w-full cursor-zoom-in object-cover"
+                        className="aspect-[4/5] w-full cursor-zoom-in bg-white object-contain p-2"
                         loading="lazy"
                         onError={(e) => {
                           if (e.target.src !== mainImg) e.target.src = mainImg
@@ -209,7 +209,7 @@ function LojaEstoqueCatalog({ publicMode = false }) {
                         onClick={(e) => openLightbox(imgs, 0, displayName, e)}
                       />
                     ) : (
-                      <div className="flex h-28 items-center justify-center bg-earth-200 text-earth-500 text-xs">
+                      <div className="flex aspect-[4/5] w-full items-center justify-center bg-earth-200 text-earth-500 text-xs">
                         {t('platform.store.noImage')}
                       </div>
                     )}
