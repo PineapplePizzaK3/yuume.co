@@ -26,7 +26,6 @@ import {
   SERVICE_FEE_JPY_PER_ITEM,
   REDIR_ASSISTIDO_FEE_PERCENT,
   PERSONAL_SHOPPING_FEE_PERCENT,
-  computeRedirecionamentoPadraoFeeJpy,
   computeAssistedEarlyPrepayDebitJpy,
 } from '../../data/serviceFees'
 
@@ -468,9 +467,7 @@ export default function Orders() {
     const isAssistedBuy = order?.order_module === 'assisted_buy' || order?.order_module === 'redir-assistido'
     const servicePercent = isAssistedBuy ? REDIR_ASSISTIDO_FEE_PERCENT : PERSONAL_SHOPPING_FEE_PERCENT
     const serviceFeePercent = Math.round(baseTotal * (servicePercent / 100))
-    const serviceFeeFixed = isAssistedBuy
-      ? computeRedirecionamentoPadraoFeeJpy(totalItems)
-      : SERVICE_FEE_JPY_PER_ITEM * totalItems
+    const serviceFeeFixed = isAssistedBuy ? 0 : SERVICE_FEE_JPY_PER_ITEM * totalItems
 
     const grandTotal = baseTotal + serviceFeePercent + serviceFeeFixed
     return Number.isFinite(grandTotal) && grandTotal > 0 ? grandTotal : null

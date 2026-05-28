@@ -11,7 +11,6 @@ import {
   SERVICE_FEE_JPY_PER_ITEM,
   REDIR_ASSISTIDO_FEE_PERCENT,
   PERSONAL_SHOPPING_FEE_PERCENT,
-  computeRedirecionamentoPadraoFeeJpy,
 } from '../data/serviceFees'
 
 export default function QuoteProductsList({ message, quoteCurrency = 'JPY', formatMoney, orderModule = 'personal_shopping' }) {
@@ -59,9 +58,7 @@ export default function QuoteProductsList({ message, quoteCurrency = 'JPY', form
   const totalItems = products.reduce((sum, p) => sum + Math.max(1, parseInt(p.quantidade, 10) || 1), 0)
 
   const serviceFeePercent = Math.round(baseTotal * (servicePercent / 100))
-  const serviceFeeFixed = isAssistedBuy
-    ? computeRedirecionamentoPadraoFeeJpy(totalItems)
-    : SERVICE_FEE_JPY_PER_ITEM * totalItems
+  const serviceFeeFixed = isAssistedBuy ? 0 : SERVICE_FEE_JPY_PER_ITEM * totalItems
   const grandTotal = baseTotal + serviceFeePercent + serviceFeeFixed
 
   const fmt = (v) => {
@@ -113,17 +110,17 @@ export default function QuoteProductsList({ message, quoteCurrency = 'JPY', form
             <span>{t('platform.quoteList.serviceFeePercent', { percent: servicePercent })}</span>
             <span>{fmt(serviceFeePercent)}</span>
           </div>
-          <div className="flex justify-between">
-            <span>
-              {isAssistedBuy
-                ? t('platform.quoteList.perItemLikeStandard', { count: totalItems })
-                : t('platform.quoteList.perItemTimes', {
-                    fee: fmt(SERVICE_FEE_JPY_PER_ITEM),
-                    count: totalItems,
-                  })}
-            </span>
-            <span>{fmt(serviceFeeFixed)}</span>
-          </div>
+          {!isAssistedBuy && (
+            <div className="flex justify-between">
+              <span>
+                {t('platform.quoteList.perItemTimes', {
+                  fee: fmt(SERVICE_FEE_JPY_PER_ITEM),
+                  count: totalItems,
+                })}
+              </span>
+              <span>{fmt(serviceFeeFixed)}</span>
+            </div>
+          )}
         </div>
         <div className="mt-3 border-t border-earth-900 pt-2 flex justify-between font-semibold text-earth-900">
           <span>{t('platform.quoteList.quoteTotal')}</span>
