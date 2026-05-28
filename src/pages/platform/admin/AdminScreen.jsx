@@ -1,6 +1,6 @@
 /**
- * Admin - Painel de administraÃ§Ã£o da plataforma.
- * Inclui gestÃ£o de produtos e pedidos.
+ * Admin - Painel de administração da plataforma.
+ * Inclui gestão de produtos e pedidos.
  */
 import { useCallback, useEffect, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
@@ -108,7 +108,7 @@ import {
 import { downloadInvoicePdf } from '../../../services/invoiceService'
 
 function formatMoney(v, currency = 'BRL') {
-  return Number(v)?.toLocaleString('pt-BR', { style: 'currency', currency }) ?? 'â€”'
+  return Number(v)?.toLocaleString('pt-BR', { style: 'currency', currency }) ?? '—'
 }
 
 const ADMIN_PAGE_SIZE = {
@@ -120,8 +120,8 @@ const ADMIN_TAB_ORDER_STORAGE_KEY = 'admin_tabs_order_v1'
 
 function formatOrderModuleLabel(order) {
   if (!order) return null
-  if (order.order_module === 'self_buy') return 'Redirecionamento Â· PadrÃ£o'
-  if (order.order_module === 'assisted_buy') return 'Redirecionamento Â· Assistido'
+  if (order.order_module === 'self_buy') return 'Redirecionamento · Padrão'
+  if (order.order_module === 'assisted_buy') return 'Redirecionamento · Assistido'
   return null
 }
 
@@ -133,7 +133,7 @@ function getProductBasePriceJpy(product) {
 function PaginationControls({ page, hasMore, loading, onPrev, onNext }) {
   return (
     <div className="mt-4 flex items-center justify-between gap-3 rounded-lg border border-earth-200 bg-white px-3 py-2 text-sm">
-      <span className="text-earth-600">PÃ¡gina {page + 1}</span>
+      <span className="text-earth-600">Página {page + 1}</span>
       <div className="flex gap-2">
         <button
           type="button"
@@ -149,7 +149,7 @@ function PaginationControls({ page, hasMore, loading, onPrev, onNext }) {
           disabled={loading || !hasMore}
           className="rounded border border-earth-300 px-3 py-1.5 font-medium text-earth-700 hover:bg-earth-100 disabled:opacity-50"
         >
-          PrÃ³xima
+          Próxima
         </button>
       </div>
     </div>
@@ -675,7 +675,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       setServices(data ?? [])
       if (error) setMessage(error.message)
     } catch (e) {
-      if (active()) setMessage(e?.message || 'Erro ao carregar serviÃ§os')
+      if (active()) setMessage(e?.message || 'Erro ao carregar serviços')
     }
   }
 
@@ -762,7 +762,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       setUsersHasMore(list.length === ADMIN_PAGE_SIZE.users)
       if (error) setMessage(error.message)
     } catch (e) {
-      if (active()) setMessage(e?.message || 'Erro ao carregar usuÃ¡rios')
+      if (active()) setMessage(e?.message || 'Erro ao carregar usuários')
     } finally {
       if (active()) setUsersListLoading(false)
     }
@@ -807,7 +807,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
         walletSavingAction: null,
       }))
     } catch (e) {
-      setMessage(e?.message || 'Erro ao carregar usuÃ¡rio')
+      setMessage(e?.message || 'Erro ao carregar usuário')
       setUserDetailModal((m) => ({ ...m, loading: false }))
     }
   }
@@ -886,7 +886,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       const isDebit = mode === 'debit'
       const currentBalance = Number(userDetailModal.wallet?.balance) || 0
       if (isDebit && amount > currentBalance) {
-        setMessage('Saldo insuficiente para remoÃ§Ã£o.')
+        setMessage('Saldo insuficiente para remoção.')
         setUserDetailModal((m) => ({ ...m, walletSaving: false, walletSavingAction: null }))
         return
       }
@@ -1033,7 +1033,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       setAdminNotifications(data ?? [])
       if (error) setMessage(error?.message)
     } catch (e) {
-      if (active()) setMessage(e?.message || 'Erro ao carregar notificaÃ§Ãµes do admin')
+      if (active()) setMessage(e?.message || 'Erro ao carregar notificações do admin')
     } finally {
       if (active()) setAdminNotificationsLoading(false)
     }
@@ -1065,10 +1065,10 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     try {
       const { error } = await decideFraudCase({ entityType, id, decision })
       if (error) {
-        setMessage(error.message || 'Erro ao atualizar decisÃ£o antifraude')
+        setMessage(error.message || 'Erro ao atualizar decisão antifraude')
         return
       }
-      setMessage('DecisÃ£o antifraude salva.')
+      setMessage('Decisão antifraude salva.')
       loadFraudQueue()
     } finally {
       setFraudDecisionLoadingId('')
@@ -1636,7 +1636,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       setAuthLogs(data ?? [])
       if (error) setMessage(error.message)
     } catch (e) {
-      if (active()) setMessage(e?.message || 'Erro ao carregar logs de autenticaÃ§Ã£o')
+      if (active()) setMessage(e?.message || 'Erro ao carregar logs de autenticação')
     } finally {
       if (active()) setAuthLogsLoading(false)
     }
@@ -1748,7 +1748,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     const name = groupForm.name?.trim()
     const destination = String(groupForm.destination || '').trim().toLowerCase()
     if (!name) {
-      setScopedMessage('grupos', 'Nome do grupo Ã© obrigatÃ³rio')
+      setScopedMessage('grupos', 'Nome do grupo é obrigatório')
       return
     }
     if (destination !== 'online' && destination !== 'physical') {
@@ -1758,7 +1758,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
 
     const imageUrls = Array.isArray(groupForm.image_urls) ? groupForm.image_urls.filter(Boolean) : []
     if (!imageUrls.length) {
-      setScopedMessage('grupos', 'Fotos do grupo sÃ£o obrigatÃ³rias')
+      setScopedMessage('grupos', 'Fotos do grupo são obrigatórias')
       return
     }
 
@@ -1961,7 +1961,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     setScopedMessage('catalogo', '')
     const priceJpy = parseFloat(form.price)
     if (isNaN(priceJpy) || priceJpy < 0) {
-      setScopedMessage('catalogo', 'PreÃ§o invÃ¡lido')
+      setScopedMessage('catalogo', 'Preço inválido')
       return
     }
     const weightRaw = form.weight_kg
@@ -1975,7 +1975,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       weightVal = parsed
     }
     const weightKg = form.weight_unit === 'g' ? weightVal / 1000 : weightVal
-    // Persistimos preÃ§o base em JPY no catÃ¡logo.
+    // Persistimos preço base em JPY no catálogo.
     const price = priceJpy
     const imageUrls = Array.isArray(form.image_urls) && form.image_urls.length > 0
       ? form.image_urls.filter(Boolean)
@@ -2094,7 +2094,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
 
     setScopedMessage('catalogo', 'Produto removido')
     loadProducts()
-    // Log nÃ£o deve interferir no UX de remoÃ§Ã£o.
+    // Log não deve interferir no UX de remoção.
     logAdminAction('product_delete', 'product', id).catch(() => {})
   }
 
@@ -2129,7 +2129,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     setScopedMessage('catalogo', '')
     const urls = Array.isArray(p.image_urls)?.length ? p.image_urls.filter(Boolean) : (p.image_url ? [p.image_url] : [])
     const payload = {
-      name: `${(p.name || '').trim()} (cÃ³pia)`,
+      name: `${(p.name || '').trim()} (cópia)`,
       description: p.description ?? '',
       price: p.price,
       weight_kg: p.weight_kg ?? 0,
@@ -2229,7 +2229,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     e.preventDefault()
     const baseShipping = parseFloat(shippingModal.cost)
     if (isNaN(baseShipping) || baseShipping < 0) {
-      setMessage('Valor do frete invÃ¡lido')
+      setMessage('Valor do frete inválido')
       return
     }
     const perItemFee = Math.max(0, parseFloat(shippingModal.redirectFeePerItem || '0') || 0)
@@ -2515,7 +2515,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       }))
       .filter((p) => (p.name?.trim() || p.descricao?.trim()) && p.valor > 0)
     if (products.length === 0) {
-      setMessage('Adicione ao menos um produto com nome ou descriÃ§Ã£o e valor.')
+      setMessage('Adicione ao menos um produto com nome ou descrição e valor.')
       return
     }
     const total = products.reduce((s, p) => s + p.valor * p.quantidade, 0)
@@ -2524,7 +2524,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     setMessage('')
     const { error } = await setQuoteAdmin(quoteModal.orderId, total, 'JPY', message)
     setSubmitting(false)
-    setMessage(error ? error.message : 'OrÃ§amento definido. Cliente pode pagar em Pedidos.')
+    setMessage(error ? error.message : 'Orçamento definido. Cliente pode pagar em Pedidos.')
     if (!error) {
       logAdminAction('order_set_quote', 'order', quoteModal.orderId, { total, currency: 'JPY', productsCount: products.length })
       setQuoteModal({ 
@@ -2596,9 +2596,16 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     const hasShipping = orderEditModal.shipping_cost.trim() !== ''
     const shippingCost = hasShipping ? parseFloat(orderEditModal.shipping_cost) : null
     if (hasShipping && (isNaN(shippingCost) || shippingCost < 0)) {
-      setMessage('Valor do frete invÃ¡lido')
+      setMessage('Valor do frete inválido')
       return
     }
+
+    const editService = services.find((s) => String(s.id) === String(orderEditModal.service_id || ''))
+    const editServiceName = String(editService?.name || '').trim().toLowerCase()
+    const isEditRedirection = editServiceName === 'redirecionamento'
+    const normalizedOrderModule = isEditRedirection
+      ? (orderEditModal.order_module === 'assisted_buy' ? 'assisted_buy' : 'self_buy')
+      : null
 
     const payload = {
       service_id: orderEditModal.service_id || null,
@@ -2606,6 +2613,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       message: orderEditModal.message,
       shipping_cost: shippingCost,
       shipping_currency: orderEditModal.shipping_currency || 'JPY',
+      order_module: normalizedOrderModule,
       extra_services: orderEditModal.extra_services,
     }
 
@@ -2619,7 +2627,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
   }
 
   const handleDeleteOrder = async (orderId) => {
-    if (!confirm('Remover este pedido? Esta aÃ§Ã£o nÃ£o pode ser desfeita.')) return
+    if (!confirm('Remover este pedido? Esta ação não pode ser desfeita.')) return
     const { error } = await deleteOrderAdmin(orderId)
     setMessage(error ? error.message : 'Pedido removido')
     if (!error) {
@@ -2638,18 +2646,18 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     try {
       const { data, error } = await getAllOrdersAdmin(5000, 0, null)
       if (error) {
-        setMessage(error.message || 'Erro ao localizar pedido da notificaÃ§Ã£o')
+        setMessage(error.message || 'Erro ao localizar pedido da notificação')
         return false
       }
       const target = (data || []).find((o) => o.id === orderId)
       if (!target) {
-        setMessage('Pedido da notificaÃ§Ã£o nÃ£o foi encontrado.')
+        setMessage('Pedido da notificação não foi encontrado.')
         return false
       }
       openOrderEditModal(target)
       return true
     } catch (e) {
-      setMessage(e?.message || 'Erro ao abrir pedido da notificaÃ§Ã£o')
+      setMessage(e?.message || 'Erro ao abrir pedido da notificação')
       return false
     }
   }
@@ -2686,7 +2694,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
         photo_url: inventoryModal.photo_url?.trim() || null,
         video_url: inventoryModal.video_url?.trim() || null,
       })
-      setMessage(error ? error.message : 'Item adicionado ao inventÃ¡rio do usuÃ¡rio.')
+      setMessage(error ? error.message : 'Item adicionado ao inventário do usuário.')
       if (!error) {
         logAdminAction('inventory_add_from_order', 'order', inventoryModal.orderId, { name })
         setInventoryModal({ open: false, orderId: null, orderMessage: '', name: '', notes: '', weight_kg: '', photo_url: '', video_url: '' })
@@ -2701,7 +2709,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     e.preventDefault()
     const uid = createOrderModal.user_id?.trim()
     if (!uid) {
-      setMessage('Selecione o usuÃ¡rio.')
+      setMessage('Selecione o usuário.')
       return
     }
     setSubmitting(true)
@@ -2711,7 +2719,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
         service_id: createOrderModal.service_id || null,
         message: createOrderModal.message?.trim() || null,
       })
-      setMessage(error ? error.message : 'Pedido criado na conta do usuÃ¡rio.')
+      setMessage(error ? error.message : 'Pedido criado na conta do usuário.')
       if (!error) {
         logAdminAction('order_create_for_user', 'order', null, { user_id: createOrderModal.user_id })
         setCreateOrderModal({ open: false, user_id: '', service_id: '', message: '' })
@@ -2726,7 +2734,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     e.preventDefault()
     const uid = registerPackageModal.user_id?.trim()
     if (!uid) {
-      setMessage('Selecione o usuÃ¡rio.')
+      setMessage('Selecione o usuário.')
       return
     }
 
@@ -2750,7 +2758,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
         photo_url: registerPackageModal.photo_url?.trim() || null,
         video_url: registerPackageModal.video_url?.trim() || null,
       })
-      setMessage(error ? error.message : 'Pacote registrado na conta do usuÃ¡rio.')
+      setMessage(error ? error.message : 'Pacote registrado na conta do usuário.')
       if (!error) {
         logAdminAction('package_register', null, null, { 
           user_id: registerPackageModal.user_id,
@@ -2862,7 +2870,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
         pageSize: 12,
       })
       if (error) {
-        setExternalSearchError(error.message || 'Erro ao buscar catÃ¡logos.')
+        setExternalSearchError(error.message || 'Erro ao buscar catálogos.')
         if (page === 1) {
           setExternalSearchResults([])
           setExternalSearchMeta(null)
@@ -2875,7 +2883,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       setExternalSearchMeta(data?.meta ?? null)
       setExternalSearchPartials(data?.partials ?? [])
     } catch (e) {
-      setExternalSearchError(e?.message || 'Erro ao buscar catÃ¡logos.')
+      setExternalSearchError(e?.message || 'Erro ao buscar catálogos.')
     } finally {
       setExternalSearchLoading(false)
     }
@@ -2891,7 +2899,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
   }
 
   const formatExternalPrice = (price, currency = 'JPY') => {
-    if (price == null || Number.isNaN(Number(price))) return 'PreÃ§o indisponÃ­vel'
+    if (price == null || Number.isNaN(Number(price))) return 'Preço indisponível'
     return Number(price).toLocaleString('pt-BR', { style: 'currency', currency: String(currency).toUpperCase() })
   }
 
@@ -3218,7 +3226,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
           </div>
         )}
 
-        {/* NavegaÃ§Ã£o por abas */}
+        {/* Navegação por abas */}
         <AdminTabsNav
           orderedTabs={orderedTabs}
           activeTab={activeTab}
@@ -3305,7 +3313,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
         {/* Invoices e documentos financeiros */}
         <InvoicesAdminSection />
 
-        {/* Modal: detalhes e ediÃ§Ã£o do usuÃ¡rio */}
+        {/* Modal: detalhes e edição do usuário */}
         {userDetailModal.open && (
           <div
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
@@ -3319,7 +3327,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
             >
               <div className="sticky top-0 z-10 flex items-center justify-between border-b border-earth-200 bg-white px-6 py-4">
                 <h3 className="text-lg font-semibold text-earth-900">
-                  {userDetailModal.loading ? 'Carregando...' : (userDetailModal.profile?.name || userDetailModal.user?.email || 'UsuÃ¡rio')}
+                  {userDetailModal.loading ? 'Carregando...' : (userDetailModal.profile?.name || userDetailModal.user?.email || 'Usuário')}
                 </h3>
                 <button
                   type="button"
@@ -3327,7 +3335,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
                   className="rounded p-1 text-earth-500 hover:bg-earth-100 hover:text-earth-900"
                   aria-label="Fechar"
                 >
-                  Ã—
+                  ×
                 </button>
               </div>
               <div className="p-6 space-y-6">
@@ -3398,7 +3406,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
                             />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-earth-700">CÃ³digo da conta</label>
+                            <label className="block text-sm font-medium text-earth-700">Código da conta</label>
                             <input
                               type="text"
                               value={userDetailModal.profileForm.account_code}
@@ -3412,7 +3420,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
                             />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-earth-700">FunÃ§Ã£o</label>
+                            <label className="block text-sm font-medium text-earth-700">Função</label>
                             <select
                               value={userDetailModal.profileForm.role}
                               onChange={(e) =>
@@ -3423,7 +3431,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
                               }
                               className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
                             >
-                              <option value="user">UsuÃ¡rio</option>
+                              <option value="user">Usuário</option>
                               <option value="admin">Administrador</option>
                             </select>
                           </div>
@@ -3433,7 +3441,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
                           disabled={userDetailModal.saving}
                           className="rounded-lg bg-earth-800 px-4 py-2 text-sm font-medium text-white hover:bg-earth-900 disabled:opacity-60"
                         >
-                          {userDetailModal.saving ? 'Salvando...' : 'Salvar alteraÃ§Ãµes'}
+                          {userDetailModal.saving ? 'Salvando...' : 'Salvar alterações'}
                         </button>
                       </form>
                     </div>
@@ -3460,7 +3468,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
                           />
                         </div>
                         <div className="flex-1 min-w-[200px]">
-                          <label className="block text-sm font-medium text-earth-700">DescriÃ§Ã£o (opcional)</label>
+                          <label className="block text-sm font-medium text-earth-700">Descrição (opcional)</label>
                           <input
                             type="text"
                             value={userDetailModal.walletDesc}
@@ -3493,14 +3501,14 @@ export default function Admin({ routeTabId = 'pedidos' }) {
                       </form>
                     </div>
 
-                    {/* Pedidos do usuÃ¡rio */}
+                    {/* Pedidos do usuário */}
                     <div>
                       <h4 className="font-medium text-earth-900 mb-3">Pedidos ({userDetailModal.ordersCount})</h4>
                       {userDetailModal.ordersCount === 0 ? (
                         <p className="text-sm text-earth-600">Nenhum pedido.</p>
                       ) : (
                         <p className="text-sm text-earth-600 mb-2">
-                          VÃ¡ para a aba Pedidos para editar os pedidos deste usuÃ¡rio.
+                          Vá para a aba Pedidos para editar os pedidos deste usuário.
                         </p>
                       )}
                       {orders.filter((o) => o.user_id === userDetailModal.user?.id).slice(0, 5).map((o) => (
@@ -3509,7 +3517,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
                           className="flex items-center justify-between rounded-lg border border-earth-200 bg-earth-50 px-4 py-2 mb-2"
                         >
                           <div>
-                            <span className="font-medium text-earth-900">Pedido {o.id?.slice(0, 8)}â€¦</span>
+                            <span className="font-medium text-earth-900">Pedido {o.id?.slice(0, 8)}…</span>
                             <span className="ml-2 rounded bg-earth-200 px-2 py-0.5 text-xs text-earth-700">
                               {ORDER_STATUS_LABELS[o.status] ?? o.status}
                             </span>

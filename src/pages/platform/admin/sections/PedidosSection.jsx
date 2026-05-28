@@ -104,6 +104,22 @@ export default function PedidosSection() {
       currency: String(raw.currency || order?.shipping_currency || 'JPY'),
     }
   }
+  const normalizePhoneForWhatsApp = (rawPhone) => {
+    const digits = String(rawPhone || '').replace(/\D+/g, '')
+    if (!digits) return null
+    const normalized = digits.startsWith('00') ? digits.slice(2) : digits
+    // wa.me expects international format (country code + number) without symbols.
+    if (normalized.length < 10) return null
+    return normalized
+  }
+  const buildWhatsAppLink = (order) => {
+    const phone = normalizePhoneForWhatsApp(order?.user_phone)
+    if (!phone) return null
+    const userLabel = order?.user_name || order?.user_email || 'cliente'
+    const orderShortId = String(order?.id || '').slice(0, 8)
+    const message = `Olá ${userLabel}, falando sobre seu pedido ${orderShortId} na ddelivery.`
+    return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`
+  }
   const shippingSnapshot = shippingModal.orderSnapshot || null
   const shippingItems = Array.isArray(shippingSnapshot?.parsedProducts) ? shippingSnapshot.parsedProducts : []
   const shippingItemsCount = Math.max(
@@ -159,6 +175,12 @@ export default function PedidosSection() {
     return haystack.includes(adminUserFilterTerm)
   }
   const ordersForList = orders.filter(includeByUser)
+  const selectedEditService = services.find((s) => String(s.id) === String(orderEditModal.service_id || ''))
+  const selectedEditServiceName = String(selectedEditService?.name || '').trim().toLowerCase()
+  const isOrderEditRedirection =
+    selectedEditServiceName === 'redirecionamento' ||
+    orderEditModal.order_module === 'self_buy' ||
+    orderEditModal.order_module === 'assisted_buy'
 
   if (activeTab !== 'pedidos' && !hasGlobalModalOpen) return null
 
@@ -365,6 +387,32 @@ export default function PedidosSection() {
                   )}
                 </div>
                 <div className="flex flex-wrap gap-2">
+                  {(() => {
+                    const userEmail = String(o?.user_email || '').trim()
+                    const whatsappLink = buildWhatsAppLink(o)
+                    return (
+                      <>
+                        {userEmail && (
+                          <a
+                            href={`mailto:${userEmail}`}
+                            className="rounded border border-sky-300 px-3 py-1.5 text-sm font-medium text-sky-700 hover:bg-sky-50"
+                          >
+                            E-mail
+                          </a>
+                        )}
+                        {whatsappLink && (
+                          <a
+                            href={whatsappLink}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="rounded border border-emerald-300 px-3 py-1.5 text-sm font-medium text-emerald-700 hover:bg-emerald-50"
+                          >
+                            WhatsApp
+                          </a>
+                        )}
+                      </>
+                    )
+                  })()}
                   {o.status === ORDER_STATUS.AWAITING_QUOTE && (
                     <button
                       type="button"
@@ -996,7 +1044,19 @@ export default function PedidosSection() {
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <select
                 value={orderEditModal.service_id}
-                onChange={(e) => setOrderEditModal((m) => ({ ...m, service_id: e.target.value }))}
+                onChange={(e) => {
+                  const nextServiceId = e.target.value
+                  const nextService = services.find((s) => String(s.id) === String(nextServiceId))
+                  const nextServiceName = String(nextService?.name || '').trim().toLowerCase()
+                  const isRedirectionService = nextServiceName === 'redirecionamento'
+                  setOrderEditModal((m) => ({
+                    ...m,
+                    service_id: nextServiceId,
+                    order_module: isRedirectionService
+                      ? (m.order_module === 'assisted_buy' ? 'assisted_buy' : 'self_buy')
+                      : null,
+                  }))
+                }}
                 className="rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
               >
                 <option value="">Sem serviço</option>
@@ -1017,6 +1077,16 @@ export default function PedidosSection() {
                   </option>
                 ))}
               </select>
+              {isOrderEditRedirection && (
+                <select
+                  value={orderEditModal.order_module || 'self_buy'}
+                  onChange={(e) => setOrderEditModal((m) => ({ ...m, order_module: e.target.value }))}
+                  className="rounded-lg border border-earth-300 px-3 py-2 text-earth-900 sm:col-span-2"
+                >
+                  <option value="self_buy">Redirecionamento · Padrão</option>
+                  <option value="assisted_buy">Redirecionamento · Assistido</option>
+                </select>
+              )}
             </div>
             <div className="mt-3">
               {orderEditParsedQuote ? (

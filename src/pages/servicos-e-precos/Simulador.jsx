@@ -169,6 +169,11 @@ function Simulador() {
         tipo: 'percentual',
         percentual: 20,
       },
+      {
+        id: 'sem-taxa',
+        label: t('publicSimulador.svcSemTaxa'),
+        tipo: 'sem-taxa',
+      },
     ],
     [t],
   )
@@ -382,7 +387,7 @@ function Simulador() {
   const freteLabel = tipoFreteSelecionado?.label ?? t('publicSimulador.shipEms')
   const prazoEntrega = tipoFreteSelecionado?.prazo ?? ''
   const computeServiceFee = (service, subtotalProdutosServico, totalItensServico) => {
-    if (!service) return 0
+    if (!service || service.tipo === 'sem-taxa') return 0
     if (service.tipo === 'redir-padrao') {
       return computeRedirecionamentoPadraoFeeJpy(totalItensServico)
     }
@@ -398,6 +403,7 @@ function Simulador() {
 
   const getServiceFeeLabel = (service) => {
     if (!service) return ''
+    if (service.tipo === 'sem-taxa') return t('publicSimulador.labelFeeSemTaxa')
     if (service.tipo === 'redir-padrao') return t('publicSimulador.labelFeeRedirPadrao')
     if (service.tipo === 'redir-assistido') {
       return t('publicSimulador.labelFeeRedirAssistido', {

@@ -89,11 +89,20 @@ export async function fetchViaJina(url: string, timeoutMs: number = JINA_TIMEOUT
 
 export function collectImageCandidates(html: string): string[] {
   const imgMatches = Array.from(html.matchAll(/<img[^>]+src=["']([^"']+)["']/gi)).map((m) => m[1])
+  const lazyMatches = Array.from(
+    html.matchAll(/<img[^>]+(?:data-src|data-original|data-lazy|data-lazy-src)=["']([^"']+)["']/gi),
+  ).map((m) => m[1])
+  const srcsetMatches = Array.from(
+    html.matchAll(/<img[^>]+(?:srcset|data-srcset)=["']([^"']+)["']/gi),
+  )
+    .flatMap((m) => String(m[1] || '').split(','))
+    .map((chunk) => chunk.trim().split(/\s+/)[0])
+    .filter(Boolean)
   const metaMatches = [
     html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)?.[1],
     html.match(/<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i)?.[1],
   ].filter(Boolean) as string[]
-  return [...imgMatches, ...metaMatches]
+  return [...imgMatches, ...lazyMatches, ...srcsetMatches, ...metaMatches]
 }
 
 export function queryTokens(query: string): string[] {
@@ -166,11 +175,14 @@ export function isMercariProductUrl(url: string): boolean {
 export function isRakumaProductUrl(url: string): boolean {
   try {
     const u = new URL(url)
-    if (!/(^|\.)fril\.jp$/i.test(u.hostname)) return false
+    const host = u.hostname.toLowerCase()
     const path = normalizeItemPathname(u.pathname)
-    if (!/^\/item\/[a-z0-9_-]+$/i.test(path)) return false
     if (hasImageLikeExt(path)) return false
-    return true
+    // Legado: https://fril.jp/item/{id}
+    if (/(^|\.)fril\.jp$/i.test(host) && /^\/item\/[a-z0-9_-]+$/i.test(path)) return true
+    // Atual: https://item.fril.jp/{hash}
+    if (host === 'item.fril.jp' && /^\/[a-f0-9]{16,64}$/i.test(path)) return true
+    return false
   } catch {
     return false
   }
@@ -208,22 +220,43 @@ export function extractRakumaHitsFromHtmlRegex(html: string, pageSize: number): 
   price: number | null
   imageUrl: string | null
 }> {
-  const re = /(?:https?:)?\/\/(?:www\.)?fril\.jp\/item\/([a-z0-9_-]+)/gi
   const seen = new Set<string>()
   const out: Array<{ title: string; productUrl: string; price: number | null; imageUrl: string | null }> = []
-  let m: RegExpExecArray | null
-  while ((m = re.exec(html)) !== null && out.length < pageSize * 2) {
-    const id = m[1]
-    const url = `https://fril.jp/item/${id}`
-    if (!isRakumaProductUrl(url) || seen.has(url)) continue
+
+  const pushUrl = (rawUrl: string, titleHint?: string) => {
+    let url = rawUrl
+    try {
+      url = new URL(rawUrl, 'https://fril.jp').toString()
+    } catch {
+      return
+    }
+    if (!isRakumaProductUrl(url) || seen.has(url)) return
     seen.add(url)
     out.push({
-      title: `Rakuma ${id}`,
+      title: titleHint?.trim() || `Rakuma ${url.split('/').pop()}`,
       productUrl: url,
       price: null,
       imageUrl: null,
     })
   }
+
+  const itemSubRe =
+    /<a[^>]+href=["'](https?:\/\/item\.fril\.jp\/[a-f0-9]+)["'][^>]*title=["']([^"']{3,220})["']/gi
+  let m: RegExpExecArray | null
+  while ((m = itemSubRe.exec(html)) !== null && out.length < pageSize * 2) {
+    pushUrl(m[1], m[2])
+  }
+
+  const legacyRe = /(?:https?:)?\/\/(?:www\.)?fril\.jp\/item\/([a-z0-9_-]+)/gi
+  while ((m = legacyRe.exec(html)) !== null && out.length < pageSize * 2) {
+    pushUrl(`https://fril.jp/item/${m[1]}`)
+  }
+
+  const subOnlyRe = /https?:\/\/item\.fril\.jp\/[a-f0-9]{16,64}/gi
+  while ((m = subOnlyRe.exec(html)) !== null && out.length < pageSize * 2) {
+    pushUrl(m[0])
+  }
+
   return out.slice(0, pageSize)
 }
 
@@ -279,12 +312,21 @@ export function parseJinaHits(text: string, baseUrl: string, fallbackCurrency: s
         hits.push({ title, productUrl: url, price: null, currency: fallbackCurrency })
       }
     }
-    const fril = line.match(/https:\/\/(?:www\.)?fril\.jp\/item\/([a-z0-9_-]+)/i)
-    if (fril) {
-      const url = `https://fril.jp/item/${fril[1]}`
+    const frilLegacy = line.match(/https:\/\/(?:www\.)?fril\.jp\/item\/([a-z0-9_-]+)/i)
+    if (frilLegacy) {
+      const url = `https://fril.jp/item/${frilLegacy[1]}`
       if (isRakumaProductUrl(url) && !seenUrl.has(url)) {
         seenUrl.add(url)
-        const title = line.replace(/https?:\/\/[^\s)]+/i, '').trim().slice(0, 180) || `Rakuma ${fril[1]}`
+        const title = line.replace(/https?:\/\/[^\s)]+/i, '').trim().slice(0, 180) || `Rakuma ${frilLegacy[1]}`
+        hits.push({ title, productUrl: url, price: null, currency: fallbackCurrency })
+      }
+    }
+    const frilSub = line.match(/https:\/\/item\.fril\.jp\/([a-f0-9]{16,64})/i)
+    if (frilSub) {
+      const url = `https://item.fril.jp/${frilSub[1]}`
+      if (isRakumaProductUrl(url) && !seenUrl.has(url)) {
+        seenUrl.add(url)
+        const title = line.replace(/https?:\/\/[^\s)]+/i, '').trim().slice(0, 180) || `Rakuma ${frilSub[1].slice(0, 8)}`
         hits.push({ title, productUrl: url, price: null, currency: fallbackCurrency })
       }
     }

@@ -28,7 +28,7 @@ const STORE_MODEL: Record<StoreId, StoreIntegrationModel> = {
     officialPartner: false,
     currentSearchMode: 'realtime_parse',
     targetSearchMode: 'ingestion_index',
-    notes: 'Mercari costuma depender de dados embarcados e pode divergir da busca nativa.',
+    notes: 'Busca primária via API web (DPoP); HTML/Jina só como fallback.',
   },
 }
 

@@ -37,30 +37,44 @@ function dedupeByUrl(hits: UnifiedSearchHit[]): UnifiedSearchHit[] {
   return [...m.values()]
 }
 
-function hitsFromArticles(html: string, pageSize: number, query: string): UnifiedSearchHit[] {
-  const blockMatches = Array.from(html.matchAll(/<article[\s\S]*?<\/article>/gi)).slice(0, pageSize * 2)
+function hitsFromItemBoxes(html: string, pageSize: number, query: string): UnifiedSearchHit[] {
+  const blockMatches = Array.from(html.matchAll(/<div class="item-box"[\s\S]*?<\/div>\s*<\/div>/gi)).slice(
+    0,
+    pageSize * 3,
+  )
   const strictHits: UnifiedSearchHit[] = []
   const looseHits: UnifiedSearchHit[] = []
 
   for (let i = 0; i < blockMatches.length; i += 1) {
     const block = blockMatches[i]?.[0] || ''
-    const href = block.match(/<a[^>]+href=["']([^"']+\/item\/[^"']+)["']/i)?.[1]
+    const link =
+      block.match(
+        /<a[^>]+href=["'](https?:\/\/item\.fril\.jp\/[a-f0-9]+)["'][^>]*title=["']([^"']{3,220})["']/i,
+      ) ||
+      block.match(/<a[^>]+href=["'](https?:\/\/item\.fril\.jp\/[a-f0-9]+)["']/i)
+    const href = link?.[1]
+    const titleFromAttr = link?.[2]
     const productUrl = href ? new URL(href, 'https://fril.jp').toString() : null
-    const idFromPath = productUrl?.match(/\/item\/([a-z0-9_-]+)/i)?.[1]
+    const idFromPath = productUrl?.split('/').pop()
     const title =
+      titleFromAttr ||
       block.match(/alt=["']([^"']{3,180})["']/i)?.[1] ||
       block.match(/<h3[^>]*>([\s\S]*?)<\/h3>/i)?.[1]?.replace(/<[^>]+>/g, ' ').trim() ||
-      (idFromPath ? `Item ${idFromPath}` : null)
+      (idFromPath ? `Item ${idFromPath.slice(0, 8)}` : null)
     const rawPrice = extractFrilPrice(block)
+    const preferredImg =
+      block.match(/<img[^>]+(?:data-src|data-original|data-lazy|data-lazy-src)=["']([^"']+)["']/i)?.[1] ||
+      block.match(/<img[^>]+srcset=["']([^"']+)["']/i)?.[1]?.split(',')?.[0]?.trim()?.split(/\s+/)?.[0] ||
+      null
     const imageUrl = pickBestImage(
-      [block.match(/<img[^>]+src=["']([^"']+)["']/i)?.[1], ...collectImageCandidates(block)],
+      [preferredImg, block.match(/<img[^>]+src=["']([^"']+)["']/i)?.[1], ...collectImageCandidates(block)],
       'https://fril.jp'
     )
 
     if (!title || !productUrl) continue
     if (!isRakumaProductUrl(productUrl)) continue
     const built = buildHit({
-      id: `${STORE_ID}-ar-${i}-${productUrl}`,
+      id: `${STORE_ID}-box-${i}-${productUrl}`,
       title,
       price: parsePrice(rawPrice),
       currency: 'JPY',
@@ -90,7 +104,7 @@ export async function searchRakuma(query: string, pageSize: number): Promise<Uni
 
   const collected: UnifiedSearchHit[] = []
 
-  collected.push(...hitsFromArticles(html, pageSize, query))
+  collected.push(...hitsFromItemBoxes(html, pageSize, query))
 
   const regexHits = extractRakumaHitsFromHtmlRegex(html, pageSize)
   for (let idx = 0; idx < regexHits.length; idx += 1) {

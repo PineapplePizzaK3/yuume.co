@@ -1,5 +1,6 @@
 import type { UnifiedSearchHit } from '../types.ts'
 import { buildHit, parsePrice, pickBestImage } from '../normalize.ts'
+import { searchMercariApi } from './mercariApi.ts'
 import {
   collectImageCandidates,
   extractMercariHitsFromHtmlRegex,
@@ -77,6 +78,13 @@ function hitsFromLiBlocks(html: string, pageSize: number, query: string): Unifie
 }
 
 export async function searchMercari(query: string, pageSize: number): Promise<UnifiedSearchHit[]> {
+  try {
+    const apiHits = await searchMercariApi(query, pageSize)
+    if (apiHits.length > 0) return apiHits
+  } catch {
+    // fallback HTML/Jina abaixo
+  }
+
   const encoded = encodeURIComponent(query)
   const searchUrl = `https://jp.mercari.com/search?keyword=${encoded}`
 
