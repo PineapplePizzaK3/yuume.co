@@ -7,18 +7,23 @@ export default function BuscaCatalogoSection() {
     externalSearchQuery,
     setExternalSearchQuery,
     externalSearchLoading,
+    externalSearchLoadingMore,
     externalSearchStores,
     toggleExternalStore,
     externalSearchError,
     externalSearchMeta,
-    externalSearchPage,
     externalSearchPartials,
     externalSearchResults,
     formatExternalPrice,
-    runExternalSearch,
+    loadMoreExternalSearch,
   } = useAdminContext()
 
   if (activeTab !== 'busca_catalogo') return null
+
+  const showLoadMore =
+    externalSearchResults.length > 0 &&
+    externalSearchMeta?.hasMore !== false &&
+    (externalSearchMeta?.hasMore === true || externalSearchResults.length >= 30)
 
   return (
     <section className="mt-0 rounded-b-xl border border-t-0 border-earth-200 bg-earth-50 p-6">
@@ -81,7 +86,10 @@ export default function BuscaCatalogoSection() {
 
       {!externalSearchLoading && externalSearchMeta && (
         <div className="mt-3 text-xs text-earth-600">
-          {externalSearchMeta.totalEstimated ?? 0} resultados estimados • pagina {externalSearchMeta.page ?? externalSearchPage} • {externalSearchMeta.tookMs ?? 0}ms
+          {externalSearchResults.length} exibidos
+          {externalSearchMeta.totalEstimated != null ? ` de ${externalSearchMeta.totalEstimated} estimados` : ''}
+          {' • '}
+          {externalSearchMeta.tookMs ?? 0}ms na ultima consulta
         </div>
       )}
 
@@ -113,68 +121,66 @@ export default function BuscaCatalogoSection() {
         <p className="mt-4 text-sm text-earth-600">Nenhum resultado encontrado com os filtros atuais.</p>
       )}
 
-      {externalSearchLoading && (
+      {externalSearchLoading && externalSearchResults.length === 0 && (
         <p className="mt-4 text-sm text-earth-600">Consultando lojas externas...</p>
       )}
 
-      {!externalSearchLoading && externalSearchResults.length > 0 && (
-        <div className="mt-4 grid gap-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+      {externalSearchResults.length > 0 && (
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           {externalSearchResults.map((item) => (
-            <article
-              key={item.id}
-              className="overflow-hidden rounded-md border border-earth-200 bg-white shadow-sm"
+            <a
+              key={item.productUrl || item.id}
+              href={item.productUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group flex flex-col overflow-hidden rounded-lg border border-earth-200 bg-white shadow-sm transition hover:border-earth-300 hover:shadow-md"
             >
-              <div className="h-28 bg-earth-100 sm:h-24">
+              <div className="aspect-square w-full bg-earth-100">
                 {item.imageUrl ? (
-                  <img src={item.imageUrl} alt={item.title} className="h-full w-full object-cover" loading="lazy" />
+                  <img
+                    src={item.imageUrl}
+                    alt={item.title}
+                    className="h-full w-full object-cover transition duration-200 group-hover:scale-[1.02]"
+                    loading="lazy"
+                  />
                 ) : (
                   <div className="flex h-full items-center justify-center text-xs text-earth-500">Sem imagem</div>
                 )}
               </div>
-              <div className="space-y-1.5 p-2">
-                <p className="line-clamp-2 text-xs font-medium leading-snug text-earth-900">{item.title}</p>
+              <div className="space-y-1.5 p-2.5">
+                <p className="line-clamp-2 text-xs font-medium leading-snug text-earth-900 group-hover:text-earth-950">
+                  {item.title}
+                </p>
                 <div className="flex items-center justify-between gap-1 text-[11px]">
                   <span className="truncate rounded bg-earth-100 px-1.5 py-0.5 text-earth-700">{item.storeName}</span>
                   <span className="shrink-0 font-medium text-earth-800">
                     {formatExternalPrice(item.price, item.currency)}
                   </span>
                 </div>
-                <a
-                  href={item.productUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex text-[11px] font-medium text-earth-700 underline hover:text-earth-900"
-                >
-                  Abrir produto
-                </a>
               </div>
-            </article>
+            </a>
           ))}
         </div>
       )}
 
-      {!externalSearchLoading && externalSearchMeta && (
-        <div className="mt-4 flex items-center justify-between gap-3 rounded-lg border border-earth-200 bg-white px-3 py-2 text-sm">
-          <span className="text-earth-600">Pagina {externalSearchPage}</span>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => runExternalSearch(Math.max(1, externalSearchPage - 1))}
-              disabled={externalSearchLoading || externalSearchPage <= 1}
-              className="rounded border border-earth-300 px-3 py-1.5 font-medium text-earth-700 hover:bg-earth-100 disabled:opacity-50"
-            >
-              Anterior
-            </button>
-            <button
-              type="button"
-              onClick={() => runExternalSearch(externalSearchPage + 1)}
-              disabled={externalSearchLoading || !externalSearchMeta?.hasMore}
-              className="rounded border border-earth-300 px-3 py-1.5 font-medium text-earth-700 hover:bg-earth-100 disabled:opacity-50"
-            >
-              Proxima
-            </button>
-          </div>
+      {showLoadMore && (
+        <div className="mt-5 flex flex-col items-center gap-2">
+          <button
+            type="button"
+            onClick={loadMoreExternalSearch}
+            disabled={externalSearchLoadingMore || externalSearchLoading}
+            className="rounded-lg border border-earth-300 bg-white px-5 py-2.5 text-sm font-medium text-earth-800 shadow-sm transition hover:border-earth-400 hover:bg-earth-50 disabled:opacity-60"
+          >
+            {externalSearchLoadingMore ? 'Carregando mais resultados...' : 'Carregar mais resultados'}
+          </button>
+          <p className="text-xs text-earth-500">
+            Busca a proxima leva nas lojas selecionadas e adiciona abaixo.
+          </p>
         </div>
+      )}
+
+      {externalSearchResults.length > 0 && externalSearchMeta && !externalSearchMeta.hasMore && (
+        <p className="mt-4 text-center text-xs text-earth-500">Fim dos resultados disponiveis para esta busca.</p>
       )}
     </section>
   )

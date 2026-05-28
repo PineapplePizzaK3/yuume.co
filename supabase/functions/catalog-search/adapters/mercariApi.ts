@@ -140,7 +140,7 @@ export async function searchMercariApi(query: string, pageSize: number): Promise
       DPoP: await sign(url, 'POST'),
     },
     body: JSON.stringify(buildSearchBody(keyword, pageSize)),
-    signal: AbortSignal.timeout(22_000),
+    signal: AbortSignal.timeout(10_000),
   })
 
   if (!res.ok) {

@@ -4,6 +4,7 @@ import type { SearchRequest, StoreId, StoreSearchResult, UnifiedSearchHit } from
 import { interleaveRankedByStore } from './rank.ts'
 import { buildCacheKey, getCache, setCache } from './cache.ts'
 import { buildStoreDiagnostics, buildSystemStrategyMeta } from './strategy.ts'
+import { STORE_DEADLINE_MS } from './adapters/common.ts'
 import { searchAmazon } from './adapters/amazon.ts'
 import { searchRakuma } from './adapters/rakuma.ts'
 import { searchMercari } from './adapters/mercari.ts'
@@ -72,8 +73,8 @@ function sanitizeRequest(body: SearchRequest): Required<SearchRequest> {
   )
   const page = Number.isFinite(Number(body?.page)) ? Math.max(1, Number(body.page)) : 1
   const pageSize = Number.isFinite(Number(body?.pageSize))
-    ? Math.min(30, Math.max(6, Number(body.pageSize)))
-    : 12
+    ? Math.min(48, Math.max(6, Number(body.pageSize)))
+    : 30
   return {
     query,
     stores: stores.length ? stores : ALLOWED_STORES,
@@ -98,6 +99,32 @@ async function searchStore(storeId: StoreId, query: string, pageSize: number): P
       error: error instanceof Error ? error.message : 'Falha ao consultar loja',
       tookMs: Date.now() - startedAt,
     }
+  }
+}
+
+async function searchStoreWithDeadline(
+  storeId: StoreId,
+  query: string,
+  pageSize: number,
+): Promise<StoreSearchResult> {
+  const startedAt = Date.now()
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const deadline = new Promise<StoreSearchResult>((resolve) => {
+    timer = setTimeout(
+      () =>
+        resolve({
+          storeId,
+          hits: [],
+          error: 'Tempo esgotado ao consultar loja',
+          tookMs: Date.now() - startedAt,
+        }),
+      STORE_DEADLINE_MS,
+    )
+  })
+  try {
+    return await Promise.race([searchStore(storeId, query, pageSize), deadline])
+  } finally {
+    if (timer) clearTimeout(timer)
   }
 }
 
@@ -126,8 +153,11 @@ Deno.serve(async (req) => {
     if (cached) return safeJson({ ...cached, cacheHit: true })
 
     const startedAt = Date.now()
-    const perStoreSize = Math.max(4, Math.ceil((input.pageSize * 2) / input.stores.length))
-    const settled = await Promise.all(input.stores.map((storeId) => searchStore(storeId, input.query, perStoreSize)))
+    const neededTotal = input.pageSize * input.page
+    const perStoreSize = Math.max(8, Math.ceil(neededTotal / input.stores.length) + 4)
+    const settled = await Promise.all(
+      input.stores.map((storeId) => searchStoreWithDeadline(storeId, input.query, perStoreSize)),
+    )
 
     const partials = settled
       .filter((result) => result.error)
@@ -140,6 +170,8 @@ Deno.serve(async (req) => {
     const ranked = interleaveRankedByStore(merged, input.query, input.stores)
     const startIdx = (input.page - 1) * input.pageSize
     const pageHits = ranked.slice(startIdx, startIdx + input.pageSize)
+    // Página cheia ⇒ pode haver mais na próxima rodada (perStoreSize sobe com page).
+    const hasMore = pageHits.length >= input.pageSize
 
     const payload = {
       results: pageHits,
@@ -149,7 +181,7 @@ Deno.serve(async (req) => {
         totalEstimated: ranked.length,
         page: input.page,
         pageSize: input.pageSize,
-        hasMore: startIdx + input.pageSize < ranked.length,
+        hasMore,
         tookMs: Date.now() - startedAt,
         strategy: buildSystemStrategyMeta(),
         diagnostics: buildStoreDiagnostics(input.stores, settled),

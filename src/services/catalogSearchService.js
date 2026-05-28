@@ -2,7 +2,7 @@ import { supabase } from '../lib/supabase'
 
 const SEARCH_FUNCTION_NAMES = ['catalog-search', 'catalog_search']
 /** Alinhado ao timeout longo de `fetch` para `/functions/v1/` em `supabase.js`. */
-const SEARCH_TIMEOUT_MS = 115000
+const SEARCH_TIMEOUT_MS = 45000
 
 async function normalizeInvokeError(err) {
   const status = err?.context?.status
@@ -39,7 +39,7 @@ async function normalizeInvokeError(err) {
   return { message: raw || 'Erro ao buscar catálogo externo.' }
 }
 
-export async function searchCatalogAdmin({ query, stores = ['amazon', 'rakuma', 'mercari'], page = 1, pageSize = 12 }) {
+export async function searchCatalogAdmin({ query, stores = ['amazon', 'rakuma', 'mercari'], page = 1, pageSize = 30 }) {
   const { error: userErr } = await supabase.auth.getUser()
   if (userErr) {
     return { data: null, error: { message: 'Sessão expirada. Faça login novamente.' } }

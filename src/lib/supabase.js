@@ -13,8 +13,8 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 const url = supabaseUrl || 'https://placeholder.supabase.co'
 const key = supabaseAnonKey || 'placeholder-anon-key'
 const REQUEST_TIMEOUT_MS = 25000
-/** Edge Functions (ex.: catalog-search) podem demorar ao agregar lojas externas. */
-const FUNCTIONS_REQUEST_TIMEOUT_MS = 120000
+/** Edge Functions (ex.: catalog-search) agregam lojas externas em paralelo (~15s). */
+const FUNCTIONS_REQUEST_TIMEOUT_MS = 45000
 
 function resolveRequestUrl(input) {
   if (typeof input === 'string') return input

@@ -15,19 +15,11 @@ const DEFAULT_HEADERS: Record<string, string> = {
   'Upgrade-Insecure-Requests': '1',
 }
 
-/** HTML direto: lojas no Japão costumam responder lentas; Jina costuma ser ainda mais lenta. */
-export const FETCH_TIMEOUT_MS = 18_000
-export const JINA_TIMEOUT_MS = 32_000
-
-function isTimeoutError(e: unknown): boolean {
-  const s = String(e ?? '')
-  const name = (e as Error)?.name ?? ''
-  return (
-    name === 'TimeoutError' ||
-    name === 'AbortError' ||
-    /timeout|aborted|signal/i.test(s)
-  )
-}
+/** HTML direto — timeout curto; Jina só como fallback e com teto baixo. */
+export const FETCH_TIMEOUT_MS = 10_000
+export const JINA_TIMEOUT_MS = 12_000
+/** Teto por loja no orquestrador (Promise.race). */
+export const STORE_DEADLINE_MS = 16_000
 
 export async function fetchText(
   url: string,
@@ -52,14 +44,7 @@ export async function fetchText(
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     return await res.text()
   }
-  try {
-    return await run(timeoutMs)
-  } catch (e) {
-    if (isTimeoutError(e)) {
-      return await run(Math.min(timeoutMs + 14_000, 40_000))
-    }
-    throw e
-  }
+  return await run(timeoutMs)
 }
 
 export async function fetchViaJina(url: string, timeoutMs: number = JINA_TIMEOUT_MS): Promise<string> {
@@ -77,14 +62,7 @@ export async function fetchViaJina(url: string, timeoutMs: number = JINA_TIMEOUT
     if (!res.ok) throw new Error(`JINA_HTTP_${res.status}`)
     return await res.text()
   }
-  try {
-    return await run(timeoutMs)
-  } catch (e) {
-    if (isTimeoutError(e)) {
-      return await run(Math.min(timeoutMs + 16_000, 55_000))
-    }
-    throw e
-  }
+  return await run(timeoutMs)
 }
 
 export function collectImageCandidates(html: string): string[] {
@@ -284,9 +262,14 @@ export function parseJinaHits(text: string, baseUrl: string, fallbackCurrency: s
     const linkMatch = line.match(/\[([^\]]{3,180})\]\((https?:\/\/[^\s)]+)\)/)
     if (!linkMatch) continue
 
-    const title = linkMatch[1]?.trim()
+    let title = linkMatch[1]?.trim()
     const productUrl = toAbsoluteUrl(linkMatch[2], baseUrl)
     if (!title || !productUrl) continue
+    if (/^!\[|^\[Image\s+\d/i.test(title)) continue
+    if (/continue-shopping|buttons\/continue/i.test(productUrl)) continue
+    if (/amazon\./i.test(baseUrl) && !/\/dp\/[A-Z0-9]{10}|\/gp\/product\/[A-Z0-9]{10}/i.test(productUrl)) {
+      continue
+    }
 
     const windowText = [lines[i - 1], lines[i], lines[i + 1], lines[i + 2], lines[i + 3]].filter(Boolean).join(' ')
     const rawPrice = priceFrom(windowText)

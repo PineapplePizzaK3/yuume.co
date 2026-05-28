@@ -9,8 +9,10 @@ import {
   fetchText,
   fetchViaJina,
   isMercariProductUrl,
+  JINA_TIMEOUT_MS,
   matchesQuery,
   parseJinaHits,
+  STORE_DEADLINE_MS,
 } from './common.ts'
 
 const STORE_ID = 'mercari'
@@ -53,7 +55,7 @@ function hitsFromLiBlocks(html: string, pageSize: number, query: string): Unifie
       null
     const imageUrl = pickBestImage(
       [block.match(/<img[^>]+src=["']([^"']+)["']/i)?.[1], ...collectImageCandidates(block)],
-      'https://jp.mercari.com'
+      'https://jp.mercari.com',
     )
     if (!title || !productUrl) continue
     if (!isMercariProductUrl(productUrl)) continue
@@ -77,22 +79,7 @@ function hitsFromLiBlocks(html: string, pageSize: number, query: string): Unifie
   return []
 }
 
-export async function searchMercari(query: string, pageSize: number): Promise<UnifiedSearchHit[]> {
-  try {
-    const apiHits = await searchMercariApi(query, pageSize)
-    if (apiHits.length > 0) return apiHits
-  } catch {
-    // fallback HTML/Jina abaixo
-  }
-
-  const encoded = encodeURIComponent(query)
-  const searchUrl = `https://jp.mercari.com/search?keyword=${encoded}`
-
-  const [html, jinaText] = await Promise.all([
-    fetchText(searchUrl, FETCH_TIMEOUT_MS, { Referer: 'https://jp.mercari.com/' }).catch(() => ''),
-    fetchViaJina(searchUrl).catch(() => ''),
-  ])
-
+function collectFromHtml(html: string, pageSize: number, query: string): UnifiedSearchHit[] {
   const collected: UnifiedSearchHit[] = []
 
   const embedded = extractMercariHitsFromNextData(html, pageSize, query)
@@ -109,7 +96,7 @@ export async function searchMercari(query: string, pageSize: number): Promise<Un
         storeId: STORE_ID,
         storeName: STORE_NAME,
         source: 'mixed',
-      })
+      }),
     )
   }
 
@@ -127,17 +114,21 @@ export async function searchMercari(query: string, pageSize: number): Promise<Un
         storeId: STORE_ID,
         storeName: STORE_NAME,
         source: 'html',
-      })
+      }),
     )
   }
 
   collected.push(...hitsFromLiBlocks(html, pageSize, query))
+  return dedupeByUrl(collected)
+}
 
+function collectFromJina(jinaText: string, pageSize: number, query: string): UnifiedSearchHit[] {
   const jinaParsed = parseJinaHits(jinaText, 'https://jp.mercari.com', 'JPY').filter((hit) =>
-    isMercariProductUrl(hit.productUrl)
+    isMercariProductUrl(hit.productUrl),
   )
   const strictJ = jinaParsed.filter((hit) => matchesQuery(hit.title, query))
   const jinaUse = strictJ.length > 0 ? strictJ : jinaParsed
+  const collected: UnifiedSearchHit[] = []
   for (let idx = 0; idx < jinaUse.length; idx += 1) {
     const hit = jinaUse[idx]
     collected.push(
@@ -151,10 +142,37 @@ export async function searchMercari(query: string, pageSize: number): Promise<Un
         storeId: STORE_ID,
         storeName: STORE_NAME,
         source: 'jina',
-      })
+      }),
     )
   }
+  return collected.slice(0, pageSize)
+}
 
-  const merged = dedupeByUrl(collected)
+export async function searchMercari(query: string, pageSize: number): Promise<UnifiedSearchHit[]> {
+  try {
+    const apiHits = await searchMercariApi(query, pageSize)
+    if (apiHits.length > 0) return apiHits
+  } catch {
+    // fallback HTML abaixo
+  }
+
+  const startedAt = Date.now()
+  const budgetMs = STORE_DEADLINE_MS - 300
+  const encoded = encodeURIComponent(query)
+  const searchUrl = `https://jp.mercari.com/search?keyword=${encoded}`
+  const html = await fetchText(searchUrl, FETCH_TIMEOUT_MS, { Referer: 'https://jp.mercari.com/' }).catch(() => '')
+
+  const fromHtml = collectFromHtml(html, pageSize, query)
+  if (fromHtml.length >= Math.min(pageSize, 4)) {
+    return fromHtml.slice(0, pageSize)
+  }
+
+  const remaining = budgetMs - (Date.now() - startedAt)
+  if (remaining < 2500) {
+    return fromHtml.slice(0, pageSize)
+  }
+
+  const jinaText = await fetchViaJina(searchUrl, Math.min(JINA_TIMEOUT_MS, remaining)).catch(() => '')
+  const merged = dedupeByUrl([...fromHtml, ...collectFromJina(jinaText, pageSize, query)])
   return merged.slice(0, pageSize)
 }

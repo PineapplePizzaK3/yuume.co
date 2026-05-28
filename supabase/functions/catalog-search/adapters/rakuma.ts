@@ -7,18 +7,27 @@ import {
   fetchText,
   fetchViaJina,
   isRakumaProductUrl,
+  JINA_TIMEOUT_MS,
   matchesQuery,
   parseJinaHits,
+  STORE_DEADLINE_MS,
 } from './common.ts'
 
 const STORE_ID = 'rakuma'
 const STORE_NAME = 'Rakuma'
 
 function extractFrilPrice(block: string): string | null {
+  const dataContent = block.match(/<span[^>]+data-content=["'](\d+)["'][^>]*>[\d,]+<\/span>/i)?.[1]
+  if (dataContent) return dataContent
+
   return (
+    block.match(/data-rat-price=["'](\d+)["']/i)?.[1] ||
+    block.match(/data-rat-cp-price=["'](\d+)["']/i)?.[1] ||
+    block.match(/<p[^>]*class=["'][^"']*item-box__item-price[^"']*["'][^>]*>[\s\S]*?([\d,]+)/i)?.[1] ||
     block.match(/(?:¥|￥)\s*([\d,]+(?:\.\d+)?)/i)?.[1] ||
     block.match(/([\d,]+(?:\.\d+)?)\s*円/)?.[1] ||
-    block.match(/"price"\s*:\s*"?([\d.,]+)"?/i)?.[1] ||
+    block.match(/"price"\s*:\s*(\d+)/i)?.[1] ||
+    block.match(/&quot;price&quot;\s*:\s*(\d+)/i)?.[1] ||
     block.match(/data-price=["']([\d.,]+)["']/i)?.[1] ||
     null
   )
@@ -38,10 +47,9 @@ function dedupeByUrl(hits: UnifiedSearchHit[]): UnifiedSearchHit[] {
 }
 
 function hitsFromItemBoxes(html: string, pageSize: number, query: string): UnifiedSearchHit[] {
-  const blockMatches = Array.from(html.matchAll(/<div class="item-box"[\s\S]*?<\/div>\s*<\/div>/gi)).slice(
-    0,
-    pageSize * 3,
-  )
+  const blockMatches = Array.from(
+    html.matchAll(/<div class="item-box">[\s\S]*?item-box__item-price[\s\S]*?<\/div>\s*<\/div>\s*<\/div>/gi),
+  ).slice(0, pageSize * 3)
   const strictHits: UnifiedSearchHit[] = []
   const looseHits: UnifiedSearchHit[] = []
 
@@ -93,17 +101,8 @@ function hitsFromItemBoxes(html: string, pageSize: number, query: string): Unifi
   return []
 }
 
-export async function searchRakuma(query: string, pageSize: number): Promise<UnifiedSearchHit[]> {
-  const encoded = encodeURIComponent(query)
-  const searchUrl = `https://fril.jp/s?query=${encoded}`
-
-  const [html, jinaText] = await Promise.all([
-    fetchText(searchUrl, FETCH_TIMEOUT_MS, { Referer: 'https://fril.jp/' }).catch(() => ''),
-    fetchViaJina(searchUrl).catch(() => ''),
-  ])
-
+function collectFromHtml(html: string, pageSize: number, query: string): UnifiedSearchHit[] {
   const collected: UnifiedSearchHit[] = []
-
   collected.push(...hitsFromItemBoxes(html, pageSize, query))
 
   const regexHits = extractRakumaHitsFromHtmlRegex(html, pageSize)
@@ -120,15 +119,20 @@ export async function searchRakuma(query: string, pageSize: number): Promise<Uni
         storeId: STORE_ID,
         storeName: STORE_NAME,
         source: 'html',
-      })
+      }),
     )
   }
 
+  return dedupeByUrl(collected)
+}
+
+function collectFromJina(jinaText: string, pageSize: number, query: string): UnifiedSearchHit[] {
   const jinaParsed = parseJinaHits(jinaText, 'https://fril.jp', 'JPY').filter((hit) =>
-    isRakumaProductUrl(hit.productUrl)
+    isRakumaProductUrl(hit.productUrl),
   )
   const strictJ = jinaParsed.filter((hit) => matchesQuery(hit.title, query))
   const jinaUse = strictJ.length > 0 ? strictJ : jinaParsed
+  const collected: UnifiedSearchHit[] = []
   for (let idx = 0; idx < jinaUse.length; idx += 1) {
     const hit = jinaUse[idx]
     collected.push(
@@ -142,10 +146,30 @@ export async function searchRakuma(query: string, pageSize: number): Promise<Uni
         storeId: STORE_ID,
         storeName: STORE_NAME,
         source: 'jina',
-      })
+      }),
     )
   }
+  return collected.slice(0, pageSize)
+}
 
-  const merged = dedupeByUrl(collected)
+export async function searchRakuma(query: string, pageSize: number): Promise<UnifiedSearchHit[]> {
+  const startedAt = Date.now()
+  const budgetMs = STORE_DEADLINE_MS - 300
+  const encoded = encodeURIComponent(query)
+  const searchUrl = `https://fril.jp/s?query=${encoded}`
+
+  const html = await fetchText(searchUrl, FETCH_TIMEOUT_MS, { Referer: 'https://fril.jp/' }).catch(() => '')
+  const fromHtml = collectFromHtml(html, pageSize, query)
+  if (fromHtml.length >= Math.min(pageSize, 4)) {
+    return fromHtml.slice(0, pageSize)
+  }
+
+  const remaining = budgetMs - (Date.now() - startedAt)
+  if (remaining < 2500) {
+    return fromHtml.slice(0, pageSize)
+  }
+
+  const jinaText = await fetchViaJina(searchUrl, Math.min(JINA_TIMEOUT_MS, remaining)).catch(() => '')
+  const merged = dedupeByUrl([...fromHtml, ...collectFromJina(jinaText, pageSize, query)])
   return merged.slice(0, pageSize)
 }

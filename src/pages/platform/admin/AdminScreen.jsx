@@ -488,6 +488,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
   const [externalSearchMeta, setExternalSearchMeta] = useState(null)
   const [externalSearchPartials, setExternalSearchPartials] = useState([])
   const [externalSearchLoading, setExternalSearchLoading] = useState(false)
+  const [externalSearchLoadingMore, setExternalSearchLoadingMore] = useState(false)
   const [externalSearchPage, setExternalSearchPage] = useState(1)
   const [externalSearchError, setExternalSearchError] = useState('')
   const [ordersPage, setOrdersPage] = useState(0)
@@ -2862,7 +2863,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     .filter(([, checked]) => checked)
     .map(([storeId]) => storeId)
 
-  const runExternalSearch = async (page = 1) => {
+  const runExternalSearch = async (page = 1, { append = false } = {}) => {
     const query = externalSearchQuery.trim()
     if (query.length < 2) {
       setExternalSearchError('Digite ao menos 2 caracteres para buscar.')
@@ -2872,18 +2873,22 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       setExternalSearchError('Selecione ao menos uma loja para buscar.')
       return
     }
-    setExternalSearchLoading(true)
+    if (append) {
+      setExternalSearchLoadingMore(true)
+    } else {
+      setExternalSearchLoading(true)
+    }
     setExternalSearchError('')
     try {
       const { data, error } = await searchCatalogAdmin({
         query,
         stores: selectedExternalStores,
         page,
-        pageSize: 12,
+        pageSize: 30,
       })
       if (error) {
         setExternalSearchError(error.message || 'Erro ao buscar catálogos.')
-        if (page === 1) {
+        if (page === 1 && !append) {
           setExternalSearchResults([])
           setExternalSearchMeta(null)
           setExternalSearchPartials([])
@@ -2891,14 +2896,43 @@ export default function Admin({ routeTabId = 'pedidos' }) {
         return
       }
       setExternalSearchPage(page)
-      setExternalSearchResults(data?.results ?? [])
-      setExternalSearchMeta(data?.meta ?? null)
+      const incoming = data?.results ?? []
+      if (append) {
+        let added = 0
+        setExternalSearchResults((prev) => {
+          const seen = new Set(prev.map((item) => item.productUrl || item.id))
+          const merged = [...prev]
+          for (const item of incoming) {
+            const key = item.productUrl || item.id
+            if (!key || seen.has(key)) continue
+            seen.add(key)
+            merged.push(item)
+            added += 1
+          }
+          return merged
+        })
+        const serverHasMore = data?.meta?.hasMore === true
+        setExternalSearchMeta({
+          ...(data?.meta ?? {}),
+          hasMore: serverHasMore && added > 0,
+        })
+      } else {
+        setExternalSearchResults(incoming)
+        setExternalSearchMeta(data?.meta ?? null)
+      }
       setExternalSearchPartials(data?.partials ?? [])
     } catch (e) {
       setExternalSearchError(e?.message || 'Erro ao buscar catálogos.')
     } finally {
       setExternalSearchLoading(false)
+      setExternalSearchLoadingMore(false)
     }
+  }
+
+  const loadMoreExternalSearch = async () => {
+    if (externalSearchLoading || externalSearchLoadingMore) return
+    if (externalSearchMeta?.hasMore === false) return
+    await runExternalSearch(externalSearchPage + 1, { append: true })
   }
 
   const handleExternalSearchSubmit = async (e) => {
@@ -3075,6 +3109,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     externalSearchQuery,
     setExternalSearchQuery,
     externalSearchLoading,
+    externalSearchLoadingMore,
     externalSearchStores,
     toggleExternalStore,
     externalSearchError,
@@ -3084,6 +3119,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     externalSearchResults,
     formatExternalPrice,
     runExternalSearch,
+    loadMoreExternalSearch,
     usersListLoading,
     usersList,
     openUserDetail,

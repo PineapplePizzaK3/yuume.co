@@ -75,6 +75,7 @@ export function pickBestImage(candidates: Array<string | null | undefined>, base
       const lower = u.toLowerCase()
       if (/\.(jpg|jpeg|png|webp)(\?|$)/i.test(lower)) score += 2
       if (/images\/i\//i.test(lower)) score += 3
+      if (/m\.media-amazon\.com|images-(?:na\.)?ssl-images-amazon/.test(lower)) score += 3
       if (/mercdn\.net|item\.fril\.jp|fril\.jp/.test(lower)) score += 2
       if (/(avatar|profile|icon|logo)/i.test(lower)) score -= 3
       return { u, score }
