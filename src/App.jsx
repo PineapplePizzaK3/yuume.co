@@ -2,6 +2,7 @@ import { Suspense, lazy, useEffect, useRef, useState } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import Navbar from './components/Navbar'
+import GlobalCatalogSearchShortcut from './components/GlobalCatalogSearchShortcut'
 import Footer from './components/Footer'
 import WhatsAppFloating from './components/WhatsAppFloating'
 import CookieConsentBanner from './components/CookieConsentBanner'
@@ -13,6 +14,7 @@ import { CART_TOAST_EVENT } from './lib/cartToast'
 const Home = lazy(() => import('./pages/Home'))
 const Contact = lazy(() => import('./pages/Contact'))
 const OndeComprar = lazy(() => import('./pages/OndeComprar'))
+const CatalogSearchPublic = lazy(() => import('./pages/CatalogSearchPublic'))
 const ItensProibidos = lazy(() => import('./pages/como-funciona/ItensProibidos'))
 const TaxasAlfandegarias = lazy(() => import('./pages/como-funciona/TaxasAlfandegarias'))
 const ServicosEPrecosLayout = lazy(() => import('./pages/servicos-e-precos/ServicosEPrecosLayout'))
@@ -164,6 +166,7 @@ function App() {
     <div className="flex min-h-screen flex-col">
       <LocaleSync />
       <Navbar />
+      <GlobalCatalogSearchShortcut />
       <main className="flex-1">
         <Suspense fallback={<SuspenseLoading />}>
           <Routes>
@@ -254,6 +257,7 @@ function App() {
               <Route path="taxas-alfandegarias" element={<TaxasAlfandegarias />} />
             </Route>
             <Route path="/onde-comprar" element={<OndeComprar />} />
+            <Route path="/busca-catalogo" element={<CatalogSearchPublic />} />
             <Route path="/legal" element={<LegalLayout />}>
               <Route index element={<Navigate to={p('legalPrivacy')} replace />} />
               <Route path="commercial-disclosure" element={<CommercialDisclosure />} />
@@ -354,6 +358,7 @@ function App() {
               <Route path="customs-fees" element={<TaxasAlfandegarias />} />
             </Route>
             <Route path="/en/where-to-buy" element={<OndeComprar />} />
+            <Route path="/en/catalog-search" element={<CatalogSearchPublic />} />
             <Route path="/en/legal" element={<LegalLayout />}>
               <Route index element={<Navigate to={e('legalPrivacy')} replace />} />
               <Route path="commercial-disclosure" element={<CommercialDisclosure />} />

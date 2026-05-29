@@ -7,6 +7,7 @@ export interface SearchRequest {
   stores?: StoreId[]
   page?: number
   pageSize?: number
+  mode?: 'admin' | 'public'
 }
 
 export interface UnifiedSearchHit {

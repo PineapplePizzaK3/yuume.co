@@ -91,6 +91,7 @@ function LojaEstoqueCatalog({ publicMode = false }) {
   const { t } = useTranslation()
   const lp = useLocalizedPath()
   const locale = useSiteLocale()
+  const isEn = locale === 'en'
   const { user } = useAuth()
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
@@ -160,6 +161,22 @@ function LojaEstoqueCatalog({ publicMode = false }) {
   return (
     <div>
       <h2 className="sr-only">{t('platform.store.pageTitle')}</h2>
+      <div className="mt-4 rounded-xl border border-earth-200 bg-white p-4 shadow-sm">
+        <p className="text-sm font-semibold text-earth-900">
+          {isEn ? 'Search partner marketplaces' : 'Busca em marketplaces parceiros'}
+        </p>
+        <p className="mt-1 text-xs text-earth-600">
+          {isEn
+            ? 'Compare external offers in one search before finalizing your purchase.'
+            : 'Compare ofertas externas em uma busca unificada e volte para finalizar sua compra com mais contexto.'}
+        </p>
+        <Link
+          to={lp('catalogSearchPublic')}
+          className="mt-3 inline-flex rounded-lg border border-earth-300 bg-earth-50 px-3 py-1.5 text-xs font-medium text-earth-800 hover:bg-earth-100"
+        >
+          {isEn ? 'Open external search' : 'Abrir busca externa'}
+        </Link>
+      </div>
       {message && <p className="mt-4 rounded-lg bg-earth-100 px-4 py-2 text-sm text-earth-800">{message}</p>}
       {loading && <p className="mt-6 text-earth-600">{t('platform.store.loading')}</p>}
       {!loading && products.length === 0 && (

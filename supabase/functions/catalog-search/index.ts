@@ -18,6 +18,11 @@ const corsHeaders = {
 }
 
 const ALLOWED_STORES: StoreId[] = ['amazon', 'rakuma', 'mercari', 'yahoo', 'yahoo_flea', 'snkrdunk']
+const PUBLIC_RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000
+const PUBLIC_RATE_LIMIT_MAX_REQUESTS = 20
+const PUBLIC_MAX_PAGE = 2
+const PUBLIC_MAX_PAGE_SIZE = 24
+const publicIpHits = new Map<string, number[]>()
 
 const searchByStore: Record<StoreId, (query: string, pageSize: number) => Promise<UnifiedSearchHit[]>> = {
   amazon: searchAmazon,
@@ -36,6 +41,35 @@ function safeJson(payload: unknown, status: number = 200): Response {
       'Content-Type': 'application/json',
     },
   })
+}
+
+function getRequestMode(body: SearchRequest): 'admin' | 'public' {
+  return body?.mode === 'public' ? 'public' : 'admin'
+}
+
+function getClientIp(req: Request): string {
+  const fromForwarded = req.headers.get('x-forwarded-for')?.split(',')?.[0]?.trim()
+  const fromCf = req.headers.get('cf-connecting-ip')?.trim()
+  const fromReal = req.headers.get('x-real-ip')?.trim()
+  return fromForwarded || fromCf || fromReal || 'unknown'
+}
+
+function enforcePublicRateLimit(req: Request): Response | null {
+  const now = Date.now()
+  const ip = getClientIp(req)
+  const windowStart = now - PUBLIC_RATE_LIMIT_WINDOW_MS
+  const recent = (publicIpHits.get(ip) ?? []).filter((ts) => ts >= windowStart)
+  if (recent.length >= PUBLIC_RATE_LIMIT_MAX_REQUESTS) {
+    return safeJson(
+      {
+        error: 'Muitas buscas em sequência. Aguarde alguns minutos e tente novamente.',
+      },
+      429,
+    )
+  }
+  recent.push(now)
+  publicIpHits.set(ip, recent)
+  return null
 }
 
 /** Valida JWT + role admin (o gateway pode ter verify_jwt=false; a proteção fica aqui). */
@@ -71,15 +105,19 @@ async function requireAdmin(req: Request): Promise<Response | null> {
   return null
 }
 
-function sanitizeRequest(body: SearchRequest): Required<SearchRequest> {
+function sanitizeRequest(body: SearchRequest, mode: 'admin' | 'public'): Required<SearchRequest> {
   const query = String(body?.query ?? '').trim()
   const requestedStores = Array.isArray(body?.stores) ? body.stores : ALLOWED_STORES
   const stores = requestedStores.filter((store): store is StoreId =>
     ALLOWED_STORES.includes(store as StoreId)
   )
-  const page = Number.isFinite(Number(body?.page)) ? Math.max(1, Number(body.page)) : 1
+  const pageLimit = mode === 'public' ? PUBLIC_MAX_PAGE : 8
+  const page = Number.isFinite(Number(body?.page))
+    ? Math.min(pageLimit, Math.max(1, Number(body.page)))
+    : 1
+  const pageSizeMax = mode === 'public' ? PUBLIC_MAX_PAGE_SIZE : 48
   const pageSize = Number.isFinite(Number(body?.pageSize))
-    ? Math.min(48, Math.max(6, Number(body.pageSize)))
+    ? Math.min(pageSizeMax, Math.max(6, Number(body.pageSize)))
     : 30
   return {
     query,
@@ -139,17 +177,23 @@ Deno.serve(async (req) => {
   if (req.method !== 'POST') return safeJson({ error: 'Método não suportado' }, 405)
 
   try {
-    const denied = await requireAdmin(req)
-    if (denied) return denied
-
     const body = (await req.json()) as SearchRequest
-    const input = sanitizeRequest(body)
+    const mode = getRequestMode(body)
+    if (mode === 'admin') {
+      const denied = await requireAdmin(req)
+      if (denied) return denied
+    } else {
+      const denied = enforcePublicRateLimit(req)
+      if (denied) return denied
+    }
+    const input = sanitizeRequest(body, mode)
 
     if (!input.query || input.query.length < 2) {
       return safeJson({ error: 'Informe ao menos 2 caracteres para buscar.' }, 400)
     }
 
     const cacheKey = buildCacheKey({
+      mode,
       q: input.query.toLowerCase(),
       stores: input.stores,
       page: input.page,
@@ -182,6 +226,7 @@ Deno.serve(async (req) => {
     const payload = {
       results: pageHits,
       meta: {
+        mode,
         query: input.query,
         stores: input.stores,
         totalEstimated: ranked.length,
@@ -190,7 +235,7 @@ Deno.serve(async (req) => {
         hasMore,
         tookMs: Date.now() - startedAt,
         strategy: buildSystemStrategyMeta(),
-        diagnostics: buildStoreDiagnostics(input.stores, settled),
+        diagnostics: mode === 'admin' ? buildStoreDiagnostics(input.stores, settled) : undefined,
       },
       partials,
       cacheHit: false,

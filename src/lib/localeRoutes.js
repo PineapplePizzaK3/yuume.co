@@ -16,6 +16,7 @@ export const ROUTES = {
   faqProhibited: { [LOCALE_PT_BR]: '/faq/itens-proibidos', [LOCALE_EN]: '/en/help/prohibited-items' },
   faqCustoms: { [LOCALE_PT_BR]: '/faq/taxas-alfandegarias', [LOCALE_EN]: '/en/help/customs-fees' },
   ondeComprar: { [LOCALE_PT_BR]: '/onde-comprar', [LOCALE_EN]: '/en/where-to-buy' },
+  catalogSearchPublic: { [LOCALE_PT_BR]: '/busca-catalogo', [LOCALE_EN]: '/en/catalog-search' },
   contact: { [LOCALE_PT_BR]: '/contact', [LOCALE_EN]: '/en/contact' },
   lojaPublic: { [LOCALE_PT_BR]: '/loja', [LOCALE_EN]: '/en/store' },
   lojaPublicVitrine: { [LOCALE_PT_BR]: '/loja/vitrine', [LOCALE_EN]: '/en/store/storefront' },

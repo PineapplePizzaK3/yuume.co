@@ -3,8 +3,9 @@ import { supabase } from '../lib/supabase'
 const SEARCH_FUNCTION_NAMES = ['catalog-search', 'catalog_search']
 /** Alinhado ao timeout longo de `fetch` para `/functions/v1/` em `supabase.js`. */
 const SEARCH_TIMEOUT_MS = 45000
+const DEFAULT_STORES = ['amazon', 'rakuma', 'mercari', 'yahoo', 'yahoo_flea', 'snkrdunk']
 
-async function normalizeInvokeError(err) {
+async function normalizeInvokeError(err, authErrorMessage = 'Sessão expirada ou sem permissão para usar a busca do admin.') {
   const status = err?.context?.status
   let backendMessage = ''
   try {
@@ -22,7 +23,7 @@ async function normalizeInvokeError(err) {
   }
   if (status === 401 || status === 403) {
     if (backendMessage) return { message: backendMessage }
-    return { message: 'Sessão expirada ou sem permissão para usar a busca do admin.' }
+    return { message: authErrorMessage }
   }
   if (status === 404) {
     return { message: 'Função catalog-search não encontrada no Supabase (deploy pendente).' }
@@ -39,7 +40,37 @@ async function normalizeInvokeError(err) {
   return { message: raw || 'Erro ao buscar catálogo externo.' }
 }
 
-export async function searchCatalogAdmin({ query, stores = ['amazon', 'rakuma', 'mercari', 'yahoo', 'yahoo_flea', 'snkrdunk'], page = 1, pageSize = 30 }) {
+async function invokeCatalogSearch({ body, token, authErrorMessage }) {
+  let lastError = null
+
+  for (const functionName of SEARCH_FUNCTION_NAMES) {
+    const invokePromise = supabase.functions.invoke(functionName, {
+      body,
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    })
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Tempo esgotado ao consultar as lojas externas.')), SEARCH_TIMEOUT_MS)
+    })
+
+    try {
+      const result = await Promise.race([invokePromise, timeoutPromise])
+      const { data, error } = result ?? {}
+      if (error) {
+        lastError = await normalizeInvokeError(error, authErrorMessage)
+        if (String(lastError?.message || '').includes('não encontrada')) continue
+        return { data: null, error: lastError }
+      }
+      if (data?.error) return { data: null, error: { message: data.error } }
+      return { data, error: null }
+    } catch (error) {
+      lastError = { message: error?.message || 'Erro ao buscar catálogo externo.' }
+    }
+  }
+
+  return { data: null, error: lastError || { message: 'Não foi possível executar a busca de catálogo.' } }
+}
+
+export async function searchCatalogAdmin({ query, stores = DEFAULT_STORES, page = 1, pageSize = 30 }) {
   const { error: userErr } = await supabase.auth.getUser()
   if (userErr) {
     return { data: null, error: { message: 'Sessão expirada. Faça login novamente.' } }
@@ -52,33 +83,17 @@ export async function searchCatalogAdmin({ query, stores = ['amazon', 'rakuma', 
     return { data: null, error: { message: 'Faça login para usar a busca do catálogo.' } }
   }
 
-  let lastError = null
+  return await invokeCatalogSearch({
+    body: { query, stores, page, pageSize, mode: 'admin' },
+    token,
+    authErrorMessage: 'Sessão expirada ou sem permissão para usar a busca do admin.',
+  })
+}
 
-  for (const functionName of SEARCH_FUNCTION_NAMES) {
-    const invokePromise = supabase.functions.invoke(functionName, {
-      body: { query, stores, page, pageSize },
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('Tempo esgotado ao consultar as lojas externas.')), SEARCH_TIMEOUT_MS)
-    })
-
-    try {
-      const result = await Promise.race([invokePromise, timeoutPromise])
-      const { data, error } = result ?? {}
-      if (error) {
-        lastError = await normalizeInvokeError(error)
-        if (String(lastError?.message || '').includes('não encontrada')) continue
-        return { data: null, error: lastError }
-      }
-      if (data?.error) return { data: null, error: { message: data.error } }
-      return { data, error: null }
-    } catch (error) {
-      lastError = { message: error?.message || 'Erro ao buscar catálogo externo.' }
-    }
-  }
-
-  return { data: null, error: lastError || { message: 'Não foi possível executar a busca de catálogo.' } }
+export async function searchCatalogPublic({ query, stores = DEFAULT_STORES, page = 1, pageSize = 24 }) {
+  return await invokeCatalogSearch({
+    body: { query, stores, page, pageSize, mode: 'public' },
+    token: '',
+    authErrorMessage: 'Acesso não autorizado para busca pública.',
+  })
 }
