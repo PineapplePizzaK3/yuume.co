@@ -1,5 +1,5 @@
 import type { UnifiedSearchHit } from '../types.ts'
-import { buildHit, parsePrice, pickBestImage } from '../normalize.ts'
+import { buildHit, parsePrice, pickBestImage, rakumaTagsFromBlock } from '../normalize.ts'
 import {
   collectImageCandidates,
   extractRakumaHitsFromHtmlRegex,
@@ -81,6 +81,7 @@ function hitsFromItemBoxes(html: string, pageSize: number, query: string): Unifi
 
     if (!title || !productUrl) continue
     if (!isRakumaProductUrl(productUrl)) continue
+    const blockTags = rakumaTagsFromBlock(block)
     const built = buildHit({
       id: `${STORE_ID}-box-${i}-${productUrl}`,
       title,
@@ -91,6 +92,7 @@ function hitsFromItemBoxes(html: string, pageSize: number, query: string): Unifi
       storeId: STORE_ID,
       storeName: STORE_NAME,
       source: 'html',
+      tags: blockTags.length ? blockTags : undefined,
     })
     if (matchesQuery(title, query)) strictHits.push(built)
     else looseHits.push(built)

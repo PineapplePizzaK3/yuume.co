@@ -483,6 +483,9 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     amazon: true,
     rakuma: true,
     mercari: true,
+    yahoo: true,
+    yahoo_flea: true,
+    snkrdunk: true,
   })
   const [externalSearchResults, setExternalSearchResults] = useState([])
   const [externalSearchMeta, setExternalSearchMeta] = useState(null)
@@ -490,6 +493,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
   const [externalSearchLoading, setExternalSearchLoading] = useState(false)
   const [externalSearchLoadingMore, setExternalSearchLoadingMore] = useState(false)
   const [externalSearchPage, setExternalSearchPage] = useState(1)
+  const [externalSearchCanAutoLoad, setExternalSearchCanAutoLoad] = useState(true)
   const [externalSearchError, setExternalSearchError] = useState('')
   const [ordersPage, setOrdersPage] = useState(0)
   const [ordersHasMore, setOrdersHasMore] = useState(false)
@@ -2911,14 +2915,12 @@ export default function Admin({ routeTabId = 'pedidos' }) {
           }
           return merged
         })
-        const serverHasMore = data?.meta?.hasMore === true
-        setExternalSearchMeta({
-          ...(data?.meta ?? {}),
-          hasMore: serverHasMore && added > 0,
-        })
+        setExternalSearchCanAutoLoad(added > 0)
+        setExternalSearchMeta(data?.meta ?? null)
       } else {
         setExternalSearchResults(incoming)
         setExternalSearchMeta(data?.meta ?? null)
+        setExternalSearchCanAutoLoad(true)
       }
       setExternalSearchPartials(data?.partials ?? [])
     } catch (e) {
@@ -2930,8 +2932,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
   }
 
   const loadMoreExternalSearch = async () => {
-    if (externalSearchLoading || externalSearchLoadingMore) return
-    if (externalSearchMeta?.hasMore === false) return
+    if (externalSearchLoading || externalSearchLoadingMore || !externalSearchCanAutoLoad) return
     await runExternalSearch(externalSearchPage + 1, { append: true })
   }
 
@@ -3117,6 +3118,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     externalSearchPage,
     externalSearchPartials,
     externalSearchResults,
+    externalSearchCanAutoLoad,
     formatExternalPrice,
     runExternalSearch,
     loadMoreExternalSearch,

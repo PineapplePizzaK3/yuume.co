@@ -4,7 +4,7 @@
  */
 import { generateKeyPair, exportJWK, SignJWT } from 'npm:jose@5'
 import type { UnifiedSearchHit } from '../types.ts'
-import { buildHit, pickBestImage } from '../normalize.ts'
+import { buildHit, mercariTagsFromRow, pickBestImage } from '../normalize.ts'
 
 const MERCARI_API_BASE = 'https://api.mercari.jp'
 const MERCARI_SEARCH_PATH = '/v2/entities:search'
@@ -19,6 +19,8 @@ type MercariSearchItem = {
   photo_paths?: unknown[]
   photos?: Array<{ imageUrl?: string; uri?: string; url?: string }>
   status?: string
+  itemType?: string
+  auction?: unknown
 }
 
 type MercariSearchResponse = {
@@ -74,7 +76,8 @@ function buildSearchBody(keyword: string, pageSize: number) {
       skuIds: [],
       excludeKeyword: '',
     },
-    defaultDatasets: [],
+    defaultDatasets: ['DATASET_TYPE_MERCARI', 'DATASET_TYPE_BEYOND'],
+    withAuction: true,
     serviceFrom: 'suruga',
   }
 }
@@ -84,6 +87,29 @@ function parseMercariPrice(value: unknown): number | null {
   const n = typeof value === 'number' ? value : Number(String(value).replace(/[^\d.]/g, ''))
   if (!Number.isFinite(n) || n <= 0) return null
   return Math.round(n)
+}
+
+function extractMercariAuctionPrices(row: MercariSearchItem): {
+  currentBidPrice: number | null
+  buyoutPrice: number | null
+} {
+  const auc = row?.auction
+  if (!auc || typeof auc !== 'object') {
+    return { currentBidPrice: null, buyoutPrice: null }
+  }
+  const a = auc as Record<string, unknown>
+  const currentBidPrice =
+    parseMercariPrice(a.highestBid) ??
+    parseMercariPrice(a.currentBid) ??
+    parseMercariPrice(a.bidPrice) ??
+    parseMercariPrice(a.price) ??
+    null
+  const buyoutPrice =
+    parseMercariPrice(a.buyoutPrice) ??
+    parseMercariPrice(a.instantPrice) ??
+    parseMercariPrice(a.fixedPrice) ??
+    null
+  return { currentBidPrice, buyoutPrice }
 }
 
 function mercariItemUrl(id: string): string {
@@ -160,6 +186,11 @@ export async function searchMercariApi(query: string, pageSize: number): Promise
     if (!id || !name || !productUrl) continue
 
     const thumb = extractMercariThumbnail(row)
+    const tags = mercariTagsFromRow(row)
+    const auctionPrices = extractMercariAuctionPrices(row)
+    if (tags.includes('auction') && auctionPrices.currentBidPrice == null) {
+      auctionPrices.currentBidPrice = parseMercariPrice(row.price)
+    }
     hits.push(
       buildHit({
         id: `mercari-api-${i}-${id}`,
@@ -171,6 +202,9 @@ export async function searchMercariApi(query: string, pageSize: number): Promise
         storeId: 'mercari',
         storeName: 'Mercari',
         source: 'mixed',
+        tags: tags.length ? tags : undefined,
+        auctionCurrentBidPrice: auctionPrices.currentBidPrice,
+        auctionBuyoutPrice: auctionPrices.buyoutPrice,
       }),
     )
   }

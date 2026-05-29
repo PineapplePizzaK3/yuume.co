@@ -39,7 +39,7 @@ async function normalizeInvokeError(err) {
   return { message: raw || 'Erro ao buscar catálogo externo.' }
 }
 
-export async function searchCatalogAdmin({ query, stores = ['amazon', 'rakuma', 'mercari'], page = 1, pageSize = 30 }) {
+export async function searchCatalogAdmin({ query, stores = ['amazon', 'rakuma', 'mercari', 'yahoo', 'yahoo_flea', 'snkrdunk'], page = 1, pageSize = 30 }) {
   const { error: userErr } = await supabase.auth.getUser()
   if (userErr) {
     return { data: null, error: { message: 'Sessão expirada. Faça login novamente.' } }

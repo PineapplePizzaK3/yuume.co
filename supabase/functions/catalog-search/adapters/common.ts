@@ -1,4 +1,10 @@
-import { parsePrice, toAbsoluteUrl } from '../normalize.ts'
+import {
+  isMercariSoldStatus,
+  isMercariUnavailableStatus,
+  parsePrice,
+  toAbsoluteUrl,
+} from '../normalize.ts'
+import type { CatalogHitTag } from '../types.ts'
 
 const DEFAULT_HEADERS: Record<string, string> = {
   'User-Agent':
@@ -166,6 +172,48 @@ export function isRakumaProductUrl(url: string): boolean {
   }
 }
 
+export function isYahooAuctionUrl(url: string): boolean {
+  try {
+    const u = new URL(url)
+    const host = u.hostname.toLowerCase()
+    const path = normalizeItemPathname(u.pathname)
+    if (!/(^|\.)auctions\.yahoo\.co\.jp$/.test(host)) return false
+    if (!/^\/(?:jp\/auction|auction)\/[a-z0-9]+$/i.test(path)) return false
+    if (hasImageLikeExt(path)) return false
+    return true
+  } catch {
+    return false
+  }
+}
+
+export function isYahooFleaUrl(url: string): boolean {
+  try {
+    const u = new URL(url)
+    const host = u.hostname.toLowerCase()
+    const path = normalizeItemPathname(u.pathname)
+    if (!/(^|\.)paypayfleamarket\.yahoo\.co\.jp$/.test(host)) return false
+    if (!/^\/item\/[a-z0-9]+$/i.test(path)) return false
+    if (hasImageLikeExt(path)) return false
+    return true
+  } catch {
+    return false
+  }
+}
+
+export function isSnkrdunkProductUrl(url: string): boolean {
+  try {
+    const u = new URL(url)
+    const host = u.hostname.toLowerCase()
+    const path = normalizeItemPathname(u.pathname)
+    if (!/(^|\.)snkrdunk\.com$/.test(host)) return false
+    if (!/^\/(?:products|apparels)\/[a-z0-9._-]+(?:\/used\/[a-z0-9._-]+)?$/i.test(path)) return false
+    if (hasImageLikeExt(path)) return false
+    return true
+  } catch {
+    return false
+  }
+}
+
 /** Fallback: URLs `/item/m…` embutidas no HTML (JSON escapado, prefetch, etc.). */
 export function extractMercariHitsFromHtmlRegex(html: string, pageSize: number): Array<{
   title: string
@@ -328,6 +376,7 @@ export function extractMercariHitsFromNextData(html: string, pageSize: number, q
   productUrl: string
   price: number | null
   imageUrl: string | null
+  tags?: CatalogHitTag[]
 }> {
   const raw = html.match(/<script[^>]*id=["']__NEXT_DATA__["'][^>]*>([\s\S]*?)<\/script>/i)?.[1]
   if (!raw) return []
@@ -339,7 +388,13 @@ export function extractMercariHitsFromNextData(html: string, pageSize: number, q
     return []
   }
 
-  const out: Array<{ title: string; productUrl: string; price: number | null; imageUrl: string | null }> = []
+  const out: Array<{
+    title: string
+    productUrl: string
+    price: number | null
+    imageUrl: string | null
+    tags?: CatalogHitTag[]
+  }> = []
   const seen = new Set<string>()
 
   const thumb = (o: Record<string, unknown>): string | null => {
@@ -381,11 +436,18 @@ export function extractMercariHitsFromNextData(html: string, pageSize: number, q
       if (!isMercariProductUrl(url)) return
       if (seen.has(url)) return
       seen.add(url)
+      const tags: CatalogHitTag[] = []
+      if (o.auction != null && typeof o.auction === 'object') tags.push('auction')
+      const itemType = String(o.itemType ?? '')
+      if (/AUCTION/i.test(itemType)) tags.push('auction')
+      if (isMercariSoldStatus(o.status)) tags.push('sold')
+      else if (isMercariUnavailableStatus(o.status)) tags.push('unavailable')
       out.push({
         title: name.trim(),
         productUrl: url,
         price: priceNum,
         imageUrl: thumb(o),
+        tags: tags.length ? [...new Set(tags)] : undefined,
       })
     }
     for (const v of Object.values(o)) visit(v, depth + 1)

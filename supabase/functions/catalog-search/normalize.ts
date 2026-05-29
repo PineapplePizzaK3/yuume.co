@@ -1,4 +1,4 @@
-import type { StoreId, UnifiedSearchHit } from './types.ts'
+import type { CatalogHitTag, StoreId, UnifiedSearchHit } from './types.ts'
 
 export function parsePrice(value: unknown): number | null {
   if (value == null) return null
@@ -32,7 +32,11 @@ export function parsePrice(value: unknown): number | null {
 
 export function toAbsoluteUrl(raw: string | null | undefined, baseUrl: string): string | null {
   if (!raw) return null
-  const clean = String(raw).trim()
+  const clean = String(raw)
+    .replace(/&amp;/gi, '&')
+    .replace(/&#38;/gi, '&')
+    .replace(/&quot;/gi, '"')
+    .trim()
   if (!clean) return null
   try {
     return new URL(clean, baseUrl).toString()
@@ -92,6 +96,70 @@ export function normalizeTitle(raw: string | null | undefined): string {
   return text.length > 180 ? `${text.slice(0, 177)}...` : text
 }
 
+export function mergeCatalogTags(...groups: Array<CatalogHitTag[] | undefined>): CatalogHitTag[] {
+  const tags: CatalogHitTag[] = []
+  for (const group of groups) {
+    if (!group?.length) continue
+    tags.push(...group)
+  }
+  return [...new Set(tags)]
+}
+
+export function isMercariSoldStatus(status: unknown): boolean {
+  const s = String(status ?? '').toUpperCase()
+  if (!s) return false
+  return /SOLD_OUT|\bSOLD\b|売り切れ/.test(s)
+}
+
+export function isMercariUnavailableStatus(status: unknown): boolean {
+  const s = String(status ?? '').toUpperCase()
+  if (!s || isMercariSoldStatus(s)) return false
+  return /TRADING|STOP|CANCEL|ADMIN_CANCEL|UNAVAILABLE|DELETED|EXPIRED/.test(s)
+}
+
+export function mercariTagsFromRow(row: {
+  auction?: unknown
+  itemType?: unknown
+  status?: unknown
+}): CatalogHitTag[] {
+  const tags: CatalogHitTag[] = []
+  if (row.auction != null && typeof row.auction === 'object') tags.push('auction')
+  const itemType = String(row.itemType ?? '')
+  if (/AUCTION/i.test(itemType)) tags.push('auction')
+  if (isMercariSoldStatus(row.status)) tags.push('sold')
+  else if (isMercariUnavailableStatus(row.status)) tags.push('unavailable')
+  return [...new Set(tags)]
+}
+
+export function mercariTagsFromText(text: string): CatalogHitTag[] {
+  const tags: CatalogHitTag[] = []
+  if (/オークション|入札(?:する|中)|現在(?:の)?(?:価格|入札)/i.test(text)) tags.push('auction')
+  if (/売り切れ|売切れ|SOLD\s*OUT|ITEM_STATUS_SOLD_OUT|\bsold_out\b/i.test(text)) tags.push('sold')
+  else if (/取引中|出品停止|取り下げ|unavailable|not available/i.test(text)) tags.push('unavailable')
+  return [...new Set(tags)]
+}
+
+export function amazonTagsFromBlock(block: string): CatalogHitTag[] {
+  const tags: CatalogHitTag[] = []
+  if (/オークション|入札/i.test(block)) tags.push('auction')
+  if (/売り切れ|sold out/i.test(block)) tags.push('sold')
+  else if (
+    /在庫切れ|在庫なし|現在お取扱いできません|Currently unavailable|temporarily out of stock|out of stock|利用できません/i.test(
+      block,
+    )
+  ) {
+    tags.push('unavailable')
+  }
+  return [...new Set(tags)]
+}
+
+export function rakumaTagsFromBlock(block: string): CatalogHitTag[] {
+  const tags: CatalogHitTag[] = []
+  if (/item-box--sold|sold-out|売り切れ|\bSOLD\b|売切れ/i.test(block)) tags.push('sold')
+  else if (/取引中|unavailable|not available/i.test(block)) tags.push('unavailable')
+  return [...new Set(tags)]
+}
+
 export function buildHit(params: {
   id: string
   title: string
@@ -102,7 +170,11 @@ export function buildHit(params: {
   storeId: StoreId
   storeName: string
   source?: 'html' | 'jina' | 'mixed'
+  tags?: CatalogHitTag[]
+  auctionCurrentBidPrice?: number | null
+  auctionBuyoutPrice?: number | null
 }): UnifiedSearchHit {
+  const tags = params.tags?.length ? [...new Set(params.tags)] : undefined
   return {
     id: params.id,
     title: normalizeTitle(params.title),
@@ -113,6 +185,9 @@ export function buildHit(params: {
     storeId: params.storeId,
     storeName: params.storeName,
     source: params.source || 'html',
+    tags,
+    auctionCurrentBidPrice: params.auctionCurrentBidPrice ?? null,
+    auctionBuyoutPrice: params.auctionBuyoutPrice ?? null,
     fetchedAt: new Date().toISOString(),
   }
 }

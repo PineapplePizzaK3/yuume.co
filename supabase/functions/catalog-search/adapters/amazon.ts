@@ -1,5 +1,5 @@
 import type { UnifiedSearchHit } from '../types.ts'
-import { buildHit, parsePrice, pickBestImage } from '../normalize.ts'
+import { buildHit, parsePrice, pickBestImage, amazonTagsFromBlock } from '../normalize.ts'
 import { collectImageCandidates, fetchText, FETCH_TIMEOUT_MS } from './common.ts'
 
 const STORE_ID = 'amazon'
@@ -92,6 +92,7 @@ function hitsFromSearchHtml(html: string, pageSize: number): UnifiedSearchHit[] 
     const productUrl = `${BASE}/dp/${asin}`
     const price = extractAmazonPrice(block)
     const imageUrl = extractAmazonImage(block)
+    const tags = amazonTagsFromBlock(block)
 
     seenAsin.add(asin)
     hits.push(
@@ -105,6 +106,7 @@ function hitsFromSearchHtml(html: string, pageSize: number): UnifiedSearchHit[] 
         storeId: STORE_ID,
         storeName: STORE_NAME,
         source: 'html',
+        tags: tags.length ? tags : undefined,
       }),
     )
 

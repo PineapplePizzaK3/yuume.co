@@ -30,6 +30,27 @@ const STORE_MODEL: Record<StoreId, StoreIntegrationModel> = {
     targetSearchMode: 'ingestion_index',
     notes: 'Busca primária via API web (DPoP); HTML/Jina só como fallback.',
   },
+  yahoo: {
+    sourceModel: 'public_web_fetch',
+    officialPartner: false,
+    currentSearchMode: 'realtime_parse',
+    targetSearchMode: 'ingestion_index',
+    notes: 'Yahoo Auctions via parsing de busca pública; sujeito a variações de markup.',
+  },
+  yahoo_flea: {
+    sourceModel: 'public_web_fetch',
+    officialPartner: false,
+    currentSearchMode: 'realtime_parse',
+    targetSearchMode: 'ingestion_index',
+    notes: 'Yahoo Flea Market (PayPayフリマ) via parsing web público; pode variar por sessão/região.',
+  },
+  snkrdunk: {
+    sourceModel: 'public_web_fetch',
+    officialPartner: false,
+    currentSearchMode: 'realtime_parse',
+    targetSearchMode: 'ingestion_index',
+    notes: 'SNKRDUNK via busca pública (sneakers, streetwear e apparels); markup Next.js pode variar.',
+  },
 }
 
 export function buildSystemStrategyMeta() {

@@ -8,18 +8,24 @@ import { STORE_DEADLINE_MS } from './adapters/common.ts'
 import { searchAmazon } from './adapters/amazon.ts'
 import { searchRakuma } from './adapters/rakuma.ts'
 import { searchMercari } from './adapters/mercari.ts'
+import { searchYahoo } from './adapters/yahoo.ts'
+import { searchYahooFlea } from './adapters/yahooFlea.ts'
+import { searchSnkrdunk } from './adapters/snkrdunk.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-const ALLOWED_STORES: StoreId[] = ['amazon', 'rakuma', 'mercari']
+const ALLOWED_STORES: StoreId[] = ['amazon', 'rakuma', 'mercari', 'yahoo', 'yahoo_flea', 'snkrdunk']
 
 const searchByStore: Record<StoreId, (query: string, pageSize: number) => Promise<UnifiedSearchHit[]>> = {
   amazon: searchAmazon,
   rakuma: searchRakuma,
   mercari: searchMercari,
+  yahoo: searchYahoo,
+  yahoo_flea: searchYahooFlea,
+  snkrdunk: searchSnkrdunk,
 }
 
 function safeJson(payload: unknown, status: number = 200): Response {

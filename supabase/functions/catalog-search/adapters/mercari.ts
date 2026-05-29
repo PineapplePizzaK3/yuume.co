@@ -1,5 +1,5 @@
 import type { UnifiedSearchHit } from '../types.ts'
-import { buildHit, parsePrice, pickBestImage } from '../normalize.ts'
+import { buildHit, parsePrice, pickBestImage, mercariTagsFromText } from '../normalize.ts'
 import { searchMercariApi } from './mercariApi.ts'
 import {
   collectImageCandidates,
@@ -59,6 +59,7 @@ function hitsFromLiBlocks(html: string, pageSize: number, query: string): Unifie
     )
     if (!title || !productUrl) continue
     if (!isMercariProductUrl(productUrl)) continue
+    const blockTags = mercariTagsFromText(block)
     const built = buildHit({
       id: `${STORE_ID}-li-${i}-${productUrl}`,
       title,
@@ -69,6 +70,7 @@ function hitsFromLiBlocks(html: string, pageSize: number, query: string): Unifie
       storeId: STORE_ID,
       storeName: STORE_NAME,
       source: 'html',
+      tags: blockTags.length ? blockTags : undefined,
     })
     if (matchesQuery(title, query)) strictHits.push(built)
     else looseHits.push(built)
@@ -96,6 +98,7 @@ function collectFromHtml(html: string, pageSize: number, query: string): Unified
         storeId: STORE_ID,
         storeName: STORE_NAME,
         source: 'mixed',
+        tags: hit.tags,
       }),
     )
   }
