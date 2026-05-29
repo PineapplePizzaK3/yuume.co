@@ -151,13 +151,39 @@ function collectFromJina(jinaText: string, pageSize: number, query: string): Uni
   return collected.slice(0, pageSize)
 }
 
-export async function searchMercari(query: string, pageSize: number, storePage = 1): Promise<UnifiedSearchHit[]> {
-  try {
-    const apiHits = await searchMercariApi(query, pageSize, storePage)
-    if (apiHits.length > 0) return apiHits
-  } catch {
-    // fallback HTML abaixo
+export type MercariPageResult = {
+  hits: UnifiedSearchHit[]
+  nextPageToken?: string
+}
+
+export async function searchMercariPage(
+  query: string,
+  pageSize: number,
+  options: { storePage?: number; pageToken?: string } = {},
+): Promise<MercariPageResult> {
+  const storePage = Math.max(1, Number(options.storePage) || 1)
+  const pageToken = String(options.pageToken || '').trim()
+
+  if (!pageToken) {
+    try {
+      const apiPage = await searchMercariApi(query, pageSize, {})
+      if (apiPage.hits.length > 0) return apiPage
+    } catch {
+      // fallback HTML abaixo
+    }
+  } else {
+    try {
+      return await searchMercariApi(query, pageSize, { pageToken })
+    } catch {
+      return { hits: [] }
+    }
   }
+
+  const htmlHits = await searchMercariHtml(query, pageSize, storePage)
+  return { hits: htmlHits }
+}
+
+async function searchMercariHtml(query: string, pageSize: number, storePage = 1): Promise<UnifiedSearchHit[]> {
 
   const startedAt = Date.now()
   const budgetMs = STORE_DEADLINE_MS - 300
@@ -179,4 +205,10 @@ export async function searchMercari(query: string, pageSize: number, storePage =
   const jinaText = await fetchViaJina(searchUrl, Math.min(JINA_TIMEOUT_MS, remaining)).catch(() => '')
   const merged = dedupeByUrl([...fromHtml, ...collectFromJina(jinaText, pageSize, query)])
   return merged.slice(0, pageSize)
+}
+
+/** @deprecated Use searchMercariPage */
+export async function searchMercari(query: string, pageSize: number, storePage = 1): Promise<UnifiedSearchHit[]> {
+  const page = await searchMercariPage(query, pageSize, { storePage })
+  return page.hits
 }

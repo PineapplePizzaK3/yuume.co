@@ -494,6 +494,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
   const [externalSearchLoadingMore, setExternalSearchLoadingMore] = useState(false)
   const [externalSearchPage, setExternalSearchPage] = useState(1)
   const [externalSearchCanAutoLoad, setExternalSearchCanAutoLoad] = useState(true)
+  const [externalSearchCursors, setExternalSearchCursors] = useState(null)
   const [externalSearchError, setExternalSearchError] = useState('')
   const [ordersPage, setOrdersPage] = useState(0)
   const [ordersHasMore, setOrdersHasMore] = useState(false)
@@ -2867,7 +2868,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     .filter(([, checked]) => checked)
     .map(([storeId]) => storeId)
 
-  const runExternalSearch = async (page = 1, { append = false } = {}) => {
+  const runExternalSearch = async (page = 1, { append = false, cursors = null } = {}) => {
     const query = externalSearchQuery.trim()
     if (query.length < 2) {
       setExternalSearchError('Digite ao menos 2 caracteres para buscar.')
@@ -2881,6 +2882,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       setExternalSearchLoadingMore(true)
     } else {
       setExternalSearchLoading(true)
+      setExternalSearchCursors(null)
     }
     setExternalSearchError('')
     try {
@@ -2889,6 +2891,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
         stores: selectedExternalStores,
         page,
         pageSize: 30,
+        cursors: append ? cursors ?? externalSearchCursors : null,
       })
       if (error) {
         setExternalSearchError(error.message || 'Erro ao buscar catálogos.')
@@ -2918,11 +2921,13 @@ export default function Admin({ routeTabId = 'pedidos' }) {
         const hasMore = data?.meta?.hasMore ?? false
         const noNewItems = incoming.length > 0 && added === 0
         setExternalSearchCanAutoLoad(hasMore && !noNewItems)
+        setExternalSearchCursors(data?.meta?.cursors ?? null)
         setExternalSearchMeta(data?.meta ?? null)
       } else {
         setExternalSearchResults(incoming)
         setExternalSearchMeta(data?.meta ?? null)
-        setExternalSearchCanAutoLoad(true)
+        setExternalSearchCursors(data?.meta?.cursors ?? null)
+        setExternalSearchCanAutoLoad(data?.meta?.hasMore ?? true)
       }
       setExternalSearchPartials(data?.partials ?? [])
     } catch (e) {
@@ -2935,7 +2940,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
 
   const loadMoreExternalSearch = async () => {
     if (externalSearchLoading || externalSearchLoadingMore || !externalSearchCanAutoLoad) return
-    await runExternalSearch(externalSearchPage + 1, { append: true })
+    await runExternalSearch(externalSearchPage + 1, { append: true, cursors: externalSearchCursors })
   }
 
   const handleExternalSearchSubmit = async (e) => {
