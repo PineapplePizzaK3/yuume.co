@@ -7,7 +7,7 @@ import {
   fetchViaJina,
   isSnkrdunkProductUrl,
   JINA_TIMEOUT_MS,
-  matchesQuery,
+  matchesQueryAnyToken,
   parseJinaHits,
   STORE_DEADLINE_MS,
 } from './common.ts'
@@ -15,6 +15,13 @@ import {
 const STORE_ID = 'snkrdunk'
 const STORE_NAME = 'SNKRDUNK'
 const BASE = 'https://snkrdunk.com'
+
+type SnkrdunkServerProduct = {
+  title: string
+  link: string
+  imageUrl: string
+  salePrice: number | null
+}
 
 function decodeHtmlEntities(text: string): string {
   return String(text || '')
@@ -33,6 +40,10 @@ function cleanText(text: string | null | undefined): string {
     .trim()
 }
 
+function unescapeEmbeddedJson(text: string): string {
+  return String(text || '').replace(/\\"/g, '"').replace(/\\\\/g, '\\')
+}
+
 function parseAriaLabel(label: string): { title: string; priceRaw: string | null } {
   const decoded = cleanText(label)
   const match = decoded.match(/^(.+?)\s*-\s*(?:¥|￥)\s*([\d,]+(?:\.\d+)?)\s*$/)
@@ -47,7 +58,7 @@ function snkrdunkTagsFromContext(text: string): Array<'sold' | 'unavailable'> {
 }
 
 function sourceRank(s: UnifiedSearchHit['source']): number {
-  return s === 'html' ? 2 : 1
+  return s === 'html' ? 2 : s === 'mixed' ? 3 : 1
 }
 
 function dedupeByUrl(hits: UnifiedSearchHit[]): UnifiedSearchHit[] {
@@ -59,12 +70,97 @@ function dedupeByUrl(hits: UnifiedSearchHit[]): UnifiedSearchHit[] {
   return [...m.values()]
 }
 
+function normalizeSearchKeyword(value: string): string {
+  return String(value || '').trim().toLowerCase()
+}
+
+function readEmbeddedSearchQuery(html: string): string | null {
+  const anchor = html.indexOf('serverSearchData')
+  if (anchor < 0) return null
+  const head = html.slice(Math.max(0, anchor - 160), anchor + 40)
+  const match =
+    head.match(/searchParams\\":\{\\"query\\":\\"([^\\"]*)\\"/) ||
+    head.match(/searchParams\\\\":\{\\\\"query\\\\":\\\\"([^\\"]*)\\\\"/)
+  if (!match) return null
+  return unescapeEmbeddedJson(match[1]).trim()
+}
+
+function parseServerSearchProducts(html: string, pageSize: number): SnkrdunkServerProduct[] {
+  const anchor = html.indexOf('serverSearchData')
+  if (anchor < 0) return []
+
+  const productsKey = '\\"products\\":'
+  const start = html.indexOf(productsKey, anchor)
+  if (start < 0) return []
+
+  const body = html.slice(start + productsKey.length, start + productsKey.length + 400000)
+  const unescaped = unescapeEmbeddedJson(body)
+
+  const productRe =
+    /\{"displayCardPattern":"[^"]*","title":"((?:\\.|[^"])*)","link":"(https:\/\/snkrdunk\.com\/[^"]+)","imageUrl":"([^"]*)","hasNewMark":(?:true|false),"salePrice":(\d+)/g
+
+  const out: SnkrdunkServerProduct[] = []
+  for (const match of unescaped.matchAll(productRe)) {
+    const link = match[2]
+    if (!isSnkrdunkProductUrl(link)) continue
+    out.push({
+      title: unescapeEmbeddedJson(match[1]),
+      link,
+      imageUrl: unescapeEmbeddedJson(match[3]),
+      salePrice: Number(match[4]),
+    })
+    if (out.length >= pageSize * 2) break
+  }
+  return out
+}
+
+function serverProductsToHits(products: SnkrdunkServerProduct[], query: string): UnifiedSearchHit[] {
+  const hits: UnifiedSearchHit[] = []
+  for (const row of products) {
+    const title = cleanText(row.title)
+    if (!title || title.length < 3) continue
+    if (!matchesQueryAnyToken(title, query)) continue
+
+    const slug = row.link.split('/').pop() || 'item'
+    hits.push(
+      buildHit({
+        id: `${STORE_ID}-api-${slug}`,
+        title,
+        price: row.salePrice != null && Number.isFinite(row.salePrice) ? row.salePrice : null,
+        currency: 'JPY',
+        imageUrl: pickBestImage([row.imageUrl], BASE),
+        productUrl: row.link,
+        storeId: STORE_ID,
+        storeName: STORE_NAME,
+        source: 'mixed',
+        tags: snkrdunkTagsFromContext(title),
+      }),
+    )
+  }
+  return hits
+}
+
+function extractSnkrdunkFromServerSearchData(
+  html: string,
+  pageSize: number,
+  query: string,
+): UnifiedSearchHit[] {
+  const embeddedQuery = readEmbeddedSearchQuery(html)
+  if (!embeddedQuery || normalizeSearchKeyword(embeddedQuery) !== normalizeSearchKeyword(query)) {
+    return []
+  }
+
+  const products = parseServerSearchProducts(html, pageSize)
+  if (products.length === 0) return []
+
+  return serverProductsToHits(products, query).slice(0, pageSize)
+}
+
 function extractSnkrdunkHitsFromHtml(html: string, pageSize: number, query: string): UnifiedSearchHit[] {
   const tileRe =
     /<a href="(https:\/\/snkrdunk\.com\/(?:products|apparels)\/[^"]+)"[^>]*class="[^"]*productTile[^"]*"[^>]*aria-label="([^"]+)"/gi
 
-  const strictHits: UnifiedSearchHit[] = []
-  const looseHits: UnifiedSearchHit[] = []
+  const hits: UnifiedSearchHit[] = []
   const seen = new Set<string>()
 
   for (const match of html.matchAll(tileRe)) {
@@ -75,6 +171,7 @@ function extractSnkrdunkHitsFromHtml(html: string, pageSize: number, query: stri
     const anchor = match[0]
     const { title, priceRaw } = parseAriaLabel(match[2])
     if (!title || title.length < 3) continue
+    if (!matchesQueryAnyToken(title, query)) continue
 
     const idx = match.index ?? 0
     const context = html.slice(Math.max(0, idx - 400), Math.min(html.length, idx + anchor.length + 1200))
@@ -96,33 +193,30 @@ function extractSnkrdunkHitsFromHtml(html: string, pageSize: number, query: stri
 
     const slug = productUrl.split('/').pop() || 'item'
     const tags = snkrdunkTagsFromContext(anchor + ' ' + context)
-    const hit = buildHit({
-      id: `${STORE_ID}-${slug}`,
-      title,
-      price: parsePrice(rawPrice),
-      currency: 'JPY',
-      imageUrl,
-      productUrl,
-      storeId: STORE_ID,
-      storeName: STORE_NAME,
-      source: 'html',
-      tags: tags.length ? tags : undefined,
-    })
-
-    if (matchesQuery(hit.title, query)) strictHits.push(hit)
-    else looseHits.push(hit)
-    if (strictHits.length + looseHits.length >= pageSize * 3) break
+    hits.push(
+      buildHit({
+        id: `${STORE_ID}-${slug}`,
+        title,
+        price: parsePrice(rawPrice),
+        currency: 'JPY',
+        imageUrl,
+        productUrl,
+        storeId: STORE_ID,
+        storeName: STORE_NAME,
+        source: 'html',
+        tags: tags.length ? tags : undefined,
+      }),
+    )
+    if (hits.length >= pageSize) break
   }
 
-  // SNKRDUNK frequentemente renderiza tiles genéricos/recomendados na busca.
-  // Para evitar "sempre os mesmos resultados", só aceitamos hits que batem com a query.
-  return strictHits.slice(0, pageSize)
+  return hits
 }
 
 function extractSnkrdunkHitsFromJina(jinaText: string, pageSize: number, query: string): UnifiedSearchHit[] {
   const parsed = parseJinaHits(jinaText, BASE, 'JPY').filter((h) => isSnkrdunkProductUrl(h.productUrl))
-  const strict = parsed.filter((h) => matchesQuery(h.title, query))
-  return strict.slice(0, pageSize).map((h, idx) =>
+  const relevant = parsed.filter((h) => matchesQueryAnyToken(h.title, query))
+  return relevant.slice(0, pageSize).map((h, idx) =>
     buildHit({
       id: `${STORE_ID}-jina-${idx}-${h.productUrl}`,
       title: h.title,
@@ -148,6 +242,10 @@ export async function searchSnkrdunk(query: string, pageSize: number, storePage 
   const searchUrl = `${BASE}/search?query=${encodeURIComponent(keyword)}${pageParam}`
 
   const html = await fetchText(searchUrl, FETCH_TIMEOUT_MS, { Referer: `${BASE}/` }).catch(() => '')
+
+  const fromServer = extractSnkrdunkFromServerSearchData(html, pageSize, keyword)
+  if (fromServer.length > 0) return fromServer
+
   const fromHtml = extractSnkrdunkHitsFromHtml(html, pageSize, keyword)
   if (fromHtml.length >= Math.min(pageSize, 4)) return fromHtml.slice(0, pageSize)
 
