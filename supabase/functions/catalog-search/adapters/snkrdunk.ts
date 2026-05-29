@@ -114,14 +114,15 @@ function extractSnkrdunkHitsFromHtml(html: string, pageSize: number, query: stri
     if (strictHits.length + looseHits.length >= pageSize * 3) break
   }
 
-  return (strictHits.length > 0 ? strictHits : looseHits).slice(0, pageSize)
+  // SNKRDUNK frequentemente renderiza tiles genéricos/recomendados na busca.
+  // Para evitar "sempre os mesmos resultados", só aceitamos hits que batem com a query.
+  return strictHits.slice(0, pageSize)
 }
 
 function extractSnkrdunkHitsFromJina(jinaText: string, pageSize: number, query: string): UnifiedSearchHit[] {
   const parsed = parseJinaHits(jinaText, BASE, 'JPY').filter((h) => isSnkrdunkProductUrl(h.productUrl))
   const strict = parsed.filter((h) => matchesQuery(h.title, query))
-  const useHits = strict.length > 0 ? strict : parsed
-  return useHits.slice(0, pageSize).map((h, idx) =>
+  return strict.slice(0, pageSize).map((h, idx) =>
     buildHit({
       id: `${STORE_ID}-jina-${idx}-${h.productUrl}`,
       title: h.title,
