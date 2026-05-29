@@ -7,7 +7,6 @@ import {
   fetchViaJina,
   isSnkrdunkProductUrl,
   JINA_TIMEOUT_MS,
-  matchesQueryAnyToken,
   parseJinaHits,
   STORE_DEADLINE_MS,
 } from './common.ts'
@@ -15,6 +14,31 @@ import {
 const STORE_ID = 'snkrdunk'
 const STORE_NAME = 'SNKRDUNK'
 const BASE = 'https://snkrdunk.com'
+const QUERY_STOPWORDS = new Set([
+  'de',
+  'do',
+  'da',
+  'dos',
+  'das',
+  'para',
+  'com',
+  'sem',
+  'em',
+  'tenis',
+  'tênis',
+  'sapato',
+  'calcado',
+  'calçado',
+  'sneaker',
+  'sneakers',
+  'shoe',
+  'shoes',
+  'masculino',
+  'feminino',
+  'original',
+  'authentic',
+  'legit',
+])
 
 type SnkrdunkServerProduct = {
   title: string
@@ -74,6 +98,66 @@ function normalizeSearchKeyword(value: string): string {
   return String(value || '').trim().toLowerCase()
 }
 
+function normalizeForMatch(value: string): string {
+  return String(value || '')
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+}
+
+function hasCjk(text: string): boolean {
+  return /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff]/.test(text)
+}
+
+function queryTokensForRelevance(query: string): string[] {
+  const cleaned = normalizeForMatch(query).replace(/[^a-z0-9\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\s]/g, ' ')
+  const rawTokens = cleaned
+    .split(/\s+/)
+    .map((token) => token.trim())
+    .filter(Boolean)
+
+  const tokens: string[] = []
+  for (const token of rawTokens) {
+    if (QUERY_STOPWORDS.has(token)) continue
+    if (token.length >= 2 || hasCjk(token)) tokens.push(token)
+  }
+  return [...new Set(tokens)]
+}
+
+function scoreSnkrdunkRelevance(title: string, query: string): number {
+  const tokens = queryTokensForRelevance(query)
+  if (tokens.length === 0) return 0
+
+  const normalizedTitle = normalizeForMatch(title)
+  if (!normalizedTitle) return -1
+
+  let matched = 0
+  let score = 0
+  for (const token of tokens) {
+    if (!normalizedTitle.includes(token)) continue
+    matched += 1
+    score += 10 + Math.min(6, token.length)
+    if (normalizedTitle.startsWith(token)) score += 3
+  }
+
+  if (matched === 0) return -1
+  if (tokens.length >= 3 && matched < 2) return -1
+
+  const phrase = tokens.join(' ')
+  if (phrase.length >= 4 && normalizedTitle.includes(phrase)) score += 18
+  score += Math.round((matched / tokens.length) * 20)
+  return score
+}
+
+function rankSnkrdunkHits(hits: UnifiedSearchHit[], query: string, pageSize: number): UnifiedSearchHit[] {
+  return [...hits]
+    .map((hit) => ({ hit, score: scoreSnkrdunkRelevance(hit.title, query) }))
+    .filter((row) => row.score >= 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, pageSize)
+    .map(({ hit, score }) => ({ ...hit, score }))
+}
+
 function readEmbeddedSearchQuery(html: string): string | null {
   const anchor = html.indexOf('serverSearchData')
   if (anchor < 0) return null
@@ -119,7 +203,6 @@ function serverProductsToHits(products: SnkrdunkServerProduct[], query: string):
   for (const row of products) {
     const title = cleanText(row.title)
     if (!title || title.length < 3) continue
-    if (!matchesQueryAnyToken(title, query)) continue
 
     const slug = row.link.split('/').pop() || 'item'
     hits.push(
@@ -137,7 +220,7 @@ function serverProductsToHits(products: SnkrdunkServerProduct[], query: string):
       }),
     )
   }
-  return hits
+  return rankSnkrdunkHits(hits, query, products.length || 1)
 }
 
 function extractSnkrdunkFromServerSearchData(
@@ -171,7 +254,6 @@ function extractSnkrdunkHitsFromHtml(html: string, pageSize: number, query: stri
     const anchor = match[0]
     const { title, priceRaw } = parseAriaLabel(match[2])
     if (!title || title.length < 3) continue
-    if (!matchesQueryAnyToken(title, query)) continue
 
     const idx = match.index ?? 0
     const context = html.slice(Math.max(0, idx - 400), Math.min(html.length, idx + anchor.length + 1200))
@@ -210,13 +292,12 @@ function extractSnkrdunkHitsFromHtml(html: string, pageSize: number, query: stri
     if (hits.length >= pageSize) break
   }
 
-  return hits
+  return rankSnkrdunkHits(hits, query, pageSize)
 }
 
 function extractSnkrdunkHitsFromJina(jinaText: string, pageSize: number, query: string): UnifiedSearchHit[] {
   const parsed = parseJinaHits(jinaText, BASE, 'JPY').filter((h) => isSnkrdunkProductUrl(h.productUrl))
-  const relevant = parsed.filter((h) => matchesQueryAnyToken(h.title, query))
-  return relevant.slice(0, pageSize).map((h, idx) =>
+  const built = parsed.map((h, idx) =>
     buildHit({
       id: `${STORE_ID}-jina-${idx}-${h.productUrl}`,
       title: h.title,
@@ -230,6 +311,7 @@ function extractSnkrdunkHitsFromJina(jinaText: string, pageSize: number, query: 
       tags: snkrdunkTagsFromContext(h.title),
     }),
   )
+  return rankSnkrdunkHits(built, query, pageSize)
 }
 
 export async function searchSnkrdunk(query: string, pageSize: number, storePage = 1): Promise<UnifiedSearchHit[]> {
