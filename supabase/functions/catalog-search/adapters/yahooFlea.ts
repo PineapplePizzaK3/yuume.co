@@ -133,13 +133,14 @@ function extractFleaHitsFromJina(jinaText: string, pageSize: number, query: stri
   )
 }
 
-export async function searchYahooFlea(query: string, pageSize: number): Promise<UnifiedSearchHit[]> {
+export async function searchYahooFlea(query: string, pageSize: number, storePage = 1): Promise<UnifiedSearchHit[]> {
   const keyword = String(query || '').trim()
   if (!keyword) return []
 
   const startedAt = Date.now()
   const budgetMs = STORE_DEADLINE_MS - 300
-  const searchUrl = `${BASE}/search/${encodeURIComponent(keyword)}`
+  const pageParam = storePage > 1 ? `?page=${storePage}` : ''
+  const searchUrl = `${BASE}/search/${encodeURIComponent(keyword)}${pageParam}`
 
   const html = await fetchText(searchUrl, FETCH_TIMEOUT_MS, { Referer: `${BASE}/` }).catch(() => '')
   const fromHtml = extractFleaHitsFromHtml(html, pageSize, keyword)

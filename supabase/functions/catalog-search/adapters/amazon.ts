@@ -116,9 +116,10 @@ function hitsFromSearchHtml(html: string, pageSize: number): UnifiedSearchHit[] 
   return hits
 }
 
-export async function searchAmazon(query: string, pageSize: number): Promise<UnifiedSearchHit[]> {
+export async function searchAmazon(query: string, pageSize: number, storePage = 1): Promise<UnifiedSearchHit[]> {
   const encoded = encodeURIComponent(query)
-  const searchUrl = `${BASE}/s?k=${encoded}`
+  const pageParam = storePage > 1 ? `&page=${storePage}` : ''
+  const searchUrl = `${BASE}/s?k=${encoded}${pageParam}`
 
   try {
     const html = await fetchText(searchUrl, FETCH_TIMEOUT_MS, {
