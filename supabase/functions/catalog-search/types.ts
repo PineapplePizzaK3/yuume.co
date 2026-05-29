@@ -8,6 +8,8 @@ export interface SearchRequest {
   page?: number
   pageSize?: number
   mode?: 'admin' | 'public'
+  /** Cursores de paginação por loja (ex.: nextPageToken do Mercari). */
+  cursors?: Partial<Record<StoreId, string>>
 }
 
 export interface UnifiedSearchHit {
@@ -32,4 +34,5 @@ export interface StoreSearchResult {
   hits: UnifiedSearchHit[]
   error?: string
   tookMs: number
+  nextCursor?: string
 }

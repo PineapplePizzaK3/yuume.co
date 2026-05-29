@@ -70,7 +70,13 @@ async function invokeCatalogSearch({ body, token, authErrorMessage }) {
   return { data: null, error: lastError || { message: 'Não foi possível executar a busca de catálogo.' } }
 }
 
-export async function searchCatalogAdmin({ query, stores = DEFAULT_STORES, page = 1, pageSize = 30 }) {
+export async function searchCatalogAdmin({
+  query,
+  stores = DEFAULT_STORES,
+  page = 1,
+  pageSize = 30,
+  cursors = null,
+}) {
   const { error: userErr } = await supabase.auth.getUser()
   if (userErr) {
     return { data: null, error: { message: 'Sessão expirada. Faça login novamente.' } }
@@ -84,15 +90,21 @@ export async function searchCatalogAdmin({ query, stores = DEFAULT_STORES, page 
   }
 
   return await invokeCatalogSearch({
-    body: { query, stores, page, pageSize, mode: 'admin' },
+    body: { query, stores, page, pageSize, mode: 'admin', ...(cursors ? { cursors } : {}) },
     token,
     authErrorMessage: 'Sessão expirada ou sem permissão para usar a busca do admin.',
   })
 }
 
-export async function searchCatalogPublic({ query, stores = DEFAULT_STORES, page = 1, pageSize = 24 }) {
+export async function searchCatalogPublic({
+  query,
+  stores = DEFAULT_STORES,
+  page = 1,
+  pageSize = 24,
+  cursors = null,
+}) {
   return await invokeCatalogSearch({
-    body: { query, stores, page, pageSize, mode: 'public' },
+    body: { query, stores, page, pageSize, mode: 'public', ...(cursors ? { cursors } : {}) },
     token: '',
     authErrorMessage: 'Acesso não autorizado para busca pública.',
   })

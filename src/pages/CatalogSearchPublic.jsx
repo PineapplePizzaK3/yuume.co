@@ -26,6 +26,7 @@ export default function CatalogSearchPublic() {
   const [catalogLoading, setCatalogLoading] = useState(false)
   const [catalogLoadingMore, setCatalogLoadingMore] = useState(false)
   const [catalogCanAutoLoad, setCatalogCanAutoLoad] = useState(true)
+  const [catalogCursors, setCatalogCursors] = useState(null)
   const [catalogError, setCatalogError] = useState('')
   const [creatingSnapshotUrl, setCreatingSnapshotUrl] = useState('')
   const lastCatalogQueryFromUrlRef = useRef('')
@@ -76,7 +77,7 @@ export default function CatalogSearchPublic() {
     [catalogStores],
   )
 
-  const runCatalogSearch = async (page = 1, { append = false, overrideQuery } = {}) => {
+  const runCatalogSearch = async (page = 1, { append = false, overrideQuery, cursors = null } = {}) => {
     const q = String(overrideQuery ?? catalogQuery).trim()
     if (q.length < 2) {
       setCatalogError(
@@ -93,6 +94,7 @@ export default function CatalogSearchPublic() {
     else {
       setCatalogLoading(true)
       setCatalogCanAutoLoad(true)
+      setCatalogCursors(null)
     }
     setCatalogError('')
 
@@ -101,6 +103,7 @@ export default function CatalogSearchPublic() {
       stores: selectedCatalogStores,
       page,
       pageSize: 24,
+      cursors: append ? cursors ?? catalogCursors : null,
     })
 
     if (error) {
@@ -130,6 +133,7 @@ export default function CatalogSearchPublic() {
         setCatalogCanAutoLoad(hasMore)
       }
 
+      setCatalogCursors(data?.meta?.cursors ?? null)
       setCatalogMeta(data?.meta ?? null)
       setCatalogPartials(Array.isArray(data?.partials) ? data.partials : [])
       trackPublicSearchMetric('search_ok', {
@@ -158,7 +162,7 @@ export default function CatalogSearchPublic() {
   const loadMoreCatalog = async () => {
     if (catalogLoading || catalogLoadingMore || !catalogCanAutoLoad) return
     const nextPage = Number(catalogMeta?.page || 1) + 1
-    await runCatalogSearch(nextPage, { append: true })
+    await runCatalogSearch(nextPage, { append: true, cursors: catalogCursors })
   }
 
   const handleResultClick = async (item, event) => {

@@ -7,7 +7,7 @@ import { buildStoreDiagnostics, buildSystemStrategyMeta } from './strategy.ts'
 import { STORE_DEADLINE_MS } from './adapters/common.ts'
 import { searchAmazon } from './adapters/amazon.ts'
 import { searchRakuma } from './adapters/rakuma.ts'
-import { searchMercari } from './adapters/mercari.ts'
+import { searchMercariPage } from './adapters/mercari.ts'
 import { searchYahoo } from './adapters/yahoo.ts'
 import { searchYahooFlea } from './adapters/yahooFlea.ts'
 import { searchSnkrdunk } from './adapters/snkrdunk.ts'
@@ -19,10 +19,8 @@ const corsHeaders = {
 
 const ALLOWED_STORES: StoreId[] = ['amazon', 'rakuma', 'mercari', 'yahoo', 'yahoo_flea', 'snkrdunk']
 const PUBLIC_RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000
-const PUBLIC_RATE_LIMIT_MAX_REQUESTS = 20
-const PUBLIC_MAX_PAGE = 50
+const PUBLIC_RATE_LIMIT_MAX_REQUESTS = 200
 const PUBLIC_MAX_PAGE_SIZE = 24
-const ADMIN_MAX_PAGE = 50
 const publicIpHits = new Map<string, number[]>()
 
 const searchByStore: Record<
@@ -31,10 +29,10 @@ const searchByStore: Record<
 > = {
   amazon: searchAmazon,
   rakuma: searchRakuma,
-  mercari: searchMercari,
   yahoo: searchYahoo,
   yahoo_flea: searchYahooFlea,
   snkrdunk: searchSnkrdunk,
+  mercari: () => Promise.resolve([]),
 }
 
 function safeJson(payload: unknown, status: number = 200): Response {
@@ -109,16 +107,23 @@ async function requireAdmin(req: Request): Promise<Response | null> {
   return null
 }
 
+function sanitizeCursors(raw: unknown): Partial<Record<StoreId, string>> {
+  if (!raw || typeof raw !== 'object') return {}
+  const out: Partial<Record<StoreId, string>> = {}
+  for (const storeId of ALLOWED_STORES) {
+    const token = String((raw as Record<string, unknown>)[storeId] ?? '').trim()
+    if (token) out[storeId] = token
+  }
+  return out
+}
+
 function sanitizeRequest(body: SearchRequest, mode: 'admin' | 'public'): Required<SearchRequest> {
   const query = String(body?.query ?? '').trim()
   const requestedStores = Array.isArray(body?.stores) ? body.stores : ALLOWED_STORES
   const stores = requestedStores.filter((store): store is StoreId =>
     ALLOWED_STORES.includes(store as StoreId)
   )
-  const pageLimit = mode === 'public' ? PUBLIC_MAX_PAGE : ADMIN_MAX_PAGE
-  const page = Number.isFinite(Number(body?.page))
-    ? Math.min(pageLimit, Math.max(1, Number(body.page)))
-    : 1
+  const page = Number.isFinite(Number(body?.page)) ? Math.max(1, Number(body.page)) : 1
   const pageSizeMax = mode === 'public' ? PUBLIC_MAX_PAGE_SIZE : 48
   const pageSize = Number.isFinite(Number(body?.pageSize))
     ? Math.min(pageSizeMax, Math.max(6, Number(body.pageSize)))
@@ -128,86 +133,68 @@ function sanitizeRequest(body: SearchRequest, mode: 'admin' | 'public'): Require
     stores: stores.length ? stores : ALLOWED_STORES,
     page,
     pageSize,
+    cursors: sanitizeCursors(body?.cursors),
   }
 }
 
-async function searchStore(
+async function searchStoreBatch(
   storeId: StoreId,
   query: string,
-  pageSize: number,
-  storePage: number = 1,
+  batchSize: number,
+  storePage: number,
+  cursor?: string,
 ): Promise<StoreSearchResult> {
   const startedAt = Date.now()
-  try {
-    const hits = await searchByStore[storeId](query, pageSize, storePage)
-    return {
-      storeId,
-      hits,
-      tookMs: Date.now() - startedAt,
-    }
-  } catch (error) {
-    return {
-      storeId,
-      hits: [],
-      error: error instanceof Error ? error.message : 'Falha ao consultar loja',
-      tookMs: Date.now() - startedAt,
-    }
-  }
-}
 
-async function searchStoreWithDeadline(
-  storeId: StoreId,
-  query: string,
-  perStoreSize: number,
-): Promise<StoreSearchResult> {
-  const startedAt = Date.now()
-  const storePageCapacity = 36
-  const maxStorePage = Math.max(1, Math.ceil(perStoreSize / storePageCapacity))
-  const seen = new Set<string>()
-  const hits: UnifiedSearchHit[] = []
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const deadline = new Promise<StoreSearchResult>((resolve) => {
+    timer = setTimeout(
+      () =>
+        resolve({
+          storeId,
+          hits: [],
+          error: 'Tempo esgotado ao consultar loja',
+          tookMs: Date.now() - startedAt,
+        }),
+      STORE_DEADLINE_MS,
+    )
+  })
 
-  for (let storePage = 1; storePage <= maxStorePage; storePage += 1) {
-    const remaining = perStoreSize - hits.length
-    if (remaining <= 0) break
-
-    let timer: ReturnType<typeof setTimeout> | undefined
-    const deadline = new Promise<StoreSearchResult>((resolve) => {
-      timer = setTimeout(
-        () =>
-          resolve({
-            storeId,
-            hits: [],
-            error: 'Tempo esgotado ao consultar loja',
-            tookMs: Date.now() - startedAt,
-          }),
-        STORE_DEADLINE_MS,
-      )
-    })
-
-    let pageResult: StoreSearchResult
+  const work = async (): Promise<StoreSearchResult> => {
     try {
-      pageResult = await Promise.race([searchStore(storeId, query, remaining, storePage), deadline])
-    } finally {
-      if (timer) clearTimeout(timer)
+      if (storeId === 'mercari') {
+        const mercari = await searchMercariPage(query, batchSize, {
+          storePage,
+          pageToken: cursor,
+        })
+        return {
+          storeId,
+          hits: mercari.hits,
+          nextCursor: mercari.nextPageToken,
+          tookMs: Date.now() - startedAt,
+        }
+      }
+
+      const hits = await searchByStore[storeId](query, batchSize, storePage)
+      return {
+        storeId,
+        hits,
+        tookMs: Date.now() - startedAt,
+      }
+    } catch (error) {
+      return {
+        storeId,
+        hits: [],
+        error: error instanceof Error ? error.message : 'Falha ao consultar loja',
+        tookMs: Date.now() - startedAt,
+      }
     }
-
-    if (pageResult.error && hits.length === 0) return pageResult
-
-    for (const hit of pageResult.hits) {
-      const key = hit.productUrl || hit.id
-      if (!key || seen.has(key)) continue
-      seen.add(key)
-      hits.push(hit)
-      if (hits.length >= perStoreSize) break
-    }
-
-    if (pageResult.hits.length < remaining) break
   }
 
-  return {
-    storeId,
-    hits: hits.slice(0, perStoreSize),
-    tookMs: Date.now() - startedAt,
+  try {
+    return await Promise.race([work(), deadline])
+  } finally {
+    if (timer) clearTimeout(timer)
   }
 }
 
@@ -237,15 +224,17 @@ Deno.serve(async (req) => {
       stores: input.stores,
       page: input.page,
       pageSize: input.pageSize,
+      cursors: input.cursors,
     })
     const cached = getCache<unknown>(cacheKey)
     if (cached) return safeJson({ ...cached, cacheHit: true })
 
     const startedAt = Date.now()
-    const neededTotal = input.pageSize * input.page
-    const perStoreSize = Math.max(8, Math.ceil(neededTotal / input.stores.length) + 4)
+    const perStoreBatch = Math.max(8, Math.ceil(input.pageSize / input.stores.length) + 2)
     const settled = await Promise.all(
-      input.stores.map((storeId) => searchStoreWithDeadline(storeId, input.query, perStoreSize)),
+      input.stores.map((storeId) =>
+        searchStoreBatch(storeId, input.query, perStoreBatch, input.page, input.cursors?.[storeId]),
+      ),
     )
 
     const partials = settled
@@ -255,11 +244,20 @@ Deno.serve(async (req) => {
         reason: result.error,
       }))
 
+    const nextCursors: Partial<Record<StoreId, string>> = {}
+    for (const result of settled) {
+      if (result.nextCursor) nextCursors[result.storeId] = result.nextCursor
+    }
+
     const merged = settled.flatMap((result) => result.hits)
     const ranked = interleaveRankedByStore(merged, input.query, input.stores)
-    const startIdx = (input.page - 1) * input.pageSize
-    const pageHits = ranked.slice(startIdx, startIdx + input.pageSize)
-    const hasMore = startIdx + pageHits.length < ranked.length
+    const pageHits = ranked.slice(0, input.pageSize)
+
+    const hasMore = settled.some(
+      (result) =>
+        !result.error &&
+        (Boolean(result.nextCursor) || result.hits.length >= perStoreBatch),
+    )
 
     const payload = {
       results: pageHits,
@@ -267,10 +265,11 @@ Deno.serve(async (req) => {
         mode,
         query: input.query,
         stores: input.stores,
-        totalEstimated: ranked.length,
+        totalEstimated: null,
         page: input.page,
         pageSize: input.pageSize,
         hasMore,
+        cursors: Object.keys(nextCursors).length ? nextCursors : undefined,
         tookMs: Date.now() - startedAt,
         strategy: buildSystemStrategyMeta(),
         diagnostics: mode === 'admin' ? buildStoreDiagnostics(input.stores, settled) : undefined,

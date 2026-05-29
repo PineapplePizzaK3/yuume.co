@@ -46,11 +46,11 @@ async function createDpopSigner() {
       .sign(privateKey)
 }
 
-function buildSearchBody(keyword: string, pageSize: number) {
+function buildSearchBody(keyword: string, pageSize: number, pageToken = '') {
   return {
     userId: '',
     pageSize: Math.min(120, Math.max(6, pageSize)),
-    pageToken: '',
+    pageToken: pageToken || '',
     searchSessionId: crypto.randomUUID().replace(/-/g, '').slice(0, 32),
     indexRouting: 'INDEX_ROUTING_UNSPECIFIED',
     thumbnailTypes: [],
@@ -150,13 +150,18 @@ function extractMercariThumbnail(row: MercariSearchItem): string | null {
   return pickBestImage(candidateList, 'https://jp.mercari.com')
 }
 
-export async function searchMercariApi(query: string, pageSize: number, storePage = 1): Promise<UnifiedSearchHit[]> {
-  const keyword = String(query || '').trim()
-  if (!keyword) return []
+export type MercariPageResult = {
+  hits: UnifiedSearchHit[]
+  nextPageToken?: string
+}
 
-  const storePageCapacity = 36
-  const offset = (storePage - 1) * storePageCapacity
-  const fetchSize = Math.min(120, offset + pageSize)
+export async function searchMercariApi(
+  query: string,
+  pageSize: number,
+  options: { pageToken?: string } = {},
+): Promise<MercariPageResult> {
+  const keyword = String(query || '').trim()
+  if (!keyword) return { hits: [] }
 
   const sign = await createDpopSigner()
   const url = `${MERCARI_API_BASE}${MERCARI_SEARCH_PATH}`
@@ -169,7 +174,7 @@ export async function searchMercariApi(query: string, pageSize: number, storePag
       'X-Platform': 'web',
       DPoP: await sign(url, 'POST'),
     },
-    body: JSON.stringify(buildSearchBody(keyword, fetchSize)),
+    body: JSON.stringify(buildSearchBody(keyword, pageSize, options.pageToken)),
     signal: AbortSignal.timeout(10_000),
   })
 
@@ -180,9 +185,10 @@ export async function searchMercariApi(query: string, pageSize: number, storePag
 
   const json = (await res.json()) as MercariSearchResponse
   const items = Array.isArray(json?.items) ? json.items : []
+  const nextPageToken = String(json?.meta?.nextPageToken || '').trim() || undefined
 
   const hits: UnifiedSearchHit[] = []
-  for (let i = 0; i < items.length && hits.length < fetchSize; i += 1) {
+  for (let i = 0; i < items.length && hits.length < pageSize; i += 1) {
     const row = items[i]
     const id = String(row?.id || '').trim()
     const name = String(row?.name || '').trim()
@@ -213,5 +219,5 @@ export async function searchMercariApi(query: string, pageSize: number, storePag
     )
   }
 
-  return hits.slice(offset, offset + pageSize)
+  return { hits, nextPageToken }
 }
