@@ -150,9 +150,13 @@ function extractMercariThumbnail(row: MercariSearchItem): string | null {
   return pickBestImage(candidateList, 'https://jp.mercari.com')
 }
 
-export async function searchMercariApi(query: string, pageSize: number): Promise<UnifiedSearchHit[]> {
+export async function searchMercariApi(query: string, pageSize: number, storePage = 1): Promise<UnifiedSearchHit[]> {
   const keyword = String(query || '').trim()
   if (!keyword) return []
+
+  const storePageCapacity = 36
+  const offset = (storePage - 1) * storePageCapacity
+  const fetchSize = Math.min(120, offset + pageSize)
 
   const sign = await createDpopSigner()
   const url = `${MERCARI_API_BASE}${MERCARI_SEARCH_PATH}`
@@ -165,7 +169,7 @@ export async function searchMercariApi(query: string, pageSize: number): Promise
       'X-Platform': 'web',
       DPoP: await sign(url, 'POST'),
     },
-    body: JSON.stringify(buildSearchBody(keyword, pageSize)),
+    body: JSON.stringify(buildSearchBody(keyword, fetchSize)),
     signal: AbortSignal.timeout(10_000),
   })
 
@@ -178,7 +182,7 @@ export async function searchMercariApi(query: string, pageSize: number): Promise
   const items = Array.isArray(json?.items) ? json.items : []
 
   const hits: UnifiedSearchHit[] = []
-  for (let i = 0; i < items.length && hits.length < pageSize; i += 1) {
+  for (let i = 0; i < items.length && hits.length < fetchSize; i += 1) {
     const row = items[i]
     const id = String(row?.id || '').trim()
     const name = String(row?.name || '').trim()
@@ -209,5 +213,5 @@ export async function searchMercariApi(query: string, pageSize: number): Promise
     )
   }
 
-  return hits
+  return hits.slice(offset, offset + pageSize)
 }

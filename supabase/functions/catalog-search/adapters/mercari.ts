@@ -151,9 +151,9 @@ function collectFromJina(jinaText: string, pageSize: number, query: string): Uni
   return collected.slice(0, pageSize)
 }
 
-export async function searchMercari(query: string, pageSize: number): Promise<UnifiedSearchHit[]> {
+export async function searchMercari(query: string, pageSize: number, storePage = 1): Promise<UnifiedSearchHit[]> {
   try {
-    const apiHits = await searchMercariApi(query, pageSize)
+    const apiHits = await searchMercariApi(query, pageSize, storePage)
     if (apiHits.length > 0) return apiHits
   } catch {
     // fallback HTML abaixo
@@ -162,7 +162,8 @@ export async function searchMercari(query: string, pageSize: number): Promise<Un
   const startedAt = Date.now()
   const budgetMs = STORE_DEADLINE_MS - 300
   const encoded = encodeURIComponent(query)
-  const searchUrl = `https://jp.mercari.com/search?keyword=${encoded}`
+  const pageParam = storePage > 1 ? `&page=${storePage}` : ''
+  const searchUrl = `https://jp.mercari.com/search?keyword=${encoded}${pageParam}`
   const html = await fetchText(searchUrl, FETCH_TIMEOUT_MS, { Referer: 'https://jp.mercari.com/' }).catch(() => '')
 
   const fromHtml = collectFromHtml(html, pageSize, query)

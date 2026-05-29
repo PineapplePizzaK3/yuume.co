@@ -153,13 +153,14 @@ function extractYahooHitsFromJina(jinaText: string, pageSize: number, query: str
   )
 }
 
-export async function searchYahoo(query: string, pageSize: number): Promise<UnifiedSearchHit[]> {
+export async function searchYahoo(query: string, pageSize: number, storePage = 1): Promise<UnifiedSearchHit[]> {
   const keyword = String(query || '').trim()
   if (!keyword) return []
 
   const startedAt = Date.now()
   const budgetMs = STORE_DEADLINE_MS - 300
-  const searchUrl = `${BASE}/search/search?p=${encodeURIComponent(keyword)}`
+  const pageParam = storePage > 1 ? `&b=${(storePage - 1) * 50 + 1}` : ''
+  const searchUrl = `${BASE}/search/search?p=${encodeURIComponent(keyword)}${pageParam}`
 
   const html = await fetchText(searchUrl, FETCH_TIMEOUT_MS, { Referer: `${BASE}/` }).catch(() => '')
   const fromHtml = extractYahooHitsFromHtml(html, pageSize, keyword)

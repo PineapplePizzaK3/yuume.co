@@ -20,11 +20,15 @@ const corsHeaders = {
 const ALLOWED_STORES: StoreId[] = ['amazon', 'rakuma', 'mercari', 'yahoo', 'yahoo_flea', 'snkrdunk']
 const PUBLIC_RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000
 const PUBLIC_RATE_LIMIT_MAX_REQUESTS = 20
-const PUBLIC_MAX_PAGE = 2
+const PUBLIC_MAX_PAGE = 50
 const PUBLIC_MAX_PAGE_SIZE = 24
+const ADMIN_MAX_PAGE = 50
 const publicIpHits = new Map<string, number[]>()
 
-const searchByStore: Record<StoreId, (query: string, pageSize: number) => Promise<UnifiedSearchHit[]>> = {
+const searchByStore: Record<
+  StoreId,
+  (query: string, pageSize: number, storePage?: number) => Promise<UnifiedSearchHit[]>
+> = {
   amazon: searchAmazon,
   rakuma: searchRakuma,
   mercari: searchMercari,
@@ -111,7 +115,7 @@ function sanitizeRequest(body: SearchRequest, mode: 'admin' | 'public'): Require
   const stores = requestedStores.filter((store): store is StoreId =>
     ALLOWED_STORES.includes(store as StoreId)
   )
-  const pageLimit = mode === 'public' ? PUBLIC_MAX_PAGE : 8
+  const pageLimit = mode === 'public' ? PUBLIC_MAX_PAGE : ADMIN_MAX_PAGE
   const page = Number.isFinite(Number(body?.page))
     ? Math.min(pageLimit, Math.max(1, Number(body.page)))
     : 1
@@ -127,10 +131,15 @@ function sanitizeRequest(body: SearchRequest, mode: 'admin' | 'public'): Require
   }
 }
 
-async function searchStore(storeId: StoreId, query: string, pageSize: number): Promise<StoreSearchResult> {
+async function searchStore(
+  storeId: StoreId,
+  query: string,
+  pageSize: number,
+  storePage: number = 1,
+): Promise<StoreSearchResult> {
   const startedAt = Date.now()
   try {
-    const hits = await searchByStore[storeId](query, pageSize)
+    const hits = await searchByStore[storeId](query, pageSize, storePage)
     return {
       storeId,
       hits,
@@ -149,26 +158,56 @@ async function searchStore(storeId: StoreId, query: string, pageSize: number): P
 async function searchStoreWithDeadline(
   storeId: StoreId,
   query: string,
-  pageSize: number,
+  perStoreSize: number,
 ): Promise<StoreSearchResult> {
   const startedAt = Date.now()
-  let timer: ReturnType<typeof setTimeout> | undefined
-  const deadline = new Promise<StoreSearchResult>((resolve) => {
-    timer = setTimeout(
-      () =>
-        resolve({
-          storeId,
-          hits: [],
-          error: 'Tempo esgotado ao consultar loja',
-          tookMs: Date.now() - startedAt,
-        }),
-      STORE_DEADLINE_MS,
-    )
-  })
-  try {
-    return await Promise.race([searchStore(storeId, query, pageSize), deadline])
-  } finally {
-    if (timer) clearTimeout(timer)
+  const storePageCapacity = 36
+  const maxStorePage = Math.max(1, Math.ceil(perStoreSize / storePageCapacity))
+  const seen = new Set<string>()
+  const hits: UnifiedSearchHit[] = []
+
+  for (let storePage = 1; storePage <= maxStorePage; storePage += 1) {
+    const remaining = perStoreSize - hits.length
+    if (remaining <= 0) break
+
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const deadline = new Promise<StoreSearchResult>((resolve) => {
+      timer = setTimeout(
+        () =>
+          resolve({
+            storeId,
+            hits: [],
+            error: 'Tempo esgotado ao consultar loja',
+            tookMs: Date.now() - startedAt,
+          }),
+        STORE_DEADLINE_MS,
+      )
+    })
+
+    let pageResult: StoreSearchResult
+    try {
+      pageResult = await Promise.race([searchStore(storeId, query, remaining, storePage), deadline])
+    } finally {
+      if (timer) clearTimeout(timer)
+    }
+
+    if (pageResult.error && hits.length === 0) return pageResult
+
+    for (const hit of pageResult.hits) {
+      const key = hit.productUrl || hit.id
+      if (!key || seen.has(key)) continue
+      seen.add(key)
+      hits.push(hit)
+      if (hits.length >= perStoreSize) break
+    }
+
+    if (pageResult.hits.length < remaining) break
+  }
+
+  return {
+    storeId,
+    hits: hits.slice(0, perStoreSize),
+    tookMs: Date.now() - startedAt,
   }
 }
 
@@ -220,8 +259,7 @@ Deno.serve(async (req) => {
     const ranked = interleaveRankedByStore(merged, input.query, input.stores)
     const startIdx = (input.page - 1) * input.pageSize
     const pageHits = ranked.slice(startIdx, startIdx + input.pageSize)
-    // Página cheia ⇒ pode haver mais na próxima rodada (perStoreSize sobe com page).
-    const hasMore = pageHits.length >= input.pageSize
+    const hasMore = startIdx + pageHits.length < ranked.length
 
     const payload = {
       results: pageHits,

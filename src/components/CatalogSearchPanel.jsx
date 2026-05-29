@@ -77,20 +77,22 @@ export default function CatalogSearchPanel({
   storesLabel = 'Lojas:',
   showTotals = true,
   onResultClick,
+  buildResultHref,
+  resultTarget = '_blank',
+  resultRel = 'noopener noreferrer',
 }) {
   const loadMoreSentinelRef = useRef(null)
   const showInfiniteScroll = results.length > 0
 
   useEffect(() => {
     const sentinel = loadMoreSentinelRef.current
-    if (!sentinel || results.length === 0) return
+    if (!sentinel || results.length === 0 || !canAutoLoad) return
 
     const observer = new IntersectionObserver(
       (entries) => {
         const entry = entries[0]
         if (!entry?.isIntersecting) return
         if (loading || loadingMore) return
-        if (!canAutoLoad) return
         if (typeof loadMore !== 'function') return
         loadMore()
       },
@@ -99,7 +101,7 @@ export default function CatalogSearchPanel({
 
     observer.observe(sentinel)
     return () => observer.disconnect()
-  }, [results.length, loading, loadingMore, canAutoLoad, loadMore])
+  }, [results.length, loading, loadingMore, canAutoLoad, loadMore, meta?.page])
 
   return (
     <section className="mt-0 rounded-b-xl border border-t-0 border-earth-200 bg-earth-50 p-6">
@@ -215,10 +217,13 @@ export default function CatalogSearchPanel({
           {results.map((item) => (
             <a
               key={item.productUrl || item.id}
-              href={item.productUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => onResultClick?.(item)}
+              href={typeof buildResultHref === 'function' ? buildResultHref(item) : item.productUrl}
+              target={resultTarget}
+              rel={resultRel}
+              onClick={(event) => {
+                const shouldContinue = onResultClick?.(item, event)
+                if (shouldContinue === false) event.preventDefault()
+              }}
               className={`group flex flex-col overflow-hidden rounded-lg border border-earth-200 bg-white shadow-sm transition hover:border-earth-300 hover:shadow-md ${
                 isSoldOrUnavailable(item) ? 'opacity-75' : ''
               }`}

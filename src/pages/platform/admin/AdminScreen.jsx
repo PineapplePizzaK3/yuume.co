@@ -2915,7 +2915,9 @@ export default function Admin({ routeTabId = 'pedidos' }) {
           }
           return merged
         })
-        setExternalSearchCanAutoLoad(added > 0)
+        const hasMore = data?.meta?.hasMore ?? false
+        const noNewItems = incoming.length > 0 && added === 0
+        setExternalSearchCanAutoLoad(hasMore && !noNewItems)
         setExternalSearchMeta(data?.meta ?? null)
       } else {
         setExternalSearchResults(incoming)

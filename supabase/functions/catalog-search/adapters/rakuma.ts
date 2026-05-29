@@ -154,11 +154,12 @@ function collectFromJina(jinaText: string, pageSize: number, query: string): Uni
   return collected.slice(0, pageSize)
 }
 
-export async function searchRakuma(query: string, pageSize: number): Promise<UnifiedSearchHit[]> {
+export async function searchRakuma(query: string, pageSize: number, storePage = 1): Promise<UnifiedSearchHit[]> {
   const startedAt = Date.now()
   const budgetMs = STORE_DEADLINE_MS - 300
   const encoded = encodeURIComponent(query)
-  const searchUrl = `https://fril.jp/s?query=${encoded}`
+  const pageParam = storePage > 1 ? `&page=${storePage}` : ''
+  const searchUrl = `https://fril.jp/s?query=${encoded}${pageParam}`
 
   const html = await fetchText(searchUrl, FETCH_TIMEOUT_MS, { Referer: 'https://fril.jp/' }).catch(() => '')
   const fromHtml = collectFromHtml(html, pageSize, query)
