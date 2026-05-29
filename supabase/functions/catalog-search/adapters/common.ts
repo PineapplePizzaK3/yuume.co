@@ -133,6 +133,15 @@ export function matchesQuery(title: string, query: string): boolean {
   return matched >= needed
 }
 
+/** Pelo menos um token da query aparece no texto (útil para SNKRDUNK e títulos JP/EN mistos). */
+export function matchesQueryAnyToken(title: string, query: string): boolean {
+  const tokens = queryTokens(query)
+  if (tokens.length === 0) return true
+  const text = String(title || '').toLowerCase()
+  if (!text) return false
+  return tokens.some((t) => text.includes(t))
+}
+
 function hasImageLikeExt(url: string): boolean {
   return /\.(?:jpg|jpeg|png|gif|webp|svg)(?:\?|$)/i.test(url)
 }
