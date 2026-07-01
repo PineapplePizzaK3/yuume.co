@@ -64,6 +64,14 @@ export const ROUTES = {
   appAdminCatalogo: { [LOCALE_PT_BR]: '/app/admin/catalogo-produtos', [LOCALE_EN]: '/en/app/admin/catalog' },
   appAdminBusca: { [LOCALE_PT_BR]: '/app/admin/busca-catalogo', [LOCALE_EN]: '/en/app/admin/catalog-search' },
   appAdminGrupos: { [LOCALE_PT_BR]: '/app/admin/grupos', [LOCALE_EN]: '/en/app/admin/groups' },
+  appAdminCalculadoraBrasil: {
+    [LOCALE_PT_BR]: '/app/admin/calculadora-brasil',
+    [LOCALE_EN]: '/en/app/admin/brazil-calculator',
+  },
+  appAdminLotes: {
+    [LOCALE_PT_BR]: '/app/admin/lotes',
+    [LOCALE_EN]: '/en/app/admin/batches',
+  },
   appAdminMarketing: { [LOCALE_PT_BR]: '/app/admin/marketing', [LOCALE_EN]: '/en/app/admin/marketing' },
   appAdminFraude: { [LOCALE_PT_BR]: '/app/admin/fraude', [LOCALE_EN]: '/en/app/admin/fraud' },
   appAdminNotificacoes: { [LOCALE_PT_BR]: '/app/admin/notificacoes', [LOCALE_EN]: '/en/app/admin/notifications' },
