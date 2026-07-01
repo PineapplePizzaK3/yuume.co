@@ -51,6 +51,8 @@ const AdminProdutosTab = lazy(() => import('./pages/platform/admin/tabs/Produtos
 const AdminCatalogoProdutosTab = lazy(() => import('./pages/platform/admin/tabs/CatalogoProdutosTab'))
 const AdminBuscaCatalogoTab = lazy(() => import('./pages/platform/admin/tabs/BuscaCatalogoTab'))
 const AdminGruposTab = lazy(() => import('./pages/platform/admin/tabs/GruposTab'))
+const AdminCalculadoraBrasilTab = lazy(() => import('./pages/platform/admin/tabs/CalculadoraBrasilTab'))
+const AdminLotesTab = lazy(() => import('./pages/platform/admin/tabs/LotesTab'))
 const AdminMarketingTab = lazy(() => import('./pages/platform/admin/tabs/MarketingTab'))
 const AdminEmailsTab = lazy(() => import('./pages/platform/admin/tabs/EmailsTab'))
 const AdminFraudeTab = lazy(() => import('./pages/platform/admin/tabs/FraudeTab'))
@@ -227,6 +229,8 @@ function App() {
                 <Route path="catalogo-produtos" element={<AdminCatalogoProdutosTab />} />
                 <Route path="busca-catalogo" element={<AdminBuscaCatalogoTab />} />
                 <Route path="grupos" element={<AdminGruposTab />} />
+                <Route path="calculadora-brasil" element={<AdminCalculadoraBrasilTab />} />
+                <Route path="lotes" element={<AdminLotesTab />} />
                 <Route path="marketing" element={<AdminMarketingTab />} />
                 <Route path="emails" element={<AdminEmailsTab />} />
                 <Route path="fraude" element={<AdminFraudeTab />} />
@@ -242,6 +246,8 @@ function App() {
                 <Route path="catalogo/catalogo-produtos" element={<AdminCatalogoProdutosTab />} />
                 <Route path="catalogo/busca-catalogo" element={<AdminBuscaCatalogoTab />} />
                 <Route path="catalogo/grupos" element={<AdminGruposTab />} />
+                <Route path="catalogo/calculadora-brasil" element={<AdminCalculadoraBrasilTab />} />
+                <Route path="catalogo/lotes" element={<AdminLotesTab />} />
                 <Route path="growth/marketing" element={<AdminMarketingTab />} />
                 <Route path="growth/emails" element={<AdminEmailsTab />} />
                 <Route path="growth/fraude" element={<AdminFraudeTab />} />
@@ -328,6 +334,8 @@ function App() {
                 <Route path="catalog" element={<AdminCatalogoProdutosTab />} />
                 <Route path="catalog-search" element={<AdminBuscaCatalogoTab />} />
                 <Route path="groups" element={<AdminGruposTab />} />
+                <Route path="brazil-calculator" element={<AdminCalculadoraBrasilTab />} />
+                <Route path="batches" element={<AdminLotesTab />} />
                 <Route path="marketing" element={<AdminMarketingTab />} />
                 <Route path="emails" element={<AdminEmailsTab />} />
                 <Route path="fraud" element={<AdminFraudeTab />} />
@@ -343,6 +351,8 @@ function App() {
                 <Route path="catalog/catalog" element={<AdminCatalogoProdutosTab />} />
                 <Route path="catalog/catalog-search" element={<AdminBuscaCatalogoTab />} />
                 <Route path="catalog/groups" element={<AdminGruposTab />} />
+                <Route path="catalog/brazil-calculator" element={<AdminCalculadoraBrasilTab />} />
+                <Route path="catalog/batches" element={<AdminLotesTab />} />
                 <Route path="growth/marketing" element={<AdminMarketingTab />} />
                 <Route path="growth/emails" element={<AdminEmailsTab />} />
                 <Route path="growth/fraud" element={<AdminFraudeTab />} />

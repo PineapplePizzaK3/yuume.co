@@ -95,6 +95,8 @@ import BuscaCatalogoSection from './sections/BuscaCatalogoSection'
 import UsuariosSection from './sections/UsuariosSection'
 import GruposSection from './sections/GruposSection'
 import CatalogoProdutosSection from './sections/CatalogoProdutosSection'
+import CalculadoraBrasilSection from './sections/CalculadoraBrasilSection'
+import LotesSection from './sections/LotesSection'
 import PedidosSection from './sections/PedidosSection'
 import InvoicesAdminSection from './sections/InvoicesAdminSection'
 import {
@@ -3366,6 +3368,12 @@ export default function Admin({ routeTabId = 'pedidos' }) {
 
         {/* Catálogo mestre de produtos */}
         <CatalogoProdutosSection />
+
+        {/* Calculadora de preço Brasil */}
+        <CalculadoraBrasilSection />
+
+        {/* Lotes */}
+        <LotesSection />
 
         {/* Invoices e documentos financeiros */}
         <InvoicesAdminSection />
