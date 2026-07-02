@@ -52,6 +52,7 @@ const ALLOWED_RPCS = new Set([
   'admin_set_shipping_await_payment',
   'admin_sync_product_variants',
   'admin_update_calculator_batch',
+  'admin_update_calculator_product',
   'admin_update_order',
   'admin_update_order_status',
   'admin_update_product',
