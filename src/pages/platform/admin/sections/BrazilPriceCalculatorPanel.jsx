@@ -10,11 +10,15 @@ import {
 
   calculateBrazilFinalPrice,
 
+  DEFAULT_IOF_PERCENT,
+
   DIRECT_METHOD_EMS,
 
   DIRECT_METHOD_EPACKET,
 
   LOTE_EMS_RATE_TABLE,
+
+  PAYMENT_GATEWAYS,
 
   SHIPPING_MODE_DIRETO,
 
@@ -61,6 +65,16 @@ export default function BrazilPriceCalculatorPanel({ onRegistered }) {
   const [packagingBrl, setPackagingBrl] = useState('0')
 
   const [localShippingBrl, setLocalShippingBrl] = useState('0')
+
+  const [applyIof, setApplyIof] = useState(false)
+
+  const [iofPercent, setIofPercent] = useState(String(DEFAULT_IOF_PERCENT))
+
+  const [stripeFeePercent, setStripeFeePercent] = useState(String(PAYMENT_GATEWAYS.stripe.defaultFeePercent))
+
+  const [parcelowFeePercent, setParcelowFeePercent] = useState(String(PAYMENT_GATEWAYS.parcelow.defaultFeePercent))
+
+  const [glinFeePercent, setGlinFeePercent] = useState(String(PAYMENT_GATEWAYS.glin.defaultFeePercent))
 
   const [saving, setSaving] = useState(false)
 
@@ -157,6 +171,20 @@ export default function BrazilPriceCalculatorPanel({ onRegistered }) {
 
       localShippingBrl,
 
+      applyIof,
+
+      iofPercent,
+
+      paymentFeePercents: {
+
+        stripe: stripeFeePercent,
+
+        parcelow: parcelowFeePercent,
+
+        glin: glinFeePercent,
+
+      },
+
     })
 
   }, [
@@ -182,6 +210,16 @@ export default function BrazilPriceCalculatorPanel({ onRegistered }) {
     packagingBrl,
 
     localShippingBrl,
+
+    applyIof,
+
+    iofPercent,
+
+    stripeFeePercent,
+
+    parcelowFeePercent,
+
+    glinFeePercent,
 
   ])
 
@@ -283,7 +321,7 @@ export default function BrazilPriceCalculatorPanel({ onRegistered }) {
 
       <p className="mt-1 text-xs text-earth-600">
 
-        Formula: (custo base + ((valor declarado + frete internacional) x fator aduaneiro)) -&gt; converte para BRL -&gt; aplica margem -&gt; soma embalagem e envio nacional.
+        Formula: (custo base + ((valor declarado + frete internacional) x fator aduaneiro)) -&gt; converte para BRL -&gt; aplica margem -&gt; soma embalagem e envio nacional -&gt; opcionalmente IOF -&gt; simula cobrança com taxas de pagamento.
 
       </p>
 
@@ -638,6 +676,132 @@ export default function BrazilPriceCalculatorPanel({ onRegistered }) {
 
 
 
+      <div className="mt-4 rounded border border-earth-200 bg-earth-50 p-3">
+
+        <p className="text-sm font-medium text-earth-900">IOF e taxas de pagamento</p>
+
+        <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+
+          <label className="flex items-center gap-2 text-xs text-earth-700">
+
+            <input
+
+              type="checkbox"
+
+              checked={applyIof}
+
+              onChange={(e) => setApplyIof(e.target.checked)}
+
+              className="rounded border-earth-300"
+
+            />
+
+            Incluir IOF no valor final
+
+          </label>
+
+          <label className="text-xs text-earth-700">
+
+            IOF (%)
+
+            <input
+
+              type="number"
+
+              min="0"
+
+              step="0.01"
+
+              value={iofPercent}
+
+              onChange={(e) => setIofPercent(e.target.value)}
+
+              disabled={!applyIof}
+
+              className="mt-1 block w-full rounded border border-earth-300 px-2 py-1.5 text-sm text-earth-900 disabled:bg-earth-100"
+
+            />
+
+          </label>
+
+          <label className="text-xs text-earth-700">
+
+            Taxa Stripe (%)
+
+            <input
+
+              type="number"
+
+              min="0"
+
+              step="0.01"
+
+              value={stripeFeePercent}
+
+              onChange={(e) => setStripeFeePercent(e.target.value)}
+
+              className="mt-1 block w-full rounded border border-earth-300 px-2 py-1.5 text-sm text-earth-900"
+
+            />
+
+          </label>
+
+          <label className="text-xs text-earth-700">
+
+            Taxa Parcelow (%)
+
+            <input
+
+              type="number"
+
+              min="0"
+
+              step="0.01"
+
+              value={parcelowFeePercent}
+
+              onChange={(e) => setParcelowFeePercent(e.target.value)}
+
+              className="mt-1 block w-full rounded border border-earth-300 px-2 py-1.5 text-sm text-earth-900"
+
+            />
+
+          </label>
+
+          <label className="text-xs text-earth-700">
+
+            Taxa Glin (%)
+
+            <input
+
+              type="number"
+
+              min="0"
+
+              step="0.01"
+
+              value={glinFeePercent}
+
+              onChange={(e) => setGlinFeePercent(e.target.value)}
+
+              className="mt-1 block w-full rounded border border-earth-300 px-2 py-1.5 text-sm text-earth-900"
+
+            />
+
+          </label>
+
+        </div>
+
+        <p className="mt-2 text-[11px] text-earth-500">
+
+          IOF incide sobre o preço antes do gateway. As taxas de pagamento usam gross-up: valor cobrado para você receber o valor final líquido após a taxa do processador.
+
+        </p>
+
+      </div>
+
+
+
       {(loadingSettings || settingsError || epacketBlocked) && (
 
         <div className="mt-3 space-y-1 text-xs">
@@ -686,6 +850,16 @@ export default function BrazilPriceCalculatorPanel({ onRegistered }) {
 
           <p className="text-2xl font-bold text-emerald-900">{formatBRL(result.breakdown.finalBrl)}</p>
 
+          {result.inputs.applyIof ? (
+
+            <p className="mt-1 text-[11px] text-emerald-800/80">
+
+              Base {formatBRL(result.breakdown.baseFinalBrl)} + IOF ({result.inputs.iofPercent}%): {formatBRL(result.breakdown.iofBrl)}
+
+            </p>
+
+          ) : null}
+
         </div>
 
         <div className="rounded border border-sky-200 bg-sky-50 p-3">
@@ -697,6 +871,42 @@ export default function BrazilPriceCalculatorPanel({ onRegistered }) {
           <p className="mt-1 text-[11px] text-sky-800/80">
             Preco final − custo para ter no Brasil
           </p>
+
+        </div>
+
+      </div>
+
+
+
+      <div className="mt-4 rounded border border-violet-200 bg-violet-50 p-3">
+
+        <p className="text-sm font-medium text-violet-900">Valor para o cliente por forma de pagamento</p>
+
+        <p className="mt-1 text-[11px] text-violet-800/80">
+
+          Sobre o preço final {formatBRL(result.breakdown.finalBrl)} — inclui gross-up da taxa do processador.
+
+        </p>
+
+        <div className="mt-3 grid gap-3 md:grid-cols-3">
+
+          {result.paymentCharges.map((charge) => (
+
+            <div key={charge.id} className="rounded border border-violet-200 bg-white p-3">
+
+              <p className="text-xs text-violet-700">{charge.label}</p>
+
+              <p className="text-xl font-bold text-violet-900">{formatBRL(charge.chargeBrl)}</p>
+
+              <p className="mt-1 text-[11px] text-violet-800/80">
+
+                Taxa {charge.feePercent}% (+{formatBRL(charge.feeBrl)})
+
+              </p>
+
+            </div>
+
+          ))}
 
         </div>
 
@@ -726,9 +936,25 @@ export default function BrazilPriceCalculatorPanel({ onRegistered }) {
 
         </p>
 
+        {result.inputs.applyIof ? (
+
+          <p className="mt-1">
+
+            IOF ({result.inputs.iofPercent}%): +{formatBRL(result.breakdown.iofBrl)} sobre {formatBRL(result.breakdown.baseFinalBrl)}.
+
+          </p>
+
+        ) : null}
+
         <p className="mt-1">
 
-          Lucro liquido: {formatBRL(result.breakdown.finalBrl)} − {formatBRL(result.breakdown.landedCostBrl)} = {formatBRL(result.breakdown.netProfitBrl)}.
+          Lucro liquido: {formatBRL(result.breakdown.baseFinalBrl)} − {formatBRL(result.breakdown.landedCostBrl)} = {formatBRL(result.breakdown.netProfitBrl)}.
+
+        </p>
+
+        <p className="mt-1">
+
+          Cobrança com taxas: Stripe {formatBRL(result.paymentCharges.find((c) => c.id === 'stripe')?.chargeBrl || 0)} · Parcelow {formatBRL(result.paymentCharges.find((c) => c.id === 'parcelow')?.chargeBrl || 0)} · Glin {formatBRL(result.paymentCharges.find((c) => c.id === 'glin')?.chargeBrl || 0)}.
 
         </p>
 
