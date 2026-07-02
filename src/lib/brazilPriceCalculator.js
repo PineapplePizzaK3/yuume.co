@@ -18,6 +18,15 @@ export const LOTE_EMS_RATE_TABLE = [
   { loteKg: 30, totalEmsYen: 77700, costPerGramYen: 2.59 },
 ]
 
+/** IOF padrão (3,5%). */
+export const DEFAULT_IOF_PERCENT = 3.5
+
+export const PAYMENT_GATEWAYS = {
+  stripe: { id: 'stripe', label: 'Stripe', defaultFeePercent: 4.99 },
+  parcelow: { id: 'parcelow', label: 'Parcelow', defaultFeePercent: 5.49 },
+  glin: { id: 'glin', label: 'Glin', defaultFeePercent: 4.99 },
+}
+
 function round2(n) {
   return Math.round((Number(n) || 0) * 100) / 100
 }
@@ -87,6 +96,55 @@ export function computeInternationalShippingYen({
   }
 }
 
+/**
+ * Valor a cobrar do cliente para receber `netAmountBrl` líquido após taxa do gateway.
+ * Ex.: net R$100 com taxa 5% → cobrar R$105,26 (gross-up).
+ */
+export function grossUpForPaymentFee(netAmountBrl, feePercent) {
+  const net = Math.max(0, Number(netAmountBrl) || 0)
+  const fee = Math.max(0, Number(feePercent) || 0)
+  if (net <= 0) {
+    return { netBrl: 0, feeBrl: 0, chargeBrl: 0, feePercent: round2(fee) }
+  }
+  if (fee <= 0) {
+    return { netBrl: round2(net), feeBrl: 0, chargeBrl: round2(net), feePercent: 0 }
+  }
+  if (fee >= 100) {
+    return { netBrl: round2(net), feeBrl: 0, chargeBrl: round2(net), feePercent: round2(fee) }
+  }
+  const charge = net / (1 - fee / 100)
+  return {
+    netBrl: round2(net),
+    feeBrl: round2(charge - net),
+    chargeBrl: round2(charge),
+    feePercent: round2(fee),
+  }
+}
+
+export function resolvePaymentFeePercent(gatewayId, feePercents = {}) {
+  const gateway = PAYMENT_GATEWAYS[gatewayId]
+  if (!gateway) return 0
+  const raw = feePercents[gatewayId]
+  const parsed = Number(raw)
+  if (Number.isFinite(parsed) && parsed >= 0) return parsed
+  return gateway.defaultFeePercent
+}
+
+export function computePaymentCharges(netAmountBrl, feePercents = {}) {
+  return Object.values(PAYMENT_GATEWAYS).map((gateway) => {
+    const feePercent = resolvePaymentFeePercent(gateway.id, feePercents)
+    const quote = grossUpForPaymentFee(netAmountBrl, feePercent)
+    return {
+      id: gateway.id,
+      label: gateway.label,
+      feePercent: quote.feePercent,
+      netBrl: quote.netBrl,
+      feeBrl: quote.feeBrl,
+      chargeBrl: quote.chargeBrl,
+    }
+  })
+}
+
 export function calculateBrazilFinalPrice(input = {}) {
   const baseCostYen = Math.max(0, Number(input.baseCostYen) || 0)
   const declaredValueYenRaw = Math.max(0, Number(input.declaredValueYen) || 0)
@@ -98,6 +156,8 @@ export function calculateBrazilFinalPrice(input = {}) {
   const localShippingBrl = Math.max(0, Number(input.localShippingBrl) || 0)
   const customsFactor = Math.max(0, Number(input.customsFactor) || 2)
   const brlPerJpy = Math.max(0, Number(input.brlPerJpy) || 0)
+  const applyIof = Boolean(input.applyIof)
+  const iofPercent = Math.max(0, Number(input.iofPercent ?? DEFAULT_IOF_PERCENT) || 0)
 
   const shipping = computeInternationalShippingYen({
     shippingMode: input.shippingMode,
@@ -116,8 +176,11 @@ export function calculateBrazilFinalPrice(input = {}) {
   const landedCostBrl = landedCostYen * brlPerJpy
   const marginBrl = landedCostBrl * (marginPercent / 100)
   const subtotalWithMarginBrl = landedCostBrl + marginBrl
-  const finalBrl = subtotalWithMarginBrl + packagingBrl + localShippingBrl
-  const netProfitBrl = finalBrl - landedCostBrl
+  const baseFinalBrl = subtotalWithMarginBrl + packagingBrl + localShippingBrl
+  const iofBrl = applyIof ? baseFinalBrl * (iofPercent / 100) : 0
+  const finalBrl = baseFinalBrl + iofBrl
+  const paymentCharges = computePaymentCharges(finalBrl, input.paymentFeePercents || {})
+  const netProfitBrl = baseFinalBrl - landedCostBrl
 
   return {
     inputs: {
@@ -132,6 +195,13 @@ export function calculateBrazilFinalPrice(input = {}) {
       brlPerJpy: round2(brlPerJpy),
       packagingBrl: round2(packagingBrl),
       localShippingBrl: round2(localShippingBrl),
+      applyIof,
+      iofPercent: round2(iofPercent),
+      paymentFeePercents: {
+        stripe: round2(resolvePaymentFeePercent('stripe', input.paymentFeePercents)),
+        parcelow: round2(resolvePaymentFeePercent('parcelow', input.paymentFeePercents)),
+        glin: round2(resolvePaymentFeePercent('glin', input.paymentFeePercents)),
+      },
     },
     shipping: {
       yen: roundYen(shipping.valueYen),
@@ -147,9 +217,12 @@ export function calculateBrazilFinalPrice(input = {}) {
       marginBrl: round2(marginBrl),
       subtotalWithMarginBrl: round2(subtotalWithMarginBrl),
       extrasBrl: round2(packagingBrl + localShippingBrl),
+      baseFinalBrl: round2(baseFinalBrl),
+      iofBrl: round2(iofBrl),
       finalBrl: round2(finalBrl),
       netProfitBrl: round2(netProfitBrl),
     },
+    paymentCharges,
     isValid:
       (baseCostYen > 0 || declaredValueYenRaw > 0)
       && weightGrams > 0
