@@ -15,6 +15,14 @@ export async function createCalculatorProductAdmin(payload) {
   return { data, error }
 }
 
+export async function updateCalculatorProductAdmin(id, payload) {
+  const { data, error } = await callAdminRpc('admin_update_calculator_product', {
+    p_id: id,
+    p_payload: payload || {},
+  })
+  return { data, error }
+}
+
 export async function deleteCalculatorProductAdmin(id) {
   const { data, error } = await callAdminRpc('admin_delete_calculator_product', {
     p_id: id,

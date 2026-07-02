@@ -27,6 +27,7 @@ export default function CalculadoraBrasilSection() {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(false)
   const [deletingId, setDeletingId] = useState('')
+  const [editingProduct, setEditingProduct] = useState(null)
   const [listError, setListError] = useState('')
 
   const loadItems = useCallback(async () => {
@@ -56,8 +57,20 @@ export default function CalculadoraBrasilSection() {
       setListError(error.message || 'Falha ao remover produto.')
     } else {
       setItems((prev) => prev.filter((row) => row.id !== id))
+      if (editingProduct?.id === id) setEditingProduct(null)
     }
     setDeletingId('')
+  }
+
+  const handleEdit = (row) => {
+    setEditingProduct(row)
+    setListError('')
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const handleSaved = () => {
+    setEditingProduct(null)
+    void loadItems()
   }
 
   if (activeTab !== 'calculadora_brasil') return null
@@ -69,7 +82,11 @@ export default function CalculadoraBrasilSection() {
         Calcule o preço final no Brasil e cadastre produtos para consulta posterior nesta aba.
       </p>
 
-      <BrazilPriceCalculatorPanel onRegistered={loadItems} />
+      <BrazilPriceCalculatorPanel
+        editingProduct={editingProduct}
+        onCancelEdit={() => setEditingProduct(null)}
+        onRegistered={handleSaved}
+      />
 
       <div className="mt-8 rounded-lg border border-earth-200 bg-white p-4">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -120,7 +137,10 @@ export default function CalculadoraBrasilSection() {
               </thead>
               <tbody>
                 {items.map((row) => (
-                  <tr key={row.id} className="border-b border-earth-100 hover:bg-earth-50/80">
+                  <tr
+                    key={row.id}
+                    className={`border-b border-earth-100 hover:bg-earth-50/80 ${editingProduct?.id === row.id ? 'bg-amber-50/80' : ''}`}
+                  >
                     <td className="px-2 py-2 font-medium text-earth-900">{row.name}</td>
                     <td className="px-2 py-2 text-earth-700">{formatJPY(row.base_cost_yen)}</td>
                     <td className="px-2 py-2 text-earth-700">{formatWeight((row.weight_grams || 0) / 1000)}</td>
@@ -139,14 +159,23 @@ export default function CalculadoraBrasilSection() {
                         : '—'}
                     </td>
                     <td className="px-2 py-2 text-right">
-                      <button
-                        type="button"
-                        onClick={() => void handleDelete(row.id)}
-                        disabled={deletingId === row.id}
-                        className="text-xs font-medium text-red-600 hover:text-red-800 disabled:opacity-50"
-                      >
-                        {deletingId === row.id ? 'Removendo...' : 'Remover'}
-                      </button>
+                      <div className="flex justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleEdit(row)}
+                          className="text-xs font-medium text-earth-700 hover:text-earth-900"
+                        >
+                          {editingProduct?.id === row.id ? 'Editando' : 'Editar'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void handleDelete(row.id)}
+                          disabled={deletingId === row.id}
+                          className="text-xs font-medium text-red-600 hover:text-red-800 disabled:opacity-50"
+                        >
+                          {deletingId === row.id ? 'Removendo...' : 'Remover'}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 
 import { getSystemSettings } from '../../../../services/settingsService'
 
-import { createCalculatorProductAdmin } from '../../../../services/calculatorProductService'
+import { createCalculatorProductAdmin, updateCalculatorProductAdmin } from '../../../../services/calculatorProductService'
 
 import { formatBRL, formatJPY } from '../../../../lib/fx'
 
@@ -30,9 +30,37 @@ import {
 
 } from '../../../../lib/brazilPriceCalculator'
 
+function buildCalculatorProductPayload(result, name, notes) {
+  return {
+    name: String(name).trim(),
+    notes: String(notes || '').trim() || null,
+    base_cost_yen: result.inputs.baseCostYen,
+    declared_value_yen: result.inputs.declaredValueYen,
+    weight_grams: result.inputs.weightGrams,
+    shipping_mode: result.inputs.shippingMode,
+    direct_method: result.inputs.shippingMode === SHIPPING_MODE_DIRETO ? result.inputs.directMethod : null,
+    lote_kg: result.inputs.shippingMode === SHIPPING_MODE_LOTE ? result.inputs.loteKg : null,
+    customs_factor: result.inputs.customsFactor,
+    brl_per_jpy: result.inputs.brlPerJpy,
+    margin_percent: result.inputs.marginPercent,
+    packaging_brl: result.inputs.packagingBrl,
+    local_shipping_brl: result.inputs.localShippingBrl,
+    international_shipping_yen: result.shipping.yen,
+    landed_cost_yen: result.breakdown.landedCostYen,
+    landed_cost_brl: result.breakdown.landedCostBrl,
+    final_price_brl: result.breakdown.finalBrl,
+    calculation_snapshot: result,
+  }
+}
 
+function getDeclaredValueForForm(product) {
+  const base = Number(product?.base_cost_yen) || 0
+  const declared = Number(product?.declared_value_yen) || 0
+  if (declared > 0 && declared !== base) return String(declared)
+  return ''
+}
 
-export default function BrazilPriceCalculatorPanel({ onRegistered }) {
+export default function BrazilPriceCalculatorPanel({ editingProduct = null, onCancelEdit, onRegistered }) {
 
   const [loadingSettings, setLoadingSettings] = useState(false)
 
@@ -79,6 +107,73 @@ export default function BrazilPriceCalculatorPanel({ onRegistered }) {
   const [saving, setSaving] = useState(false)
 
   const [saveFeedback, setSaveFeedback] = useState('')
+
+  const isEditing = Boolean(editingProduct?.id)
+
+  useEffect(() => {
+    if (!editingProduct?.id) return
+
+    const snap = (() => {
+      const raw = editingProduct.calculation_snapshot
+      if (!raw) return {}
+      if (typeof raw === 'string') {
+        try {
+          return JSON.parse(raw)
+        } catch {
+          return {}
+        }
+      }
+      return raw
+    })()
+    const inputs = snap.inputs || {}
+    const fees = inputs.paymentFeePercents || {}
+
+    setProductName(editingProduct.name || '')
+    setProductNotes(editingProduct.notes || '')
+    setBaseCostYen(String(editingProduct.base_cost_yen ?? ''))
+    setDeclaredValueYen(getDeclaredValueForForm(editingProduct))
+    setWeightValue(String(editingProduct.weight_grams ?? ''))
+    setWeightUnit('g')
+    setShippingMode(editingProduct.shipping_mode === SHIPPING_MODE_DIRETO ? SHIPPING_MODE_DIRETO : SHIPPING_MODE_LOTE)
+    setLoteKg(String(editingProduct.lote_kg ?? '1'))
+    setDirectMethod(editingProduct.direct_method === DIRECT_METHOD_EPACKET ? DIRECT_METHOD_EPACKET : DIRECT_METHOD_EMS)
+    setCustomsFactor(String(editingProduct.customs_factor ?? '2'))
+    setMarginPercent(String(editingProduct.margin_percent ?? '30'))
+    setPackagingBrl(String(editingProduct.packaging_brl ?? '0'))
+    setLocalShippingBrl(String(editingProduct.local_shipping_brl ?? '0'))
+    setApplyIof(Boolean(inputs.applyIof))
+    setIofPercent(String(inputs.iofPercent ?? DEFAULT_IOF_PERCENT))
+    setStripeFeePercent(String(fees.stripe ?? PAYMENT_GATEWAYS.stripe.defaultFeePercent))
+    setParcelowFeePercent(String(fees.parcelow ?? PAYMENT_GATEWAYS.parcelow.defaultFeePercent))
+    setGlinFeePercent(String(fees.glin ?? PAYMENT_GATEWAYS.glin.defaultFeePercent))
+    setSaveFeedback('')
+  }, [editingProduct])
+
+  const resetForm = () => {
+    setProductName('')
+    setProductNotes('')
+    setBaseCostYen('')
+    setDeclaredValueYen('')
+    setWeightValue('')
+    setWeightUnit('g')
+    setShippingMode(SHIPPING_MODE_LOTE)
+    setLoteKg('1')
+    setDirectMethod(DIRECT_METHOD_EMS)
+    setCustomsFactor('2')
+    setPackagingBrl('0')
+    setLocalShippingBrl('0')
+    setApplyIof(false)
+    setIofPercent(String(DEFAULT_IOF_PERCENT))
+    setStripeFeePercent(String(PAYMENT_GATEWAYS.stripe.defaultFeePercent))
+    setParcelowFeePercent(String(PAYMENT_GATEWAYS.parcelow.defaultFeePercent))
+    setGlinFeePercent(String(PAYMENT_GATEWAYS.glin.defaultFeePercent))
+    setSaveFeedback('')
+  }
+
+  const handleCancelEdit = () => {
+    resetForm()
+    if (typeof onCancelEdit === 'function') onCancelEdit()
+  }
 
 
 
@@ -233,7 +328,7 @@ export default function BrazilPriceCalculatorPanel({ onRegistered }) {
 
 
 
-  const canRegister = result.isValid
+  const canSave = result.isValid
 
     && String(productName).trim().length > 0
 
@@ -243,67 +338,33 @@ export default function BrazilPriceCalculatorPanel({ onRegistered }) {
 
 
 
-  const handleRegister = async () => {
+  const handleSave = async () => {
 
-    if (!canRegister) return
+    if (!canSave) return
 
     setSaving(true)
 
     setSaveFeedback('')
 
-    const { error } = await createCalculatorProductAdmin({
+    const payload = buildCalculatorProductPayload(result, productName, productNotes)
 
-      name: String(productName).trim(),
-
-      notes: String(productNotes).trim() || null,
-
-      base_cost_yen: result.inputs.baseCostYen,
-
-      declared_value_yen: result.inputs.declaredValueYen,
-
-      weight_grams: result.inputs.weightGrams,
-
-      shipping_mode: result.inputs.shippingMode,
-
-      direct_method: result.inputs.shippingMode === SHIPPING_MODE_DIRETO ? result.inputs.directMethod : null,
-
-      lote_kg: result.inputs.shippingMode === SHIPPING_MODE_LOTE ? result.inputs.loteKg : null,
-
-      customs_factor: result.inputs.customsFactor,
-
-      brl_per_jpy: result.inputs.brlPerJpy,
-
-      margin_percent: result.inputs.marginPercent,
-
-      packaging_brl: result.inputs.packagingBrl,
-
-      local_shipping_brl: result.inputs.localShippingBrl,
-
-      international_shipping_yen: result.shipping.yen,
-
-      landed_cost_yen: result.breakdown.landedCostYen,
-
-      landed_cost_brl: result.breakdown.landedCostBrl,
-
-      final_price_brl: result.breakdown.finalBrl,
-
-      calculation_snapshot: result,
-
-    })
+    const { error } = isEditing
+      ? await updateCalculatorProductAdmin(editingProduct.id, payload)
+      : await createCalculatorProductAdmin(payload)
 
     if (error) {
 
-      setSaveFeedback(error.message || 'Falha ao cadastrar produto.')
+      setSaveFeedback(error.message || (isEditing ? 'Falha ao atualizar produto.' : 'Falha ao cadastrar produto.'))
 
     } else {
 
-      setSaveFeedback('Produto cadastrado com sucesso.')
+      setSaveFeedback(isEditing ? 'Produto atualizado com sucesso.' : 'Produto cadastrado com sucesso.')
 
-      setProductName('')
-
-      setProductNotes('')
+      resetForm()
 
       if (typeof onRegistered === 'function') onRegistered()
+
+      if (isEditing && typeof onCancelEdit === 'function') onCancelEdit()
 
     }
 
@@ -315,9 +376,11 @@ export default function BrazilPriceCalculatorPanel({ onRegistered }) {
 
   return (
 
-    <div className="mt-6 rounded-lg border border-emerald-200 bg-white p-4">
+    <div className={`mt-6 rounded-lg border bg-white p-4 ${isEditing ? 'border-amber-300' : 'border-emerald-200'}`}>
 
-      <h3 className="text-base font-semibold text-earth-900">Nova simulacao</h3>
+      <h3 className="text-base font-semibold text-earth-900">
+        {isEditing ? `Editar produto: ${editingProduct.name}` : 'Nova simulacao'}
+      </h3>
 
       <p className="mt-1 text-xs text-earth-600">
 
@@ -968,17 +1031,30 @@ export default function BrazilPriceCalculatorPanel({ onRegistered }) {
 
           type="button"
 
-          onClick={() => void handleRegister()}
+          onClick={() => void handleSave()}
 
-          disabled={!canRegister}
+          disabled={!canSave}
 
           className="rounded-lg bg-earth-900 px-4 py-2 text-sm font-semibold text-white hover:bg-earth-800 disabled:cursor-not-allowed disabled:opacity-50"
 
         >
 
-          {saving ? 'Cadastrando...' : 'Cadastrar produto'}
+          {saving
+            ? (isEditing ? 'Salvando...' : 'Cadastrando...')
+            : (isEditing ? 'Salvar alteracoes' : 'Cadastrar produto')}
 
         </button>
+
+        {isEditing ? (
+          <button
+            type="button"
+            onClick={handleCancelEdit}
+            disabled={saving}
+            className="rounded-lg border border-earth-300 bg-white px-4 py-2 text-sm font-semibold text-earth-700 hover:bg-earth-50 disabled:opacity-50"
+          >
+            Cancelar edicao
+          </button>
+        ) : null}
 
         {saveFeedback ? (
 
