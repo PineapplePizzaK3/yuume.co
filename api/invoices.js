@@ -197,6 +197,27 @@ export default async function handler(req, res) {
       const result = await ensureInvoiceForPaidOrder(supabaseAdmin, orderId, {
         invoiceKind: invoiceKind || undefined,
       })
+      if (!result?.ok) {
+        const reason = String(result?.reason || '').trim()
+        const duplicateWithDoc = reason === 'duplicate' && result?.invoice_id
+        if (duplicateWithDoc) {
+          return res.status(200).json({
+            ...result,
+            order_id: orderId,
+            random_data_used: useRandomData,
+          })
+        }
+        const reasonMessages = {
+          order_not_found: 'Pedido não encontrado. Use o template "Fatura manual" para pedidos externos.',
+          not_eligible_status: 'Pedido não está pago (status deve ser paid ou products_paid).',
+          missing_params: 'orderId é obrigatório para este template.',
+        }
+        return res.status(400).json({
+          ok: false,
+          reason,
+          error: reasonMessages[reason] || result?.error || 'Não foi possível gerar o documento.',
+        })
+      }
       return res.status(200).json({
         ...result,
         order_id: orderId,

@@ -207,6 +207,13 @@ function normalizeManualItems(rawItems = []) {
     .filter(Boolean)
 }
 
+const MANUAL_INVOICE_KINDS = new Set(['invoice', 'consolidation_invoice'])
+
+function normalizeManualInvoiceKind(raw) {
+  const k = String(raw || 'invoice').trim().toLowerCase()
+  return MANUAL_INVOICE_KINDS.has(k) ? k : 'invoice'
+}
+
 function buildManualBillingBreakdown({
   subtotalUsd,
   serviceFeeUsd,
@@ -214,6 +221,7 @@ function buildManualBillingBreakdown({
   discountBrl,
   usdBrl,
   locale,
+  invoiceKind,
 }) {
   const components = []
   const add = (code, labelPt, labelEn, amountUsd, amountBrl = null) => {
@@ -227,9 +235,15 @@ function buildManualBillingBreakdown({
       amount_brl: roundBrl(amountBrl != null ? amountBrl : usd * usdBrl),
     })
   }
-  add('products_subtotal', 'Subtotal de produtos', 'Products subtotal', subtotalUsd)
-  add('service_fee_redirect', 'Taxa de serviço', 'Service fee', serviceFeeUsd)
-  add('shipping_fee', 'Frete internacional', 'International shipping', shippingUsd)
+  if (invoiceKind === 'consolidation_invoice') {
+    add('shipping_fee', 'Frete internacional', 'International shipping', shippingUsd)
+    add('service_fee_redirect', 'Taxa de serviço', 'Service fee', serviceFeeUsd)
+    add('products_subtotal', 'Subtotal de produtos', 'Products subtotal', subtotalUsd)
+  } else {
+    add('products_subtotal', 'Subtotal de produtos', 'Products subtotal', subtotalUsd)
+    add('service_fee_redirect', 'Taxa de serviço', 'Service fee', serviceFeeUsd)
+    add('shipping_fee', 'Frete internacional', 'International shipping', shippingUsd)
+  }
   if (discountBrl > 0) {
     components.push({
       code: 'discount',
@@ -241,8 +255,14 @@ function buildManualBillingBreakdown({
   }
   return {
     flow_type: 'manual',
-    formula_summary_pt: 'Fatura manual (pedido externo à plataforma)',
-    formula_summary_en: 'Manual invoice (off-platform order)',
+    formula_summary_pt:
+      invoiceKind === 'consolidation_invoice'
+        ? 'Fatura manual de consolidação (pedido externo à plataforma)'
+        : 'Fatura manual (pedido externo à plataforma)',
+    formula_summary_en:
+      invoiceKind === 'consolidation_invoice'
+        ? 'Manual consolidation invoice (off-platform order)'
+        : 'Manual invoice (off-platform order)',
     components,
     document_locale: locale,
   }
@@ -287,6 +307,7 @@ export async function createManualInvoiceDocument(supabaseAdmin, payload = {}, o
   const userResolved = await resolveManualInvoiceUserId(supabaseAdmin, payload, opts)
   if (!userResolved.ok) return userResolved
   const userId = userResolved.userId
+  const invoiceKind = normalizeManualInvoiceKind(payload.invoiceKind)
 
   const customerName = String(payload.customer?.name || payload.customerName || '').trim()
   const customerEmail = String(payload.customer?.email || payload.customerEmail || '').trim()
@@ -347,10 +368,13 @@ export async function createManualInvoiceDocument(supabaseAdmin, payload = {}, o
 
   const { data: invNo, error: rpcErr } = await supabaseAdmin.rpc('next_invoice_number')
   if (rpcErr) console.error('next_invoice_number failed:', rpcErr)
-  const invoiceNumber =
+  let invoiceNumber =
     typeof invNo === 'string' && invNo.startsWith('INV-')
       ? invNo
       : `INV-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`
+  if (invoiceKind === 'consolidation_invoice' && !/-CON$/.test(invoiceNumber)) {
+    invoiceNumber = `${invoiceNumber}-CON`
+  }
 
   const companyName = String(process.env.INVOICE_COMPANY_NAME || 'YuumeCo').trim()
   const supportContact =
@@ -360,7 +384,7 @@ export async function createManualInvoiceDocument(supabaseAdmin, payload = {}, o
   const dataJson = {
     schema_version: 1,
     document_type: 'invoice',
-    document_subtype: 'manual',
+    document_subtype: invoiceKind === 'consolidation_invoice' ? 'consolidation' : 'manual',
     invoice_id: rowId,
     invoice_number: invoiceNumber,
     order_id: null,
@@ -391,7 +415,8 @@ export async function createManualInvoiceDocument(supabaseAdmin, payload = {}, o
       transaction_id: transactionId,
     },
     service_fees: {
-      service_type: 'manual_off_platform',
+      service_type:
+        invoiceKind === 'consolidation_invoice' ? 'consolidation_fee' : 'manual_off_platform',
       service_fee_usd: serviceFeeUsd,
       service_fee_brl: serviceFeeBrl,
     },
@@ -402,6 +427,7 @@ export async function createManualInvoiceDocument(supabaseAdmin, payload = {}, o
       discountBrl,
       usdBrl,
       locale: documentLocale,
+      invoiceKind,
     }),
     currency_info: {
       exchange_rate_usd_brl: usdBrl,
@@ -421,8 +447,13 @@ export async function createManualInvoiceDocument(supabaseAdmin, payload = {}, o
       disclaimer:
         'International purchase. Import duties, taxes, and customs clearance may apply in your country and are the responsibility of the buyer unless otherwise stated.',
     },
-    order_flow_type: 'manual',
+    order_flow_type: invoiceKind === 'consolidation_invoice' ? 'manual_consolidation' : 'manual',
     notes,
+    shipping_fee: {
+      shipping_method: 'standard',
+      shipping_fee_usd: shippingUsd,
+      shipping_fee_brl: shippingBrl,
+    },
   }
 
   const { data: inserted, error: insErr } = await supabaseAdmin
@@ -432,7 +463,7 @@ export async function createManualInvoiceDocument(supabaseAdmin, payload = {}, o
       order_id: null,
       user_id: userId,
       invoice_number: invoiceNumber,
-      invoice_kind: 'invoice',
+      invoice_kind: invoiceKind,
       data_json: dataJson,
     })
     .select('id')
@@ -453,7 +484,7 @@ export async function createManualInvoiceDocument(supabaseAdmin, payload = {}, o
     ok: true,
     invoice_id: inserted.id,
     invoice_number: invoiceNumber,
-    invoice_kind: 'invoice',
+    invoice_kind: invoiceKind,
     manual: true,
   }
 }

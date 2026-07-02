@@ -1674,15 +1674,19 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       setMessage(error)
       return
     }
-    const invoiceId = data?.invoice_id || data?.id || null
-    const invoiceNumber = data?.invoice_number || data?.document_number || 'invoice'
-    if (data?.skipped) {
-      setMessage(
-        `Documento já existente (${invoiceNumber}). Motivo: ${data?.reason || 'duplicate'}. Baixando PDF...`
-      )
+    const invoiceId = data?.invoice_id || data?.document_id || data?.id || null
+    const invoiceNumber = data?.invoice_number || data?.document_number || null
+    const reason = String(data?.reason || '').trim()
+
+    if (data?.skipped && reason === 'duplicate' && invoiceId && invoiceNumber) {
+      setMessage(`Documento já existente (${invoiceNumber}). Baixando PDF...`)
+    } else if (!invoiceId || !invoiceNumber) {
+      setMessage('Não foi possível gerar o documento a partir do pedido.')
+      return
     } else {
       setMessage(`Documento gerado: ${invoiceNumber}. Baixando PDF...`)
     }
+
     if (invoiceId) {
       try {
         await downloadInvoicePdf(session.access_token, invoiceId, `${invoiceNumber}.pdf`)
