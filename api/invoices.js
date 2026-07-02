@@ -8,7 +8,7 @@
  * POST /api/invoices
  * Body:
  * {
- *   "action": "create_invoice" | "ensure_invoice" | "create_credit_note" | "create_payout" | "delete_document" | "delete_documents",
+ *   "action": "create_invoice" | "ensure_invoice" | "create_manual_invoice" | "create_credit_note" | "create_payout" | "delete_document" | "delete_documents",
  *   ...payload
  * }
  */
@@ -19,6 +19,7 @@ import {
   buildRandomCreditNotePayload,
   buildRandomPayoutPayload,
   createCreditNoteDocument,
+  createManualInvoiceDocument,
   createPayoutStatementDocument,
 } from '../server-lib/financialDocumentGenerator.js'
 
@@ -203,6 +204,14 @@ export default async function handler(req, res) {
       })
     }
 
+    if (action === 'create_manual_invoice') {
+      const result = await createManualInvoiceDocument(supabaseAdmin, body, {
+        fallbackUserId: auth.user.id,
+      })
+      if (!result.ok) return res.status(400).json(result)
+      return res.status(200).json(result)
+    }
+
     if (action === 'create_credit_note') {
       const useRandomData = body?.randomData === true
       let payload = { ...body }
@@ -383,6 +392,7 @@ export default async function handler(req, res) {
     return {
       id: r.id,
       order_id: r.order_id,
+      external_reference: r.data_json?.external_reference || null,
       user_id: r.user_id,
       user_name: userName,
       invoice_number: r.invoice_number,

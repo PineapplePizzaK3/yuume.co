@@ -104,6 +104,7 @@ import {
   deleteFinancialDocumentAdmin,
   deleteFinancialDocumentsAdmin,
   createInvoiceDocumentAdmin,
+  createManualInvoiceAdmin,
   createPayoutStatementAdmin,
   listFinancialDocumentsAdmin,
 } from '../../../services/invoiceAdminService'
@@ -1696,6 +1697,26 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     await loadFinancialDocuments()
   }
 
+  const generateManualInvoiceDoc = async (payload) => {
+    if (!session?.access_token) return
+    const { data, error } = await createManualInvoiceAdmin(session.access_token, payload)
+    if (error) {
+      setMessage(error)
+      return
+    }
+    const invoiceId = data?.invoice_id || data?.id || null
+    const invoiceNumber = data?.invoice_number || data?.document_number || 'invoice'
+    setMessage(`Fatura manual gerada: ${invoiceNumber}. Baixando PDF...`)
+    if (invoiceId) {
+      try {
+        await downloadInvoicePdf(session.access_token, invoiceId, `${invoiceNumber}.pdf`)
+      } catch (e) {
+        setMessage(`Fatura manual gerada: ${invoiceNumber}. Erro ao baixar PDF: ${e?.message || 'falha desconhecida'}`)
+      }
+    }
+    await loadFinancialDocuments()
+  }
+
   const downloadFinancialDocPdf = async (invoiceId, invoiceNumber) => {
     if (!session?.access_token || !invoiceId) return
     try {
@@ -3257,6 +3278,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     setDocsFilterUserId,
     loadFinancialDocuments,
     generateInvoiceDoc,
+    generateManualInvoiceDoc,
     generateCreditNoteDoc,
     generatePayoutDoc,
     downloadFinancialDocPdf,

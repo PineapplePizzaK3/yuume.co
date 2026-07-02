@@ -9,6 +9,39 @@ const DOC_KIND_OPTIONS = [
   { value: 'payout_statement', label: 'Payout Statement' },
 ]
 
+const EMPTY_MANUAL_ITEM = { itemName: '', quantity: '1', unitPriceUsd: '' }
+
+function buildManualInvoicePayload(form) {
+  const items = (form.items || [])
+    .map((row) => ({
+      itemName: row.itemName.trim(),
+      quantity: Number(row.quantity) || 1,
+      unitPriceUsd: Number(row.unitPriceUsd) || 0,
+    }))
+    .filter((row) => row.itemName && row.unitPriceUsd > 0)
+
+  const payload = {
+    customer: {
+      name: form.customerName.trim(),
+      email: form.customerEmail.trim() || undefined,
+      country: form.customerCountry.trim() || 'Brazil',
+    },
+    items,
+    paymentMethod: form.paymentMethod.trim() || 'Manual',
+    transactionId: form.transactionId.trim() || undefined,
+    externalReference: form.externalReference.trim() || undefined,
+    notes: form.notes.trim() || undefined,
+  }
+
+  if (form.userId.trim()) payload.userId = form.userId.trim()
+  if (form.serviceFeeUsd !== '') payload.serviceFeeUsd = Number(form.serviceFeeUsd) || 0
+  if (form.shippingUsd !== '') payload.shippingUsd = Number(form.shippingUsd) || 0
+  if (form.discountBrl !== '') payload.discountBrl = Number(form.discountBrl) || 0
+  if (form.exchangeRateUsdBrl !== '') payload.exchangeRateUsdBrl = Number(form.exchangeRateUsdBrl) || undefined
+
+  return payload
+}
+
 export default function InvoicesAdminSection() {
   const {
     activeTab,
@@ -20,6 +53,7 @@ export default function InvoicesAdminSection() {
     loadFinancialDocuments,
     financialDocs,
     generateInvoiceDoc,
+    generateManualInvoiceDoc,
     generateCreditNoteDoc,
     generatePayoutDoc,
     downloadFinancialDocPdf,
@@ -29,6 +63,21 @@ export default function InvoicesAdminSection() {
   } = useAdminContext()
 
   const [invoiceForm, setInvoiceForm] = useState({ orderId: '', invoiceKind: 'invoice' })
+  const [manualForm, setManualForm] = useState({
+    userId: '',
+    externalReference: '',
+    customerName: '',
+    customerEmail: '',
+    customerCountry: 'Brazil',
+    paymentMethod: 'PIX',
+    transactionId: '',
+    serviceFeeUsd: '',
+    shippingUsd: '',
+    discountBrl: '',
+    exchangeRateUsdBrl: '',
+    notes: '',
+    items: [{ ...EMPTY_MANUAL_ITEM }],
+  })
   const [creditForm, setCreditForm] = useState({
     originalInvoiceId: '',
     orderId: '',
@@ -131,6 +180,205 @@ export default function InvoicesAdminSection() {
         </div>
       </div>
 
+      <form
+        onSubmit={async (e) => {
+          e.preventDefault()
+          if (!manualForm.customerName.trim()) {
+            setMessage('Informe o nome do cliente para a fatura manual.')
+            return
+          }
+          const payload = buildManualInvoicePayload(manualForm)
+          if (!payload.items.length) {
+            setMessage('Adicione ao menos um item com descrição e preço unitário em USD.')
+            return
+          }
+          await generateManualInvoiceDoc(payload)
+        }}
+        className="space-y-4 rounded-lg border border-orange-200 bg-orange-50/40 p-4"
+      >
+        <div>
+          <h3 className="font-semibold text-earth-900">Fatura manual (pedido externo)</h3>
+          <p className="mt-1 text-xs text-earth-600">
+            Gera invoice sem pedido na plataforma. Ideal para vendas fora do fluxo automático. O PDF é baixado
+            automaticamente após a criação.
+          </p>
+        </div>
+
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <input
+            placeholder="Nome do cliente *"
+            value={manualForm.customerName}
+            onChange={(e) => setManualForm((s) => ({ ...s, customerName: e.target.value }))}
+            className="rounded border border-earth-300 bg-white px-3 py-2 text-sm"
+          />
+          <input
+            placeholder="E-mail do cliente"
+            value={manualForm.customerEmail}
+            onChange={(e) => setManualForm((s) => ({ ...s, customerEmail: e.target.value }))}
+            className="rounded border border-earth-300 bg-white px-3 py-2 text-sm"
+          />
+          <input
+            placeholder="País"
+            value={manualForm.customerCountry}
+            onChange={(e) => setManualForm((s) => ({ ...s, customerCountry: e.target.value }))}
+            className="rounded border border-earth-300 bg-white px-3 py-2 text-sm"
+          />
+          <input
+            placeholder="Referência externa (ex: pedido WhatsApp)"
+            value={manualForm.externalReference}
+            onChange={(e) => setManualForm((s) => ({ ...s, externalReference: e.target.value }))}
+            className="rounded border border-earth-300 bg-white px-3 py-2 text-sm"
+          />
+        </div>
+
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <input
+            placeholder="userId (opcional — vincula à conta na plataforma)"
+            value={manualForm.userId}
+            onChange={(e) => setManualForm((s) => ({ ...s, userId: e.target.value }))}
+            className="rounded border border-earth-300 bg-white px-3 py-2 text-sm font-mono text-xs"
+          />
+          <input
+            placeholder="Método de pagamento"
+            value={manualForm.paymentMethod}
+            onChange={(e) => setManualForm((s) => ({ ...s, paymentMethod: e.target.value }))}
+            className="rounded border border-earth-300 bg-white px-3 py-2 text-sm"
+          />
+          <input
+            placeholder="ID da transação"
+            value={manualForm.transactionId}
+            onChange={(e) => setManualForm((s) => ({ ...s, transactionId: e.target.value }))}
+            className="rounded border border-earth-300 bg-white px-3 py-2 text-sm"
+          />
+          <input
+            type="number"
+            step="0.0001"
+            placeholder="Câmbio USD/BRL (opcional)"
+            value={manualForm.exchangeRateUsdBrl}
+            onChange={(e) => setManualForm((s) => ({ ...s, exchangeRateUsdBrl: e.target.value }))}
+            className="rounded border border-earth-300 bg-white px-3 py-2 text-sm"
+          />
+        </div>
+
+        <div className="grid gap-3 md:grid-cols-3">
+          <input
+            type="number"
+            step="0.0001"
+            placeholder="Taxa de serviço (USD)"
+            value={manualForm.serviceFeeUsd}
+            onChange={(e) => setManualForm((s) => ({ ...s, serviceFeeUsd: e.target.value }))}
+            className="rounded border border-earth-300 bg-white px-3 py-2 text-sm"
+          />
+          <input
+            type="number"
+            step="0.0001"
+            placeholder="Frete (USD)"
+            value={manualForm.shippingUsd}
+            onChange={(e) => setManualForm((s) => ({ ...s, shippingUsd: e.target.value }))}
+            className="rounded border border-earth-300 bg-white px-3 py-2 text-sm"
+          />
+          <input
+            type="number"
+            step="0.01"
+            placeholder="Desconto (BRL)"
+            value={manualForm.discountBrl}
+            onChange={(e) => setManualForm((s) => ({ ...s, discountBrl: e.target.value }))}
+            className="rounded border border-earth-300 bg-white px-3 py-2 text-sm"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-medium text-earth-800">Itens *</p>
+            <button
+              type="button"
+              onClick={() =>
+                setManualForm((s) => ({
+                  ...s,
+                  items: [...s.items, { ...EMPTY_MANUAL_ITEM }],
+                }))
+              }
+              className="rounded border border-earth-300 bg-white px-2.5 py-1 text-xs font-medium text-earth-700 hover:bg-earth-100"
+            >
+              + Adicionar item
+            </button>
+          </div>
+          {manualForm.items.map((row, idx) => (
+            <div key={idx} className="grid gap-2 md:grid-cols-[1fr_90px_130px_auto]">
+              <input
+                placeholder="Descrição do item"
+                value={row.itemName}
+                onChange={(e) =>
+                  setManualForm((s) => {
+                    const items = [...s.items]
+                    items[idx] = { ...items[idx], itemName: e.target.value }
+                    return { ...s, items }
+                  })
+                }
+                className="rounded border border-earth-300 bg-white px-3 py-2 text-sm"
+              />
+              <input
+                type="number"
+                min="1"
+                step="1"
+                placeholder="Qtd"
+                value={row.quantity}
+                onChange={(e) =>
+                  setManualForm((s) => {
+                    const items = [...s.items]
+                    items[idx] = { ...items[idx], quantity: e.target.value }
+                    return { ...s, items }
+                  })
+                }
+                className="rounded border border-earth-300 bg-white px-3 py-2 text-sm"
+              />
+              <input
+                type="number"
+                step="0.0001"
+                placeholder="Preço unit. USD"
+                value={row.unitPriceUsd}
+                onChange={(e) =>
+                  setManualForm((s) => {
+                    const items = [...s.items]
+                    items[idx] = { ...items[idx], unitPriceUsd: e.target.value }
+                    return { ...s, items }
+                  })
+                }
+                className="rounded border border-earth-300 bg-white px-3 py-2 text-sm"
+              />
+              <button
+                type="button"
+                disabled={manualForm.items.length <= 1}
+                onClick={() =>
+                  setManualForm((s) => ({
+                    ...s,
+                    items: s.items.filter((_, i) => i !== idx),
+                  }))
+                }
+                className="rounded border border-earth-300 bg-white px-3 py-2 text-xs text-earth-600 hover:bg-earth-100 disabled:opacity-40"
+              >
+                Remover
+              </button>
+            </div>
+          ))}
+        </div>
+
+        <textarea
+          placeholder="Observações internas (opcional)"
+          value={manualForm.notes}
+          onChange={(e) => setManualForm((s) => ({ ...s, notes: e.target.value }))}
+          rows={2}
+          className="w-full rounded border border-earth-300 bg-white px-3 py-2 text-sm"
+        />
+
+        <button
+          type="submit"
+          className="rounded-lg bg-orange-600 px-4 py-2 text-sm font-medium text-white hover:bg-orange-700"
+        >
+          Gerar fatura manual e baixar PDF
+        </button>
+      </form>
+
       <div className="grid gap-6 xl:grid-cols-3">
         <form
           onSubmit={async (e) => {
@@ -146,8 +394,8 @@ export default function InvoicesAdminSection() {
           }}
           className="rounded-lg border border-earth-200 bg-white p-4"
         >
-          <h3 className="font-semibold text-earth-900">Gerar Invoice</h3>
-          <p className="mt-1 text-xs text-earth-600">Gera Invoice fase 1 ou de consolidacao.</p>
+          <h3 className="font-semibold text-earth-900">Gerar Invoice (pedido na plataforma)</h3>
+          <p className="mt-1 text-xs text-earth-600">Requer orderId de um pedido pago na plataforma.</p>
           <div className="mt-3 space-y-2">
             <input
               placeholder="orderId (uuid)"
@@ -292,7 +540,7 @@ export default function InvoicesAdminSection() {
                   )}
                 </td>
                 <td className="px-3 py-2">{doc.invoice_kind || doc.document_subtype || '—'}</td>
-                <td className="px-3 py-2 font-mono text-xs">{doc.order_id || '—'}</td>
+                <td className="px-3 py-2 font-mono text-xs">{doc.order_id || doc.external_reference || '—'}</td>
                 <td className="px-3 py-2 text-xs">{doc.user_name || doc.user_id || '—'}</td>
                 <td className="px-3 py-2">{doc.created_at ? new Date(doc.created_at).toLocaleString('pt-BR') : '—'}</td>
                 <td className="px-3 py-2 text-right">

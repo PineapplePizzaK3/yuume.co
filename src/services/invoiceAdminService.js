@@ -54,6 +54,18 @@ export async function createInvoiceDocumentAdmin(accessToken, payload) {
   return { data, error: null }
 }
 
+export async function createManualInvoiceAdmin(accessToken, payload) {
+  const base = getPaymentsApiBase()
+  const res = await fetch(`${base}/invoices`, {
+    method: 'POST',
+    headers: authHeaders(accessToken),
+    body: JSON.stringify({ action: 'create_manual_invoice', ...(payload || {}) }),
+  })
+  const data = await parsePayload(res)
+  if (!res.ok) return { data: null, error: normalizeAdminApiError(res, data) }
+  return { data, error: null }
+}
+
 export async function createCreditNoteAdmin(accessToken, payload) {
   const base = getPaymentsApiBase()
   const res = await fetch(`${base}/invoices`, {
