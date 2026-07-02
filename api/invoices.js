@@ -205,11 +205,19 @@ export default async function handler(req, res) {
     }
 
     if (action === 'create_manual_invoice') {
-      const result = await createManualInvoiceDocument(supabaseAdmin, body, {
-        fallbackUserId: auth.user.id,
-      })
-      if (!result.ok) return res.status(400).json(result)
-      return res.status(200).json(result)
+      const manualPayload = { ...body }
+      delete manualPayload.action
+      delete manualPayload.randomData
+      try {
+        const result = await createManualInvoiceDocument(supabaseAdmin, manualPayload, {
+          fallbackUserId: auth.user.id,
+        })
+        if (!result.ok) return res.status(400).json(result)
+        return res.status(200).json(result)
+      } catch (e) {
+        console.error('create_manual_invoice:', e)
+        return res.status(500).json({ ok: false, error: e?.message || 'Manual invoice failed' })
+      }
     }
 
     if (action === 'create_credit_note') {

@@ -11,14 +11,22 @@ const DOC_KIND_OPTIONS = [
 
 const EMPTY_MANUAL_ITEM = { itemName: '', quantity: '1', unitPriceUsd: '' }
 
+function parseDecimalInput(value) {
+  const raw = String(value ?? '').trim()
+  if (!raw) return 0
+  const normalized = raw.replace(/\s/g, '').replace(',', '.')
+  const n = Number(normalized)
+  return Number.isFinite(n) ? n : NaN
+}
+
 function buildManualInvoicePayload(form) {
   const items = (form.items || [])
     .map((row) => ({
       itemName: row.itemName.trim(),
-      quantity: Number(row.quantity) || 1,
-      unitPriceUsd: Number(row.unitPriceUsd) || 0,
+      quantity: parseDecimalInput(row.quantity) || 1,
+      unitPriceUsd: parseDecimalInput(row.unitPriceUsd),
     }))
-    .filter((row) => row.itemName && row.unitPriceUsd > 0)
+    .filter((row) => row.itemName && Number.isFinite(row.unitPriceUsd) && row.unitPriceUsd > 0)
 
   const payload = {
     customer: {
@@ -34,10 +42,22 @@ function buildManualInvoicePayload(form) {
   }
 
   if (form.userId.trim()) payload.userId = form.userId.trim()
-  if (form.serviceFeeUsd !== '') payload.serviceFeeUsd = Number(form.serviceFeeUsd) || 0
-  if (form.shippingUsd !== '') payload.shippingUsd = Number(form.shippingUsd) || 0
-  if (form.discountBrl !== '') payload.discountBrl = Number(form.discountBrl) || 0
-  if (form.exchangeRateUsdBrl !== '') payload.exchangeRateUsdBrl = Number(form.exchangeRateUsdBrl) || undefined
+  if (form.serviceFeeUsd !== '') {
+    const v = parseDecimalInput(form.serviceFeeUsd)
+    if (Number.isFinite(v)) payload.serviceFeeUsd = v
+  }
+  if (form.shippingUsd !== '') {
+    const v = parseDecimalInput(form.shippingUsd)
+    if (Number.isFinite(v)) payload.shippingUsd = v
+  }
+  if (form.discountBrl !== '') {
+    const v = parseDecimalInput(form.discountBrl)
+    if (Number.isFinite(v)) payload.discountBrl = v
+  }
+  if (form.exchangeRateUsdBrl !== '') {
+    const v = parseDecimalInput(form.exchangeRateUsdBrl)
+    if (Number.isFinite(v) && v > 0) payload.exchangeRateUsdBrl = v
+  }
 
   return payload
 }
@@ -78,6 +98,7 @@ export default function InvoicesAdminSection() {
     notes: '',
     items: [{ ...EMPTY_MANUAL_ITEM }],
   })
+  const [manualSubmitting, setManualSubmitting] = useState(false)
   const [creditForm, setCreditForm] = useState({
     originalInvoiceId: '',
     orderId: '',
@@ -183,16 +204,22 @@ export default function InvoicesAdminSection() {
       <form
         onSubmit={async (e) => {
           e.preventDefault()
+          if (manualSubmitting) return
           if (!manualForm.customerName.trim()) {
             setMessage('Informe o nome do cliente para a fatura manual.')
             return
           }
           const payload = buildManualInvoicePayload(manualForm)
           if (!payload.items.length) {
-            setMessage('Adicione ao menos um item com descrição e preço unitário em USD.')
+            setMessage('Adicione ao menos um item com descrição e preço unitário em USD (use ponto ou vírgula).')
             return
           }
-          await generateManualInvoiceDoc(payload)
+          setManualSubmitting(true)
+          try {
+            await generateManualInvoiceDoc(payload)
+          } finally {
+            setManualSubmitting(false)
+          }
         }}
         className="space-y-4 rounded-lg border border-orange-200 bg-orange-50/40 p-4"
       >
@@ -373,9 +400,10 @@ export default function InvoicesAdminSection() {
 
         <button
           type="submit"
-          className="rounded-lg bg-orange-600 px-4 py-2 text-sm font-medium text-white hover:bg-orange-700"
+          disabled={manualSubmitting}
+          className="rounded-lg bg-orange-600 px-4 py-2 text-sm font-medium text-white hover:bg-orange-700 disabled:opacity-60"
         >
-          Gerar fatura manual e baixar PDF
+          {manualSubmitting ? 'Gerando fatura...' : 'Gerar fatura manual e baixar PDF'}
         </button>
       </form>
 

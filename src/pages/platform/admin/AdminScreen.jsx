@@ -1704,8 +1704,12 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       setMessage(error)
       return
     }
-    const invoiceId = data?.invoice_id || data?.id || null
-    const invoiceNumber = data?.invoice_number || data?.document_number || 'invoice'
+    const invoiceId = data?.invoice_id || data?.document_id || data?.id || null
+    const invoiceNumber = data?.invoice_number || data?.document_number || null
+    if (!invoiceId || !invoiceNumber) {
+      setMessage('Resposta inválida ao criar fatura manual. Verifique se a API /api/invoices está atualizada.')
+      return
+    }
     setMessage(`Fatura manual gerada: ${invoiceNumber}. Baixando PDF...`)
     if (invoiceId) {
       try {

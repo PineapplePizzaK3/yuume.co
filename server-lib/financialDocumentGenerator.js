@@ -248,27 +248,45 @@ function buildManualBillingBreakdown({
   }
 }
 
+function isUuid(value) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    String(value || '').trim()
+  )
+}
+
+async function resolveManualInvoiceUserId(supabaseAdmin, payload = {}, opts = {}) {
+  const fallbackUserId = String(opts.fallbackUserId || '').trim()
+  const explicitUserId = String(payload.userId || '').trim()
+  let userId = explicitUserId || fallbackUserId
+
+  if (!userId || !isUuid(userId)) {
+    return { ok: false, error: 'userId inválido. Deixe em branco para usar o admin ou informe um UUID válido.' }
+  }
+
+  const { data: authData, error: authErr } = await supabaseAdmin.auth.admin.getUserById(userId)
+  if (authErr || !authData?.user?.id) {
+    if (explicitUserId && fallbackUserId && isUuid(fallbackUserId) && explicitUserId !== fallbackUserId) {
+      const { data: fallbackData, error: fallbackErr } = await supabaseAdmin.auth.admin.getUserById(
+        fallbackUserId
+      )
+      if (!fallbackErr && fallbackData?.user?.id) {
+        return { ok: true, userId: fallbackData.user.id, usedFallback: true }
+      }
+    }
+    return { ok: false, error: 'Usuário não encontrado para vincular a fatura.' }
+  }
+
+  return { ok: true, userId: authData.user.id, usedFallback: false }
+}
+
 /**
  * Cria fatura manual sem pedido na plataforma (order_id = null).
  * Útil para vendas/atendimentos fora do fluxo automático.
  */
 export async function createManualInvoiceDocument(supabaseAdmin, payload = {}, opts = {}) {
-  const fallbackUserId = String(opts.fallbackUserId || '').trim()
-  const explicitUserId = String(payload.userId || '').trim()
-  let userId = explicitUserId || fallbackUserId
-
-  if (userId) {
-    const { data: profileRow } = await supabaseAdmin
-      .from('profiles')
-      .select('id')
-      .eq('id', userId)
-      .maybeSingle()
-    if (!profileRow?.id) userId = fallbackUserId || ''
-  }
-
-  if (!userId) {
-    return { ok: false, error: 'userId required (or valid admin session)' }
-  }
+  const userResolved = await resolveManualInvoiceUserId(supabaseAdmin, payload, opts)
+  if (!userResolved.ok) return userResolved
+  const userId = userResolved.userId
 
   const customerName = String(payload.customer?.name || payload.customerName || '').trim()
   const customerEmail = String(payload.customer?.email || payload.customerEmail || '').trim()
@@ -420,7 +438,17 @@ export async function createManualInvoiceDocument(supabaseAdmin, payload = {}, o
     .select('id')
     .single()
 
-  if (insErr) return { ok: false, error: insErr.message }
+  if (insErr) {
+    const msg = String(insErr.message || 'Insert failed')
+    if (/order_id.*not-null|null value in column "order_id"/i.test(msg)) {
+      return {
+        ok: false,
+        error:
+          'Banco ainda exige order_id em invoices. Aplique a migration 130_manual_invoices_null_order.sql no Supabase.',
+      }
+    }
+    return { ok: false, error: msg }
+  }
   return {
     ok: true,
     invoice_id: inserted.id,
