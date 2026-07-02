@@ -17,6 +17,7 @@ export const ROUTES = {
   faqCustoms: { [LOCALE_PT_BR]: '/faq/taxas-alfandegarias', [LOCALE_EN]: '/en/help/customs-fees' },
   ondeComprar: { [LOCALE_PT_BR]: '/onde-comprar', [LOCALE_EN]: '/en/where-to-buy' },
   catalogSearchPublic: { [LOCALE_PT_BR]: '/busca-catalogo', [LOCALE_EN]: '/en/catalog-search' },
+  ephemeralProductPublic: { [LOCALE_PT_BR]: '/produto-temporario', [LOCALE_EN]: '/en/instant-product' },
   contact: { [LOCALE_PT_BR]: '/contact', [LOCALE_EN]: '/en/contact' },
   lojaPublic: { [LOCALE_PT_BR]: '/loja', [LOCALE_EN]: '/en/store' },
   lojaPublicVitrine: { [LOCALE_PT_BR]: '/loja/vitrine', [LOCALE_EN]: '/en/store/storefront' },
@@ -284,4 +285,18 @@ export function publicStoreProductPath(productId, locale, options = {}) {
   const vid = options?.variantId != null ? String(options.variantId).trim() : ''
   if (!vid) return base
   return `${base}?v=${encodeURIComponent(vid)}`
+}
+
+/**
+ * Página de detalhe de produto efêmero (busca pública).
+ * @param {string} token
+ * @param {SiteLocale} locale
+ */
+export function publicEphemeralProductPath(token, locale) {
+  const id = String(token ?? '').trim()
+  if (!id) return localizedPath('catalogSearchPublic', locale)
+  const enc = encodeURIComponent(id)
+  return locale === LOCALE_EN
+    ? `/en/instant-product/${enc}`
+    : `/produto-temporario/${enc}`
 }

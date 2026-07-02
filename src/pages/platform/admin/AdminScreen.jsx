@@ -104,6 +104,7 @@ import {
   deleteFinancialDocumentAdmin,
   deleteFinancialDocumentsAdmin,
   createInvoiceDocumentAdmin,
+  createManualInvoiceAdmin,
   createPayoutStatementAdmin,
   listFinancialDocumentsAdmin,
 } from '../../../services/invoiceAdminService'
@@ -1673,15 +1674,19 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       setMessage(error)
       return
     }
-    const invoiceId = data?.invoice_id || data?.id || null
-    const invoiceNumber = data?.invoice_number || data?.document_number || 'invoice'
-    if (data?.skipped) {
-      setMessage(
-        `Documento já existente (${invoiceNumber}). Motivo: ${data?.reason || 'duplicate'}. Baixando PDF...`
-      )
+    const invoiceId = data?.invoice_id || data?.document_id || data?.id || null
+    const invoiceNumber = data?.invoice_number || data?.document_number || null
+    const reason = String(data?.reason || '').trim()
+
+    if (data?.skipped && reason === 'duplicate' && invoiceId && invoiceNumber) {
+      setMessage(`Documento já existente (${invoiceNumber}). Baixando PDF...`)
+    } else if (!invoiceId || !invoiceNumber) {
+      setMessage('Não foi possível gerar o documento a partir do pedido.')
+      return
     } else {
       setMessage(`Documento gerado: ${invoiceNumber}. Baixando PDF...`)
     }
+
     if (invoiceId) {
       try {
         await downloadInvoicePdf(session.access_token, invoiceId, `${invoiceNumber}.pdf`)
@@ -1691,6 +1696,30 @@ export default function Admin({ routeTabId = 'pedidos' }) {
             e?.message || 'falha desconhecida'
           }`
         )
+      }
+    }
+    await loadFinancialDocuments()
+  }
+
+  const generateManualInvoiceDoc = async (payload) => {
+    if (!session?.access_token) return
+    const { data, error } = await createManualInvoiceAdmin(session.access_token, payload)
+    if (error) {
+      setMessage(error)
+      return
+    }
+    const invoiceId = data?.invoice_id || data?.document_id || data?.id || null
+    const invoiceNumber = data?.invoice_number || data?.document_number || null
+    if (!invoiceId || !invoiceNumber) {
+      setMessage('Resposta inválida ao criar fatura manual. Verifique se a API /api/invoices está atualizada.')
+      return
+    }
+    setMessage(`Fatura manual gerada: ${invoiceNumber}. Baixando PDF...`)
+    if (invoiceId) {
+      try {
+        await downloadInvoicePdf(session.access_token, invoiceId, `${invoiceNumber}.pdf`)
+      } catch (e) {
+        setMessage(`Fatura manual gerada: ${invoiceNumber}. Erro ao baixar PDF: ${e?.message || 'falha desconhecida'}`)
       }
     }
     await loadFinancialDocuments()
@@ -3257,6 +3286,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     setDocsFilterUserId,
     loadFinancialDocuments,
     generateInvoiceDoc,
+    generateManualInvoiceDoc,
     generateCreditNoteDoc,
     generatePayoutDoc,
     downloadFinancialDocPdf,

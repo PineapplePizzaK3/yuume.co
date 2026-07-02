@@ -8,7 +8,7 @@
  * POST /api/invoices
  * Body:
  * {
- *   "action": "create_invoice" | "ensure_invoice" | "create_credit_note" | "create_payout" | "delete_document" | "delete_documents",
+ *   "action": "create_invoice" | "ensure_invoice" | "create_manual_invoice" | "create_credit_note" | "create_payout" | "delete_document" | "delete_documents",
  *   ...payload
  * }
  */
@@ -19,6 +19,7 @@ import {
   buildRandomCreditNotePayload,
   buildRandomPayoutPayload,
   createCreditNoteDocument,
+  createManualInvoiceDocument,
   createPayoutStatementDocument,
 } from '../server-lib/financialDocumentGenerator.js'
 
@@ -196,11 +197,48 @@ export default async function handler(req, res) {
       const result = await ensureInvoiceForPaidOrder(supabaseAdmin, orderId, {
         invoiceKind: invoiceKind || undefined,
       })
+      if (!result?.ok) {
+        const reason = String(result?.reason || '').trim()
+        const duplicateWithDoc = reason === 'duplicate' && result?.invoice_id
+        if (duplicateWithDoc) {
+          return res.status(200).json({
+            ...result,
+            order_id: orderId,
+            random_data_used: useRandomData,
+          })
+        }
+        const reasonMessages = {
+          order_not_found: 'Pedido não encontrado. Use o template "Fatura manual" para pedidos externos.',
+          not_eligible_status: 'Pedido não está pago (status deve ser paid ou products_paid).',
+          missing_params: 'orderId é obrigatório para este template.',
+        }
+        return res.status(400).json({
+          ok: false,
+          reason,
+          error: reasonMessages[reason] || result?.error || 'Não foi possível gerar o documento.',
+        })
+      }
       return res.status(200).json({
         ...result,
         order_id: orderId,
         random_data_used: useRandomData,
       })
+    }
+
+    if (action === 'create_manual_invoice') {
+      const manualPayload = { ...body }
+      delete manualPayload.action
+      delete manualPayload.randomData
+      try {
+        const result = await createManualInvoiceDocument(supabaseAdmin, manualPayload, {
+          fallbackUserId: auth.user.id,
+        })
+        if (!result.ok) return res.status(400).json(result)
+        return res.status(200).json(result)
+      } catch (e) {
+        console.error('create_manual_invoice:', e)
+        return res.status(500).json({ ok: false, error: e?.message || 'Manual invoice failed' })
+      }
     }
 
     if (action === 'create_credit_note') {
@@ -383,6 +421,7 @@ export default async function handler(req, res) {
     return {
       id: r.id,
       order_id: r.order_id,
+      external_reference: r.data_json?.external_reference || null,
       user_id: r.user_id,
       user_name: userName,
       invoice_number: r.invoice_number,

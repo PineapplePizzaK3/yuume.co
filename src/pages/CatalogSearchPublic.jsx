@@ -1,16 +1,18 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { PageSeo } from '../components/PageSeo'
 import CatalogSearchPanel, { CATALOG_STORE_OPTIONS } from '../components/CatalogSearchPanel'
-import { LOCALE_EN } from '../lib/localeRoutes'
+import { LOCALE_EN, publicEphemeralProductPath } from '../lib/localeRoutes'
 import { useSiteLocale } from '../hooks/useSiteLocale'
 import { searchCatalogPublic } from '../services/catalogSearchService'
+import { createEphemeralProductSnapshot } from '../services/ephemeralProductService'
 
 export default function CatalogSearchPublic() {
   const { t } = useTranslation()
   const siteLocale = useSiteLocale()
   const isEn = siteLocale === LOCALE_EN
+  const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const catalogQueryFromUrl = searchParams.get('catalogQuery') || ''
   const catalogStoreFromUrl = searchParams.get('catalogStore') || ''
@@ -26,6 +28,7 @@ export default function CatalogSearchPublic() {
   const [catalogCanAutoLoad, setCatalogCanAutoLoad] = useState(true)
   const [catalogCursors, setCatalogCursors] = useState(null)
   const [catalogError, setCatalogError] = useState('')
+  const [creatingSnapshotUrl, setCreatingSnapshotUrl] = useState('')
   const lastCatalogQueryFromUrlRef = useRef('')
 
   const trackPublicSearchMetric = (eventName, payload = {}) => {
@@ -162,6 +165,43 @@ export default function CatalogSearchPublic() {
     await runCatalogSearch(nextPage, { append: true, cursors: catalogCursors })
   }
 
+  const handleResultClick = async (item, event) => {
+    event?.preventDefault?.()
+    const productUrl = String(item?.productUrl || '').trim()
+    if (!productUrl) return false
+    if (creatingSnapshotUrl === productUrl) return false
+    setCreatingSnapshotUrl(productUrl)
+    setCatalogError('')
+    trackPublicSearchMetric('result_click', {
+      storeId: item?.storeId,
+      productUrl,
+    })
+    const { data, error } = await createEphemeralProductSnapshot(item)
+    if (error || !data?.token) {
+      setCatalogError(
+        error?.message
+          || (isEn
+            ? 'Could not create temporary product page. Please try again.'
+            : 'Nao foi possivel criar a pagina temporaria. Tente novamente.')
+      )
+      trackPublicSearchMetric('snapshot_error', {
+        storeId: item?.storeId,
+        productUrl,
+        reason: error?.message || 'unknown',
+      })
+      setCreatingSnapshotUrl('')
+      return false
+    }
+
+    trackPublicSearchMetric('snapshot_created', {
+      storeId: item?.storeId,
+      productUrl,
+      token: data.token,
+    })
+    navigate(publicEphemeralProductPath(data.token, siteLocale))
+    return false
+  }
+
   useEffect(() => {
     const fromUrl = String(catalogQueryFromUrl || '').trim()
     if (!fromUrl || fromUrl.length < 2) return
@@ -222,12 +262,10 @@ export default function CatalogSearchPublic() {
               isEn ? 'No more results available for this search.' : 'Fim dos resultados disponiveis para esta busca.'
             }
             storesLabel={isEn ? 'Stores:' : 'Lojas:'}
-            onResultClick={(item) =>
-              trackPublicSearchMetric('result_click', {
-                storeId: item.storeId,
-                productUrl: item.productUrl,
-              })
-            }
+            onResultClick={handleResultClick}
+            buildResultHref={() => '#'}
+            resultTarget="_self"
+            resultRel={undefined}
           />
         </div>
       </section>

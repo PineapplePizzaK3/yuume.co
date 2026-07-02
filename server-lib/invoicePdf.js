@@ -48,6 +48,7 @@ function flowLabel(flow, locale) {
   if (f === 'personal_shopping') return t(locale, 'Personal shopper', 'Personal shopping')
   if (f === 'group_purchase') return t(locale, 'Grupo de compras', 'Group purchase')
   if (f === 'virtual_store') return t(locale, 'Loja virtual', 'Virtual store')
+  if (f === 'manual') return t(locale, 'Fatura manual', 'Manual invoice')
   return String(flow || '—')
 }
 
@@ -374,7 +375,8 @@ export function buildInvoicePdfBuffer(data) {
       width: boxW,
       lineBreak: false,
     })
-    const orderRef = d.order_id || d.original_invoice_id || d.statement_id || d.credit_note_id
+    const orderRef =
+      d.order_id || d.external_reference || d.original_invoice_id || d.statement_id || d.credit_note_id
     if (orderRef) {
       doc.text(`${t(locale, 'Referência do pedido', 'Order reference')}: ${esc(String(orderRef).slice(0, 22))}`, 48 + boxW + 18, boxY + 50, {
         width: boxW,
