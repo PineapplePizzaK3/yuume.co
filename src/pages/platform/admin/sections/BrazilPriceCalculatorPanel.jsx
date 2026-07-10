@@ -42,6 +42,27 @@ function MoneyPair({ yen, brl, brlPerJpy, className = 'text-lg font-semibold tex
   )
 }
 
+function roundMoney2(n) {
+  return Math.round((Number(n) || 0) * 100) / 100
+}
+
+function PerItemHint({ brl, yen, brlPerJpy, quantity, className = 'mt-1 text-[11px] text-earth-500' }) {
+  const qty = Math.max(1, Math.round(Number(quantity) || 1))
+  if (qty <= 1) return null
+  const pair = resolveMoneyPair(yen, brl, brlPerJpy)
+  if (pair.brlVal == null && pair.yenVal == null) return null
+  const perBrl = pair.brlVal != null ? roundMoney2(pair.brlVal / qty) : null
+  const perYen = pair.yenVal != null ? Math.round(pair.yenVal / qty) : null
+  return (
+    <p className={className}>
+      Por item:{' '}
+      {perBrl != null ? formatBRL(perBrl) : null}
+      {perBrl != null && perYen != null ? ' · ' : null}
+      {perYen != null ? formatJPY(perYen) : null}
+    </p>
+  )
+}
+
 /** Exibição voltada ao cliente: BRL em destaque, JPY como referência. */
 function ClientMoney({ yen, brl, brlPerJpy, size = 'md', align = 'left' }) {
   const { yenVal, brlVal } = resolveMoneyPair(yen, brl, brlPerJpy)
@@ -94,6 +115,19 @@ function formatInstallmentLabel(charge) {
     ? installmentBrl
     : (Number(charge?.chargeBrl) || 0) / installments
   return `${installments}x de ${formatBRL(amount)}`
+}
+
+function formatInstallmentPerItemLabel(charge, quantity) {
+  const qty = Math.max(1, Math.round(Number(quantity) || 1))
+  if (qty <= 1) return null
+  const installments = Math.max(0, Math.round(Number(charge?.installments) || 0))
+  if (installments <= 0) return null
+  const perInstallment = roundMoney2(
+    (Number.isFinite(Number(charge?.installmentBrl))
+      ? Number(charge.installmentBrl)
+      : (Number(charge?.chargeBrl) || 0) / installments) / qty
+  )
+  return `${installments}x de ${formatBRL(perInstallment)}`
 }
 
 function defaultPaymentFeeByMethod() {
@@ -621,6 +655,12 @@ export default function BrazilPriceCalculatorPanel({
                 brlPerJpy={brlPerJpy}
                 size={clientPrintMode ? 'md' : 'lg'}
               />
+              <PerItemHint
+                brl={result.breakdown.finalBrl}
+                brlPerJpy={brlPerJpy}
+                quantity={qty}
+                className={`mt-1 ${clientPrintMode ? 'text-[10px]' : 'text-[11px]'} text-emerald-800/80`}
+              />
               {!clientPrintMode && result.inputs.applyIof ? (
                 <p className="mt-1 text-xs text-emerald-800/80">
                   Inclui IOF de {result.inputs.iofPercent}%
@@ -641,7 +681,15 @@ export default function BrazilPriceCalculatorPanel({
                             {PAYMENT_GATEWAY_TITLES[gatewayId] || gatewayId}
                           </p>
                           {cheapest ? (
-                            <ClientMoney brl={cheapest.chargeBrl} brlPerJpy={brlPerJpy} size="sm" />
+                            <>
+                              <ClientMoney brl={cheapest.chargeBrl} brlPerJpy={brlPerJpy} size="sm" />
+                              <PerItemHint
+                                brl={cheapest.chargeBrl}
+                                brlPerJpy={brlPerJpy}
+                                quantity={qty}
+                                className="text-[10px] text-earth-500"
+                              />
+                            </>
                           ) : null}
                           {!clientPrintMode ? (
                             <div>
@@ -661,6 +709,7 @@ export default function BrazilPriceCalculatorPanel({
                             {categoryGroup.charges.map((charge) => {
                               const meta = getPaymentMethodMeta(charge.id)
                               const installmentLabel = formatInstallmentLabel(charge)
+                              const installmentPerItem = formatInstallmentPerItemLabel(charge, qty)
                               return (
                                 <div key={charge.id} className={`flex items-center justify-between gap-2 rounded border border-violet-200 bg-violet-50/50 ${clientPrintMode ? 'px-1.5 py-1' : 'px-2 py-1.5'}`}>
                                   <div className="min-w-0">
@@ -674,9 +723,27 @@ export default function BrazilPriceCalculatorPanel({
                                       {!clientPrintMode ? (
                                         <p className="text-[11px] text-earth-500">Total {formatBRL(charge.chargeBrl)}</p>
                                       ) : null}
+                                      {installmentPerItem ? (
+                                        <p className="text-[10px] text-earth-500">Por item: {installmentPerItem}</p>
+                                      ) : (
+                                        <PerItemHint
+                                          brl={charge.chargeBrl}
+                                          brlPerJpy={brlPerJpy}
+                                          quantity={qty}
+                                          className="text-[10px] text-earth-500"
+                                        />
+                                      )}
                                     </div>
                                   ) : (
-                                    <ClientMoney brl={charge.chargeBrl} brlPerJpy={brlPerJpy} size="sm" align="right" />
+                                    <div className="text-right">
+                                      <ClientMoney brl={charge.chargeBrl} brlPerJpy={brlPerJpy} size="sm" align="right" />
+                                      <PerItemHint
+                                        brl={charge.chargeBrl}
+                                        brlPerJpy={brlPerJpy}
+                                        quantity={qty}
+                                        className="text-[10px] text-earth-500"
+                                      />
+                                    </div>
                                   )}
                                 </div>
                               )
@@ -1224,6 +1291,13 @@ export default function BrazilPriceCalculatorPanel({
             brl={result.breakdown.beforeTaxBrl}
             brlPerJpy={brlPerJpy}
           />
+          <PerItemHint
+            yen={result.breakdown.beforeTaxYen}
+            brl={result.breakdown.beforeTaxBrl}
+            brlPerJpy={brlPerJpy}
+            quantity={result.inputs.quantity}
+            className="mt-1 text-[11px] text-amber-800/80"
+          />
 
           <p className="mt-1 text-[11px] text-amber-800/80">
             Custo base + frete + margem
@@ -1239,6 +1313,12 @@ export default function BrazilPriceCalculatorPanel({
           <p className="text-xs text-earth-600">Custo para ter no Brasil</p>
 
           <MoneyPair yen={result.breakdown.landedCostYen} brl={result.breakdown.landedCostBrl} brlPerJpy={brlPerJpy} />
+          <PerItemHint
+            yen={result.breakdown.landedCostYen}
+            brl={result.breakdown.landedCostBrl}
+            brlPerJpy={brlPerJpy}
+            quantity={result.inputs.quantity}
+          />
 
           <p className="mt-1 text-[11px] text-earth-500">
             Com impostos alfandegarios (fator {result.inputs.customsFactor})
@@ -1254,6 +1334,12 @@ export default function BrazilPriceCalculatorPanel({
             brl={result.breakdown.finalBrl}
             brlPerJpy={brlPerJpy}
             className="text-xl font-bold text-emerald-900"
+          />
+          <PerItemHint
+            brl={result.breakdown.finalBrl}
+            brlPerJpy={brlPerJpy}
+            quantity={result.inputs.quantity}
+            className="mt-1 text-[11px] text-emerald-800/80"
           />
 
           {result.inputs.applyIof ? (
@@ -1276,6 +1362,12 @@ export default function BrazilPriceCalculatorPanel({
             brl={result.breakdown.netProfitBrl}
             brlPerJpy={brlPerJpy}
             className="text-xl font-bold text-sky-900"
+          />
+          <PerItemHint
+            brl={result.breakdown.netProfitBrl}
+            brlPerJpy={brlPerJpy}
+            quantity={result.inputs.quantity}
+            className="mt-1 text-[11px] text-sky-800/80"
           />
 
           <p className="mt-1 text-[11px] text-sky-800/80">
@@ -1315,11 +1407,19 @@ export default function BrazilPriceCalculatorPanel({
                       </p>
                     </div>
                     {cheapest ? (
-                      <MoneyPair
-                        brl={cheapest.chargeBrl}
-                        brlPerJpy={brlPerJpy}
-                        className="text-base font-bold text-violet-900"
-                      />
+                      <div className="text-right">
+                        <MoneyPair
+                          brl={cheapest.chargeBrl}
+                          brlPerJpy={brlPerJpy}
+                          className="text-base font-bold text-violet-900"
+                        />
+                        <PerItemHint
+                          brl={cheapest.chargeBrl}
+                          brlPerJpy={brlPerJpy}
+                          quantity={result.inputs.quantity}
+                          className="mt-0.5 text-[11px] text-violet-800/80"
+                        />
+                      </div>
                     ) : null}
                   </div>
                 </summary>
@@ -1332,6 +1432,7 @@ export default function BrazilPriceCalculatorPanel({
                       <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
                         {categoryGroup.charges.map((charge) => {
                           const installmentLabel = formatInstallmentLabel(charge)
+                          const installmentPerItem = formatInstallmentPerItemLabel(charge, result.inputs.quantity)
                           return (
                             <div key={charge.id} className="rounded border border-violet-200 bg-violet-50/40 p-2">
                               <p className="text-xs text-violet-700">{charge.label}</p>
@@ -1341,13 +1442,24 @@ export default function BrazilPriceCalculatorPanel({
                                   <p className="text-[11px] text-violet-800/80">
                                     Total {formatPairFromBrl(charge.chargeBrl, brlPerJpy)}
                                   </p>
+                                  {installmentPerItem ? (
+                                    <p className="text-[11px] text-violet-800/80">Por item: {installmentPerItem}</p>
+                                  ) : null}
                                 </>
                               ) : (
-                                <MoneyPair
-                                  brl={charge.chargeBrl}
-                                  brlPerJpy={brlPerJpy}
-                                  className="text-base font-bold text-violet-900"
-                                />
+                                <>
+                                  <MoneyPair
+                                    brl={charge.chargeBrl}
+                                    brlPerJpy={brlPerJpy}
+                                    className="text-base font-bold text-violet-900"
+                                  />
+                                  <PerItemHint
+                                    brl={charge.chargeBrl}
+                                    brlPerJpy={brlPerJpy}
+                                    quantity={result.inputs.quantity}
+                                    className="mt-0.5 text-[11px] text-violet-800/80"
+                                  />
+                                </>
                               )}
                               <p className="mt-1 text-[11px] text-violet-800/80">
                                 Taxa {charge.feePercent}%
@@ -1383,18 +1495,34 @@ export default function BrazilPriceCalculatorPanel({
             <p className="mt-1 text-sm font-semibold text-amber-900">
               {formatPairFromBrl(result.breakdown.beforeTaxBrl, brlPerJpy)}
             </p>
+            <PerItemHint
+              brl={result.breakdown.beforeTaxBrl}
+              brlPerJpy={brlPerJpy}
+              quantity={result.inputs.quantity}
+              className="mt-0.5 text-[11px] text-amber-800/80"
+            />
           </div>
           <div className="rounded border border-earth-200 bg-earth-50 p-2">
             <p className="text-[11px] uppercase tracking-wide text-earth-500">2) Custo no Brasil</p>
             <p className="mt-1 text-sm font-semibold text-earth-900">
               {formatPairFromBrl(result.breakdown.landedCostBrl, brlPerJpy)}
             </p>
+            <PerItemHint
+              brl={result.breakdown.landedCostBrl}
+              brlPerJpy={brlPerJpy}
+              quantity={result.inputs.quantity}
+            />
           </div>
           <div className="rounded border border-earth-200 bg-earth-50 p-2">
             <p className="text-[11px] uppercase tracking-wide text-earth-500">3) Margem + extras</p>
             <p className="mt-1 text-sm font-semibold text-earth-900">
               +{formatPairFromBrl(result.breakdown.marginBrl + result.breakdown.extrasBrl, brlPerJpy)}
             </p>
+            <PerItemHint
+              brl={result.breakdown.marginBrl + result.breakdown.extrasBrl}
+              brlPerJpy={brlPerJpy}
+              quantity={result.inputs.quantity}
+            />
           </div>
           <div className="rounded border border-earth-200 bg-earth-50 p-2">
             <p className="text-[11px] uppercase tracking-wide text-earth-500">4) IOF</p>
@@ -1403,12 +1531,25 @@ export default function BrazilPriceCalculatorPanel({
                 ? `+${formatPairFromBrl(result.breakdown.iofBrl, brlPerJpy)}`
                 : 'Não aplicado'}
             </p>
+            {result.inputs.applyIof ? (
+              <PerItemHint
+                brl={result.breakdown.iofBrl}
+                brlPerJpy={brlPerJpy}
+                quantity={result.inputs.quantity}
+              />
+            ) : null}
           </div>
           <div className="rounded border border-emerald-200 bg-emerald-50 p-2">
             <p className="text-[11px] uppercase tracking-wide text-emerald-700">5) Preço final</p>
             <p className="mt-1 text-sm font-semibold text-emerald-900">
               {formatPairFromBrl(result.breakdown.finalBrl, brlPerJpy)}
             </p>
+            <PerItemHint
+              brl={result.breakdown.finalBrl}
+              brlPerJpy={brlPerJpy}
+              quantity={result.inputs.quantity}
+              className="mt-0.5 text-[11px] text-emerald-800/80"
+            />
           </div>
         </div>
 
@@ -1457,6 +1598,12 @@ export default function BrazilPriceCalculatorPanel({
                   <p className="text-sm font-semibold text-violet-900">
                     {formatPairFromBrl(cheapest.chargeBrl, brlPerJpy)}
                   </p>
+                  <PerItemHint
+                    brl={cheapest.chargeBrl}
+                    brlPerJpy={brlPerJpy}
+                    quantity={result.inputs.quantity}
+                    className="mt-0.5 text-[11px] text-violet-800/80"
+                  />
                   <p className="text-[11px] text-violet-800/80">{cheapest.label}</p>
                 </div>
               )
