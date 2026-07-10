@@ -9,6 +9,7 @@ import {
 import {
   DIRECT_METHOD_EMS,
   DIRECT_METHOD_EPACKET,
+  DIRECT_METHOD_AIRMAIL,
   SHIPPING_MODE_DIRETO,
   SHIPPING_MODE_LOTE,
 } from '../../../../lib/brazilPriceCalculator'
@@ -18,6 +19,7 @@ function shippingLabel(row) {
     return `Lote ${row.lote_kg ?? '?'} kg (EMS)`
   }
   if (row.direct_method === DIRECT_METHOD_EPACKET) return 'Direto · ePacket'
+  if (row.direct_method === DIRECT_METHOD_AIRMAIL) return 'Direto · Airmail'
   if (row.direct_method === DIRECT_METHOD_EMS) return 'Direto · EMS'
   return 'Direto'
 }

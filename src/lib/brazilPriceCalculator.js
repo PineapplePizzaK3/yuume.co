@@ -1,10 +1,11 @@
 import { calcularFreteEMS } from '../data/tabelaFreteEMS'
-import { calcularFreteEPacket } from '../data/fretesJPPost'
+import { calcularFreteEPacket, calcularFreteParcel } from '../data/fretesJPPost'
 
 export const SHIPPING_MODE_LOTE = 'lote'
 export const SHIPPING_MODE_DIRETO = 'direto'
 export const DIRECT_METHOD_EMS = 'ems'
 export const DIRECT_METHOD_EPACKET = 'epacket'
+export const DIRECT_METHOD_AIRMAIL = 'airmail'
 
 export const LOTE_EMS_RATE_TABLE = [
   { loteKg: 1, totalEmsYen: 5100, costPerGramYen: 5.1 },
@@ -171,6 +172,19 @@ export function computeInternationalShippingYen({
     return {
       valueYen: roundYen(calcularFreteEPacket(grams)),
       note: 'direto_epacket',
+    }
+  }
+
+  if (directMethod === DIRECT_METHOD_AIRMAIL) {
+    if (grams > 30000) {
+      return {
+        valueYen: 0,
+        note: 'airmail_limite_30kg',
+      }
+    }
+    return {
+      valueYen: roundYen(calcularFreteParcel(grams, 'aereo')),
+      note: 'direto_airmail',
     }
   }
 
