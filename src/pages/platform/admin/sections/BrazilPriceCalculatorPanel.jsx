@@ -10,6 +10,7 @@ import {
   DEFAULT_IOF_PERCENT,
   DIRECT_METHOD_EMS,
   DIRECT_METHOD_EPACKET,
+  DIRECT_METHOD_AIRMAIL,
   LOTE_EMS_RATE_TABLE,
   PAYMENT_METHODS,
   SHIPPING_MODE_DIRETO,
@@ -296,7 +297,13 @@ export default function BrazilPriceCalculatorPanel({
     setQuantity(String(inputs.quantity ?? '1'))
     setShippingMode(editingProduct.shipping_mode === SHIPPING_MODE_DIRETO ? SHIPPING_MODE_DIRETO : SHIPPING_MODE_LOTE)
     setLoteKg(String(editingProduct.lote_kg ?? '1'))
-    setDirectMethod(editingProduct.direct_method === DIRECT_METHOD_EPACKET ? DIRECT_METHOD_EPACKET : DIRECT_METHOD_EMS)
+    setDirectMethod(
+      editingProduct.direct_method === DIRECT_METHOD_EPACKET
+        ? DIRECT_METHOD_EPACKET
+        : editingProduct.direct_method === DIRECT_METHOD_AIRMAIL
+          ? DIRECT_METHOD_AIRMAIL
+          : DIRECT_METHOD_EMS
+    )
     setCustomsFactor(String(editingProduct.customs_factor ?? '2'))
     setMarginPercent(String(editingProduct.margin_percent ?? '30'))
     setPackagingBrl(String(editingProduct.packaging_brl ?? '0'))
@@ -478,19 +485,17 @@ export default function BrazilPriceCalculatorPanel({
 
 
   const epacketBlocked = shippingMode === SHIPPING_MODE_DIRETO
-
     && directMethod === DIRECT_METHOD_EPACKET
-
     && (weightGrams * Math.max(1, Math.round(Number(quantity) || 1))) > 2000
 
-
+  const airmailBlocked = shippingMode === SHIPPING_MODE_DIRETO
+    && directMethod === DIRECT_METHOD_AIRMAIL
+    && (weightGrams * Math.max(1, Math.round(Number(quantity) || 1))) > 30000
 
   const canSave = result.isValid
-
     && String(productName).trim().length > 0
-
     && !epacketBlocked
-
+    && !airmailBlocked
     && !saving
 
 
@@ -535,7 +540,9 @@ export default function BrazilPriceCalculatorPanel({
     ? `Lote fechado EMS (${loteKg} kg)`
     : directMethod === DIRECT_METHOD_EPACKET
       ? 'Envio direto · ePacket'
-      : 'Envio direto · EMS'
+      : directMethod === DIRECT_METHOD_AIRMAIL
+        ? 'Envio direto · Airmail'
+        : 'Envio direto · EMS'
 
   const productDisplayName = String(productName).trim() || 'Produto sem nome'
   const productDisplayNotes = String(productNotes).trim()
@@ -559,7 +566,7 @@ export default function BrazilPriceCalculatorPanel({
 
     return (
       <div className={`mt-6 rounded-lg border border-earth-200 bg-white ${clientPrintMode ? 'p-2.5' : 'p-3.5'}`}>
-        {!result.isValid || epacketBlocked ? (
+        {!result.isValid || epacketBlocked || airmailBlocked ? (
           <p className="text-sm text-earth-600">
             Configure a simulação na visão loja ou selecione um produto na lista para gerar o resumo do cliente.
           </p>
@@ -960,6 +967,8 @@ export default function BrazilPriceCalculatorPanel({
 
               <option value={DIRECT_METHOD_EMS}>EMS</option>
 
+              <option value={DIRECT_METHOD_AIRMAIL}>Airmail (ate 30kg)</option>
+
               <option value={DIRECT_METHOD_EPACKET}>ePacket (ate 2kg)</option>
 
             </select>
@@ -1163,7 +1172,7 @@ export default function BrazilPriceCalculatorPanel({
 
 
 
-      {(loadingSettings || settingsError || epacketBlocked) && (
+      {(loadingSettings || settingsError || epacketBlocked || airmailBlocked) && (
 
         <div className="mt-3 space-y-1 text-xs">
 
@@ -1174,6 +1183,12 @@ export default function BrazilPriceCalculatorPanel({
           {epacketBlocked ? (
 
             <p className="text-red-700">ePacket permite no maximo 2kg por envio.</p>
+
+          ) : null}
+
+          {airmailBlocked ? (
+
+            <p className="text-red-700">Airmail permite no maximo 30kg por envio.</p>
 
           ) : null}
 
