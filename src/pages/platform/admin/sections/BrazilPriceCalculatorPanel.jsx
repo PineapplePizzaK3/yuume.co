@@ -32,12 +32,24 @@ function resolveMoneyPair(yen, brl, brlPerJpy) {
   return { yenVal, brlVal }
 }
 
-function MoneyPair({ yen, brl, brlPerJpy, className = 'text-lg font-semibold text-earth-900' }) {
+function MoneyPair({ yen, brl, brlPerJpy, quantity, className = 'text-lg font-semibold text-earth-900', perItemClassName }) {
   const { yenVal, brlVal } = resolveMoneyPair(yen, brl, brlPerJpy)
+  const qty = Math.max(1, Math.round(Number(quantity) || 1))
+  const showPerItem = qty > 1 && (brlVal != null || yenVal != null)
+  const perBrl = showPerItem && brlVal != null ? roundMoney2(brlVal / qty) : null
+  const perYen = showPerItem && yenVal != null ? Math.round(yenVal / qty) : null
+  const hintClass = perItemClassName || 'mt-1 text-sm font-semibold text-earth-700'
   return (
     <>
       <p className={className}>{formatJPY(yenVal)}</p>
       <p className={className}>{formatBRL(brlVal)}</p>
+      {showPerItem ? (
+        <p className={hintClass}>
+          Por item: {perBrl != null ? formatBRL(perBrl) : null}
+          {perBrl != null && perYen != null ? ' · ' : null}
+          {perYen != null ? formatJPY(perYen) : null}
+        </p>
+      ) : null}
     </>
   )
 }
@@ -46,26 +58,13 @@ function roundMoney2(n) {
   return Math.round((Number(n) || 0) * 100) / 100
 }
 
-function PerItemHint({ brl, yen, brlPerJpy, quantity, className = 'mt-1 text-[11px] text-earth-500' }) {
-  const qty = Math.max(1, Math.round(Number(quantity) || 1))
-  if (qty <= 1) return null
-  const pair = resolveMoneyPair(yen, brl, brlPerJpy)
-  if (pair.brlVal == null && pair.yenVal == null) return null
-  const perBrl = pair.brlVal != null ? roundMoney2(pair.brlVal / qty) : null
-  const perYen = pair.yenVal != null ? Math.round(pair.yenVal / qty) : null
-  return (
-    <p className={className}>
-      Por item:{' '}
-      {perBrl != null ? formatBRL(perBrl) : null}
-      {perBrl != null && perYen != null ? ' · ' : null}
-      {perYen != null ? formatJPY(perYen) : null}
-    </p>
-  )
-}
-
 /** Exibição voltada ao cliente: BRL em destaque, JPY como referência. */
-function ClientMoney({ yen, brl, brlPerJpy, size = 'md', align = 'left' }) {
+function ClientMoney({ yen, brl, brlPerJpy, quantity, size = 'md', align = 'left' }) {
   const { yenVal, brlVal } = resolveMoneyPair(yen, brl, brlPerJpy)
+  const qty = Math.max(1, Math.round(Number(quantity) || 1))
+  const showPerItem = qty > 1 && (brlVal != null || yenVal != null)
+  const perBrl = showPerItem && brlVal != null ? roundMoney2(brlVal / qty) : null
+  const perYen = showPerItem && yenVal != null ? Math.round(yenVal / qty) : null
   const alignClass = align === 'center' ? 'text-center' : align === 'right' ? 'text-right' : 'text-left'
   const brlClass =
     size === 'xl'
@@ -83,10 +82,21 @@ function ClientMoney({ yen, brl, brlPerJpy, size = 'md', align = 'left' }) {
         : size === 'sm'
           ? 'mt-0.5 text-[11px] text-earth-500'
         : 'mt-0.5 text-xs text-earth-500'
+  const perItemClass =
+    size === 'lg' || size === 'xl'
+      ? 'mt-1 text-base font-semibold text-earth-800'
+      : 'mt-0.5 text-sm font-semibold text-earth-800'
   return (
     <div className={alignClass}>
       <p className={brlClass}>{formatBRL(brlVal)}</p>
       <p className={yenClass}>{formatJPY(yenVal)}</p>
+      {showPerItem ? (
+        <p className={perItemClass}>
+          Por item: {perBrl != null ? formatBRL(perBrl) : null}
+          {perBrl != null && perYen != null ? ' · ' : null}
+          {perYen != null ? formatJPY(perYen) : null}
+        </p>
+      ) : null}
     </div>
   )
 }
@@ -640,11 +650,11 @@ export default function BrazilPriceCalculatorPanel({
               </div>
               <div className={`rounded border border-earth-200 bg-earth-50 ${clientPrintMode ? 'p-2' : 'p-3'}`}>
                 <p className="text-xs text-earth-500">Frete internacional</p>
-                <ClientMoney yen={result.shipping.yen} brlPerJpy={brlPerJpy} size={clientPrintMode ? 'sm' : 'md'} />
+                <ClientMoney yen={result.shipping.yen} brlPerJpy={brlPerJpy} quantity={qty} size={clientPrintMode ? 'sm' : 'md'} />
               </div>
               <div className={`rounded border border-earth-200 bg-earth-50 ${clientPrintMode ? 'p-2' : 'p-3'}`}>
                 <p className="text-xs text-earth-500">Embalagem / envio nacional</p>
-                <ClientMoney brl={result.breakdown.extrasBrl} brlPerJpy={brlPerJpy} size={clientPrintMode ? 'sm' : 'md'} />
+                <ClientMoney brl={result.breakdown.extrasBrl} brlPerJpy={brlPerJpy} quantity={qty} size={clientPrintMode ? 'sm' : 'md'} />
               </div>
             </div>
 
@@ -653,13 +663,8 @@ export default function BrazilPriceCalculatorPanel({
               <ClientMoney
                 brl={result.breakdown.finalBrl}
                 brlPerJpy={brlPerJpy}
-                size={clientPrintMode ? 'md' : 'lg'}
-              />
-              <PerItemHint
-                brl={result.breakdown.finalBrl}
-                brlPerJpy={brlPerJpy}
                 quantity={qty}
-                className={`mt-1 ${clientPrintMode ? 'text-[10px]' : 'text-[11px]'} text-emerald-800/80`}
+                size={clientPrintMode ? 'md' : 'lg'}
               />
               {!clientPrintMode && result.inputs.applyIof ? (
                 <p className="mt-1 text-xs text-emerald-800/80">
@@ -681,15 +686,7 @@ export default function BrazilPriceCalculatorPanel({
                             {PAYMENT_GATEWAY_TITLES[gatewayId] || gatewayId}
                           </p>
                           {cheapest ? (
-                            <>
-                              <ClientMoney brl={cheapest.chargeBrl} brlPerJpy={brlPerJpy} size="sm" />
-                              <PerItemHint
-                                brl={cheapest.chargeBrl}
-                                brlPerJpy={brlPerJpy}
-                                quantity={qty}
-                                className="text-[10px] text-earth-500"
-                              />
-                            </>
+                            <ClientMoney brl={cheapest.chargeBrl} brlPerJpy={brlPerJpy} quantity={qty} size="sm" />
                           ) : null}
                           {!clientPrintMode ? (
                             <div>
@@ -724,26 +721,15 @@ export default function BrazilPriceCalculatorPanel({
                                         <p className="text-[11px] text-earth-500">Total {formatBRL(charge.chargeBrl)}</p>
                                       ) : null}
                                       {installmentPerItem ? (
-                                        <p className="text-[10px] text-earth-500">Por item: {installmentPerItem}</p>
-                                      ) : (
-                                        <PerItemHint
-                                          brl={charge.chargeBrl}
-                                          brlPerJpy={brlPerJpy}
-                                          quantity={qty}
-                                          className="text-[10px] text-earth-500"
-                                        />
-                                      )}
+                                        <p className="text-sm font-semibold text-earth-800">Por item: {installmentPerItem}</p>
+                                      ) : qty > 1 ? (
+                                        <p className="text-sm font-semibold text-earth-800">
+                                          Por item: {formatBRL(roundMoney2(charge.chargeBrl / qty))}
+                                        </p>
+                                      ) : null}
                                     </div>
                                   ) : (
-                                    <div className="text-right">
-                                      <ClientMoney brl={charge.chargeBrl} brlPerJpy={brlPerJpy} size="sm" align="right" />
-                                      <PerItemHint
-                                        brl={charge.chargeBrl}
-                                        brlPerJpy={brlPerJpy}
-                                        quantity={qty}
-                                        className="text-[10px] text-earth-500"
-                                      />
-                                    </div>
+                                    <ClientMoney brl={charge.chargeBrl} brlPerJpy={brlPerJpy} quantity={qty} size="sm" align="right" />
                                   )}
                                 </div>
                               )
@@ -1271,7 +1257,7 @@ export default function BrazilPriceCalculatorPanel({
 
           <p className="text-xs text-earth-600">Frete internacional</p>
 
-          <MoneyPair yen={result.shipping.yen} brlPerJpy={brlPerJpy} />
+          <MoneyPair yen={result.shipping.yen} brlPerJpy={brlPerJpy} quantity={result.inputs.quantity} />
 
           <p className="mt-1 text-xs text-earth-500">
             Peso total: {result.inputs.weightGrams} g
@@ -1290,13 +1276,8 @@ export default function BrazilPriceCalculatorPanel({
             yen={result.breakdown.beforeTaxYen}
             brl={result.breakdown.beforeTaxBrl}
             brlPerJpy={brlPerJpy}
-          />
-          <PerItemHint
-            yen={result.breakdown.beforeTaxYen}
-            brl={result.breakdown.beforeTaxBrl}
-            brlPerJpy={brlPerJpy}
             quantity={result.inputs.quantity}
-            className="mt-1 text-[11px] text-amber-800/80"
+            perItemClassName="mt-1 text-sm font-semibold text-amber-800"
           />
 
           <p className="mt-1 text-[11px] text-amber-800/80">
@@ -1312,8 +1293,7 @@ export default function BrazilPriceCalculatorPanel({
 
           <p className="text-xs text-earth-600">Custo para ter no Brasil</p>
 
-          <MoneyPair yen={result.breakdown.landedCostYen} brl={result.breakdown.landedCostBrl} brlPerJpy={brlPerJpy} />
-          <PerItemHint
+          <MoneyPair
             yen={result.breakdown.landedCostYen}
             brl={result.breakdown.landedCostBrl}
             brlPerJpy={brlPerJpy}
@@ -1333,13 +1313,9 @@ export default function BrazilPriceCalculatorPanel({
           <MoneyPair
             brl={result.breakdown.finalBrl}
             brlPerJpy={brlPerJpy}
-            className="text-xl font-bold text-emerald-900"
-          />
-          <PerItemHint
-            brl={result.breakdown.finalBrl}
-            brlPerJpy={brlPerJpy}
             quantity={result.inputs.quantity}
-            className="mt-1 text-[11px] text-emerald-800/80"
+            className="text-xl font-bold text-emerald-900"
+            perItemClassName="mt-1 text-base font-semibold text-emerald-800"
           />
 
           {result.inputs.applyIof ? (
@@ -1347,6 +1323,9 @@ export default function BrazilPriceCalculatorPanel({
             <p className="mt-1 text-[11px] text-emerald-800/80">
 
               Base {formatPairFromBrl(result.breakdown.baseFinalBrl, brlPerJpy)} + IOF ({result.inputs.iofPercent}%): {formatPairFromBrl(result.breakdown.iofBrl, brlPerJpy)}
+              {result.inputs.quantity > 1
+                ? ` · por item ${formatBRL(roundMoney2(result.breakdown.baseFinalBrl / result.inputs.quantity))} + IOF ${formatBRL(roundMoney2(result.breakdown.iofBrl / result.inputs.quantity))}`
+                : ''}
 
             </p>
 
@@ -1361,13 +1340,9 @@ export default function BrazilPriceCalculatorPanel({
           <MoneyPair
             brl={result.breakdown.netProfitBrl}
             brlPerJpy={brlPerJpy}
-            className="text-xl font-bold text-sky-900"
-          />
-          <PerItemHint
-            brl={result.breakdown.netProfitBrl}
-            brlPerJpy={brlPerJpy}
             quantity={result.inputs.quantity}
-            className="mt-1 text-[11px] text-sky-800/80"
+            className="text-xl font-bold text-sky-900"
+            perItemClassName="mt-1 text-base font-semibold text-sky-800"
           />
 
           <p className="mt-1 text-[11px] text-sky-800/80">
@@ -1386,7 +1361,11 @@ export default function BrazilPriceCalculatorPanel({
 
         <p className="mt-1 text-[11px] text-violet-800/80">
 
-          Sobre o preço final {formatPairFromBrl(result.breakdown.finalBrl, brlPerJpy)} — inclui gross-up da taxa do processador.
+          Sobre o preço final {formatPairFromBrl(result.breakdown.finalBrl, brlPerJpy)}
+          {result.inputs.quantity > 1
+            ? ` (${formatBRL(roundMoney2(result.breakdown.finalBrl / result.inputs.quantity))} por item)`
+            : ''}
+          {' '}— inclui gross-up da taxa do processador.
 
         </p>
 
@@ -1407,19 +1386,13 @@ export default function BrazilPriceCalculatorPanel({
                       </p>
                     </div>
                     {cheapest ? (
-                      <div className="text-right">
-                        <MoneyPair
-                          brl={cheapest.chargeBrl}
-                          brlPerJpy={brlPerJpy}
-                          className="text-base font-bold text-violet-900"
-                        />
-                        <PerItemHint
-                          brl={cheapest.chargeBrl}
-                          brlPerJpy={brlPerJpy}
-                          quantity={result.inputs.quantity}
-                          className="mt-0.5 text-[11px] text-violet-800/80"
-                        />
-                      </div>
+                      <MoneyPair
+                        brl={cheapest.chargeBrl}
+                        brlPerJpy={brlPerJpy}
+                        quantity={result.inputs.quantity}
+                        className="text-base font-bold text-violet-900"
+                        perItemClassName="mt-0.5 text-sm font-semibold text-violet-800"
+                      />
                     ) : null}
                   </div>
                 </summary>
@@ -1433,6 +1406,7 @@ export default function BrazilPriceCalculatorPanel({
                         {categoryGroup.charges.map((charge) => {
                           const installmentLabel = formatInstallmentLabel(charge)
                           const installmentPerItem = formatInstallmentPerItemLabel(charge, result.inputs.quantity)
+                          const qty = Math.max(1, Number(result.inputs.quantity) || 1)
                           return (
                             <div key={charge.id} className="rounded border border-violet-200 bg-violet-50/40 p-2">
                               <p className="text-xs text-violet-700">{charge.label}</p>
@@ -1443,23 +1417,21 @@ export default function BrazilPriceCalculatorPanel({
                                     Total {formatPairFromBrl(charge.chargeBrl, brlPerJpy)}
                                   </p>
                                   {installmentPerItem ? (
-                                    <p className="text-[11px] text-violet-800/80">Por item: {installmentPerItem}</p>
+                                    <p className="text-sm font-semibold text-violet-800">Por item: {installmentPerItem}</p>
+                                  ) : qty > 1 ? (
+                                    <p className="text-sm font-semibold text-violet-800">
+                                      Por item: {formatBRL(roundMoney2(charge.chargeBrl / qty))}
+                                    </p>
                                   ) : null}
                                 </>
                               ) : (
-                                <>
-                                  <MoneyPair
-                                    brl={charge.chargeBrl}
-                                    brlPerJpy={brlPerJpy}
-                                    className="text-base font-bold text-violet-900"
-                                  />
-                                  <PerItemHint
-                                    brl={charge.chargeBrl}
-                                    brlPerJpy={brlPerJpy}
-                                    quantity={result.inputs.quantity}
-                                    className="mt-0.5 text-[11px] text-violet-800/80"
-                                  />
-                                </>
+                                <MoneyPair
+                                  brl={charge.chargeBrl}
+                                  brlPerJpy={brlPerJpy}
+                                  quantity={result.inputs.quantity}
+                                  className="text-base font-bold text-violet-900"
+                                  perItemClassName="mt-0.5 text-sm font-semibold text-violet-800"
+                                />
                               )}
                               <p className="mt-1 text-[11px] text-violet-800/80">
                                 Taxa {charge.feePercent}%
@@ -1492,63 +1464,53 @@ export default function BrazilPriceCalculatorPanel({
         <div className="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-5">
           <div className="rounded border border-amber-200 bg-amber-50 p-2">
             <p className="text-[11px] uppercase tracking-wide text-amber-700">1) Antes da alfândega</p>
-            <p className="mt-1 text-sm font-semibold text-amber-900">
-              {formatPairFromBrl(result.breakdown.beforeTaxBrl, brlPerJpy)}
-            </p>
-            <PerItemHint
+            <MoneyPair
               brl={result.breakdown.beforeTaxBrl}
               brlPerJpy={brlPerJpy}
               quantity={result.inputs.quantity}
-              className="mt-0.5 text-[11px] text-amber-800/80"
+              className="mt-1 text-sm font-semibold text-amber-900"
+              perItemClassName="mt-0.5 text-sm font-semibold text-amber-800"
             />
           </div>
           <div className="rounded border border-earth-200 bg-earth-50 p-2">
             <p className="text-[11px] uppercase tracking-wide text-earth-500">2) Custo no Brasil</p>
-            <p className="mt-1 text-sm font-semibold text-earth-900">
-              {formatPairFromBrl(result.breakdown.landedCostBrl, brlPerJpy)}
-            </p>
-            <PerItemHint
+            <MoneyPair
               brl={result.breakdown.landedCostBrl}
               brlPerJpy={brlPerJpy}
               quantity={result.inputs.quantity}
+              className="mt-1 text-sm font-semibold text-earth-900"
             />
           </div>
           <div className="rounded border border-earth-200 bg-earth-50 p-2">
             <p className="text-[11px] uppercase tracking-wide text-earth-500">3) Margem + extras</p>
-            <p className="mt-1 text-sm font-semibold text-earth-900">
-              +{formatPairFromBrl(result.breakdown.marginBrl + result.breakdown.extrasBrl, brlPerJpy)}
-            </p>
-            <PerItemHint
+            <MoneyPair
               brl={result.breakdown.marginBrl + result.breakdown.extrasBrl}
               brlPerJpy={brlPerJpy}
               quantity={result.inputs.quantity}
+              className="mt-1 text-sm font-semibold text-earth-900"
             />
           </div>
           <div className="rounded border border-earth-200 bg-earth-50 p-2">
             <p className="text-[11px] uppercase tracking-wide text-earth-500">4) IOF</p>
-            <p className="mt-1 text-sm font-semibold text-earth-900">
-              {result.inputs.applyIof
-                ? `+${formatPairFromBrl(result.breakdown.iofBrl, brlPerJpy)}`
-                : 'Não aplicado'}
-            </p>
             {result.inputs.applyIof ? (
-              <PerItemHint
+              <MoneyPair
                 brl={result.breakdown.iofBrl}
                 brlPerJpy={brlPerJpy}
                 quantity={result.inputs.quantity}
+                className="mt-1 text-sm font-semibold text-earth-900"
               />
-            ) : null}
+            ) : (
+              <p className="mt-1 text-sm font-semibold text-earth-900">Não aplicado</p>
+            )}
           </div>
           <div className="rounded border border-emerald-200 bg-emerald-50 p-2">
             <p className="text-[11px] uppercase tracking-wide text-emerald-700">5) Preço final</p>
-            <p className="mt-1 text-sm font-semibold text-emerald-900">
-              {formatPairFromBrl(result.breakdown.finalBrl, brlPerJpy)}
-            </p>
-            <PerItemHint
+            <MoneyPair
               brl={result.breakdown.finalBrl}
               brlPerJpy={brlPerJpy}
               quantity={result.inputs.quantity}
-              className="mt-0.5 text-[11px] text-emerald-800/80"
+              className="mt-1 text-sm font-semibold text-emerald-900"
+              perItemClassName="mt-0.5 text-sm font-semibold text-emerald-800"
             />
           </div>
         </div>
@@ -1595,14 +1557,12 @@ export default function BrazilPriceCalculatorPanel({
               return (
                 <div key={gatewayId} className="rounded border border-violet-200 bg-white p-2">
                   <p className="text-[11px] text-violet-700">{PAYMENT_GATEWAY_TITLES[gatewayId] || gatewayId}</p>
-                  <p className="text-sm font-semibold text-violet-900">
-                    {formatPairFromBrl(cheapest.chargeBrl, brlPerJpy)}
-                  </p>
-                  <PerItemHint
+                  <MoneyPair
                     brl={cheapest.chargeBrl}
                     brlPerJpy={brlPerJpy}
                     quantity={result.inputs.quantity}
-                    className="mt-0.5 text-[11px] text-violet-800/80"
+                    className="text-sm font-semibold text-violet-900"
+                    perItemClassName="mt-0.5 text-sm font-semibold text-violet-800"
                   />
                   <p className="text-[11px] text-violet-800/80">{cheapest.label}</p>
                 </div>
