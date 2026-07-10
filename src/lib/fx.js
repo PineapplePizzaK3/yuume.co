@@ -206,6 +206,32 @@ export function formatBRL(v) {
   return Number(v)?.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) ?? '—'
 }
 
+/** Converte BRL → JPY usando a taxa BRL por 1 JPY. */
+export function brlToYen(brl, brlPerJpy) {
+  const rate = Number(brlPerJpy) || 0
+  const v = Number(brl) || 0
+  if (rate <= 0) return 0
+  return Math.round(v / rate)
+}
+
+/** Converte JPY → BRL usando a taxa BRL por 1 JPY. */
+export function yenToBrl(yen, brlPerJpy) {
+  return (Number(yen) || 0) * (Number(brlPerJpy) || 0)
+}
+
+/** Exibe valor em JPY e BRL (ex.: "¥1,000 · R$ 35,00"). */
+export function formatJpyBrlPair(yen, brl) {
+  return `${formatJPY(yen)} · ${formatBRL(brl)}`
+}
+
+export function formatPairFromYen(yen, brlPerJpy) {
+  return formatJpyBrlPair(yen, yenToBrl(yen, brlPerJpy))
+}
+
+export function formatPairFromBrl(brl, brlPerJpy) {
+  return formatJpyBrlPair(brlToYen(brl, brlPerJpy), brl)
+}
+
 export function formatUSD(v) {
   return Number(v)?.toLocaleString('en-US', { style: 'currency', currency: 'USD' }) ?? '—'
 }
