@@ -296,9 +296,10 @@ export function calculateBrazilFinalPrice(input = {}) {
   const paymentFixedUsdByMethodInput = input.paymentFixedUsdByMethod || {}
   const quantity = Math.max(1, Math.round(Number(input.quantity) || 1))
   const unitBaseCostYen = Math.max(0, Number(input.baseCostYen) || 0)
-  const unitDeclaredValueYenRaw = Math.max(0, Number(input.declaredValueYen) || 0)
-  // Valor aduaneiro unitário: se declarado vazio, usa custo base.
-  const unitDeclaredValueYen = unitDeclaredValueYenRaw > 0 ? unitDeclaredValueYenRaw : unitBaseCostYen
+  // Valor digitado no formulário (0 = campo vazio). Não confundir com o valor efetivo usado no cálculo.
+  const unitDeclaredValueInput = Math.max(0, Number(input.declaredValueYen) || 0)
+  // Valor aduaneiro unitário efetivo: se declarado vazio, usa custo base.
+  const unitDeclaredValueYen = unitDeclaredValueInput > 0 ? unitDeclaredValueInput : unitBaseCostYen
   const unitWeightGrams = Math.max(0, Math.round(Number(input.weightGrams) || 0))
   const baseCostYen = unitBaseCostYen * quantity
   const declaredValueYen = unitDeclaredValueYen * quantity
@@ -352,6 +353,7 @@ export function calculateBrazilFinalPrice(input = {}) {
     inputs: {
       quantity,
       unitBaseCostYen: roundYen(unitBaseCostYen),
+      unitDeclaredValueInput: roundYen(unitDeclaredValueInput),
       unitDeclaredValueYen: roundYen(unitDeclaredValueYen),
       unitWeightGrams,
       baseCostYen: roundYen(baseCostYen),

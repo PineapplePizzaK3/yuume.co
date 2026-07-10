@@ -230,12 +230,21 @@ function groupChargesByCategory(charges = []) {
     })
 }
 
-function buildCalculatorProductPayload(result, name, notes) {
+function buildCalculatorProductPayload(result, name, notes, formValues = {}) {
+  // Persistir o valor digitado (0 = vazio / usar custo base no cálculo), não o fallback resolvido.
+  const declaredFromForm = Math.max(0, Number(formValues.declaredValueYen) || 0)
+  const declaredFromResult = Math.max(0, Number(result.inputs.unitDeclaredValueInput) || 0)
+  const declaredValueYen = declaredFromForm > 0
+    ? declaredFromForm
+    : declaredFromResult > 0
+      ? declaredFromResult
+      : 0
+
   return {
     name: String(name).trim(),
     notes: String(notes || '').trim() || null,
     base_cost_yen: result.inputs.unitBaseCostYen ?? result.inputs.baseCostYen,
-    declared_value_yen: result.inputs.unitDeclaredValueYen ?? result.inputs.declaredValueYen,
+    declared_value_yen: declaredValueYen,
     weight_grams: result.inputs.unitWeightGrams ?? result.inputs.weightGrams,
     shipping_mode: result.inputs.shippingMode,
     direct_method: result.inputs.shippingMode === SHIPPING_MODE_DIRETO ? result.inputs.directMethod : null,
@@ -253,10 +262,20 @@ function buildCalculatorProductPayload(result, name, notes) {
   }
 }
 
-function getDeclaredValueForForm(product) {
-  const base = Number(product?.base_cost_yen) || 0
-  const declared = Number(product?.declared_value_yen) || 0
-  if (declared > 0 && declared !== base) return String(declared)
+function getDeclaredValueForForm(product, snapshotInputs = {}) {
+  const fromColumn = Number(product?.declared_value_yen)
+  if (Number.isFinite(fromColumn) && fromColumn > 0) return String(fromColumn)
+
+  const fromSnapInput = Number(snapshotInputs.unitDeclaredValueInput)
+  if (Number.isFinite(fromSnapInput) && fromSnapInput > 0) return String(fromSnapInput)
+
+  // Snapshots antigos só tinham o valor efetivo (já com fallback para custo base).
+  const fromSnapUnit = Number(snapshotInputs.unitDeclaredValueYen)
+  const base = Number(product?.base_cost_yen) || Number(snapshotInputs.unitBaseCostYen) || 0
+  if (Number.isFinite(fromSnapUnit) && fromSnapUnit > 0 && fromSnapUnit !== base) {
+    return String(fromSnapUnit)
+  }
+
   return ''
 }
 
@@ -335,7 +354,7 @@ export default function BrazilPriceCalculatorPanel({
     setProductName(editingProduct.name || '')
     setProductNotes(editingProduct.notes || '')
     setBaseCostYen(String(editingProduct.base_cost_yen ?? ''))
-    setDeclaredValueYen(getDeclaredValueForForm(editingProduct))
+    setDeclaredValueYen(getDeclaredValueForForm(editingProduct, inputs))
     setWeightValue(String(editingProduct.weight_grams ?? ''))
     setWeightUnit('g')
     setQuantity(String(inputs.quantity ?? '1'))
@@ -552,7 +571,9 @@ export default function BrazilPriceCalculatorPanel({
 
     setSaveFeedback('')
 
-    const payload = buildCalculatorProductPayload(result, productName, productNotes)
+    const payload = buildCalculatorProductPayload(result, productName, productNotes, {
+      declaredValueYen,
+    })
 
     const { error } = isEditing
       ? await updateCalculatorProductAdmin(editingProduct.id, payload)
