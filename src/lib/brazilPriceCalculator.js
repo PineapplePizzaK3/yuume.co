@@ -404,7 +404,7 @@ export function calculateBrazilFinalPrice(input = {}) {
     },
     paymentCharges,
     isValid:
-      (unitBaseCostYen > 0 || unitDeclaredValueYenRaw > 0)
+      (unitBaseCostYen > 0 || unitDeclaredValueInput > 0)
       && unitWeightGrams > 0
       && brlPerJpy > 0
       && shipping.valueYen > 0,
