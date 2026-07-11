@@ -10,6 +10,9 @@ export default function AdminQuoteProductsForm({
   onProductsChange,
   descriptionPlaceholder = 'Mensagem/pedido do cliente...',
   showLink = false,
+  onScrapeProduct = null,
+  scrapingProductIndex = null,
+  scrapeFeedbackByIndex = {},
 }) {
   const updateProduct = (idx, patch) => {
     onProductsChange(products.map((p, i) => (i === idx ? { ...p, ...patch } : p)))
@@ -47,13 +50,30 @@ export default function AdminQuoteProductsForm({
               className="sm:col-span-2 rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
             />
             {showLink && (
-              <input
-                type="text"
-                value={item.link ?? ''}
-                onChange={(e) => updateProduct(idx, { link: e.target.value })}
-                placeholder="Link do produto"
-                className="sm:col-span-2 rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
-              />
+              <div className="sm:col-span-2 space-y-1">
+                <div className="grid gap-2 md:grid-cols-[1fr_auto]">
+                  <input
+                    type="text"
+                    value={item.link ?? ''}
+                    onChange={(e) => updateProduct(idx, { link: e.target.value })}
+                    placeholder="Link do produto"
+                    className="rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
+                  />
+                  {onScrapeProduct && (
+                    <button
+                      type="button"
+                      onClick={() => onScrapeProduct(idx)}
+                      disabled={scrapingProductIndex === idx || !String(item.link || '').trim()}
+                      className="rounded-lg border border-earth-300 bg-white px-3 py-2 text-sm font-medium text-earth-700 hover:bg-earth-100 disabled:opacity-60"
+                    >
+                      {scrapingProductIndex === idx ? 'Buscando...' : 'Buscar dados'}
+                    </button>
+                  )}
+                </div>
+                {scrapeFeedbackByIndex[idx] && (
+                  <p className="text-xs text-earth-500">{scrapeFeedbackByIndex[idx]}</p>
+                )}
+              </div>
             )}
             <div className="space-y-2">
               <input
