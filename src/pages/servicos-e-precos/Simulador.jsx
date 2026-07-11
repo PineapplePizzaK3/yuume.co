@@ -16,6 +16,8 @@ import {
   SERVICE_FEE_JPY_PER_ITEM,
   computeRedirecionamentoPadraoFeeJpy,
   REDIR_ASSISTIDO_FEE_PERCENT,
+  PERSONAL_SHOPPING_FEE_PERCENT,
+  GRUPO_COMPRAS_FEE_PERCENT,
 } from '../../data/serviceFees'
 import { ShippingTypesGuide } from '../../components/ShippingTypesGuide'
 
@@ -160,14 +162,14 @@ function Simulador() {
       {
         id: 'personal-shopping',
         label: t('publicSimulador.svcPS'),
-        tipo: 'percentual',
-        percentual: 25,
+        tipo: 'personal-shopping',
+        percentual: PERSONAL_SHOPPING_FEE_PERCENT,
       },
       {
         id: 'grupo-compras',
         label: t('publicSimulador.svcGrupo'),
         tipo: 'percentual',
-        percentual: 20,
+        percentual: GRUPO_COMPRAS_FEE_PERCENT,
       },
       {
         id: 'sem-taxa',
@@ -397,7 +399,11 @@ function Simulador() {
         computeRedirecionamentoPadraoFeeJpy(totalItensServico)
       )
     }
-    const pct = service.percentual ?? 25
+    if (service.tipo === 'personal-shopping') {
+      const pct = service.percentual ?? PERSONAL_SHOPPING_FEE_PERCENT
+      return subtotalProdutosServico * (pct / 100)
+    }
+    const pct = service.percentual ?? GRUPO_COMPRAS_FEE_PERCENT
     return subtotalProdutosServico * (pct / 100) + totalItensServico * SERVICE_FEE_JPY_PER_ITEM
   }
 
@@ -410,8 +416,13 @@ function Simulador() {
         pct: REDIR_ASSISTIDO_FEE_PERCENT,
       })
     }
+    if (service.tipo === 'personal-shopping') {
+      return t('publicSimulador.labelFeePercentFlat', {
+        pct: service.percentual ?? PERSONAL_SHOPPING_FEE_PERCENT,
+      })
+    }
     return t('publicSimulador.labelFeePercent', {
-      pct: service.percentual ?? 25,
+      pct: service.percentual ?? GRUPO_COMPRAS_FEE_PERCENT,
       perItem: SERVICE_FEE_JPY_PER_ITEM,
     })
   }

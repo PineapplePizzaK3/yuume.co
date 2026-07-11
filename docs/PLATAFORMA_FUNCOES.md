@@ -30,7 +30,7 @@
 - Aprovar itens
 - Receber produtos consolidados
 - Pagar taxas e fretes
-- Taxa de referência: **25% sobre o valor da compra + ¥200 por item** (+ frete), conforme orçamento enviado pelo admin
+- Taxa de referência: **30% flat sobre o valor da compra** (+ frete; sem taxa por item), conforme orçamento enviado pelo admin
 
 ### 3. Grupo de Compras
 - Comprar produtos dos grupos pelo carrinho

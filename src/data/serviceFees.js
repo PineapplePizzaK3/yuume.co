@@ -5,7 +5,8 @@ export const SERVICE_FEE_JPY_PER_ITEM = 250
 /** Taxa fixa por unidade nas Compras Programadas (USD); BRL só para exibição (× usd_brl). */
 export const GRUPO_COMPRAS_FEE_PER_UNIT_USD = 1.9
 export const GRUPO_COMPRAS_FEE_PERCENT = 20
-export const PERSONAL_SHOPPING_FEE_PERCENT = 25
+/** Personal Shopping: percentual flat sobre produtos (sem taxa por item). */
+export const PERSONAL_SHOPPING_FEE_PERCENT = 30
 export const REDIR_ASSISTIDO_FEE_PERCENT = 15
 
 /**

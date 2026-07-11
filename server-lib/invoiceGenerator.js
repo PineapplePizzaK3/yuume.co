@@ -21,10 +21,9 @@ const INVOICE_KIND_STANDARD = 'invoice'
 const INVOICE_KIND_CONSOLIDATION = 'consolidation_invoice'
 const INVOICE_KIND_SET = new Set([INVOICE_KIND_STANDARD, INVOICE_KIND_CONSOLIDATION])
 const REDIR_ASSISTIDO_FEE_PERCENT = 15
-const PERSONAL_SHOPPING_FEE_PERCENT = 25
+const PERSONAL_SHOPPING_FEE_PERCENT = 30
 const GRUPO_COMPRAS_FEE_PERCENT = 20
 const GRUPO_COMPRAS_FEE_PER_UNIT_USD = 1.9
-const SERVICE_FEE_JPY_PER_ITEM = 250
 
 function num(n, fallback = 0) {
   const x = Number(n)
@@ -148,25 +147,23 @@ function buildBillingBreakdown({
     )
   } else if (flowType === 'personal_shopping') {
     const percentUsd = clampNonNegativeUsd(subtotalUsd * (PERSONAL_SHOPPING_FEE_PERCENT / 100))
-    const perItemUsd = clampNonNegativeUsd(jpyToFinalUsd(SERVICE_FEE_JPY_PER_ITEM * qty, jpyUsd, wiseMarkup))
-    const estimatedTotal = clampNonNegativeUsd(percentUsd + perItemUsd)
     add(
       'service_fee_personal',
       'Taxa de personal shopping',
       'Personal shopping fee',
       serviceFeeUsd,
       serviceFeeUsd * usdBrl,
-      `${PERSONAL_SHOPPING_FEE_PERCENT}% sobre produtos + ¥${SERVICE_FEE_JPY_PER_ITEM} por item`,
-      `${PERSONAL_SHOPPING_FEE_PERCENT}% over products + ¥${SERVICE_FEE_JPY_PER_ITEM} per item`
+      `${PERSONAL_SHOPPING_FEE_PERCENT}% flat sobre produtos (sem taxa por item)`,
+      `${PERSONAL_SHOPPING_FEE_PERCENT}% flat over products (no per-item fee)`
     )
     add(
       'service_fee_personal_formula_estimate',
       'Estimativa da fórmula',
       'Formula estimate',
-      estimatedTotal,
-      estimatedTotal * usdBrl,
-      `Itens: ${qty}`,
-      `Items: ${qty}`
+      percentUsd,
+      percentUsd * usdBrl,
+      `${PERSONAL_SHOPPING_FEE_PERCENT}% sobre subtotal`,
+      `${PERSONAL_SHOPPING_FEE_PERCENT}% of subtotal`
     )
   } else if (flowType === 'group_purchase') {
     const percentUsd = clampNonNegativeUsd(subtotalUsd * (GRUPO_COMPRAS_FEE_PERCENT / 100))
@@ -259,7 +256,7 @@ function buildBillingBreakdown({
       flowType === 'assisted_redirect'
         ? 'Produtos + taxa assistida (percentual) + taxa por item + frete'
         : flowType === 'personal_shopping'
-          ? 'Produtos + taxa personal (percentual) + ¥250 por item + frete'
+          ? `Produtos + taxa personal (${PERSONAL_SHOPPING_FEE_PERCENT}% flat) + frete`
           : flowType === 'group_purchase'
             ? 'Produtos + taxa grupo (percentual) + taxa por unidade + frete'
             : flowType === 'virtual_store'
@@ -271,7 +268,7 @@ function buildBillingBreakdown({
       flowType === 'assisted_redirect'
         ? 'Products + assisted fee (percentage) + per-item fee + shipping'
         : flowType === 'personal_shopping'
-          ? 'Products + personal fee (percentage) + ¥250 per item + shipping'
+          ? `Products + personal fee (${PERSONAL_SHOPPING_FEE_PERCENT}% flat) + shipping`
           : flowType === 'group_purchase'
             ? 'Products + group fee (percentage) + per-unit fee + shipping'
             : flowType === 'virtual_store'

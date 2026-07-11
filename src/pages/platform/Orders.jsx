@@ -23,7 +23,6 @@ import OrderAttachments from '../../components/OrderAttachments'
 import { downloadInvoicePdfByOrder, getInvoiceByOrder } from '../../services/invoiceService'
 import { parseQuoteMessage } from '../../lib/quoteProducts'
 import {
-  SERVICE_FEE_JPY_PER_ITEM,
   REDIR_ASSISTIDO_FEE_PERCENT,
   PERSONAL_SHOPPING_FEE_PERCENT,
   computeAssistedEarlyPrepayDebitJpy,
@@ -460,16 +459,11 @@ export default function Orders() {
       return sum + value * qty
     }, 0)
 
-    const totalItems = products.reduce(
-      (sum, p) => sum + Math.max(1, parseInt(p?.quantidade, 10) || 1),
-      0
-    )
     const isAssistedBuy = order?.order_module === 'assisted_buy' || order?.order_module === 'redir-assistido'
     const servicePercent = isAssistedBuy ? REDIR_ASSISTIDO_FEE_PERCENT : PERSONAL_SHOPPING_FEE_PERCENT
     const serviceFeePercent = Math.round(baseTotal * (servicePercent / 100))
-    const serviceFeeFixed = isAssistedBuy ? 0 : SERVICE_FEE_JPY_PER_ITEM * totalItems
-
-    const grandTotal = baseTotal + serviceFeePercent + serviceFeeFixed
+    // Personal Shopping: 30% flat (sem taxa por item). Assistido: só % neste preview.
+    const grandTotal = baseTotal + serviceFeePercent
     return Number.isFinite(grandTotal) && grandTotal > 0 ? grandTotal : null
   }
 

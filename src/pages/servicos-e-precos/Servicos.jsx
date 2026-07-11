@@ -4,8 +4,13 @@ import { PageSeo } from '../../components/PageSeo'
 import { useLocalizedPath } from '../../hooks/useLocalizedPath'
 import { useSiteLocale } from '../../hooks/useSiteLocale'
 import { formatJpyForSite } from '../../lib/moneyDisplay'
+import {
+  PERSONAL_SHOPPING_FEE_PERCENT,
+  SERVICE_FEE_JPY_PER_ITEM,
+  GRUPO_COMPRAS_FEE_PERCENT,
+} from '../../data/serviceFees'
 
-/** @typedef {{ id: string, prefix: string, stepCount: number, pricingKey: string, variant?: 'redir', tabela?: { percentual?: number, porItem?: number, freteKey?: string, modoLoja?: boolean } }} ServiceFlowDef */
+/** @typedef {{ id: string, prefix: string, stepCount: number, pricingKey: string, variant?: 'redir', tabela?: { percentual?: number, porItem?: number | null, freteKey?: string, modoLoja?: boolean } }} ServiceFlowDef */
 
 /** @type {ServiceFlowDef[]} */
 const SERVICE_FLOWS = [
@@ -21,14 +26,14 @@ const SERVICE_FLOWS = [
     prefix: 'flowPS',
     stepCount: 6,
     pricingKey: 'pricingPS',
-    tabela: { percentual: 25, porItem: 250, freteKey: 'afterConsolidation' },
+    tabela: { percentual: PERSONAL_SHOPPING_FEE_PERCENT, porItem: null, freteKey: 'afterConsolidation' },
   },
   {
     id: 'grupo-de-compras',
     prefix: 'flowGrupo',
     stepCount: 5,
     pricingKey: 'pricingGrupo',
-    tabela: { percentual: 20, porItem: 250, freteKey: 'afterShipRequest' },
+    tabela: { percentual: GRUPO_COMPRAS_FEE_PERCENT, porItem: SERVICE_FEE_JPY_PER_ITEM, freteKey: 'afterShipRequest' },
   },
   {
     id: 'loja-virtual',
@@ -68,13 +73,14 @@ function TabelaValores({
                 ? t('publicServicos.valueOnRequest')
                 : `${percentual}%`,
           },
-          {
-            label: t('publicServicos.linePerItem'),
-            valor:
-              porItem === null
-                ? t('publicServicos.na')
-                : `${formatarIene(porItem)}/item`,
-          },
+          ...(porItem == null
+            ? []
+            : [
+                {
+                  label: t('publicServicos.linePerItem'),
+                  valor: `${formatarIene(porItem)}/item`,
+                },
+              ]),
           {
             label: t('publicServicos.lineIntlShipping'),
             valor: freteTexto ?? '',
