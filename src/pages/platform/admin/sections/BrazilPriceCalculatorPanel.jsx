@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { getSystemSettings } from '../../../../services/settingsService'
 
@@ -240,6 +240,11 @@ function buildCalculatorProductPayload(result, name, notes, formValues = {}) {
       ? declaredFromResult
       : 0
 
+  const marginFromForm = Number(formValues.marginPercent)
+  const marginPercent = Number.isFinite(marginFromForm) && marginFromForm >= 0
+    ? marginFromForm
+    : Math.max(0, Number(result.inputs.marginPercent) || 0)
+
   return {
     name: String(name).trim(),
     notes: String(notes || '').trim() || null,
@@ -251,7 +256,7 @@ function buildCalculatorProductPayload(result, name, notes, formValues = {}) {
     lote_kg: result.inputs.shippingMode === SHIPPING_MODE_LOTE ? result.inputs.loteKg : null,
     customs_factor: result.inputs.customsFactor,
     brl_per_jpy: result.inputs.brlPerJpy,
-    margin_percent: result.inputs.marginPercent,
+    margin_percent: marginPercent,
     packaging_brl: result.inputs.packagingBrl,
     local_shipping_brl: result.inputs.localShippingBrl,
     international_shipping_yen: result.shipping.yen,
@@ -260,6 +265,16 @@ function buildCalculatorProductPayload(result, name, notes, formValues = {}) {
     final_price_brl: result.breakdown.finalBrl,
     calculation_snapshot: result,
   }
+}
+
+function getMarginPercentForForm(product, snapshotInputs = {}, fallback = '30') {
+  const fromColumn = Number(product?.margin_percent)
+  if (Number.isFinite(fromColumn) && fromColumn >= 0) return String(fromColumn)
+
+  const fromSnap = Number(snapshotInputs.marginPercent)
+  if (Number.isFinite(fromSnap) && fromSnap >= 0) return String(fromSnap)
+
+  return String(fallback)
 }
 
 function getDeclaredValueForForm(product, snapshotInputs = {}) {
@@ -316,6 +331,8 @@ export default function BrazilPriceCalculatorPanel({
 
   const [systemSettings, setSystemSettings] = useState(null)
 
+  const [systemMarginDefault, setSystemMarginDefault] = useState('30')
+
   const [marginPercent, setMarginPercent] = useState('30')
 
   const [packagingBrl, setPackagingBrl] = useState('0')
@@ -334,6 +351,8 @@ export default function BrazilPriceCalculatorPanel({
   const [saveFeedback, setSaveFeedback] = useState('')
 
   const isEditing = Boolean(editingProduct?.id)
+  const editingProductIdRef = useRef(editingProduct?.id || null)
+  editingProductIdRef.current = editingProduct?.id || null
 
   useEffect(() => {
     if (!editingProduct?.id) return
@@ -368,7 +387,7 @@ export default function BrazilPriceCalculatorPanel({
           : DIRECT_METHOD_EMS
     )
     setCustomsFactor(String(editingProduct.customs_factor ?? '2'))
-    setMarginPercent(String(editingProduct.margin_percent ?? '30'))
+    setMarginPercent(getMarginPercentForForm(editingProduct, inputs, systemMarginDefault))
     setPackagingBrl(String(editingProduct.packaging_brl ?? '0'))
     setLocalShippingBrl(String(editingProduct.local_shipping_brl ?? '0'))
     setApplyIof(Boolean(inputs.applyIof))
@@ -389,6 +408,7 @@ export default function BrazilPriceCalculatorPanel({
     setLoteKg('1')
     setDirectMethod(DIRECT_METHOD_EMS)
     setCustomsFactor('2')
+    setMarginPercent(systemMarginDefault)
     setPackagingBrl('0')
     setLocalShippingBrl('0')
     setApplyIof(false)
@@ -432,10 +452,15 @@ export default function BrazilPriceCalculatorPanel({
 
         const margin = Number(data?.pricing_margin_percent?.amount)
 
-        if (margin >= 0) {
-
-          setMarginPercent((prev) => (String(prev).trim() ? prev : String(margin)))
-
+        if (Number.isFinite(margin) && margin >= 0) {
+          const nextDefault = String(margin)
+          setSystemMarginDefault(nextDefault)
+          // Nunca sobrescrever a margem de um produto em edição; só preencher formulário novo vazio.
+          setMarginPercent((prev) => {
+            if (editingProductIdRef.current) return prev
+            if (!String(prev).trim()) return nextDefault
+            return prev
+          })
         }
 
       }
@@ -573,6 +598,7 @@ export default function BrazilPriceCalculatorPanel({
 
     const payload = buildCalculatorProductPayload(result, productName, productNotes, {
       declaredValueYen,
+      marginPercent,
     })
 
     const { error } = isEditing
