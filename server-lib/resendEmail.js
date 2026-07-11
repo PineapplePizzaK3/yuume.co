@@ -25,6 +25,10 @@ export function getDefaultResendFrom() {
   return trimString(process.env.ADMIN_ALERT_FROM || 'Admin Alerts <onboarding@resend.dev>')
 }
 
+export function getDefaultSupportFrom() {
+  return trimString(process.env.ADMIN_SUPPORT_FROM || process.env.EMAIL_SUPPORT_EMAIL || getDefaultResendFrom())
+}
+
 export async function sendResendEmail({ to, subject, text, html, from, replyTo }) {
   const apiKey = trimString(process.env.RESEND_API_KEY)
   if (!apiKey) {

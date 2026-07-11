@@ -924,8 +924,11 @@ export default function EmailsSection() {
               value={emailForm.from}
               onChange={(e) => setEmailForm((s) => ({ ...s, from: e.target.value }))}
               className="mt-1 w-full rounded border border-earth-300 px-3 py-2"
-              placeholder="Loja <no-reply@seudominio.com>"
+              placeholder="Suporte <support@seudominio.com>"
             />
+            <span className="mt-1 block text-xs text-earth-500">
+              Em branco, usa o remetente de suporte configurado no servidor.
+            </span>
           </label>
           <label className="text-sm md:col-span-2">
             <span className="text-earth-700">Responder para (reply-to, opcional)</span>

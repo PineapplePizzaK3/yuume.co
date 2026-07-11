@@ -17,6 +17,7 @@ Copie `.env.example` para `.env` e preencha:
 - `STRIPE_SECRET_KEY` – nunca exponha no frontend
 - `STRIPE_WEBHOOK_SECRET` – para o webhook de pagamento
 - `RESEND_API_KEY` – chave da API de envio de e-mail (alertas do admin)
+- `ADMIN_SUPPORT_FROM` – remetente padrão dos envios manuais do admin (ex.: `YuumeCo Support <support@seudominio.com>`)
 - `ADMIN_ALERT_FROM` – remetente dos alertas (ex.: `YuumeCo Alerts <alerts@seudominio.com>`)
 - `ADMIN_ALERT_EMAILS` – lista opcional (separada por vírgula) de e-mails para receber alertas; se vazio, usa admins da tabela `profiles`
 - `ADMIN_PANEL_URL` – URL opcional para link direto no e-mail (padrão: `${VITE_SITE_URL}/platform/admin`)
@@ -123,8 +124,9 @@ Copie `.env.example` para `.env` e preencha:
    - SPF
    - DKIM
    - Tracking domain (opcional, recomendado)
-3. Configure `ADMIN_ALERT_FROM` com remetente no domínio validado:
-   - Ex.: `Loja <no-reply@seudominio.com>`
+3. Configure remetentes separados no domínio validado:
+   - `ADMIN_SUPPORT_FROM`: envios manuais do admin, ex. `YuumeCo Support <support@seudominio.com>`
+   - `ADMIN_ALERT_FROM`: alertas automáticos, ex. `YuumeCo Alerts <alerts@seudominio.com>`
 4. Envio manual no admin:
    - Endpoint seguro: `POST /api/admin-send-email` (somente usuário admin autenticado)
    - Interface: aba **Marketing** no painel admin.

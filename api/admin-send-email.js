@@ -1,5 +1,5 @@
 import { getAuthenticatedUser, getSupabaseAdmin, isAdminUser } from '../server-lib/antiFraud.js'
-import { sendResendEmail } from '../server-lib/resendEmail.js'
+import { getDefaultSupportFrom, sendResendEmail } from '../server-lib/resendEmail.js'
 import { buildProfessionalEmailTemplate } from '../server-lib/professionalEmailTemplate.js'
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -97,6 +97,7 @@ export default async function handler(req, res) {
   const ctaLabel = String(body.cta_label || '').trim()
   const ctaUrl = String(body.cta_url || '').trim()
   const signatureName = String(body.signature_name || '').trim()
+  const sendFrom = from || getDefaultSupportFrom()
 
   const recipientError = validateRecipients(to)
   if (recipientError) {
@@ -140,7 +141,7 @@ export default async function handler(req, res) {
       subject,
       text: finalText,
       html: finalHtml,
-      from: from || undefined,
+      from: sendFrom || undefined,
       replyTo,
     })
     console.info('admin-send-email:sent', {
