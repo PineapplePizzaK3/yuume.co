@@ -3,11 +3,10 @@ import { ORDER_STATUS, ORDER_STATUS_LABELS, approveOrderAdmin, rejectOrderAdmin 
 import { logAdminAction } from '../../../../services/logService'
 import { parseQuoteMessage, serializeQuoteProducts } from '../../../../lib/quoteProducts'
 import QuoteProductsList from '../../../../components/QuoteProductsList'
-import { TriCurrencyDisplay } from '../../../../components/TriCurrencyDisplay'
 import OrderAttachments from '../../../../components/OrderAttachments'
-import { jpyAmountToTri } from '../../../../lib/quoteMoneyTri'
 import { useAdminContext } from '../AdminContext'
 import { REDIR_ASSISTIDO_FEE_PERCENT, computeAssistedEarlyPrepayDebitJpy } from '../../../../data/serviceFees'
+import AdminQuoteProductsForm, { EMPTY_QUOTE_PRODUCT } from './AdminQuoteProductsForm'
 
 export default function PedidosSection() {
   const {
@@ -947,95 +946,13 @@ export default function PedidosSection() {
             <h3 className="font-semibold text-earth-900">
               Definir orçamento {quoteModal.orderModule === 'assisted_buy' ? '(Redirecionamento Assistido)' : '(Personal Shopping)'}
             </h3>
-            <div className="mt-4 space-y-4">
-              <textarea
-                value={quoteModal.orderDescription}
-                onChange={(e) => setQuoteModal((m) => ({ ...m, orderDescription: e.target.value }))}
-                rows={2}
-                placeholder="Mensagem/pedido do cliente..."
-                className="block w-full rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
+            <div className="mt-4">
+              <AdminQuoteProductsForm
+                orderDescription={quoteModal.orderDescription}
+                onOrderDescriptionChange={(value) => setQuoteModal((m) => ({ ...m, orderDescription: value }))}
+                products={quoteModal.products}
+                onProductsChange={(next) => setQuoteModal((m) => ({ ...m, products: next }))}
               />
-              {quoteModal.products.map((item, idx) => (
-                <div key={idx} className="rounded-lg border border-earth-200 bg-earth-50/50 p-4">
-                  <div className="mb-3 flex items-center justify-between">
-                    <span className="text-sm font-medium text-earth-700">Produto {idx + 1}</span>
-                    {quoteModal.products.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => setQuoteModal((m) => ({ ...m, products: m.products.filter((_, i) => i !== idx) }))}
-                        className="text-sm text-red-600 hover:text-red-800"
-                      >
-                        Remover
-                      </button>
-                    )}
-                  </div>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <input
-                      type="text"
-                      value={item.name}
-                      onChange={(e) =>
-                        setQuoteModal((m) => ({
-                          ...m,
-                          products: m.products.map((p, i) => (i === idx ? { ...p, name: e.target.value } : p)),
-                        }))
-                      }
-                      placeholder="Nome"
-                      className="sm:col-span-2 rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
-                    />
-                    <div className="space-y-2">
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={item.valor}
-                        onChange={(e) =>
-                          setQuoteModal((m) => ({
-                            ...m,
-                            products: m.products.map((p, i) => (i === idx ? { ...p, valor: e.target.value } : p)),
-                          }))
-                        }
-                        placeholder="Valor (¥)"
-                        className="w-full rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
-                      />
-                      {(() => {
-                        const tri = jpyAmountToTri(parseFloat(item.valor))
-                        if (!tri) return null
-                        return (
-                          <TriCurrencyDisplay
-                            brl={tri.brl}
-                            jpy={tri.jpy}
-                            usd={tri.usd}
-                            variant="compact"
-                            primary="jpy"
-                          />
-                        )
-                      })()}
-                    </div>
-                    <input
-                      type="number"
-                      min="1"
-                      value={item.quantidade ?? 1}
-                      onChange={(e) =>
-                        setQuoteModal((m) => ({
-                          ...m,
-                          products: m.products.map((p, i) => (i === idx ? { ...p, quantidade: e.target.value } : p)),
-                        }))
-                      }
-                      placeholder="Qtd"
-                      className="rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
-                    />
-                  </div>
-                </div>
-              ))}
-              <button
-                type="button"
-                onClick={() =>
-                  setQuoteModal((m) => ({ ...m, products: [...m.products, { name: '', valor: '', quantidade: 1, descricao: '' }] }))
-                }
-                className="w-full rounded-lg border-2 border-dashed border-earth-300 py-2 text-sm font-medium text-earth-600 hover:border-earth-400 hover:bg-earth-50"
-              >
-                + Adicionar produto
-              </button>
             </div>
             <div className="mt-6 flex gap-2">
               <button
@@ -1052,7 +969,7 @@ export default function PedidosSection() {
                     open: false,
                     orderId: null,
                     orderDescription: '',
-                    products: [{ name: '', valor: '', quantidade: 1, descricao: '' }],
+                    products: [{ ...EMPTY_QUOTE_PRODUCT }],
                     currency: 'JPY',
                     orderModule: 'personal_shopping',
                   })

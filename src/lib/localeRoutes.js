@@ -59,11 +59,11 @@ export const ROUTES = {
 
   appAdmin: { [LOCALE_PT_BR]: '/app/admin', [LOCALE_EN]: '/en/app/admin' },
   appAdminPedidos: { [LOCALE_PT_BR]: '/app/admin/pedidos', [LOCALE_EN]: '/en/app/admin/orders' },
+  appAdminOrcamentos: { [LOCALE_PT_BR]: '/app/admin/orcamentos', [LOCALE_EN]: '/en/app/admin/quotes' },
   appAdminUsuarios: { [LOCALE_PT_BR]: '/app/admin/usuarios', [LOCALE_EN]: '/en/app/admin/users' },
   appAdminEnvios: { [LOCALE_PT_BR]: '/app/admin/envios', [LOCALE_EN]: '/en/app/admin/shipping' },
   appAdminProdutos: { [LOCALE_PT_BR]: '/app/admin/produtos', [LOCALE_EN]: '/en/app/admin/products' },
   appAdminCatalogo: { [LOCALE_PT_BR]: '/app/admin/catalogo-produtos', [LOCALE_EN]: '/en/app/admin/catalog' },
-  appAdminBusca: { [LOCALE_PT_BR]: '/app/admin/busca-catalogo', [LOCALE_EN]: '/en/app/admin/catalog-search' },
   appAdminGrupos: { [LOCALE_PT_BR]: '/app/admin/grupos', [LOCALE_EN]: '/en/app/admin/groups' },
   appAdminCalculadoraBrasil: {
     [LOCALE_PT_BR]: '/app/admin/calculadora-brasil',

@@ -15,7 +15,7 @@ export const ADMIN_TABS = [
   { id: 'produtos_usuarios', path: 'produtos-usuarios', label: 'Produtos (Usuários)', icon: '📋', category: 'operacao' },
   { id: 'produtos', path: 'produtos', label: 'Produtos Loja', icon: '🛒', category: 'catalogo' },
   { id: 'catalogo_produtos', path: 'catalogo-produtos', label: 'Lista de Produtos', icon: '📚', category: 'catalogo' },
-  { id: 'busca_catalogo', path: 'busca-catalogo', label: 'Busca em Catálogos', icon: '🔎', category: 'catalogo' },
+  { id: 'orcamentos', path: 'orcamentos', label: 'Orçamentos', icon: '📝', category: 'catalogo' },
   { id: 'grupos', path: 'grupos', label: 'Compras Programadas', icon: '👥', category: 'catalogo' },
   { id: 'calculadora_brasil', path: 'calculadora-brasil', label: 'Calculadora Brasil', icon: '🧮', category: 'catalogo' },
   { id: 'lotes', path: 'lotes', label: 'Lotes', icon: '📦', category: 'catalogo' },
@@ -31,12 +31,12 @@ export const ADMIN_TABS = [
 /** Portuguese URL segment -> English segment (under /en/app/admin/) */
 const ADMIN_PT_TO_EN_SEGMENT = {
   pedidos: 'orders',
+  orcamentos: 'quotes',
   usuarios: 'users',
   envios: 'shipping',
   'produtos-usuarios': 'user-products',
   produtos: 'products',
   'catalogo-produtos': 'catalog',
-  'busca-catalogo': 'catalog-search',
   grupos: 'groups',
   'calculadora-brasil': 'brazil-calculator',
   lotes: 'batches',

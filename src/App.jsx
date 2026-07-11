@@ -44,12 +44,12 @@ const Services = lazy(() => import('./pages/platform/Services'))
 const Cart = lazy(() => import('./pages/platform/Cart'))
 const AdminLayout = lazy(() => import('./pages/platform/admin/AdminLayout'))
 const AdminPedidosTab = lazy(() => import('./pages/platform/admin/tabs/PedidosTab'))
+const AdminOrcamentosTab = lazy(() => import('./pages/platform/admin/tabs/OrcamentosTab'))
 const AdminUsuariosTab = lazy(() => import('./pages/platform/admin/tabs/UsuariosTab'))
 const AdminEnviosTab = lazy(() => import('./pages/platform/admin/tabs/EnviosTab'))
 const AdminProdutosUsuariosTab = lazy(() => import('./pages/platform/admin/tabs/ProdutosUsuariosTab'))
 const AdminProdutosTab = lazy(() => import('./pages/platform/admin/tabs/ProdutosTab'))
 const AdminCatalogoProdutosTab = lazy(() => import('./pages/platform/admin/tabs/CatalogoProdutosTab'))
-const AdminBuscaCatalogoTab = lazy(() => import('./pages/platform/admin/tabs/BuscaCatalogoTab'))
 const AdminGruposTab = lazy(() => import('./pages/platform/admin/tabs/GruposTab'))
 const AdminCalculadoraBrasilTab = lazy(() => import('./pages/platform/admin/tabs/CalculadoraBrasilTab'))
 const AdminLotesTab = lazy(() => import('./pages/platform/admin/tabs/LotesTab'))
@@ -222,12 +222,12 @@ function App() {
               }>
                 <Route index element={<Navigate to={p('appAdminPedidos')} replace />} />
                 <Route path="pedidos" element={<AdminPedidosTab />} />
+                <Route path="orcamentos" element={<AdminOrcamentosTab />} />
                 <Route path="usuarios" element={<AdminUsuariosTab />} />
                 <Route path="envios" element={<AdminEnviosTab />} />
                 <Route path="produtos-usuarios" element={<AdminProdutosUsuariosTab />} />
                 <Route path="produtos" element={<AdminProdutosTab />} />
                 <Route path="catalogo-produtos" element={<AdminCatalogoProdutosTab />} />
-                <Route path="busca-catalogo" element={<AdminBuscaCatalogoTab />} />
                 <Route path="grupos" element={<AdminGruposTab />} />
                 <Route path="calculadora-brasil" element={<AdminCalculadoraBrasilTab />} />
                 <Route path="lotes" element={<AdminLotesTab />} />
@@ -244,7 +244,7 @@ function App() {
                 <Route path="operacao/produtos-usuarios" element={<AdminProdutosUsuariosTab />} />
                 <Route path="catalogo/produtos" element={<AdminProdutosTab />} />
                 <Route path="catalogo/catalogo-produtos" element={<AdminCatalogoProdutosTab />} />
-                <Route path="catalogo/busca-catalogo" element={<AdminBuscaCatalogoTab />} />
+                <Route path="catalogo/orcamentos" element={<AdminOrcamentosTab />} />
                 <Route path="catalogo/grupos" element={<AdminGruposTab />} />
                 <Route path="catalogo/calculadora-brasil" element={<AdminCalculadoraBrasilTab />} />
                 <Route path="catalogo/lotes" element={<AdminLotesTab />} />
@@ -327,12 +327,12 @@ function App() {
               }>
                 <Route index element={<Navigate to={e('appAdminPedidos')} replace />} />
                 <Route path="orders" element={<AdminPedidosTab />} />
+                <Route path="quotes" element={<AdminOrcamentosTab />} />
                 <Route path="users" element={<AdminUsuariosTab />} />
                 <Route path="shipping" element={<AdminEnviosTab />} />
                 <Route path="user-products" element={<AdminProdutosUsuariosTab />} />
                 <Route path="products" element={<AdminProdutosTab />} />
                 <Route path="catalog" element={<AdminCatalogoProdutosTab />} />
-                <Route path="catalog-search" element={<AdminBuscaCatalogoTab />} />
                 <Route path="groups" element={<AdminGruposTab />} />
                 <Route path="brazil-calculator" element={<AdminCalculadoraBrasilTab />} />
                 <Route path="batches" element={<AdminLotesTab />} />
@@ -349,7 +349,7 @@ function App() {
                 <Route path="operations/user-products" element={<AdminProdutosUsuariosTab />} />
                 <Route path="catalog/products" element={<AdminProdutosTab />} />
                 <Route path="catalog/catalog" element={<AdminCatalogoProdutosTab />} />
-                <Route path="catalog/catalog-search" element={<AdminBuscaCatalogoTab />} />
+                <Route path="catalog/quotes" element={<AdminOrcamentosTab />} />
                 <Route path="catalog/groups" element={<AdminGruposTab />} />
                 <Route path="catalog/brazil-calculator" element={<AdminCalculadoraBrasilTab />} />
                 <Route path="catalog/batches" element={<AdminLotesTab />} />

@@ -10,7 +10,6 @@ import { jpyAmountToTri } from '../lib/quoteMoneyTri'
 import { TriCurrencyDisplay } from './TriCurrencyDisplay'
 import LinkifyText from './LinkifyText'
 import {
-  SERVICE_FEE_JPY_PER_ITEM,
   REDIR_ASSISTIDO_FEE_PERCENT,
   PERSONAL_SHOPPING_FEE_PERCENT,
 } from '../data/serviceFees'
@@ -57,11 +56,10 @@ export default function QuoteProductsList({ message, quoteCurrency = 'JPY', form
 
   const isAssistedBuy = orderModule === 'assisted_buy' || orderModule === 'redir-assistido'
   const servicePercent = isAssistedBuy ? REDIR_ASSISTIDO_FEE_PERCENT : PERSONAL_SHOPPING_FEE_PERCENT
-  const totalItems = products.reduce((sum, p) => sum + Math.max(1, parseInt(p.quantidade, 10) || 1), 0)
 
   const serviceFeePercent = Math.round(baseTotal * (servicePercent / 100))
-  const serviceFeeFixed = isAssistedBuy ? 0 : SERVICE_FEE_JPY_PER_ITEM * totalItems
-  const grandTotal = baseTotal + serviceFeePercent + serviceFeeFixed
+  // Personal Shopping: percentual flat (sem taxa por item). Assistido: só % (taxa por item na escada de redirecionamento).
+  const grandTotal = baseTotal + serviceFeePercent
 
   const fmt = (v) => {
     if (formatMoney) return formatMoney(v, quoteCurrency)
@@ -100,6 +98,16 @@ export default function QuoteProductsList({ message, quoteCurrency = 'JPY', form
                 {qty > 1 && <span className="ml-1 font-normal text-earth-600">× {qty}</span>}
               </span>
               <span className="text-earth-700">{fmtTri(lineTotal)}</span>
+              {p.link && (
+                <a
+                  href={p.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full text-xs font-medium text-earth-700 underline break-all hover:text-earth-900"
+                >
+                  {p.link}
+                </a>
+              )}
               {p.descricao && (
                 <span className="w-full text-xs text-earth-500 whitespace-pre-wrap">
                   <LinkifyText text={p.descricao} />
@@ -120,17 +128,6 @@ export default function QuoteProductsList({ message, quoteCurrency = 'JPY', form
             <span>{t('platform.quoteList.serviceFeePercent', { percent: servicePercent })}</span>
             <span>{fmtTri(serviceFeePercent)}</span>
           </div>
-          {!isAssistedBuy && (
-            <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
-              <span>
-                {t('platform.quoteList.perItemTimes', {
-                  fee: fmt(SERVICE_FEE_JPY_PER_ITEM),
-                  count: totalItems,
-                })}
-              </span>
-              <span>{fmtTri(serviceFeeFixed)}</span>
-            </div>
-          )}
         </div>
         <div className="mt-3 border-t border-earth-900 pt-2 flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between font-semibold text-earth-900">
           <span>{t('platform.quoteList.quoteTotal')}</span>

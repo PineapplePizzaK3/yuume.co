@@ -68,7 +68,6 @@ import { getPurchaseGroupProducts } from '../../../services/productService'
 import { getUserLogs, getAuthLogs, logAdminAction } from '../../../services/logService'
 import { getMyAdminNotifications, markNotificationRead } from '../../../services/notificationService'
 import { getFraudReviewQueue, decideFraudCase } from '../../../services/fraudService'
-import { searchCatalogAdmin } from '../../../services/catalogSearchService'
 import { brlToJpy, formatWeight } from '../../../lib/fx'
 import { formatJpyForSite } from '../../../lib/moneyDisplay'
 import { parseQuoteMessage, serializeQuoteProducts } from '../../../lib/quoteProducts'
@@ -91,13 +90,13 @@ import LogsSection from './sections/LogsSection'
 import EnviosSection from './sections/EnviosSection'
 import ProdutosUsuariosSection from './sections/ProdutosUsuariosSection'
 import ProdutosSection from './sections/ProdutosSection'
-import BuscaCatalogoSection from './sections/BuscaCatalogoSection'
 import UsuariosSection from './sections/UsuariosSection'
 import GruposSection from './sections/GruposSection'
 import CatalogoProdutosSection from './sections/CatalogoProdutosSection'
 import CalculadoraBrasilSection from './sections/CalculadoraBrasilSection'
 import LotesSection from './sections/LotesSection'
 import PedidosSection from './sections/PedidosSection'
+import OrcamentosSection from './sections/OrcamentosSection'
 import InvoicesAdminSection from './sections/InvoicesAdminSection'
 import {
   createCreditNoteAdmin,
@@ -321,7 +320,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     open: false,
     orderId: null,
     orderDescription: '',
-    products: [{ name: '', valor: '', quantidade: 1, descricao: '' }],
+    products: [{ name: '', valor: '', quantidade: 1, descricao: '', link: '' }],
     currency: 'JPY',
     orderModule: 'personal_shopping',
   })
@@ -481,24 +480,6 @@ export default function Admin({ routeTabId = 'pedidos' }) {
   const [groupProductScraping, setGroupProductScraping] = useState(false)
   const [groupProductScrapeMeta, setGroupProductScrapeMeta] = useState(null)
   const [groupProductScrapePreview, setGroupProductScrapePreview] = useState(null)
-  const [externalSearchQuery, setExternalSearchQuery] = useState('')
-  const [externalSearchStores, setExternalSearchStores] = useState({
-    amazon: true,
-    rakuma: true,
-    mercari: true,
-    yahoo: true,
-    yahoo_flea: true,
-    snkrdunk: true,
-  })
-  const [externalSearchResults, setExternalSearchResults] = useState([])
-  const [externalSearchMeta, setExternalSearchMeta] = useState(null)
-  const [externalSearchPartials, setExternalSearchPartials] = useState([])
-  const [externalSearchLoading, setExternalSearchLoading] = useState(false)
-  const [externalSearchLoadingMore, setExternalSearchLoadingMore] = useState(false)
-  const [externalSearchPage, setExternalSearchPage] = useState(1)
-  const [externalSearchCanAutoLoad, setExternalSearchCanAutoLoad] = useState(true)
-  const [externalSearchCursors, setExternalSearchCursors] = useState(null)
-  const [externalSearchError, setExternalSearchError] = useState('')
   const [ordersPage, setOrdersPage] = useState(0)
   const [ordersHasMore, setOrdersHasMore] = useState(false)
   const [orderStatusFilter, setOrderStatusFilter] = useState([])
@@ -2568,7 +2549,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
         open: false, 
         orderId: null, 
         orderDescription: '', 
-        products: [{ name: '', valor: '', quantidade: 1, descricao: '' }], 
+        products: [{ name: '', valor: '', quantidade: 1, descricao: '', link: '' }], 
         currency: 'JPY',
         orderModule: 'personal_shopping'
       })
@@ -2585,8 +2566,9 @@ export default function Admin({ routeTabId = 'pedidos' }) {
         valor: p.valor != null ? String(p.valor) : '',
         quantidade: p.quantidade != null ? String(p.quantidade) : '1',
         descricao: String(p.descricao ?? ''),
+        link: String(p.link ?? ''),
       }))
-      : [{ name: '', valor: '', quantidade: 1, descricao: '' }]
+      : [{ name: '', valor: '', quantidade: 1, descricao: '', link: '' }]
 
     setQuoteModal({
       open: true,
@@ -2895,99 +2877,6 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     }
   }
 
-  const selectedExternalStores = Object.entries(externalSearchStores)
-    .filter(([, checked]) => checked)
-    .map(([storeId]) => storeId)
-
-  const runExternalSearch = async (page = 1, { append = false, cursors = null } = {}) => {
-    const query = externalSearchQuery.trim()
-    if (query.length < 2) {
-      setExternalSearchError('Digite ao menos 2 caracteres para buscar.')
-      return
-    }
-    if (selectedExternalStores.length === 0) {
-      setExternalSearchError('Selecione ao menos uma loja para buscar.')
-      return
-    }
-    if (append) {
-      setExternalSearchLoadingMore(true)
-    } else {
-      setExternalSearchLoading(true)
-      setExternalSearchCursors(null)
-    }
-    setExternalSearchError('')
-    try {
-      const { data, error } = await searchCatalogAdmin({
-        query,
-        stores: selectedExternalStores,
-        page,
-        pageSize: 30,
-        cursors: append ? cursors ?? externalSearchCursors : null,
-      })
-      if (error) {
-        setExternalSearchError(error.message || 'Erro ao buscar catálogos.')
-        if (page === 1 && !append) {
-          setExternalSearchResults([])
-          setExternalSearchMeta(null)
-          setExternalSearchPartials([])
-        }
-        return
-      }
-      setExternalSearchPage(page)
-      const incoming = data?.results ?? []
-      if (append) {
-        let added = 0
-        setExternalSearchResults((prev) => {
-          const seen = new Set(prev.map((item) => item.productUrl || item.id))
-          const merged = [...prev]
-          for (const item of incoming) {
-            const key = item.productUrl || item.id
-            if (!key || seen.has(key)) continue
-            seen.add(key)
-            merged.push(item)
-            added += 1
-          }
-          return merged
-        })
-        const hasMore = data?.meta?.hasMore ?? false
-        const noNewItems = incoming.length > 0 && added === 0
-        setExternalSearchCanAutoLoad(hasMore && !noNewItems)
-        setExternalSearchCursors(data?.meta?.cursors ?? null)
-        setExternalSearchMeta(data?.meta ?? null)
-      } else {
-        setExternalSearchResults(incoming)
-        setExternalSearchMeta(data?.meta ?? null)
-        setExternalSearchCursors(data?.meta?.cursors ?? null)
-        setExternalSearchCanAutoLoad(data?.meta?.hasMore ?? true)
-      }
-      setExternalSearchPartials(data?.partials ?? [])
-    } catch (e) {
-      setExternalSearchError(e?.message || 'Erro ao buscar catálogos.')
-    } finally {
-      setExternalSearchLoading(false)
-      setExternalSearchLoadingMore(false)
-    }
-  }
-
-  const loadMoreExternalSearch = async () => {
-    if (externalSearchLoading || externalSearchLoadingMore || !externalSearchCanAutoLoad) return
-    await runExternalSearch(externalSearchPage + 1, { append: true, cursors: externalSearchCursors })
-  }
-
-  const handleExternalSearchSubmit = async (e) => {
-    e.preventDefault()
-    await runExternalSearch(1)
-  }
-
-  const toggleExternalStore = (storeId) => {
-    setExternalSearchStores((prev) => ({ ...prev, [storeId]: !prev[storeId] }))
-  }
-
-  const formatExternalPrice = (price, currency = 'JPY') => {
-    if (price == null || Number.isNaN(Number(price))) return 'Preço indisponível'
-    return Number(price).toLocaleString('pt-BR', { style: 'currency', currency: String(currency).toUpperCase() })
-  }
-
   const masterProductReferences = products.filter((p) => !p.purchase_group_id)
   const storePublishCandidates = masterProductReferences.filter((p) => !p.store_linked)
   const productReferenceTerm = productReferenceSearch.trim().toLowerCase()
@@ -3144,22 +3033,6 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     storeProductsPage,
     storeProductsHasMore,
     setStoreProductsPage,
-    handleExternalSearchSubmit,
-    externalSearchQuery,
-    setExternalSearchQuery,
-    externalSearchLoading,
-    externalSearchLoadingMore,
-    externalSearchStores,
-    toggleExternalStore,
-    externalSearchError,
-    externalSearchMeta,
-    externalSearchPage,
-    externalSearchPartials,
-    externalSearchResults,
-    externalSearchCanAutoLoad,
-    formatExternalPrice,
-    runExternalSearch,
-    loadMoreExternalSearch,
     usersListLoading,
     usersList,
     openUserDetail,
@@ -3360,6 +3233,8 @@ export default function Admin({ routeTabId = 'pedidos' }) {
         {/* Pedidos - Fluxo Redirecionamento */}
         <PedidosSection />
 
+        <OrcamentosSection />
+
         {/* Usuários */}
         <UsuariosSection />
 
@@ -3392,9 +3267,6 @@ export default function Admin({ routeTabId = 'pedidos' }) {
 
         {/* Loja - Produtos */}
         <ProdutosSection />
-
-        {/* Busca unificada em catálogos externos (MVP admin) */}
-        <BuscaCatalogoSection />
 
         {/* Catálogo mestre de produtos */}
         <CatalogoProdutosSection />

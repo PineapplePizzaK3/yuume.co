@@ -27,6 +27,7 @@ export function serializeQuoteProducts(products, orderDescription = null) {
     valor: parseFloat(p.valor) || 0,
     quantidade: Math.max(1, parseInt(p.quantidade, 10) || 1),
     descricao: String(p.descricao ?? '').trim() || null,
+    link: String(p.link ?? '').trim() || null,
   }))
   const obj = { [QUOTE_PRODUCTS_KEY]: list }
   if (orderDescription?.trim()) obj[ORDER_DESCRIPTION_KEY] = orderDescription.trim()
