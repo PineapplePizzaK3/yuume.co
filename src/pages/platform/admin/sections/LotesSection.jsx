@@ -267,7 +267,7 @@ function BatchTotalsPanel({
           <p className="mt-1 text-[11px] text-violet-700">
             {summary.shipping.mode === 'manual'
               ? `Faixa manual ${summary.shipping.loteKg} kg`
-              : `Calculado por peso (${formatGramsAsWeightLabel(summary.weights.totalWeightGrams)})`}
+              : `Faixa automática até ${summary.shipping.autoBandMaxGrams || summary.weights.totalWeightGrams} g`}
           </p>
         </div>
       </div>
@@ -277,8 +277,11 @@ function BatchTotalsPanel({
         <p><span className="text-earth-600">Peso proteções:</span> <strong>{formatGramsAsWeightLabel(summary.weights.protectionWeightGrams)}</strong></p>
         <p>
           <span className="text-earth-600">Faixa EMS usada:</span>{' '}
-          <strong>{summary.shipping.loteKg} kg</strong>
-          {summary.shipping.loteKg !== summary.shipping.autoLoteKg ? ` (auto: ${summary.shipping.autoLoteKg} kg)` : ''}
+          <strong>
+            {summary.shipping.mode === 'manual'
+              ? `${summary.shipping.loteKg} kg (manual)`
+              : `até ${summary.shipping.autoBandMaxGrams || summary.weights.totalWeightGrams} g`}
+          </strong>
         </p>
         <p><span className="text-earth-600">Valor base dos produtos:</span> <strong>{formatPairFromYen(summary.sums.baseCostYen, brlPerJpy)}</strong></p>
         <p><span className="text-earth-600">Valor declarado do lote:</span> <strong>{formatPairFromYen(summary.sums.declaredValueYen, brlPerJpy)}</strong></p>

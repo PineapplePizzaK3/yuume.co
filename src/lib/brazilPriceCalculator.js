@@ -1,4 +1,4 @@
-import { calcularFreteEMS } from '../data/tabelaFreteEMS'
+import { calcularFreteEMS, TABELA_FRETE_EMS } from '../data/tabelaFreteEMS'
 import { calcularFreteEPacket, calcularFreteParcel } from '../data/fretesJPPost'
 
 export const SHIPPING_MODE_LOTE = 'lote'
@@ -152,6 +152,12 @@ export function resolveLoteKgForWeightGrams(weightGrams) {
   return LOTE_EMS_RATE_TABLE[LOTE_EMS_RATE_TABLE.length - 1]?.loteKg || 30
 }
 
+export function getEmsBandForWeightGrams(weightGrams) {
+  const grams = Math.max(0, Math.ceil(Number(weightGrams) || 0))
+  if (grams <= 0) return TABELA_FRETE_EMS[0] || null
+  return TABELA_FRETE_EMS.find((row) => grams <= row.pesoMax) || TABELA_FRETE_EMS[TABELA_FRETE_EMS.length - 1] || null
+}
+
 export function computeBatchSummary({
   items = [],
   protectionWeightGrams = 0,
@@ -186,10 +192,11 @@ export function computeBatchSummary({
   const autoLoteKg = resolveLoteKgForWeightGrams(totalWeightGrams)
   const selectedLoteKg = getLoteRateRow(loteKg) ? Number(loteKg) : autoLoteKg
   const selectedLoteRow = getLoteRateRow(selectedLoteKg)
+  const autoEmsBand = getEmsBandForWeightGrams(totalWeightGrams)
   const useManualLote = String(loteMode) === 'manual'
   const shippingYen = useManualLote && selectedLoteRow
     ? roundYen(selectedLoteRow.totalEmsYen)
-    : roundYen(calcularFreteEMS(totalWeightGrams))
+    : roundYen(autoEmsBand?.valor ?? calcularFreteEMS(totalWeightGrams))
   const shippingNote = useManualLote
     ? `lote_ems_manual_${selectedLoteKg}kg`
     : `lote_ems_auto_peso_${totalWeightGrams}g`
@@ -216,6 +223,7 @@ export function computeBatchSummary({
       mode: useManualLote ? 'manual' : 'auto',
       loteKg: selectedLoteKg,
       autoLoteKg,
+      autoBandMaxGrams: autoEmsBand?.pesoMax || null,
       yen: shippingYen,
       brl: round2(shippingYen * rate),
       note: shippingNote,
