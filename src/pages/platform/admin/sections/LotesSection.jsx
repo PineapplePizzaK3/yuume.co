@@ -127,16 +127,17 @@ function BatchItemsEditor({
         {itemRows.map((row, index) => {
           const selectedProduct = productsMap.get(String(row.calculator_product_id || ''))
           const quantity = Math.max(0, Math.floor(Number(row.quantity) || 0))
-          const unitBase = Math.max(0, Number(selectedProduct?.base_cost_yen) || 0)
-          const unitDeclared = getItemDeclaredYen(selectedProduct || {})
           const unitFinalBrl = Math.max(0, Number(selectedProduct?.final_price_brl) || 0)
           const rowPricing = pricingByRowId?.[String(index)] || null
-          const lineBase = unitBase * quantity
-          const lineDeclared = unitDeclared * quantity
           const lineFinalBrl = rowPricing
             ? Number(rowPricing.lineFinalPriceBrl) || 0
             : unitFinalBrl * quantity
-          const unitFinalInBatchBrl = quantity > 0 ? lineFinalBrl / quantity : 0
+          const marginPercentApplied = rowPricing
+            ? Number(rowPricing.unitMarginPercent) || 0
+            : Math.max(0, Number(selectedProduct?.margin_percent) || 0)
+          const lineProfitBrl = rowPricing
+            ? Number(rowPricing.lineProfitBrl) || 0
+            : 0
           const lineWeight = Math.max(0, Number(selectedProduct?.weight_grams) || 0) * quantity
           return (
             <div key={`row-${index}`} className="rounded border border-earth-200 bg-white p-2.5">
@@ -173,21 +174,13 @@ function BatchItemsEditor({
               </div>
 
               {selectedProduct ? (
-                <div className="mt-2 grid gap-1 text-xs text-earth-700 md:grid-cols-2 xl:grid-cols-5">
+                <div className="mt-2 grid gap-1 text-xs text-earth-700 md:grid-cols-2 xl:grid-cols-4">
                   <p>
                     <span className="text-earth-500">Peso:</span>{' '}
                     {formatGramsAsWeightLabel(lineWeight)}
                   </p>
                   <p>
-                    <span className="text-earth-500">Base (linha):</span>{' '}
-                    {formatPairFromYen(lineBase, brlPerJpy)}
-                  </p>
-                  <p>
-                    <span className="text-earth-500">Declarado (linha):</span>{' '}
-                    {formatPairFromYen(lineDeclared, brlPerJpy)}
-                  </p>
-                  <p>
-                    <span className="text-earth-500">Preço final (linha):</span>{' '}
+                    <span className="text-earth-500">Preço final no lote:</span>{' '}
                     {formatBRL(lineFinalBrl)}
                     {rowPricing ? (
                       <span className="ml-1 text-[11px] text-earth-500">
@@ -196,8 +189,12 @@ function BatchItemsEditor({
                     ) : null}
                   </p>
                   <p>
-                    <span className="text-earth-500">Preço final unitário no lote:</span>{' '}
-                    {formatBRL(unitFinalInBatchBrl)}
+                    <span className="text-earth-500">Margem aplicada:</span>{' '}
+                    {marginPercentApplied.toFixed(2)}%
+                  </p>
+                  <p>
+                    <span className="text-earth-500">Lucro estimado:</span>{' '}
+                    {formatBRL(lineProfitBrl)}
                   </p>
                 </div>
               ) : (

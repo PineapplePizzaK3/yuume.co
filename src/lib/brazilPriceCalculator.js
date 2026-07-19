@@ -242,6 +242,7 @@ export function computeBatchSummary({
       + lineMarginBrl
       + item.linePackagingBrl
       + item.lineLocalShippingBrl
+    const lineProfitBrl = lineFinalPriceBrl - lineLandedCostBrl
 
     return {
       ...item,
@@ -249,7 +250,9 @@ export function computeBatchSummary({
       lineTaxableYen: roundYen(lineTaxableYen),
       lineCustomsTaxedYen: roundYen(lineCustomsTaxedYen),
       lineLandedCostYen: roundYen(lineLandedCostYen),
+      lineLandedCostBrl: round2(lineLandedCostBrl),
       lineMarginBrl: round2(lineMarginBrl),
+      lineProfitBrl: round2(lineProfitBrl),
       lineFinalPriceBrl: round2(lineFinalPriceBrl),
     }
   })
