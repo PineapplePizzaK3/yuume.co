@@ -143,6 +143,102 @@ export function getLoteRateRow(loteKg) {
   return LOTE_EMS_RATE_TABLE.find((row) => row.loteKg === kg) || null
 }
 
+export function resolveLoteKgForWeightGrams(weightGrams) {
+  const grams = Math.max(0, Math.round(Number(weightGrams) || 0))
+  if (grams <= 0) return LOTE_EMS_RATE_TABLE[0]?.loteKg || 1
+  const kgNeeded = Math.max(1, Math.ceil(grams / 1000))
+  const covering = LOTE_EMS_RATE_TABLE.find((row) => row.loteKg >= kgNeeded)
+  if (covering) return covering.loteKg
+  return LOTE_EMS_RATE_TABLE[LOTE_EMS_RATE_TABLE.length - 1]?.loteKg || 30
+}
+
+export function computeBatchSummary({
+  items = [],
+  protectionWeightGrams = 0,
+  loteKg = null,
+  customsFactor = 2,
+  brlPerJpy = 0,
+} = {}) {
+  const normalizedItems = (Array.isArray(items) ? items : []).map((item) => {
+    const qty = Math.max(0, Math.floor(Number(item?.quantity) || 0))
+    const unitWeight = Math.max(0, Math.round(Number(item?.unit_weight_grams ?? item?.weight_grams) || 0))
+    const unitBase = Math.max(0, Number(item?.base_cost_yen) || 0)
+    const unitDeclaredRaw = Math.max(0, Number(item?.declared_value_yen) || 0)
+    const unitDeclared = unitDeclaredRaw > 0 ? unitDeclaredRaw : unitBase
+    const unitFinalBrl = Math.max(0, Number(item?.final_price_brl) || 0)
+    return {
+      quantity: qty,
+      unitWeightGrams: unitWeight,
+      unitBaseCostYen: unitBase,
+      unitDeclaredValueYen: unitDeclared,
+      unitFinalPriceBrl: unitFinalBrl,
+      lineWeightGrams: unitWeight * qty,
+      lineBaseCostYen: unitBase * qty,
+      lineDeclaredValueYen: unitDeclared * qty,
+      lineFinalPriceBrl: unitFinalBrl * qty,
+    }
+  }).filter((item) => item.quantity > 0)
+
+  const productsWeightGrams = normalizedItems.reduce((acc, item) => acc + item.lineWeightGrams, 0)
+  const protectionWeight = Math.max(0, Math.round(Number(protectionWeightGrams) || 0))
+  const totalWeightGrams = productsWeightGrams + protectionWeight
+  const autoLoteKg = resolveLoteKgForWeightGrams(totalWeightGrams)
+  const selectedLoteKg = getLoteRateRow(loteKg) ? Number(loteKg) : autoLoteKg
+  const shipping = computeInternationalShippingYen({
+    shippingMode: SHIPPING_MODE_LOTE,
+    directMethod: DIRECT_METHOD_EMS,
+    productWeightGrams: totalWeightGrams,
+    loteKg: selectedLoteKg,
+  })
+
+  const rate = Math.max(0, Number(brlPerJpy) || 0)
+  const factor = Math.max(0, Number(customsFactor) || 0)
+  const baseCostYen = normalizedItems.reduce((acc, item) => acc + item.lineBaseCostYen, 0)
+  const declaredValueYen = normalizedItems.reduce((acc, item) => acc + item.lineDeclaredValueYen, 0)
+  const taxableYen = declaredValueYen + shipping.valueYen
+  const customsTaxedYen = taxableYen * factor
+  const customsIncrementYen = taxableYen * Math.max(0, factor - 1)
+  const landedCostYen = baseCostYen + customsTaxedYen
+  const finalPriceBrl = normalizedItems.reduce((acc, item) => acc + item.lineFinalPriceBrl, 0)
+
+  return {
+    items: normalizedItems,
+    weights: {
+      productsWeightGrams,
+      protectionWeightGrams: protectionWeight,
+      totalWeightGrams,
+    },
+    shipping: {
+      loteKg: selectedLoteKg,
+      autoLoteKg,
+      yen: roundYen(shipping.valueYen),
+      brl: round2(shipping.valueYen * rate),
+      note: shipping.note,
+      loteRatePerGram: shipping.loteRatePerGram || null,
+    },
+    sums: {
+      baseCostYen: roundYen(baseCostYen),
+      baseCostBrl: round2(baseCostYen * rate),
+      declaredValueYen: roundYen(declaredValueYen),
+      declaredValueBrl: round2(declaredValueYen * rate),
+      finalPriceBrl: round2(finalPriceBrl),
+    },
+    customs: {
+      factor: round2(factor),
+      taxableYen: roundYen(taxableYen),
+      taxableBrl: round2(taxableYen * rate),
+      taxedYen: roundYen(customsTaxedYen),
+      taxedBrl: round2(customsTaxedYen * rate),
+      incrementYen: roundYen(customsIncrementYen),
+      incrementBrl: round2(customsIncrementYen * rate),
+    },
+    landedCost: {
+      yen: roundYen(landedCostYen),
+      brl: round2(landedCostYen * rate),
+    },
+  }
+}
+
 export function computeInternationalShippingYen({
   shippingMode = SHIPPING_MODE_LOTE,
   directMethod = DIRECT_METHOD_EMS,

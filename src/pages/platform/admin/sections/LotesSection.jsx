@@ -1,7 +1,14 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
 import { useAdminContext } from '../AdminContext'
-import { formatWeight } from '../../../../lib/fx'
+import { formatBRL, formatJPY, formatPairFromYen, formatWeight } from '../../../../lib/fx'
+import { getSystemSettings } from '../../../../services/settingsService'
 import { listCalculatorProductsAdmin } from '../../../../services/calculatorProductService'
+import {
+  computeBatchSummary,
+  getLoteRateRow,
+  resolveBrlPerJpyFromSettings,
+  resolveLoteKgForWeightGrams,
+} from '../../../../lib/brazilPriceCalculator'
 import {
   createCalculatorBatchAdmin,
   deleteCalculatorBatchAdmin,
@@ -21,6 +28,12 @@ function buildItemLabel(product) {
   return `${name} · ${Math.round(weight)} g`
 }
 
+function getItemDeclaredYen(source = {}) {
+  const base = Math.max(0, Number(source.base_cost_yen) || 0)
+  const declared = Math.max(0, Number(source.declared_value_yen) || 0)
+  return declared > 0 ? declared : base
+}
+
 function buildSelectedItems(itemRows, productsMap) {
   return itemRows
     .map((row) => {
@@ -31,12 +44,19 @@ function buildSelectedItems(itemRows, productsMap) {
       if (!product) return null
       const unitWeight = Math.max(0, Number(product.weight_grams) || 0)
       if (unitWeight <= 0) return null
+      const unitBase = Math.max(0, Number(product.base_cost_yen) || 0)
+      const unitDeclared = getItemDeclaredYen(product)
+      const unitFinalBrl = Math.max(0, Number(product.final_price_brl) || 0)
       return {
         product,
         calculator_product_id: productId,
         quantity: qty,
         unit_weight_grams: unitWeight,
         line_weight_grams: unitWeight * qty,
+        weight_grams: unitWeight,
+        base_cost_yen: unitBase,
+        declared_value_yen: unitDeclared,
+        final_price_brl: unitFinalBrl,
       }
     })
     .filter(Boolean)
@@ -52,10 +72,22 @@ function batchItemsToRows(items) {
   }))
 }
 
+function formatSnapshotItemLine(item) {
+  const snapshot = item?.snapshot || {}
+  const qty = Math.max(0, Number(item?.quantity) || 0)
+  const name = String(snapshot?.name || '').trim() || 'Item'
+  const unitBase = Math.max(0, Number(snapshot?.base_cost_yen) || 0)
+  const unitDeclared = getItemDeclaredYen(snapshot)
+  const unitFinal = Math.max(0, Number(snapshot?.final_price_brl) || 0)
+  return `${name} x${qty} · Base ${formatJPY(unitBase * qty)} · Declarado ${formatJPY(unitDeclared * qty)} · Final ${formatBRL(unitFinal * qty)}`
+}
+
 function BatchItemsEditor({
   itemRows,
   products,
+  productsMap,
   loadingProducts,
+  brlPerJpy,
   onAddRow,
   onRemoveRow,
   onUpdateRow,
@@ -63,7 +95,7 @@ function BatchItemsEditor({
   return (
     <div className="rounded border border-earth-200 bg-earth-50 p-3">
       <div className="mb-2 flex items-center justify-between">
-        <p className="text-sm font-medium text-earth-900">Produtos do lote</p>
+        <p className="text-sm font-medium text-earth-900">Itens do lote</p>
         <button
           type="button"
           onClick={onAddRow}
@@ -77,59 +109,176 @@ function BatchItemsEditor({
         <p className="text-xs text-earth-600">Carregando produtos...</p>
       ) : null}
 
-      {itemRows.map((row, index) => (
-        <div key={`row-${index}`} className="mb-2 grid gap-2 md:grid-cols-[1fr,120px,auto]">
-          <select
-            value={row.calculator_product_id}
-            onChange={(e) => onUpdateRow(index, { calculator_product_id: e.target.value })}
-            className="rounded border border-earth-300 px-2 py-1.5 text-sm text-earth-900"
-          >
-            <option value="">Selecione um produto</option>
-            {products.map((p) => (
-              <option key={p.id} value={p.id}>
-                {buildItemLabel(p)}
-              </option>
-            ))}
-          </select>
-          <input
-            type="number"
-            min="1"
-            step="1"
-            value={row.quantity}
-            onChange={(e) => onUpdateRow(index, { quantity: e.target.value })}
-            className="rounded border border-earth-300 px-2 py-1.5 text-sm text-earth-900"
-            placeholder="Qtd"
-          />
-          <button
-            type="button"
-            onClick={() => onRemoveRow(index)}
-            disabled={itemRows.length <= 1}
-            className="rounded border border-red-200 bg-white px-2 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50 disabled:opacity-40"
-          >
-            Remover
-          </button>
-        </div>
-      ))}
+      <div className="space-y-2">
+        {itemRows.map((row, index) => {
+          const selectedProduct = productsMap.get(String(row.calculator_product_id || ''))
+          const quantity = Math.max(0, Math.floor(Number(row.quantity) || 0))
+          const unitBase = Math.max(0, Number(selectedProduct?.base_cost_yen) || 0)
+          const unitDeclared = getItemDeclaredYen(selectedProduct || {})
+          const unitFinalBrl = Math.max(0, Number(selectedProduct?.final_price_brl) || 0)
+          const lineBase = unitBase * quantity
+          const lineDeclared = unitDeclared * quantity
+          const lineFinalBrl = unitFinalBrl * quantity
+          const lineWeight = Math.max(0, Number(selectedProduct?.weight_grams) || 0) * quantity
+          return (
+            <div key={`row-${index}`} className="rounded border border-earth-200 bg-white p-2.5">
+              <div className="grid gap-2 md:grid-cols-[1fr,110px,auto]">
+                <select
+                  value={row.calculator_product_id}
+                  onChange={(e) => onUpdateRow(index, { calculator_product_id: e.target.value })}
+                  className="rounded border border-earth-300 px-2 py-1.5 text-sm text-earth-900"
+                >
+                  <option value="">Selecione um produto</option>
+                  {products.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {buildItemLabel(p)}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={row.quantity}
+                  onChange={(e) => onUpdateRow(index, { quantity: e.target.value })}
+                  className="rounded border border-earth-300 px-2 py-1.5 text-sm text-earth-900"
+                  placeholder="Qtd"
+                />
+                <button
+                  type="button"
+                  onClick={() => onRemoveRow(index)}
+                  disabled={itemRows.length <= 1}
+                  className="rounded border border-red-200 bg-white px-2 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50 disabled:opacity-40"
+                >
+                  Remover
+                </button>
+              </div>
+
+              {selectedProduct ? (
+                <div className="mt-2 grid gap-1 text-xs text-earth-700 md:grid-cols-2 xl:grid-cols-4">
+                  <p>
+                    <span className="text-earth-500">Peso:</span>{' '}
+                    {formatGramsAsWeightLabel(lineWeight)}
+                  </p>
+                  <p>
+                    <span className="text-earth-500">Base (linha):</span>{' '}
+                    {formatPairFromYen(lineBase, brlPerJpy)}
+                  </p>
+                  <p>
+                    <span className="text-earth-500">Declarado (linha):</span>{' '}
+                    {formatPairFromYen(lineDeclared, brlPerJpy)}
+                  </p>
+                  <p>
+                    <span className="text-earth-500">Preço final (linha):</span>{' '}
+                    {formatBRL(lineFinalBrl)}
+                  </p>
+                </div>
+              ) : (
+                <p className="mt-2 text-xs text-earth-500">
+                  Selecione um produto para exibir valores unitários e de linha.
+                </p>
+              )}
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }
 
-function WeightSummary({ productsWeightGrams, protectionWeight }) {
-  const totalWeightGrams = productsWeightGrams + protectionWeight
+function BatchTotalsPanel({
+  summary,
+  brlPerJpy,
+  customsFactor,
+  loteMode,
+  loteKgManual,
+  onCustomsFactorChange,
+  onLoteModeChange,
+  onLoteKgManualChange,
+}) {
   return (
-    <div className="mt-4 grid gap-2 rounded border border-earth-200 bg-white p-3 text-sm text-earth-800 md:grid-cols-3">
-      <p>
-        <span className="text-earth-600">Peso dos produtos:</span>{' '}
-        <strong>{formatGramsAsWeightLabel(productsWeightGrams)}</strong>
-      </p>
-      <p>
-        <span className="text-earth-600">Peso de proteções:</span>{' '}
-        <strong>{formatGramsAsWeightLabel(protectionWeight)}</strong>
-      </p>
-      <p>
-        <span className="text-earth-600">Peso final do lote:</span>{' '}
-        <strong>{formatGramsAsWeightLabel(totalWeightGrams)}</strong>
-      </p>
+    <div className="mt-4 rounded border border-earth-200 bg-white p-3">
+      <div className="grid gap-3 md:grid-cols-3">
+        <label className="text-xs text-earth-700">
+          Fator aduaneiro
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            value={customsFactor}
+            onChange={(e) => onCustomsFactorChange(e.target.value)}
+            className="mt-1 block w-full rounded border border-earth-300 px-2 py-1.5 text-sm text-earth-900"
+          />
+        </label>
+        <label className="text-xs text-earth-700">
+          Faixa lote EMS
+          <select
+            value={loteMode}
+            onChange={(e) => onLoteModeChange(e.target.value)}
+            className="mt-1 block w-full rounded border border-earth-300 px-2 py-1.5 text-sm text-earth-900"
+          >
+            <option value="auto">Automático pelo peso</option>
+            <option value="manual">Manual</option>
+          </select>
+        </label>
+        <label className="text-xs text-earth-700">
+          Lote manual (kg)
+          <select
+            value={loteKgManual}
+            onChange={(e) => onLoteKgManualChange(e.target.value)}
+            disabled={loteMode !== 'manual'}
+            className="mt-1 block w-full rounded border border-earth-300 px-2 py-1.5 text-sm text-earth-900 disabled:opacity-50"
+          >
+            {summary.shippingTable.map((row) => (
+              <option key={row.loteKg} value={row.loteKg}>
+                {row.loteKg} kg - {row.costPerGramYen} JPY/g
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      <div className="mt-3 grid gap-2 text-sm text-earth-800 md:grid-cols-2 xl:grid-cols-3">
+        <p>
+          <span className="text-earth-600">Peso produtos:</span>{' '}
+          <strong>{formatGramsAsWeightLabel(summary.weights.productsWeightGrams)}</strong>
+        </p>
+        <p>
+          <span className="text-earth-600">Peso proteções:</span>{' '}
+          <strong>{formatGramsAsWeightLabel(summary.weights.protectionWeightGrams)}</strong>
+        </p>
+        <p>
+          <span className="text-earth-600">Peso final:</span>{' '}
+          <strong>{formatGramsAsWeightLabel(summary.weights.totalWeightGrams)}</strong>
+        </p>
+        <p>
+          <span className="text-earth-600">Faixa EMS usada:</span>{' '}
+          <strong>{summary.shipping.loteKg} kg</strong>
+          {summary.shipping.loteKg !== summary.shipping.autoLoteKg
+            ? ` (auto: ${summary.shipping.autoLoteKg} kg)`
+            : ''}
+        </p>
+        <p>
+          <span className="text-earth-600">Frete internacional:</span>{' '}
+          <strong>{formatPairFromYen(summary.shipping.yen, brlPerJpy)}</strong>
+        </p>
+        <p>
+          <span className="text-earth-600">Valor declarado do lote:</span>{' '}
+          <strong>{formatPairFromYen(summary.sums.declaredValueYen, brlPerJpy)}</strong>
+        </p>
+        <p>
+          <span className="text-earth-600">Impostos alfandegários:</span>{' '}
+          <strong>{formatPairFromYen(summary.customs.taxedYen, brlPerJpy)}</strong>
+        </p>
+        <p>
+          <span className="text-earth-600">Custo no Brasil (lote):</span>{' '}
+          <strong>{formatPairFromYen(summary.landedCost.yen, brlPerJpy)}</strong>
+        </p>
+        <p>
+          <span className="text-earth-600">Soma preços finais:</span>{' '}
+          <strong>{formatBRL(summary.sums.finalPriceBrl)}</strong>
+        </p>
+      </div>
     </div>
   )
 }
@@ -138,8 +287,10 @@ export default function LotesSection() {
   const { activeTab } = useAdminContext()
   const [products, setProducts] = useState([])
   const [batches, setBatches] = useState([])
+  const [systemSettings, setSystemSettings] = useState(null)
   const [loadingProducts, setLoadingProducts] = useState(false)
   const [loadingBatches, setLoadingBatches] = useState(false)
+  const [loadingSettings, setLoadingSettings] = useState(false)
   const [saving, setSaving] = useState(false)
   const [updatingId, setUpdatingId] = useState('')
   const [deletingId, setDeletingId] = useState('')
@@ -151,6 +302,9 @@ export default function LotesSection() {
   const [editName, setEditName] = useState('')
   const [editNotes, setEditNotes] = useState('')
   const [editProtectionWeightGrams, setEditProtectionWeightGrams] = useState('0')
+  const [editCustomsFactor, setEditCustomsFactor] = useState('2')
+  const [editLoteMode, setEditLoteMode] = useState('auto')
+  const [editLoteKgManual, setEditLoteKgManual] = useState('1')
   const [editItemRows, setEditItemRows] = useState([{ calculator_product_id: '', quantity: '1' }])
 
   const productsMap = useMemo(() => {
@@ -158,6 +312,7 @@ export default function LotesSection() {
     for (const p of products) map.set(String(p.id), p)
     return map
   }, [products])
+  const brlPerJpy = useMemo(() => resolveBrlPerJpyFromSettings(systemSettings || {}), [systemSettings])
 
   const createProtectionWeight = Math.max(0, Math.floor(Number(protectionWeightGrams) || 0))
 
@@ -165,11 +320,27 @@ export default function LotesSection() {
     () => buildSelectedItems(editItemRows, productsMap),
     [editItemRows, productsMap],
   )
-  const editProductsWeightGrams = useMemo(
-    () => editSelectedItems.reduce((acc, item) => acc + item.line_weight_grams, 0),
-    [editSelectedItems],
-  )
   const editProtectionWeight = Math.max(0, Math.floor(Number(editProtectionWeightGrams) || 0))
+  const editBatchSummary = useMemo(() => {
+    const loteKg = editLoteMode === 'manual' ? Number(editLoteKgManual) || 1 : null
+    return computeBatchSummary({
+      items: editSelectedItems,
+      protectionWeightGrams: editProtectionWeight,
+      loteKg,
+      customsFactor: Number(editCustomsFactor) || 2,
+      brlPerJpy,
+    })
+  }, [editSelectedItems, editProtectionWeight, editLoteMode, editLoteKgManual, editCustomsFactor, brlPerJpy])
+  const loteRateTable = useMemo(
+    () => [1, 2, 3, 5, 10, 15, 20, 25, 30]
+      .map((kg) => getLoteRateRow(kg))
+      .filter(Boolean),
+    [],
+  )
+  const editBatchSummaryWithTable = useMemo(
+    () => ({ ...editBatchSummary, shippingTable: loteRateTable }),
+    [editBatchSummary, loteRateTable],
+  )
 
   const loadProducts = useCallback(async () => {
     setLoadingProducts(true)
@@ -181,6 +352,18 @@ export default function LotesSection() {
       setProducts(data)
     }
     setLoadingProducts(false)
+  }, [])
+
+  const loadSettings = useCallback(async () => {
+    setLoadingSettings(true)
+    const { data, error } = await getSystemSettings()
+    if (error) {
+      setFeedback(error.message || 'Falha ao carregar cotações da calculadora.')
+      setSystemSettings(null)
+    } else {
+      setSystemSettings(data || {})
+    }
+    setLoadingSettings(false)
   }, [])
 
   const loadBatches = useCallback(async () => {
@@ -197,8 +380,8 @@ export default function LotesSection() {
 
   useEffect(() => {
     if (activeTab !== 'lotes') return
-    void Promise.all([loadProducts(), loadBatches()])
-  }, [activeTab, loadProducts, loadBatches])
+    void Promise.all([loadProducts(), loadBatches(), loadSettings()])
+  }, [activeTab, loadProducts, loadBatches, loadSettings])
 
   if (activeTab !== 'lotes') return null
 
@@ -215,6 +398,12 @@ export default function LotesSection() {
     setEditNotes(batch.notes || '')
     setEditProtectionWeightGrams(String(batch.protection_weight_grams ?? 0))
     setEditItemRows(batchItemsToRows(batch.items))
+    const firstSnapshot = Array.isArray(batch.items) && batch.items.length > 0
+      ? (batch.items[0]?.snapshot || {})
+      : {}
+    setEditCustomsFactor(String(firstSnapshot.customs_factor ?? 2))
+    setEditLoteMode('auto')
+    setEditLoteKgManual(String(resolveLoteKgForWeightGrams(batch.total_weight_grams)))
     setFeedback('')
   }
 
@@ -223,6 +412,9 @@ export default function LotesSection() {
     setEditName('')
     setEditNotes('')
     setEditProtectionWeightGrams('0')
+    setEditCustomsFactor('2')
+    setEditLoteMode('auto')
+    setEditLoteKgManual('1')
     setEditItemRows([{ calculator_product_id: '', quantity: '1' }])
   }
 
@@ -293,6 +485,12 @@ export default function LotesSection() {
               line_weight_grams: item.line_weight_grams,
               snapshot: {
                 name: item.product.name,
+                base_cost_yen: item.product.base_cost_yen,
+                declared_value_yen: item.product.declared_value_yen,
+                customs_factor: item.product.customs_factor,
+                margin_percent: item.product.margin_percent,
+                brl_per_jpy: item.product.brl_per_jpy,
+                final_price_brl: item.product.final_price_brl,
                 weight_grams: item.product.weight_grams,
               },
             })) }
@@ -322,7 +520,7 @@ export default function LotesSection() {
     <section className="mt-0 rounded-b-xl border border-t-0 border-earth-200 bg-earth-50 p-6">
       <h2 className="text-lg font-semibold text-earth-900">Lotes</h2>
       <p className="mt-1 text-sm text-earth-600">
-        Crie um lote vazio e adicione produtos da calculadora Brasil aos poucos. Os pesos são recalculados ao salvar.
+        Crie um lote vazio, adicione produtos e acompanhe valores do lote com frete EMS e alfândega na mesma tela.
       </p>
 
       <div className="mt-4 rounded-lg border border-earth-200 bg-white p-4">
@@ -361,7 +559,9 @@ export default function LotesSection() {
           />
         </label>
 
-        <WeightSummary productsWeightGrams={0} protectionWeight={createProtectionWeight} />
+        <div className="mt-4 rounded border border-earth-200 bg-earth-50 p-3 text-sm text-earth-700">
+          Peso inicial do lote: <strong>{formatGramsAsWeightLabel(createProtectionWeight)}</strong>
+        </div>
 
         <div className="mt-4 flex items-center gap-3">
           <button
@@ -410,19 +610,24 @@ export default function LotesSection() {
               <tbody>
                 {batches.map((batch) => {
                   const itemList = Array.isArray(batch.items) ? batch.items : []
-                  const itemSummary = itemList
-                    .map((it) => {
-                      const name = String(it?.snapshot?.name || '').trim() || 'Item'
-                      const qty = Number(it?.quantity) || 0
-                      return `${name} x${qty}`
-                    })
-                    .join(', ')
                   const isEditing = editingBatchId === batch.id
                   return (
                     <Fragment key={batch.id}>
                       <tr className="border-b border-earth-100 hover:bg-earth-50/80">
                         <td className="px-2 py-2 font-medium text-earth-900">{batch.name}</td>
-                        <td className="px-2 py-2 text-earth-700">{itemSummary || '—'}</td>
+                        <td className="px-2 py-2 text-earth-700">
+                          {itemList.length === 0 ? (
+                            <span>—</span>
+                          ) : (
+                            <div className="space-y-1">
+                              {itemList.map((it, idx) => (
+                                <p key={`${batch.id}-item-${idx}`} className="text-xs text-earth-700">
+                                  {formatSnapshotItemLine(it)}
+                                </p>
+                              ))}
+                            </div>
+                          )}
+                        </td>
                         <td className="px-2 py-2 text-earth-700">{formatGramsAsWeightLabel(batch.products_weight_grams)}</td>
                         <td className="px-2 py-2 text-earth-700">{formatGramsAsWeightLabel(batch.protection_weight_grams)}</td>
                         <td className="px-2 py-2 font-semibold text-earth-900">{formatGramsAsWeightLabel(batch.total_weight_grams)}</td>
@@ -490,16 +695,24 @@ export default function LotesSection() {
                                 <BatchItemsEditor
                                   itemRows={editItemRows}
                                   products={products}
+                                  productsMap={productsMap}
                                   loadingProducts={loadingProducts}
+                                  brlPerJpy={brlPerJpy}
                                   onAddRow={handleAddEditRow}
                                   onRemoveRow={handleRemoveEditRow}
                                   onUpdateRow={handleUpdateEditRow}
                                 />
                               </div>
 
-                              <WeightSummary
-                                productsWeightGrams={editProductsWeightGrams}
-                                protectionWeight={editProtectionWeight}
+                              <BatchTotalsPanel
+                                summary={editBatchSummaryWithTable}
+                                brlPerJpy={brlPerJpy}
+                                customsFactor={editCustomsFactor}
+                                loteMode={editLoteMode}
+                                loteKgManual={editLoteKgManual}
+                                onCustomsFactorChange={setEditCustomsFactor}
+                                onLoteModeChange={setEditLoteMode}
+                                onLoteKgManualChange={setEditLoteKgManual}
                               />
 
                               <div className="mt-4 flex items-center gap-3">
@@ -511,6 +724,9 @@ export default function LotesSection() {
                                 >
                                   {updatingId === editingBatchId ? 'Salvando...' : 'Salvar lote'}
                                 </button>
+                                {loadingSettings ? (
+                                  <p className="text-xs text-earth-500">Atualizando cotação BRL/JPY...</p>
+                                ) : null}
                                 {feedback && editingBatchId ? (
                                   <p className="text-sm text-earth-700">{feedback}</p>
                                 ) : null}
