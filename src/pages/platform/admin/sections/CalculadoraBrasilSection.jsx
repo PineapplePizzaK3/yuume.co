@@ -17,6 +17,7 @@ import {
   SHIPPING_MODE_DIRETO,
   SHIPPING_MODE_LOTE,
 } from '../../../../lib/brazilPriceCalculator'
+import { openComparativeSearchTabs } from '../../../../lib/comparativeSearch'
 
 function shippingLabel(row) {
   if (row.shipping_mode === SHIPPING_MODE_LOTE) {
@@ -205,6 +206,15 @@ export default function CalculadoraBrasilSection() {
     setDeletingTemplateId('')
   }
 
+  const handleCompare = (title) => {
+    const opened = openComparativeSearchTabs(title)
+    if (!opened) {
+      setListError('Informe um título de produto para pesquisar.')
+      return
+    }
+    setListError('')
+  }
+
   if (activeTab !== 'calculadora_brasil') return null
 
   return (
@@ -348,30 +358,42 @@ export default function CalculadoraBrasilSection() {
             {items.map((row) => {
               const selected = editingProduct?.id === row.id
               return (
-                <button
+                <div
                   key={row.id}
-                  type="button"
-                  onClick={() => handleEdit(row)}
                   className={`rounded-2xl border p-4 text-left transition ${
                     selected
                       ? 'border-emerald-400 bg-emerald-50 shadow-sm ring-2 ring-emerald-200'
                       : 'border-earth-200 bg-white hover:border-earth-300 hover:shadow-sm'
                   }`}
                 >
-                  <p className="font-semibold text-earth-900">{row.name}</p>
-                  <p className="mt-1 text-xs text-earth-500">
-                    {formatWeight((row.weight_grams || 0) / 1000)} · {shippingLabel(row)}
-                  </p>
-                  <p className="mt-3 text-lg font-bold text-emerald-800">
-                    {formatBRL(row.final_price_brl)}
-                  </p>
-                  <p className="mt-0.5 text-xs text-earth-500">
-                    {formatJPY(brlToYen(row.final_price_brl, row.brl_per_jpy))}
-                  </p>
-                  {selected ? (
-                    <p className="mt-3 text-xs font-medium text-emerald-700">Selecionado</p>
-                  ) : null}
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => handleEdit(row)}
+                    className="w-full text-left"
+                  >
+                    <p className="font-semibold text-earth-900">{row.name}</p>
+                    <p className="mt-1 text-xs text-earth-500">
+                      {formatWeight((row.weight_grams || 0) / 1000)} · {shippingLabel(row)}
+                    </p>
+                    <p className="mt-3 text-lg font-bold text-emerald-800">
+                      {formatBRL(row.final_price_brl)}
+                    </p>
+                    <p className="mt-0.5 text-xs text-earth-500">
+                      {formatJPY(brlToYen(row.final_price_brl, row.brl_per_jpy))}
+                    </p>
+                    {selected ? (
+                      <p className="mt-3 text-xs font-medium text-emerald-700">Selecionado</p>
+                    ) : null}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleCompare(row.name)}
+                    className="mt-3 text-xs font-semibold text-sky-700 hover:text-sky-900"
+                    title="Abrir OLX, Mercado Livre e Google com o título do produto"
+                  >
+                    Comparar preços
+                  </button>
+                </div>
               )
             })}
           </div>
@@ -432,6 +454,14 @@ export default function CalculadoraBrasilSection() {
                           className="text-xs font-medium text-earth-700 hover:text-earth-900"
                         >
                           {editingProduct?.id === row.id ? 'Editando' : 'Editar'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleCompare(row.name)}
+                          className="text-xs font-medium text-sky-700 hover:text-sky-900"
+                          title="Abrir OLX, Mercado Livre e Google com o título do produto"
+                        >
+                          Comparar
                         </button>
                         <button
                           type="button"

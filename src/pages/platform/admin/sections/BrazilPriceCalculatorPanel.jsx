@@ -18,6 +18,7 @@ import {
   resolveBrlPerJpyFromSettings,
   toWeightGrams,
 } from '../../../../lib/brazilPriceCalculator'
+import { openComparativeSearchTabs } from '../../../../lib/comparativeSearch'
 
 function resolveMoneyPair(yen, brl, brlPerJpy) {
   const rate = Number(brlPerJpy) || 0
@@ -1658,6 +1659,23 @@ export default function BrazilPriceCalculatorPanel({
             {isEditing ? 'Cancelar edicao' : 'Cancelar template'}
           </button>
         ) : null}
+
+        <button
+          type="button"
+          onClick={() => {
+            const opened = openComparativeSearchTabs(productName)
+            if (!opened) {
+              setSaveFeedback('Informe o nome do produto para comparar nos sites.')
+            } else {
+              setSaveFeedback('Pesquisas abertas em novas abas (OLX, Mercado Livre e Google).')
+            }
+          }}
+          disabled={!String(productName).trim()}
+          className="rounded-lg border border-sky-300 bg-sky-50 px-4 py-2 text-sm font-semibold text-sky-900 hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-50"
+          title="Abrir OLX, Mercado Livre e Google com o título do produto"
+        >
+          Comparar preços
+        </button>
 
         {saveFeedback ? (
 
