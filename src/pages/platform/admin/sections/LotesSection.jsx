@@ -42,7 +42,7 @@ function getItemDeclaredYen(source = {}) {
 
 function buildSelectedItems(itemRows, productsMap) {
   return itemRows
-    .map((row) => {
+    .map((row, index) => {
       const productId = String(row.calculator_product_id || '').trim()
       const qty = Math.max(0, Math.floor(Number(row.quantity) || 0))
       if (!productId || qty <= 0) return null
@@ -53,8 +53,12 @@ function buildSelectedItems(itemRows, productsMap) {
       const unitBase = Math.max(0, Number(product.base_cost_yen) || 0)
       const unitDeclared = getItemDeclaredYen(product)
       const unitFinalBrl = Math.max(0, Number(product.final_price_brl) || 0)
+      const unitMarginPercent = Math.max(0, Number(product.margin_percent) || 0)
+      const unitPackagingBrl = Math.max(0, Number(product.packaging_brl) || 0)
+      const unitLocalShippingBrl = Math.max(0, Number(product.local_shipping_brl) || 0)
       return {
         product,
+        row_id: String(index),
         calculator_product_id: productId,
         quantity: qty,
         unit_weight_grams: unitWeight,
@@ -62,6 +66,9 @@ function buildSelectedItems(itemRows, productsMap) {
         weight_grams: unitWeight,
         base_cost_yen: unitBase,
         declared_value_yen: unitDeclared,
+        margin_percent: unitMarginPercent,
+        packaging_brl: unitPackagingBrl,
+        local_shipping_brl: unitLocalShippingBrl,
         final_price_brl: unitFinalBrl,
       }
     })
@@ -94,6 +101,7 @@ function BatchItemsEditor({
   productsMap,
   loadingProducts,
   brlPerJpy,
+  pricingByRowId,
   onAddRow,
   onRemoveRow,
   onUpdateRow,
@@ -122,9 +130,13 @@ function BatchItemsEditor({
           const unitBase = Math.max(0, Number(selectedProduct?.base_cost_yen) || 0)
           const unitDeclared = getItemDeclaredYen(selectedProduct || {})
           const unitFinalBrl = Math.max(0, Number(selectedProduct?.final_price_brl) || 0)
+          const rowPricing = pricingByRowId?.[String(index)] || null
           const lineBase = unitBase * quantity
           const lineDeclared = unitDeclared * quantity
-          const lineFinalBrl = unitFinalBrl * quantity
+          const lineFinalBrl = rowPricing
+            ? Number(rowPricing.lineFinalPriceBrl) || 0
+            : unitFinalBrl * quantity
+          const unitFinalInBatchBrl = quantity > 0 ? lineFinalBrl / quantity : 0
           const lineWeight = Math.max(0, Number(selectedProduct?.weight_grams) || 0) * quantity
           return (
             <div key={`row-${index}`} className="rounded border border-earth-200 bg-white p-2.5">
@@ -161,7 +173,7 @@ function BatchItemsEditor({
               </div>
 
               {selectedProduct ? (
-                <div className="mt-2 grid gap-1 text-xs text-earth-700 md:grid-cols-2 xl:grid-cols-4">
+                <div className="mt-2 grid gap-1 text-xs text-earth-700 md:grid-cols-2 xl:grid-cols-5">
                   <p>
                     <span className="text-earth-500">Peso:</span>{' '}
                     {formatGramsAsWeightLabel(lineWeight)}
@@ -177,6 +189,15 @@ function BatchItemsEditor({
                   <p>
                     <span className="text-earth-500">Preço final (linha):</span>{' '}
                     {formatBRL(lineFinalBrl)}
+                    {rowPricing ? (
+                      <span className="ml-1 text-[11px] text-earth-500">
+                        (recalculado pelo lote atual)
+                      </span>
+                    ) : null}
+                  </p>
+                  <p>
+                    <span className="text-earth-500">Preço final unitário no lote:</span>{' '}
+                    {formatBRL(unitFinalInBatchBrl)}
                   </p>
                 </div>
               ) : (
@@ -739,6 +760,7 @@ export default function LotesSection() {
                                   productsMap={productsMap}
                                   loadingProducts={loadingProducts}
                                   brlPerJpy={brlPerJpy}
+                                  pricingByRowId={editBatchSummary.itemPricingByRowId}
                                   onAddRow={handleAddEditRow}
                                   onRemoveRow={handleRemoveEditRow}
                                   onUpdateRow={handleUpdateEditRow}

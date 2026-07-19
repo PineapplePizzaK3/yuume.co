@@ -180,16 +180,26 @@ export function computeBatchSummary({
     const unitBase = Math.max(0, Number(item?.base_cost_yen) || 0)
     const unitDeclaredRaw = Math.max(0, Number(item?.declared_value_yen) || 0)
     const unitDeclared = unitDeclaredRaw > 0 ? unitDeclaredRaw : unitBase
+    const unitMarginPercent = Math.max(0, Number(item?.margin_percent) || 0)
+    const unitPackagingBrl = Math.max(0, Number(item?.packaging_brl) || 0)
+    const unitLocalShippingBrl = Math.max(0, Number(item?.local_shipping_brl) || 0)
     const unitFinalBrl = Math.max(0, Number(item?.final_price_brl) || 0)
     return {
+      rowId: item?.row_id != null ? String(item.row_id) : null,
+      calculatorProductId: item?.calculator_product_id != null ? String(item.calculator_product_id) : null,
       quantity: qty,
       unitWeightGrams: unitWeight,
       unitBaseCostYen: unitBase,
       unitDeclaredValueYen: unitDeclared,
+      unitMarginPercent,
+      unitPackagingBrl,
+      unitLocalShippingBrl,
       unitFinalPriceBrl: unitFinalBrl,
       lineWeightGrams: unitWeight * qty,
       lineBaseCostYen: unitBase * qty,
       lineDeclaredValueYen: unitDeclared * qty,
+      linePackagingBrl: unitPackagingBrl * qty,
+      lineLocalShippingBrl: unitLocalShippingBrl * qty,
       lineFinalPriceBrl: unitFinalBrl * qty,
     }
   }).filter((item) => item.quantity > 0)
@@ -208,7 +218,8 @@ export function computeBatchSummary({
   const shippingNote = useManualLote
     ? `lote_ems_manual_${selectedLoteKg}kg`
     : `lote_ems_auto_peso_${totalWeightGrams}g`
-  const loteRatePerGram = selectedLoteRow?.costPerGramYen || null
+  const loteRatePerGram = selectedLoteRow?.costPerGramYen
+    || (selectedLoteKg > 0 ? shippingYen / (selectedLoteKg * 1000) : null)
 
   const rate = Math.max(0, Number(brlPerJpy) || 0)
   const factor = Math.max(0, Number(customsFactor) || 0)
@@ -218,10 +229,40 @@ export function computeBatchSummary({
   const customsTaxedYen = taxableYen * factor
   const customsIncrementYen = taxableYen * Math.max(0, factor - 1)
   const landedCostYen = baseCostYen + customsTaxedYen
-  const finalPriceBrl = normalizedItems.reduce((acc, item) => acc + item.lineFinalPriceBrl, 0)
+
+  const normalizedItemsWithBatchFinal = normalizedItems.map((item) => {
+    const lineShippingYen = roundYen(item.lineWeightGrams * Math.max(0, Number(loteRatePerGram) || 0))
+    const lineTaxableYen = item.lineDeclaredValueYen + lineShippingYen
+    const lineCustomsTaxedYen = lineTaxableYen * factor
+    const lineLandedCostYen = item.lineBaseCostYen + lineCustomsTaxedYen
+    const lineBaseCostBrl = item.lineBaseCostYen * rate
+    const lineLandedCostBrl = lineLandedCostYen * rate
+    const lineMarginBrl = lineBaseCostBrl * (item.unitMarginPercent / 100)
+    const lineFinalPriceBrl = lineLandedCostBrl
+      + lineMarginBrl
+      + item.linePackagingBrl
+      + item.lineLocalShippingBrl
+
+    return {
+      ...item,
+      lineShippingYen: roundYen(lineShippingYen),
+      lineTaxableYen: roundYen(lineTaxableYen),
+      lineCustomsTaxedYen: roundYen(lineCustomsTaxedYen),
+      lineLandedCostYen: roundYen(lineLandedCostYen),
+      lineMarginBrl: round2(lineMarginBrl),
+      lineFinalPriceBrl: round2(lineFinalPriceBrl),
+    }
+  })
+  const finalPriceBrl = normalizedItemsWithBatchFinal.reduce((acc, item) => acc + item.lineFinalPriceBrl, 0)
+  const itemPricingByRowId = normalizedItemsWithBatchFinal.reduce((acc, item) => {
+    if (!item.rowId) return acc
+    acc[item.rowId] = item
+    return acc
+  }, {})
 
   return {
-    items: normalizedItems,
+    items: normalizedItemsWithBatchFinal,
+    itemPricingByRowId,
     weights: {
       productsWeightGrams,
       protectionWeightGrams: protectionWeight,
