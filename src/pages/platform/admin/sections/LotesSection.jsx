@@ -248,46 +248,37 @@ function BatchTotalsPanel({
         </label>
       </div>
 
+      <div className="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-4">
+        <div className="rounded border border-emerald-200 bg-emerald-50 p-2.5">
+          <p className="text-[11px] uppercase tracking-wide text-emerald-700">Custo final do lote</p>
+          <p className="mt-1 text-sm font-bold text-emerald-900">{formatPairFromYen(summary.landedCost.yen, brlPerJpy)}</p>
+        </div>
+        <div className="rounded border border-sky-200 bg-sky-50 p-2.5">
+          <p className="text-[11px] uppercase tracking-wide text-sky-700">Peso total</p>
+          <p className="mt-1 text-sm font-bold text-sky-900">{formatGramsAsWeightLabel(summary.weights.totalWeightGrams)}</p>
+        </div>
+        <div className="rounded border border-amber-200 bg-amber-50 p-2.5">
+          <p className="text-[11px] uppercase tracking-wide text-amber-700">Impostos alfandegários</p>
+          <p className="mt-1 text-sm font-bold text-amber-900">{formatPairFromYen(summary.customs.taxedYen, brlPerJpy)}</p>
+        </div>
+        <div className="rounded border border-violet-200 bg-violet-50 p-2.5">
+          <p className="text-[11px] uppercase tracking-wide text-violet-700">Frete internacional</p>
+          <p className="mt-1 text-sm font-bold text-violet-900">{formatPairFromYen(summary.shipping.yen, brlPerJpy)}</p>
+        </div>
+      </div>
+
       <div className="mt-3 grid gap-2 text-sm text-earth-800 md:grid-cols-2 xl:grid-cols-3">
-        <p>
-          <span className="text-earth-600">Peso produtos:</span>{' '}
-          <strong>{formatGramsAsWeightLabel(summary.weights.productsWeightGrams)}</strong>
-        </p>
-        <p>
-          <span className="text-earth-600">Peso proteções:</span>{' '}
-          <strong>{formatGramsAsWeightLabel(summary.weights.protectionWeightGrams)}</strong>
-        </p>
-        <p>
-          <span className="text-earth-600">Peso final:</span>{' '}
-          <strong>{formatGramsAsWeightLabel(summary.weights.totalWeightGrams)}</strong>
-        </p>
+        <p><span className="text-earth-600">Peso produtos:</span> <strong>{formatGramsAsWeightLabel(summary.weights.productsWeightGrams)}</strong></p>
+        <p><span className="text-earth-600">Peso proteções:</span> <strong>{formatGramsAsWeightLabel(summary.weights.protectionWeightGrams)}</strong></p>
         <p>
           <span className="text-earth-600">Faixa EMS usada:</span>{' '}
           <strong>{summary.shipping.loteKg} kg</strong>
-          {summary.shipping.loteKg !== summary.shipping.autoLoteKg
-            ? ` (auto: ${summary.shipping.autoLoteKg} kg)`
-            : ''}
+          {summary.shipping.loteKg !== summary.shipping.autoLoteKg ? ` (auto: ${summary.shipping.autoLoteKg} kg)` : ''}
         </p>
-        <p>
-          <span className="text-earth-600">Frete internacional:</span>{' '}
-          <strong>{formatPairFromYen(summary.shipping.yen, brlPerJpy)}</strong>
-        </p>
-        <p>
-          <span className="text-earth-600">Valor declarado do lote:</span>{' '}
-          <strong>{formatPairFromYen(summary.sums.declaredValueYen, brlPerJpy)}</strong>
-        </p>
-        <p>
-          <span className="text-earth-600">Impostos alfandegários:</span>{' '}
-          <strong>{formatPairFromYen(summary.customs.taxedYen, brlPerJpy)}</strong>
-        </p>
-        <p>
-          <span className="text-earth-600">Custo no Brasil (lote):</span>{' '}
-          <strong>{formatPairFromYen(summary.landedCost.yen, brlPerJpy)}</strong>
-        </p>
-        <p>
-          <span className="text-earth-600">Soma preços finais:</span>{' '}
-          <strong>{formatBRL(summary.sums.finalPriceBrl)}</strong>
-        </p>
+        <p><span className="text-earth-600">Valor base dos produtos:</span> <strong>{formatPairFromYen(summary.sums.baseCostYen, brlPerJpy)}</strong></p>
+        <p><span className="text-earth-600">Valor declarado do lote:</span> <strong>{formatPairFromYen(summary.sums.declaredValueYen, brlPerJpy)}</strong></p>
+        <p><span className="text-earth-600">Base aduaneira (declarado + frete):</span> <strong>{formatPairFromYen(summary.customs.taxableYen, brlPerJpy)}</strong></p>
+        <p><span className="text-earth-600">Soma preços finais dos itens:</span> <strong>{formatBRL(summary.sums.finalPriceBrl)}</strong></p>
       </div>
     </div>
   )
