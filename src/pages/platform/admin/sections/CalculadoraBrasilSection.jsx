@@ -3,7 +3,11 @@ import { useAdminContext } from '../AdminContext'
 import BrazilPriceCalculatorPanel from './BrazilPriceCalculatorPanel'
 import { brlToYen, formatBRL, formatJPY, formatPairFromBrl, formatPairFromYen, formatWeight } from '../../../../lib/fx'
 import {
+  createCalculatorProductTemplateAdmin,
   deleteCalculatorProductAdmin,
+  deleteCalculatorProductTemplateAdmin,
+  duplicateCalculatorProductAdmin,
+  listCalculatorProductTemplatesAdmin,
   listCalculatorProductsAdmin,
 } from '../../../../services/calculatorProductService'
 import {
@@ -28,21 +32,40 @@ export default function CalculadoraBrasilSection() {
   const { activeTab } = useAdminContext()
   const [viewMode, setViewMode] = useState('loja')
   const [items, setItems] = useState([])
+  const [templates, setTemplates] = useState([])
   const [loading, setLoading] = useState(false)
   const [deletingId, setDeletingId] = useState('')
+  const [duplicatingId, setDuplicatingId] = useState('')
+  const [savingTemplateId, setSavingTemplateId] = useState('')
+  const [deletingTemplateId, setDeletingTemplateId] = useState('')
   const [editingProduct, setEditingProduct] = useState(null)
+  const [baseProduct, setBaseProduct] = useState(null)
   const [listError, setListError] = useState('')
   const isStoreView = viewMode !== 'cliente'
 
   const loadItems = useCallback(async () => {
     setLoading(true)
     setListError('')
-    const { data, error } = await listCalculatorProductsAdmin()
-    if (error) {
-      setListError(error.message || 'Falha ao carregar produtos da calculadora.')
+    const [productsResult, templatesResult] = await Promise.all([
+      listCalculatorProductsAdmin(),
+      listCalculatorProductTemplatesAdmin(),
+    ])
+    if (productsResult.error || templatesResult.error) {
+      setListError(
+        productsResult.error?.message
+        || templatesResult.error?.message
+        || 'Falha ao carregar produtos e templates da calculadora.'
+      )
+    }
+    if (productsResult.error) {
       setItems([])
     } else {
-      setItems(data)
+      setItems(productsResult.data)
+    }
+    if (templatesResult.error) {
+      setTemplates([])
+    } else {
+      setTemplates(templatesResult.data)
     }
     setLoading(false)
   }, [])
@@ -67,6 +90,7 @@ export default function CalculadoraBrasilSection() {
   }
 
   const handleEdit = (row) => {
+    setBaseProduct(null)
     setEditingProduct(row)
     setListError('')
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -74,7 +98,111 @@ export default function CalculadoraBrasilSection() {
 
   const handleSaved = () => {
     setEditingProduct(null)
+    setBaseProduct(null)
     void loadItems()
+  }
+
+  const handleDuplicate = async (row) => {
+    if (!row?.id) return
+    setDuplicatingId(row.id)
+    setListError('')
+    const { error } = await duplicateCalculatorProductAdmin(row)
+    if (error) {
+      setListError(error.message || 'Falha ao duplicar produto.')
+    } else {
+      await loadItems()
+    }
+    setDuplicatingId('')
+  }
+
+  const handleCreateTemplate = async (row) => {
+    if (!row?.id) return
+    const name = window.prompt('Nome do template:', row.name || '')
+    if (name == null) return
+    const trimmedName = name.trim()
+    if (!trimmedName) {
+      setListError('Informe um nome para o template.')
+      return
+    }
+
+    setSavingTemplateId(row.id)
+    setListError('')
+    const snap = row.calculation_snapshot && typeof row.calculation_snapshot === 'object'
+      ? row.calculation_snapshot
+      : {}
+    const snapInputs = snap.inputs && typeof snap.inputs === 'object' ? snap.inputs : {}
+    const templateData = {
+      notes: row.notes || null,
+      base_cost_yen: row.base_cost_yen,
+      declared_value_yen: row.declared_value_yen,
+      weight_grams: row.weight_grams,
+      shipping_mode: row.shipping_mode,
+      direct_method: row.direct_method,
+      lote_kg: row.lote_kg,
+      customs_factor: row.customs_factor,
+      margin_percent: row.margin_percent,
+      packaging_brl: row.packaging_brl,
+      local_shipping_brl: row.local_shipping_brl,
+      // Snapshot só com entradas reutilizáveis; câmbio/preço final são recalculados na aplicação.
+      calculation_snapshot: {
+        inputs: {
+          quantity: snapInputs.quantity ?? 1,
+          applyIof: Boolean(snapInputs.applyIof),
+          iofPercent: snapInputs.iofPercent,
+          paymentFeePercents: snapInputs.paymentFeePercents || {},
+          paymentFixedUsdByMethod: snapInputs.paymentFixedUsdByMethod || {},
+          unitBaseCostYen: snapInputs.unitBaseCostYen,
+          unitDeclaredValueInput: snapInputs.unitDeclaredValueInput,
+          unitDeclaredValueYen: snapInputs.unitDeclaredValueYen,
+          unitWeightGrams: snapInputs.unitWeightGrams,
+          shippingMode: snapInputs.shippingMode,
+          directMethod: snapInputs.directMethod,
+          loteKg: snapInputs.loteKg,
+          customsFactor: snapInputs.customsFactor,
+          marginPercent: snapInputs.marginPercent,
+          packagingBrl: snapInputs.packagingBrl,
+          localShippingBrl: snapInputs.localShippingBrl,
+        },
+      },
+    }
+    const { error } = await createCalculatorProductTemplateAdmin(trimmedName, templateData)
+    if (error) {
+      setListError(error.message || 'Falha ao criar template.')
+    } else {
+      await loadItems()
+    }
+    setSavingTemplateId('')
+  }
+
+  const handleUseTemplate = (template) => {
+    const data = template?.template_data
+    if (!data || typeof data !== 'object') {
+      setListError('Este template não possui dados válidos.')
+      return
+    }
+    setEditingProduct(null)
+    setBaseProduct({
+      ...data,
+      name: '',
+      __templateName: template.name,
+      __templateKey: `${template.id}-${Date.now()}`,
+    })
+    setListError('')
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const handleDeleteTemplate = async (id) => {
+    if (!id) return
+    if (!window.confirm('Remover este template da calculadora?')) return
+    setDeletingTemplateId(id)
+    setListError('')
+    const { error } = await deleteCalculatorProductTemplateAdmin(id)
+    if (error) {
+      setListError(error.message || 'Falha ao remover template.')
+    } else {
+      setTemplates((prev) => prev.filter((template) => template.id !== id))
+    }
+    setDeletingTemplateId('')
   }
 
   if (activeTab !== 'calculadora_brasil') return null
@@ -119,9 +247,61 @@ export default function CalculadoraBrasilSection() {
       <BrazilPriceCalculatorPanel
         viewMode={viewMode}
         editingProduct={editingProduct}
-        onCancelEdit={() => setEditingProduct(null)}
+        baseProduct={baseProduct}
+        onCancelEdit={() => {
+          setEditingProduct(null)
+          setBaseProduct(null)
+        }}
         onRegistered={handleSaved}
       />
+
+      {isStoreView ? (
+        <div className="mt-8 rounded-lg border border-amber-200 bg-amber-50/60 p-4">
+          <div className="mb-3">
+            <h3 className="font-medium text-earth-900">Templates da calculadora</h3>
+            <p className="text-xs text-earth-600">
+              Use um template para preencher um novo produto com os mesmos custos, envio, margem e taxas.
+            </p>
+          </div>
+
+          {templates.length === 0 ? (
+            <p className="text-sm text-earth-600">
+              Nenhum template criado. Use “Criar template” em um produto cadastrado.
+            </p>
+          ) : (
+            <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+              {templates.map((template) => {
+                const data = template.template_data || {}
+                return (
+                  <div key={template.id} className="rounded-lg border border-amber-200 bg-white p-3">
+                    <p className="font-medium text-earth-900">{template.name}</p>
+                    <p className="mt-1 text-xs text-earth-600">
+                      Margem {Number(data.margin_percent || 0)}% · {shippingLabel(data)}
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-3">
+                      <button
+                        type="button"
+                        onClick={() => handleUseTemplate(template)}
+                        className="text-xs font-semibold text-amber-800 hover:text-amber-950"
+                      >
+                        Usar como base
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void handleDeleteTemplate(template.id)}
+                        disabled={deletingTemplateId === template.id}
+                        className="text-xs font-medium text-red-600 hover:text-red-800 disabled:opacity-50"
+                      >
+                        {deletingTemplateId === template.id ? 'Removendo...' : 'Remover'}
+                      </button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      ) : null}
 
       <div className={`mt-8 ${isStoreView ? 'rounded-lg border border-earth-200 bg-white p-4' : ''}`}>
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -252,6 +432,22 @@ export default function CalculadoraBrasilSection() {
                           className="text-xs font-medium text-earth-700 hover:text-earth-900"
                         >
                           {editingProduct?.id === row.id ? 'Editando' : 'Editar'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void handleDuplicate(row)}
+                          disabled={duplicatingId === row.id}
+                          className="text-xs font-medium text-emerald-700 hover:text-emerald-900 disabled:opacity-50"
+                        >
+                          {duplicatingId === row.id ? 'Duplicando...' : 'Duplicar'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void handleCreateTemplate(row)}
+                          disabled={savingTemplateId === row.id}
+                          className="text-xs font-medium text-amber-700 hover:text-amber-900 disabled:opacity-50"
+                        >
+                          {savingTemplateId === row.id ? 'Salvando...' : 'Criar template'}
                         </button>
                         <button
                           type="button"

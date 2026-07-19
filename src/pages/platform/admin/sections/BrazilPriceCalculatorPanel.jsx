@@ -297,6 +297,7 @@ function getDeclaredValueForForm(product, snapshotInputs = {}) {
 export default function BrazilPriceCalculatorPanel({
   viewMode = 'loja',
   editingProduct = null,
+  baseProduct = null,
   onCancelEdit,
   onRegistered,
 }) {
@@ -351,14 +352,16 @@ export default function BrazilPriceCalculatorPanel({
   const [saveFeedback, setSaveFeedback] = useState('')
 
   const isEditing = Boolean(editingProduct?.id)
+  const sourceProduct = editingProduct || baseProduct
+  const isUsingBase = Boolean(!isEditing && baseProduct)
   const editingProductIdRef = useRef(editingProduct?.id || null)
   editingProductIdRef.current = editingProduct?.id || null
 
   useEffect(() => {
-    if (!editingProduct?.id) return
+    if (!sourceProduct) return
 
     const snap = (() => {
-      const raw = editingProduct.calculation_snapshot
+      const raw = sourceProduct.calculation_snapshot
       if (!raw) return {}
       if (typeof raw === 'string') {
         try {
@@ -370,31 +373,31 @@ export default function BrazilPriceCalculatorPanel({
       return raw
     })()
     const inputs = snap.inputs || {}
-    setProductName(editingProduct.name || '')
-    setProductNotes(editingProduct.notes || '')
-    setBaseCostYen(String(editingProduct.base_cost_yen ?? ''))
-    setDeclaredValueYen(getDeclaredValueForForm(editingProduct, inputs))
-    setWeightValue(String(editingProduct.weight_grams ?? ''))
+    setProductName(sourceProduct.name || '')
+    setProductNotes(sourceProduct.notes || '')
+    setBaseCostYen(String(sourceProduct.base_cost_yen ?? inputs.unitBaseCostYen ?? ''))
+    setDeclaredValueYen(getDeclaredValueForForm(sourceProduct, inputs))
+    setWeightValue(String(sourceProduct.weight_grams ?? inputs.unitWeightGrams ?? ''))
     setWeightUnit('g')
     setQuantity(String(inputs.quantity ?? '1'))
-    setShippingMode(editingProduct.shipping_mode === SHIPPING_MODE_DIRETO ? SHIPPING_MODE_DIRETO : SHIPPING_MODE_LOTE)
-    setLoteKg(String(editingProduct.lote_kg ?? '1'))
+    setShippingMode(sourceProduct.shipping_mode === SHIPPING_MODE_DIRETO ? SHIPPING_MODE_DIRETO : SHIPPING_MODE_LOTE)
+    setLoteKg(String(sourceProduct.lote_kg ?? '1'))
     setDirectMethod(
-      editingProduct.direct_method === DIRECT_METHOD_EPACKET
+      sourceProduct.direct_method === DIRECT_METHOD_EPACKET
         ? DIRECT_METHOD_EPACKET
-        : editingProduct.direct_method === DIRECT_METHOD_AIRMAIL
+        : sourceProduct.direct_method === DIRECT_METHOD_AIRMAIL
           ? DIRECT_METHOD_AIRMAIL
           : DIRECT_METHOD_EMS
     )
-    setCustomsFactor(String(editingProduct.customs_factor ?? '2'))
-    setMarginPercent(getMarginPercentForForm(editingProduct, inputs, systemMarginDefault))
-    setPackagingBrl(String(editingProduct.packaging_brl ?? '0'))
-    setLocalShippingBrl(String(editingProduct.local_shipping_brl ?? '0'))
+    setCustomsFactor(String(sourceProduct.customs_factor ?? inputs.customsFactor ?? '2'))
+    setMarginPercent(getMarginPercentForForm(sourceProduct, inputs, systemMarginDefault))
+    setPackagingBrl(String(sourceProduct.packaging_brl ?? inputs.packagingBrl ?? '0'))
+    setLocalShippingBrl(String(sourceProduct.local_shipping_brl ?? inputs.localShippingBrl ?? '0'))
     setApplyIof(Boolean(inputs.applyIof))
     setIofPercent(String(inputs.iofPercent ?? DEFAULT_IOF_PERCENT))
     setPaymentFeePercents(normalizePaymentFeePercents(inputs.paymentFeePercents || {}))
     setSaveFeedback('')
-  }, [editingProduct])
+  }, [sourceProduct])
 
   const resetForm = () => {
     setProductName('')
@@ -797,10 +800,14 @@ export default function BrazilPriceCalculatorPanel({
 
   return (
 
-    <div className={`mt-6 rounded-lg border bg-white p-4 ${isEditing ? 'border-amber-300' : 'border-emerald-200'}`}>
+    <div className={`mt-6 rounded-lg border bg-white p-4 ${isEditing || isUsingBase ? 'border-amber-300' : 'border-emerald-200'}`}>
 
       <h3 className="text-base font-semibold text-earth-900">
-        {isEditing ? `Editar produto: ${editingProduct.name}` : 'Nova simulacao (visao loja)'}
+        {isEditing
+          ? `Editar produto: ${editingProduct.name}`
+          : isUsingBase
+            ? `Novo produto baseado em: ${baseProduct.__templateName || baseProduct.name || 'template'}`
+            : 'Nova simulacao (visao loja)'}
       </h3>
 
       <p className="mt-1 text-xs text-earth-600">
@@ -1641,14 +1648,14 @@ export default function BrazilPriceCalculatorPanel({
 
         </button>
 
-        {isEditing ? (
+        {isEditing || isUsingBase ? (
           <button
             type="button"
             onClick={handleCancelEdit}
             disabled={saving}
             className="rounded-lg border border-earth-300 bg-white px-4 py-2 text-sm font-semibold text-earth-700 hover:bg-earth-50 disabled:opacity-50"
           >
-            Cancelar edicao
+            {isEditing ? 'Cancelar edicao' : 'Cancelar template'}
           </button>
         ) : null}
 
