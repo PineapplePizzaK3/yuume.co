@@ -156,6 +156,7 @@ export function computeBatchSummary({
   items = [],
   protectionWeightGrams = 0,
   loteKg = null,
+  loteMode = 'auto',
   customsFactor = 2,
   brlPerJpy = 0,
 } = {}) {
@@ -184,18 +185,21 @@ export function computeBatchSummary({
   const totalWeightGrams = productsWeightGrams + protectionWeight
   const autoLoteKg = resolveLoteKgForWeightGrams(totalWeightGrams)
   const selectedLoteKg = getLoteRateRow(loteKg) ? Number(loteKg) : autoLoteKg
-  const shipping = computeInternationalShippingYen({
-    shippingMode: SHIPPING_MODE_LOTE,
-    directMethod: DIRECT_METHOD_EMS,
-    productWeightGrams: totalWeightGrams,
-    loteKg: selectedLoteKg,
-  })
+  const selectedLoteRow = getLoteRateRow(selectedLoteKg)
+  const useManualLote = String(loteMode) === 'manual'
+  const shippingYen = useManualLote && selectedLoteRow
+    ? roundYen(selectedLoteRow.totalEmsYen)
+    : roundYen(calcularFreteEMS(totalWeightGrams))
+  const shippingNote = useManualLote
+    ? `lote_ems_manual_${selectedLoteKg}kg`
+    : `lote_ems_auto_peso_${totalWeightGrams}g`
+  const loteRatePerGram = selectedLoteRow?.costPerGramYen || null
 
   const rate = Math.max(0, Number(brlPerJpy) || 0)
   const factor = Math.max(0, Number(customsFactor) || 0)
   const baseCostYen = normalizedItems.reduce((acc, item) => acc + item.lineBaseCostYen, 0)
   const declaredValueYen = normalizedItems.reduce((acc, item) => acc + item.lineDeclaredValueYen, 0)
-  const taxableYen = declaredValueYen + shipping.valueYen
+  const taxableYen = declaredValueYen + shippingYen
   const customsTaxedYen = taxableYen * factor
   const customsIncrementYen = taxableYen * Math.max(0, factor - 1)
   const landedCostYen = baseCostYen + customsTaxedYen
@@ -209,12 +213,13 @@ export function computeBatchSummary({
       totalWeightGrams,
     },
     shipping: {
+      mode: useManualLote ? 'manual' : 'auto',
       loteKg: selectedLoteKg,
       autoLoteKg,
-      yen: roundYen(shipping.valueYen),
-      brl: round2(shipping.valueYen * rate),
-      note: shipping.note,
-      loteRatePerGram: shipping.loteRatePerGram || null,
+      yen: shippingYen,
+      brl: round2(shippingYen * rate),
+      note: shippingNote,
+      loteRatePerGram,
     },
     sums: {
       baseCostYen: roundYen(baseCostYen),

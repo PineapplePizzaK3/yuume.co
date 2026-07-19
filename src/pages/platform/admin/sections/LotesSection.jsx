@@ -264,6 +264,11 @@ function BatchTotalsPanel({
         <div className="rounded border border-violet-200 bg-violet-50 p-2.5">
           <p className="text-[11px] uppercase tracking-wide text-violet-700">Frete internacional</p>
           <p className="mt-1 text-sm font-bold text-violet-900">{formatPairFromYen(summary.shipping.yen, brlPerJpy)}</p>
+          <p className="mt-1 text-[11px] text-violet-700">
+            {summary.shipping.mode === 'manual'
+              ? `Faixa manual ${summary.shipping.loteKg} kg`
+              : `Calculado por peso (${formatGramsAsWeightLabel(summary.weights.totalWeightGrams)})`}
+          </p>
         </div>
       </div>
 
@@ -328,6 +333,7 @@ export default function LotesSection() {
       items: editSelectedItems,
       protectionWeightGrams: editProtectionWeight,
       loteKg,
+      loteMode: editLoteMode,
       customsFactor: Number(editCustomsFactor) || 2,
       brlPerJpy,
     })
