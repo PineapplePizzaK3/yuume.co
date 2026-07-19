@@ -182,6 +182,16 @@ function BatchItemsEditor({
           )
         })}
       </div>
+
+      <div className="mt-2 flex justify-end">
+        <button
+          type="button"
+          onClick={onAddRow}
+          className="rounded border border-earth-300 bg-white px-2 py-1 text-xs font-medium text-earth-700 hover:bg-earth-100"
+        >
+          + Adicionar produto
+        </button>
+      </div>
     </div>
   )
 }
