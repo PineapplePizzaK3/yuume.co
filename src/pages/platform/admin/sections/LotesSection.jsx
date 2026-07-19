@@ -6,6 +6,7 @@ import { listCalculatorProductsAdmin } from '../../../../services/calculatorProd
 import {
   computeBatchSummary,
   getLoteRateRow,
+  LOTE_EMS_RATE_TABLE,
   resolveBrlPerJpyFromSettings,
   resolveLoteKgForWeightGrams,
 } from '../../../../lib/brazilPriceCalculator'
@@ -19,6 +20,11 @@ import {
 function formatGramsAsWeightLabel(grams) {
   const g = Math.max(0, Number(grams) || 0)
   return `${Math.round(g)} g (${formatWeight(g / 1000)})`
+}
+
+function formatLoteManualOptionLabel(row) {
+  const costPerGram = Number(row?.costPerGramYen || 0).toFixed(2)
+  return `${row.loteKg} kg - ${formatJPY(row.totalEmsYen)} total (${costPerGram} JPY/g)`
 }
 
 function buildItemLabel(product) {
@@ -206,6 +212,11 @@ function BatchTotalsPanel({
   onLoteModeChange,
   onLoteKgManualChange,
 }) {
+  const shippingRows = Array.isArray(summary.shippingTable) ? summary.shippingTable : []
+  const rowsUpTo10Kg = shippingRows.filter((row) => row.loteKg <= 10)
+  const rowsFrom10To20Kg = shippingRows.filter((row) => row.loteKg > 10 && row.loteKg <= 20)
+  const rowsAbove20Kg = shippingRows.filter((row) => row.loteKg > 20)
+
   return (
     <div className="mt-4 rounded border border-earth-200 bg-white p-3">
       <div className="grid gap-3 md:grid-cols-3">
@@ -239,11 +250,33 @@ function BatchTotalsPanel({
             disabled={loteMode !== 'manual'}
             className="mt-1 block w-full rounded border border-earth-300 px-2 py-1.5 text-sm text-earth-900 disabled:opacity-50"
           >
-            {summary.shippingTable.map((row) => (
-              <option key={row.loteKg} value={row.loteKg}>
-                {row.loteKg} kg - {row.costPerGramYen} JPY/g
-              </option>
-            ))}
+            {rowsUpTo10Kg.length > 0 ? (
+              <optgroup label="Faixas base (ate 10kg)">
+                {rowsUpTo10Kg.map((row) => (
+                  <option key={row.loteKg} value={row.loteKg}>
+                    {formatLoteManualOptionLabel(row)}
+                  </option>
+                ))}
+              </optgroup>
+            ) : null}
+            {rowsFrom10To20Kg.length > 0 ? (
+              <optgroup label="Faixas detalhadas (10kg a 20kg)">
+                {rowsFrom10To20Kg.map((row) => (
+                  <option key={row.loteKg} value={row.loteKg}>
+                    {formatLoteManualOptionLabel(row)}
+                  </option>
+                ))}
+              </optgroup>
+            ) : null}
+            {rowsAbove20Kg.length > 0 ? (
+              <optgroup label="Faixas altas (acima de 20kg)">
+                {rowsAbove20Kg.map((row) => (
+                  <option key={row.loteKg} value={row.loteKg}>
+                    {formatLoteManualOptionLabel(row)}
+                  </option>
+                ))}
+              </optgroup>
+            ) : null}
           </select>
         </label>
       </div>
@@ -342,9 +375,7 @@ export default function LotesSection() {
     })
   }, [editSelectedItems, editProtectionWeight, editLoteMode, editLoteKgManual, editCustomsFactor, brlPerJpy])
   const loteRateTable = useMemo(
-    () => [1, 2, 3, 5, 10, 15, 20, 25, 30]
-      .map((kg) => getLoteRateRow(kg))
-      .filter(Boolean),
+    () => LOTE_EMS_RATE_TABLE.map((row) => getLoteRateRow(row.loteKg)).filter(Boolean),
     [],
   )
   const editBatchSummaryWithTable = useMemo(
