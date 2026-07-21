@@ -32,8 +32,8 @@ function shippingLabel(row) {
 function toComparativeDiffPercent(finalPriceBrl, comparativePriceBrl) {
   const finalVal = Number(finalPriceBrl) || 0
   const comparativeVal = Number(comparativePriceBrl) || 0
-  if (comparativeVal <= 0) return null
-  return ((finalVal - comparativeVal) / comparativeVal) * 100
+  if (finalVal <= 0 || comparativeVal <= 0) return null
+  return ((comparativeVal - finalVal) / finalVal) * 100
 }
 
 function formatComparativeDiff(diffPercent) {
@@ -376,9 +376,9 @@ export default function CalculadoraBrasilSection() {
               const comparativeDiffClass = comparativeDiff == null
                 ? 'text-earth-500'
                 : comparativeDiff > 0
-                  ? 'text-red-700'
+                  ? 'text-emerald-700'
                   : comparativeDiff < 0
-                    ? 'text-emerald-700'
+                    ? 'text-red-700'
                     : 'text-earth-700'
               return (
                 <div
@@ -453,9 +453,9 @@ export default function CalculadoraBrasilSection() {
                   const comparativeDiffClass = comparativeDiff == null
                     ? 'text-earth-500'
                     : comparativeDiff > 0
-                      ? 'text-red-700'
+                      ? 'text-emerald-700'
                       : comparativeDiff < 0
-                        ? 'text-emerald-700'
+                        ? 'text-red-700'
                         : 'text-earth-700'
                   return (
                   <tr
