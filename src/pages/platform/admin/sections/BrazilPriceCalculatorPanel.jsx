@@ -245,6 +245,7 @@ function buildCalculatorProductPayload(result, name, notes, formValues = {}) {
   const marginPercent = Number.isFinite(marginFromForm) && marginFromForm >= 0
     ? marginFromForm
     : Math.max(0, Number(result.inputs.marginPercent) || 0)
+  const comparativePriceBrl = Math.max(0, Number(formValues.comparativePriceBrl) || 0)
 
   return {
     name: String(name).trim(),
@@ -258,6 +259,7 @@ function buildCalculatorProductPayload(result, name, notes, formValues = {}) {
     customs_factor: result.inputs.customsFactor,
     brl_per_jpy: result.inputs.brlPerJpy,
     margin_percent: marginPercent,
+    comparative_price_brl: comparativePriceBrl > 0 ? comparativePriceBrl : null,
     packaging_brl: result.inputs.packagingBrl,
     local_shipping_brl: result.inputs.localShippingBrl,
     international_shipping_yen: result.shipping.yen,
@@ -336,6 +338,7 @@ export default function BrazilPriceCalculatorPanel({
   const [systemMarginDefault, setSystemMarginDefault] = useState('30')
 
   const [marginPercent, setMarginPercent] = useState('30')
+  const [comparativePriceBrl, setComparativePriceBrl] = useState('')
 
   const [packagingBrl, setPackagingBrl] = useState('0')
 
@@ -392,6 +395,11 @@ export default function BrazilPriceCalculatorPanel({
     )
     setCustomsFactor(String(sourceProduct.customs_factor ?? inputs.customsFactor ?? '2'))
     setMarginPercent(getMarginPercentForForm(sourceProduct, inputs, systemMarginDefault))
+    setComparativePriceBrl(
+      sourceProduct.comparative_price_brl != null && Number(sourceProduct.comparative_price_brl) > 0
+        ? String(sourceProduct.comparative_price_brl)
+        : ''
+    )
     setPackagingBrl(String(sourceProduct.packaging_brl ?? inputs.packagingBrl ?? '0'))
     setLocalShippingBrl(String(sourceProduct.local_shipping_brl ?? inputs.localShippingBrl ?? '0'))
     setApplyIof(Boolean(inputs.applyIof))
@@ -413,6 +421,7 @@ export default function BrazilPriceCalculatorPanel({
     setDirectMethod(DIRECT_METHOD_EMS)
     setCustomsFactor('2')
     setMarginPercent(systemMarginDefault)
+    setComparativePriceBrl('')
     setPackagingBrl('0')
     setLocalShippingBrl('0')
     setApplyIof(false)
@@ -603,6 +612,7 @@ export default function BrazilPriceCalculatorPanel({
     const payload = buildCalculatorProductPayload(result, productName, productNotes, {
       declaredValueYen,
       marginPercent,
+      comparativePriceBrl,
     })
 
     const { error } = isEditing
@@ -863,7 +873,7 @@ export default function BrazilPriceCalculatorPanel({
 
 
 
-      <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+      <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-6">
 
         <label className="text-xs text-earth-700">
 
@@ -990,6 +1000,30 @@ export default function BrazilPriceCalculatorPanel({
             value={marginPercent}
 
             onChange={(e) => setMarginPercent(e.target.value)}
+
+            className="mt-1 block w-full rounded border border-earth-300 px-2 py-1.5 text-sm text-earth-900"
+
+          />
+
+        </label>
+
+        <label className="text-xs text-earth-700">
+
+          Preço comparativo (BRL)
+
+          <input
+
+            type="number"
+
+            min="0"
+
+            step="0.01"
+
+            value={comparativePriceBrl}
+
+            onChange={(e) => setComparativePriceBrl(e.target.value)}
+
+            placeholder="Preço no Brasil (opcional)"
 
             className="mt-1 block w-full rounded border border-earth-300 px-2 py-1.5 text-sm text-earth-900"
 

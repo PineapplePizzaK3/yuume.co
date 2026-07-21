@@ -29,6 +29,19 @@ function shippingLabel(row) {
   return 'Direto'
 }
 
+function toComparativeDiffPercent(finalPriceBrl, comparativePriceBrl) {
+  const finalVal = Number(finalPriceBrl) || 0
+  const comparativeVal = Number(comparativePriceBrl) || 0
+  if (comparativeVal <= 0) return null
+  return ((finalVal - comparativeVal) / comparativeVal) * 100
+}
+
+function formatComparativeDiff(diffPercent) {
+  if (!Number.isFinite(diffPercent)) return '—'
+  const sign = diffPercent > 0 ? '+' : ''
+  return `${sign}${diffPercent.toFixed(2)}%`
+}
+
 export default function CalculadoraBrasilSection() {
   const { activeTab } = useAdminContext()
   const [viewMode, setViewMode] = useState('loja')
@@ -142,6 +155,7 @@ export default function CalculadoraBrasilSection() {
       lote_kg: row.lote_kg,
       customs_factor: row.customs_factor,
       margin_percent: row.margin_percent,
+      comparative_price_brl: row.comparative_price_brl,
       packaging_brl: row.packaging_brl,
       local_shipping_brl: row.local_shipping_brl,
       // Snapshot só com entradas reutilizáveis; câmbio/preço final são recalculados na aplicação.
@@ -357,6 +371,15 @@ export default function CalculadoraBrasilSection() {
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {items.map((row) => {
               const selected = editingProduct?.id === row.id
+              const comparativePrice = Number(row.comparative_price_brl) || 0
+              const comparativeDiff = toComparativeDiffPercent(row.final_price_brl, row.comparative_price_brl)
+              const comparativeDiffClass = comparativeDiff == null
+                ? 'text-earth-500'
+                : comparativeDiff > 0
+                  ? 'text-red-700'
+                  : comparativeDiff < 0
+                    ? 'text-emerald-700'
+                    : 'text-earth-700'
               return (
                 <div
                   key={row.id}
@@ -381,6 +404,11 @@ export default function CalculadoraBrasilSection() {
                     <p className="mt-0.5 text-xs text-earth-500">
                       {formatJPY(brlToYen(row.final_price_brl, row.brl_per_jpy))}
                     </p>
+                    {comparativePrice > 0 ? (
+                      <p className={`mt-1 text-xs font-medium ${comparativeDiffClass}`}>
+                        Comparativo BR: {formatBRL(comparativePrice)} · Dif.: {formatComparativeDiff(comparativeDiff)}
+                      </p>
+                    ) : null}
                     {selected ? (
                       <p className="mt-3 text-xs font-medium text-emerald-700">Selecionado</p>
                     ) : null}
@@ -411,13 +439,25 @@ export default function CalculadoraBrasilSection() {
                   <th className="px-2 py-2">Custo no BR</th>
                   <th className="px-2 py-2">Margem</th>
                   <th className="px-2 py-2">Preço final</th>
+                  <th className="px-2 py-2">Preço comparativo</th>
+                  <th className="px-2 py-2">Dif. (%)</th>
                   <th className="px-2 py-2">Lucro líq.</th>
                   <th className="px-2 py-2">Cadastro</th>
                   <th className="px-2 py-2" />
                 </tr>
               </thead>
               <tbody>
-                {items.map((row) => (
+                {items.map((row) => {
+                  const comparativePrice = Number(row.comparative_price_brl) || 0
+                  const comparativeDiff = toComparativeDiffPercent(row.final_price_brl, row.comparative_price_brl)
+                  const comparativeDiffClass = comparativeDiff == null
+                    ? 'text-earth-500'
+                    : comparativeDiff > 0
+                      ? 'text-red-700'
+                      : comparativeDiff < 0
+                        ? 'text-emerald-700'
+                        : 'text-earth-700'
+                  return (
                   <tr
                     key={row.id}
                     className={`border-b border-earth-100 hover:bg-earth-50/80 ${editingProduct?.id === row.id ? 'bg-amber-50/80' : ''}`}
@@ -434,6 +474,12 @@ export default function CalculadoraBrasilSection() {
                     <td className="px-2 py-2 text-earth-700">{Number(row.margin_percent)}%</td>
                     <td className="px-2 py-2 font-semibold text-emerald-800 whitespace-nowrap">
                       {formatPairFromBrl(row.final_price_brl, row.brl_per_jpy)}
+                    </td>
+                    <td className="px-2 py-2 text-earth-700 whitespace-nowrap">
+                      {comparativePrice > 0 ? formatBRL(comparativePrice) : '—'}
+                    </td>
+                    <td className={`px-2 py-2 font-medium whitespace-nowrap ${comparativeDiffClass}`}>
+                      {comparativePrice > 0 ? formatComparativeDiff(comparativeDiff) : '—'}
                     </td>
                     <td className="px-2 py-2 font-medium text-sky-800 whitespace-nowrap">
                       {formatPairFromBrl(
@@ -490,7 +536,7 @@ export default function CalculadoraBrasilSection() {
                       </div>
                     </td>
                   </tr>
-                ))}
+                )})}
               </tbody>
             </table>
           </div>

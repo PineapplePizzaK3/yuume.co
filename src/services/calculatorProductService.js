@@ -44,6 +44,7 @@ export async function duplicateCalculatorProductAdmin(product) {
     customs_factor: source.customs_factor,
     brl_per_jpy: source.brl_per_jpy,
     margin_percent: source.margin_percent,
+    comparative_price_brl: source.comparative_price_brl,
     packaging_brl: source.packaging_brl,
     local_shipping_brl: source.local_shipping_brl,
     international_shipping_yen: source.international_shipping_yen,
