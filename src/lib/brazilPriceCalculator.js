@@ -235,9 +235,9 @@ export function computeBatchSummary({
     const lineTaxableYen = item.lineDeclaredValueYen + lineShippingYen
     const lineCustomsTaxedYen = lineTaxableYen * factor
     const lineLandedCostYen = item.lineBaseCostYen + lineCustomsTaxedYen
-    const lineBaseCostBrl = item.lineBaseCostYen * rate
     const lineLandedCostBrl = lineLandedCostYen * rate
-    const lineMarginBrl = lineBaseCostBrl * (item.unitMarginPercent / 100)
+    // Margem sobre o custo no Brasil do item no lote.
+    const lineMarginBrl = lineLandedCostBrl * (item.unitMarginPercent / 100)
     const lineFinalPriceBrl = lineLandedCostBrl
       + lineMarginBrl
       + item.linePackagingBrl
@@ -484,16 +484,16 @@ export function calculateBrazilFinalPrice(input = {}) {
   // Regra de negócio:
   // - custo base é somado ao final
   // - fator aduaneiro incide somente sobre (declarado + frete internacional)
-  // - valor antes da alfândega = produto + frete + margem (margem só sobre custo base)
+  // - margem incide sobre o custo no Brasil (landed cost)
+  // - valor antes da alfândega = produto + frete (sem margem; margem é pós-alfândega)
   const taxableYen = declaredValueYen + shipping.valueYen
   const taxedYen = taxableYen * customsFactor
   const landedCostYen = baseCostYen + taxedYen
   const landedCostBrl = landedCostYen * brlPerJpy
-  // Margem incide somente sobre o custo base (não sobre frete/aduana).
   const baseCostBrl = baseCostYen * brlPerJpy
-  const marginBrl = baseCostBrl * (marginPercent / 100)
-  const marginYen = brlPerJpy > 0 ? marginBrl / brlPerJpy : 0
-  const beforeTaxBaseYen = baseCostYen + shipping.valueYen + marginYen
+  // Margem sobre o custo para ter no Brasil (custo BR / landed cost).
+  const marginBrl = landedCostBrl * (marginPercent / 100)
+  const beforeTaxBaseYen = baseCostYen + shipping.valueYen
   const beforeTaxBaseBrl = beforeTaxBaseYen * brlPerJpy
   const beforeTaxIofBrl = applyIof ? beforeTaxBaseBrl * (iofPercent / 100) : 0
   const beforeTaxBrl = beforeTaxBaseBrl + beforeTaxIofBrl

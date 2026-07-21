@@ -822,7 +822,7 @@ export default function BrazilPriceCalculatorPanel({
       </h3>
 
       <p className="mt-1 text-xs text-earth-600">
-        Formula: (custo base + ((valor declarado + frete internacional) x fator aduaneiro)) -&gt; converte para BRL -&gt; margem apenas sobre o custo base -&gt; soma embalagem e envio nacional -&gt; opcionalmente IOF -&gt; simula cobranca com taxas de pagamento.
+        Formula: (custo base + ((valor declarado + frete internacional) x fator aduaneiro)) -&gt; converte para BRL -&gt; margem sobre o custo no Brasil -&gt; soma embalagem e envio nacional -&gt; opcionalmente IOF -&gt; simula cobranca com taxas de pagamento.
       </p>
 
 
@@ -1370,7 +1370,7 @@ export default function BrazilPriceCalculatorPanel({
           />
 
           <p className="mt-1 text-[11px] text-amber-800/80">
-            Custo base + frete + margem
+            Custo base + frete
             {result.inputs.applyIof
               ? ` + IOF (${result.inputs.iofPercent}%)`
               : ''}
@@ -1610,7 +1610,7 @@ export default function BrazilPriceCalculatorPanel({
           </summary>
           <div className="mt-2 space-y-1 text-xs text-earth-700">
             <p>
-              Antes dos impostos alfandegarios: custo base {formatPairFromYen(result.inputs.baseCostYen, brlPerJpy)} + frete internacional {formatPairFromYen(result.shipping.yen, brlPerJpy)} + margem ({result.inputs.marginPercent}% sobre custo base = {formatPairFromBrl(result.breakdown.marginBrl, brlPerJpy)})
+              Antes dos impostos alfandegarios: custo base {formatPairFromYen(result.inputs.baseCostYen, brlPerJpy)} + frete internacional {formatPairFromYen(result.shipping.yen, brlPerJpy)}
               {result.inputs.applyIof
                 ? ` + IOF (${result.inputs.iofPercent}% sobre ${formatPairFromBrl(result.breakdown.beforeTaxBaseBrl, brlPerJpy)} = ${formatPairFromBrl(result.breakdown.beforeTaxIofBrl, brlPerJpy)})`
                 : ''}
@@ -1621,7 +1621,7 @@ export default function BrazilPriceCalculatorPanel({
               = {formatPairFromYen(result.breakdown.landedCostYen, brlPerJpy)}.
             </p>
             <p>
-              Margem ({result.inputs.marginPercent}% sobre custo base {formatPairFromBrl(result.breakdown.baseCostBrl, brlPerJpy)}): +{formatPairFromBrl(result.breakdown.marginBrl, brlPerJpy)}.
+              Margem ({result.inputs.marginPercent}% sobre custo no Brasil {formatPairFromBrl(result.breakdown.landedCostBrl, brlPerJpy)}): +{formatPairFromBrl(result.breakdown.marginBrl, brlPerJpy)}.
             </p>
             <p>
               Opcionais (embalagem + envio BR): +{formatPairFromBrl(result.breakdown.extrasBrl, brlPerJpy)}.
