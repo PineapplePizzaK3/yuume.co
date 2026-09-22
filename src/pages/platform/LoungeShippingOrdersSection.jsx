@@ -20,15 +20,10 @@ import {
   readUserShippingQuoteBreakdown,
 } from '../../lib/loungeOrderRouting'
 import { fetchLoungeOrderPage } from '../../lib/loungeOrdersPagedFetch'
-import { PARCELOW_CARD_BRANDS_IMG, PIX_OFFICIAL_LOGO_IMG } from '../../components/paymentModalConstants'
+import { GATEWAY_OPTIONS_META, PARCELOW_CARD_BRANDS_IMG, PIX_OFFICIAL_LOGO_IMG } from '../../components/paymentModalConstants'
+import WisePaymentReceiptModal from '../../components/WisePaymentReceiptModal'
 
 const PAGE_SIZE = 12
-
-const GATEWAY_OPTIONS_META = [
-  { id: 'parcelow', label: 'Parcelow', icon: '🇧🇷' },
-  { id: 'glin', label: 'Glin', icon: '🇧🇷' },
-  { id: 'stripe', label: 'Stripe', icon: '🌐' },
-]
 
 function numPositive(n) {
   const v = Number(n)
@@ -107,7 +102,14 @@ export default function LoungeShippingOrdersSection() {
   const [banner, setBanner] = useState(null)
   const [payingId, setPayingId] = useState(null)
   const [payModal, setPayModal] = useState({ open: false, order: null, useWallet: true })
-  const [selectedGateway, setSelectedGateway] = useState('parcelow')
+  const [selectedGateway, setSelectedGateway] = useState('wise')
+  const [wiseModal, setWiseModal] = useState({
+    open: false,
+    orderId: '',
+    amountJpy: 0,
+    wiseRequestId: '',
+    wisePayUrl: '',
+  })
   const [detailsModal, setDetailsModal] = useState({ open: false, order: null })
   const [targetOrderId, setTargetOrderId] = useState(null)
   const [hasOpenedTargetOrder, setHasOpenedTargetOrder] = useState(false)
@@ -122,7 +124,7 @@ export default function LoungeShippingOrdersSection() {
   )
 
   useEffect(() => {
-    if (!payModal.open) setSelectedGateway('parcelow')
+    if (!payModal.open) setSelectedGateway('wise')
   }, [payModal.open])
 
   useEffect(() => {
@@ -236,6 +238,27 @@ export default function LoungeShippingOrdersSection() {
         setHasMore(more)
         const { data: w } = await getWallet(user.id)
         setWallet(w ?? null)
+        return
+      }
+      if (result?.manual && result?.provider === 'wise') {
+        setPayModal({ open: false, order: null, useWallet: true })
+        setWiseModal({
+          open: true,
+          orderId: result.orderId || order.id,
+          amountJpy: Number(result.amountJpy) || 0,
+          wiseRequestId: result.wiseRequestId || '',
+          wisePayUrl: result.wisePayUrl || '',
+        })
+        if (result.wisePayUrl) {
+          const opened = window.open(result.wisePayUrl, '_blank', 'noopener,noreferrer')
+          if (!opened) {
+            setBanner({
+              text: 'O navegador bloqueou a abertura da Wise. Libere pop-ups para este site e tente novamente.',
+              variant: 'info',
+            })
+          }
+        }
+        setBanner({ text: t('platform.orders.wisePendingApproval'), variant: 'info' })
         return
       }
       const url = result?.url
@@ -596,7 +619,7 @@ export default function LoungeShippingOrdersSection() {
                       >
                         {gatewayOptions.map((opt) => (
                           <option key={opt.id} value={opt.id}>
-                            {opt.icon} {opt.label} — {opt.details}
+                            {opt.icon} {opt.label}{opt.recommended ? ` (${t('platform.orders.gatewayRecommended')})` : ''} — {opt.details}
                           </option>
                         ))}
                       </select>
@@ -665,6 +688,28 @@ export default function LoungeShippingOrdersSection() {
           </div>
         </div>
       )}
+      <WisePaymentReceiptModal
+        open={wiseModal.open}
+        orderLabel={wiseModal.orderId ? `${String(wiseModal.orderId).slice(0, 8)}…` : ''}
+        amountJpy={wiseModal.amountJpy}
+        wisePayUrl={wiseModal.wisePayUrl}
+        wiseRequestId={wiseModal.wiseRequestId}
+        userId={user?.id || ''}
+        onClose={() => setWiseModal({ open: false, orderId: '', amountJpy: 0, wiseRequestId: '', wisePayUrl: '' })}
+        onSubmitted={async () => {
+          setPage(0)
+          const { data, hasMore: more } = await fetchLoungeOrderPage(user.id, {
+            page: 0,
+            pageSize: PAGE_SIZE,
+            matchFn: isOrderInLoungeShippingTab,
+            excludeStatus: 'completed',
+          })
+          setOrders(data)
+          setHasMore(more)
+          const { data: w } = await getWallet(user.id)
+          setWallet(w ?? null)
+        }}
+      />
     </section>
   )
 }

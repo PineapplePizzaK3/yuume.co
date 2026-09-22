@@ -10,6 +10,7 @@ export async function createEphemeralProductSnapshot(hitPayload) {
       price: hitPayload?.price ?? 0,
       currency: hitPayload?.currency || 'JPY',
       imageUrl: hitPayload?.imageUrl || null,
+      source: hitPayload?.source || null,
       sourcePayload: hitPayload || {},
     }
     const { data, error } = await withDbTimeout(

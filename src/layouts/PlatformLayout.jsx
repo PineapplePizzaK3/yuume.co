@@ -12,7 +12,7 @@ import { isRouteActive } from '../lib/localeRoutes'
 
 const NAV_ROUTE_KEYS = ['appDashboard']
 const CONTA_ROUTE_KEYS = ['appLounge', 'appConta', 'appCart']
-const LOJA_ROUTE_KEYS = ['appServices', 'appLojaEstoque', 'appLoja']
+const LOJA_ROUTE_KEYS = ['appServices', 'appLojaEstoque', 'appLojaCatalogo', 'appLoja']
 
 const ALL_MENU_KEYS = [...NAV_ROUTE_KEYS, ...CONTA_ROUTE_KEYS, ...LOJA_ROUTE_KEYS]
 
@@ -46,6 +46,7 @@ const LABEL_KEY_BY_ROUTE = {
   appServices: 'platform.navServices',
   appLoja: 'platform.storeHub.tabShowcase',
   appLojaEstoque: 'platform.storeHub.tabStock',
+  appLojaCatalogo: 'platform.storeHub.tabSnkrdunkCatalog',
 }
 
 const MENU_ORDER_STORAGE_KEY = 'platform_menu_order_v2'
@@ -54,6 +55,19 @@ const DEFAULT_MENU_ORDER = {
   nav: [...NAV_ROUTE_KEYS],
   conta: [...CONTA_ROUTE_KEYS],
   loja: [...LOJA_ROUTE_KEYS],
+}
+
+function insertMissingMenuKey(safe, key) {
+  if (safe.includes(key)) return
+  // Catálogo fica imediatamente antes da Vitrine.
+  if (key === 'appLojaCatalogo') {
+    const vitrineIdx = safe.indexOf('appLoja')
+    if (vitrineIdx >= 0) {
+      safe.splice(vitrineIdx, 0, key)
+      return
+    }
+  }
+  safe.push(key)
 }
 
 function normalizeSectionOrder(value, allowed) {
@@ -66,7 +80,7 @@ function normalizeSectionOrder(value, allowed) {
   }).filter(Boolean)
   const safe = migrated.filter((k) => allowed.includes(k))
   for (const k of allowed) {
-    if (!safe.includes(k)) safe.push(k)
+    insertMissingMenuKey(safe, k)
   }
   return safe
 }
@@ -128,8 +142,12 @@ export function PlatformLayout() {
       }
       const tab = String(new URLSearchParams(location.search).get('tab') || '').toLowerCase()
       const isVitrine = tab === 'vitrine' || tab === 'grupos'
+      const isCatalogo = tab === 'snkrdunk'
       if (routeKey === 'appLojaEstoque') {
-        return isRouteActive('appLoja', location.pathname, true) && !isVitrine
+        return isRouteActive('appLoja', location.pathname, true) && !isVitrine && !isCatalogo
+      }
+      if (routeKey === 'appLojaCatalogo') {
+        return isRouteActive('appLoja', location.pathname, true) && isCatalogo
       }
       if (routeKey === 'appLoja') {
         return isRouteActive('appLoja', location.pathname, true) && isVitrine
@@ -142,7 +160,7 @@ export function PlatformLayout() {
   const isInLoja = useMemo(
     () =>
       LOJA_ROUTE_KEYS.some((k) => {
-        if (k === 'appLoja' || k === 'appLojaEstoque') {
+        if (k === 'appLoja' || k === 'appLojaEstoque' || k === 'appLojaCatalogo') {
           return isRouteActive('appLoja', location.pathname, true)
         }
         return p(k) === location.pathname
@@ -161,9 +179,11 @@ export function PlatformLayout() {
       const to =
         k === 'appLojaEstoque'
           ? p('appLoja')
-          : k === 'appLoja'
-            ? `${p('appLoja')}?tab=vitrine`
-            : p(k)
+          : k === 'appLojaCatalogo'
+            ? `${p('appLoja')}?tab=snkrdunk`
+            : k === 'appLoja'
+              ? `${p('appLoja')}?tab=vitrine`
+              : p(k)
       map.set(k, { routeKey: k, to, label: t(LABEL_KEY_BY_ROUTE[k]) })
     }
     return map

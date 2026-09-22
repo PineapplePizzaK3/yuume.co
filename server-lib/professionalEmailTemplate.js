@@ -30,6 +30,14 @@ function normalizeUrl(value) {
 
 function buildFooterSocialLinks({ websiteUrl, instagramUrl, whatsappUrl }) {
   const links = []
+  const buildLink = (url, label, title) =>
+    `<a href="${escapeHtml(url)}" title="${escapeHtml(title)}" aria-label="${escapeHtml(title)}" style="display:inline-block;margin:0 8px 8px 0;padding:8px 12px;border:1px solid #d1d5db;border-radius:9999px;color:#374151;font-size:12px;font-weight:600;line-height:1.2;text-decoration:none;">${escapeHtml(label)}</a>`
+
+  if (websiteUrl) links.push(buildLink(websiteUrl, 'Site', `Website ${websiteUrl}`))
+  if (instagramUrl) links.push(buildLink(instagramUrl, 'Instagram', 'Instagram YuumeCo'))
+  if (whatsappUrl) links.push(buildLink(whatsappUrl, 'WhatsApp', 'WhatsApp YuumeCo'))
+  if (links.length > 0) return `<div style="margin:10px 0 2px;">${links.join('')}</div>`
+
   if (websiteUrl) {
     links.push(
       `<a href="${escapeHtml(websiteUrl)}" title="Website ${escapeHtml(websiteUrl)}" aria-label="Website ${escapeHtml(websiteUrl)}" style="display:inline-block;margin-right:8px;text-decoration:none;">

@@ -18,8 +18,16 @@ function normalizeUrl(value) {
   return url
 }
 
-function buildFooterSocialLinks({ websiteUrl, instagramUrl }) {
+function buildFooterSocialLinks({ websiteUrl, instagramUrl, whatsappUrl }) {
   const links = []
+  const buildLink = (url, label, title) =>
+    `<a href="${escapeHtml(url)}" title="${escapeHtml(title)}" aria-label="${escapeHtml(title)}" style="display:inline-block;margin:0 8px 8px 0;padding:8px 12px;border:1px solid #d1d5db;border-radius:9999px;color:#374151;font-size:12px;font-weight:600;line-height:1.2;text-decoration:none;">${escapeHtml(label)}</a>`
+
+  if (websiteUrl) links.push(buildLink(websiteUrl, 'Site', `Website ${websiteUrl}`))
+  if (instagramUrl) links.push(buildLink(instagramUrl, 'Instagram', 'Instagram YuumeCo'))
+  if (whatsappUrl) links.push(buildLink(whatsappUrl, 'WhatsApp', 'WhatsApp YuumeCo'))
+  if (links.length > 0) return `<div style="margin:10px 0 2px;">${links.join('')}</div>`
+
   if (websiteUrl) {
     links.push(
       `<a href="${escapeHtml(websiteUrl)}" title="Website ${escapeHtml(websiteUrl)}" aria-label="Website ${escapeHtml(websiteUrl)}" style="display:inline-block;margin-right:8px;text-decoration:none;">
@@ -72,6 +80,7 @@ export function buildProfessionalEmailPreview({
   const companyAddress = trimString(import.meta.env.VITE_EMAIL_COMPANY_ADDRESS || '')
   const websiteUrl = normalizeUrl(import.meta.env.VITE_SITE_URL || '')
   const instagramUrl = normalizeUrl(import.meta.env.VITE_EMAIL_INSTAGRAM_URL || 'https://instagram.com/yuume_co')
+  const whatsappUrl = normalizeUrl(import.meta.env.VITE_EMAIL_WHATSAPP_URL || 'https://wa.me/message/ABHOOUB6UB7PM1')
   const logoUrl = normalizeUrl(import.meta.env.VITE_EMAIL_LOGO_URL || '')
 
   const safeSubject = trimString(subject) || `Mensagem de ${brandName}`
@@ -101,7 +110,7 @@ export function buildProfessionalEmailPreview({
   const addressBlock = companyAddress
     ? `<p style="margin:6px 0 0;color:#6b7280;font-size:12px;line-height:1.5;">${escapeHtml(companyAddress)}</p>`
     : ''
-  const socialLinksBlock = buildFooterSocialLinks({ websiteUrl, instagramUrl })
+  const socialLinksBlock = buildFooterSocialLinks({ websiteUrl, instagramUrl, whatsappUrl })
   const fromBlock = safeFrom
     ? `<p style="margin:6px 0 0;color:#6b7280;font-size:12px;line-height:1.5;">Remetente: ${escapeHtml(safeFrom)}</p>`
     : ''

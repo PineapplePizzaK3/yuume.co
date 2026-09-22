@@ -15,6 +15,11 @@ export const ROUTES = {
   faqIndex: { [LOCALE_PT_BR]: '/faq', [LOCALE_EN]: '/en/help' },
   faqProhibited: { [LOCALE_PT_BR]: '/faq/itens-proibidos', [LOCALE_EN]: '/en/help/prohibited-items' },
   faqCustoms: { [LOCALE_PT_BR]: '/faq/taxas-alfandegarias', [LOCALE_EN]: '/en/help/customs-fees' },
+  liveRipsHub: { [LOCALE_PT_BR]: '/live-rips', [LOCALE_EN]: '/en/live-rips' },
+  liveRipsDetail: { [LOCALE_PT_BR]: '/live-rips/rip', [LOCALE_EN]: '/en/live-rips/rip' },
+  liveRipsMine: { [LOCALE_PT_BR]: '/live-rips/minha-rip', [LOCALE_EN]: '/en/live-rips/my-rip' },
+  liveRipsLive: { [LOCALE_PT_BR]: '/live-rips/live', [LOCALE_EN]: '/en/live-rips/live' },
+  liveRipsOverlay: { [LOCALE_PT_BR]: '/live-rips/overlay', [LOCALE_EN]: '/en/live-rips/overlay' },
   ondeComprar: { [LOCALE_PT_BR]: '/onde-comprar', [LOCALE_EN]: '/en/where-to-buy' },
   catalogSearchPublic: { [LOCALE_PT_BR]: '/busca-catalogo', [LOCALE_EN]: '/en/catalog-search' },
   ephemeralProductPublic: { [LOCALE_PT_BR]: '/produto-temporario', [LOCALE_EN]: '/en/instant-product' },
@@ -183,6 +188,11 @@ export function pathnameToRouteKey(pathname) {
   const direct = table[pathname]
   if (direct) return direct
 
+  const liveRipDetailPrefix = loc === LOCALE_EN ? '/en/live-rips/rip/' : '/live-rips/rip/'
+  if (pathname.startsWith(liveRipDetailPrefix)) {
+    return 'liveRipsDetail'
+  }
+
   const adminPrefix = loc === LOCALE_EN ? '/en/app/admin/' : '/app/admin/'
   if (pathname.startsWith(adminPrefix)) {
     const rest = pathname.slice(adminPrefix.length)
@@ -299,4 +309,18 @@ export function publicEphemeralProductPath(token, locale) {
   return locale === LOCALE_EN
     ? `/en/instant-product/${enc}`
     : `/produto-temporario/${enc}`
+}
+
+/**
+ * Página de detalhe do Live Rip.
+ * @param {string} productId
+ * @param {SiteLocale} locale
+ */
+export function liveRipDetailPath(productId, locale) {
+  const id = String(productId ?? '').trim()
+  if (!id) return localizedPath('liveRipsHub', locale)
+  const enc = encodeURIComponent(id)
+  return locale === LOCALE_EN
+    ? `/en/live-rips/rip/${enc}`
+    : `/live-rips/rip/${enc}`
 }

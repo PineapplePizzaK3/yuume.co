@@ -5,6 +5,7 @@
  */
 export const PARCELOW_CARD_BRANDS_IMG = `${import.meta.env.BASE_URL}payment/parcelow-card-brands.png`
 export const PIX_OFFICIAL_LOGO_IMG = `${import.meta.env.BASE_URL}payment/pix-logo.png`
+export const WISE_PAY_ME_URL = String(import.meta.env.VITE_WISE_PAY_ME_URL || 'https://wise.com/pay/me/jonathana465').trim()
 
 const buildBadgeSrc = (label, { bg = '#ffffff', fg = '#1f2937', stroke = '#d1d5db' } = {}) =>
   `data:image/svg+xml;utf8,${encodeURIComponent(
@@ -31,12 +32,21 @@ const PIX_BADGE_SRC_FALLBACK = `data:image/svg+xml;utf8,${encodeURIComponent(
 const TED_BADGE_SRC = buildBadgeSrc('TED', { bg: '#f8fafc', fg: '#0f172a', stroke: '#cbd5e1' })
 
 export const GATEWAY_OPTIONS_META = [
+  { id: 'wise', label: 'Wise', icon: '🌍', recommended: true },
   { id: 'parcelow', label: 'Parcelow', icon: '🇧🇷' },
   { id: 'glin', label: 'Glin', icon: '🇧🇷' },
   { id: 'stripe', label: 'Stripe', icon: '🌐' },
 ]
 
 export const PAYMENT_METHODS_BY_GATEWAY = {
+  wise: [
+    {
+      id: 'wise_transfer',
+      label: 'Transferencia Wise',
+      group: 'transfer',
+      src: buildBadgeSrc('WISE', { bg: '#eafff4', fg: '#047857', stroke: '#86efac' }),
+    },
+  ],
   parcelow: [
     { id: 'pix', label: 'PIX', group: 'pix', src: PIX_OFFICIAL_LOGO_IMG, fallbackSrc: PIX_BADGE_SRC_FALLBACK },
     { id: 'ted', label: 'TED', group: 'transfer', src: TED_BADGE_SRC },

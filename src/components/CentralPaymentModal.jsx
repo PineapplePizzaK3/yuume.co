@@ -22,7 +22,7 @@ export default function CentralPaymentModal({ open, onClose, amountJpy, accessTo
       GATEWAY_OPTIONS_META.map((entry) => ({
         ...entry,
         details: t(`platform.orders.gateway.${entry.id}`),
-      })),
+      })).filter((entry) => entry.id !== 'wise'),
     [t]
   )
 

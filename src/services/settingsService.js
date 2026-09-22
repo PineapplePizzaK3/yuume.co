@@ -16,6 +16,7 @@ const SETTINGS_KEYS = [
   'pricing_jpy_usd_buffer_percent',
   'grupo_compras_fee_per_unit_usd',
   'wise_usd_jpy_withdrawal_markup_percent',
+  'on_demand_price_multiplier',
 ]
 
 export async function getSystemSettings() {

@@ -38,24 +38,37 @@ function Navbar() {
   const isStoreServicesRoute = isRouteActive('appServices', location.pathname, true)
   const currentStoreSection = useMemo(() => {
     if (isStoreServicesRoute) return 'servicos'
-    if (isRouteActive('appLoja', location.pathname, true) || isRouteActive('lojaPublicVitrine', location.pathname, true)) {
-      return 'vitrine'
+    if (isRouteActive('lojaPublicVitrine', location.pathname, true)) return 'vitrine'
+    if (isRouteActive('appLoja', location.pathname, true)) {
+      const tab = String(new URLSearchParams(location.search).get('tab') || '').toLowerCase()
+      if (tab === 'snkrdunk') return 'onDemand'
+      if (tab === 'vitrine' || tab === 'grupos') return 'vitrine'
+      // /app/loja sem tab = Em estoque (não há item no submenu do header)
+      return null
     }
-    return 'vitrine'
-  }, [isStoreServicesRoute, location.pathname])
+    return null
+  }, [isStoreServicesRoute, location.pathname, location.search])
   const storeSubmenuItems = useMemo(() => {
     const vitrine = {
       id: 'vitrine',
       label: t('platform.storeHub.tabShowcase'),
       toRoute: isAuthenticated ? 'appLoja' : 'lojaPublicVitrine',
+      search: isAuthenticated ? '?tab=vitrine' : '',
+    }
+    const onDemand = {
+      id: 'onDemand',
+      label: t('platform.storeHub.tabSnkrdunkCatalog'),
+      toRoute: 'appLoja',
+      search: '?tab=snkrdunk',
     }
     const servicos = {
       id: 'servicos',
       label: t('platform.storeHub.tabServices'),
       toRoute: 'appServices',
+      search: '',
     }
     if (isAuthenticated) {
-      return [servicos, vitrine]
+      return [servicos, onDemand, vitrine]
     }
     return [vitrine]
   }, [isAuthenticated, t])
@@ -137,6 +150,7 @@ function Navbar() {
                     <LocalizedLink
                       key={item.id}
                       toRoute={item.toRoute}
+                      search={item.search || ''}
                       className={`rounded-none px-3 py-2 text-sm whitespace-nowrap transition ${
                         currentStoreSection === item.id
                           ? 'bg-earth-900 font-medium text-earth-50'

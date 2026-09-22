@@ -12,6 +12,50 @@ function emitCartUpdated(userId) {
   window.dispatchEvent(new CustomEvent(CART_UPDATED_EVENT, { detail: { userId } }))
 }
 
+function mapEphemeralCartRow(row) {
+  const token = String(row?.ephemeral_token || '').trim()
+  const priceJpy = Number(row?.price_jpy) || 0
+  return {
+    id: row?.id || `ephemeral-${token}`,
+    line_type: 'ephemeral',
+    ephemeral_token: token,
+    user_id: row?.user_id || null,
+    product_id: null,
+    variant_id: null,
+    quantity: Math.max(1, Number(row?.quantity) || 1),
+    created_at: row?.created_at || null,
+    products: {
+      id: token ? `ephemeral:${token}` : null,
+      name: row?.title || 'Produto temporário',
+      price: priceJpy,
+      price_jpy: priceJpy,
+      price_usd: null,
+      price_brl: null,
+      image_url: row?.image_url || '',
+      is_active: row?.is_available !== false,
+      stock_quantity: null,
+      purchase_group_id: null,
+      external_url: row?.external_url || '',
+      store_id: row?.store_id || '',
+      expires_at: row?.expires_at || null,
+    },
+    product_variants: null,
+  }
+}
+
+export async function getEphemeralCart() {
+  try {
+    const { data, error } = await withDbTimeout(
+      supabase.rpc('list_my_ephemeral_cart_items')
+    )
+    if (error) return { data: [], error }
+    const rows = Array.isArray(data) ? data.map(mapEphemeralCartRow) : []
+    return { data: rows, error: null }
+  } catch (e) {
+    return { data: [], error: toServiceError(e) }
+  }
+}
+
 export async function getCart(userId) {
   try {
     const { data, error } = await withDbTimeout(
@@ -52,7 +96,20 @@ export async function getCart(userId) {
         .eq('user_id', userId)
         .order('created_at', { ascending: false })
     )
-    return { data: data ?? [], error }
+    if (error) return { data: data ?? [], error }
+
+    const catalogRows = (Array.isArray(data) ? data : []).map((row) => ({
+      ...row,
+      line_type: 'catalog',
+    }))
+
+    const { data: ephemeralRows } = await getEphemeralCart()
+    // Não bloquear o carrinho principal se a listagem efêmera falhar.
+    const merged = [
+      ...(Array.isArray(ephemeralRows) ? ephemeralRows : []),
+      ...catalogRows,
+    ]
+    return { data: merged, error: null }
   } catch (e) {
     return { data: [], error: toServiceError(e) }
   }
@@ -162,6 +219,71 @@ export async function clearCart(userId) {
       supabase.from('cart_items').delete().eq('user_id', userId)
     )
     if (!error) emitCartUpdated(userId)
+    return { error }
+  } catch (e) {
+    return { error: toServiceError(e) }
+  }
+}
+
+export async function addEphemeralToCart(ephemeralToken, quantity = 1) {
+  try {
+    const token = String(ephemeralToken || '').trim()
+    if (!token) return { data: null, error: { message: 'Item temporário inválido.' } }
+    const qty = Math.max(1, Math.min(99, Math.floor(Number(quantity) || 1)))
+
+    const { data: sessionData } = await supabase.auth.getSession()
+    const userId = sessionData?.session?.user?.id || ''
+    if (!userId) return { data: null, error: { message: 'Faça login para adicionar ao carrinho.' } }
+
+    const { data, error } = await withDbTimeout(
+      supabase.rpc('add_ephemeral_to_cart', {
+        p_token: token,
+        p_quantity: qty,
+      })
+    )
+    if (!error) emitCartUpdated(userId)
+    return { data: data ?? null, error }
+  } catch (e) {
+    return { data: null, error: toServiceError(e) }
+  }
+}
+
+export async function updateEphemeralCartItem(ephemeralToken, quantity) {
+  try {
+    const token = String(ephemeralToken || '').trim()
+    if (!token) return { data: null, error: { message: 'Item temporário inválido.' } }
+    const qty = Math.max(1, Math.min(99, Math.floor(Number(quantity) || 1)))
+
+    const { data: sessionData } = await supabase.auth.getSession()
+    const userId = sessionData?.session?.user?.id || ''
+
+    const { data, error } = await withDbTimeout(
+      supabase.rpc('update_ephemeral_cart_item', {
+        p_token: token,
+        p_quantity: qty,
+      })
+    )
+    if (!error && userId) emitCartUpdated(userId)
+    return { data: data ?? null, error }
+  } catch (e) {
+    return { data: null, error: toServiceError(e) }
+  }
+}
+
+export async function removeEphemeralFromCart(ephemeralToken) {
+  try {
+    const token = String(ephemeralToken || '').trim()
+    if (!token) return { error: { message: 'Item temporário inválido.' } }
+
+    const { data: sessionData } = await supabase.auth.getSession()
+    const userId = sessionData?.session?.user?.id || ''
+
+    const { error } = await withDbTimeout(
+      supabase.rpc('remove_ephemeral_from_cart', {
+        p_token: token,
+      })
+    )
+    if (!error && userId) emitCartUpdated(userId)
     return { error }
   } catch (e) {
     return { error: toServiceError(e) }

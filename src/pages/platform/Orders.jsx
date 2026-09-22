@@ -22,6 +22,8 @@ import QuoteProductsList from '../../components/QuoteProductsList'
 import OrderAttachments from '../../components/OrderAttachments'
 import { downloadInvoicePdfByOrder, getInvoiceByOrder } from '../../services/invoiceService'
 import { parseQuoteMessage } from '../../lib/quoteProducts'
+import { GATEWAY_OPTIONS_META } from '../../components/paymentModalConstants'
+import WisePaymentReceiptModal from '../../components/WisePaymentReceiptModal'
 import {
   REDIR_ASSISTIDO_FEE_PERCENT,
   PERSONAL_SHOPPING_FEE_PERCENT,
@@ -63,11 +65,7 @@ export default function Orders() {
   const { user, session } = useAuth()
 
   const gatewayOptions = useMemo(
-    () => [
-      { id: 'parcelow', label: 'Parcelow', icon: '🇧🇷', details: t('platform.orders.gateway.parcelow') },
-      { id: 'glin', label: 'Glin', icon: '🇧🇷', details: t('platform.orders.gateway.glin') },
-      { id: 'stripe', label: 'Stripe', icon: '🌐', details: t('platform.orders.gateway.stripe') },
-    ],
+    () => GATEWAY_OPTIONS_META.map((entry) => ({ ...entry, details: t(`platform.orders.gateway.${entry.id}`) })),
     [t]
   )
 
@@ -97,11 +95,18 @@ export default function Orders() {
   const [payingId, setPayingId] = useState(null)
   const [feedback, setFeedback] = useState('')
   const [payModal, setPayModal] = useState({ open: false, order: null, useWallet: true })
-  const [selectedGateway, setSelectedGateway] = useState('parcelow')
+  const [selectedGateway, setSelectedGateway] = useState('wise')
+  const [wiseModal, setWiseModal] = useState({
+    open: false,
+    orderId: '',
+    amountJpy: 0,
+    wiseRequestId: '',
+    wisePayUrl: '',
+  })
   const [extraServicesOrderId, setExtraServicesOrderId] = useState(null)
   useEffect(() => {
     if (!payModal.open) {
-      setSelectedGateway('parcelow')
+      setSelectedGateway('wise')
     }
   }, [payModal.open])
 
@@ -392,6 +397,22 @@ export default function Orders() {
         setFeedback(t('platform.orders.paySuccess'))
         await refreshOrders()
         setPayModal({ open: false, order: null, useWallet: true })
+        return
+      }
+      if (result?.manual && result?.provider === 'wise') {
+        setPayModal({ open: false, order: null, useWallet: true })
+        setWiseModal({
+          open: true,
+          orderId: result.orderId || order.id,
+          amountJpy: Number(result.amountJpy) || 0,
+          wiseRequestId: result.wiseRequestId || '',
+          wisePayUrl: result.wisePayUrl || '',
+        })
+        if (result.wisePayUrl) {
+          const opened = window.open(result.wisePayUrl, '_blank', 'noopener,noreferrer')
+          if (!opened) setFeedback('O navegador bloqueou a abertura da Wise. Libere pop-ups para este site e tente novamente.')
+        }
+        setFeedback(t('platform.orders.wisePendingApproval'))
         return
       }
       const url = result?.url
@@ -1198,6 +1219,19 @@ export default function Orders() {
         </div>
       )}
 
+      <WisePaymentReceiptModal
+        open={wiseModal.open}
+        orderLabel={wiseModal.orderId ? `${String(wiseModal.orderId).slice(0, 8)}…` : ''}
+        amountJpy={wiseModal.amountJpy}
+        wisePayUrl={wiseModal.wisePayUrl}
+        wiseRequestId={wiseModal.wiseRequestId}
+        userId={user?.id || ''}
+        onClose={() => setWiseModal({ open: false, orderId: '', amountJpy: 0, wiseRequestId: '', wisePayUrl: '' })}
+        onSubmitted={async () => {
+          await refreshOrders()
+        }}
+      />
+
       {payModal.open && payModal.order && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="flex w-full max-w-lg max-h-[90vh] flex-col rounded-xl bg-white shadow-lg">
@@ -1278,7 +1312,7 @@ export default function Orders() {
                       >
                         {gatewayOptions.map((option) => (
                           <option key={option.id} value={option.id}>
-                            {option.icon} {option.label}
+                            {option.icon} {option.label}{option.recommended ? ` (${t('platform.orders.gatewayRecommended')})` : ''}
                           </option>
                         ))}
                       </select>

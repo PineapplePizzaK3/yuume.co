@@ -73,8 +73,13 @@ function getSupabaseUser(accessToken) {
 
 function normalizeProvider(raw) {
   const p = String(raw || '').trim().toLowerCase()
-  if (p === 'stripe' || p === 'parcelow' || p === 'glin') return p
+  if (p === 'stripe' || p === 'parcelow' || p === 'glin' || p === 'wise') return p
   return null
+}
+
+function getWisePayUrl() {
+  const raw = String(process.env.WISE_PAY_ME_URL || process.env.VITE_WISE_PAY_ME_URL || '').trim()
+  return raw || 'https://wise.com/pay/me/jonathana465'
 }
 
 function shouldPreferParcelow(order, currency) {
@@ -1061,6 +1066,8 @@ export default async function handler(req, res) {
     const accessToken = authHeader.replace('Bearer ', '')
     const supabaseUser = getSupabaseUser(accessToken)
     let intentCheckoutId = null
+    let cartParamsForStoreCheckout = null
+    let cartCouponCode = ''
 
     if (body.cartCheckout === true && !orderId) {
       if (!supabaseUser) {
@@ -1068,6 +1075,8 @@ export default async function handler(req, res) {
       }
       const cp = body.cartParams && typeof body.cartParams === 'object' ? body.cartParams : {}
       const couponRaw = cp.couponCode != null ? String(cp.couponCode).trim() : ''
+      cartParamsForStoreCheckout = cp
+      cartCouponCode = couponRaw
       const { data: intentSummary, error: intentRpcErr } = await supabaseUser.rpc('create_store_checkout_intent', {
         p_user_id: user.id,
         p_ship_immediately: !!cp.shipImmediately,
@@ -1458,6 +1467,91 @@ export default async function handler(req, res) {
 
     const requestedProvider = normalizeProvider(body.provider)
     const selectedProvider = requestedProvider || (shouldPreferParcelow(order, currency) ? 'parcelow' : 'stripe')
+
+    if (selectedProvider === 'wise') {
+      const wisePayUrl = getWisePayUrl()
+      if (intentCheckoutId) {
+        if (!supabaseUser) {
+          return res.status(500).json({ error: 'Checkout Wise indisponível para este carrinho.' })
+        }
+        await supabase.from('store_checkout_intents').delete().eq('id', intentCheckoutId)
+        const { data: createdOrder, error: coErr } = await supabaseUser.rpc('create_store_order', {
+          p_user_id: user.id,
+          p_ship_immediately: !!cartParamsForStoreCheckout?.shipImmediately,
+          p_shipping_cost:
+            cartParamsForStoreCheckout?.shippingCostJpy != null
+              ? Number(cartParamsForStoreCheckout.shippingCostJpy)
+              : null,
+          p_shipping_currency: 'JPY',
+          p_shipping_address_id: cartParamsForStoreCheckout?.shippingAddressId || null,
+          p_coupon_code: cartCouponCode || null,
+        })
+        if (coErr) {
+          return res.status(400).json({ error: coErr.message || 'Erro ao criar pedido para pagamento Wise' })
+        }
+        const createdOrderId = createdOrder && typeof createdOrder === 'object' ? createdOrder.id : null
+        if (!createdOrderId) {
+          return res.status(500).json({ error: 'Pedido não retornado após criação para Wise' })
+        }
+        orderId = createdOrderId
+        intentCheckoutId = null
+        const { data: freshOrder, error: freshOrderErr } = await supabase
+          .from('orders')
+          .select('id, user_id, status, shipping_cost, shipping_currency, quote_amount, quote_currency, total_amount, total_amount_usd, discount_amount, wallet_applied_amount, order_source, ship_immediately, acquisition_mode, referral_discount_amount, affiliate_id, referral_id')
+          .eq('id', orderId)
+          .single()
+        if (freshOrderErr || !freshOrder) {
+          return res.status(500).json({ error: 'Pedido Wise não encontrado após criação' })
+        }
+        order = freshOrder
+      }
+
+      const { data: existingRequest } = await supabase
+        .from('wise_payment_requests')
+        .select('id,status')
+        .eq('order_id', orderId)
+        .in('status', ['pending', 'submitted'])
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      let wiseRequestId = existingRequest?.id || null
+      if (!wiseRequestId) {
+        const { data: insertedWiseRequest, error: wiseInsertErr } = await supabase
+          .from('wise_payment_requests')
+          .insert({
+            order_id: orderId,
+            user_id: user.id,
+            amount_jpy: unitAmount,
+            wise_pay_url: wisePayUrl,
+            status: 'pending',
+          })
+          .select('id')
+          .single()
+        if (wiseInsertErr || !insertedWiseRequest?.id) {
+          return res.status(500).json({ error: wiseInsertErr?.message || 'Erro ao iniciar pagamento Wise manual' })
+        }
+        wiseRequestId = insertedWiseRequest.id
+      } else {
+        await supabase
+          .from('wise_payment_requests')
+          .update({
+            amount_jpy: unitAmount,
+            wise_pay_url: wisePayUrl,
+          })
+          .eq('id', wiseRequestId)
+      }
+
+      return res.status(200).json({
+        provider: 'wise',
+        manual: true,
+        orderId,
+        wiseRequestId,
+        wisePayUrl,
+        amountJpy: unitAmount,
+        walletApplied,
+      })
+    }
 
     if (selectedProvider === 'parcelow') {
       if (!rates?.jpy_usd || !rates?.usd_brl) {

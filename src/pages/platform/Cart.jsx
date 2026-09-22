@@ -11,7 +11,14 @@ import { useFormatPrice } from '../../hooks/useFormatPrice'
 import { PageSeo } from '../../components/PageSeo'
 import { createPortal } from 'react-dom'
 import { useAuth } from '../../hooks/useAuth'
-import { getCart, updateCartItem, removeFromCart, getLatestPendingStoreOrder } from '../../services/cartService'
+import {
+  getCart,
+  updateCartItem,
+  removeFromCart,
+  updateEphemeralCartItem,
+  removeEphemeralFromCart,
+  getLatestPendingStoreOrder,
+} from '../../services/cartService'
 import { getMyCoupons, validateCoupon } from '../../services/couponService'
 import { createCheckoutSession, fetchExchangeRates, getMyPayments } from '../../services/paymentService'
 import { getMyOrders } from '../../services/orderService'
@@ -25,10 +32,22 @@ import {
 } from '../../data/serviceFees'
 import { brlToJpy, formatUSD, jpyToBrl, getFxBrlPerJpy } from '../../lib/fx'
 import { TriCurrencyDisplay } from '../../components/TriCurrencyDisplay'
-import { appStoreProductPath } from '../../lib/localeRoutes'
+import { appStoreProductPath, publicEphemeralProductPath } from '../../lib/localeRoutes'
+
+function getCartLineKey(item) {
+  if (item?.line_type === 'ephemeral' || item?.ephemeral_token) {
+    return `ephemeral:${item.ephemeral_token}`
+  }
+  return item?.variant_id || item?.product_id
+}
+
+function isEphemeralCartItem(item) {
+  return item?.line_type === 'ephemeral' || Boolean(item?.ephemeral_token)
+}
 import { getSystemSettings } from '../../services/settingsService'
 import { GATEWAY_OPTIONS_META, PAYMENT_METHODS_BY_GATEWAY } from '../../components/paymentModalConstants'
 import { getPurchaseGroups } from '../../services/groupService'
+import WisePaymentReceiptModal from '../../components/WisePaymentReceiptModal'
 
 function getCartItemImages(product, variant) {
   const variantList = Array.isArray(variant?.image_urls) ? variant.image_urls.filter(Boolean) : []
@@ -113,8 +132,15 @@ function Cart() {
   const [payModal, setPayModal] = useState({ open: false, order: null, useWallet: false, cartCheckout: false })
   const [walletApplyMode, setWalletApplyMode] = useState('full')
   const [walletCustomAmount, setWalletCustomAmount] = useState('')
-  const [selectedGateway, setSelectedGateway] = useState('parcelow')
+  const [selectedGateway, setSelectedGateway] = useState('wise')
   const [selectedMethodGroup, setSelectedMethodGroup] = useState('card')
+  const [wiseModal, setWiseModal] = useState({
+    open: false,
+    orderId: '',
+    amountJpy: 0,
+    wiseRequestId: '',
+    wisePayUrl: '',
+  })
   const [feedback, setFeedback] = useState('')
   const [systemSettings, setSystemSettings] = useState(null)
   const [couponInput, setCouponInput] = useState('')
@@ -273,8 +299,8 @@ function Cart() {
     setQtyDrafts((prev) => {
       const next = {}
       for (const item of items) {
-        const key = item.variant_id || item.product_id
-        if (Object.prototype.hasOwnProperty.call(prev, key)) {
+        const key = getCartLineKey(item)
+        if (key && Object.prototype.hasOwnProperty.call(prev, key)) {
           next[key] = prev[key]
         }
       }
@@ -404,7 +430,7 @@ function Cart() {
     if (!payModal.open) {
       setWalletApplyMode('full')
       setWalletCustomAmount('')
-      setSelectedGateway('parcelow')
+      setSelectedGateway('wise')
       setSelectedMethodGroup('card')
     }
   }, [payModal.open])
@@ -514,7 +540,7 @@ function Cart() {
   const totalAfterDiscountBrl = Math.max(0, totalBrl - discountBrl)
 
   const cartItemsKey = useMemo(
-    () => items.map((i) => `${i.variant_id || i.product_id}:${i.quantity}`).join('|'),
+    () => items.map((i) => `${getCartLineKey(i)}:${i.quantity}`).join('|'),
     [items]
   )
 
@@ -636,34 +662,39 @@ function Cart() {
     setFeedback('')
   }
 
-  const handleUpdateQty = async (variantId, quantity) => {
+  const handleUpdateQty = async (lineKey, quantity) => {
     const qty = Math.max(1, Math.min(99, Number(quantity) || 1))
-    const currentItem = items.find((i) => (i.variant_id || i.product_id) === variantId)
+    const currentItem = items.find((i) => getCartLineKey(i) === lineKey)
     const currentQty = Number(currentItem?.quantity || 1)
     if (qty === currentQty) {
       setQtyDrafts((d) => {
         const next = { ...d }
-        delete next[variantId]
+        delete next[lineKey]
         return next
       })
       return
     }
-    const { error } = await updateCartItem(user.id, variantId, qty)
+    const { error } = isEphemeralCartItem(currentItem)
+      ? await updateEphemeralCartItem(currentItem.ephemeral_token, qty)
+      : await updateCartItem(user.id, lineKey, qty)
     if (error) setFeedback(error.message)
     else {
       setQtyDrafts((d) => {
         const next = { ...d }
-        delete next[variantId]
+        delete next[lineKey]
         return next
       })
       loadCart({ silent: true })
     }
   }
 
-  const handleRemove = async (variantId) => {
+  const handleRemove = async (lineKey) => {
+    const currentItem = items.find((i) => getCartLineKey(i) === lineKey)
     const snapshot = items
-    setItems((prev) => prev.filter((i) => (i.variant_id || i.product_id) !== variantId))
-    const { error } = await removeFromCart(user.id, variantId)
+    setItems((prev) => prev.filter((i) => getCartLineKey(i) !== lineKey))
+    const { error } = isEphemeralCartItem(currentItem)
+      ? await removeEphemeralFromCart(currentItem.ephemeral_token)
+      : await removeFromCart(user.id, lineKey)
     if (error) {
       setFeedback(error.message)
       setItems(snapshot)
@@ -911,6 +942,25 @@ function Cart() {
         })()
         return
       }
+      if (result?.manual && result?.provider === 'wise') {
+        setPayModal({ open: false, order: null, useWallet: false, cartCheckout: false })
+        setWiseModal({
+          open: true,
+          orderId: result.orderId || orderId,
+          amountJpy: Number(result.amountJpy) || 0,
+          wiseRequestId: result.wiseRequestId || '',
+          wisePayUrl: result.wisePayUrl || '',
+        })
+        if (result.wisePayUrl) {
+          const opened = window.open(result.wisePayUrl, '_blank', 'noopener,noreferrer')
+          if (!opened) {
+            setFeedback('O navegador bloqueou a abertura da Wise. Libere pop-ups e tente novamente.')
+          }
+        }
+        setFeedback(t('platform.orders.wisePendingApproval'))
+        await loadPendingOrders()
+        return
+      }
       if (result?.url) {
         try {
           if (result?.debug) {
@@ -959,6 +1009,7 @@ function Cart() {
     if (!paymentId) return '—'
     if (paymentId.startsWith('wallet')) return t('platform.cart.payMethod.wallet')
     if (paymentId === 'referral_discount' || paymentId === 'coupon_discount') return t('platform.cart.payMethod.discount')
+    if (paymentId.startsWith('wise')) return 'Wise'
     if (paymentId.startsWith('glin')) return 'Glin'
     if (paymentId.startsWith('parcelow')) return 'Parcelow'
     if (paymentId.includes('pix')) return 'PIX'
@@ -1077,6 +1128,11 @@ function Cart() {
                   const p = item.products
                   const variant = item.product_variants
                   if (!p) return null
+                  const lineKey = getCartLineKey(item)
+                  const ephemeral = isEphemeralCartItem(item)
+                  const productHref = ephemeral
+                    ? publicEphemeralProductPath(item.ephemeral_token, locale)
+                    : appStoreProductPath(p.id, locale, item.variant_id ? { variantId: item.variant_id } : {})
                   const qty = Math.max(1, Number(item.quantity) || 1)
                   const jpyUnit = Number(variant?.price_jpy ?? p.price_jpy ?? p.price) || 0
                   const brlUnit = Number(p.price_brl)
@@ -1128,7 +1184,7 @@ function Cart() {
                         </div>
                         <h3 className="font-semibold text-earth-900">
                           <Link
-                            to={appStoreProductPath(p.id, locale, item.variant_id ? { variantId: item.variant_id } : {})}
+                            to={productHref}
                             className="hover:text-earth-700 hover:underline"
                           >
                             {p.name}
@@ -1165,15 +1221,15 @@ function Cart() {
                           type="number"
                           min="1"
                           max="99"
-                          value={qtyDrafts[item.variant_id || item.product_id] ?? item.quantity}
+                          value={qtyDrafts[lineKey] ?? item.quantity}
                           onChange={(e) =>
-                            setQtyDrafts((d) => ({ ...d, [item.variant_id || item.product_id]: e.target.value }))
+                            setQtyDrafts((d) => ({ ...d, [lineKey]: e.target.value }))
                           }
-                          onBlur={(e) => handleUpdateQty(item.variant_id || item.product_id, e.target.value)}
+                          onBlur={(e) => handleUpdateQty(lineKey, e.target.value)}
                           onKeyDown={(e) => {
                             if (e.key === 'Enter') {
                               e.preventDefault()
-                              handleUpdateQty(item.variant_id || item.product_id, e.currentTarget.value)
+                              handleUpdateQty(lineKey, e.currentTarget.value)
                             }
                           }}
                           className="w-16 rounded border border-earth-300 px-2 py-1 text-center text-earth-900"
@@ -1186,7 +1242,7 @@ function Cart() {
                         </div>
                         <button
                           type="button"
-                          onClick={() => handleRemove(item.variant_id || item.product_id)}
+                          onClick={() => handleRemove(lineKey)}
                           className="text-sm text-red-600 hover:text-red-800 sm:ml-1"
                         >
                           {t('platform.cart.remove')}
@@ -1742,6 +1798,11 @@ function Cart() {
                                     <p className="text-sm font-medium text-earth-900">
                                       <span className="mr-1">{entry.icon}</span>
                                       {entry.label}
+                                      {entry.recommended ? (
+                                        <span className="ml-2 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
+                                          {t('platform.orders.gatewayRecommended')}
+                                        </span>
+                                      ) : null}
                                     </p>
                                     <p className="text-xs text-earth-600">{entry.details}</p>
                                   </button>
@@ -1882,6 +1943,19 @@ function Cart() {
           </div>,
           document.body
         )}
+      <WisePaymentReceiptModal
+        open={wiseModal.open}
+        orderLabel={wiseModal.orderId ? `${String(wiseModal.orderId).slice(0, 8)}…` : ''}
+        amountJpy={wiseModal.amountJpy}
+        wisePayUrl={wiseModal.wisePayUrl}
+        wiseRequestId={wiseModal.wiseRequestId}
+        userId={user?.id || ''}
+        onClose={() => setWiseModal({ open: false, orderId: '', amountJpy: 0, wiseRequestId: '', wisePayUrl: '' })}
+        onSubmitted={async () => {
+          await loadPendingOrders()
+          await loadPayments()
+        }}
+      />
     </>
   )
 }

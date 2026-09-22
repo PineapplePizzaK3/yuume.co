@@ -13,6 +13,7 @@ export const ADMIN_TABS = [
   { id: 'usuarios', path: 'usuarios', label: 'Usuários', icon: '👤', category: 'operacao' },
   { id: 'envios', path: 'envios', label: 'Envios', icon: '🚚', category: 'operacao' },
   { id: 'produtos_usuarios', path: 'produtos-usuarios', label: 'Produtos (Usuários)', icon: '📋', category: 'operacao' },
+  { id: 'live_rips_admin', path: 'live-rips', label: 'Live Rips', icon: '🎥', category: 'operacao' },
   { id: 'produtos', path: 'produtos', label: 'Produtos Loja', icon: '🛒', category: 'catalogo' },
   { id: 'catalogo_produtos', path: 'catalogo-produtos', label: 'Lista de Produtos', icon: '📚', category: 'catalogo' },
   { id: 'orcamentos', path: 'orcamentos', label: 'Orçamentos', icon: '📝', category: 'catalogo' },
@@ -25,6 +26,7 @@ export const ADMIN_TABS = [
   { id: 'notificacoes', path: 'notificacoes', label: 'Notificações', icon: '🔔', category: 'growth' },
   { id: 'recargas', path: 'recargas', label: 'Recargas PIX', icon: '💰', category: 'financeiro' },
   { id: 'invoices_admin', path: 'invoices', label: 'Invoices', icon: '🧾', category: 'financeiro' },
+  { id: 'controle_financeiro', path: 'controle-financeiro', label: 'Controle financeiro', icon: '📊', category: 'financeiro' },
   { id: 'logs', path: 'logs', label: 'Logs', icon: '📋', category: 'sistema' },
 ]
 
@@ -35,6 +37,7 @@ const ADMIN_PT_TO_EN_SEGMENT = {
   usuarios: 'users',
   envios: 'shipping',
   'produtos-usuarios': 'user-products',
+  'live-rips': 'live-rips',
   produtos: 'products',
   'catalogo-produtos': 'catalog',
   grupos: 'groups',
@@ -46,6 +49,7 @@ const ADMIN_PT_TO_EN_SEGMENT = {
   notificacoes: 'notifications',
   recargas: 'top-ups',
   invoices: 'invoices',
+  'controle-financeiro': 'financial-control',
   logs: 'logs',
 }
 

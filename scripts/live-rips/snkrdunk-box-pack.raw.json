@@ -1,0 +1,293 @@
+{
+  "source": {
+    "name": "SNKRDUNK",
+    "url": "https://snkrdunk.com/categories/26",
+    "categoryPath": "トレカ (ボックス・パック)"
+  },
+  "pokemonAutoCatalog": {
+    "enabled": true,
+    "searchUrlTemplates": [
+      "https://snkrdunk.com/search?searchCategoryIds=6%2F26&brandIds=pokemon&sort=hottest&page={page}",
+      "https://snkrdunk.com/search?keywords=Scarlet%20%26%20Violet%20Enhanced%20Expansion%20Pack&searchCategoryIds=6%2F26&sort=hottest&page={page}",
+      "https://snkrdunk.com/search?keywords=%E3%82%B9%E3%82%AB%E3%83%BC%E3%83%AC%E3%83%83%E3%83%88%26%E3%83%90%E3%82%A4%E3%82%AA%E3%83%AC%E3%83%83%E3%83%88%20%E5%BC%B7%E5%8C%96%E6%8B%A1%E5%BC%B5%E3%83%91%E3%83%83%E3%82%AF&searchCategoryIds=6%2F26&sort=hottest&page={page}",
+      "https://snkrdunk.com/search?keywords=%E5%BC%B7%E5%8C%96%E6%8B%A1%E5%BC%B5%E3%83%91%E3%83%83%E3%82%AF%20%E3%83%9C%E3%83%83%E3%82%AF%E3%82%B9&searchCategoryIds=6%2F26&sort=hottest&page={page}",
+      "https://snkrdunk.com/search?keywords=%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%20%E5%BC%B7%E5%8C%96%E6%8B%A1%E5%BC%B5%E3%83%91%E3%83%83%E3%82%AF%20%E3%83%9C%E3%83%83%E3%82%AF%E3%82%B9&searchCategoryIds=6%2F26&sort=hottest&page={page}"
+    ],
+    "maxPages": 200,
+    "maxPagesPerQuery": 8,
+    "boxKeyword": "ボックス",
+    "keywordSeeds": [
+      "スカーレットex",
+      "バイオレットex",
+      "トリプレットビート",
+      "クレイバースト",
+      "スノーハザード",
+      "151",
+      "黒炎の支配者",
+      "レイジングサーフ",
+      "古代の咆哮",
+      "未来の一閃",
+      "シャイニートレジャーex",
+      "ワイルドフォース",
+      "サイバージャッジ",
+      "クリムゾンヘイズ",
+      "変幻の仮面",
+      "ナイトワンダラー",
+      "ステラミラクル",
+      "楽園ドラゴーナ",
+      "超電ブレイカー",
+      "テラスタルフェスex",
+      "バトルパートナーズ"
+    ]
+  },
+  "onePieceAutoCatalog": {
+    "enabled": true,
+    "searchUrlTemplates": [
+      "https://snkrdunk.com/search?searchCategoryIds=6%2F26&brandIds=onepiece&sort=hottest&page={page}",
+      "https://snkrdunk.com/search?keywords=%E3%83%AF%E3%83%B3%E3%83%94%E3%83%BC%E3%82%B9%20%E3%83%9C%E3%83%83%E3%82%AF%E3%82%B9&searchCategoryIds=6%2F26&brandIds=onepiece&sort=hottest&page={page}"
+    ],
+    "maxPages": 120,
+    "maxPagesPerQuery": 6,
+    "boxKeyword": "ボックス",
+    "keywordSeeds": [
+      "世界最強の戦士",
+      "受け継がれる意志",
+      "神速の拳",
+      "決戦の刻",
+      "神の島の冒険",
+      "師弟の絆",
+      "新たなる皇帝",
+      "二つの伝説",
+      "双璧の覇者",
+      "500年後の未来",
+      "新時代の主役",
+      "ロマンスドーン",
+      "頂上決戦"
+    ]
+  },
+  "additionalTcgAutoCatalogs": [
+    {
+      "id": "yugioh",
+      "categoryId": "yugioh",
+      "label": {
+        "pt-BR": "Yu-Gi-Oh! - Booster Box",
+        "en": "Yu-Gi-Oh! - Booster Box"
+      },
+      "brandIds": [
+        "yu-gi-oh"
+      ],
+      "searchUrlTemplates": [
+        "https://snkrdunk.com/search?searchCategoryIds=6%2F26&brandIds=yu-gi-oh&sort=hottest&page={page}"
+      ],
+      "maxPages": 80,
+      "maxPagesPerQuery": 5,
+      "boxKeyword": "ボックス"
+    },
+    {
+      "id": "weis-schwarz",
+      "categoryId": "weis-schwarz",
+      "label": {
+        "pt-BR": "Weiss Schwarz - Booster Box",
+        "en": "Weiss Schwarz - Booster Box"
+      },
+      "brandIds": [
+        "weis-schwarz"
+      ],
+      "searchUrlTemplates": [
+        "https://snkrdunk.com/search?searchCategoryIds=6%2F26&brandIds=weis-schwarz&sort=hottest&page={page}"
+      ],
+      "maxPages": 80,
+      "maxPagesPerQuery": 5,
+      "boxKeyword": "ボックス"
+    },
+    {
+      "id": "dragon-ball-super-card-game",
+      "categoryId": "dragon-ball-super-card-game",
+      "label": {
+        "pt-BR": "Dragon Ball Super - Booster Box",
+        "en": "Dragon Ball Super - Booster Box"
+      },
+      "brandIds": [
+        "dragon-ball-super-card-game"
+      ],
+      "searchUrlTemplates": [
+        "https://snkrdunk.com/search?searchCategoryIds=6%2F26&brandIds=dragon-ball-super-card-game&sort=hottest&page={page}"
+      ],
+      "maxPages": 80,
+      "maxPagesPerQuery": 5,
+      "boxKeyword": "ボックス"
+    },
+    {
+      "id": "union-arena",
+      "categoryId": "union-arena",
+      "label": {
+        "pt-BR": "Union Arena - Booster Box",
+        "en": "Union Arena - Booster Box"
+      },
+      "brandIds": [
+        "union-arena"
+      ],
+      "searchUrlTemplates": [
+        "https://snkrdunk.com/search?searchCategoryIds=6%2F26&brandIds=union-arena&sort=hottest&page={page}"
+      ],
+      "maxPages": 80,
+      "maxPagesPerQuery": 5,
+      "boxKeyword": "ボックス"
+    },
+    {
+      "id": "gundam-card-game",
+      "categoryId": "gundam-card-game",
+      "label": {
+        "pt-BR": "Gundam Card Game - Booster Box",
+        "en": "Gundam Card Game - Booster Box"
+      },
+      "brandIds": [
+        "gundam-card-game"
+      ],
+      "searchUrlTemplates": [
+        "https://snkrdunk.com/search?searchCategoryIds=6%2F26&brandIds=gundam-card-game&sort=hottest&page={page}"
+      ],
+      "maxPages": 80,
+      "maxPagesPerQuery": 5,
+      "boxKeyword": "ボックス"
+    },
+    {
+      "id": "duelmasters",
+      "categoryId": "duelmasters",
+      "label": {
+        "pt-BR": "Duel Masters - Booster Box",
+        "en": "Duel Masters - Booster Box"
+      },
+      "brandIds": [
+        "duelmasters"
+      ],
+      "searchUrlTemplates": [
+        "https://snkrdunk.com/search?searchCategoryIds=6%2F26&brandIds=duelmasters&sort=hottest&page={page}"
+      ],
+      "maxPages": 80,
+      "maxPagesPerQuery": 5,
+      "boxKeyword": "ボックス"
+    }
+  ],
+  "lastUpdatedAt": "2026-09-21T00:00:00.000Z",
+  "categories": [
+    {
+      "id": "pokemon-standard",
+      "label": {
+        "pt-BR": "Pokemon - Booster Box",
+        "en": "Pokemon - Booster Box"
+      }
+    },
+    {
+      "id": "one-piece",
+      "label": {
+        "pt-BR": "One Piece - Booster Box",
+        "en": "One Piece - Booster Box"
+      }
+    },
+    {
+      "id": "yugioh",
+      "label": {
+        "pt-BR": "Yu-Gi-Oh! - Booster Box",
+        "en": "Yu-Gi-Oh! - Booster Box"
+      }
+    },
+    {
+      "id": "weis-schwarz",
+      "label": {
+        "pt-BR": "Weiss Schwarz - Booster Box",
+        "en": "Weiss Schwarz - Booster Box"
+      }
+    },
+    {
+      "id": "dragon-ball-super-card-game",
+      "label": {
+        "pt-BR": "Dragon Ball Super - Booster Box",
+        "en": "Dragon Ball Super - Booster Box"
+      }
+    },
+    {
+      "id": "union-arena",
+      "label": {
+        "pt-BR": "Union Arena - Booster Box",
+        "en": "Union Arena - Booster Box"
+      }
+    },
+    {
+      "id": "gundam-card-game",
+      "label": {
+        "pt-BR": "Gundam Card Game - Booster Box",
+        "en": "Gundam Card Game - Booster Box"
+      }
+    },
+    {
+      "id": "duelmasters",
+      "label": {
+        "pt-BR": "Duel Masters - Booster Box",
+        "en": "Duel Masters - Booster Box"
+      }
+    }
+  ],
+  "products": [
+    {
+      "id": "pokemon-mega-dream-ex",
+      "categoryId": "pokemon-standard",
+      "name": "Pokemon Mega Dream ex",
+      "type": "Booster Box",
+      "priceYen": 6800,
+      "availableRips": 4,
+      "image": "/home/tcg-1-japanese-booster-boxes-WLC.png",
+      "searchUrl": "https://snkrdunk.com/search?keywords=MEGA%E3%83%89%E3%83%AA%E3%83%BC%E3%83%A0ex&searchCategoryIds=6%2F26&brandIds=pokemon&page=1",
+      "snkrdunkImageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/fdd5a167-a53a-4b9f-9a3d-0864d311e378.webp?size=m",
+      "snkrdunkPriceLabel": "¥12.450"
+    },
+    {
+      "id": "pokemon-wild-force",
+      "categoryId": "pokemon-standard",
+      "name": "Pokemon Wild Force",
+      "type": "Booster Box",
+      "priceYen": 5200,
+      "availableRips": 2,
+      "image": "/home/tcg-3-wstcg.jpg",
+      "searchUrl": "https://snkrdunk.com/search?keywords=Wild+Force&searchCategoryIds=6%2F26&brandIds=pokemon&page=1",
+      "snkrdunkImageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/3e8ae867-e5ac-4952-ac6e-9cf6f286c6f8.webp?size=m",
+      "snkrdunkPriceLabel": "¥10.290"
+    },
+    {
+      "id": "pokemon-shiny-treasure-ex-box",
+      "categoryId": "pokemon-standard",
+      "name": "Pokemon Shiny Treasure ex",
+      "type": "Booster Box",
+      "priceYen": 7600,
+      "availableRips": 2,
+      "image": "/home/anime-2-unboxing-japanese.jpeg",
+      "searchUrl": "https://snkrdunk.com/search?keywords=Shiny+Treasure+ex&searchCategoryIds=6%2F26&brandIds=pokemon&page=1",
+      "snkrdunkImageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/09f02ace-bb13-4200-ab89-1efbeda27e63.webp?size=m",
+      "snkrdunkPriceLabel": "¥15.400"
+    },
+    {
+      "id": "one-piece-op16",
+      "categoryId": "one-piece",
+      "name": "One Piece OP-16",
+      "type": "Booster Box",
+      "priceYen": 6000,
+      "availableRips": 2,
+      "image": "/home/anime-1-new-boosters.png",
+      "searchUrl": "https://snkrdunk.com/search?keywords=One+Piece+OP-16&searchCategoryIds=6%2F26&page=1",
+      "snkrdunkImageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/OPC-TCG-2026-09-07-OP016-of.webp?size=m",
+      "snkrdunkPriceLabel": "¥8.499"
+    },
+    {
+      "id": "one-piece-op14",
+      "categoryId": "one-piece",
+      "name": "One Piece OP-14",
+      "type": "Booster Box",
+      "priceYen": 5600,
+      "availableRips": 1,
+      "image": "/home/tcg-1-japanese-booster-boxes-WLC.png",
+      "searchUrl": "https://snkrdunk.com/search?keywords=One+Piece+OP-14&searchCategoryIds=6%2F26&page=1",
+      "snkrdunkImageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/OPC-TCG-2026-09-07-OP014-of.webp?size=m",
+      "snkrdunkPriceLabel": "¥8.200"
+    }
+  ]
+}

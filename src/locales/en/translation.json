@@ -9,6 +9,7 @@
     "home": "Home",
     "services": "Services & pricing",
     "whereToBuy": "Where to buy",
+    "liveRips": "Live Rips",
     "faq": "Help",
     "contact": "Contact",
     "virtualStore": "Store",
@@ -904,7 +905,24 @@
       "tabStock": "In stock",
       "tabScheduled": "Scheduled buying",
       "tabShowcase": "Showcase",
+      "tabSnkrdunkCatalog": "On-Demand",
       "tabServices": "Services"
+    },
+    "storeSnkrdunk": {
+      "eyebrow": "Direct purchase",
+      "title": "On-Demand",
+      "description": "Live category-based results with YuumeCo internal checkout.",
+      "snapshotInfo": "Live external results for the selected category.",
+      "categoriesTitle": "Categories",
+      "viewButton": "View product",
+      "buyButton": "Buy now",
+      "buyLoading": "Opening purchase...",
+      "snapshotError": "Could not start purchase for this item.",
+      "searchError": "Could not load results for this category.",
+      "loading": "Loading results...",
+      "empty": "No results found for this category.",
+      "loadMore": "Load more results",
+      "loadingMore": "Loading more..."
     },
     "groupBuy": {
       "metaTitle": "Showcase | Platform",
@@ -1340,6 +1358,22 @@
       "title": "Where to buy | Best Japanese shops | YuumeCo",
       "description": "Partner stores by category: Amazon, AmiAmi, Pokémon Center, Mercari, and more."
     },
+    "liveRips": {
+      "title": "Live Rips | YuumeCo",
+      "description": "Choose your rip for the next live opening directly from Japan."
+    },
+    "liveRipsDetail": {
+      "title": "Rip details | YuumeCo",
+      "description": "Review your rip reservation details for the next live stream."
+    },
+    "liveRipsMyRip": {
+      "title": "My Rip | YuumeCo",
+      "description": "Track your reservation status before the live opening."
+    },
+    "liveRipsLive": {
+      "title": "Live Rips stream | YuumeCo",
+      "description": "Follow the live opening and mock pull registrations for each rip."
+    },
     "defaultTitle": "YuumeCo | Bringing Japan to you"
   },
   "faqPage": {
@@ -1413,6 +1447,175 @@
         "title": "Stationery & everyday",
         "desc": "Pens, notebooks, planners, and cute desk items for daily life, with a Japanese-inspired selection."
       }
+    }
+  },
+  "liveRips": {
+    "hero": {
+      "title": "Your box. Your opening. Straight from Japan.",
+      "description": "Choose your Japanese product and join the next live opening. Each Rip is opened individually for the customer.",
+      "cta": "See next live",
+      "secondaryCta": "My Rip"
+    },
+    "hubSteps": {
+      "eyebrow": "Step-by-step journey",
+      "stepLabel": "Step {{number}}",
+      "done": "Completed",
+      "nextButton": "Continue to how it works",
+      "finalStepButton": "Go to pricing and booking",
+      "concept": {
+        "title": "Concept",
+        "description": "Understand the experience before picking your box.",
+        "featuredTitle": "Featured to get started",
+        "featuredDescription": "A quick selection so you can feel the format before browsing the full catalog.",
+        "card1Title": "A dedicated opening for you",
+        "card1Body": "Each Rip is reserved for one customer and opened individually during the live.",
+        "card2Title": "Original products from Japan",
+        "card2Body": "We work with reference products from Japanese catalogs to keep the experience transparent and authentic.",
+        "card3Title": "Guided and safe flow",
+        "card3Body": "You follow each stage from reservation to opening, with your Rip history recorded."
+      },
+      "howItWorks": {
+        "title": "How it works",
+        "description": "See the full experience flow.",
+        "heading": "How it works in practice",
+        "lead": "From choosing a product to the live opening moment, the flow happens in four steps.",
+        "step1": "You choose a product and reserve your Rip.",
+        "step1Detail": "Compare options, check availability, and confirm your reservation for the set you want.",
+        "step2": "Our team confirms and separates the item in Japan.",
+        "step2Detail": "We prepare your opening based on the product reserved under your account.",
+        "step3": "The opening happens live on the stream date.",
+        "step3Detail": "You follow the reveal in real time in the live environment as each card is opened.",
+        "step4": "Your pulls are logged so you can track everything.",
+        "step4Detail": "After the opening, your rip history stays available for review and next actions."
+      },
+      "trust": {
+        "title": "Transparency you can verify",
+        "description": "The experience is designed to balance opening excitement with clear trust signals.",
+        "card1Eyebrow": "Integrity",
+        "card1Title": "Traceable outcomes",
+        "card1Body": "Each opening follows a documented flow to reduce uncertainty and keep the experience consistent.",
+        "card2Eyebrow": "Market",
+        "card2Title": "Live value references",
+        "card2Body": "Pricing follows current market references so you can decide with better context.",
+        "card3Eyebrow": "Support",
+        "card3Title": "Human operation and follow-up",
+        "card3Body": "You get visibility across the full journey and direct support from the team when needed."
+      },
+      "catalog": {
+        "title": "Pricing and booking",
+        "description": "Compare options, prices, and reserve your Rip."
+      }
+    },
+    "nextLive": {
+      "title": "Next Live",
+      "date": "Date",
+      "time": "Time",
+      "status": "Status",
+      "availableCount_one": "{{count}} Rip available",
+      "availableCount_other": "{{count}} Rips available",
+      "productsButton": "See available Rips"
+    },
+    "products": {
+      "title": "Available products",
+      "description": "Pick a product to reserve your Rip for the next live.",
+      "categoriesTitle": "Categories",
+      "snapshotInfo": "Product base: {{source}} - {{categoryPath}} (updated on {{updatedAt}})",
+      "type": "Type",
+      "condition": "Condition",
+      "shrinkWith": "With shrinkwrap",
+      "shrinkWithout": "Without shrinkwrap (シュリンクなし)",
+      "language": "Language",
+      "price": "Price",
+      "availability": "Availability",
+      "availableCount_one": "{{count}} Rip",
+      "availableCount_other": "{{count}} Rips",
+      "reserveButton": "Reserve Rip",
+      "placeholder": "Product image",
+      "sourceLabel": "Source: {{source}}",
+      "cardSizeLabel": "Card size",
+      "cardSizeHint": "Adjust to increase or reduce the card interface size."
+    },
+    "detail": {
+      "pageEyebrow": "Rip details",
+      "description": "This Rip will be opened individually for you during our next live stream.",
+      "sourceLabel": "Reference catalog: {{source}}",
+      "howItWorksTitle": "How it works?",
+      "steps": {
+        "step1": "You choose your Rip.",
+        "step2": "We separate the product in Japan.",
+        "step3": "We open it live.",
+        "step4": "You follow your pulls."
+      },
+      "futureNotice": "Cards pulled belong to the buyer. Storage, shipping, grading, and buyback options will be added later.",
+      "reserveTitle": "Reservation",
+      "reserveBody": "Your reservation will be stored in the system. You can pay right after to confirm it.",
+      "reserveButton": "Reserve this Rip",
+      "reserveLoading": "Reserving...",
+      "reserveSuccess": "Rip reserved!",
+      "reserveError": "We could not complete your reservation right now.",
+      "loginRequired": "You must be signed in to reserve a Rip.",
+      "loginCta": "Sign in",
+      "ripCodeLabel": "Code",
+      "payReservationButton": "Pay reservation",
+      "paymentLoading": "Opening checkout...",
+      "paymentStartError": "Could not start reservation checkout.",
+      "payWithWalletButton": "Pay with credits",
+      "walletPayLoading": "Processing credits payment...",
+      "walletPayError": "Could not debit your credits for this Rip.",
+      "alreadyPaid": "Reservation already paid",
+      "walletOnlyHint": "Live Rips accepts only platform wallet credits.",
+      "walletBalanceLabel": "Balance",
+      "ripPriceLabel": "Rip price",
+      "walletGapLabel": "Missing to pay",
+      "addCreditsCta": "Add credits to account",
+      "goToMyRip": "Go to My Rip",
+      "backToCatalog": "Back to Live Rips"
+    },
+    "myRip": {
+      "title": "My Rip",
+      "statusReserved": "Reserved",
+      "statusPaid": "Paid",
+      "product": "Product",
+      "ripCode": "Rip",
+      "nextLive": "Next live",
+      "timelineTitle": "Status timeline",
+      "watchButton": "Watch live",
+      "liveNotStarted": "The live stream has not started yet.",
+      "loading": "Loading your reservation...",
+      "noReservation": "You don't have an active Live Rip reservation yet.",
+      "loadError": "Could not load your reservation right now.",
+      "pullsTitle": "Your Rip pulls",
+      "postLiveHint": "Your opening is complete.",
+      "postLiveCta": "View in Lounge / Inventory",
+      "timeline": {
+        "reserved": "Rip reserved",
+        "separated": "Product separated",
+        "waiting": "Waiting for live",
+        "opening": "Opening",
+        "registered": "Cards logged"
+      }
+    },
+    "live": {
+      "title": "Live - JAPAN RIP NIGHT #01",
+      "videoLabel": "Stream",
+      "videoPlaceholder": "The real stream feed will be connected later.",
+      "queueTitle": "Rips in this live",
+      "nowOpening": "NOW OPENING",
+      "pullsTitle": "Pulls in this opening",
+      "addPullButton": "+ Register pull",
+      "removePullButton": "Remove demo pull"
+    },
+    "shell": {
+      "brandEyebrow": "Exclusive experience",
+      "brand": "Live Rips",
+      "companyLine": "Yuume.Co",
+      "navAria": "Live Rips navigation",
+      "navCatalog": "Catalog",
+      "navMyRip": "My Rip",
+      "navLive": "Live",
+      "backToServices": "Back to services",
+      "infoSupport": "Yuume.Co human support",
+      "infoSource": "Based on reference Japanese catalog data"
     }
   },
   "publicServicos": {

@@ -94,6 +94,7 @@ import NotificacoesSection from './sections/NotificacoesSection'
 import RecargasSection from './sections/RecargasSection'
 import LogsSection from './sections/LogsSection'
 import EnviosSection from './sections/EnviosSection'
+import LiveRipsSection from './sections/LiveRipsSection'
 import ProdutosUsuariosSection from './sections/ProdutosUsuariosSection'
 import ProdutosSection from './sections/ProdutosSection'
 import UsuariosSection from './sections/UsuariosSection'
@@ -104,6 +105,7 @@ import LotesSection from './sections/LotesSection'
 import PedidosSection from './sections/PedidosSection'
 import OrcamentosSection from './sections/OrcamentosSection'
 import InvoicesAdminSection from './sections/InvoicesAdminSection'
+import ControleFinanceiroSection from './sections/ControleFinanceiroSection'
 import {
   createCreditNoteAdmin,
   deleteFinancialDocumentAdmin,
@@ -114,6 +116,7 @@ import {
   listFinancialDocumentsAdmin,
 } from '../../../services/invoiceAdminService'
 import { downloadInvoicePdf } from '../../../services/invoiceService'
+import { listWisePaymentRequestsAdmin } from '../../../services/wisePaymentService'
 
 function formatMoney(v, currency = 'BRL') {
   return Number(v)?.toLocaleString('pt-BR', { style: 'currency', currency }) ?? '—'
@@ -526,6 +529,8 @@ export default function Admin({ routeTabId = 'pedidos' }) {
   const [usersListLoading, setUsersListLoading] = useState(false)
   const [topupRequests, setTopupRequests] = useState([])
   const [topupLoading, setTopupLoading] = useState(false)
+  const [wiseRequests, setWiseRequests] = useState([])
+  const [wiseLoading, setWiseLoading] = useState(false)
   const [marketingLoading, setMarketingLoading] = useState(false)
   const [checkoutCoupons, setCheckoutCoupons] = useState([])
   const [checkoutCouponsLoading, setCheckoutCouponsLoading] = useState(false)
@@ -1076,6 +1081,22 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     }
   }
 
+  const loadWiseRequests = async (active = () => true) => {
+    setWiseLoading(true)
+    try {
+      const { data, error } = await listWisePaymentRequestsAdmin('submitted')
+      if (!active()) return
+      if (error) {
+        setMessage(error.message || 'Erro ao carregar comprovantes Wise')
+        setWiseRequests([])
+        return
+      }
+      setWiseRequests(data ?? [])
+    } finally {
+      if (active()) setWiseLoading(false)
+    }
+  }
+
   const loadMarketingData = async (active = () => true) => {
     setMarketingLoading(true)
     setCheckoutCouponsLoading(true)
@@ -1174,6 +1195,14 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     if (activeTab === 'recargas') {
       let isActive = true
       loadTopupRequests(() => isActive)
+      return () => { isActive = false }
+    }
+  }, [activeTab])
+
+  useEffect(() => {
+    if (activeTab === 'pedidos') {
+      let isActive = true
+      loadWiseRequests(() => isActive)
       return () => { isActive = false }
     }
   }, [activeTab])
@@ -3122,6 +3151,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
   const adminContextValue = {
     activeTab,
     setActiveTab,
+    session,
     ORDER_STATUS,
     ORDER_STATUS_LABELS,
     orderStatusFilter,
@@ -3295,8 +3325,11 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     sectionMessages,
     topupLoading,
     topupRequests,
+    wiseLoading,
+    wiseRequests,
     formatMoney,
     loadTopupRequests,
+    loadWiseRequests,
     loadAdminNotifications,
     adminNotificationsLoading,
     adminNotifications,
@@ -3431,6 +3464,9 @@ export default function Admin({ routeTabId = 'pedidos' }) {
         {/* Painel de Envios */}
         <EnviosSection />
 
+        {/* Live Rips */}
+        <LiveRipsSection />
+
         {/* Produtos por usuário (inventário) */}
         <ProdutosUsuariosSection />
 
@@ -3448,6 +3484,9 @@ export default function Admin({ routeTabId = 'pedidos' }) {
 
         {/* Invoices e documentos financeiros */}
         <InvoicesAdminSection />
+
+        {/* Controle financeiro manual */}
+        <ControleFinanceiroSection />
 
         {/* Modal: detalhes e edição do usuário */}
         {userDetailModal.open && (

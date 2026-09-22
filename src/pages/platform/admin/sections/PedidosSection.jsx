@@ -7,10 +7,13 @@ import OrderAttachments from '../../../../components/OrderAttachments'
 import { useAdminContext } from '../AdminContext'
 import { REDIR_ASSISTIDO_FEE_PERCENT, computeAssistedEarlyPrepayDebitJpy } from '../../../../data/serviceFees'
 import AdminQuoteProductsForm, { EMPTY_QUOTE_PRODUCT } from './AdminQuoteProductsForm'
+import { approveWisePaymentRequestAdmin, rejectWisePaymentRequestAdmin } from '../../../../services/wisePaymentService'
+import { getPaymentsApiBase } from '../../../../services/paymentService'
 
 export default function PedidosSection() {
   const {
     activeTab,
+    session,
     orderStatusFilter,
     setOrderStatusFilter,
     ordersTotalCount,
@@ -28,6 +31,9 @@ export default function PedidosSection() {
     openShippingModal,
     setMessage,
     loadOrders,
+    wiseLoading,
+    wiseRequests,
+    loadWiseRequests,
     handleOrderStatus,
     openInventoryModal,
     openOrderEditModal,
@@ -183,6 +189,19 @@ export default function PedidosSection() {
     orderEditModal.order_module === 'self_buy' ||
     orderEditModal.order_module === 'assisted_buy'
 
+  const ensureOrderInvoice = async (orderId) => {
+    if (!orderId || !session?.access_token) return
+    const base = getPaymentsApiBase()
+    await fetch(`${base}/invoices`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ action: 'ensure_invoice', orderId }),
+    }).catch(() => null)
+  }
+
   if (activeTab !== 'pedidos' && !hasGlobalModalOpen) return null
 
   return (
@@ -278,6 +297,89 @@ export default function PedidosSection() {
         >
           Registrar pacote
         </button>
+      </div>
+      <div className="mt-6 rounded-lg border border-emerald-200 bg-emerald-50/40 p-4">
+        <h3 className="text-sm font-semibold text-earth-900">Comprovantes Wise aguardando validacao</h3>
+        <p className="mt-1 text-xs text-earth-600">
+          Aprove apenas quando o valor transferido for confirmado na sua conta Wise.
+        </p>
+        {wiseLoading ? <p className="mt-3 text-sm text-earth-600">Carregando comprovantes Wise...</p> : null}
+        {!wiseLoading && wiseRequests.length === 0 ? (
+          <p className="mt-3 text-sm text-earth-600">Nenhum comprovante Wise pendente.</p>
+        ) : null}
+        {!wiseLoading && wiseRequests.length > 0 ? (
+          <div className="mt-3 space-y-3">
+            {wiseRequests.map((req) => (
+              <div key={req.id} className="rounded-lg border border-earth-200 bg-white p-3">
+                <p className="font-medium text-earth-900">
+                  Pedido {String(req.order_id || '').slice(0, 8)}... - {formatJPY(req.amount_jpy || 0)}
+                </p>
+                <p className="mt-1 text-sm text-earth-600">
+                  {req.user_name || req.user_email || req.user_id?.slice(0, 8) || '—'} •{' '}
+                  {req.submitted_at ? new Date(req.submitted_at).toLocaleString('pt-BR') : ''}
+                </p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {req.receipt_url ? (
+                    <a
+                      href={req.receipt_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded border border-earth-300 px-3 py-1.5 text-sm font-medium text-earth-700 hover:bg-earth-100"
+                    >
+                      Ver comprovante
+                    </a>
+                  ) : null}
+                  {req.wise_pay_url ? (
+                    <a
+                      href={req.wise_pay_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded border border-emerald-300 px-3 py-1.5 text-sm font-medium text-emerald-700 hover:bg-emerald-50"
+                    >
+                      Abrir link Wise
+                    </a>
+                  ) : null}
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const txid = prompt('ID da transacao Wise (opcional):')
+                      const { data, error } = await approveWisePaymentRequestAdmin(req.id, txid || null)
+                      if (error) {
+                        setMessage(error.message || 'Nao foi possivel aprovar comprovante Wise')
+                        return
+                      }
+                      setMessage('Pagamento Wise aprovado com sucesso.')
+                      logAdminAction('wise_payment_approve', 'order', req.order_id, { request_id: req.id, txid: txid || null })
+                      await loadWiseRequests()
+                      await loadOrders()
+                      await ensureOrderInvoice(data?.order_id || req.order_id)
+                    }}
+                    className="rounded bg-green-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-green-800"
+                  >
+                    Aprovar pagamento Wise
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const note = prompt('Motivo da rejeicao (opcional):')
+                      const { error } = await rejectWisePaymentRequestAdmin(req.id, note || null)
+                      if (error) {
+                        setMessage(error.message || 'Nao foi possivel rejeitar comprovante Wise')
+                        return
+                      }
+                      setMessage('Pagamento Wise rejeitado.')
+                      logAdminAction('wise_payment_reject', 'order', req.order_id, { request_id: req.id, note: note || null })
+                      await loadWiseRequests()
+                    }}
+                    className="rounded border border-red-300 bg-white px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50"
+                  >
+                    Rejeitar
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : null}
       </div>
       {ordersLoading && <p className="mt-4 text-sm text-earth-600">Carregando pedidos...</p>}
       {!ordersLoading && ordersForList.length === 0 && (

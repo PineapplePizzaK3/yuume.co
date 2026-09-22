@@ -25,6 +25,7 @@ import {
 } from '../../components/StoreProductDisplay'
 import StoreProductCategorySection from '../../components/StoreProductCategorySection'
 import GrupoDeCompras from './GrupoDeCompras'
+import LojaSnkrdunkCatalogTab from './LojaSnkrdunkCatalogTab'
 
 function readVariantCategory(variant) {
   const attrs = variant?.attributes && typeof variant.attributes === 'object' ? variant.attributes : {}
@@ -311,12 +312,17 @@ export default function Loja({ publicMode = false }) {
   const [searchParams] = useSearchParams()
   // Default: Em Estoque. Vitrine only when explicitly requested.
   const tabParam = String(searchParams.get('tab') || '').toLowerCase()
-  const tab = tabParam === 'vitrine' || tabParam === 'grupos' ? 'grupos' : 'estoque'
+  const tab = tabParam === 'vitrine' || tabParam === 'grupos'
+    ? 'grupos'
+    : tabParam === 'snkrdunk'
+      ? 'snkrdunk'
+      : 'estoque'
 
   const tabLinks = useMemo(
     () => ({
       estoque: pathname,
       grupos: `${pathname}?tab=vitrine`,
+      snkrdunk: `${pathname}?tab=snkrdunk`,
     }),
     [pathname]
   )
@@ -344,6 +350,14 @@ export default function Loja({ publicMode = false }) {
               {t('platform.storeHub.tabStock')}
             </Link>
             <Link
+              to={tabLinks.snkrdunk}
+              className={`rounded-lg px-3 py-2 text-sm font-medium transition ${
+                tab === 'snkrdunk' ? 'bg-earth-900 text-earth-50' : 'bg-white text-earth-700 hover:bg-earth-100'
+              }`}
+            >
+              {t('platform.storeHub.tabSnkrdunkCatalog')}
+            </Link>
+            <Link
               to={tabLinks.grupos}
               className={`rounded-lg px-3 py-2 text-sm font-medium transition ${
                 tab === 'grupos' ? 'bg-earth-900 text-earth-50' : 'bg-white text-earth-700 hover:bg-earth-100'
@@ -356,6 +370,8 @@ export default function Loja({ publicMode = false }) {
           <div className="mt-6">
             {tab === 'estoque' ? (
               <LojaEstoqueCatalog publicMode={publicMode} />
+            ) : tab === 'snkrdunk' ? (
+              <LojaSnkrdunkCatalogTab />
             ) : (
               <GrupoDeCompras embedded hideHeader destination="all" publicMode={publicMode} />
             )}

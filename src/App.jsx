@@ -1,5 +1,5 @@
 import { Suspense, lazy, useEffect, useRef, useState } from 'react'
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import Navbar from './components/Navbar'
 import GlobalCatalogSearchShortcut from './components/GlobalCatalogSearchShortcut'
@@ -15,6 +15,13 @@ const Home = lazy(() => import('./pages/Home'))
 const Contact = lazy(() => import('./pages/Contact'))
 const OndeComprar = lazy(() => import('./pages/OndeComprar'))
 const CatalogSearchPublic = lazy(() => import('./pages/CatalogSearchPublic'))
+const EphemeralProductDetail = lazy(() => import('./pages/EphemeralProductDetail'))
+const LiveRipsPage = lazy(() => import('./pages/live-rips/LiveRipsPage'))
+const LiveRipDetailPage = lazy(() => import('./pages/live-rips/LiveRipDetailPage'))
+const MyRipPage = lazy(() => import('./pages/live-rips/MyRipPage'))
+const LiveRipBroadcastPage = lazy(() => import('./pages/live-rips/LiveRipBroadcastPage'))
+const LiveRipOverlayPage = lazy(() => import('./pages/live-rips/LiveRipOverlayPage'))
+const LiveRipsLayout = lazy(() => import('./layouts/LiveRipsLayout'))
 const ItensProibidos = lazy(() => import('./pages/como-funciona/ItensProibidos'))
 const TaxasAlfandegarias = lazy(() => import('./pages/como-funciona/TaxasAlfandegarias'))
 const ServicosEPrecosLayout = lazy(() => import('./pages/servicos-e-precos/ServicosEPrecosLayout'))
@@ -59,6 +66,7 @@ const AdminFraudeTab = lazy(() => import('./pages/platform/admin/tabs/FraudeTab'
 const AdminNotificacoesTab = lazy(() => import('./pages/platform/admin/tabs/NotificacoesTab'))
 const AdminRecargasTab = lazy(() => import('./pages/platform/admin/tabs/RecargasTab'))
 const AdminInvoicesTab = lazy(() => import('./pages/platform/admin/tabs/InvoicesAdminTab'))
+const AdminControleFinanceiroTab = lazy(() => import('./pages/platform/admin/tabs/ControleFinanceiroTab'))
 const AdminLogsTab = lazy(() => import('./pages/platform/admin/tabs/LogsTab'))
 const Lounge = lazy(() => import('./pages/platform/Lounge'))
 const Invoices = lazy(() => import('./pages/platform/Invoices'))
@@ -79,9 +87,15 @@ function SuspenseLoading() {
 }
 
 function App() {
+  const location = useLocation()
   const toastTimerRef = useRef(null)
   const toastFadeTimerRef = useRef(null)
   const [cartToast, setCartToast] = useState({ visible: false, message: '' })
+  const isLiveRipsRoute =
+    location.pathname === '/live-rips' ||
+    location.pathname.startsWith('/live-rips/') ||
+    location.pathname === '/en/live-rips' ||
+    location.pathname.startsWith('/en/live-rips/')
 
   useEffect(() => {
     const onCartToast = (event) => {
@@ -167,8 +181,8 @@ function App() {
   return (
     <div className="flex min-h-screen flex-col">
       <LocaleSync />
-      <Navbar />
-      <GlobalCatalogSearchShortcut />
+      {!isLiveRipsRoute ? <Navbar /> : null}
+      {!isLiveRipsRoute ? <GlobalCatalogSearchShortcut /> : null}
       <main className="flex-1">
         <Suspense fallback={<SuspenseLoading />}>
           <Routes>
@@ -237,6 +251,7 @@ function App() {
                 <Route path="notificacoes" element={<AdminNotificacoesTab />} />
                 <Route path="recargas" element={<AdminRecargasTab />} />
                 <Route path="invoices" element={<AdminInvoicesTab />} />
+                <Route path="controle-financeiro" element={<AdminControleFinanceiroTab />} />
                 <Route path="logs" element={<AdminLogsTab />} />
                 <Route path="operacao/pedidos" element={<AdminPedidosTab />} />
                 <Route path="operacao/usuarios" element={<AdminUsuariosTab />} />
@@ -254,6 +269,7 @@ function App() {
                 <Route path="growth/notificacoes" element={<AdminNotificacoesTab />} />
                 <Route path="financeiro/recargas" element={<AdminRecargasTab />} />
                 <Route path="financeiro/invoices" element={<AdminInvoicesTab />} />
+                <Route path="financeiro/controle-financeiro" element={<AdminControleFinanceiroTab />} />
                 <Route path="sistema/logs" element={<AdminLogsTab />} />
               </Route>
             </Route>
@@ -262,8 +278,16 @@ function App() {
               <Route path="itens-proibidos" element={<ItensProibidos />} />
               <Route path="taxas-alfandegarias" element={<TaxasAlfandegarias />} />
             </Route>
+            <Route path="/live-rips/overlay" element={<LiveRipOverlayPage />} />
+            <Route path="/live-rips" element={<LiveRipsLayout />}>
+              <Route index element={<LiveRipsPage />} />
+              <Route path="rip/:productId" element={<LiveRipDetailPage />} />
+              <Route path="minha-rip" element={<MyRipPage />} />
+              <Route path="live" element={<LiveRipBroadcastPage />} />
+            </Route>
             <Route path="/onde-comprar" element={<OndeComprar />} />
             <Route path="/busca-catalogo" element={<CatalogSearchPublic />} />
+            <Route path="/produto-temporario/:token" element={<EphemeralProductDetail />} />
             <Route path="/legal" element={<LegalLayout />}>
               <Route index element={<Navigate to={p('legalPrivacy')} replace />} />
               <Route path="commercial-disclosure" element={<CommercialDisclosure />} />
@@ -342,6 +366,7 @@ function App() {
                 <Route path="notifications" element={<AdminNotificacoesTab />} />
                 <Route path="top-ups" element={<AdminRecargasTab />} />
                 <Route path="invoices" element={<AdminInvoicesTab />} />
+                <Route path="financial-control" element={<AdminControleFinanceiroTab />} />
                 <Route path="logs" element={<AdminLogsTab />} />
                 <Route path="operations/orders" element={<AdminPedidosTab />} />
                 <Route path="operations/users" element={<AdminUsuariosTab />} />
@@ -359,6 +384,7 @@ function App() {
                 <Route path="growth/notifications" element={<AdminNotificacoesTab />} />
                 <Route path="finance/top-ups" element={<AdminRecargasTab />} />
                 <Route path="finance/invoices" element={<AdminInvoicesTab />} />
+                <Route path="finance/financial-control" element={<AdminControleFinanceiroTab />} />
                 <Route path="system/logs" element={<AdminLogsTab />} />
               </Route>
             </Route>
@@ -367,8 +393,16 @@ function App() {
               <Route path="prohibited-items" element={<ItensProibidos />} />
               <Route path="customs-fees" element={<TaxasAlfandegarias />} />
             </Route>
+            <Route path="/en/live-rips/overlay" element={<LiveRipOverlayPage />} />
+            <Route path="/en/live-rips" element={<LiveRipsLayout />}>
+              <Route index element={<LiveRipsPage />} />
+              <Route path="rip/:productId" element={<LiveRipDetailPage />} />
+              <Route path="my-rip" element={<MyRipPage />} />
+              <Route path="live" element={<LiveRipBroadcastPage />} />
+            </Route>
             <Route path="/en/where-to-buy" element={<OndeComprar />} />
             <Route path="/en/catalog-search" element={<CatalogSearchPublic />} />
+            <Route path="/en/instant-product/:token" element={<EphemeralProductDetail />} />
             <Route path="/en/legal" element={<LegalLayout />}>
               <Route index element={<Navigate to={e('legalPrivacy')} replace />} />
               <Route path="commercial-disclosure" element={<CommercialDisclosure />} />
@@ -383,9 +417,9 @@ function App() {
           </Routes>
         </Suspense>
       </main>
-      <Footer />
+      {!isLiveRipsRoute ? <Footer /> : null}
       <CookieConsentBanner />
-      <WhatsAppFloating />
+      {!isLiveRipsRoute ? <WhatsAppFloating /> : null}
       {cartToast.message && (
         <div className="pointer-events-none fixed inset-0 z-[12000] flex items-center justify-center p-4">
           <p
