@@ -23,6 +23,7 @@ export const ROUTES = {
   ondeComprar: { [LOCALE_PT_BR]: '/onde-comprar', [LOCALE_EN]: '/en/where-to-buy' },
   catalogSearchPublic: { [LOCALE_PT_BR]: '/busca-catalogo', [LOCALE_EN]: '/en/catalog-search' },
   ephemeralProductPublic: { [LOCALE_PT_BR]: '/produto-temporario', [LOCALE_EN]: '/en/instant-product' },
+  ephemeralProductOpen: { [LOCALE_PT_BR]: '/produto-temporario/abrir', [LOCALE_EN]: '/en/instant-product/open' },
   contact: { [LOCALE_PT_BR]: '/contact', [LOCALE_EN]: '/en/contact' },
   lojaPublic: { [LOCALE_PT_BR]: '/loja', [LOCALE_EN]: '/en/store' },
   lojaPublicVitrine: { [LOCALE_PT_BR]: '/loja/vitrine', [LOCALE_EN]: '/en/store/storefront' },
@@ -309,6 +310,25 @@ export function publicEphemeralProductPath(token, locale) {
   return locale === LOCALE_EN
     ? `/en/instant-product/${enc}`
     : `/produto-temporario/${enc}`
+}
+
+/**
+ * Bridge page that creates an ephemeral snapshot then redirects.
+ * Used so catalog result links support open-in-new-tab.
+ * @param {string} sessionId
+ * @param {SiteLocale} locale
+ * @param {string} [encodedPayload] optional hash fallback shared across tabs
+ */
+export function publicEphemeralOpenPath(sessionId, locale, encodedPayload = '') {
+  const sid = String(sessionId ?? '').trim()
+  if (!sid) return localizedPath('catalogSearchPublic', locale)
+  const q = `?s=${encodeURIComponent(sid)}`
+  const hash = String(encodedPayload || '').trim()
+    ? `#d=${encodeURIComponent(String(encodedPayload).trim())}`
+    : ''
+  return locale === LOCALE_EN
+    ? `/en/instant-product/open${q}${hash}`
+    : `/produto-temporario/abrir${q}${hash}`
 }
 
 /**

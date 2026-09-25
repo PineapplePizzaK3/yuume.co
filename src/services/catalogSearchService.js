@@ -40,7 +40,7 @@ async function normalizeInvokeError(err, authErrorMessage = 'Sessão expirada ou
   return { message: raw || 'Erro ao buscar catálogo externo.' }
 }
 
-async function invokeCatalogSearch({ body, token, authErrorMessage }) {
+async function invokeCatalogSearch({ body, token, authErrorMessage, timeoutMs = SEARCH_TIMEOUT_MS }) {
   let lastError = null
 
   for (const functionName of SEARCH_FUNCTION_NAMES) {
@@ -49,7 +49,7 @@ async function invokeCatalogSearch({ body, token, authErrorMessage }) {
       headers: token ? { Authorization: `Bearer ${token}` } : undefined,
     })
     const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('Tempo esgotado ao consultar as lojas externas.')), SEARCH_TIMEOUT_MS)
+      setTimeout(() => reject(new Error('Tempo esgotado ao consultar as lojas externas.')), timeoutMs)
     })
 
     try {
@@ -93,6 +93,20 @@ export async function searchCatalogAdmin({
     body: { query, stores, page, pageSize, mode: 'admin', ...(cursors ? { cursors } : {}) },
     token,
     authErrorMessage: 'Sessão expirada ou sem permissão para usar a busca do admin.',
+  })
+}
+
+export async function fetchCatalogProductGallery({ productUrl, storeId, timeoutMs = 12000 }) {
+  return await invokeCatalogSearch({
+    body: {
+      action: 'gallery',
+      productUrl,
+      storeId,
+      mode: 'public',
+    },
+    token: '',
+    authErrorMessage: 'Acesso não autorizado para busca pública.',
+    timeoutMs,
   })
 }
 

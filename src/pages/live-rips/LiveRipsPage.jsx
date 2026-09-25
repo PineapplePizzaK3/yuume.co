@@ -2,7 +2,8 @@ import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { LocalizedLink } from '../../components/LocalizedLink'
 import { PageSeo } from '../../components/PageSeo'
-import { LiveRipProductCard } from '../../components/live-rips/LiveRipProductCard'
+import { LiveRipProductCard, LiveRipPriceBlock } from '../../components/live-rips/LiveRipProductCard'
+import { LiveRipJpVersionBadge } from '../../components/live-rips/LiveRipJpVersionBadge'
 import {
   getLiveRipProductName,
   LIVE_RIPS_LAST_UPDATED_AT,
@@ -12,6 +13,7 @@ import {
   getLiveRipProductsByCategory,
 } from '../../data/liveRipsMock'
 import { liveRipDetailPath } from '../../lib/localeRoutes'
+import { useExchangeRates } from '../../hooks/useExchangeRates'
 import { useSiteLocale } from '../../hooks/useSiteLocale'
 
 const HUB_STEPS = ['concept', 'howItWorks', 'catalog']
@@ -19,6 +21,7 @@ const HUB_STEPS = ['concept', 'howItWorks', 'catalog']
 function LiveRipsPage() {
   const { t } = useTranslation()
   const locale = useSiteLocale()
+  const { rates } = useExchangeRates()
   const [activeCategoryId, setActiveCategoryId] = useState(LIVE_RIPS_PRODUCT_CATEGORIES[0]?.id || '')
   const [cardZoomPercent, setCardZoomPercent] = useState(100)
 
@@ -77,6 +80,8 @@ function LiveRipsPage() {
             ? {
                 with: withShrink.priceLabel,
                 without: withoutShrink.priceLabel,
+                withYen: Number(withShrink.priceYen ?? withShrink.priceJpy) || 0,
+                withoutYen: Number(withoutShrink.priceYen ?? withoutShrink.priceJpy) || 0,
               }
             : null
 
@@ -176,29 +181,14 @@ function LiveRipsPage() {
               <p className="mt-3 text-earth-700">{t('liveRips.hubSteps.concept.description')}</p>
               <div className="mt-5 space-y-3">
                 <div className="rounded-lg border border-earth-200 bg-earth-50 p-4">
-                  <img
-                    src={placeholderImage(t('liveRips.hubSteps.concept.card1Title'), 800, 280)}
-                    alt={t('liveRips.hubSteps.concept.card1Title')}
-                    className="mb-3 h-24 w-full rounded-md object-cover"
-                  />
                   <p className="font-semibold text-earth-900">{t('liveRips.hubSteps.concept.card1Title')}</p>
                   <p className="mt-1 text-sm text-earth-700">{t('liveRips.hubSteps.concept.card1Body')}</p>
                 </div>
                 <div className="rounded-lg border border-earth-200 bg-earth-50 p-4">
-                  <img
-                    src={placeholderImage(t('liveRips.hubSteps.concept.card2Title'), 800, 280)}
-                    alt={t('liveRips.hubSteps.concept.card2Title')}
-                    className="mb-3 h-24 w-full rounded-md object-cover"
-                  />
                   <p className="font-semibold text-earth-900">{t('liveRips.hubSteps.concept.card2Title')}</p>
                   <p className="mt-1 text-sm text-earth-700">{t('liveRips.hubSteps.concept.card2Body')}</p>
                 </div>
                 <div className="rounded-lg border border-earth-200 bg-earth-50 p-4">
-                  <img
-                    src={placeholderImage(t('liveRips.hubSteps.concept.card3Title'), 800, 280)}
-                    alt={t('liveRips.hubSteps.concept.card3Title')}
-                    className="mb-3 h-24 w-full rounded-md object-cover"
-                  />
                   <p className="font-semibold text-earth-900">{t('liveRips.hubSteps.concept.card3Title')}</p>
                   <p className="mt-1 text-sm text-earth-700">{t('liveRips.hubSteps.concept.card3Body')}</p>
                 </div>
@@ -215,16 +205,22 @@ function LiveRipsPage() {
                     href="#live-rips-step-catalog"
                     className="flex items-center gap-3 rounded-lg border border-earth-200 bg-earth-50 p-3 transition hover:border-earth-300 hover:bg-white"
                   >
-                    <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-md bg-earth-200">
+                    <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-md bg-earth-200">
                       <img
                         src={product.image || placeholderImage(getLiveRipProductName(product, locale), 320, 220)}
                         alt={getLiveRipProductName(product, locale)}
                         className="h-full w-full object-cover"
                       />
+                      <LiveRipJpVersionBadge size={14} className="right-1 top-1 p-0.5" />
                     </div>
                     <div className="min-w-0">
                       <p className="truncate text-sm font-semibold text-earth-900">{getLiveRipProductName(product, locale)}</p>
-                      <p className="text-xs text-earth-600">{product.priceLabel}</p>
+                      <div className="mt-1">
+                        <LiveRipPriceBlock
+                          yen={Number(product.priceYen ?? product.priceJpy) || 0}
+                          rates={rates}
+                        />
+                      </div>
                       <p className="text-xs text-earth-500">
                         {t('liveRips.products.availableCount', { count: product.availableRips })}
                       </p>
@@ -239,27 +235,40 @@ function LiveRipsPage() {
 
       <section id="live-rips-step-howItWorks" className="px-4 py-12">
         <div className="mx-auto max-w-6xl">
-          <div className="rounded-xl border border-earth-200 bg-white p-6 shadow-sm">
+          <div className="rounded-xl border border-earth-200 bg-white p-6 shadow-sm sm:p-8">
             <h2 className="text-2xl font-bold text-earth-900">{t('liveRips.hubSteps.howItWorks.heading')}</h2>
-            <p className="mt-2 text-earth-600">{t('liveRips.hubSteps.howItWorks.lead')}</p>
-            <ol className="mt-6 space-y-4">
-              {['step1', 'step2', 'step3', 'step4'].map((stepKey, index) => (
-                <li key={stepKey} className="flex gap-4">
-                  <div className="flex w-9 flex-shrink-0 flex-col items-center">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-earth-900 text-sm font-semibold text-earth-50">
-                      {index + 1}
-                    </div>
-                    {index < 3 ? <div className="mt-1 h-full w-px bg-earth-300" /> : null}
-                  </div>
-                  <div className="flex-1 rounded-lg border border-earth-200 bg-earth-50 p-4">
+            <p className="mt-2 max-w-2xl text-earth-600">{t('liveRips.hubSteps.howItWorks.lead')}</p>
+            <ol className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {[
+                { key: 'step1', icon: '/live-rips/icons/step-1.png' },
+                { key: 'step2', icon: '/live-rips/icons/step-2.png' },
+                { key: 'step3', icon: '/live-rips/icons/step-3.png' },
+                { key: 'step4', icon: '/live-rips/icons/step-4.png' },
+              ].map((step, index) => (
+                <li
+                  key={step.key}
+                  className="flex flex-col rounded-xl border border-earth-200 bg-earth-50/80 p-4"
+                >
+                  <div className="flex h-24 items-center justify-center rounded-lg bg-white/80">
                     <img
-                      src={placeholderImage(t(`liveRips.hubSteps.howItWorks.${stepKey}`), 960, 220)}
-                      alt={t(`liveRips.hubSteps.howItWorks.${stepKey}`)}
-                      className="mb-3 h-20 w-full rounded-md object-cover"
+                      src={step.icon}
+                      alt=""
+                      className="h-16 w-16 object-contain"
+                      onError={(event) => {
+                        event.currentTarget.onerror = null
+                        event.currentTarget.src = placeholderImage(String(index + 1), 128, 128)
+                      }}
                     />
-                    <p className="text-sm font-semibold text-earth-900">{t(`liveRips.hubSteps.howItWorks.${stepKey}`)}</p>
-                    <p className="mt-1 text-sm text-earth-600">{t(`liveRips.hubSteps.howItWorks.${stepKey}Detail`)}</p>
                   </div>
+                  <p className="mt-4 text-[11px] font-semibold uppercase tracking-wide text-earth-500">
+                    {t('liveRips.hubSteps.stepLabel', { number: index + 1 })}
+                  </p>
+                  <p className="mt-1 text-sm font-semibold leading-snug text-earth-900">
+                    {t(`liveRips.hubSteps.howItWorks.${step.key}`)}
+                  </p>
+                  <p className="mt-2 text-xs leading-relaxed text-earth-600">
+                    {t(`liveRips.hubSteps.howItWorks.${step.key}Detail`)}
+                  </p>
                 </li>
               ))}
             </ol>
@@ -273,31 +282,16 @@ function LiveRipsPage() {
           <p className="mt-2 text-earth-600">{t('liveRips.hubSteps.trust.description')}</p>
           <div className="mt-6 grid gap-4 md:grid-cols-3">
             <article className="rounded-xl border border-earth-200 bg-white p-5 shadow-sm">
-              <img
-                src={placeholderImage(t('liveRips.hubSteps.trust.card1Title'), 640, 280)}
-                alt={t('liveRips.hubSteps.trust.card1Title')}
-                className="mb-3 h-24 w-full rounded-md object-cover"
-              />
               <p className="text-xs font-semibold uppercase tracking-wide text-earth-500">{t('liveRips.hubSteps.trust.card1Eyebrow')}</p>
               <h3 className="mt-2 font-bold text-earth-900">{t('liveRips.hubSteps.trust.card1Title')}</h3>
               <p className="mt-2 text-sm text-earth-700">{t('liveRips.hubSteps.trust.card1Body')}</p>
             </article>
             <article className="rounded-xl border border-earth-200 bg-white p-5 shadow-sm">
-              <img
-                src={placeholderImage(t('liveRips.hubSteps.trust.card2Title'), 640, 280)}
-                alt={t('liveRips.hubSteps.trust.card2Title')}
-                className="mb-3 h-24 w-full rounded-md object-cover"
-              />
               <p className="text-xs font-semibold uppercase tracking-wide text-earth-500">{t('liveRips.hubSteps.trust.card2Eyebrow')}</p>
               <h3 className="mt-2 font-bold text-earth-900">{t('liveRips.hubSteps.trust.card2Title')}</h3>
               <p className="mt-2 text-sm text-earth-700">{t('liveRips.hubSteps.trust.card2Body')}</p>
             </article>
             <article className="rounded-xl border border-earth-200 bg-white p-5 shadow-sm">
-              <img
-                src={placeholderImage(t('liveRips.hubSteps.trust.card3Title'), 640, 280)}
-                alt={t('liveRips.hubSteps.trust.card3Title')}
-                className="mb-3 h-24 w-full rounded-md object-cover"
-              />
               <p className="text-xs font-semibold uppercase tracking-wide text-earth-500">{t('liveRips.hubSteps.trust.card3Eyebrow')}</p>
               <h3 className="mt-2 font-bold text-earth-900">{t('liveRips.hubSteps.trust.card3Title')}</h3>
               <p className="mt-2 text-sm text-earth-700">{t('liveRips.hubSteps.trust.card3Body')}</p>
@@ -380,6 +374,14 @@ function LiveRipsPage() {
                   })}
                 </div>
               </div>
+
+              {categoryProducts.length === 0 ? (
+                <p className="mb-6 text-sm text-earth-600">
+                  {t('liveRips.products.empty', {
+                    defaultValue: 'Nenhuma caixa com packs nesta categoria.',
+                  })}
+                </p>
+              ) : null}
 
               <div className="mb-6 rounded-lg border border-earth-200 bg-white p-4">
                 <div className="flex flex-wrap items-center gap-3">

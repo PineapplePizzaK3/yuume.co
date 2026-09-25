@@ -13,11 +13,6 @@ import {
   adminUpsertLiveRipEvent,
   adminUpsertLiveRipProduct,
 } from '../../../../services/liveRipService'
-import { getSystemSettings, saveSystemSettingsAdmin } from '../../../../services/settingsService'
-import {
-  ON_DEMAND_PRICE_MULTIPLIER_DEFAULT,
-  resolveOnDemandPriceMultiplier,
-} from '../../../../lib/onDemandPricing'
 
 const STATUS_OPTIONS = ['reserved', 'paid', 'separated', 'waiting_live', 'opening', 'cards_logged', 'cancelled']
 
@@ -96,8 +91,6 @@ export default function LiveRipsSection() {
     market_value_jpy: '',
     is_active: true,
   })
-  const [onDemandMultiplierDraft, setOnDemandMultiplierDraft] = useState(String(ON_DEMAND_PRICE_MULTIPLIER_DEFAULT))
-  const [onDemandMultiplierSaving, setOnDemandMultiplierSaving] = useState(false)
 
   const currentOpening = useMemo(
     () => rows.find((row) => row.status === 'opening') || rows.find((row) => row.status === 'waiting_live') || null,
@@ -147,38 +140,6 @@ export default function LiveRipsSection() {
     if (activeTab !== 'live_rips_admin') return
     loadAll()
   }, [activeTab])
-
-  useEffect(() => {
-    if (activeTab !== 'live_rips_admin') return
-    let active = true
-    ;(async () => {
-      const { data, error } = await getSystemSettings()
-      if (!active) return
-      if (error) {
-        setOnDemandMultiplierDraft(String(ON_DEMAND_PRICE_MULTIPLIER_DEFAULT))
-        return
-      }
-      setOnDemandMultiplierDraft(String(resolveOnDemandPriceMultiplier(data)))
-    })()
-    return () => {
-      active = false
-    }
-  }, [activeTab])
-
-  async function handleSaveOnDemandMultiplier() {
-    const next = resolveOnDemandPriceMultiplier(onDemandMultiplierDraft)
-    setOnDemandMultiplierSaving(true)
-    const { error } = await saveSystemSettingsAdmin({
-      on_demand_price_multiplier: { amount: next },
-    })
-    setOnDemandMultiplierSaving(false)
-    if (error) {
-      setMessage(error.message || 'Falha ao salvar multiplicador On-Demand')
-      return
-    }
-    setOnDemandMultiplierDraft(String(next))
-    setMessage(`Multiplicador On-Demand salvo: ${next}×`)
-  }
 
   async function handleStatusChange(row, nextStatus) {
     setSubmittingId(row.id)
@@ -373,7 +334,6 @@ export default function LiveRipsSection() {
           { id: 'events', label: 'Lives' },
           { id: 'products', label: 'Produtos e estoque' },
           { id: 'cards', label: 'Catálogo de cartas' },
-          { id: 'on_demand', label: 'On-Demand' },
         ].map((panel) => (
           <button
             key={panel.id}
@@ -389,42 +349,6 @@ export default function LiveRipsSection() {
           </button>
         ))}
       </div>
-
-      {activePanel === 'on_demand' ? (
-        <div className="mt-4 max-w-xl rounded-xl border border-earth-200 bg-white p-4 shadow-sm sm:p-5">
-          <h3 className="text-base font-semibold text-earth-900">Preço On-Demand</h3>
-          <p className="mt-1 text-sm text-earth-600">
-            Todos os itens da aba On-Demand na Loja usam: preço original × multiplicador. Padrão: 1.15.
-          </p>
-          <label className="mt-4 block text-sm font-medium text-earth-800" htmlFor="on-demand-multiplier">
-            Multiplicador
-          </label>
-          <div className="mt-1 flex flex-wrap items-center gap-2">
-            <input
-              id="on-demand-multiplier"
-              type="number"
-              min="0.01"
-              step="0.01"
-              value={onDemandMultiplierDraft}
-              onChange={(e) => setOnDemandMultiplierDraft(e.target.value)}
-              className="w-36 rounded-lg border border-earth-300 px-3 py-2 text-sm text-earth-900"
-            />
-            <span className="text-sm text-earth-600">×</span>
-            <button
-              type="button"
-              onClick={handleSaveOnDemandMultiplier}
-              disabled={onDemandMultiplierSaving}
-              className="rounded-lg bg-earth-900 px-3 py-2 text-sm font-medium text-earth-50 hover:bg-earth-800 disabled:opacity-60"
-            >
-              {onDemandMultiplierSaving ? 'Salvando...' : 'Salvar'}
-            </button>
-          </div>
-          <p className="mt-3 text-xs text-earth-500">
-            Exemplo: ¥10.000 × {resolveOnDemandPriceMultiplier(onDemandMultiplierDraft)} = ¥
-            {Math.round(10000 * resolveOnDemandPriceMultiplier(onDemandMultiplierDraft)).toLocaleString('pt-BR')}
-          </p>
-        </div>
-      ) : null}
 
       {activePanel === 'operations' ? (
         <>

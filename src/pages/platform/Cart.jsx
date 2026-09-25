@@ -1152,12 +1152,16 @@ function Cart() {
                     Number.isFinite(unitUsd) && unitUsd > 0
                       ? unitUsd * qty
                       : NaN
-                  const sourceTag = p.purchase_group_id
-                    ? t('platform.cart.sourceGroupBuy')
-                    : t('platform.cart.sourceStore')
-                  const sourceTagClass = p.purchase_group_id
-                    ? 'bg-amber-100 text-amber-800'
-                    : 'bg-sky-100 text-sky-800'
+                  const sourceTag = ephemeral
+                    ? t('platform.cart.sourceSearch')
+                    : p.purchase_group_id
+                      ? t('platform.cart.sourceGroupBuy')
+                      : t('platform.cart.sourceStore')
+                  const sourceTagClass = ephemeral
+                    ? 'bg-violet-100 text-violet-800'
+                    : p.purchase_group_id
+                      ? 'bg-amber-100 text-amber-800'
+                      : 'bg-sky-100 text-sky-800'
                   const stockCap = getProductStockCap(variant || p)
                   const qtyOverStock =
                     stockCap != null && stockCap > 0 && qty > stockCap

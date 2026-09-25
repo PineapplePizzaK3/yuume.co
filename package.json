@@ -10,6 +10,9 @@
     "preview": "npm run build && wrangler dev",
     "supabase:functions:deploy:catalog-search": "supabase functions deploy catalog-search",
     "scrape:quality": "node scripts/scrape-quality-report.mjs",
+    "catalog:on-demand:refresh": "node scripts/on-demand/update-snkrdunk-catalog.mjs",
+    "catalog:live-rips:box-pack": "node scripts/live-rips/build-box-pack-catalog.mjs",
+    "catalog:live-rips:refresh": "npm run catalog:on-demand:refresh && npm run catalog:live-rips:box-pack",
     "recalc:calculator-margin": "node --import ./scripts/register-extensionless.mjs scripts/recalc-calculator-products-margin.mjs",
     "recalc:calculator-margin:dry": "node --import ./scripts/register-extensionless.mjs scripts/recalc-calculator-products-margin.mjs --dry-run",
     "deploy": "npm run build && wrangler deploy"

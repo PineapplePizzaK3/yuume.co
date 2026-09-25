@@ -402,12 +402,23 @@ function adapterMercari(html: string, pageUrl: URL): AdapterResult | null {
   const priceRaw =
     html.match(/(?:¥|￥)\s*([\d,]+(?:\.\d+)?)/i)?.[0] ||
     html.match(/["']price["']\s*:\s*["']?([\d.,]+)/i)?.[1]
+  const itemId = pageUrl.pathname.match(/\/item\/(m\d+)/i)?.[1] || ''
+  if (!itemId) return null
+  const unescaped = html.replace(/\\u002f/gi, '/').replace(/\\\//g, '/')
   const imageCandidates = [
     html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)?.[1],
-    html.match(/"photo"\s*:\s*"([^"]+)"/i)?.[1],
-    html.match(/"thumbnailUrl"\s*:\s*"([^"]+)"/i)?.[1],
+    ...Array.from(
+      unescaped.matchAll(
+        new RegExp(`https://[^"'\\s<>]*${itemId}_\\d+\\.(?:jpg|jpeg|png|webp)(?:\\?[^"'\\s<>]*)?`, 'gi'),
+      ),
+    )
+      .map((m) => m[0].replace(/\\+$/g, ''))
+      .filter((url) => /mercdn\.net/i.test(url) && url.includes(itemId)),
+    ...Array.from(unescaped.matchAll(new RegExp(`photos/(${itemId}_\\d+\\.(?:jpg|jpeg|png|webp))`, 'gi'))).map(
+      (m) => `https://static.mercdn.net/item/detail/orig/photos/${m[1]}`,
+    ),
   ].filter(Boolean) as string[]
-  const imageUrls = pickTopImageUrls(imageCandidates, pageUrl, 10)
+  const imageUrls = pickTopImageUrls(imageCandidates, pageUrl, 10).filter((url) => url.includes(itemId))
   return {
     adapterName: 'mercari',
     price: parsePrice(priceRaw),
@@ -423,10 +434,30 @@ function adapterRakuma(html: string, pageUrl: URL): AdapterResult | null {
   const priceRaw =
     html.match(/(?:¥|￥)\s*([\d,]+(?:\.\d+)?)/i)?.[0] ||
     html.match(/["']price["']\s*:\s*["']?([\d.,]+)/i)?.[1]
+  const og =
+    html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)?.[1] ||
+    html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i)?.[1] ||
+    ''
+  const ogItemId = og.match(/\/img\/(\d+)\//)?.[1] || ''
+  const matches = Array.from(
+    html.matchAll(/https:\/\/img\.fril\.jp\/img\/(\d+)\/([lms])\/(\d+)\.(?:jpg|jpeg|png|webp)(?:\?[^"'\\\s]*)?/gi),
+  )
+  const bestByPhoto = new Map<string, string>()
+  if (ogItemId) {
+    const sizeRank = (size: string) => (size === 'l' ? 3 : size === 'm' ? 2 : 1)
+    const chosen = new Map<string, { url: string; rank: number }>()
+    for (const match of matches) {
+      if (match[1] !== ogItemId) continue
+      const rank = sizeRank(match[2])
+      const photoId = match[3]
+      const prev = chosen.get(photoId)
+      if (!prev || rank > prev.rank) chosen.set(photoId, { url: match[0], rank })
+    }
+    for (const [photoId, row] of chosen) bestByPhoto.set(photoId, row.url)
+  }
   const imageCandidates = [
-    html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)?.[1],
-    html.match(/<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i)?.[1],
-    html.match(/"image(?:Url)?"\s*:\s*"([^"]+)"/i)?.[1],
+    og,
+    ...bestByPhoto.values(),
   ].filter(Boolean) as string[]
   const imageUrls = pickTopImageUrls(imageCandidates, pageUrl, 10)
   return {
@@ -810,11 +841,14 @@ Deno.serve(async (req) => {
     const normalizedName = normalizeProductName(merged.name, parsed)
     const normalizedPrice = merged.price ?? null
     const normalizedCurrency = normalizeCurrency(merged.currency, html)
-    const normalizedImages = pickTopImageUrls([
-      ...imageCandidates,
-      ...(merged.imageUrls || []),
-      ...(merged.imageUrl ? [merged.imageUrl] : []),
-    ], parsed, 10)
+    const marketplaceAdapter = adapterData?.adapterName && ['mercari', 'rakuma', 'amazon'].includes(adapterData.adapterName)
+    const normalizedImages = marketplaceAdapter && Array.isArray(adapterData?.imageUrls) && adapterData.imageUrls.length
+      ? pickTopImageUrls(adapterData.imageUrls, parsed, 10)
+      : pickTopImageUrls([
+        ...imageCandidates,
+        ...(merged.imageUrls || []),
+        ...(merged.imageUrl ? [merged.imageUrl] : []),
+      ], parsed, 10)
     const normalizedImage = normalizedImages[0] || null
 
     let payload: ScrapePayload = {

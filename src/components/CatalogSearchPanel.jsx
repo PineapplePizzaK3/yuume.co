@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 export const CATALOG_STORE_OPTIONS = [
   { id: 'amazon', label: 'Amazon JP' },
@@ -76,6 +76,9 @@ export default function CatalogSearchPanel({
   endOfResultsLabel = 'Fim dos resultados disponiveis para esta busca.',
   storesLabel = 'Lojas:',
   showTotals = true,
+  statusMessage = '',
+  pendingResultUrl = '',
+  onPrepareResultHref,
   onResultClick,
   buildResultHref,
   resultTarget = '_blank',
@@ -83,6 +86,20 @@ export default function CatalogSearchPanel({
 }) {
   const loadMoreSentinelRef = useRef(null)
   const showInfiniteScroll = results.length > 0
+  const [brokenImages, setBrokenImages] = useState(() => new Set())
+  const visibleResults = useMemo(() => {
+    const list = Array.isArray(results) ? results : []
+    return list.filter((item) => {
+      const url = String(item?.imageUrl || '').trim()
+      if (!url || !/^https?:\/\//i.test(url)) return false
+      if (brokenImages.has(url)) return false
+      return true
+    })
+  }, [results, brokenImages])
+
+  useEffect(() => {
+    setBrokenImages(new Set())
+  }, [meta?.query, meta?.page])
 
   useEffect(() => {
     const sentinel = loadMoreSentinelRef.current
@@ -173,13 +190,17 @@ export default function CatalogSearchPanel({
         </div>
       </form>
 
+      {statusMessage ? (
+        <div className="mt-3 rounded-lg border border-earth-200 bg-white px-3 py-2 text-sm text-earth-700">{statusMessage}</div>
+      ) : null}
+
       {error ? (
         <div className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
       ) : null}
 
       {!loading && meta && showTotals ? (
         <div className="mt-3 text-xs text-earth-600">
-          {results.length} exibidos
+          {visibleResults.length} exibidos
           {meta.totalEstimated != null ? ` de ${meta.totalEstimated} estimados` : ''}
           {' • '}
           {meta.tookMs ?? 0}ms na ultima consulta
@@ -209,38 +230,69 @@ export default function CatalogSearchPanel({
         </div>
       ) : null}
 
-      {!loading && results.length === 0 && meta ? <p className="mt-4 text-sm text-earth-600">{emptyLabel}</p> : null}
-      {loading && results.length === 0 ? <p className="mt-4 text-sm text-earth-600">{loadingLabel}</p> : null}
+      {!loading && visibleResults.length === 0 && meta ? <p className="mt-4 text-sm text-earth-600">{emptyLabel}</p> : null}
+      {loading && visibleResults.length === 0 ? <p className="mt-4 text-sm text-earth-600">{loadingLabel}</p> : null}
 
-      {results.length > 0 ? (
+      {visibleResults.length > 0 ? (
         <div className="mt-4 grid grid-cols-3 gap-2 sm:grid-cols-2 sm:gap-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-          {results.map((item) => (
+          {visibleResults.map((item) => (
             <a
               key={item.productUrl || item.id}
               href={typeof buildResultHref === 'function' ? buildResultHref(item) : item.productUrl}
               target={resultTarget}
               rel={resultRel}
+              onPointerDown={() => {
+                onPrepareResultHref?.(item)
+              }}
+              onContextMenu={() => {
+                onPrepareResultHref?.(item)
+              }}
               onClick={(event) => {
+                // Let the browser handle new-tab / modified clicks via real href.
+                if (
+                  event.button !== 0
+                  || event.metaKey
+                  || event.ctrlKey
+                  || event.shiftKey
+                  || event.altKey
+                ) {
+                  onPrepareResultHref?.(item)
+                  return
+                }
                 const shouldContinue = onResultClick?.(item, event)
                 if (shouldContinue === false) event.preventDefault()
               }}
               className={`group flex flex-col overflow-hidden rounded-lg border border-earth-200 bg-white shadow-sm transition hover:border-earth-300 hover:shadow-md ${
                 isSoldOrUnavailable(item) ? 'opacity-75' : ''
-              }`}
+              } ${pendingResultUrl && pendingResultUrl === item.productUrl ? 'opacity-60' : ''}`}
             >
               <div className="relative h-24 w-full bg-earth-100 sm:h-52">
-                {item.imageUrl ? (
-                  <img
-                    src={item.imageUrl}
-                    alt={item.title}
-                    className={`h-full w-full object-cover transition duration-200 group-hover:scale-[1.02] ${
-                      isSoldOrUnavailable(item) ? 'grayscale-[35%]' : ''
-                    }`}
-                    loading="lazy"
-                  />
-                ) : (
-                  <div className="flex h-full items-center justify-center text-xs text-earth-500">Sem imagem</div>
-                )}
+                <img
+                  src={item.imageUrl}
+                  alt={item.title}
+                  className={`h-full w-full object-cover transition duration-200 group-hover:scale-[1.02] ${
+                    isSoldOrUnavailable(item) ? 'grayscale-[35%]' : ''
+                  }`}
+                  loading="lazy"
+                  onError={() => {
+                    const url = String(item.imageUrl || '').trim()
+                    if (!url) return
+                    setBrokenImages((prev) => {
+                      if (prev.has(url)) return prev
+                      const next = new Set(prev)
+                      next.add(url)
+                      return next
+                    })
+                  }}
+                />
+                {Array.isArray(item.imageUrls) && item.imageUrls.length > 1 ? (
+                  <span
+                    className="absolute right-1 top-1 rounded bg-black/70 px-1.5 py-0.5 text-[9px] font-semibold text-white sm:right-1.5 sm:top-1.5 sm:text-[10px]"
+                    title={`${item.imageUrls.length} fotos`}
+                  >
+                    {item.imageUrls.length}
+                  </span>
+                ) : null}
                 <div className="absolute left-1 top-1 flex flex-col gap-0.5 sm:left-1.5 sm:top-1.5 sm:gap-1">
                   {itemTags(item).includes('auction') ? (
                     <span className="rounded bg-amber-500 px-1 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white shadow-sm sm:px-1.5 sm:text-[10px]">

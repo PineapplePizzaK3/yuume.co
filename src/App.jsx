@@ -16,6 +16,7 @@ const Contact = lazy(() => import('./pages/Contact'))
 const OndeComprar = lazy(() => import('./pages/OndeComprar'))
 const CatalogSearchPublic = lazy(() => import('./pages/CatalogSearchPublic'))
 const EphemeralProductDetail = lazy(() => import('./pages/EphemeralProductDetail'))
+const EphemeralProductOpen = lazy(() => import('./pages/EphemeralProductOpen'))
 const LiveRipsPage = lazy(() => import('./pages/live-rips/LiveRipsPage'))
 const LiveRipDetailPage = lazy(() => import('./pages/live-rips/LiveRipDetailPage'))
 const MyRipPage = lazy(() => import('./pages/live-rips/MyRipPage'))
@@ -287,6 +288,7 @@ function App() {
             </Route>
             <Route path="/onde-comprar" element={<OndeComprar />} />
             <Route path="/busca-catalogo" element={<CatalogSearchPublic />} />
+            <Route path="/produto-temporario/abrir" element={<EphemeralProductOpen />} />
             <Route path="/produto-temporario/:token" element={<EphemeralProductDetail />} />
             <Route path="/legal" element={<LegalLayout />}>
               <Route index element={<Navigate to={p('legalPrivacy')} replace />} />
@@ -402,6 +404,7 @@ function App() {
             </Route>
             <Route path="/en/where-to-buy" element={<OndeComprar />} />
             <Route path="/en/catalog-search" element={<CatalogSearchPublic />} />
+            <Route path="/en/instant-product/open" element={<EphemeralProductOpen />} />
             <Route path="/en/instant-product/:token" element={<EphemeralProductDetail />} />
             <Route path="/en/legal" element={<LegalLayout />}>
               <Route index element={<Navigate to={e('legalPrivacy')} replace />} />

@@ -10,6 +10,9 @@ export async function createEphemeralProductSnapshot(hitPayload) {
       price: hitPayload?.price ?? 0,
       currency: hitPayload?.currency || 'JPY',
       imageUrl: hitPayload?.imageUrl || null,
+      imageUrls: Array.isArray(hitPayload?.imageUrls)
+        ? hitPayload.imageUrls.map((url) => String(url || '').trim()).filter(Boolean)
+        : [],
       source: hitPayload?.source || null,
       sourcePayload: hitPayload || {},
     }
@@ -17,6 +20,23 @@ export async function createEphemeralProductSnapshot(hitPayload) {
       supabase.rpc('create_ephemeral_product', {
         p_payload: payload,
         p_ttl_minutes: 120,
+      })
+    )
+    return { data: data ?? null, error }
+  } catch (e) {
+    return { data: null, error: toServiceError(e) }
+  }
+}
+
+export async function updateEphemeralProductImages(token, imageUrls) {
+  try {
+    const urls = Array.isArray(imageUrls)
+      ? imageUrls.map((url) => String(url || '').trim()).filter(Boolean)
+      : []
+    const { data, error } = await withDbTimeout(
+      supabase.rpc('update_ephemeral_product_images', {
+        p_token: String(token || '').trim(),
+        p_image_urls: urls,
       })
     )
     return { data: data ?? null, error }

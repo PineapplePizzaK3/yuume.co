@@ -36,39 +36,27 @@ function Navbar() {
   const isStorePublicRoute = isRouteActive('lojaPublic', location.pathname, true)
   const isStoreAppRoute = isRouteActive('appLoja', location.pathname, true)
   const isStoreServicesRoute = isRouteActive('appServices', location.pathname, true)
+  const isLiveRipsRoute = isRouteActive('liveRipsHub', location.pathname, true)
   const currentStoreSection = useMemo(() => {
     if (isStoreServicesRoute) return 'servicos'
-    if (isRouteActive('lojaPublicVitrine', location.pathname, true)) return 'vitrine'
-    if (isRouteActive('appLoja', location.pathname, true)) {
-      const tab = String(new URLSearchParams(location.search).get('tab') || '').toLowerCase()
-      if (tab === 'snkrdunk') return 'onDemand'
-      if (tab === 'vitrine' || tab === 'grupos') return 'vitrine'
-      // /app/loja sem tab = Em estoque (não há item no submenu do header)
-      return null
+    if (isRouteActive('appLoja', location.pathname, true) || isRouteActive('lojaPublicVitrine', location.pathname, true)) {
+      return 'vitrine'
     }
-    return null
-  }, [isStoreServicesRoute, location.pathname, location.search])
+    return 'vitrine'
+  }, [isStoreServicesRoute, location.pathname])
   const storeSubmenuItems = useMemo(() => {
     const vitrine = {
       id: 'vitrine',
       label: t('platform.storeHub.tabShowcase'),
       toRoute: isAuthenticated ? 'appLoja' : 'lojaPublicVitrine',
-      search: isAuthenticated ? '?tab=vitrine' : '',
-    }
-    const onDemand = {
-      id: 'onDemand',
-      label: t('platform.storeHub.tabSnkrdunkCatalog'),
-      toRoute: 'appLoja',
-      search: '?tab=snkrdunk',
     }
     const servicos = {
       id: 'servicos',
       label: t('platform.storeHub.tabServices'),
       toRoute: 'appServices',
-      search: '',
     }
     if (isAuthenticated) {
-      return [servicos, onDemand, vitrine]
+      return [servicos, vitrine]
     }
     return [vitrine]
   }, [isAuthenticated, t])
@@ -122,6 +110,12 @@ function Navbar() {
               {t('nav.whereToBuy')}
             </LocalizedLink>
             <LocalizedLink
+              toRoute="liveRipsHub"
+              className={`flex items-center ${isLiveRipsRoute ? linkAtivo : linkNormal}`}
+            >
+              {t('nav.liveRips')}
+            </LocalizedLink>
+            <LocalizedLink
               toRoute="faqIndex"
               className={`flex items-center ${isRouteActive('faqIndex', location.pathname, true) ? linkAtivo : linkNormal}`}
             >
@@ -150,7 +144,6 @@ function Navbar() {
                     <LocalizedLink
                       key={item.id}
                       toRoute={item.toRoute}
-                      search={item.search || ''}
                       className={`rounded-none px-3 py-2 text-sm whitespace-nowrap transition ${
                         currentStoreSection === item.id
                           ? 'bg-earth-900 font-medium text-earth-50'
@@ -357,6 +350,13 @@ function Navbar() {
                 className={`rounded-lg px-4 py-3 ${isRouteActive('faqIndex', location.pathname, true) ? 'bg-earth-100 font-semibold text-earth-900' : 'text-earth-600 hover:bg-earth-50 hover:text-earth-900'}`}
               >
                 {t('nav.faq')}
+              </LocalizedLink>
+              <LocalizedLink
+                toRoute="liveRipsHub"
+                onClick={fecharMenu}
+                className={`rounded-lg px-4 py-3 ${isLiveRipsRoute ? 'bg-earth-100 font-semibold text-earth-900' : 'text-earth-600 hover:bg-earth-50 hover:text-earth-900'}`}
+              >
+                {t('nav.liveRips')}
               </LocalizedLink>
               <LocalizedLink
                 toRoute="contact"

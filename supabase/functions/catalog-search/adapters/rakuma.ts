@@ -1,5 +1,5 @@
 import type { UnifiedSearchHit } from '../types.ts'
-import { buildHit, parsePrice, pickBestImage, rakumaTagsFromBlock } from '../normalize.ts'
+import { buildHit, parsePrice, pickProductImages, rakumaTagsFromBlock } from '../normalize.ts'
 import {
   collectImageCandidates,
   extractRakumaHitsFromHtmlRegex,
@@ -74,9 +74,9 @@ function hitsFromItemBoxes(html: string, pageSize: number, query: string): Unifi
       block.match(/<img[^>]+(?:data-src|data-original|data-lazy|data-lazy-src)=["']([^"']+)["']/i)?.[1] ||
       block.match(/<img[^>]+srcset=["']([^"']+)["']/i)?.[1]?.split(',')?.[0]?.trim()?.split(/\s+/)?.[0] ||
       null
-    const imageUrl = pickBestImage(
+    const imageUrls = pickProductImages(
       [preferredImg, block.match(/<img[^>]+src=["']([^"']+)["']/i)?.[1], ...collectImageCandidates(block)],
-      'https://fril.jp'
+      'https://fril.jp',
     )
 
     if (!title || !productUrl) continue
@@ -87,7 +87,8 @@ function hitsFromItemBoxes(html: string, pageSize: number, query: string): Unifi
       title,
       price: parsePrice(rawPrice),
       currency: 'JPY',
-      imageUrl,
+      imageUrl: imageUrls[0] || null,
+      imageUrls,
       productUrl,
       storeId: STORE_ID,
       storeName: STORE_NAME,
@@ -110,6 +111,7 @@ function collectFromHtml(html: string, pageSize: number, query: string): Unified
   const regexHits = extractRakumaHitsFromHtmlRegex(html, pageSize)
   for (let idx = 0; idx < regexHits.length; idx += 1) {
     const hit = regexHits[idx]
+    if (!hit.imageUrl) continue
     collected.push(
       buildHit({
         id: `${STORE_ID}-rx-${idx}-${hit.productUrl}`,
@@ -137,13 +139,14 @@ function collectFromJina(jinaText: string, pageSize: number, query: string): Uni
   const collected: UnifiedSearchHit[] = []
   for (let idx = 0; idx < jinaUse.length; idx += 1) {
     const hit = jinaUse[idx]
+    if (!hit.imageUrl) continue
     collected.push(
       buildHit({
         id: `${STORE_ID}-jina-${idx}-${hit.productUrl}`,
         title: hit.title,
         price: hit.price,
         currency: hit.currency,
-        imageUrl: null,
+        imageUrl: hit.imageUrl,
         productUrl: hit.productUrl,
         storeId: STORE_ID,
         storeName: STORE_NAME,

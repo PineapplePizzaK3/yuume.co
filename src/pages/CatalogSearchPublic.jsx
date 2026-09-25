@@ -3,10 +3,36 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { PageSeo } from '../components/PageSeo'
 import CatalogSearchPanel, { CATALOG_STORE_OPTIONS } from '../components/CatalogSearchPanel'
-import { LOCALE_EN, publicEphemeralProductPath } from '../lib/localeRoutes'
+import {
+  catalogSearchSessionMatches,
+  readCatalogSearchSession,
+  writeCatalogSearchSession,
+} from '../lib/catalogSearchSession'
+import {
+  encodeEphemeralOpenPayload,
+  stashEphemeralOpenPayload,
+} from '../lib/ephemeralOpenSession'
+import { LOCALE_EN, publicEphemeralOpenPath } from '../lib/localeRoutes'
 import { useSiteLocale } from '../hooks/useSiteLocale'
 import { searchCatalogPublic } from '../services/catalogSearchService'
-import { createEphemeralProductSnapshot } from '../services/ephemeralProductService'
+
+function defaultCatalogStores(storeIdFromUrl = '') {
+  const storeId = String(storeIdFromUrl || '').trim()
+  const onlyOne =
+    storeId &&
+    storeId !== 'all' &&
+    CATALOG_STORE_OPTIONS.some((store) => store.id === storeId)
+  return CATALOG_STORE_OPTIONS.reduce(
+    (acc, row) => ({ ...acc, [row.id]: onlyOne ? row.id === storeId : true }),
+    {},
+  )
+}
+
+function selectedStoreIds(stores) {
+  return Object.entries(stores || {})
+    .filter(([, enabled]) => enabled)
+    .map(([storeId]) => storeId)
+}
 
 export default function CatalogSearchPublic() {
   const { t } = useTranslation()
@@ -16,20 +42,36 @@ export default function CatalogSearchPublic() {
   const [searchParams, setSearchParams] = useSearchParams()
   const catalogQueryFromUrl = searchParams.get('catalogQuery') || ''
   const catalogStoreFromUrl = searchParams.get('catalogStore') || ''
-  const [catalogQuery, setCatalogQuery] = useState(catalogQueryFromUrl)
-  const [catalogStores, setCatalogStores] = useState(() =>
-    CATALOG_STORE_OPTIONS.reduce((acc, row) => ({ ...acc, [row.id]: true }), {}),
+
+  const restoredSessionRef = useRef(null)
+  if (restoredSessionRef.current === null) {
+    const fromUrl = String(catalogQueryFromUrl || '').trim()
+    const session = readCatalogSearchSession()
+    restoredSessionRef.current =
+      fromUrl.length >= 2 && catalogSearchSessionMatches(session, { query: fromUrl })
+        ? session
+        : false
+  }
+  const restoredSession = restoredSessionRef.current || null
+
+  const [catalogQuery, setCatalogQuery] = useState(
+    () => restoredSession?.query || catalogQueryFromUrl,
   )
-  const [catalogResults, setCatalogResults] = useState([])
-  const [catalogMeta, setCatalogMeta] = useState(null)
-  const [catalogPartials, setCatalogPartials] = useState([])
+  const [catalogStores, setCatalogStores] = useState(
+    () => restoredSession?.stores || defaultCatalogStores(catalogStoreFromUrl),
+  )
+  const [catalogResults, setCatalogResults] = useState(() => restoredSession?.results || [])
+  const [catalogMeta, setCatalogMeta] = useState(() => restoredSession?.meta ?? null)
+  const [catalogPartials, setCatalogPartials] = useState(() => restoredSession?.partials || [])
   const [catalogLoading, setCatalogLoading] = useState(false)
   const [catalogLoadingMore, setCatalogLoadingMore] = useState(false)
-  const [catalogCanAutoLoad, setCatalogCanAutoLoad] = useState(true)
-  const [catalogCursors, setCatalogCursors] = useState(null)
+  const [catalogCanAutoLoad, setCatalogCanAutoLoad] = useState(
+    () => restoredSession?.canAutoLoad !== false,
+  )
+  const [catalogCursors, setCatalogCursors] = useState(() => restoredSession?.cursors ?? null)
   const [catalogError, setCatalogError] = useState('')
-  const [creatingSnapshotUrl, setCreatingSnapshotUrl] = useState('')
-  const lastCatalogQueryFromUrlRef = useRef('')
+  const lastCatalogQueryFromUrlRef = useRef(restoredSession ? String(restoredSession.query || '') : '')
+  const skipNextUrlSearchRef = useRef(Boolean(restoredSession))
 
   const trackPublicSearchMetric = (eventName, payload = {}) => {
     const safePayload = { area: 'catalog-search-public', eventName, ...payload }
@@ -54,6 +96,7 @@ export default function CatalogSearchPublic() {
   }
 
   useEffect(() => {
+    if (restoredSession?.stores) return
     const storeId = String(catalogStoreFromUrl || '').trim()
     if (!storeId || storeId === 'all') return
     const exists = CATALOG_STORE_OPTIONS.some((store) => store.id === storeId)
@@ -63,19 +106,35 @@ export default function CatalogSearchPublic() {
       for (const key of Object.keys(next)) next[key] = key === storeId
       return next
     })
-  }, [catalogStoreFromUrl])
+  }, [catalogStoreFromUrl, restoredSession])
 
   const toggleCatalogStore = (storeId) => {
     setCatalogStores((prev) => ({ ...prev, [storeId]: !prev[storeId] }))
   }
 
-  const selectedCatalogStores = useMemo(
-    () =>
-      Object.entries(catalogStores)
-        .filter(([, enabled]) => enabled)
-        .map(([storeId]) => storeId),
-    [catalogStores],
-  )
+  const selectedCatalogStores = useMemo(() => selectedStoreIds(catalogStores), [catalogStores])
+
+  const persistSearchSession = ({
+    query,
+    stores,
+    selectedStores,
+    results,
+    meta,
+    partials,
+    cursors,
+    canAutoLoad,
+  }) => {
+    writeCatalogSearchSession({
+      query,
+      stores,
+      selectedStores,
+      results,
+      meta,
+      partials,
+      cursors,
+      canAutoLoad,
+    })
+  }
 
   const runCatalogSearch = async (page = 1, { append = false, overrideQuery, cursors = null } = {}) => {
     const q = String(overrideQuery ?? catalogQuery).trim()
@@ -117,6 +176,8 @@ export default function CatalogSearchPublic() {
     } else {
       const incoming = Array.isArray(data?.results) ? data.results : []
       const hasMore = data?.meta?.hasMore ?? false
+      let nextResults = incoming
+      let nextCanAutoLoad = hasMore
 
       if (append) {
         let noNewItems = false
@@ -125,17 +186,34 @@ export default function CatalogSearchPublic() {
           for (const item of incoming) map.set(item.productUrl, item)
           const merged = [...map.values()]
           if (incoming.length > 0 && merged.length === prev.length) noNewItems = true
+          nextResults = merged
           return merged
         })
-        if (!hasMore || noNewItems) setCatalogCanAutoLoad(false)
+        if (!hasMore || noNewItems) {
+          nextCanAutoLoad = false
+          setCatalogCanAutoLoad(false)
+        }
       } else {
         setCatalogResults(incoming)
         setCatalogCanAutoLoad(hasMore)
       }
 
-      setCatalogCursors(data?.meta?.cursors ?? null)
-      setCatalogMeta(data?.meta ?? null)
-      setCatalogPartials(Array.isArray(data?.partials) ? data.partials : [])
+      const nextMeta = data?.meta ?? null
+      const nextPartials = Array.isArray(data?.partials) ? data.partials : []
+      const nextCursors = data?.meta?.cursors ?? null
+      setCatalogCursors(nextCursors)
+      setCatalogMeta(nextMeta)
+      setCatalogPartials(nextPartials)
+      persistSearchSession({
+        query: q,
+        stores: catalogStores,
+        selectedStores: selectedCatalogStores,
+        results: nextResults,
+        meta: nextMeta,
+        partials: nextPartials,
+        cursors: nextCursors,
+        canAutoLoad: nextCanAutoLoad,
+      })
       trackPublicSearchMetric('search_ok', {
         query: q,
         stores: selectedCatalogStores.join(','),
@@ -156,6 +234,8 @@ export default function CatalogSearchPublic() {
     if (q) nextParams.set('catalogQuery', q)
     else nextParams.delete('catalogQuery')
     setSearchParams(nextParams, { replace: true })
+    lastCatalogQueryFromUrlRef.current = q
+    skipNextUrlSearchRef.current = true
     await runCatalogSearch(1, { append: false })
   }
 
@@ -165,47 +245,80 @@ export default function CatalogSearchPublic() {
     await runCatalogSearch(nextPage, { append: true, cursors: catalogCursors })
   }
 
-  const handleResultClick = async (item, event) => {
-    event?.preventDefault?.()
-    const productUrl = String(item?.productUrl || '').trim()
-    if (!productUrl) return false
-    if (creatingSnapshotUrl === productUrl) return false
-    setCreatingSnapshotUrl(productUrl)
-    setCatalogError('')
-    trackPublicSearchMetric('result_click', {
-      storeId: item?.storeId,
-      productUrl,
-    })
-    const { data, error } = await createEphemeralProductSnapshot(item)
-    if (error || !data?.token) {
-      setCatalogError(
-        error?.message
-          || (isEn
-            ? 'Could not create temporary product page. Please try again.'
-            : 'Nao foi possivel criar a pagina temporaria. Tente novamente.')
+  const buildResultHref = (item) => {
+    const sid = stashEphemeralOpenPayload(item)
+    if (!sid) return '#'
+    return publicEphemeralOpenPath(sid, siteLocale, encodeEphemeralOpenPayload(item))
+  }
+
+  const handleResultClick = (item, event) => {
+    // New tab / modified clicks use the real href (bridge page).
+    if (
+      event
+      && (
+        event.button !== 0
+        || event.metaKey
+        || event.ctrlKey
+        || event.shiftKey
+        || event.altKey
       )
-      trackPublicSearchMetric('snapshot_error', {
-        storeId: item?.storeId,
-        productUrl,
-        reason: error?.message || 'unknown',
-      })
-      setCreatingSnapshotUrl('')
+    ) {
+      stashEphemeralOpenPayload(item)
+      return undefined
+    }
+    event?.preventDefault?.()
+    const href = buildResultHref(item)
+    if (!href || href === '#') {
+      setCatalogError(
+        isEn
+          ? 'Could not open temporary product page. Please try again.'
+          : 'Nao foi possivel abrir a pagina temporaria. Tente novamente.',
+      )
       return false
     }
-
-    trackPublicSearchMetric('snapshot_created', {
+    trackPublicSearchMetric('result_click', {
       storeId: item?.storeId,
-      productUrl,
-      token: data.token,
+      productUrl: item?.productUrl,
     })
-    navigate(publicEphemeralProductPath(data.token, siteLocale))
+    // Keep current results in session so browser back restores instantly.
+    persistSearchSession({
+      query: String(catalogQuery || catalogQueryFromUrl || '').trim(),
+      stores: catalogStores,
+      selectedStores: selectedCatalogStores,
+      results: catalogResults,
+      meta: catalogMeta,
+      partials: catalogPartials,
+      cursors: catalogCursors,
+      canAutoLoad: catalogCanAutoLoad,
+    })
+    navigate(href)
     return false
   }
 
   useEffect(() => {
     const fromUrl = String(catalogQueryFromUrl || '').trim()
     if (!fromUrl || fromUrl.length < 2) return
+    if (skipNextUrlSearchRef.current) {
+      skipNextUrlSearchRef.current = false
+      lastCatalogQueryFromUrlRef.current = fromUrl
+      return
+    }
     if (lastCatalogQueryFromUrlRef.current === fromUrl) return
+
+    const session = readCatalogSearchSession()
+    if (catalogSearchSessionMatches(session, { query: fromUrl })) {
+      lastCatalogQueryFromUrlRef.current = fromUrl
+      setCatalogQuery(fromUrl)
+      if (session.stores) setCatalogStores(session.stores)
+      setCatalogResults(Array.isArray(session.results) ? session.results : [])
+      setCatalogMeta(session.meta ?? null)
+      setCatalogPartials(Array.isArray(session.partials) ? session.partials : [])
+      setCatalogCursors(session.cursors ?? null)
+      setCatalogCanAutoLoad(session.canAutoLoad !== false)
+      setCatalogError('')
+      return
+    }
+
     lastCatalogQueryFromUrlRef.current = fromUrl
     setCatalogQuery(fromUrl)
     setCatalogCanAutoLoad(true)
@@ -262,8 +375,9 @@ export default function CatalogSearchPublic() {
               isEn ? 'No more results available for this search.' : 'Fim dos resultados disponiveis para esta busca.'
             }
             storesLabel={isEn ? 'Stores:' : 'Lojas:'}
+            onPrepareResultHref={stashEphemeralOpenPayload}
             onResultClick={handleResultClick}
-            buildResultHref={() => '#'}
+            buildResultHref={buildResultHref}
             resultTarget="_self"
             resultRel={undefined}
           />

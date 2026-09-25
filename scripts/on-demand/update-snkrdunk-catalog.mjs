@@ -6,7 +6,7 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const projectRoot = path.resolve(__dirname, '..', '..')
 const inputPath = path.join(__dirname, 'snkrdunk-box-pack.raw.json')
-const outputPath = path.join(projectRoot, 'src', 'data', 'liveRipsSnkrdunkCatalog.js')
+const outputPath = path.join(projectRoot, 'src', 'data', 'onDemandSnkrdunkCatalog.js')
 
 function isObject(value) {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -541,18 +541,18 @@ async function collectAdditionalTcgBoxes(raw) {
 
 function buildOutput({ source, lastUpdatedAt, categories, products }) {
   const lines = []
-  lines.push(`export const LIVE_RIPS_SNKRDUNK_SOURCE = ${JSON.stringify(source, null, 2)}`)
+  lines.push(`export const ON_DEMAND_SNKRDUNK_SOURCE = ${JSON.stringify(source, null, 2)}`)
   lines.push('')
   lines.push(
-    `export const LIVE_RIPS_SNKRDUNK_LAST_UPDATED_AT = ${JSON.stringify(lastUpdatedAt)}`
+    `export const ON_DEMAND_SNKRDUNK_LAST_UPDATED_AT = ${JSON.stringify(lastUpdatedAt)}`
   )
   lines.push('')
   lines.push(
-    `export const LIVE_RIPS_SNKRDUNK_CATEGORIES = ${JSON.stringify(categories, null, 2)}`
+    `export const ON_DEMAND_SNKRDUNK_CATEGORIES = ${JSON.stringify(categories, null, 2)}`
   )
   lines.push('')
   lines.push(
-    `export const LIVE_RIPS_SNKRDUNK_PRODUCTS = ${JSON.stringify(products, null, 2)}`
+    `export const ON_DEMAND_SNKRDUNK_PRODUCTS = ${JSON.stringify(products, null, 2)}`
   )
   lines.push('')
   return `${lines.join('\n')}\n`
@@ -632,7 +632,9 @@ async function main() {
   assert(Array.isArray(raw.categories), '`categories` must be an array.')
   assert(Array.isArray(raw.products), '`products` must be an array.')
 
-  const lastUpdatedAt = String(raw.lastUpdatedAt || new Date().toISOString())
+  const lastUpdatedAt = new Date().toISOString()
+  // Mantém o snapshot raw alinhado com a geração (útil para auditoria local).
+  raw.lastUpdatedAt = lastUpdatedAt
   const categories = raw.categories.map((category, index) => {
     assert(isObject(category), `Category at index ${index} must be an object.`)
     assert(typeof category.id === 'string' && category.id.trim(), `Category ${index} requires id.`)
@@ -752,8 +754,10 @@ async function main() {
   })
 
   await writeFile(outputPath, outputText, 'utf8')
+  await writeFile(inputPath, `${JSON.stringify(raw, null, 2)}\n`, 'utf8')
   console.log(`SNKRDUNK catalog generated: ${outputPath}`)
   console.log(`Categories: ${categories.length} | Products: ${products.length}`)
+  console.log(`Last updated at: ${lastUpdatedAt}`)
 }
 
 main().catch((error) => {

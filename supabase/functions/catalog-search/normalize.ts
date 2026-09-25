@@ -36,6 +36,7 @@ export function toAbsoluteUrl(raw: string | null | undefined, baseUrl: string): 
     .replace(/&amp;/gi, '&')
     .replace(/&#38;/gi, '&')
     .replace(/&quot;/gi, '"')
+    .replace(/\\+$/g, '')
     .trim()
   if (!clean) return null
   try {
@@ -47,8 +48,10 @@ export function toAbsoluteUrl(raw: string | null | undefined, baseUrl: string): 
 
 function isBadImage(url: string): boolean {
   const u = url.toLowerCase()
+  if (!/^https?:\/\//i.test(url)) return true
+  if (u.startsWith('data:')) return true
+  if (/(null|undefined|about:blank)$/i.test(u)) return true
   return (
-    u.startsWith('data:') ||
     u.includes('sprite') ||
     u.includes('icon') ||
     u.includes('logo') ||
@@ -60,32 +63,81 @@ function isBadImage(url: string): boolean {
     u.includes('loading') ||
     u.includes('spacer') ||
     u.includes('pixel') ||
-    u.endsWith('.svg')
+    u.includes('transparent') ||
+    u.includes('clear.gif') ||
+    u.includes('spaceball') ||
+    u.includes('1x1') ||
+    u.includes('grey.gif') ||
+    u.includes('gray.gif') ||
+    u.includes('/np/') ||
+    u.includes('no-image') ||
+    u.endsWith('.svg') ||
+    u.includes('.gif?') && u.includes('tracking')
   )
 }
 
+function scoreImage(url: string): number {
+  let score = 0
+  const lower = url.toLowerCase()
+  if (/\.(jpg|jpeg|png|webp)(\?|$)/i.test(lower)) score += 2
+  if (/images\/i\//i.test(lower)) score += 3
+  if (/m\.media-amazon\.com|images-(?:na\.)?ssl-images-amazon/.test(lower)) score += 3
+  if (/mercdn\.net|img\.fril\.jp|fril\.jp|yimg\.jp|snkrdunk\.com/.test(lower)) score += 2
+  if (/(avatar|profile|icon|logo|sprite)/i.test(lower)) score -= 5
+  if (/orig|hires|\/l\/|size=l\b|pri=l|_sl1\d{3}/.test(lower)) score += 3
+  if (/thumb|thumbnail|\/s\/|size=s\b|w=240\b|w=120\b/.test(lower)) score -= 1
+  return score
+}
+
+/** Mesma foto em tamanhos diferentes (thumb, srcset, ?size=) vira uma só. */
+function imageIdentity(url: string): string {
+  try {
+    const parsed = new URL(url)
+    let path = parsed.pathname
+    path = path.replace(/\/c!\/[^/]+\//g, '/')
+    path = path.replace(/\/thumb\//g, '/')
+    path = path.replace(/\/item\/detail\/orig\//g, '/')
+    if (/fril\.jp$/i.test(parsed.hostname)) path = path.replace(/\/[lms]\//g, '/')
+    path = path.replace(/\._[^/]+(?=\.(?:jpg|jpeg|png|webp)$)/i, '')
+    const drop = ['size', 'w', 'h', 'width', 'height', 'pri', 'quality', 'imwidth', 'impolicy', 'fit', 'auto']
+    for (const key of drop) parsed.searchParams.delete(key)
+    const query = parsed.searchParams.toString()
+    return `${parsed.hostname}${path}${query ? `?${query}` : ''}`
+  } catch {
+    return url
+  }
+}
+
+/**
+ * Todas as fotos distintas, na ordem em que aparecem.
+ * Variações de tamanho da mesma foto ficam só na versão maior.
+ */
+export function pickProductImages(
+  candidates: Array<string | null | undefined>,
+  baseUrl: string,
+  limit = 24,
+): string[] {
+  const ordered: Array<{ url: string; score: number }> = []
+  const seen = new Map<string, number>()
+  for (const raw of candidates) {
+    const url = toAbsoluteUrl(raw, baseUrl)
+    if (!url || isBadImage(url)) continue
+    const score = scoreImage(url)
+    if (score < 0) continue
+    const identity = imageIdentity(url)
+    const prevIndex = seen.get(identity)
+    if (prevIndex == null) {
+      seen.set(identity, ordered.length)
+      ordered.push({ url, score })
+    } else if (score > ordered[prevIndex].score) {
+      ordered[prevIndex] = { url, score }
+    }
+  }
+  return ordered.slice(0, Math.max(1, limit)).map((row) => row.url)
+}
+
 export function pickBestImage(candidates: Array<string | null | undefined>, baseUrl: string): string | null {
-  const uniq = Array.from(
-    new Set(
-      candidates
-        .map((c) => toAbsoluteUrl(c, baseUrl))
-        .filter(Boolean) as string[]
-    )
-  )
-  const scored = uniq
-    .filter((u) => !isBadImage(u))
-    .map((u) => {
-      let score = 0
-      const lower = u.toLowerCase()
-      if (/\.(jpg|jpeg|png|webp)(\?|$)/i.test(lower)) score += 2
-      if (/images\/i\//i.test(lower)) score += 3
-      if (/m\.media-amazon\.com|images-(?:na\.)?ssl-images-amazon/.test(lower)) score += 3
-      if (/mercdn\.net|item\.fril\.jp|fril\.jp/.test(lower)) score += 2
-      if (/(avatar|profile|icon|logo)/i.test(lower)) score -= 3
-      return { u, score }
-    })
-    .sort((a, b) => b.score - a.score)
-  return scored[0]?.u ?? null
+  return pickProductImages(candidates, baseUrl, 24)[0] ?? null
 }
 
 export function normalizeTitle(raw: string | null | undefined): string {
@@ -166,6 +218,7 @@ export function buildHit(params: {
   price: number | null
   currency?: string | null
   imageUrl?: string | null
+  imageUrls?: Array<string | null | undefined>
   productUrl: string
   storeId: StoreId
   storeName: string
@@ -175,12 +228,17 @@ export function buildHit(params: {
   auctionBuyoutPrice?: number | null
 }): UnifiedSearchHit {
   const tags = params.tags?.length ? [...new Set(params.tags)] : undefined
+  const imageUrls = pickProductImages(
+    params.imageUrls?.length ? params.imageUrls : [params.imageUrl],
+    params.productUrl,
+  )
   return {
     id: params.id,
     title: normalizeTitle(params.title),
     price: params.price,
     currency: String(params.currency || 'JPY').toUpperCase(),
-    imageUrl: params.imageUrl || null,
+    imageUrl: imageUrls[0] || null,
+    imageUrls,
     productUrl: params.productUrl,
     storeId: params.storeId,
     storeName: params.storeName,

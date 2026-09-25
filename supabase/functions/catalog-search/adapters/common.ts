@@ -2,6 +2,7 @@ import {
   isMercariSoldStatus,
   isMercariUnavailableStatus,
   parsePrice,
+  pickProductImages,
   toAbsoluteUrl,
 } from '../normalize.ts'
 import type { CatalogHitTag } from '../types.ts'
@@ -385,6 +386,7 @@ export function extractMercariHitsFromNextData(html: string, pageSize: number, q
   productUrl: string
   price: number | null
   imageUrl: string | null
+  imageUrls?: string[]
   tags?: CatalogHitTag[]
 }> {
   const raw = html.match(/<script[^>]*id=["']__NEXT_DATA__["'][^>]*>([\s\S]*?)<\/script>/i)?.[1]
@@ -402,20 +404,25 @@ export function extractMercariHitsFromNextData(html: string, pageSize: number, q
     productUrl: string
     price: number | null
     imageUrl: string | null
+    imageUrls?: string[]
     tags?: CatalogHitTag[]
   }> = []
   const seen = new Set<string>()
 
-  const thumb = (o: Record<string, unknown>): string | null => {
-    const th = o.thumbnails
-    if (Array.isArray(th) && typeof th[0] === 'string') return th[0]
-    const ph = o.photos
-    if (Array.isArray(ph) && ph[0] && typeof ph[0] === 'object') {
-      const p0 = ph[0] as Record<string, unknown>
-      const u = p0.imageUrl ?? p0.uri ?? p0.url
-      if (typeof u === 'string') return u
+  const photosOf = (o: Record<string, unknown>): string[] => {
+    const raw: Array<string | null | undefined> = []
+    const pushValue = (value: unknown) => {
+      if (typeof value === 'string') raw.push(value)
+      else if (value && typeof value === 'object') {
+        const row = value as Record<string, unknown>
+        if (typeof row.imageUrl === 'string') raw.push(row.imageUrl)
+        if (typeof row.uri === 'string') raw.push(row.uri)
+        if (typeof row.url === 'string') raw.push(row.url)
+      }
     }
-    return null
+    if (Array.isArray(o.photos)) for (const photo of o.photos) pushValue(photo)
+    if (Array.isArray(o.thumbnails)) for (const thumb of o.thumbnails) pushValue(thumb)
+    return pickProductImages(raw, 'https://jp.mercari.com')
   }
 
   const visit = (obj: unknown, depth: number) => {
@@ -451,11 +458,13 @@ export function extractMercariHitsFromNextData(html: string, pageSize: number, q
       if (/AUCTION/i.test(itemType)) tags.push('auction')
       if (isMercariSoldStatus(o.status)) tags.push('sold')
       else if (isMercariUnavailableStatus(o.status)) tags.push('unavailable')
+      const imageUrls = photosOf(o)
       out.push({
         title: name.trim(),
         productUrl: url,
         price: priceNum,
-        imageUrl: thumb(o),
+        imageUrl: imageUrls[0] || null,
+        imageUrls,
         tags: tags.length ? [...new Set(tags)] : undefined,
       })
     }

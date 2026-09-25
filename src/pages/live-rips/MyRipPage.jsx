@@ -3,12 +3,12 @@ import { useTranslation } from 'react-i18next'
 import { LocalizedLink } from '../../components/LocalizedLink'
 import { PageSeo } from '../../components/PageSeo'
 import LiveRipPullReveal from '../../components/live-rips/LiveRipPullReveal'
+import { LiveRipJpVersionBadge } from '../../components/live-rips/LiveRipJpVersionBadge'
 import { LiveRipStatusTimeline } from '../../components/live-rips/LiveRipStatusTimeline'
 import { useAuth } from '../../hooks/useAuth'
 import {
   getLiveRipProductName,
   LIVE_RIPS_NEXT_LIVE,
-  LIVE_RIPS_PRODUCTS,
 } from '../../data/liveRipsMock'
 import { useSiteLocale } from '../../hooks/useSiteLocale'
 import { getMyLiveRipPulls, getMyLiveRipReservation } from '../../services/liveRipService'
@@ -60,9 +60,9 @@ function MyRipPage() {
         image: reservation.product_image || '',
       }
     }
-    return LIVE_RIPS_PRODUCTS[0]
+    return null
   }, [reservation])
-  const productName = getLiveRipProductName(product, locale)
+  const productName = getLiveRipProductName(product, locale) || '—'
 
   const statusOrder = ['reserved', 'paid', 'separated', 'waiting_live', 'opening', 'cards_logged']
   const currentStatus = reservation?.status || 'reserved'
@@ -99,14 +99,15 @@ function MyRipPage() {
               <p className="inline-flex rounded-full bg-earth-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-earth-800">
                 {reservation?.payment_status === 'paid' ? t('liveRips.myRip.statusPaid') : t('liveRips.myRip.statusReserved')}
               </p>
-              <div className="mt-4 overflow-hidden rounded-lg border border-earth-200 bg-earth-50">
-                {product.image ? (
+              <div className="relative mt-4 overflow-hidden rounded-lg border border-earth-200 bg-earth-50">
+                {product?.image ? (
                   <img src={product.image} alt={productName} className="h-44 w-full object-cover" />
                 ) : (
                   <div className="flex h-44 items-center justify-center text-sm text-earth-600">
                     {t('liveRips.products.placeholder')}
                   </div>
                 )}
+                <LiveRipJpVersionBadge size={26} />
               </div>
               <dl className="mt-5 space-y-3 text-sm text-earth-700">
                 <div className="flex items-center justify-between gap-4">

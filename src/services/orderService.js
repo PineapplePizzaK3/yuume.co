@@ -432,12 +432,6 @@ export async function requestOrderExtraServices(orderId, extraServices) {
         p_extra_services: extraServices || {},
       })
     )
-    if (!error && data?.id) {
-      void triggerUserTransactionalEmail({
-        event_type: 'extra_services_requested',
-        order_id: data.id,
-      })
-    }
     return { data: data ?? null, error }
   } catch (e) {
     return { data: null, error: toServiceError(e) }

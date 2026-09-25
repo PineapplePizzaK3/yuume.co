@@ -18,6 +18,8 @@ export interface UnifiedSearchHit {
   price: number | null
   currency: string
   imageUrl: string | null
+  /** Fotos do anúncio, da capa até as extras. A capa continua em imageUrl. */
+  imageUrls?: string[]
   productUrl: string
   storeId: StoreId
   storeName: string

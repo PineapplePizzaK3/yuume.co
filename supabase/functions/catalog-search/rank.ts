@@ -21,9 +21,14 @@ export function scoreHit(hit: UnifiedSearchHit, query: string): number {
   }
 
   if (hit.price != null) score += 3
-  if (hit.imageUrl) score += 4
+  if (hit.imageUrl) score += 8
+  else score -= 40
   if (hit.source === 'html') score += 2
   if (hit.source === 'mixed') score += 1
+  // Generic regex stubs like "Mercari m12345" with no real title/image.
+  if (/^(mercari|rakuma|yahoo|amazon|snkrdunk)\s+m?\w+$/i.test(String(hit.title || '').trim())) {
+    score -= 30
+  }
 
   return score
 }

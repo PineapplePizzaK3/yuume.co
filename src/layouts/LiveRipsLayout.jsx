@@ -21,11 +21,17 @@ function LiveRipsLayout() {
         <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3.5 sm:px-6">
           <div className="min-w-0">
             <div className="flex items-center gap-3">
-              <img
-                src="/logo.svg?v=yumc-1svg-7"
-                alt={t('nav.logoAlt')}
-                className="h-8 w-auto object-contain sm:h-10"
-              />
+              <LocalizedLink
+                toRoute="home"
+                className="shrink-0 opacity-90 transition hover:opacity-100"
+                aria-label={t('nav.home')}
+              >
+                <img
+                  src="/logo.svg?v=yumc-1svg-7"
+                  alt={t('nav.logoAlt')}
+                  className="h-8 w-auto object-contain sm:h-10"
+                />
+              </LocalizedLink>
               <div className="min-w-0">
                 <p className="truncate text-[11px] font-semibold uppercase tracking-wide text-earth-500">
                   {t('liveRips.shell.companyLine')}

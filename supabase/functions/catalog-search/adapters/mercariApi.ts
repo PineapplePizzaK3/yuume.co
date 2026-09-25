@@ -4,7 +4,7 @@
  */
 import { generateKeyPair, exportJWK, SignJWT } from 'npm:jose@5'
 import type { UnifiedSearchHit } from '../types.ts'
-import { buildHit, mercariTagsFromRow, pickBestImage } from '../normalize.ts'
+import { buildHit, mercariTagsFromRow, pickProductImages } from '../normalize.ts'
 
 const MERCARI_API_BASE = 'https://api.mercari.jp'
 const MERCARI_SEARCH_PATH = '/v2/entities:search'
@@ -17,7 +17,7 @@ type MercariSearchItem = {
   price?: number | string
   thumbnails?: unknown[]
   photo_paths?: unknown[]
-  photos?: Array<{ imageUrl?: string; uri?: string; url?: string }>
+  photos?: Array<string | { imageUrl?: string; uri?: string; url?: string }>
   status?: string
   itemType?: string
   auction?: unknown
@@ -119,7 +119,7 @@ function mercariItemUrl(id: string): string {
   return `https://jp.mercari.com/item/${path}`
 }
 
-function extractMercariThumbnail(row: MercariSearchItem): string | null {
+function extractMercariImages(row: MercariSearchItem): string[] {
   const candidateList: Array<string | null | undefined> = []
   const thumbs = Array.isArray(row.thumbnails) ? row.thumbnails : []
   for (const t of thumbs) {
@@ -139,15 +139,110 @@ function extractMercariThumbnail(row: MercariSearchItem): string | null {
 
   const photoPaths = Array.isArray(row.photo_paths) ? row.photo_paths : []
   for (const p of photoPaths) {
-    if (typeof p === 'string') candidateList.push(p)
+    if (typeof p !== 'string') continue
+    const clean = p.trim()
+    if (!clean) continue
+    if (/^https?:\/\//i.test(clean)) {
+      candidateList.push(clean)
+      continue
+    }
+    const normalized = clean.replace(/^\//, '')
+    if (/^photos\/m\d+_\d+\./i.test(normalized)) {
+      candidateList.push(`https://static.mercdn.net/item/detail/orig/${normalized}`)
+    } else {
+      candidateList.push(clean)
+    }
   }
   const photos = Array.isArray(row.photos) ? row.photos : []
   for (const p of photos) {
+    if (typeof p === 'string') {
+      candidateList.push(p)
+      continue
+    }
     if (!p || typeof p !== 'object') continue
     candidateList.push(p.imageUrl, p.uri, p.url)
   }
 
-  return pickBestImage(candidateList, 'https://jp.mercari.com')
+  return pickProductImages(candidateList, 'https://jp.mercari.com')
+}
+
+export async function fetchMercariItemPhotos(itemId: string): Promise<string[]> {
+  const id = String(itemId || '').match(/m\d+/i)?.[0]
+  if (!id) return []
+  const sign = await createDpopSigner()
+  const url = `${MERCARI_API_BASE}/items/get?id=${encodeURIComponent(id)}`
+  const res = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'User-Agent': MERCARI_USER_AGENT,
+      'X-Platform': 'web',
+      Accept: 'application/json',
+      DPoP: await sign(url, 'GET'),
+    },
+    signal: AbortSignal.timeout(8_000),
+  })
+  if (!res.ok) return []
+  const json = await res.json().catch(() => null)
+  if (!json || typeof json !== 'object') return []
+
+  // Response shapes vary: {photos}, {data:{photos}}, {data:{item:{photos}}}
+  const root = json as Record<string, unknown>
+  const data = (root.data && typeof root.data === 'object' ? root.data : root) as Record<string, unknown>
+  const item = (data.item && typeof data.item === 'object' ? data.item : data) as MercariSearchItem
+
+  const candidateList: Array<string | null | undefined> = []
+  const pushPhotos = (row: MercariSearchItem | null | undefined) => {
+    if (!row) return
+    const photos = Array.isArray(row.photos) ? row.photos : []
+    for (const p of photos) {
+      if (typeof p === 'string') candidateList.push(p)
+      else if (p && typeof p === 'object') candidateList.push(p.imageUrl, p.uri, p.url)
+    }
+    const photoPaths = Array.isArray(row.photo_paths) ? row.photo_paths : []
+    for (const p of photoPaths) {
+      if (typeof p !== 'string') continue
+      const clean = p.trim()
+      if (!clean) continue
+      if (/^https?:\/\//i.test(clean)) candidateList.push(clean)
+      else {
+        const normalized = clean.replace(/^\//, '')
+        if (/^photos\/m\d+_\d+\./i.test(normalized)) {
+          candidateList.push(`https://static.mercdn.net/item/detail/orig/${normalized}`)
+        } else if (new RegExp(`^${id}_\\d+\\.`, 'i').test(normalized)) {
+          candidateList.push(`https://static.mercdn.net/item/detail/orig/photos/${normalized}`)
+        }
+      }
+    }
+    const thumbs = Array.isArray(row.thumbnails) ? row.thumbnails : []
+    for (const t of thumbs) {
+      if (typeof t === 'string') candidateList.push(t)
+      else if (t && typeof t === 'object') {
+        const o = t as Record<string, unknown>
+        candidateList.push(
+          typeof o.url === 'string' ? o.url : null,
+          typeof o.imageUrl === 'string' ? o.imageUrl : null,
+          typeof o.uri === 'string' ? o.uri : null,
+        )
+      }
+    }
+  }
+
+  pushPhotos(item)
+  if (item !== data) pushPhotos(data as MercariSearchItem)
+
+  const rewritten = candidateList.map((url) => {
+    if (typeof url !== 'string') return url
+    const photo =
+      url.match(new RegExp(`(photos\\/${id}_\\d+\\.(?:jpg|jpeg|png|webp))`, 'i'))?.[1] ||
+      url.match(/(photos\/m\d+_\d+\.(?:jpg|jpeg|png|webp))/i)?.[1]
+    if (photo && photo.toLowerCase().includes(id.toLowerCase())) {
+      return `https://static.mercdn.net/item/detail/orig/${photo}`
+    }
+    return url
+  })
+  const owned = rewritten.filter((url) => typeof url === 'string' && url.includes(id))
+  const picked = pickProductImages(owned.length ? owned : rewritten, 'https://jp.mercari.com')
+  return picked.filter((url) => url.includes(id) && !/\/c!\//i.test(url) && !/\/thumb\//i.test(url))
 }
 
 export type MercariPageResult = {
@@ -195,7 +290,7 @@ export async function searchMercariApi(
     const productUrl = mercariItemUrl(id)
     if (!id || !name || !productUrl) continue
 
-    const thumb = extractMercariThumbnail(row)
+    const imageUrls = extractMercariImages(row)
     const tags = mercariTagsFromRow(row)
     const auctionPrices = extractMercariAuctionPrices(row)
     if (tags.includes('auction') && auctionPrices.currentBidPrice == null) {
@@ -207,7 +302,8 @@ export async function searchMercariApi(
         title: name,
         price: parseMercariPrice(row.price),
         currency: 'JPY',
-        imageUrl: thumb,
+        imageUrl: imageUrls[0] || null,
+        imageUrls,
         productUrl,
         storeId: 'mercari',
         storeName: 'Mercari',

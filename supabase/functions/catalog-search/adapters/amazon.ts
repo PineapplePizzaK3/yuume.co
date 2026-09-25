@@ -1,5 +1,5 @@
 import type { UnifiedSearchHit } from '../types.ts'
-import { buildHit, parsePrice, pickBestImage, amazonTagsFromBlock } from '../normalize.ts'
+import { buildHit, parsePrice, pickProductImages, amazonTagsFromBlock } from '../normalize.ts'
 import { collectImageCandidates, fetchText, FETCH_TIMEOUT_MS } from './common.ts'
 
 const STORE_ID = 'amazon'
@@ -55,20 +55,32 @@ function extractAmazonPrice(block: string): number | null {
   return parsePrice(yen)
 }
 
-function extractAmazonImage(block: string): string | null {
-  const srcsetFirst = block
-    .match(/<img[^>]+class=["'][^"']*s-image[^"']*["'][^>]+srcset=["']([^"']+)["']/i)?.[1]
-    ?.split(',')?.[0]
-    ?.trim()
-    ?.split(/\s+/)?.[0]
+function extractAmazonImages(block: string): string[] {
+  const srcsetParts = String(
+    block.match(/<img[^>]+class=["'][^"']*s-image[^"']*["'][^>]+srcset=["']([^"']+)["']/i)?.[1] || '',
+  )
+    .split(',')
+    .map((chunk) => chunk.trim().split(/\s+/)[0])
+    .filter(Boolean)
+  const dynamic = block.match(/data-a-dynamic-image=["']([^"']+)["']/i)?.[1]
+  let dynamicUrls: string[] = []
+  if (dynamic) {
+    try {
+      const parsed = JSON.parse(dynamic.replace(/&quot;/g, '"'))
+      if (parsed && typeof parsed === 'object') dynamicUrls = Object.keys(parsed)
+    } catch {
+      dynamicUrls = []
+    }
+  }
   const candidates = [
     block.match(/<img[^>]+class=["'][^"']*s-image[^"']*["'][^>]+src=["']([^"']+)["']/i)?.[1],
     block.match(/<img[^>]+src=["']([^"']+)["'][^>]+class=["'][^"']*s-image/i)?.[1],
-    srcsetFirst,
+    ...srcsetParts,
+    ...dynamicUrls,
     block.match(/data-image-source-src=["']([^"']+)["']/i)?.[1],
     ...collectImageCandidates(block),
   ]
-  return pickBestImage(candidates, BASE)
+  return pickProductImages(candidates, BASE)
 }
 
 function isAmazonBlockedPage(html: string): boolean {
@@ -91,7 +103,7 @@ function hitsFromSearchHtml(html: string, pageSize: number): UnifiedSearchHit[] 
 
     const productUrl = `${BASE}/dp/${asin}`
     const price = extractAmazonPrice(block)
-    const imageUrl = extractAmazonImage(block)
+    const imageUrls = extractAmazonImages(block)
     const tags = amazonTagsFromBlock(block)
 
     seenAsin.add(asin)
@@ -101,7 +113,8 @@ function hitsFromSearchHtml(html: string, pageSize: number): UnifiedSearchHit[] 
         title,
         price,
         currency: 'JPY',
-        imageUrl,
+        imageUrl: imageUrls[0] || null,
+        imageUrls,
         productUrl,
         storeId: STORE_ID,
         storeName: STORE_NAME,

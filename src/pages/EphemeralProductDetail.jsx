@@ -8,8 +8,71 @@ import { useAuth } from '../hooks/useAuth'
 import { useExchangeRates } from '../hooks/useExchangeRates'
 import { LOCALE_EN, localizedPath } from '../lib/localeRoutes'
 import { computeProductSalePrice, SALE_CHANNEL_STORE } from '../lib/productSalePrice'
+import ImageLightbox from '../components/ImageLightbox'
+import { fetchCatalogProductGallery } from '../services/catalogSearchService'
 import { addEphemeralToCart } from '../services/cartService'
-import { getPublicEphemeralProduct } from '../services/ephemeralProductService'
+import {
+  getPublicEphemeralProduct,
+  updateEphemeralProductImages,
+} from '../services/ephemeralProductService'
+import { scrapeProductUrl } from '../services/wishlistLinkService'
+
+function uniqueImageUrls(values) {
+  const out = []
+  const seen = new Set()
+  const list = Array.isArray(values) ? values : []
+  for (const value of list) {
+    const url = String(value || '').trim()
+    if (!url || !/^https?:\/\//i.test(url)) continue
+    if (/(null|undefined|about:blank)$/i.test(url)) continue
+    if (/(placeholder|no[_-]?image|blank|spacer|pixel|1x1|clear\.gif|transparent|spaceball)/i.test(url)) continue
+    if (seen.has(url)) continue
+    seen.add(url)
+    out.push(url)
+  }
+  return out
+}
+
+/** Drop related/UI junk; keep only URLs that belong to this listing. */
+function filterListingImages(productUrl, urls) {
+  const list = uniqueImageUrls(urls)
+  if (!list.length) return []
+  let host = ''
+  let itemId = ''
+  try {
+    const parsed = new URL(productUrl)
+    host = parsed.hostname.toLowerCase()
+    itemId = parsed.pathname.match(/\/item\/(m\d+)/i)?.[1] || ''
+  } catch {
+    return list
+  }
+
+  if (/(^|\.)mercari\.com$/.test(host) && itemId) {
+    const owned = list.filter((url) => url.includes(itemId) && /mercdn\.net/i.test(url))
+    const orig = owned.filter((url) => !/\/c!\//i.test(url) && !/\/thumb\//i.test(url))
+    return orig.length ? orig : owned
+  }
+  if (/(^|\.)fril\.jp$/.test(host)) {
+    // Prefer large (/l/) listing photos for the og item group only.
+    const large = list.filter((url) => /img\.fril\.jp\/img\/\d+\/l\//i.test(url) && !/\/user\//i.test(url))
+    return large.length ? large : list.filter((url) => /img\.fril\.jp\/img\/\d+\//i.test(url) && !/\/user\//i.test(url))
+  }
+  if (/(^|\.)amazon\./.test(host)) {
+    return list.filter((url) => /m\.media-amazon\.com|images-(?:na\.)?ssl-images-amazon/i.test(url) && /\/images\/I\//i.test(url))
+  }
+  if (/yahoo\.co\.jp$/.test(host)) {
+    return list.filter(
+      (url) =>
+        /yimg\.jp/i.test(url) &&
+        /images\.auctions\.yahoo|auc-pctr|fleamarket|paypay|\/image\//i.test(url) &&
+        !/(icon|logo|avatar|sprite|1x1|clear\.gif)/i.test(url),
+    )
+  }
+  if (/(^|\.)snkrdunk\.com$/.test(host)) {
+    return list.filter((url) => /cdn\.snkrdunk\.com/i.test(url) && !/\/assets\/|logo|icon/i.test(url))
+  }
+  return list.filter((url) => !/(avatar|profile|icon|logo|sprite|pixel|1x1|spacer)/i.test(url))
+}
 
 export default function EphemeralProductDetail() {
   const { t } = useTranslation()
@@ -23,6 +86,9 @@ export default function EphemeralProductDetail() {
   const [error, setError] = useState('')
   const [feedback, setFeedback] = useState('')
   const [product, setProduct] = useState(null)
+  const [imageIndex, setImageIndex] = useState(0)
+  const [lightboxOpen, setLightboxOpen] = useState(false)
+  const [galleryLoading, setGalleryLoading] = useState(false)
   const { rates: pricingRates, loading: ratesLoading } = useExchangeRates()
 
   const trackEphemeralEvent = (eventName, payload = {}) => {
@@ -61,6 +127,122 @@ export default function EphemeralProductDetail() {
     void load()
     return () => { active = false }
   }, [token, isEn])
+
+  const images = useMemo(() => {
+    const listed = Array.isArray(product?.image_urls) ? product.image_urls : []
+    return uniqueImageUrls([...listed, product?.image_url])
+  }, [product])
+
+  const dropBrokenImage = (brokenUrl) => {
+    const target = String(brokenUrl || '').trim()
+    if (!target) return
+    setProduct((prev) => {
+      if (!prev) return prev
+      const current = uniqueImageUrls([
+        ...(Array.isArray(prev.image_urls) ? prev.image_urls : []),
+        prev.image_url,
+      ])
+      const next = current.filter((url) => url !== target)
+      if (next.length === current.length) return prev
+      return {
+        ...prev,
+        image_url: next[0] || '',
+        image_urls: next,
+      }
+    })
+    setImageIndex((idx) => {
+      const nextLen = Math.max(0, uniqueImageUrls([
+        ...(Array.isArray(product?.image_urls) ? product.image_urls : []),
+        product?.image_url,
+      ]).filter((url) => url !== target).length)
+      if (nextLen <= 0) return 0
+      return Math.min(idx, nextLen - 1)
+    })
+  }
+
+  useEffect(() => {
+    setImageIndex(0)
+    setLightboxOpen(false)
+  }, [product?.token])
+
+  // Enrich gallery in background after the page is already open with the cover photo.
+  useEffect(() => {
+    let active = true
+    const productUrl = String(product?.external_url || '').trim()
+    const tokenValue = String(product?.token || '').trim()
+    if (!productUrl || !tokenValue) return undefined
+
+    const initialImages = uniqueImageUrls([
+      ...(Array.isArray(product?.image_urls) ? product.image_urls : []),
+      product?.image_url,
+    ])
+    const filteredInitial = filterListingImages(productUrl, initialImages)
+
+    const enrich = async () => {
+      setGalleryLoading(true)
+      try {
+        const gallery = await fetchCatalogProductGallery({
+          productUrl,
+          storeId: product?.store_id,
+          timeoutMs: 15000,
+        })
+        if (!active) return
+
+        const galleryOk = !gallery?.error && Array.isArray(gallery?.data?.imageUrls)
+        let fetched = galleryOk
+          ? filterListingImages(productUrl, uniqueImageUrls(gallery.data.imageUrls))
+          : []
+
+        // Listing create only stores the cover — if gallery returned ≤1, try scrape adapters.
+        if (fetched.length <= 1) {
+          const scraped = await scrapeProductUrl(productUrl)
+          if (!active) return
+          const adapterImages = uniqueImageUrls([
+            ...(Array.isArray(scraped?.data?.imageUrls) ? scraped.data.imageUrls : []),
+            scraped?.data?.imageUrl,
+          ])
+          const scrapedFiltered = filterListingImages(productUrl, adapterImages)
+          if (scrapedFiltered.length > fetched.length) fetched = scrapedFiltered
+        }
+
+        if (!fetched.length && filteredInitial.length) {
+          fetched = filteredInitial
+        }
+
+        if (!fetched.length) return
+
+        const nextImages = fetched
+        if (
+          nextImages.length === initialImages.length &&
+          nextImages.every((url, idx) => url === initialImages[idx])
+        ) {
+          return
+        }
+
+        setProduct((prev) => {
+          if (!prev || prev.token !== tokenValue) return prev
+          return {
+            ...prev,
+            image_url: nextImages[0] || prev.image_url,
+            image_urls: nextImages,
+          }
+        })
+        void updateEphemeralProductImages(tokenValue, nextImages)
+        trackEphemeralEvent('gallery_enriched', {
+          token: tokenValue,
+          storeId: product?.store_id,
+          imageCount: nextImages.length,
+        })
+      } finally {
+        if (active) setGalleryLoading(false)
+      }
+    }
+
+    void enrich()
+    return () => {
+      active = false
+    }
+  }, [product?.token, product?.external_url, product?.store_id])
 
   const salePrice = useMemo(() => {
     const jpy = Number(product?.price_jpy)
@@ -146,13 +328,68 @@ export default function EphemeralProductDetail() {
           {!loading && product ? (
             <div className="grid gap-6 rounded-xl border border-earth-200 bg-white p-5 shadow-sm md:grid-cols-[320px,1fr]">
               <div className="overflow-hidden rounded-lg border border-earth-200 bg-earth-50">
-                {product.image_url ? (
-                  <img
-                    src={product.image_url}
-                    alt={product.title}
-                    className="h-full w-full object-cover"
-                    loading="lazy"
-                  />
+                {images.length > 0 ? (
+                  <>
+                    <div className="relative">
+                      <img
+                        src={images[imageIndex] || images[0]}
+                        alt={product.title}
+                        className="h-72 w-full cursor-zoom-in object-contain sm:h-96"
+                        onClick={() => setLightboxOpen(true)}
+                        onError={() => dropBrokenImage(images[imageIndex] || images[0])}
+                      />
+                      {images.length > 1 ? (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => setImageIndex((current) => (current === 0 ? images.length - 1 : current - 1))}
+                            className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow hover:bg-white"
+                            aria-label={isEn ? 'Previous photo' : 'Foto anterior'}
+                          >
+                            <svg className="h-5 w-5 text-earth-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                            </svg>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setImageIndex((current) => (current === images.length - 1 ? 0 : current + 1))}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow hover:bg-white"
+                            aria-label={isEn ? 'Next photo' : 'Próxima foto'}
+                          >
+                            <svg className="h-5 w-5 text-earth-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                          </button>
+                        </>
+                      ) : null}
+                    </div>
+                    {images.length > 1 ? (
+                      <div className="flex gap-2 overflow-x-auto p-2">
+                        {images.map((url, index) => (
+                          <button
+                            key={url}
+                            type="button"
+                            onClick={() => setImageIndex(index)}
+                            className={`h-14 w-14 shrink-0 overflow-hidden rounded border ${
+                              index === imageIndex ? 'border-earth-800' : 'border-earth-200'
+                            }`}
+                            aria-label={isEn ? `Photo ${index + 1}` : `Foto ${index + 1}`}
+                          >
+                            <img
+                              src={url}
+                              alt=""
+                              className="h-full w-full object-cover"
+                              onError={() => dropBrokenImage(url)}
+                            />
+                          </button>
+                        ))}
+                      </div>
+                    ) : galleryLoading ? (
+                      <p className="px-2 py-1.5 text-center text-[11px] text-earth-500">
+                        {isEn ? 'Loading more photos…' : 'Carregando mais fotos…'}
+                      </p>
+                    ) : null}
+                  </>
                 ) : (
                   <div className="flex h-72 items-center justify-center text-sm text-earth-500">
                     {isEn ? 'No image available' : 'Sem imagem disponivel'}
@@ -165,26 +402,28 @@ export default function EphemeralProductDetail() {
                 </p>
                 <h1 className="mt-2 text-2xl font-semibold text-earth-900">{product.title}</h1>
                 <div className="mt-3">
-                  <p className="text-3xl font-bold text-earth-900">{formattedPrice}</p>
-                  {salePrice?.unitSaleBrl > 0 ? (
-                    <div className="mt-2">
-                      <TriCurrencyDisplay
-                        brl={salePrice.unitSaleBrl}
-                        jpy={Number(product.price_jpy) || 0}
-                        usd={salePrice.priceUsd ?? salePrice.unitSaleUsd}
-                        variant="page"
-                        footnote={
-                          isEn
-                            ? 'Sale price in BRL includes exchange fees. Shipping not included.'
-                            : 'Preco de venda em reais ja inclui taxas de cambio. Frete nao incluso.'
-                        }
-                      />
-                    </div>
-                  ) : ratesLoading ? (
-                    <p className="mt-1 text-sm text-earth-500">
-                      {isEn ? 'Loading sale price…' : 'Carregando preco de venda…'}
-                    </p>
-                  ) : null}
+                  {salePrice?.unitSaleBrl > 0 || Number(product.price_jpy) > 0 ? (
+                    <TriCurrencyDisplay
+                      brl={salePrice?.unitSaleBrl || 0}
+                      jpy={Number(product.price_jpy) || 0}
+                      usd={salePrice?.priceUsd ?? salePrice?.unitSaleUsd ?? 0}
+                      variant="page"
+                      primary="jpy"
+                      footnote={
+                        salePrice?.unitSaleBrl > 0
+                          ? isEn
+                            ? 'Sale price includes exchange fees. Shipping not included.'
+                            : 'Preço já inclui taxas de câmbio. Frete não incluso.'
+                          : ratesLoading
+                            ? isEn
+                              ? 'Loading BRL/USD conversion…'
+                              : 'Carregando conversão BRL/USD…'
+                            : null
+                      }
+                    />
+                  ) : (
+                    <p className="text-3xl font-bold text-earth-900">{formattedPrice}</p>
+                  )}
                 </div>
                 <p className="mt-3 text-sm text-earth-600">
                   {isEn
@@ -229,6 +468,17 @@ export default function EphemeralProductDetail() {
           ) : null}
         </div>
       </section>
+      <ImageLightbox
+        open={lightboxOpen}
+        src={images[imageIndex] || images[0]}
+        alt={product?.title || ''}
+        onClose={() => setLightboxOpen(false)}
+        hasNavigation={images.length > 1}
+        onPrev={() => setImageIndex((current) => (current === 0 ? images.length - 1 : current - 1))}
+        onNext={() => setImageIndex((current) => (current === images.length - 1 ? 0 : current + 1))}
+        prevLabel={isEn ? 'Previous photo' : 'Foto anterior'}
+        nextLabel={isEn ? 'Next photo' : 'Próxima foto'}
+      />
     </>
   )
 }

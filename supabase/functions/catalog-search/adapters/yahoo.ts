@@ -1,5 +1,5 @@
 import type { UnifiedSearchHit } from '../types.ts'
-import { buildHit, parsePrice, pickBestImage } from '../normalize.ts'
+import { buildHit, parsePrice, pickProductImages } from '../normalize.ts'
 import {
   collectImageCandidates,
   FETCH_TIMEOUT_MS,
@@ -98,14 +98,23 @@ function extractYahooHitsFromHtml(html: string, pageSize: number, query: string)
     const currentBidPrice = parsePrice(currentBidRaw)
     const buyoutPrice = parsePrice(buyoutRaw)
 
-    const imageUrl = pickBestImage(
+    const ownImages = pickProductImages(
       [
         anchor.match(/<img[^>]+src=["']([^"']+)["']/i)?.[1],
-        context.match(/<img[^>]+class=["'][^"']*Product__imageData[^"']*["'][^>]+src=["']([^"']+)["']/i)?.[1],
-        ...collectImageCandidates(context),
+        ...collectImageCandidates(anchor),
       ],
       BASE,
     )
+    const imageUrls = ownImages.length
+      ? ownImages
+      : pickProductImages(
+          [
+            context.match(/<img[^>]+class=["'][^"']*Product__imageData[^"']*["'][^>]+src=["']([^"']+)["']/i)?.[1],
+            ...collectImageCandidates(context),
+          ],
+          BASE,
+          1,
+        )
 
     const tags = yahooTagsFromContext(anchor + ' ' + context)
     const hit = buildHit({
@@ -113,7 +122,8 @@ function extractYahooHitsFromHtml(html: string, pageSize: number, query: string)
       title,
       price: currentBidPrice ?? buyoutPrice,
       currency: 'JPY',
-      imageUrl,
+      imageUrl: imageUrls[0] || null,
+      imageUrls,
       productUrl,
       storeId: STORE_ID,
       storeName: STORE_NAME,
@@ -141,7 +151,7 @@ function extractYahooHitsFromJina(jinaText: string, pageSize: number, query: str
       title: h.title,
       price: h.price,
       currency: h.currency,
-      imageUrl: null,
+      imageUrl: h.imageUrl || null,
       productUrl: h.productUrl,
       storeId: STORE_ID,
       storeName: STORE_NAME,
@@ -150,7 +160,7 @@ function extractYahooHitsFromJina(jinaText: string, pageSize: number, query: str
       auctionCurrentBidPrice: h.price,
       auctionBuyoutPrice: null,
     }),
-  )
+  ).filter((hit) => Boolean(hit.imageUrl))
 }
 
 export async function searchYahoo(query: string, pageSize: number, storePage = 1): Promise<UnifiedSearchHit[]> {

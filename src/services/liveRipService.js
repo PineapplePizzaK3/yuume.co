@@ -3,11 +3,11 @@ import { withDbTimeout, toServiceError } from '../lib/dbGuard'
 import { callAdminRpc } from './adminRpcService'
 import {
   LIVE_RIPS_BASE_PULLS,
-  LIVE_RIPS_PRODUCTS,
   LIVE_RIPS_QUEUE,
   getLiveRipProductById,
   getLiveRipProductsByCategory,
 } from '../data/liveRipsMock'
+import { filterLiveRipBoxWithPacksProducts, isLiveRipBoxWithPacksProduct } from '../lib/liveRipBoxPackFilter'
 
 function formatJpyLabel(value) {
   const n = Number(value || 0)
@@ -25,12 +25,13 @@ function mapDbProduct(row) {
     type: row.type || 'Booster Box',
     language: row.language || 'Japanese',
     image: row.image_url || '',
-    source: row.source || 'SNKRDUNK',
+    source: row.source || 'Live Rips',
     collectionTitle: row.collection_title || row.name || row.id,
     shrinkwrapOption: row.shrinkwrap_option || null,
     snkrdunkApparelId: row.snkrdunk_apparel_id || null,
     popularityRank: Number.isFinite(Number(row.popularity_rank)) ? Number(row.popularity_rank) : null,
     priceJpy,
+    priceYen: priceJpy,
     priceLabel: row.price_label || formatJpyLabel(priceJpy),
     availableRips: Number.isFinite(Number(row.available_rips)) ? Number(row.available_rips) : 0,
   }
@@ -48,13 +49,36 @@ export async function listLiveRipProductsByCategory(categoryId = '') {
     const { data, error } = await withDbTimeout(query)
     if (error) throw new Error(error.message || 'Erro ao carregar catálogo de Live Rips')
 
-    const rows = Array.isArray(data) ? data.map(mapDbProduct).filter(Boolean) : []
+    const rows = filterLiveRipBoxWithPacksProducts(
+      (Array.isArray(data) ? data : []).map(mapDbProduct).filter(Boolean)
+    )
     if (rows.length > 0) return { data: rows, error: null }
 
-    // Fallback de segurança para ambiente sem migração aplicada.
+    // Fallback: catálogo estático Live Rips (já filtrado para caixas com packs).
     return { data: getLiveRipProductsByCategory(categoryId), error: null }
   } catch (e) {
     return { data: getLiveRipProductsByCategory(categoryId), error: toServiceError(e) }
+  }
+}
+
+export async function getLiveRipProduct(productId) {
+  const id = String(productId || '').trim()
+  if (!id) return { data: null, error: { message: 'Produto inválido.' } }
+  try {
+    const { data, error } = await withDbTimeout(
+      supabase.from('live_rip_products').select('*').eq('id', id).maybeSingle()
+    )
+    if (error) throw new Error(error.message || 'Erro ao carregar produto Live Rip')
+    const mapped = mapDbProduct(data)
+    if (mapped && isLiveRipBoxWithPacksProduct(mapped)) {
+      return { data: mapped, error: null }
+    }
+    const fallback = getLiveRipProductById(id)
+    return { data: fallback, error: fallback ? null : { message: 'Produto não encontrado.' } }
+  } catch (e) {
+    const fallback = getLiveRipProductById(id)
+    if (fallback) return { data: fallback, error: null }
+    return { data: null, error: toServiceError(e) }
   }
 }
 

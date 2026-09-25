@@ -1,5 +1,5 @@
 import type { UnifiedSearchHit } from '../types.ts'
-import { buildHit, parsePrice, pickBestImage } from '../normalize.ts'
+import { buildHit, parsePrice, pickProductImages } from '../normalize.ts'
 import {
   collectImageCandidates,
   FETCH_TIMEOUT_MS,
@@ -211,7 +211,8 @@ function serverProductsToHits(products: SnkrdunkServerProduct[], query: string):
         title,
         price: row.salePrice != null && Number.isFinite(row.salePrice) ? row.salePrice : null,
         currency: 'JPY',
-        imageUrl: pickBestImage([row.imageUrl], BASE),
+        imageUrl: pickProductImages([row.imageUrl], BASE)[0] || null,
+        imageUrls: pickProductImages([row.imageUrl], BASE),
         productUrl: row.link,
         storeId: STORE_ID,
         storeName: STORE_NAME,
@@ -264,14 +265,16 @@ function extractSnkrdunkHitsFromHtml(html: string, pageSize: number, query: stri
       context.match(/(?:¥|￥)\s*([\d,]+(?:\.\d+)?)/i)?.[1] ||
       null
 
-    const imageUrl = pickBestImage(
+    const ownImages = pickProductImages(
       [
         anchor.match(/<img[^>]+src=["']([^"']+)["']/i)?.[1],
         ...collectImageCandidates(anchor),
-        ...collectImageCandidates(context),
       ],
       BASE,
     )
+    const imageUrls = ownImages.length
+      ? ownImages
+      : pickProductImages(collectImageCandidates(context), BASE, 1)
 
     const slug = productUrl.split('/').pop() || 'item'
     const tags = snkrdunkTagsFromContext(anchor + ' ' + context)
@@ -281,7 +284,8 @@ function extractSnkrdunkHitsFromHtml(html: string, pageSize: number, query: stri
         title,
         price: parsePrice(rawPrice),
         currency: 'JPY',
-        imageUrl,
+        imageUrl: imageUrls[0] || null,
+        imageUrls,
         productUrl,
         storeId: STORE_ID,
         storeName: STORE_NAME,
@@ -303,14 +307,14 @@ function extractSnkrdunkHitsFromJina(jinaText: string, pageSize: number, query: 
       title: h.title,
       price: h.price,
       currency: h.currency,
-      imageUrl: null,
+      imageUrl: h.imageUrl || null,
       productUrl: h.productUrl,
       storeId: STORE_ID,
       storeName: STORE_NAME,
       source: 'jina',
       tags: snkrdunkTagsFromContext(h.title),
     }),
-  )
+  ).filter((hit) => Boolean(hit.imageUrl))
   return rankSnkrdunkHits(built, query, pageSize)
 }
 

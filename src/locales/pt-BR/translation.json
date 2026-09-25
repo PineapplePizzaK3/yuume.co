@@ -534,6 +534,7 @@
       "item_other": "{{count}} itens",
       "sourceGroupBuy": "Compras Programadas",
       "sourceStore": "Vitrine",
+      "sourceSearch": "Marketplace",
       "noImage": "Sem imagem",
       "unitLabel": "Unitário",
       "triFootnoteRates": "Dólar após atualizar cotações no servidor.",

@@ -1,3 +1,7 @@
+/**
+ * Dados e helpers do Live Rips.
+ * Catálogo: só caixas com packs (`liveRipsSnkrdunkCatalog.js`), separado do On-Demand.
+ */
 import {
   LIVE_RIPS_SNKRDUNK_CATEGORIES,
   LIVE_RIPS_SNKRDUNK_LAST_UPDATED_AT,
@@ -25,6 +29,7 @@ export const LIVE_RIPS_LAST_UPDATED_AT = LIVE_RIPS_SNKRDUNK_LAST_UPDATED_AT
 export const LIVE_RIPS_PRODUCTS = LIVE_RIPS_SNKRDUNK_PRODUCTS.map((product) => ({
   ...product,
   nameEn: product.nameEn || product.name,
+  priceJpy: Number(product.priceYen) || 0,
   type: {
     'pt-BR': product.type,
     en: product.type,

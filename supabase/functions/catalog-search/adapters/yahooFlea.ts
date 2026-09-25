@@ -1,5 +1,5 @@
 import type { UnifiedSearchHit } from '../types.ts'
-import { buildHit, parsePrice, pickBestImage } from '../normalize.ts'
+import { buildHit, parsePrice, pickProductImages } from '../normalize.ts'
 import {
   collectImageCandidates,
   FETCH_TIMEOUT_MS,
@@ -82,14 +82,16 @@ function extractFleaHitsFromHtml(html: string, pageSize: number, query: string):
       context.match(/(?:¥|￥)\s*([\d,]+(?:\.\d+)?)/i)?.[1] ||
       null
 
-    const imageUrl = pickBestImage(
+    const ownImages = pickProductImages(
       [
         anchor.match(/<img[^>]+src=["']([^"']+)["']/i)?.[1],
         ...collectImageCandidates(anchor),
-        ...collectImageCandidates(context),
       ],
       BASE,
     )
+    const imageUrls = ownImages.length
+      ? ownImages
+      : pickProductImages(collectImageCandidates(context), BASE, 1)
 
     const tags = fleaTagsFromContext(anchor + ' ' + context)
     const hit = buildHit({
@@ -97,7 +99,8 @@ function extractFleaHitsFromHtml(html: string, pageSize: number, query: string):
       title,
       price: parsePrice(rawPrice),
       currency: 'JPY',
-      imageUrl,
+      imageUrl: imageUrls[0] || null,
+      imageUrls,
       productUrl,
       storeId: STORE_ID,
       storeName: STORE_NAME,
@@ -123,14 +126,14 @@ function extractFleaHitsFromJina(jinaText: string, pageSize: number, query: stri
       title: h.title,
       price: h.price,
       currency: h.currency,
-      imageUrl: null,
+      imageUrl: h.imageUrl || null,
       productUrl: h.productUrl,
       storeId: STORE_ID,
       storeName: STORE_NAME,
       source: 'jina',
       tags: fleaTagsFromContext(h.title),
     }),
-  )
+  ).filter((hit) => Boolean(hit.imageUrl))
 }
 
 export async function searchYahooFlea(query: string, pageSize: number, storePage = 1): Promise<UnifiedSearchHit[]> {

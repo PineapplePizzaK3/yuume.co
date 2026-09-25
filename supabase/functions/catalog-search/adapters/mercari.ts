@@ -1,5 +1,5 @@
 import type { UnifiedSearchHit } from '../types.ts'
-import { buildHit, parsePrice, pickBestImage, mercariTagsFromText } from '../normalize.ts'
+import { buildHit, parsePrice, pickProductImages, mercariTagsFromText } from '../normalize.ts'
 import { searchMercariApi } from './mercariApi.ts'
 import {
   collectImageCandidates,
@@ -53,7 +53,7 @@ function hitsFromLiBlocks(html: string, pageSize: number, query: string): Unifie
       block.match(/"price"\s*:\s*"?([\d.,]+)"?/i)?.[1] ||
       block.match(/([\d,]+(?:\.\d+)?)\s*円/)?.[1] ||
       null
-    const imageUrl = pickBestImage(
+    const imageUrls = pickProductImages(
       [block.match(/<img[^>]+src=["']([^"']+)["']/i)?.[1], ...collectImageCandidates(block)],
       'https://jp.mercari.com',
     )
@@ -65,7 +65,8 @@ function hitsFromLiBlocks(html: string, pageSize: number, query: string): Unifie
       title,
       price: parsePrice(rawPrice),
       currency: 'JPY',
-      imageUrl,
+      imageUrl: imageUrls[0] || null,
+      imageUrls,
       productUrl,
       storeId: STORE_ID,
       storeName: STORE_NAME,
@@ -94,6 +95,7 @@ function collectFromHtml(html: string, pageSize: number, query: string): Unified
         price: hit.price,
         currency: 'JPY',
         imageUrl: hit.imageUrl,
+        imageUrls: hit.imageUrls,
         productUrl: hit.productUrl,
         storeId: STORE_ID,
         storeName: STORE_NAME,
@@ -106,6 +108,8 @@ function collectFromHtml(html: string, pageSize: number, query: string): Unified
   const regexHits = extractMercariHitsFromHtmlRegex(html, pageSize)
   for (let idx = 0; idx < regexHits.length; idx += 1) {
     const hit = regexHits[idx]
+    // Regex stubs have no image — skip to avoid blank result cards.
+    if (!hit.imageUrl) continue
     collected.push(
       buildHit({
         id: `${STORE_ID}-rx-${idx}-${hit.productUrl}`,
@@ -134,13 +138,14 @@ function collectFromJina(jinaText: string, pageSize: number, query: string): Uni
   const collected: UnifiedSearchHit[] = []
   for (let idx = 0; idx < jinaUse.length; idx += 1) {
     const hit = jinaUse[idx]
+    if (!hit.imageUrl) continue
     collected.push(
       buildHit({
         id: `${STORE_ID}-jina-${idx}-${hit.productUrl}`,
         title: hit.title,
         price: hit.price,
         currency: hit.currency,
-        imageUrl: null,
+        imageUrl: hit.imageUrl,
         productUrl: hit.productUrl,
         storeId: STORE_ID,
         storeName: STORE_NAME,

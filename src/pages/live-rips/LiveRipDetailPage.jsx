@@ -3,18 +3,24 @@ import { useTranslation } from 'react-i18next'
 import { useParams } from 'react-router-dom'
 import { LocalizedLink } from '../../components/LocalizedLink'
 import { PageSeo } from '../../components/PageSeo'
+import { TriCurrencyDisplay } from '../../components/TriCurrencyDisplay'
+import { LiveRipJpVersionBadge } from '../../components/live-rips/LiveRipJpVersionBadge'
 import { useAuth } from '../../hooks/useAuth'
+import { useExchangeRates } from '../../hooks/useExchangeRates'
 import { localizedPath } from '../../lib/localeRoutes'
+import { computeProductSalePrice, SALE_CHANNEL_STORE } from '../../lib/productSalePrice'
 import {
   getLiveRipProductName,
   LIVE_RIPS_NEXT_LIVE,
-  LIVE_RIPS_PRODUCTS,
   LIVE_RIPS_SOURCE,
   getLiveRipCategoryById,
-  getLiveRipProductById,
 } from '../../data/liveRipsMock'
 import { useSiteLocale } from '../../hooks/useSiteLocale'
-import { payLiveRipReservationWithWallet, reserveLiveRipProduct } from '../../services/liveRipService'
+import {
+  getLiveRipProduct,
+  payLiveRipReservationWithWallet,
+  reserveLiveRipProduct,
+} from '../../services/liveRipService'
 import { getWallet } from '../../services/walletService'
 
 function LiveRipDetailPage() {
@@ -22,17 +28,43 @@ function LiveRipDetailPage() {
   const { productId = '' } = useParams()
   const locale = useSiteLocale()
   const { isAuthenticated, user } = useAuth()
+  const { rates: pricingRates } = useExchangeRates()
+  const [product, setProduct] = useState(null)
+  const [productLoading, setProductLoading] = useState(true)
   const [reservedReservation, setReservedReservation] = useState(null)
   const [submitting, setSubmitting] = useState(false)
   const [paymentLoading, setPaymentLoading] = useState(false)
   const [walletBalance, setWalletBalance] = useState(null)
   const [errorMessage, setErrorMessage] = useState('')
 
-  const product = getLiveRipProductById(productId) || LIVE_RIPS_PRODUCTS[0]
+  useEffect(() => {
+    let active = true
+    setProductLoading(true)
+    ;(async () => {
+      const { data, error } = await getLiveRipProduct(productId)
+      if (!active) return
+      if (error) setErrorMessage(error.message || t('liveRips.detail.loadError', { defaultValue: 'Produto não encontrado.' }))
+      setProduct(data)
+      setProductLoading(false)
+    })()
+    return () => {
+      active = false
+    }
+  }, [productId, t])
+
   const productName = getLiveRipProductName(product, locale)
   const category = getLiveRipCategoryById(product?.categoryId)
   const reservationId = reservedReservation?.id || reservedReservation?.reservation?.id || ''
-  const reservationPriceJpy = Number(reservedReservation?.price_jpy || product?.priceJpy || 0)
+  const reservationPriceJpy = Number(reservedReservation?.price_jpy || product?.priceJpy || product?.priceYen || 0)
+  const productYen = Number(product?.priceJpy || product?.priceYen || 0)
+  const salePrice = useMemo(() => {
+    if (!(productYen > 0) || !pricingRates) return null
+    return computeProductSalePrice({
+      priceJpy: productYen,
+      channel: SALE_CHANNEL_STORE,
+      rates: pricingRates,
+    })
+  }, [productYen, pricingRates])
   const walletGap = walletBalance == null ? 0 : Math.max(0, reservationPriceJpy - walletBalance)
   const loginHref = useMemo(
     () => {
@@ -57,6 +89,7 @@ function LiveRipDetailPage() {
   }, [user?.id])
 
   const handleReserve = async () => {
+    if (!product?.id) return
     if (!isAuthenticated) {
       setErrorMessage(t('liveRips.detail.loginRequired'))
       return
@@ -106,6 +139,20 @@ function LiveRipDetailPage() {
       />
 
       <section className="px-4 pb-16 pt-8 sm:pt-10">
+        {productLoading ? (
+          <div className="mx-auto max-w-5xl rounded-xl border border-earth-200 bg-white p-6 text-sm text-earth-600">
+            {t('liveRips.detail.loading', { defaultValue: 'Carregando produto…' })}
+          </div>
+        ) : !product ? (
+          <div className="mx-auto max-w-5xl rounded-xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">
+            {errorMessage || t('liveRips.detail.loadError', { defaultValue: 'Produto não encontrado.' })}
+            <div className="mt-3">
+              <LocalizedLink toRoute="liveRipsHub" className="underline">
+                {t('liveRips.detail.backToHub', { defaultValue: 'Voltar para Live Rips' })}
+              </LocalizedLink>
+            </div>
+          </div>
+        ) : (
         <div className="mx-auto grid max-w-5xl gap-6 lg:grid-cols-[1.15fr,0.85fr]">
           <article className="rounded-xl border border-earth-200 bg-white p-6 shadow-sm sm:p-7">
             <p className="text-xs font-semibold uppercase tracking-wide text-earth-500">
@@ -126,7 +173,7 @@ function LiveRipDetailPage() {
               })}
             </p>
 
-            <div className="mt-6 overflow-hidden rounded-lg border border-earth-200 bg-earth-50">
+            <div className="relative mt-6 overflow-hidden rounded-lg border border-earth-200 bg-earth-50">
               {product.image ? (
                 <img src={product.image} alt={productName} className="h-56 w-full object-cover" />
               ) : (
@@ -134,12 +181,25 @@ function LiveRipDetailPage() {
                   {t('liveRips.products.placeholder')}
                 </div>
               )}
+              <LiveRipJpVersionBadge size={28} />
             </div>
 
             <dl className="mt-6 grid gap-3 text-sm text-earth-700 sm:grid-cols-2">
-              <div className="rounded-lg border border-earth-200 bg-earth-50 p-3">
+              <div className="rounded-lg border border-earth-200 bg-earth-50 p-3 sm:col-span-2">
                 <dt className="text-xs uppercase tracking-wide text-earth-500">{t('liveRips.products.price')}</dt>
-                <dd className="mt-1 font-semibold text-earth-900">{product.priceLabel}</dd>
+                <dd className="mt-2">
+                  {productYen > 0 ? (
+                    <TriCurrencyDisplay
+                      jpy={productYen}
+                      brl={salePrice?.unitSaleBrl || 0}
+                      usd={salePrice?.priceUsd ?? salePrice?.unitSaleUsd ?? 0}
+                      variant="page"
+                      primary="jpy"
+                    />
+                  ) : (
+                    <span className="font-semibold text-earth-900">{product.priceLabel || '—'}</span>
+                  )}
+                </dd>
               </div>
               <div className="rounded-lg border border-earth-200 bg-earth-50 p-3">
                 <dt className="text-xs uppercase tracking-wide text-earth-500">{t('liveRips.nextLive.title')}</dt>
@@ -235,6 +295,7 @@ function LiveRipDetailPage() {
             </LocalizedLink>
           </aside>
         </div>
+        )}
       </section>
     </>
   )

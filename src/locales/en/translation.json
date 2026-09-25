@@ -534,6 +534,7 @@
       "item_other": "{{count}} items",
       "sourceGroupBuy": "Scheduled buying",
       "sourceStore": "In stock",
+      "sourceSearch": "Marketplace",
       "noImage": "No image",
       "unitLabel": "Unit price",
       "triFootnoteRates": "USD shown after server rates are updated.",

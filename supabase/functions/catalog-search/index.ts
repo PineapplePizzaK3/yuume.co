@@ -11,6 +11,7 @@ import { searchMercariPage } from './adapters/mercari.ts'
 import { searchYahoo } from './adapters/yahoo.ts'
 import { searchYahooFlea } from './adapters/yahooFlea.ts'
 import { searchSnkrdunk } from './adapters/snkrdunk.ts'
+import { fetchProductGallery } from './productGallery.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -212,6 +213,14 @@ Deno.serve(async (req) => {
       const denied = enforcePublicRateLimit(req)
       if (denied) return denied
     }
+    if (String((body as { action?: string })?.action || '') === 'gallery') {
+      const productUrl = String((body as { productUrl?: string })?.productUrl || '').trim()
+      if (!productUrl) return safeJson({ error: 'URL do produto obrigatória.' }, 400)
+      const storeId = String((body as { storeId?: string })?.storeId || '').trim()
+      const imageUrls = await fetchProductGallery(storeId, productUrl)
+      return safeJson({ imageUrls })
+    }
+
     const input = sanitizeRequest(body, mode)
 
     if (!input.query || input.query.length < 2) {
@@ -250,7 +259,10 @@ Deno.serve(async (req) => {
     }
 
     const merged = settled.flatMap((result) => result.hits)
-    const ranked = interleaveRankedByStore(merged, input.query, input.stores)
+    // Drop imageless fallbacks (jina/regex stubs) — they render as blank result cards.
+    const withImages = merged.filter((hit) => Boolean(String(hit.imageUrl || '').trim()))
+    const usable = withImages.length > 0 ? withImages : merged
+    const ranked = interleaveRankedByStore(usable, input.query, input.stores)
     const pageHits = ranked.slice(0, input.pageSize)
 
     const hasMore = settled.some(

@@ -62,19 +62,6 @@ function buildEventCopy(eventType, orderRow, shipmentRow) {
     }
   }
 
-  if (eventType === 'extra_services_requested') {
-    const orderShort = String(orderRow?.id || '').slice(0, 8)
-    return {
-      subject: `Serviços extras recebidos para o pedido ${orderShort || ''}`.trim(),
-      preheader: 'Sua solicitação de serviços extras já chegou pra gente.',
-      headline: 'Pedido de serviços extras recebido',
-      lines: [
-        `Recebemos seu pedido de serviços extras para o pedido ${orderShort || ''}.`.trim(),
-        'Obrigada(o)! Em breve a gente te atualiza com os próximos passos.',
-      ],
-    }
-  }
-
   const orderShort = String(orderRow?.id || '').slice(0, 8)
   const statusLabel = ORDER_STATUS_LABELS[String(orderRow?.status || '')] || String(orderRow?.status || 'atualizado')
   const isStore = String(orderRow?.order_source || '') === 'store'
@@ -119,7 +106,7 @@ export default async function handler(req, res) {
   let orderRow = null
   let shipmentRow = null
 
-  if (eventType === 'order_created' || eventType === 'extra_services_requested') {
+  if (eventType === 'order_created') {
     if (!orderId) return res.status(400).json({ error: 'order_id is required' })
     const { data } = await supabase
       .from('orders')

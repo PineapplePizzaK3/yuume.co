@@ -2,11 +2,11 @@ import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PageSeo } from '../../components/PageSeo'
 import LiveRipPullReveal from '../../components/live-rips/LiveRipPullReveal'
+import { LiveRipJpVersionBadge } from '../../components/live-rips/LiveRipJpVersionBadge'
 import { supabase } from '../../lib/supabase'
 import {
   getLiveRipProductName,
   LIVE_RIPS_BASE_PULLS,
-  LIVE_RIPS_PRODUCTS,
   LIVE_RIPS_QUEUE,
 } from '../../data/liveRipsMock'
 import { useSiteLocale } from '../../hooks/useSiteLocale'
@@ -20,11 +20,7 @@ function LiveRipBroadcastPage() {
   const [remotePulls, setRemotePulls] = useState([])
   const [isRealtimeConnected, setIsRealtimeConnected] = useState(false)
 
-  const productsById = useMemo(() => {
-    const map = new Map()
-    LIVE_RIPS_PRODUCTS.forEach((product) => map.set(product.id, product))
-    return map
-  }, [])
+  const productsById = useMemo(() => new Map(), [])
 
   useEffect(() => {
     let isMounted = true
@@ -79,8 +75,13 @@ function LiveRipBroadcastPage() {
     customer_name: row.customerName,
     product_id: row.productId,
   }))
-  const currentRip = queueRows[0] || { customer_name: '-', product_id: LIVE_RIPS_PRODUCTS[0]?.id }
-  const currentProduct = productsById.get(currentRip.product_id || currentRip.productId) || LIVE_RIPS_PRODUCTS[0]
+  const currentRip = queueRows[0] || { customer_name: '-', product_id: '', product_name: '-', product_image: '' }
+  const currentProduct = productsById.get(currentRip.product_id || currentRip.productId) || {
+    id: currentRip.product_id || '',
+    name: currentRip.product_name || '',
+    nameEn: currentRip.product_name_en || currentRip.product_name || '',
+    image: currentRip.product_image || '',
+  }
   const streamUrl = queueData?.event?.stream_url || ''
   const showEmbeddedStream = /^https?:\/\//i.test(streamUrl)
 
@@ -189,7 +190,7 @@ function LiveRipBroadcastPage() {
                       className="rounded-lg border border-earth-200 bg-earth-50 p-2 text-sm text-earth-800"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="h-14 w-14 shrink-0 overflow-hidden rounded-md border border-earth-200 bg-earth-200">
+                        <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-md border border-earth-200 bg-earth-200">
                           {product?.image ? (
                             <img
                               src={product.image}
@@ -197,6 +198,7 @@ function LiveRipBroadcastPage() {
                               className="h-full w-full object-cover"
                             />
                           ) : null}
+                          <LiveRipJpVersionBadge size={12} className="right-0.5 top-0.5 p-0.5" />
                         </div>
                         <div className="min-w-0">
                           <p className="font-semibold">{entry.rip_code || entry.ripCode} {entry.customer_name || entry.customerName}</p>
