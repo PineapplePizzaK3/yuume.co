@@ -4,15 +4,17 @@ import { Link, useLocation, useSearchParams } from 'react-router-dom'
 import { PageSeo } from '../../components/PageSeo'
 import { CardAssetTile } from '../../components/collector/CardAssetTile'
 import { isCollectorMockMode, listCollectionAssets, listMyRipRecords, listWishlistCards } from '../../services/collectorService'
-import { collectorCardAssetPath, collectorCollectionRipPath } from '../../lib/localeRoutes'
+import { listOwnedCollectionItems } from '../../services/collectionService'
+import { catalogItemPath, collectorCardAssetPath, collectorCollectionRipPath } from '../../lib/localeRoutes'
 import { useSiteLocale } from '../../hooks/useSiteLocale'
 import { useAuth } from '../../hooks/useAuth'
 import { useLocalizedPath } from '../../hooks/useLocalizedPath'
 
+const TAB_SETS = 'sets'
 const TAB_ASSETS = 'cards'
 const TAB_RIPS = 'rips'
 const TAB_WISHLIST = 'wishlist'
-const VALID_TABS = new Set([TAB_ASSETS, TAB_RIPS, TAB_WISHLIST])
+const VALID_TABS = new Set([TAB_SETS, TAB_ASSETS, TAB_RIPS, TAB_WISHLIST])
 
 function CollectionPage() {
   const { t, i18n } = useTranslation()
@@ -21,6 +23,8 @@ function CollectionPage() {
   const path = useLocalizedPath()
   const locale = useSiteLocale()
   const [searchParams, setSearchParams] = useSearchParams()
+  const [ownedItems, setOwnedItems] = useState([])
+  const [ownedError, setOwnedError] = useState('')
   const [assets, setAssets] = useState([])
   const [rips, setRips] = useState([])
   const [wishlist, setWishlist] = useState([])
@@ -41,6 +45,23 @@ function CollectionPage() {
       active = false
     }
   }, [])
+
+  useEffect(() => {
+    if (!isAuthenticated || isMockMode) {
+      setOwnedItems([])
+      setOwnedError('')
+      return
+    }
+    let active = true
+    void listOwnedCollectionItems().then((res) => {
+      if (!active) return
+      setOwnedItems(Array.isArray(res?.data) ? res.data : [])
+      setOwnedError(res?.error?.message || '')
+    })
+    return () => {
+      active = false
+    }
+  }, [isAuthenticated, isMockMode])
 
   const setTab = (tab) => setSearchParams(tab === TAB_ASSETS ? {} : { tab })
 
@@ -80,6 +101,13 @@ function CollectionPage() {
           <div className="mt-6 flex flex-wrap gap-2">
             <button
               type="button"
+              onClick={() => setTab(TAB_SETS)}
+              className={`rounded-full px-4 py-2 text-sm font-medium ${activeTab === TAB_SETS ? 'bg-earth-900 text-earth-50' : 'bg-white text-earth-700 border border-earth-300'}`}
+            >
+              {t('collector.collection.tabs.sets', { defaultValue: 'Sets / Cartas' })}
+            </button>
+            <button
+              type="button"
               onClick={() => setTab(TAB_ASSETS)}
               className={`rounded-full px-4 py-2 text-sm font-medium ${activeTab === TAB_ASSETS ? 'bg-earth-900 text-earth-50' : 'bg-white text-earth-700 border border-earth-300'}`}
             >
@@ -104,6 +132,55 @@ function CollectionPage() {
       </section>
       <section className="px-4 pb-12">
         <div className="mx-auto max-w-6xl">
+          {activeTab === TAB_SETS ? (
+            ownedError ? (
+              <p className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">{ownedError}</p>
+            ) : ownedItems.length ? (
+              <ul className="space-y-2">
+                {ownedItems.map((row) => {
+                  const card = row.catalog_item
+                  const label =
+                    (localeKey === 'en' ? card?.name_en || card?.name_ja : card?.name_ja || card?.name_en) ||
+                    row.custom_snapshot?.name ||
+                    card?.number ||
+                    row.id
+                  const meta = [
+                    card?.set?.set_code,
+                    card?.number ? `#${card.number}` : null,
+                    card?.rarity,
+                    row.quantity > 1 ? `×${row.quantity}` : null,
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')
+                  const to = card?.id ? catalogItemPath(card.id, locale) : null
+                  const inner = (
+                    <>
+                      <span className="font-medium text-earth-900">{label}</span>
+                      {meta ? <span className="text-earth-600"> · {meta}</span> : null}
+                    </>
+                  )
+                  return (
+                    <li key={row.id} className="rounded-lg border border-earth-200 bg-white px-4 py-3 text-sm text-earth-700">
+                      {to ? (
+                        <Link to={to} className="hover:text-earth-900">
+                          {inner}
+                        </Link>
+                      ) : (
+                        inner
+                      )}
+                    </li>
+                  )
+                })}
+              </ul>
+            ) : (
+              <p className="rounded-lg border border-earth-200 bg-earth-50 p-4 text-sm text-earth-600">
+                {t('collector.empty.sets', {
+                  defaultValue: 'Nenhum item de set marcado ainda. Abra um item do catálogo e toque em “Tenho este item”.',
+                })}
+              </p>
+            )
+          ) : null}
+
           {activeTab === TAB_ASSETS ? (
             assets.length ? (
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">

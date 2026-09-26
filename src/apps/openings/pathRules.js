@@ -6,12 +6,14 @@ const OPENINGS_EXACT_PATHS = new Set([
   '/lives',
   '/openings',
   '/colecao',
+  '/item',
   '/japan-search',
   '/en/rips',
   '/en/batches',
   '/en/lives',
   '/en/openings',
   '/en/collection',
+  '/en/item',
   '/en/japan-search',
 ])
 
@@ -21,11 +23,13 @@ const OPENINGS_PREFIX_PATHS = [
   '/lives/',
   '/openings/',
   '/colecao/',
+  '/item/',
   '/en/rips/',
   '/en/batches/',
   '/en/lives/',
   '/en/openings/',
   '/en/collection/',
+  '/en/item/',
 ]
 
 export function isOpeningsPath(pathname = '') {

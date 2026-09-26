@@ -20,6 +20,7 @@ const LivePage = lazy(() => import('./pages/collector/LivePage'))
 const CollectionPage = lazy(() => import('./pages/collector/CollectionPage'))
 const MyRipRecordPage = lazy(() => import('./pages/collector/MyRipRecordPage'))
 const CardAssetPage = lazy(() => import('./pages/collector/CardAssetPage'))
+const CatalogItemPage = lazy(() => import('./pages/collector/CatalogItemPage'))
 const JapanSearchPage = lazy(() => import('./pages/collector/JapanSearchPage'))
 const Contact = lazy(() => import('./pages/Contact'))
 const OndeComprar = lazy(() => import('./pages/OndeComprar'))
@@ -140,6 +141,7 @@ function App() {
     CollectionPage,
     MyRipRecordPage,
     CardAssetPage,
+    CatalogItemPage,
     JapanSearchPage,
     Contact,
     OndeComprar,

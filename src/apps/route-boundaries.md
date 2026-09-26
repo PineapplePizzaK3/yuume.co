@@ -16,12 +16,14 @@ that rename happens.
 - `"/lives"`, `"/lives/:liveId"`
 - `"/openings"`, `"/openings/:openingId"`
 - `"/colecao"`, `"/colecao/rips/:ripId"`, `"/colecao/batches/:ripId"`, `"/colecao/cartas/:assetId"`
+- `"/item/:itemId"`
 - `"/japan-search"`
 - `"/en/rips"`, `"/en/rips/:ripId"`
 - `"/en/batches"`, `"/en/batches/:batchId"`
 - `"/en/lives"`, `"/en/lives/:liveId"`
 - `"/en/openings"`, `"/en/openings/:openingId"`
 - `"/en/collection"`, `"/en/collection/rips/:ripId"`, `"/en/collection/batches/:ripId"`, `"/en/collection/cards/:assetId"`
+- `"/en/item/:itemId"`
 - `"/en/japan-search"`
 
 ## Services Domain
