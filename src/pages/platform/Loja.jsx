@@ -2,10 +2,11 @@
  * Loja: aba Em estoque (catálogo com pronta entrega) + aba Vitrine (grupos de compra).
  */
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useLocation, useSearchParams } from 'react-router-dom'
+import { Link, Navigate, useLocation, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useLocalizedPath } from '../../hooks/useLocalizedPath'
 import { useSiteLocale } from '../../hooks/useSiteLocale'
+import { useStoreVitrineEnabled } from '../../hooks/useStoreVitrineEnabled'
 import { appStoreProductPath, publicStoreProductPath } from '../../lib/localeRoutes'
 import { PageSeo } from '../../components/PageSeo'
 import { getProducts } from '../../services/productService'
@@ -310,7 +311,8 @@ export default function Loja({ publicMode = false }) {
   const { t } = useTranslation()
   const { pathname } = useLocation()
   const [searchParams] = useSearchParams()
-  // Default: Em Estoque. Vitrine only when explicitly requested.
+  const { enabled: vitrineEnabled, loading: vitrineLoading } = useStoreVitrineEnabled()
+  // Default: Em Estoque. Vitrine only when explicitly requested and feature-enabled.
   const tabParam = String(searchParams.get('tab') || '').toLowerCase()
   const tab = tabParam === 'vitrine' || tabParam === 'grupos'
     ? 'grupos'
@@ -326,6 +328,10 @@ export default function Loja({ publicMode = false }) {
     }),
     [pathname]
   )
+
+  if (!vitrineLoading && !vitrineEnabled && tab === 'grupos') {
+    return <Navigate to={pathname} replace />
+  }
 
   return (
     <>
@@ -357,14 +363,16 @@ export default function Loja({ publicMode = false }) {
             >
               {t('platform.storeHub.tabSnkrdunkCatalog')}
             </Link>
-            <Link
-              to={tabLinks.grupos}
-              className={`rounded-lg px-3 py-2 text-sm font-medium transition ${
-                tab === 'grupos' ? 'bg-earth-900 text-earth-50' : 'bg-white text-earth-700 hover:bg-earth-100'
-              }`}
-            >
-              {t('platform.storeHub.tabShowcase')}
-            </Link>
+            {vitrineEnabled ? (
+              <Link
+                to={tabLinks.grupos}
+                className={`rounded-lg px-3 py-2 text-sm font-medium transition ${
+                  tab === 'grupos' ? 'bg-earth-900 text-earth-50' : 'bg-white text-earth-700 hover:bg-earth-100'
+                }`}
+              >
+                {t('platform.storeHub.tabShowcase')}
+              </Link>
+            ) : null}
           </div>
 
           <div className="mt-6">
@@ -372,8 +380,10 @@ export default function Loja({ publicMode = false }) {
               <LojaEstoqueCatalog publicMode={publicMode} />
             ) : tab === 'snkrdunk' ? (
               <LojaSnkrdunkCatalogTab />
-            ) : (
+            ) : vitrineEnabled ? (
               <GrupoDeCompras embedded hideHeader destination="all" publicMode={publicMode} />
+            ) : (
+              <LojaEstoqueCatalog publicMode={publicMode} />
             )}
           </div>
         </div>

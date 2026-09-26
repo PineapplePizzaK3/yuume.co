@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '../hooks/useAuth'
 import { useCartCount } from '../hooks/useCartCount'
 import { useLocalizedPath } from '../hooks/useLocalizedPath'
+import { useStoreVitrineEnabled } from '../hooks/useStoreVitrineEnabled'
 import { isRouteActive } from '../lib/localeRoutes'
 
 const NAV_ROUTE_KEYS = ['appDashboard']
@@ -124,6 +125,7 @@ export function PlatformLayout() {
   const { user, isAdmin, signOut } = useAuth()
   const location = useLocation()
   const cartCount = useCartCount(user?.id)
+  const { enabled: vitrineEnabled } = useStoreVitrineEnabled()
   const hasCartItems = cartCount > 0
   const cartBadgeLabel = cartCount > 99 ? '99+' : String(cartCount)
   const [lojaOpen, setLojaOpen] = useState(true)
@@ -198,6 +200,7 @@ export function PlatformLayout() {
   const orderedLojaItems = menuOrder.loja
     .map((k) => navItemsByKey.get(k))
     .filter(Boolean)
+    .filter((item) => vitrineEnabled || item.routeKey !== 'appLoja')
 
   useEffect(() => {
     if (isInLoja) setLojaOpen(true)

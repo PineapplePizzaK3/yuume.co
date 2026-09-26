@@ -6,6 +6,7 @@ import { useAuth } from '../hooks/useAuth'
 import { useUnreadNotifications } from '../hooks/useUnreadNotifications'
 import { useLocalizedPath } from '../hooks/useLocalizedPath'
 import { useSiteLocale } from '../hooks/useSiteLocale'
+import { useStoreVitrineEnabled } from '../hooks/useStoreVitrineEnabled'
 import { isRouteActive } from '../lib/localeRoutes'
 import { buildStaticSearchIndex } from '../services/globalSearchService'
 import { LocalizedLink } from './LocalizedLink'
@@ -23,6 +24,7 @@ function Navbar() {
   const path = useLocalizedPath()
   const unreadNotifications = useUnreadNotifications(user?.id, 20)
   const hasUnreadNotifications = unreadNotifications > 0
+  const { enabled: vitrineEnabled } = useStoreVitrineEnabled()
 
   const fecharMenu = () => setMenuAberto(false)
 
@@ -36,30 +38,40 @@ function Navbar() {
   const isStorePublicRoute = isRouteActive('lojaPublic', location.pathname, true)
   const isStoreAppRoute = isRouteActive('appLoja', location.pathname, true)
   const isStoreServicesRoute = isRouteActive('appServices', location.pathname, true)
-  const isLiveRipsRoute = isRouteActive('liveRipsHub', location.pathname, true)
+  const isCollectorRipsRoute =
+    isRouteActive('collectorRips', location.pathname, true) ||
+    isRouteActive('collectorBatches', location.pathname, true)
+  const isCollectorCollectionRoute = isRouteActive('collectorCollection', location.pathname, true)
+  const isCollectorJapanSearchRoute = isRouteActive('collectorJapanSearch', location.pathname, true)
+  const isForwardingRoute = isRouteActive('forwardingHome', location.pathname)
   const currentStoreSection = useMemo(() => {
     if (isStoreServicesRoute) return 'servicos'
-    if (isRouteActive('appLoja', location.pathname, true) || isRouteActive('lojaPublicVitrine', location.pathname, true)) {
+    if (
+      vitrineEnabled &&
+      (isRouteActive('appLoja', location.pathname, true) || isRouteActive('lojaPublicVitrine', location.pathname, true))
+    ) {
       return 'vitrine'
     }
-    return 'vitrine'
-  }, [isStoreServicesRoute, location.pathname])
+    return null
+  }, [isStoreServicesRoute, location.pathname, vitrineEnabled])
   const storeSubmenuItems = useMemo(() => {
-    const vitrine = {
-      id: 'vitrine',
-      label: t('platform.storeHub.tabShowcase'),
-      toRoute: isAuthenticated ? 'appLoja' : 'lojaPublicVitrine',
-    }
-    const servicos = {
-      id: 'servicos',
-      label: t('platform.storeHub.tabServices'),
-      toRoute: 'appServices',
-    }
+    const items = []
     if (isAuthenticated) {
-      return [servicos, vitrine]
+      items.push({
+        id: 'servicos',
+        label: t('platform.storeHub.tabServices'),
+        toRoute: 'appServices',
+      })
     }
-    return [vitrine]
-  }, [isAuthenticated, t])
+    if (vitrineEnabled) {
+      items.push({
+        id: 'vitrine',
+        label: t('platform.storeHub.tabShowcase'),
+        toRoute: isAuthenticated ? 'appLoja' : 'lojaPublicVitrine',
+      })
+    }
+    return items
+  }, [isAuthenticated, t, vitrineEnabled])
   const staticSearchIndex = useMemo(() => buildStaticSearchIndex({ t, path }), [t, path])
   const searchButtonLabel = locale === 'en' ? 'Search site' : 'Pesquisar no site'
   const searchButtonTitle = locale === 'en' ? 'Search' : 'Pesquisar'
@@ -98,34 +110,28 @@ function Navbar() {
               {t('nav.home')}
             </LocalizedLink>
             <LocalizedLink
-              toRoute="servicosPrecos"
-              className={`flex items-center ${isRouteActive('servicosPrecos', location.pathname, true) ? linkAtivo : linkNormal}`}
+              toRoute="collectorBatches"
+              className={`flex items-center ${isCollectorRipsRoute ? linkAtivo : linkNormal}`}
             >
-              {t('nav.services')}
+              {t('nav.batches', { defaultValue: 'Aberturas' })}
             </LocalizedLink>
             <LocalizedLink
-              toRoute="ondeComprar"
-              className={`flex items-center ${isRouteActive('ondeComprar', location.pathname) ? linkAtivo : linkNormal}`}
+              toRoute="collectorCollection"
+              className={`flex items-center ${isCollectorCollectionRoute ? linkAtivo : linkNormal}`}
             >
-              {t('nav.whereToBuy')}
+              {t('nav.collection', { defaultValue: 'Colecao' })}
             </LocalizedLink>
             <LocalizedLink
-              toRoute="liveRipsHub"
-              className={`flex items-center ${isLiveRipsRoute ? linkAtivo : linkNormal}`}
+              toRoute="collectorJapanSearch"
+              className={`flex items-center ${isCollectorJapanSearchRoute ? linkAtivo : linkNormal}`}
             >
-              {t('nav.liveRips')}
+              {t('nav.japanSearch', { defaultValue: 'Japan Search' })}
             </LocalizedLink>
             <LocalizedLink
-              toRoute="faqIndex"
-              className={`flex items-center ${isRouteActive('faqIndex', location.pathname, true) ? linkAtivo : linkNormal}`}
+              toRoute="forwardingHome"
+              className={`flex items-center ${isForwardingRoute ? linkAtivo : linkNormal}`}
             >
-              {t('nav.faq')}
-            </LocalizedLink>
-            <LocalizedLink
-              toRoute="contact"
-              className={`flex items-center ${isRouteActive('contact', location.pathname) ? linkAtivo : linkNormal}`}
-            >
-              {t('nav.contact')}
+              {t('nav.japanServices', { defaultValue: 'Servicos Japao' })}
             </LocalizedLink>
             <div className="group relative flex h-[4.5rem] shrink-0">
               <LocalizedLink
@@ -138,23 +144,25 @@ function Navbar() {
               >
                 {t('nav.virtualStore')}
               </LocalizedLink>
-              <div className="pointer-events-none absolute left-1/2 top-full z-20 -translate-x-1/2 pt-2 opacity-0 transition group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100">
-                <div className="flex items-center gap-2 rounded-none border border-earth-200 bg-white p-2 shadow-lg">
-                  {storeSubmenuItems.map((item) => (
-                    <LocalizedLink
-                      key={item.id}
-                      toRoute={item.toRoute}
-                      className={`rounded-none px-3 py-2 text-sm whitespace-nowrap transition ${
-                        currentStoreSection === item.id
-                          ? 'bg-earth-900 font-medium text-earth-50'
-                          : 'text-earth-700 hover:bg-earth-100'
-                      }`}
-                    >
-                      {item.label}
-                    </LocalizedLink>
-                  ))}
+              {storeSubmenuItems.length > 0 ? (
+                <div className="pointer-events-none absolute left-1/2 top-full z-20 -translate-x-1/2 pt-2 opacity-0 transition group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100">
+                  <div className="flex items-center gap-2 rounded-none border border-earth-200 bg-white p-2 shadow-lg">
+                    {storeSubmenuItems.map((item) => (
+                      <LocalizedLink
+                        key={item.id}
+                        toRoute={item.toRoute}
+                        className={`rounded-none px-3 py-2 text-sm whitespace-nowrap transition ${
+                          currentStoreSection === item.id
+                            ? 'bg-earth-900 font-medium text-earth-50'
+                            : 'text-earth-700 hover:bg-earth-100'
+                        }`}
+                      >
+                        {item.label}
+                      </LocalizedLink>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              ) : null}
             </div>
 
             <button
@@ -331,39 +339,32 @@ function Navbar() {
                 {t('nav.home')}
               </LocalizedLink>
               <LocalizedLink
-                toRoute="servicosPrecos"
+                toRoute="collectorBatches"
                 onClick={fecharMenu}
-                className={`rounded-lg px-4 py-3 ${isRouteActive('servicosPrecos', location.pathname, true) ? 'bg-earth-100 font-semibold text-earth-900' : 'text-earth-600 hover:bg-earth-50 hover:text-earth-900'}`}
+                className={`rounded-lg px-4 py-3 ${isCollectorRipsRoute ? 'bg-earth-100 font-semibold text-earth-900' : 'text-earth-600 hover:bg-earth-50 hover:text-earth-900'}`}
               >
-                {t('nav.services')}
+                {t('nav.batches', { defaultValue: 'Aberturas' })}
               </LocalizedLink>
               <LocalizedLink
-                toRoute="ondeComprar"
+                toRoute="collectorCollection"
                 onClick={fecharMenu}
-                className={`rounded-lg px-4 py-3 ${isRouteActive('ondeComprar', location.pathname) ? 'bg-earth-100 font-semibold text-earth-900' : 'text-earth-600 hover:bg-earth-50 hover:text-earth-900'}`}
+                className={`rounded-lg px-4 py-3 ${isCollectorCollectionRoute ? 'bg-earth-100 font-semibold text-earth-900' : 'text-earth-600 hover:bg-earth-50 hover:text-earth-900'}`}
               >
-                {t('nav.whereToBuy')}
+                {t('nav.collection', { defaultValue: 'Colecao' })}
               </LocalizedLink>
               <LocalizedLink
-                toRoute="faqIndex"
+                toRoute="collectorJapanSearch"
                 onClick={fecharMenu}
-                className={`rounded-lg px-4 py-3 ${isRouteActive('faqIndex', location.pathname, true) ? 'bg-earth-100 font-semibold text-earth-900' : 'text-earth-600 hover:bg-earth-50 hover:text-earth-900'}`}
+                className={`rounded-lg px-4 py-3 ${isCollectorJapanSearchRoute ? 'bg-earth-100 font-semibold text-earth-900' : 'text-earth-600 hover:bg-earth-50 hover:text-earth-900'}`}
               >
-                {t('nav.faq')}
+                {t('nav.japanSearch', { defaultValue: 'Japan Search' })}
               </LocalizedLink>
               <LocalizedLink
-                toRoute="liveRipsHub"
+                toRoute="forwardingHome"
                 onClick={fecharMenu}
-                className={`rounded-lg px-4 py-3 ${isLiveRipsRoute ? 'bg-earth-100 font-semibold text-earth-900' : 'text-earth-600 hover:bg-earth-50 hover:text-earth-900'}`}
+                className={`rounded-lg px-4 py-3 ${isForwardingRoute ? 'bg-earth-100 font-semibold text-earth-900' : 'text-earth-600 hover:bg-earth-50 hover:text-earth-900'}`}
               >
-                {t('nav.liveRips')}
-              </LocalizedLink>
-              <LocalizedLink
-                toRoute="contact"
-                onClick={fecharMenu}
-                className={`rounded-lg px-4 py-3 ${isRouteActive('contact', location.pathname) ? 'bg-earth-100 font-semibold text-earth-900' : 'text-earth-600 hover:bg-earth-50 hover:text-earth-900'}`}
-              >
-                {t('nav.contact')}
+                {t('nav.japanServices', { defaultValue: 'Servicos Japao' })}
               </LocalizedLink>
               <LocalizedLink
                 toRoute={storeMainRoute}

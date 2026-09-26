@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { uploadProductImage } from '../../../../services/productService'
+import {
+  getStoreVitrineEnabled,
+  setStoreVitrineEnabledAdmin,
+} from '../../../../services/settingsService'
 import { PRODUCT_CONDITION_OPTIONS } from '../../../../lib/productCondition'
 import { useAdminContext } from '../AdminContext'
 import RichTextEditor from '../../../../components/RichTextEditor'
@@ -24,6 +28,11 @@ function parseAdminLinks(value, variants = []) {
 
 export default function GruposSection() {
   const [variantImageDrafts, setVariantImageDrafts] = useState({})
+  const [vitrineEnabled, setVitrineEnabled] = useState(false)
+  const [vitrineLoading, setVitrineLoading] = useState(true)
+  const [vitrineSaving, setVitrineSaving] = useState(false)
+  const [vitrineToggleMessage, setVitrineToggleMessage] = useState('')
+  const [vitrineToggleError, setVitrineToggleError] = useState(false)
   const {
     activeTab,
     handleSaveGroup,
@@ -102,6 +111,39 @@ export default function GruposSection() {
     if (!editingGroupProductId && editingPendingProductIndex == null) return
     scrollEditorIntoView(groupProductEditorRef)
   }, [editingGroupProductId, editingPendingProductIndex, scrollEditorIntoView])
+
+  useEffect(() => {
+    if (activeTab !== 'grupos') return
+    let active = true
+    setVitrineLoading(true)
+    void getStoreVitrineEnabled().then((enabled) => {
+      if (!active) return
+      setVitrineEnabled(Boolean(enabled))
+      setVitrineLoading(false)
+    })
+    return () => {
+      active = false
+    }
+  }, [activeTab])
+
+  const handleToggleVitrine = async () => {
+    const next = !vitrineEnabled
+    setVitrineSaving(true)
+    const { error } = await setStoreVitrineEnabledAdmin(next)
+    setVitrineSaving(false)
+    if (error) {
+      setVitrineToggleMessage(error.message || 'Nao foi possivel atualizar a aba Vitrine.')
+      setVitrineToggleError(true)
+      return
+    }
+    setVitrineEnabled(next)
+    setVitrineToggleMessage(
+      next
+        ? 'Aba Vitrine reativada na Loja.'
+        : 'Aba Vitrine desativada na Loja.'
+    )
+    setVitrineToggleError(false)
+  }
 
   const localMessage = String(sectionMessages?.grupos || '')
   const localMessageIsError = /erro|inválid|obrigat|falha|não foi possível|selecione|preencha/i.test(localMessage.toLowerCase())
@@ -336,6 +378,49 @@ export default function GruposSection() {
   return (
     <section className="mt-0 rounded-b-xl border border-t-0 border-earth-200 bg-earth-50 p-6">
       <h2 className="text-lg font-semibold text-earth-900">Compras Programadas</h2>
+
+      <div className="mt-4 rounded-lg border border-earth-200 bg-white p-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h3 className="font-medium text-earth-900">Aba Vitrine na Loja</h3>
+            <p className="mt-1 text-xs text-earth-600">
+              Controla se a aba Vitrine (grupos de compra) aparece para os clientes na Loja.
+              Momentaneamente desativada; reative aqui quando quiser publicar de novo.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleToggleVitrine}
+            disabled={vitrineLoading || vitrineSaving}
+            className={`rounded-lg px-3 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-60 ${
+              vitrineEnabled
+                ? 'border border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100'
+                : 'bg-earth-900 text-white hover:bg-earth-800'
+            }`}
+          >
+            {vitrineLoading || vitrineSaving
+              ? 'Atualizando...'
+              : vitrineEnabled
+                ? 'Desativar Vitrine'
+                : 'Reativar Vitrine'}
+          </button>
+        </div>
+        <p className="mt-2 text-xs font-medium text-earth-700">
+          Status atual:{' '}
+          <span className={vitrineEnabled ? 'text-green-700' : 'text-amber-800'}>
+            {vitrineLoading ? '...' : vitrineEnabled ? 'Ativa' : 'Desativada'}
+          </span>
+        </p>
+        {vitrineToggleMessage ? (
+          <p
+            className={`mt-2 rounded-lg px-3 py-2 text-sm ${
+              vitrineToggleError ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
+            }`}
+          >
+            {vitrineToggleMessage}
+          </p>
+        ) : null}
+      </div>
 
       {localMessage && (
         <p className={`mt-3 rounded-lg px-4 py-2 text-sm ${
