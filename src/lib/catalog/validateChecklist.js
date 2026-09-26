@@ -6,7 +6,7 @@ export const VALIDATOR_VERSION = 1
 export const SPOT_CHECK_RATIO = 0.1
 
 /** Rarity codes treated as "SR or higher" for the spot-check sample, when a trusted rarity exists. */
-export const HIGH_RARITY_CODES = ['SR', 'SAR', 'UR', 'MUR', 'HR', 'CHR', 'CSR', 'BWR', 'MA']
+export const HIGH_RARITY_CODES = ['SR', 'SAR', 'UR', 'MUR', 'HR', 'CHR', 'CSR', 'BWR', 'MA', 'ACE']
 
 const MAX_LISTED_NUMBERS = 50
 

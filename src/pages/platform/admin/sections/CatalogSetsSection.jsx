@@ -476,7 +476,7 @@ export default function CatalogSetsSection() {
                     Conferência manual ({checkedCount}/{spotCheckIds.length})
                   </h3>
                   <p className="mt-1 text-xs text-earth-600">
-                    Compare cada item com a página oficial: número, nome e raridade. Inclui todas as secretas e 10% aleatório.
+                    Compare cada item com a página oficial: número, nome e raridade japonesa (C, U, R, RR, AR, SR, SAR, UR, MUR). Inclui todas as secretas e 10% aleatório.
                   </p>
                   <div className="mt-2 flex gap-2">
                     <button
@@ -494,8 +494,7 @@ export default function CatalogSetsSection() {
                           <th className="px-2 py-1">OK</th>
                           <th className="px-2 py-1">Nº</th>
                           <th className="px-2 py-1">Nome (JA)</th>
-                          <th className="px-2 py-1">Raridade</th>
-                          <th className="px-2 py-1">TCGdex (ref.)</th>
+                          <th className="px-2 py-1">Raridade JP</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -514,8 +513,7 @@ export default function CatalogSetsSection() {
                               </td>
                               <td className="px-2 py-1 font-mono">{item?.number || '?'}</td>
                               <td className="px-2 py-1">{item?.name_ja || '—'}</td>
-                              <td className="px-2 py-1">{item?.rarity || '—'}</td>
-                              <td className="px-2 py-1 text-xs text-earth-500">{item?.attributes?.tcgdex_rarity || '—'}</td>
+                              <td className="px-2 py-1 font-mono">{item?.rarity || '—'}</td>
                             </tr>
                           )
                         })}

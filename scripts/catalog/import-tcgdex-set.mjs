@@ -5,10 +5,11 @@
  *
  * - Creates the set from its manifest when missing. An existing set's manifest is NOT overwritten (admins may have
  *   edited it) unless --sync-manifest is passed.
- * - Never imports images or prices. TCGdex rarity is kept only as attributes.tcgdex_rarity because its Japanese
- *   rarity data is incomplete; catalog_items.rarity is filled from the official page via CSV/admin.
+ * - Never imports images or prices. TCGdex English rarity names are mapped to Japanese letter codes
+ *   (Ultra Rare → SR, Hyper Rare → UR, Illustration rare → AR). Gaps stay empty for CSV/admin.
  */
-import { normalizeCardNumber } from '../../src/lib/catalog/validateChecklist.js'
+import { dropUnreliableSecretRarity, mapTcgdexRarityToJp } from '../../src/lib/catalog/jpRarity.js'
+import { cardNumberToInt, normalizeCardNumber } from '../../src/lib/catalog/validateChecklist.js'
 import { createServiceClient, fetchSetByCode, parseArgs, readManifest } from './lib.mjs'
 
 const TCGDEX_API = 'https://api.tcgdex.net/v2/ja'
@@ -45,14 +46,15 @@ async function mapPool(items, limit, fn) {
   return results
 }
 
-function toCatalogItem(card, fetchedAt) {
+function toCatalogItem(card, fetchedAt, setCtx) {
   const number = normalizeCardNumber(card.localId)
   const variants = card.variants && typeof card.variants === 'object' ? card.variants : {}
+  const tcgdexRarity = card.rarity && card.rarity !== 'None' ? card.rarity : null
   const attributes = {
     category: card.category ?? null,
     stage: card.stage ?? null,
     dex_ids: Array.isArray(card.dexId) ? card.dexId : [],
-    tcgdex_rarity: card.rarity && card.rarity !== 'None' ? card.rarity : null,
+    tcgdex_rarity: tcgdexRarity,
     tcgdex_variants: {
       normal: Boolean(variants.normal),
       reverse: Boolean(variants.reverse),
@@ -62,6 +64,7 @@ function toCatalogItem(card, fetchedAt) {
   return {
     number,
     name_ja: card.name ?? null,
+    rarity: mapTcgdexRarityToJp(tcgdexRarity, setCtx),
     attributes,
     external_refs: { tcgdex: card.id },
     provenance: { license: 'MIT', api: TCGDEX_API, card_id: card.id, fetched_at: fetchedAt },
@@ -84,15 +87,25 @@ async function importOne(client, manifestRef, flags) {
   const missing = cardRefs.filter((_, i) => !cards[i]).map((ref) => ref.id)
   if (missing.length) throw new Error(`Cartas não encontradas no TCGdex: ${missing.join(', ')}`)
 
-  const items = cards.map((card) => toCatalogItem(card, fetchedAt))
+  const setCtx = { setCode: manifest.set_code, serieId: tcgSet.serie?.id }
+  const expectedOfficial = tcgSet.cardCount?.official ?? manifest.official_manifest?.expected_official ?? null
+  let items = cards.map((card) => {
+    const item = toCatalogItem(card, fetchedAt, setCtx)
+    return { ...item, number_int: cardNumberToInt(item.number) }
+  })
+  items = dropUnreliableSecretRarity(items, { expectedOfficial })
   const numbers = new Set()
   for (const item of items) {
     if (!item.number) throw new Error(`Carta sem número: ${item.external_refs.tcgdex}`)
     if (numbers.has(item.number)) throw new Error(`Número duplicado no TCGdex: ${item.number}`)
     numbers.add(item.number)
   }
-  const withTcgdexRarity = items.filter((item) => item.attributes.tcgdex_rarity).length
-  console.log(`Itens preparados: ${items.length} (com raridade TCGdex: ${withTcgdexRarity}; coluna rarity fica vazia)`)
+  const rarityCounts = {}
+  for (const item of items) {
+    const code = item.rarity || '(vazio)'
+    rarityCounts[code] = (rarityCounts[code] || 0) + 1
+  }
+  console.log(`Itens preparados: ${items.length}. Raridades JP: ${JSON.stringify(rarityCounts)}`)
 
   if (flags.has('dry-run')) {
     console.log('Dry run: nada gravado. Exemplo:', JSON.stringify(items[items.length - 1]))

@@ -56,12 +56,11 @@ Card images (D3): MVP catalog is text-only. Allowed later: YuumeCo's own photos 
 | Admin catalog search + gallery | `searchCatalogAdmin` in `catalogSearchService.js`; `action: 'gallery'` in `catalog-search/index.ts` (`productGallery.ts`) | same as above | same as above |
 | URL product scrape | edge `scrape-product` via `src/services/wishlistLinkService.js` (Lounge URL wishlist, `ListaDesejos.jsx`) and `src/pages/platform/AssistedRedirectBudgetSection.jsx` (assisted forwarding budget) | any pasted URL (Mercari, Rakuma, Yahoo, Amazon, SNKRDUNK...) | Direct fetch + r.jina.ai fallback |
 | On-demand SNKRDUNK catalog | `.github/workflows/refresh-on-demand-snkrdunk-catalog.yml` -> `scripts/on-demand/update-snkrdunk-catalog.mjs` -> `src/data/onDemandSnkrdunkCatalog.js`, `src/data/liveRipsSnkrdunkCatalog.js` (store SNKRDUNK tab, ephemeral products, `onDemandCatalog.js`, Live Rips) | snkrdunk | Scheduled scraping (runs from `main`) |
-| Collection top cards | `scripts/on-demand/build-collection-top-cards.mjs` -> `src/data/collectionTopCards.js` (`collectorService.getCollectionTopCards`, `AberturasSection`, `liveRipsMock`) | snkrdunk | Manual script run. An UNCOMMITTED workflow change would add it to the schedule; intentionally left uncommitted pending D4. |
+| Collection top cards | `scripts/on-demand/build-collection-top-cards.mjs` -> `src/data/collectionTopCards.js` (`collectorService.getCollectionTopCards`, `AberturasSection`, `liveRipsMock`) | snkrdunk | Scheduled with the on-demand workflow (D4: keep legacy scraping). Kill switch: `market_sources.legacy_automation_allowed`. |
 | Scrape quality report | `scripts/scrape-quality-report.mjs` | multiple | Manual script |
 
-Policy until D4 is decided: these keep working unchanged ("legacy exception"), are recorded in the registry with
-`legacy_search_allowed` / `legacy_automation_allowed = true`, and can be switched off from the database without a deploy.
-No new Collector Platform feature may call them.
+D4 (2026-09-27): keep the legacy scraping features above. They stay on the grandfathered flags and can still be
+switched off from `market_sources` without a deploy. No new Collector Platform feature may call them.
 
 ## Owner decisions
 
@@ -70,8 +69,8 @@ No new Collector Platform feature may call them.
 | D1 | Clear Yahoo! Shopping and Rakuten API use (commercial use, credit display, caching) | Steps 8/10 API adapters |
 | D2 | Amazon Creators API eligibility | Amazon API adapter |
 | D3 | Card image policy (none / own photos / license) | Catalog images (Step 3 ships text-only) |
-| D4 | Future of legacy scraping features listed above | Step 12 only |
-| D5 | TCGdex Japanese coverage for M2a, SV2a, SV8a, M6 (else manual CSV entry) | Step 3 imports. Checked 2026-09-27: numbers and Japanese names complete for all four (SV2a 210, SV8a 237, M2a 250, M6 113). Rarity is unreliable (SV8a mostly "None", M6 secrets all "Mega Hyper Rare"), so it is stored only as `attributes.tcgdex_rarity`; `catalog_items.rarity` comes from the official page via CSV. |
+| D4 | Keep legacy scraping (catalog search, scrape-product, SNKRDUNK on-demand + top cards). Kill switch remains the registry flags. | Decided 2026-09-27. Workflow schedules top-card refresh. |
+| D5 | TCGdex Japanese coverage for M2a, SV2a, SV8a, M6 (else manual CSV entry) | Step 3 imports. Numbers/names complete. Rarity: map TCGdex English names to JP codes (Ultra Rare→SR, Hyper Rare→UR, Illustration rare→AR). SV8a and many M2a commons are "None"; M6 secrets are a single Western bucket and are left empty. Fill gaps via official-page CSV. |
 | D6 | Checklist scope: base numbers only, variants excluded from completion | Step 3/5 |
 | D7 | Set-verification reviewer(s) and 14-day post-release grace rule | Step 3 VERIFIED transition |
 | D8 | Policy for sellers who exclude proxy buyers (`is_cross_border_agency`) | Step 8 Yahoo adapter |
