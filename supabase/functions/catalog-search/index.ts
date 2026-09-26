@@ -12,6 +12,7 @@ import { searchYahoo } from './adapters/yahoo.ts'
 import { searchYahooFlea } from './adapters/yahooFlea.ts'
 import { searchSnkrdunk } from './adapters/snkrdunk.ts'
 import { fetchProductGallery } from './productGallery.ts'
+import { isSourceAllowed, partitionAllowedSources, type GateContext } from '../_shared/marketSourceGate.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -48,6 +49,11 @@ function safeJson(payload: unknown, status: number = 200): Response {
 
 function getRequestMode(body: SearchRequest): 'admin' | 'public' {
   return body?.mode === 'public' ? 'public' : 'admin'
+}
+
+function getGateContext(body: SearchRequest, mode: 'admin' | 'public'): GateContext {
+  if (body?.context === 'collector') return 'collector'
+  return mode === 'admin' ? 'legacy_admin' : 'legacy_public'
 }
 
 function getClientIp(req: Request): string {
@@ -206,6 +212,7 @@ Deno.serve(async (req) => {
   try {
     const body = (await req.json()) as SearchRequest
     const mode = getRequestMode(body)
+    const gateContext = getGateContext(body, mode)
     if (mode === 'admin') {
       const denied = await requireAdmin(req)
       if (denied) return denied
@@ -217,6 +224,9 @@ Deno.serve(async (req) => {
       const productUrl = String((body as { productUrl?: string })?.productUrl || '').trim()
       if (!productUrl) return safeJson({ error: 'URL do produto obrigatória.' }, 400)
       const storeId = String((body as { storeId?: string })?.storeId || '').trim()
+      if (!(await isSourceAllowed(storeId, 'display_images', gateContext))) {
+        return safeJson({ imageUrls: [], excluded: true })
+      }
       const imageUrls = await fetchProductGallery(storeId, productUrl)
       return safeJson({ imageUrls })
     }
@@ -227,15 +237,47 @@ Deno.serve(async (req) => {
       return safeJson({ error: 'Informe ao menos 2 caracteres para buscar.' }, 400)
     }
 
+    const { allowed: allowedStores, excluded: excludedStores } = await partitionAllowedSources(
+      input.stores,
+      'search',
+      gateContext,
+    )
+    input.stores = allowedStores
+
+    if (!input.stores.length) {
+      return safeJson({
+        results: [],
+        meta: {
+          mode,
+          context: gateContext,
+          query: input.query,
+          stores: [],
+          excludedStores,
+          totalEstimated: null,
+          page: input.page,
+          pageSize: input.pageSize,
+          hasMore: false,
+          tookMs: 0,
+          strategy: buildSystemStrategyMeta(),
+        },
+        partials: [],
+        cacheHit: false,
+      })
+    }
+
+    const { excluded: cacheExcludedStores } = await partitionAllowedSources(input.stores, 'cache', gateContext)
+    const cacheAllowed = cacheExcludedStores.length === 0
+
     const cacheKey = buildCacheKey({
       mode,
+      context: gateContext,
       q: input.query.toLowerCase(),
       stores: input.stores,
       page: input.page,
       pageSize: input.pageSize,
       cursors: input.cursors,
     })
-    const cached = getCache<unknown>(cacheKey)
+    const cached = cacheAllowed ? getCache<unknown>(cacheKey) : null
     if (cached) return safeJson({ ...cached, cacheHit: true })
 
     const startedAt = Date.now()
@@ -275,8 +317,10 @@ Deno.serve(async (req) => {
       results: pageHits,
       meta: {
         mode,
+        context: gateContext,
         query: input.query,
         stores: input.stores,
+        excludedStores,
         totalEstimated: null,
         page: input.page,
         pageSize: input.pageSize,
@@ -290,7 +334,7 @@ Deno.serve(async (req) => {
       cacheHit: false,
     }
 
-    setCache(cacheKey, payload)
+    if (cacheAllowed) setCache(cacheKey, payload)
     return safeJson(payload)
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Erro inesperado'

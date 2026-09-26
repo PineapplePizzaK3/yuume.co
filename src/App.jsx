@@ -79,6 +79,7 @@ const AdminRecargasTab = lazy(() => import('./pages/platform/admin/tabs/Recargas
 const AdminInvoicesTab = lazy(() => import('./pages/platform/admin/tabs/InvoicesAdminTab'))
 const AdminControleFinanceiroTab = lazy(() => import('./pages/platform/admin/tabs/ControleFinanceiroTab'))
 const AdminLogsTab = lazy(() => import('./pages/platform/admin/tabs/LogsTab'))
+const AdminMarketSourcesTab = lazy(() => import('./pages/platform/admin/tabs/MarketSourcesTab'))
 const Lounge = lazy(() => import('./pages/platform/Lounge'))
 const Invoices = lazy(() => import('./pages/platform/Invoices'))
 const InvoiceDetail = lazy(() => import('./pages/platform/InvoiceDetail'))
@@ -197,6 +198,7 @@ function App() {
     AdminInvoicesTab,
     AdminControleFinanceiroTab,
     AdminLogsTab,
+    AdminMarketSourcesTab,
     Lounge,
     Invoices,
     InvoiceDetail,

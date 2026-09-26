@@ -24,6 +24,8 @@ const ALLOWED_RPCS = new Set([
   'admin_collector_set_batch_status',
   'admin_collector_upsert_batch',
   'admin_collector_upsert_session',
+  'admin_list_market_sources',
+  'admin_market_source_update',
   'admin_live_rips_add_pull',
   'admin_live_rips_adjust_stock',
   'admin_live_rips_finalize_to_inventory',

@@ -8,6 +8,8 @@ export interface SearchRequest {
   page?: number
   pageSize?: number
   mode?: 'admin' | 'public'
+  /** 'legacy' (default) keeps grandfathered sources; 'collector' only uses sources cleared in market_sources. */
+  context?: 'legacy' | 'collector'
   /** Cursores de paginação por loja (ex.: nextPageToken do Mercari). */
   cursors?: Partial<Record<StoreId, string>>
 }

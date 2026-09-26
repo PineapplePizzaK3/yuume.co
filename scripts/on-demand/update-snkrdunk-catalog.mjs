@@ -1,6 +1,7 @@
 import { readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { exitIfAutomationDisabled } from '../lib/marketSourceKillSwitch.mjs'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -622,6 +623,7 @@ async function collectEnglishTitlesByApparelId(products) {
 }
 
 async function main() {
+  await exitIfAutomationDisabled('snkrdunk', 'on-demand-refresh')
   const rawText = await readFile(inputPath, 'utf8')
   const raw = JSON.parse(rawText)
 

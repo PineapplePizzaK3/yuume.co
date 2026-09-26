@@ -1,5 +1,6 @@
 // Setup type definitions for built-in Supabase Runtime APIs
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { isSourceAllowed, resolveSourceForHost } from '../_shared/marketSourceGate.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -13,6 +14,7 @@ type ScrapeFailureCode =
   | 'http_error'
   | 'parse_error'
   | 'not_found'
+  | 'source_disallowed'
 
 type ExtractResult = {
   name?: string
@@ -778,6 +780,12 @@ Deno.serve(async (req) => {
       return safeReturn({ error: 'URL inválida', error_code: 'invalid_request' })
     }
     if (!['http:', 'https:'].includes(parsed.protocol)) return safeReturn({ error: 'URL inválida', error_code: 'invalid_request' })
+
+    // Hosts not in market_sources keep working (arbitrary shop URLs are the normal wishlist case).
+    const registrySourceId = await resolveSourceForHost(parsed.hostname)
+    if (registrySourceId && !(await isSourceAllowed(registrySourceId, 'search', 'legacy_public'))) {
+      return safeReturn({ error: 'Leitura automática desativada para esta loja.', error_code: 'source_disallowed' })
+    }
 
     let html = ''
     let responseStatus = 0

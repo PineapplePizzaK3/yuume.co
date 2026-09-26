@@ -90,7 +90,7 @@ export async function searchCatalogAdmin({
   }
 
   return await invokeCatalogSearch({
-    body: { query, stores, page, pageSize, mode: 'admin', ...(cursors ? { cursors } : {}) },
+    body: { query, stores, page, pageSize, mode: 'admin', context: 'legacy', ...(cursors ? { cursors } : {}) },
     token,
     authErrorMessage: 'Sessão expirada ou sem permissão para usar a busca do admin.',
   })
@@ -103,6 +103,7 @@ export async function fetchCatalogProductGallery({ productUrl, storeId, timeoutM
       productUrl,
       storeId,
       mode: 'public',
+      context: 'legacy',
     },
     token: '',
     authErrorMessage: 'Acesso não autorizado para busca pública.',
@@ -118,7 +119,7 @@ export async function searchCatalogPublic({
   cursors = null,
 }) {
   return await invokeCatalogSearch({
-    body: { query, stores, page, pageSize, mode: 'public', ...(cursors ? { cursors } : {}) },
+    body: { query, stores, page, pageSize, mode: 'public', context: 'legacy', ...(cursors ? { cursors } : {}) },
     token: '',
     authErrorMessage: 'Acesso não autorizado para busca pública.',
   })

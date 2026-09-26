@@ -61,6 +61,7 @@ export function ServicesRoutes({ components, p, e }) {
     AdminInvoicesTab,
     AdminControleFinanceiroTab,
     AdminLogsTab,
+    AdminMarketSourcesTab,
     Lounge,
     Invoices,
     InvoiceDetail,
@@ -143,6 +144,7 @@ export function ServicesRoutes({ components, p, e }) {
           <Route path="invoices" element={<AdminInvoicesTab />} />
           <Route path="controle-financeiro" element={<AdminControleFinanceiroTab />} />
           <Route path="logs" element={<AdminLogsTab />} />
+          <Route path="fontes-mercado" element={<AdminMarketSourcesTab />} />
           <Route path="operacao/pedidos" element={<AdminPedidosTab />} />
           <Route path="operacao/usuarios" element={<AdminUsuariosTab />} />
           <Route path="operacao/envios" element={<AdminEnviosTab />} />
@@ -162,6 +164,7 @@ export function ServicesRoutes({ components, p, e }) {
           <Route path="financeiro/invoices" element={<AdminInvoicesTab />} />
           <Route path="financeiro/controle-financeiro" element={<AdminControleFinanceiroTab />} />
           <Route path="sistema/logs" element={<AdminLogsTab />} />
+          <Route path="sistema/fontes-mercado" element={<AdminMarketSourcesTab />} />
         </Route>
       </Route>
       <Route path="/faq" element={<FaqLayout />}>
@@ -266,6 +269,7 @@ export function ServicesRoutes({ components, p, e }) {
           <Route path="invoices" element={<AdminInvoicesTab />} />
           <Route path="financial-control" element={<AdminControleFinanceiroTab />} />
           <Route path="logs" element={<AdminLogsTab />} />
+          <Route path="market-sources" element={<AdminMarketSourcesTab />} />
           <Route path="operations/orders" element={<AdminPedidosTab />} />
           <Route path="operations/users" element={<AdminUsuariosTab />} />
           <Route path="operations/shipping" element={<AdminEnviosTab />} />
@@ -285,6 +289,7 @@ export function ServicesRoutes({ components, p, e }) {
           <Route path="finance/invoices" element={<AdminInvoicesTab />} />
           <Route path="finance/financial-control" element={<AdminControleFinanceiroTab />} />
           <Route path="system/logs" element={<AdminLogsTab />} />
+          <Route path="system/market-sources" element={<AdminMarketSourcesTab />} />
         </Route>
       </Route>
       <Route path="/en/help" element={<FaqLayout />}>

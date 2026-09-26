@@ -2,6 +2,7 @@ import { readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { LIVE_RIPS_SNKRDUNK_PRODUCTS } from '../../src/data/liveRipsSnkrdunkCatalog.js'
+import { exitIfAutomationDisabled } from '../lib/marketSourceKillSwitch.mjs'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -419,6 +420,7 @@ function buildOutputText(topCardsMap, generatedAt) {
 }
 
 async function main() {
+  await exitIfAutomationDisabled('snkrdunk', 'collection-top-cards')
   const fullRefresh = process.argv.includes('--full')
   const now = new Date().toISOString()
   const setCodeOverrides = await loadSetCodeOverrides()

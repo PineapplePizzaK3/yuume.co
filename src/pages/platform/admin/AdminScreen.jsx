@@ -96,6 +96,7 @@ import LogsSection from './sections/LogsSection'
 import EnviosSection from './sections/EnviosSection'
 import LiveRipsSection from './sections/LiveRipsSection'
 import AberturasSection from './sections/AberturasSection'
+import MarketSourcesSection from './sections/MarketSourcesSection'
 import ProdutosUsuariosSection from './sections/ProdutosUsuariosSection'
 import ProdutosSection from './sections/ProdutosSection'
 import UsuariosSection from './sections/UsuariosSection'
@@ -3461,6 +3462,9 @@ export default function Admin({ routeTabId = 'pedidos' }) {
 
         {/* Logs */}
         <LogsSection />
+
+        {/* Fontes de mercado */}
+        <MarketSourcesSection />
 
         {/* Painel de Envios */}
         <EnviosSection />

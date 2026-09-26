@@ -29,6 +29,7 @@ export const ADMIN_TABS = [
   { id: 'invoices_admin', path: 'invoices', label: 'Invoices', icon: '🧾', category: 'financeiro' },
   { id: 'controle_financeiro', path: 'controle-financeiro', label: 'Controle financeiro', icon: '📊', category: 'financeiro' },
   { id: 'logs', path: 'logs', label: 'Logs', icon: '📋', category: 'sistema' },
+  { id: 'market_sources', path: 'fontes-mercado', label: 'Fontes de mercado', icon: '🔌', category: 'sistema' },
 ]
 
 /** Portuguese URL segment -> English segment (under /en/app/admin/) */
@@ -53,6 +54,7 @@ const ADMIN_PT_TO_EN_SEGMENT = {
   invoices: 'invoices',
   'controle-financeiro': 'financial-control',
   logs: 'logs',
+  'fontes-mercado': 'market-sources',
 }
 
 const EN_TO_PT_ADMIN_SEGMENT = Object.fromEntries(
