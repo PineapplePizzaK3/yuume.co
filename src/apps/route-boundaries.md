@@ -17,6 +17,7 @@ that rename happens.
 - `"/openings"`, `"/openings/:openingId"`
 - `"/colecao"`, `"/colecao/rips/:ripId"`, `"/colecao/batches/:ripId"`, `"/colecao/cartas/:assetId"`
 - `"/item/:itemId"`
+- `"/explorar"`, `"/explorar/sets/:setId"`
 - `"/japan-search"`
 - `"/en/rips"`, `"/en/rips/:ripId"`
 - `"/en/batches"`, `"/en/batches/:batchId"`
@@ -24,6 +25,7 @@ that rename happens.
 - `"/en/openings"`, `"/en/openings/:openingId"`
 - `"/en/collection"`, `"/en/collection/rips/:ripId"`, `"/en/collection/batches/:ripId"`, `"/en/collection/cards/:assetId"`
 - `"/en/item/:itemId"`
+- `"/en/explore"`, `"/en/explore/sets/:setId"`
 - `"/en/japan-search"`
 
 ## Services Domain
