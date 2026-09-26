@@ -16,6 +16,7 @@ export const ROUTES = {
   collectorOpenings: { [LOCALE_PT_BR]: '/openings', [LOCALE_EN]: '/en/openings' },
   collectorCollection: { [LOCALE_PT_BR]: '/colecao', [LOCALE_EN]: '/en/collection' },
   catalogItem: { [LOCALE_PT_BR]: '/item', [LOCALE_EN]: '/en/item' },
+  collectorExplore: { [LOCALE_PT_BR]: '/explorar', [LOCALE_EN]: '/en/explore' },
   collectorJapanSearch: { [LOCALE_PT_BR]: '/japan-search', [LOCALE_EN]: '/en/japan-search' },
   servicosPrecos: { [LOCALE_PT_BR]: '/servicos-e-precos', [LOCALE_EN]: '/en/services-pricing' },
   servicosFretes: { [LOCALE_PT_BR]: '/servicos-e-precos/fretes-prazos', [LOCALE_EN]: '/en/services-pricing/shipping-times' },
@@ -104,6 +105,7 @@ export const OPENINGS_ROUTE_KEYS = [
   'collectorOpenings',
   'collectorCollection',
   'catalogItem',
+  'collectorExplore',
   'collectorJapanSearch',
 ]
 
@@ -303,6 +305,8 @@ export function pathnameToRouteKey(pathname) {
   if (pathname.startsWith(collectorCollectionCardPrefix)) return 'collectorCollection'
   const catalogItemPrefix = loc === LOCALE_EN ? '/en/item/' : '/item/'
   if (pathname.startsWith(catalogItemPrefix)) return 'catalogItem'
+  const exploreSetPrefix = loc === LOCALE_EN ? '/en/explore/sets/' : '/explorar/sets/'
+  if (pathname.startsWith(exploreSetPrefix)) return 'collectorExplore'
 
   const adminPrefix = loc === LOCALE_EN ? '/en/app/admin/' : '/app/admin/'
   if (pathname.startsWith(adminPrefix)) {
@@ -537,4 +541,16 @@ export function catalogItemPath(itemId, locale) {
   if (!id) return localizedPath('catalogItem', locale)
   const enc = encodeURIComponent(id)
   return locale === LOCALE_EN ? `/en/item/${enc}` : `/item/${enc}`
+}
+
+/**
+ * Set checklist page under Explore.
+ * @param {string} setId
+ * @param {SiteLocale} locale
+ */
+export function catalogSetPath(setId, locale) {
+  const id = String(setId ?? '').trim()
+  if (!id) return localizedPath('collectorExplore', locale)
+  const enc = encodeURIComponent(id)
+  return locale === LOCALE_EN ? `/en/explore/sets/${enc}` : `/explorar/sets/${enc}`
 }

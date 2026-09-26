@@ -11,6 +11,8 @@ export function OpeningsRoutes({ components }) {
     MyRipRecordPage,
     CardAssetPage,
     CatalogItemPage,
+    ExplorePage,
+    SetPage,
     JapanSearchPage,
   } = components
 
@@ -30,6 +32,8 @@ export function OpeningsRoutes({ components }) {
       <Route path="/colecao/batches/:ripId" element={<MyRipRecordPage />} />
       <Route path="/colecao/cartas/:assetId" element={<CardAssetPage />} />
       <Route path="/item/:itemId" element={<CatalogItemPage />} />
+      <Route path="/explorar" element={<ExplorePage />} />
+      <Route path="/explorar/sets/:setId" element={<SetPage />} />
       <Route path="/japan-search" element={<JapanSearchPage />} />
 
       <Route path="/en" element={<CollectorHome />} />
@@ -46,6 +50,8 @@ export function OpeningsRoutes({ components }) {
       <Route path="/en/collection/batches/:ripId" element={<MyRipRecordPage />} />
       <Route path="/en/collection/cards/:assetId" element={<CardAssetPage />} />
       <Route path="/en/item/:itemId" element={<CatalogItemPage />} />
+      <Route path="/en/explore" element={<ExplorePage />} />
+      <Route path="/en/explore/sets/:setId" element={<SetPage />} />
       <Route path="/en/japan-search" element={<JapanSearchPage />} />
     </>
   )

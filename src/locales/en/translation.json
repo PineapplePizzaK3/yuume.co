@@ -16,6 +16,7 @@
     "rips": "Rips",
     "batches": "Openings",
     "collection": "Collection",
+    "explore": "Explore",
     "japanSearch": "Japan Search",
     "japanServices": "Japan Services",
     "whereToBuy": "Where to buy",
@@ -1937,7 +1938,9 @@
       "recordTitle": "Opening Record | Collector MVP",
       "assetTitle": "Card Asset | Collector MVP",
       "japanSearchTitle": "Japan Search | Collector MVP",
-      "japanSearchDescription": "Search Japanese products inside the platform."
+      "japanSearchDescription": "Search Japanese products inside the platform.",
+      "exploreTitle": "Explore sets | YuumeCo",
+      "exploreDescription": "Browse Japanese sets and track your collection completion."
     },
     "hero": {
       "eyebrow": "Openings",
@@ -2130,10 +2133,57 @@
       "loginRequiredTitle": "Sign in to view your collection",
       "loginRequiredBody": "Your collection and opening records are available after login.",
       "tabs": {
+        "sets": "Sets / Cards",
         "cards": "Cards",
         "batches": "Openings",
         "wishlist": "Wishlist"
       }
+    },
+    "explore": {
+      "title": "Explore sets",
+      "description": "Pick sets to track. Completion and missing items only appear for verified sets.",
+      "openSet": "Open set",
+      "track": "Track",
+      "untrack": "Stop tracking"
+    },
+    "setPage": {
+      "filterMissing": "Missing only",
+      "noMissing": "Nothing missing in this filter.",
+      "noItems": "This set has no checklist items yet.",
+      "owned": "Owned",
+      "markOwned": "Mark"
+    },
+    "setStatus": {
+      "VERIFIED": "Verified",
+      "VALIDATING": "Validating",
+      "IMPORTED": "Imported",
+      "PENDING": "Pending",
+      "unknown": "Unknown"
+    },
+    "progress": {
+      "checklistPending": "Checklist under review",
+      "verifiedReady": "Checklist verified — open the set to mark what you own.",
+      "summary": "{{owned}}/{{total}} ({{pct}}%) · {{missing}} missing"
+    },
+    "onboarding": {
+      "open": "Start collection",
+      "title": "Start your collection",
+      "subtitle": "Pick a set, mark what you already own, and track what's missing.",
+      "close": "Close",
+      "pickFranchise": "1. Franchise",
+      "pickSet": "2. Set",
+      "chooseSet": "Choose a set",
+      "markOwned": "3. Mark what you own ({{count}})",
+      "selectAll": "Select all",
+      "next": "Continue",
+      "back": "Back",
+      "finish": "Save and track"
+    },
+    "item": {
+      "markOwned": "I own this",
+      "markNotOwned": "Remove from collection",
+      "setNotVerified": "This set checklist is not verified yet ({{status}}).",
+      "noAutoAcquire": "Purchases and Japan holdings do not enter the collection automatically — only when you mark them."
     },
     "asset": {
       "origin": "Origin",
@@ -2173,7 +2223,8 @@
       "soon": "coming soon"
     },
     "common": {
-      "loading": "Loading..."
+      "loading": "Loading...",
+      "saving": "Saving..."
     },
     "japanSearch": {
       "title": "Japan Search",
@@ -2182,14 +2233,22 @@
     "empty": {
       "cards": "No card assets yet.",
       "batches": "Reserve an opening to see records here.",
-      "wishlist": "Your wishlist is empty."
+      "wishlist": "Your wishlist is empty.",
+      "sets": "No set items marked yet. Open a catalog item and tap “I own this”.",
+      "setsExplore": "No sets registered yet."
     },
     "errors": {
       "reserveFailed": "Could not reserve a spot right now.",
       "batchNotFound": "Opening not found.",
       "openingNotFound": "Opening session not found.",
       "joinRequired": "Reserve an opening first to access this record.",
-      "assetNotFound": "Card asset not found."
+      "assetNotFound": "Card asset not found.",
+      "itemNotFound": "Item not found.",
+      "setNotFound": "Set not found.",
+      "setsLoad": "Could not load sets.",
+      "trackFailed": "Could not update tracking.",
+      "collectionUpdate": "Could not update the collection.",
+      "onboardingFailed": "Could not save onboarding."
     }
   }
 }

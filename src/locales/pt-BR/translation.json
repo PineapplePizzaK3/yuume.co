@@ -16,6 +16,7 @@
     "rips": "Rips",
     "batches": "Aberturas",
     "collection": "Coleção",
+    "explore": "Explorar",
     "japanSearch": "Japan Search",
     "japanServices": "Serviços Japão",
     "whereToBuy": "Aonde comprar",
@@ -1891,7 +1892,9 @@
       "recordTitle": "Registro da Abertura | Collector MVP",
       "assetTitle": "Card Asset | Collector MVP",
       "japanSearchTitle": "Japan Search | Collector MVP",
-      "japanSearchDescription": "Busca de produtos japoneses dentro da plataforma."
+      "japanSearchDescription": "Busca de produtos japoneses dentro da plataforma.",
+      "exploreTitle": "Explorar sets | YuumeCo",
+      "exploreDescription": "Explore sets japoneses e acompanhe a completude da sua coleção."
     },
     "hero": {
       "eyebrow": "Aberturas",
@@ -2084,10 +2087,57 @@
       "loginRequiredTitle": "Entre para ver sua colecao",
       "loginRequiredBody": "Sua colecao e seus registros de abertura ficam disponiveis apos o login.",
       "tabs": {
+        "sets": "Sets / Cartas",
         "cards": "Cartas",
         "batches": "Aberturas",
         "wishlist": "Wishlist"
       }
+    },
+    "explore": {
+      "title": "Explorar sets",
+      "description": "Escolha sets para acompanhar. Completude e faltantes só aparecem em sets verificados.",
+      "openSet": "Abrir set",
+      "track": "Acompanhar",
+      "untrack": "Parar de acompanhar"
+    },
+    "setPage": {
+      "filterMissing": "Só faltantes",
+      "noMissing": "Nada faltando neste filtro.",
+      "noItems": "Este set ainda não tem itens no checklist.",
+      "owned": "Tenho",
+      "markOwned": "Marcar"
+    },
+    "setStatus": {
+      "VERIFIED": "Verificado",
+      "VALIDATING": "Em validação",
+      "IMPORTED": "Importado",
+      "PENDING": "Pendente",
+      "unknown": "Desconhecido"
+    },
+    "progress": {
+      "checklistPending": "Checklist em validação",
+      "verifiedReady": "Checklist verificado — abra o set para marcar o que você tem.",
+      "summary": "{{owned}}/{{total}} ({{pct}}%) · faltam {{missing}}"
+    },
+    "onboarding": {
+      "open": "Começar coleção",
+      "title": "Começar sua coleção",
+      "subtitle": "Escolha um set, marque o que você já tem e acompanhe o que falta.",
+      "close": "Fechar",
+      "pickFranchise": "1. Franquia",
+      "pickSet": "2. Set",
+      "chooseSet": "Escolha um set",
+      "markOwned": "3. Marque o que você já tem ({{count}})",
+      "selectAll": "Marcar todos",
+      "next": "Continuar",
+      "back": "Voltar",
+      "finish": "Salvar e acompanhar"
+    },
+    "item": {
+      "markOwned": "Tenho este item",
+      "markNotOwned": "Remover da coleção",
+      "setNotVerified": "Checklist deste set ainda não está verificado ({{status}}).",
+      "noAutoAcquire": "Compras e holdings no Japão não entram sozinhas na coleção — só quando você marca."
     },
     "asset": {
       "origin": "Origem",
@@ -2127,7 +2177,8 @@
       "soon": "em breve"
     },
     "common": {
-      "loading": "Carregando..."
+      "loading": "Carregando...",
+      "saving": "Salvando..."
     },
     "japanSearch": {
       "title": "Japan Search",
@@ -2136,14 +2187,22 @@
     "empty": {
       "cards": "Nenhum card asset por enquanto.",
       "batches": "Reserve uma abertura para ver seus registros aqui.",
-      "wishlist": "Sua wishlist ainda esta vazia."
+      "wishlist": "Sua wishlist ainda esta vazia.",
+      "sets": "Nenhum item de set marcado ainda. Abra um item do catálogo e toque em “Tenho este item”.",
+      "setsExplore": "Nenhum set cadastrado ainda."
     },
     "errors": {
       "reserveFailed": "Nao foi possivel reservar posicao agora.",
       "batchNotFound": "Abertura nao encontrada.",
       "openingNotFound": "Sessao de abertura nao encontrada.",
       "joinRequired": "Reserve uma abertura para acessar este registro.",
-      "assetNotFound": "Card asset nao encontrado."
+      "assetNotFound": "Card asset nao encontrado.",
+      "itemNotFound": "Item nao encontrado.",
+      "setNotFound": "Set nao encontrado.",
+      "setsLoad": "Nao foi possivel carregar os sets.",
+      "trackFailed": "Nao foi possivel atualizar o acompanhamento.",
+      "collectionUpdate": "Nao foi possivel atualizar a colecao.",
+      "onboardingFailed": "Nao foi possivel salvar o onboarding."
     }
   }
 }
