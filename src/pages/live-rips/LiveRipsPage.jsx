@@ -5,6 +5,10 @@ import { PageSeo } from '../../components/PageSeo'
 import { LiveRipProductCard, LiveRipPriceBlock } from '../../components/live-rips/LiveRipProductCard'
 import { LiveRipJpVersionBadge } from '../../components/live-rips/LiveRipJpVersionBadge'
 import {
+  LIVE_RIP_HOW_IT_WORKS_ICONS,
+  LiveRipHeroIcon,
+} from '../../components/live-rips/LiveRipIcons'
+import {
   getLiveRipProductName,
   LIVE_RIPS_LAST_UPDATED_AT,
   LIVE_RIPS_NEXT_LIVE,
@@ -136,12 +140,10 @@ function LiveRipsPage() {
                 </div>
               </div>
 
-              <div className="overflow-hidden rounded-xl border border-earth-200">
-                <img
-                  src={placeholderImage('Live Rip Hero')}
-                  alt="Live Rip hero placeholder"
-                  className="h-48 w-full object-cover sm:h-56"
-                />
+              <div className="flex items-center justify-center rounded-xl border border-earth-200 bg-earth-50/80 px-6 py-8 sm:py-10">
+                <div className="h-36 w-36 sm:h-44 sm:w-44" aria-hidden>
+                  <LiveRipHeroIcon />
+                </div>
               </div>
             </div>
           </div>
@@ -239,38 +241,30 @@ function LiveRipsPage() {
             <h2 className="text-2xl font-bold text-earth-900">{t('liveRips.hubSteps.howItWorks.heading')}</h2>
             <p className="mt-2 max-w-2xl text-earth-600">{t('liveRips.hubSteps.howItWorks.lead')}</p>
             <ol className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {[
-                { key: 'step1', icon: '/live-rips/icons/step-1.png' },
-                { key: 'step2', icon: '/live-rips/icons/step-2.png' },
-                { key: 'step3', icon: '/live-rips/icons/step-3.png' },
-                { key: 'step4', icon: '/live-rips/icons/step-4.png' },
-              ].map((step, index) => (
-                <li
-                  key={step.key}
-                  className="flex flex-col rounded-xl border border-earth-200 bg-earth-50/80 p-4"
-                >
-                  <div className="flex h-24 items-center justify-center rounded-lg bg-white/80">
-                    <img
-                      src={step.icon}
-                      alt=""
-                      className="h-16 w-16 object-contain"
-                      onError={(event) => {
-                        event.currentTarget.onerror = null
-                        event.currentTarget.src = placeholderImage(String(index + 1), 128, 128)
-                      }}
-                    />
-                  </div>
-                  <p className="mt-4 text-[11px] font-semibold uppercase tracking-wide text-earth-500">
-                    {t('liveRips.hubSteps.stepLabel', { number: index + 1 })}
-                  </p>
-                  <p className="mt-1 text-sm font-semibold leading-snug text-earth-900">
-                    {t(`liveRips.hubSteps.howItWorks.${step.key}`)}
-                  </p>
-                  <p className="mt-2 text-xs leading-relaxed text-earth-600">
-                    {t(`liveRips.hubSteps.howItWorks.${step.key}Detail`)}
-                  </p>
-                </li>
-              ))}
+              {['step1', 'step2', 'step3', 'step4'].map((stepKey, index) => {
+                const Icon = LIVE_RIP_HOW_IT_WORKS_ICONS[stepKey]
+                return (
+                  <li
+                    key={stepKey}
+                    className="flex flex-col rounded-xl border border-earth-200 bg-earth-50/80 p-4"
+                  >
+                    <div className="flex h-20 items-center justify-center rounded-lg bg-white/90">
+                      <div className="h-12 w-12">
+                        {Icon ? <Icon /> : null}
+                      </div>
+                    </div>
+                    <p className="mt-4 text-[11px] font-semibold uppercase tracking-wide text-earth-500">
+                      {t('liveRips.hubSteps.stepLabel', { number: index + 1 })}
+                    </p>
+                    <p className="mt-1 text-sm font-semibold leading-snug text-earth-900">
+                      {t(`liveRips.hubSteps.howItWorks.${stepKey}`)}
+                    </p>
+                    <p className="mt-2 text-xs leading-relaxed text-earth-600">
+                      {t(`liveRips.hubSteps.howItWorks.${stepKey}Detail`)}
+                    </p>
+                  </li>
+                )
+              })}
             </ol>
           </div>
         </div>

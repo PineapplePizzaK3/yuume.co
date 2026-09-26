@@ -47,7 +47,7 @@ function Home() {
   return (
     <>
       <PageSeo
-        routeKey="home"
+        routeKey="forwardingHome"
         title={t('meta.home.title')}
         description={t('meta.home.description')}
       />

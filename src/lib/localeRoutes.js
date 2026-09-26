@@ -9,6 +9,13 @@ export const LOCALE_EN = 'en'
 /** @type {Record<string, Record<SiteLocale, string>>} */
 export const ROUTES = {
   home: { [LOCALE_PT_BR]: '/', [LOCALE_EN]: '/en' },
+  forwardingHome: { [LOCALE_PT_BR]: '/redirecionamento', [LOCALE_EN]: '/en/forwarding' },
+  collectorRips: { [LOCALE_PT_BR]: '/rips', [LOCALE_EN]: '/en/rips' },
+  collectorLives: { [LOCALE_PT_BR]: '/lives', [LOCALE_EN]: '/en/lives' },
+  collectorBatches: { [LOCALE_PT_BR]: '/batches', [LOCALE_EN]: '/en/batches' },
+  collectorOpenings: { [LOCALE_PT_BR]: '/openings', [LOCALE_EN]: '/en/openings' },
+  collectorCollection: { [LOCALE_PT_BR]: '/colecao', [LOCALE_EN]: '/en/collection' },
+  collectorJapanSearch: { [LOCALE_PT_BR]: '/japan-search', [LOCALE_EN]: '/en/japan-search' },
   servicosPrecos: { [LOCALE_PT_BR]: '/servicos-e-precos', [LOCALE_EN]: '/en/services-pricing' },
   servicosFretes: { [LOCALE_PT_BR]: '/servicos-e-precos/fretes-prazos', [LOCALE_EN]: '/en/services-pricing/shipping-times' },
   servicosSimulador: { [LOCALE_PT_BR]: '/servicos-e-precos/simulador', [LOCALE_EN]: '/en/services-pricing/shipping-calculator' },
@@ -193,6 +200,20 @@ export function pathnameToRouteKey(pathname) {
   if (pathname.startsWith(liveRipDetailPrefix)) {
     return 'liveRipsDetail'
   }
+  const collectorRipDetailPrefix = loc === LOCALE_EN ? '/en/rips/' : '/rips/'
+  if (pathname.startsWith(collectorRipDetailPrefix)) return 'collectorRips'
+  const collectorBatchDetailPrefix = loc === LOCALE_EN ? '/en/batches/' : '/batches/'
+  if (pathname.startsWith(collectorBatchDetailPrefix)) return 'collectorBatches'
+  const collectorLiveDetailPrefix = loc === LOCALE_EN ? '/en/lives/' : '/lives/'
+  if (pathname.startsWith(collectorLiveDetailPrefix)) return 'collectorLives'
+  const collectorOpeningDetailPrefix = loc === LOCALE_EN ? '/en/openings/' : '/openings/'
+  if (pathname.startsWith(collectorOpeningDetailPrefix)) return 'collectorOpenings'
+  const collectorCollectionRipPrefix = loc === LOCALE_EN ? '/en/collection/rips/' : '/colecao/rips/'
+  if (pathname.startsWith(collectorCollectionRipPrefix)) return 'collectorCollection'
+  const collectorCollectionBatchPrefix = loc === LOCALE_EN ? '/en/collection/batches/' : '/colecao/batches/'
+  if (pathname.startsWith(collectorCollectionBatchPrefix)) return 'collectorCollection'
+  const collectorCollectionCardPrefix = loc === LOCALE_EN ? '/en/collection/cards/' : '/colecao/cartas/'
+  if (pathname.startsWith(collectorCollectionCardPrefix)) return 'collectorCollection'
 
   const adminPrefix = loc === LOCALE_EN ? '/en/app/admin/' : '/app/admin/'
   if (pathname.startsWith(adminPrefix)) {
@@ -343,4 +364,76 @@ export function liveRipDetailPath(productId, locale) {
   return locale === LOCALE_EN
     ? `/en/live-rips/rip/${enc}`
     : `/live-rips/rip/${enc}`
+}
+
+/**
+ * Página de detalhe do Collector Rip.
+ * @param {string} ripId
+ * @param {SiteLocale} locale
+ */
+export function collectorRipDetailPath(ripId, locale) {
+  const id = String(ripId ?? '').trim()
+  if (!id) return localizedPath('collectorRips', locale)
+  const enc = encodeURIComponent(id)
+  return locale === LOCALE_EN ? `/en/rips/${enc}` : `/rips/${enc}`
+}
+
+/**
+ * Página de detalhe da Opening Batch.
+ * @param {string} batchId
+ * @param {SiteLocale} locale
+ */
+export function collectorBatchDetailPath(batchId, locale) {
+  const id = String(batchId ?? '').trim()
+  if (!id) return localizedPath('collectorBatches', locale)
+  const enc = encodeURIComponent(id)
+  return locale === LOCALE_EN ? `/en/batches/${enc}` : `/batches/${enc}`
+}
+
+/**
+ * Página de detalhe da Live de colecionador.
+ * @param {string} liveId
+ * @param {SiteLocale} locale
+ */
+export function collectorLiveDetailPath(liveId, locale) {
+  const id = String(liveId ?? '').trim()
+  if (!id) return localizedPath('collectorLives', locale)
+  const enc = encodeURIComponent(id)
+  return locale === LOCALE_EN ? `/en/lives/${enc}` : `/lives/${enc}`
+}
+
+/**
+ * Página de detalhe da Opening Session.
+ * @param {string} openingId
+ * @param {SiteLocale} locale
+ */
+export function collectorOpeningDetailPath(openingId, locale) {
+  const id = String(openingId ?? '').trim()
+  if (!id) return localizedPath('collectorOpenings', locale)
+  const enc = encodeURIComponent(id)
+  return locale === LOCALE_EN ? `/en/openings/${enc}` : `/openings/${enc}`
+}
+
+/**
+ * Página de registro de um rip na coleção.
+ * @param {string} ripId
+ * @param {SiteLocale} locale
+ */
+export function collectorCollectionRipPath(ripId, locale) {
+  const id = String(ripId ?? '').trim()
+  if (!id) return localizedPath('collectorCollection', locale)
+  const enc = encodeURIComponent(id)
+  return locale === LOCALE_EN ? `/en/collection/batches/${enc}` : `/colecao/batches/${enc}`
+}
+
+/**
+ * Página de detalhe de um card asset.
+ * @param {string} assetId
+ * @param {SiteLocale} locale
+ */
+export function collectorCardAssetPath(assetId, locale) {
+  const id = String(assetId ?? '').trim()
+  if (!id) return localizedPath('collectorCollection', locale)
+  const enc = encodeURIComponent(id)
+  return locale === LOCALE_EN ? `/en/collection/cards/${enc}` : `/colecao/cartas/${enc}`
 }

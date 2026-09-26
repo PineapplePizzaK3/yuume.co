@@ -20,6 +20,16 @@ export default {
           100: '#F7F2EB',
           50: '#FCF9F5',
         },
+        collector: {
+          700: '#8A1F2E',
+          600: '#A72B3D',
+          500: '#C73A4F',
+          100: '#FBEAED',
+        },
+      },
+      fontFamily: {
+        display: ['Sora', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        collector: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
       },
     },
   },

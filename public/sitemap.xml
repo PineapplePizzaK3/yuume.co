@@ -15,6 +15,90 @@
     <xhtml:link rel="alternate" hreflang="x-default" href="https://eiko-dls.com/"/>
   </url>
   <url>
+    <loc>https://eiko-dls.com/redirecionamento</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://eiko-dls.com/redirecionamento"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://eiko-dls.com/en/forwarding"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://eiko-dls.com/"/>
+  </url>
+  <url>
+    <loc>https://eiko-dls.com/en/forwarding</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://eiko-dls.com/redirecionamento"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://eiko-dls.com/en/forwarding"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://eiko-dls.com/"/>
+  </url>
+  <url>
+    <loc>https://eiko-dls.com/rips</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://eiko-dls.com/rips"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://eiko-dls.com/en/rips"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://eiko-dls.com/"/>
+  </url>
+  <url>
+    <loc>https://eiko-dls.com/en/rips</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://eiko-dls.com/rips"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://eiko-dls.com/en/rips"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://eiko-dls.com/"/>
+  </url>
+  <url>
+    <loc>https://eiko-dls.com/batches</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://eiko-dls.com/batches"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://eiko-dls.com/en/batches"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://eiko-dls.com/"/>
+  </url>
+  <url>
+    <loc>https://eiko-dls.com/en/batches</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://eiko-dls.com/batches"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://eiko-dls.com/en/batches"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://eiko-dls.com/"/>
+  </url>
+  <url>
+    <loc>https://eiko-dls.com/lives</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://eiko-dls.com/lives"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://eiko-dls.com/en/lives"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://eiko-dls.com/"/>
+  </url>
+  <url>
+    <loc>https://eiko-dls.com/en/lives</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://eiko-dls.com/lives"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://eiko-dls.com/en/lives"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://eiko-dls.com/"/>
+  </url>
+  <url>
+    <loc>https://eiko-dls.com/openings</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://eiko-dls.com/openings"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://eiko-dls.com/en/openings"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://eiko-dls.com/"/>
+  </url>
+  <url>
+    <loc>https://eiko-dls.com/en/openings</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://eiko-dls.com/openings"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://eiko-dls.com/en/openings"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://eiko-dls.com/"/>
+  </url>
+  <url>
+    <loc>https://eiko-dls.com/colecao</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://eiko-dls.com/colecao"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://eiko-dls.com/en/collection"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://eiko-dls.com/"/>
+  </url>
+  <url>
+    <loc>https://eiko-dls.com/en/collection</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://eiko-dls.com/colecao"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://eiko-dls.com/en/collection"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://eiko-dls.com/"/>
+  </url>
+  <url>
+    <loc>https://eiko-dls.com/japan-search</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://eiko-dls.com/japan-search"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://eiko-dls.com/en/japan-search"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://eiko-dls.com/"/>
+  </url>
+  <url>
+    <loc>https://eiko-dls.com/en/japan-search</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://eiko-dls.com/japan-search"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://eiko-dls.com/en/japan-search"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://eiko-dls.com/"/>
+  </url>
+  <url>
     <loc>https://eiko-dls.com/servicos-e-precos</loc>
     <xhtml:link rel="alternate" hreflang="pt-BR" href="https://eiko-dls.com/servicos-e-precos"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://eiko-dls.com/en/services-pricing"/>

@@ -8,6 +8,11 @@
   "nav": {
     "home": "Home",
     "services": "Services & pricing",
+    "rips": "Rips",
+    "batches": "Openings",
+    "collection": "Collection",
+    "japanSearch": "Japan Search",
+    "japanServices": "Japan Services",
     "whereToBuy": "Where to buy",
     "liveRips": "Live Rips",
     "faq": "Help",
@@ -1912,5 +1917,151 @@
     "minne": "Fashion, crafts, and handmade items.",
     "voi": "Marui department store — fashion and lifestyle.",
     "palcloset": "Luxury and designer clothing."
+  },
+  "collector": {
+    "meta": {
+      "homeTitle": "Collector MVP | YuumeCo",
+      "homeDescription": "Reserve spots in openings and track your recorded pulls.",
+      "batchesTitle": "Openings | Collector MVP",
+      "batchesDescription": "Discover available openings and reserve your spots.",
+      "batchDetailTitle": "Opening Detail | Collector MVP",
+      "batchDetailDescription": "Opening details and reservation progress.",
+      "openingsTitle": "Opening Sessions | Collector MVP",
+      "openingDetailTitle": "Opening Session | Collector MVP",
+      "collectionTitle": "Collection | Collector MVP",
+      "recordTitle": "Opening Record | Collector MVP",
+      "assetTitle": "Card Asset | Collector MVP",
+      "japanSearchTitle": "Japan Search | Collector MVP",
+      "japanSearchDescription": "Search Japanese products inside the platform."
+    },
+    "hero": {
+      "title": "Platform for TCG collectors",
+      "description": "Discover products, reserve spots in openings, and track results in your collection."
+    },
+    "status": {
+      "OPEN": "Open",
+      "FULL": "Full",
+      "LOCKED": "Locked",
+      "SCHEDULED": "Scheduled",
+      "OPENING": "Opening",
+      "COMPLETED": "Completed",
+      "FULFILLING": "Fulfilling",
+      "CANCELLED": "Cancelled",
+      "reserved": "Reserved",
+      "waiting_live": "Waiting opening",
+      "opening": "Opening",
+      "completed": "Completed"
+    },
+    "actions": {
+      "viewBatch": "View opening",
+      "exploreBatches": "Explore openings",
+      "openCollection": "Open my collection",
+      "japanServices": "Japan forwarding services",
+      "viewAll": "View all",
+      "openBatch": "View opening",
+      "reservePosition": "Reserve spot",
+      "reserved": "Reserved",
+      "reserving": "Reserving...",
+      "openOpening": "Open session",
+      "viewRecord": "View opening record",
+      "viewRelatedAsset": "View related card asset",
+      "backToBatchRecord": "Back to opening record",
+      "watchRecordedOpening": "Watch recorded opening"
+    },
+    "home": {
+      "openingHighlights": "Recorded openings",
+      "availableBatches": "Available openings"
+    },
+    "scope": {
+      "inTitle": "Current MVP (opening-first)",
+      "in1": "Explore products and openings",
+      "in2": "Reserve spots in openings (mock demo)",
+      "in3": "View recorded opening sessions and relevant pulls",
+      "in4": "Track card assets in your collection",
+      "outTitle": "Out of scope for now",
+      "out1": "Open external-seller marketplace",
+      "out2": "Grading, buyback, vault, and user trading",
+      "out3": "Advanced provably-fair system",
+      "out4": "Mandatory live opening dependency"
+    },
+    "batchCard": {
+      "positionsLabel": "Reserved spots",
+      "positions": "{{reserved}}/{{total}}"
+    },
+    "batchDetail": {
+      "packsLabel": "Reserved spots",
+      "totalPacks": "Total spots",
+      "availablePositions": "Available spots",
+      "progressTitle": "Opening progress",
+      "reserveSuccess": "Spot reserved in demo mode."
+    },
+    "ripDetail": {
+      "pullHighlights": "Relevant pulls",
+      "bulkDefault": "Bulk is tracked in aggregate without individual filler cards."
+    },
+    "opening": {
+      "title": "Opening sessions",
+      "description": "Follow scheduled, recording, and published openings.",
+      "statusScheduled": "Scheduled",
+      "statusRecording": "Recording",
+      "statusPublished": "Published",
+      "recordingInProgress": "Opening is being recorded. Video will be published after the session ends.",
+      "allocationsTitle": "Spots in this opening",
+      "pullTitle": "Logged pulls",
+      "status": {
+        "SCHEDULED": "Scheduled",
+        "RECORDING": "Recording",
+        "PUBLISHED": "Published",
+        "CANCELLED": "Cancelled"
+      }
+    },
+    "batches": {
+      "title": "Openings",
+      "description": "Pick your game, reserve spots, and track the recorded opening."
+    },
+    "filters": {
+      "allGames": "All games"
+    },
+    "collection": {
+      "title": "My collection",
+      "description": "Track your cards, opening history, and cards you want to find.",
+      "tabs": {
+        "cards": "Cards",
+        "batches": "Openings",
+        "wishlist": "Wishlist"
+      }
+    },
+    "asset": {
+      "origin": "Origin",
+      "originBatch": "Opening",
+      "statusLabel": "Status",
+      "condition": "Condition",
+      "status": {
+        "held": "In collection"
+      },
+      "actions": {
+        "keep": "Keep",
+        "ship": "Ship",
+        "grade": "Grade",
+        "sell": "Sell"
+      },
+      "soon": "coming soon"
+    },
+    "japanSearch": {
+      "title": "Japan Search",
+      "description": "Use the integrated search to explore products across Japanese marketplaces."
+    },
+    "empty": {
+      "cards": "No card assets yet.",
+      "batches": "Reserve an opening to see records here.",
+      "wishlist": "Your wishlist is empty."
+    },
+    "errors": {
+      "reserveFailed": "Could not reserve a spot right now.",
+      "batchNotFound": "Opening not found.",
+      "openingNotFound": "Opening session not found.",
+      "joinRequired": "Reserve an opening first to access this record.",
+      "assetNotFound": "Card asset not found."
+    }
   }
 }

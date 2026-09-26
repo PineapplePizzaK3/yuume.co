@@ -8,6 +8,11 @@
   "nav": {
     "home": "Home",
     "services": "Serviços e Preços",
+    "rips": "Rips",
+    "batches": "Aberturas",
+    "collection": "Coleção",
+    "japanSearch": "Japan Search",
+    "japanServices": "Serviços Japão",
     "whereToBuy": "Aonde comprar",
     "liveRips": "Live Rips",
     "faq": "Dúvidas",
@@ -1866,5 +1871,151 @@
     "catPersonagens": "Personagens e Licenças",
     "catUsados": "Usados e Leilões",
     "catModa": "Moda"
+  },
+  "collector": {
+    "meta": {
+      "homeTitle": "Collector MVP | YuumeCo",
+      "homeDescription": "Reserve posicoes em aberturas e acompanhe seus pulls registrados.",
+      "batchesTitle": "Aberturas | Collector MVP",
+      "batchesDescription": "Descubra aberturas disponiveis e reserve suas posicoes.",
+      "batchDetailTitle": "Detalhe da Abertura | Collector MVP",
+      "batchDetailDescription": "Detalhe da abertura e progresso das reservas.",
+      "openingsTitle": "Sessoes de abertura | Collector MVP",
+      "openingDetailTitle": "Sessao de abertura | Collector MVP",
+      "collectionTitle": "Colecao | Collector MVP",
+      "recordTitle": "Registro da Abertura | Collector MVP",
+      "assetTitle": "Card Asset | Collector MVP",
+      "japanSearchTitle": "Japan Search | Collector MVP",
+      "japanSearchDescription": "Busca de produtos japoneses dentro da plataforma."
+    },
+    "hero": {
+      "title": "Plataforma para colecionadores de TCG",
+      "description": "Descubra produtos, reserve posicoes em aberturas e acompanhe os resultados na sua colecao."
+    },
+    "status": {
+      "OPEN": "Aberta",
+      "FULL": "Lotada",
+      "LOCKED": "Travada",
+      "SCHEDULED": "Agendada",
+      "OPENING": "Em abertura",
+      "COMPLETED": "Concluida",
+      "FULFILLING": "Em fulfillment",
+      "CANCELLED": "Cancelada",
+      "reserved": "Reservado",
+      "waiting_live": "Aguardando abertura",
+      "opening": "Em abertura",
+      "completed": "Concluida"
+    },
+    "actions": {
+      "viewBatch": "Ver abertura",
+      "exploreBatches": "Explorar aberturas",
+      "openCollection": "Ver minha colecao",
+      "japanServices": "Servicos de redirecionamento JP",
+      "viewAll": "Ver tudo",
+      "openBatch": "Ver abertura",
+      "reservePosition": "Reservar posicao",
+      "reserved": "Reserva registrada",
+      "reserving": "Reservando...",
+      "openOpening": "Ver sessao de abertura",
+      "viewRecord": "Ver registro da abertura",
+      "viewRelatedAsset": "Ver card asset relacionado",
+      "backToBatchRecord": "Voltar para o registro da abertura",
+      "watchRecordedOpening": "Assistir abertura gravada"
+    },
+    "home": {
+      "openingHighlights": "Aberturas registradas",
+      "availableBatches": "Aberturas disponiveis"
+    },
+    "scope": {
+      "inTitle": "MVP atual (abertura-first)",
+      "in1": "Explorar produtos e aberturas",
+      "in2": "Reservar posicoes em aberturas (demo mock)",
+      "in3": "Ver sessao gravada e pulls relevantes",
+      "in4": "Acompanhar card assets na colecao",
+      "outTitle": "Fora do MVP agora",
+      "out1": "Marketplace de sellers externos",
+      "out2": "Grading, buyback, vault e trading entre usuarios",
+      "out3": "Sistema avancado provably-fair",
+      "out4": "Dependencia obrigatoria de abertura ao vivo"
+    },
+    "batchCard": {
+      "positionsLabel": "Posicoes reservadas",
+      "positions": "{{reserved}}/{{total}}"
+    },
+    "batchDetail": {
+      "packsLabel": "Posicoes reservadas",
+      "totalPacks": "Total de posicoes",
+      "availablePositions": "Posicoes disponiveis",
+      "progressTitle": "Progresso da abertura",
+      "reserveSuccess": "Posicao reservada no modo demo."
+    },
+    "ripDetail": {
+      "pullHighlights": "Pulls relevantes",
+      "bulkDefault": "Bulk agregado sem cadastro individual de fillers."
+    },
+    "opening": {
+      "title": "Sessoes de abertura",
+      "description": "Acompanhe aberturas programadas, em gravacao e publicadas.",
+      "statusScheduled": "Agendada",
+      "statusRecording": "Gravando",
+      "statusPublished": "Publicado",
+      "recordingInProgress": "Abertura em gravacao. Video sera publicado ao final da sessao.",
+      "allocationsTitle": "Reservas desta abertura",
+      "pullTitle": "Pulls registrados",
+      "status": {
+        "SCHEDULED": "Agendada",
+        "RECORDING": "Gravando",
+        "PUBLISHED": "Publicado",
+        "CANCELLED": "Cancelada"
+      }
+    },
+    "batches": {
+      "title": "Aberturas",
+      "description": "Escolha o jogo, reserve posicoes e acompanhe a abertura gravada."
+    },
+    "filters": {
+      "allGames": "Todos os jogos"
+    },
+    "collection": {
+      "title": "Minha colecao",
+      "description": "Acompanhe seus cards, seu historico de aberturas e os cards que voce quer encontrar.",
+      "tabs": {
+        "cards": "Cartas",
+        "batches": "Aberturas",
+        "wishlist": "Wishlist"
+      }
+    },
+    "asset": {
+      "origin": "Origem",
+      "originBatch": "Abertura",
+      "statusLabel": "Status",
+      "condition": "Condicao",
+      "status": {
+        "held": "Em colecao"
+      },
+      "actions": {
+        "keep": "Manter",
+        "ship": "Enviar",
+        "grade": "Graduar",
+        "sell": "Vender"
+      },
+      "soon": "em breve"
+    },
+    "japanSearch": {
+      "title": "Japan Search",
+      "description": "Use a busca integrada para explorar produtos em marketplaces japoneses."
+    },
+    "empty": {
+      "cards": "Nenhum card asset por enquanto.",
+      "batches": "Reserve uma abertura para ver seus registros aqui.",
+      "wishlist": "Sua wishlist ainda esta vazia."
+    },
+    "errors": {
+      "reserveFailed": "Nao foi possivel reservar posicao agora.",
+      "batchNotFound": "Abertura nao encontrada.",
+      "openingNotFound": "Sessao de abertura nao encontrada.",
+      "joinRequired": "Reserve uma abertura para acessar este registro.",
+      "assetNotFound": "Card asset nao encontrado."
+    }
   }
 }

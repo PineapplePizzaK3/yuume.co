@@ -12,6 +12,15 @@ import { LOCALE_EN, LOCALE_PT_BR, localizedPath } from './lib/localeRoutes'
 import { CART_TOAST_EVENT } from './lib/cartToast'
 
 const Home = lazy(() => import('./pages/Home'))
+const CollectorHome = lazy(() => import('./pages/collector/CollectorHome'))
+const RipsPage = lazy(() => import('./pages/collector/RipsPage'))
+const RipDetailPage = lazy(() => import('./pages/collector/RipDetailPage'))
+const LivesPage = lazy(() => import('./pages/collector/LivesPage'))
+const LivePage = lazy(() => import('./pages/collector/LivePage'))
+const CollectionPage = lazy(() => import('./pages/collector/CollectionPage'))
+const MyRipRecordPage = lazy(() => import('./pages/collector/MyRipRecordPage'))
+const CardAssetPage = lazy(() => import('./pages/collector/CardAssetPage'))
+const JapanSearchPage = lazy(() => import('./pages/collector/JapanSearchPage'))
 const Contact = lazy(() => import('./pages/Contact'))
 const OndeComprar = lazy(() => import('./pages/OndeComprar'))
 const CatalogSearchPublic = lazy(() => import('./pages/CatalogSearchPublic'))
@@ -188,7 +197,21 @@ function App() {
         <Suspense fallback={<SuspenseLoading />}>
           <Routes>
             {/* pt-BR */}
-            <Route path="/" element={<Home />} />
+            <Route path="/" element={<CollectorHome />} />
+            <Route path="/redirecionamento" element={<Home />} />
+            <Route path="/rips" element={<RipsPage />} />
+            <Route path="/rips/:ripId" element={<RipDetailPage />} />
+            <Route path="/batches" element={<RipsPage />} />
+            <Route path="/batches/:batchId" element={<RipDetailPage />} />
+            <Route path="/lives" element={<LivesPage />} />
+            <Route path="/lives/:liveId" element={<LivePage />} />
+            <Route path="/openings" element={<LivesPage />} />
+            <Route path="/openings/:openingId" element={<LivePage />} />
+            <Route path="/colecao" element={<CollectionPage />} />
+            <Route path="/colecao/rips/:ripId" element={<MyRipRecordPage />} />
+            <Route path="/colecao/batches/:ripId" element={<MyRipRecordPage />} />
+            <Route path="/colecao/cartas/:assetId" element={<CardAssetPage />} />
+            <Route path="/japan-search" element={<JapanSearchPage />} />
             <Route path="/como-funciona" element={<Navigate to={p('servicosPrecos')} replace />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/loja" element={<Navigate to={p('lojaPublicVitrine')} replace />} />
@@ -303,7 +326,21 @@ function App() {
             </Route>
 
             {/* English */}
-            <Route path="/en" element={<Home />} />
+            <Route path="/en" element={<CollectorHome />} />
+            <Route path="/en/forwarding" element={<Home />} />
+            <Route path="/en/rips" element={<RipsPage />} />
+            <Route path="/en/rips/:ripId" element={<RipDetailPage />} />
+            <Route path="/en/batches" element={<RipsPage />} />
+            <Route path="/en/batches/:batchId" element={<RipDetailPage />} />
+            <Route path="/en/lives" element={<LivesPage />} />
+            <Route path="/en/lives/:liveId" element={<LivePage />} />
+            <Route path="/en/openings" element={<LivesPage />} />
+            <Route path="/en/openings/:openingId" element={<LivePage />} />
+            <Route path="/en/collection" element={<CollectionPage />} />
+            <Route path="/en/collection/rips/:ripId" element={<MyRipRecordPage />} />
+            <Route path="/en/collection/batches/:ripId" element={<MyRipRecordPage />} />
+            <Route path="/en/collection/cards/:assetId" element={<CardAssetPage />} />
+            <Route path="/en/japan-search" element={<JapanSearchPage />} />
             <Route path="/en/como-funciona" element={<Navigate to={e('servicosPrecos')} replace />} />
             <Route path="/en/contact" element={<Contact />} />
             <Route path="/en/store" element={<Navigate to={e('lojaPublicVitrine')} replace />} />
