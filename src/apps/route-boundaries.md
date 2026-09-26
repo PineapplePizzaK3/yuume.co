@@ -2,6 +2,11 @@
 
 This file maps the current route ownership during the split between Services and Openings.
 
+The target architecture is collector-first (see `docs/architecture/collector-platform.md`): the "Openings"
+app becomes the Collector app, and Openings becomes one acquisition module inside it. New collector routes
+(`/item`, `/explorar`, `/desejos`, and their `/en` equivalents) will be registered in the Openings app until
+that rename happens.
+
 ## Openings Domain
 
 - `"/"` (transition alias, points to collector home)
