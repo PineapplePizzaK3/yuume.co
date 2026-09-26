@@ -1,5 +1,10 @@
 {
   "loading": "Loading...",
+  "credits": {
+    "unit": "credits",
+    "iconTitle": "YuumeCo credits",
+    "parityHint": "1 credit = ¥1"
+  },
   "errorBoundary": {
     "title": "Something went wrong",
     "body": "An error occurred while loading this page. Check the browser console (F12) for details.",
@@ -1935,8 +1940,10 @@
       "japanSearchDescription": "Search Japanese products inside the platform."
     },
     "hero": {
+      "eyebrow": "Openings",
       "title": "Platform for TCG collectors",
-      "description": "Discover products, reserve spots in openings, and track results in your collection."
+      "description": "Discover products, reserve spots in openings, and track results in your collection.",
+      "iconTitle": "TCG box and packs"
     },
     "status": {
       "OPEN": "Open",
@@ -1960,8 +1967,13 @@
       "viewAll": "View all",
       "openBatch": "View opening",
       "reservePosition": "Reserve spot",
+      "reserveWithCredits": "Reserve with credits",
+      "loginToReserve": "Sign in to reserve",
+      "loginToContinue": "Sign in to continue",
       "reserved": "Reserved",
       "reserving": "Reserving...",
+      "reservingCredits": "Debiting credits...",
+      "soldOut": "No spots available",
       "openOpening": "Open session",
       "viewRecord": "View opening record",
       "viewRelatedAsset": "View related card asset",
@@ -1970,7 +1982,64 @@
     },
     "home": {
       "openingHighlights": "Recorded openings",
-      "availableBatches": "Available openings"
+      "availableBatches": "Available openings",
+      "emptyBatches": "No openings available right now.",
+      "emptyOpenings": "No opening sessions scheduled right now."
+    },
+    "hubSteps": {
+      "eyebrow": "How to navigate",
+      "stepLabel": "Step {{number}}",
+      "concept": {
+        "title": "What Openings are",
+        "description": "Reserve packs from real boxes, pay with credits, and follow the recorded opening.",
+        "featuredTitle": "Featured openings",
+        "featuredDescription": "A quick selection to start exploring available boxes.",
+        "card1Title": "Real boxes in Japan",
+        "card1Body": "Each opening maps to a physical box with limited pack slots.",
+        "card2Title": "Pay with credits",
+        "card2Body": "1 credit = ¥1. Add wallet balance and reserve packs instantly.",
+        "card3Title": "Results in your collection",
+        "card3Body": "Follow the recorded session and card assets created after the opening."
+      },
+      "howItWorks": {
+        "title": "How it works",
+        "description": "See the full experience flow.",
+        "heading": "How it works in practice",
+        "lead": "From choosing a box to logging pulls, the flow happens in four steps.",
+        "step1": "Choose the box and pack quantity.",
+        "step1Detail": "Compare credit prices, check availability, and pick 1 pack, a box, or a case.",
+        "step2": "Pay with wallet credits.",
+        "step2Detail": "Reservation debits credits immediately (1 credit = ¥1) and confirms your seats.",
+        "step3": "Follow the opening session.",
+        "step3Detail": "When the box is opened, you can watch the recording and relevant pulls.",
+        "step4": "Results land in your collection.",
+        "step4Detail": "Card assets and the opening record stay linked to your account."
+      },
+      "trust": {
+        "title": "Transparency you can verify",
+        "description": "The experience pairs opening excitement with clear trust criteria.",
+        "card1Eyebrow": "Currency",
+        "card1Title": "Official credits",
+        "card1Body": "All opening prices are charged in credits (1 credit = ¥1).",
+        "card2Eyebrow": "Record",
+        "card2Title": "Recorded session",
+        "card2Body": "Follow the opening and relevant pulls with history on the platform.",
+        "card3Eyebrow": "Collection",
+        "card3Title": "Tracked assets",
+        "card3Body": "Results stay linked to your account for review and next steps."
+      },
+      "catalog": {
+        "title": "Boxes and purchase",
+        "description": "Compare boxes, credit prices, and reserve your spots."
+      },
+      "nextOpening": {
+        "title": "Next opening",
+        "status": "Status",
+        "available": "Open boxes",
+        "availableCount": "{{count}} available",
+        "sessions": "Sessions",
+        "productsButton": "View available boxes"
+      }
     },
     "scope": {
       "inTitle": "Current MVP (opening-first)",
@@ -1986,18 +2055,50 @@
     },
     "batchCard": {
       "positionsLabel": "Reserved spots",
-      "positions": "{{reserved}}/{{total}}"
+      "remainingLabel": "Available spots",
+      "positions": "{{reserved}}/{{total}}",
+      "pricePerPack": "Price per pack",
+      "boxTotal": "Box price"
     },
     "batchDetail": {
       "packsLabel": "Reserved spots",
+      "remainingLabel": "Available spots",
       "totalPacks": "Total spots",
       "availablePositions": "Available spots",
+      "quantityLabel": "Quantity",
       "progressTitle": "Opening progress",
-      "reserveSuccess": "Spot reserved in demo mode."
+      "reserveSuccess": "Spot reserved in demo mode.",
+      "reservePaidSuccess": "Spot reserved with {{amount}} credits.",
+      "pricePerPosition": "Price per spot",
+      "selectedTotalLabel": "Total for {{count}} pack(s)",
+      "walletOnlyHint": "Openings are charged only with wallet credits.",
+      "totalCreditsLabel": "Total for this reservation",
+      "walletBalanceLabel": "Your credits",
+      "walletGapLabel": "Shortfall",
+      "addCreditsCta": "Add balance to wallet",
+      "alreadyReserved": "You already have {{count}} spot(s) in this opening.",
+      "quickQty": {
+        "label": "Quick quantities",
+        "onePack": "1 pack",
+        "fivePacks": "5 packs",
+        "halfBox": "1/2 box ({{count}})",
+        "fullBox": "1 box ({{count}})",
+        "fullCase": "1 case ({{count}})",
+        "remaining": "Remaining ({{count}})"
+      }
     },
     "ripDetail": {
       "pullHighlights": "Relevant pulls",
       "bulkDefault": "Bulk is tracked in aggregate without individual filler cards."
+    },
+    "topCards": {
+      "title": "Top cards in this collection",
+      "subtitle": "Automatic ranking by credit value (SNKRDUNK).",
+      "source": "Source: SNKRDUNK",
+      "updatedAt": "Updated at {{value}}",
+      "empty": "We could not find relevant cards for this collection yet.",
+      "cardNumber": "Card",
+      "imageUnavailable": "Image unavailable"
     },
     "opening": {
       "title": "Opening sessions",
@@ -2020,11 +2121,14 @@
       "description": "Pick your game, reserve spots, and track the recorded opening."
     },
     "filters": {
-      "allGames": "All games"
+      "allGames": "All categories",
+      "gamesTitle": "Categories"
     },
     "collection": {
       "title": "My collection",
       "description": "Track your cards, opening history, and cards you want to find.",
+      "loginRequiredTitle": "Sign in to view your collection",
+      "loginRequiredBody": "Your collection and opening records are available after login.",
       "tabs": {
         "cards": "Cards",
         "batches": "Openings",
@@ -2036,16 +2140,40 @@
       "originBatch": "Opening",
       "statusLabel": "Status",
       "condition": "Condition",
+      "marketValue": "Pull market value",
+      "marketValueMissing": "No market value recorded for this card yet.",
+      "sellBackOffer": "Sell-back offer (80%)",
+      "sellBackUnavailable": "Sell-back unavailable for this card.",
+      "lastAction": "Last action",
+      "psaResult": "PSA result",
+      "psaGradePending": "Grade pending",
+      "confirmSellBack": "Confirm sell-back for {{value}} credits?",
+      "confirmPsa": "Send this card to the PSA grading queue?",
       "status": {
-        "held": "In collection"
+        "held": "In collection",
+        "sold": "Sold (sell-back)",
+        "grading": "In grading (PSA)",
+        "graded": "Graded (PSA)"
       },
       "actions": {
         "keep": "Keep",
         "ship": "Ship",
         "grade": "Grade",
-        "sell": "Sell"
+        "sell": "Sell",
+        "processing": "Processing..."
+      },
+      "messages": {
+        "sellBackSuccess": "Sell-back complete. {{value}} credited.",
+        "psaRequestSuccess": "PSA grading request submitted."
+      },
+      "errors": {
+        "sellBackFailed": "Could not sell this card right now.",
+        "psaRequestFailed": "Could not request grading right now."
       },
       "soon": "coming soon"
+    },
+    "common": {
+      "loading": "Loading..."
     },
     "japanSearch": {
       "title": "Japan Search",

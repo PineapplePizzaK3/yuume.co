@@ -1,0 +1,3 @@
+{
+  "_comment": "Optional overrides for collections where set-code inference fails. Keys are live-rip product ids without '-no-shrink'."
+}

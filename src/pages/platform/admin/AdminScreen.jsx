@@ -95,6 +95,7 @@ import RecargasSection from './sections/RecargasSection'
 import LogsSection from './sections/LogsSection'
 import EnviosSection from './sections/EnviosSection'
 import LiveRipsSection from './sections/LiveRipsSection'
+import AberturasSection from './sections/AberturasSection'
 import ProdutosUsuariosSection from './sections/ProdutosUsuariosSection'
 import ProdutosSection from './sections/ProdutosSection'
 import UsuariosSection from './sections/UsuariosSection'
@@ -3466,6 +3467,9 @@ export default function Admin({ routeTabId = 'pedidos' }) {
 
         {/* Live Rips */}
         <LiveRipsSection />
+
+        {/* Aberturas */}
+        <AberturasSection activeTab={activeTab} />
 
         {/* Produtos por usuário (inventário) */}
         <ProdutosUsuariosSection />

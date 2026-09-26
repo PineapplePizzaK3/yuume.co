@@ -2,14 +2,16 @@ import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PageSeo } from '../../components/PageSeo'
 import { RipCard } from '../../components/collector/RipCard'
-import { COLLECTOR_GAMES } from '../../data/collectorMock'
-import { listOpeningBatches } from '../../services/collectorService'
+import { OPENING_CATALOG_CATEGORIES } from '../../data/collectorLiveRipCatalog'
+import { isCollectorMockMode, listOpeningBatches } from '../../services/collectorService'
 import { collectorBatchDetailPath } from '../../lib/localeRoutes'
 import { useSiteLocale } from '../../hooks/useSiteLocale'
 
 function RipsPage() {
   const { t, i18n } = useTranslation()
   const locale = useSiteLocale()
+  const localeKey = i18n.language === 'en' ? 'en' : 'pt-BR'
+  const isMockMode = isCollectorMockMode()
   const [game, setGame] = useState('')
   const [batches, setBatches] = useState([])
 
@@ -24,12 +26,12 @@ function RipsPage() {
     }
   }, [game])
 
-  const gameLabelById = useMemo(
+  const categoryLabelById = useMemo(
     () =>
       new Map(
-        COLLECTOR_GAMES.map((row) => [row.id, row.label[i18n.language === 'en' ? 'en' : 'pt-BR'] || row.id])
+        OPENING_CATALOG_CATEGORIES.map((row) => [row.id, row.label[localeKey] || row.id])
       ),
-    [i18n.language]
+    [localeKey]
   )
 
   return (
@@ -38,7 +40,7 @@ function RipsPage() {
         routeKey="collectorBatches"
         title={t('collector.meta.batchesTitle', { defaultValue: 'Aberturas | Collector MVP' })}
         description={t('collector.meta.batchesDescription', { defaultValue: 'Descubra aberturas disponiveis e reserve suas posicoes.' })}
-        noindex
+        noindex={isMockMode}
       />
       <section className="px-4 pb-10 pt-24">
         <div className="mx-auto flex max-w-6xl items-end justify-between gap-4">
@@ -56,9 +58,9 @@ function RipsPage() {
             className="rounded-lg border border-earth-300 bg-white px-3 py-2 text-sm text-earth-800"
           >
             <option value="">{t('collector.filters.allGames', { defaultValue: 'Todos os jogos' })}</option>
-            {COLLECTOR_GAMES.map((item) => (
+            {OPENING_CATALOG_CATEGORIES.map((item) => (
               <option key={item.id} value={item.id}>
-                {gameLabelById.get(item.id)}
+                {categoryLabelById.get(item.id)}
               </option>
             ))}
           </select>

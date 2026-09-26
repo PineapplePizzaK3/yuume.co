@@ -1,17 +1,19 @@
 import { useTranslation } from 'react-i18next'
 import { PageSeo } from '../../components/PageSeo'
 import { DemoBadge } from '../../components/collector/DemoBadge'
+import { isCollectorMockMode } from '../../services/collectorService'
 import CatalogSearchPublic from '../CatalogSearchPublic'
 
 function JapanSearchPage() {
   const { t } = useTranslation()
+  const isMockMode = isCollectorMockMode()
   return (
     <>
       <PageSeo
         routeKey="collectorJapanSearch"
         title={t('collector.meta.japanSearchTitle', { defaultValue: 'Japan Search | Collector MVP' })}
         description={t('collector.meta.japanSearchDescription', { defaultValue: 'Busca de produtos japoneses dentro da plataforma.' })}
-        noindex
+        noindex={isMockMode}
       />
       <section className="px-4 pb-8 pt-24">
         <div className="mx-auto max-w-6xl rounded-2xl border border-earth-200 bg-white p-6 shadow-sm">

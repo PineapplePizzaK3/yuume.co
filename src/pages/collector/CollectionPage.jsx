@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useSearchParams } from 'react-router-dom'
 import { PageSeo } from '../../components/PageSeo'
 import { CardAssetTile } from '../../components/collector/CardAssetTile'
-import { listCollectionAssets, listMyRipRecords, listWishlistCards } from '../../services/collectorService'
+import { isCollectorMockMode, listCollectionAssets, listMyRipRecords, listWishlistCards } from '../../services/collectorService'
 import { collectorCardAssetPath, collectorCollectionRipPath } from '../../lib/localeRoutes'
 import { useSiteLocale } from '../../hooks/useSiteLocale'
+import { useAuth } from '../../hooks/useAuth'
+import { useLocalizedPath } from '../../hooks/useLocalizedPath'
 
 const TAB_ASSETS = 'cards'
 const TAB_RIPS = 'rips'
@@ -14,12 +16,16 @@ const VALID_TABS = new Set([TAB_ASSETS, TAB_RIPS, TAB_WISHLIST])
 
 function CollectionPage() {
   const { t, i18n } = useTranslation()
+  const { isAuthenticated } = useAuth()
+  const location = useLocation()
+  const path = useLocalizedPath()
   const locale = useSiteLocale()
   const [searchParams, setSearchParams] = useSearchParams()
   const [assets, setAssets] = useState([])
   const [rips, setRips] = useState([])
   const [wishlist, setWishlist] = useState([])
   const localeKey = i18n.language === 'en' ? 'en' : 'pt-BR'
+  const isMockMode = isCollectorMockMode()
 
   const activeTab = VALID_TABS.has(searchParams.get('tab') || '') ? searchParams.get('tab') : TAB_ASSETS
 
@@ -38,9 +44,29 @@ function CollectionPage() {
 
   const setTab = (tab) => setSearchParams(tab === TAB_ASSETS ? {} : { tab })
 
+  if (!isMockMode && !isAuthenticated) {
+    return (
+      <section className="mx-auto mt-24 max-w-3xl rounded-2xl border border-earth-200 bg-white p-6 text-earth-700 shadow-sm">
+        <h1 className="font-display text-2xl font-semibold text-earth-900">
+          {t('collector.collection.loginRequiredTitle', { defaultValue: 'Entre para ver sua colecao' })}
+        </h1>
+        <p className="mt-2 text-sm text-earth-600">
+          {t('collector.collection.loginRequiredBody', { defaultValue: 'Sua colecao e seus registros de abertura ficam disponiveis apos o login.' })}
+        </p>
+        <Link
+          to={path('login')}
+          state={{ from: location }}
+          className="mt-4 inline-flex rounded-lg bg-earth-900 px-4 py-2 text-sm font-medium text-earth-50 hover:bg-earth-800"
+        >
+          {t('collector.actions.loginToContinue', { defaultValue: 'Entrar para continuar' })}
+        </Link>
+      </section>
+    )
+  }
+
   return (
     <>
-      <PageSeo routeKey="collectorCollection" title={t('collector.meta.collectionTitle', { defaultValue: 'Colecao | Collector MVP' })} noindex />
+      <PageSeo routeKey="collectorCollection" title={t('collector.meta.collectionTitle', { defaultValue: 'Colecao | Collector MVP' })} noindex={isMockMode} />
       <section className="px-4 pb-10 pt-24">
         <div className="mx-auto max-w-6xl">
           <h1 className="font-display text-3xl font-semibold text-earth-900">

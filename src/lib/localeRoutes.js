@@ -75,6 +75,7 @@ export const ROUTES = {
   appAdminOrcamentos: { [LOCALE_PT_BR]: '/app/admin/orcamentos', [LOCALE_EN]: '/en/app/admin/quotes' },
   appAdminUsuarios: { [LOCALE_PT_BR]: '/app/admin/usuarios', [LOCALE_EN]: '/en/app/admin/users' },
   appAdminEnvios: { [LOCALE_PT_BR]: '/app/admin/envios', [LOCALE_EN]: '/en/app/admin/shipping' },
+  appAdminAberturas: { [LOCALE_PT_BR]: '/app/admin/aberturas', [LOCALE_EN]: '/en/app/admin/openings' },
   appAdminProdutos: { [LOCALE_PT_BR]: '/app/admin/produtos', [LOCALE_EN]: '/en/app/admin/products' },
   appAdminCatalogo: { [LOCALE_PT_BR]: '/app/admin/catalogo-produtos', [LOCALE_EN]: '/en/app/admin/catalog' },
   appAdminGrupos: { [LOCALE_PT_BR]: '/app/admin/grupos', [LOCALE_EN]: '/en/app/admin/groups' },
@@ -92,6 +93,90 @@ export const ROUTES = {
   appAdminRecargas: { [LOCALE_PT_BR]: '/app/admin/recargas', [LOCALE_EN]: '/en/app/admin/top-ups' },
   appAdminInvoices: { [LOCALE_PT_BR]: '/app/admin/invoices', [LOCALE_EN]: '/en/app/admin/invoices' },
   appAdminLogs: { [LOCALE_PT_BR]: '/app/admin/logs', [LOCALE_EN]: '/en/app/admin/logs' },
+}
+
+export const OPENINGS_ROUTE_KEYS = [
+  'home',
+  'collectorRips',
+  'collectorLives',
+  'collectorBatches',
+  'collectorOpenings',
+  'collectorCollection',
+  'collectorJapanSearch',
+]
+
+export const SERVICES_ROUTE_KEYS = [
+  'forwardingHome',
+  'servicosPrecos',
+  'servicosFretes',
+  'servicosSimulador',
+  'faqIndex',
+  'faqProhibited',
+  'faqCustoms',
+  'liveRipsHub',
+  'liveRipsDetail',
+  'liveRipsMine',
+  'liveRipsLive',
+  'liveRipsOverlay',
+  'ondeComprar',
+  'catalogSearchPublic',
+  'ephemeralProductPublic',
+  'ephemeralProductOpen',
+  'contact',
+  'lojaPublic',
+  'lojaPublicVitrine',
+  'lojaPublicProgramadas',
+  'lojaPublicProgramadasOnline',
+  'lojaPublicProgramadasFisica',
+  'login',
+  'register',
+  'forgotPassword',
+  'resetPassword',
+  'legalPrivacy',
+  'legalTerms',
+  'legalCommercial',
+]
+
+export const PLATFORM_ROUTE_KEYS = [
+  'appDashboard',
+  'appCompleteSocial',
+  'appLounge',
+  'appServices',
+  'appProfile',
+  'appConta',
+  'appLoja',
+  'appCart',
+  'appGrupoCompras',
+  'appGrupoComprasOnline',
+  'appGrupoComprasFisica',
+  'appInvoices',
+  'appAdmin',
+  'appAdminPedidos',
+  'appAdminOrcamentos',
+  'appAdminUsuarios',
+  'appAdminEnvios',
+  'appAdminAberturas',
+  'appAdminProdutos',
+  'appAdminCatalogo',
+  'appAdminGrupos',
+  'appAdminCalculadoraBrasil',
+  'appAdminLotes',
+  'appAdminMarketing',
+  'appAdminFraude',
+  'appAdminNotificacoes',
+  'appAdminRecargas',
+  'appAdminInvoices',
+  'appAdminLogs',
+]
+
+const ROUTE_NAMESPACE_BY_KEY = {
+  ...Object.fromEntries(OPENINGS_ROUTE_KEYS.map((key) => [key, 'openings'])),
+  ...Object.fromEntries(SERVICES_ROUTE_KEYS.map((key) => [key, 'services'])),
+  ...Object.fromEntries(PLATFORM_ROUTE_KEYS.map((key) => [key, 'platform'])),
+}
+
+export function routeNamespace(routeKey) {
+  return ROUTE_NAMESPACE_BY_KEY[routeKey] || 'unknown'
 }
 
 /**

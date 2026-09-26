@@ -1,5 +1,10 @@
 {
   "loading": "Carregando...",
+  "credits": {
+    "unit": "créditos",
+    "iconTitle": "Créditos YuumeCo",
+    "parityHint": "1 crédito = ¥1"
+  },
   "errorBoundary": {
     "title": "Algo deu errado",
     "body": "Ocorreu um erro ao carregar a página. Verifique o console do navegador (F12) para mais detalhes.",
@@ -1889,8 +1894,10 @@
       "japanSearchDescription": "Busca de produtos japoneses dentro da plataforma."
     },
     "hero": {
+      "eyebrow": "Aberturas",
       "title": "Plataforma para colecionadores de TCG",
-      "description": "Descubra produtos, reserve posicoes em aberturas e acompanhe os resultados na sua colecao."
+      "description": "Descubra produtos, reserve posicoes em aberturas e acompanhe os resultados na sua colecao.",
+      "iconTitle": "Caixa e packs TCG"
     },
     "status": {
       "OPEN": "Aberta",
@@ -1914,8 +1921,13 @@
       "viewAll": "Ver tudo",
       "openBatch": "Ver abertura",
       "reservePosition": "Reservar posicao",
+      "reserveWithCredits": "Reservar com creditos",
+      "loginToReserve": "Entrar para reservar",
+      "loginToContinue": "Entrar para continuar",
       "reserved": "Reserva registrada",
       "reserving": "Reservando...",
+      "reservingCredits": "Debitando creditos...",
+      "soldOut": "Sem posicoes disponiveis",
       "openOpening": "Ver sessao de abertura",
       "viewRecord": "Ver registro da abertura",
       "viewRelatedAsset": "Ver card asset relacionado",
@@ -1924,7 +1936,64 @@
     },
     "home": {
       "openingHighlights": "Aberturas registradas",
-      "availableBatches": "Aberturas disponiveis"
+      "availableBatches": "Aberturas disponiveis",
+      "emptyBatches": "Nenhuma abertura disponivel no momento.",
+      "emptyOpenings": "Nenhuma sessao de abertura agendada no momento."
+    },
+    "hubSteps": {
+      "eyebrow": "Como navegar",
+      "stepLabel": "Passo {{number}}",
+      "concept": {
+        "title": "O que sao as Aberturas",
+        "description": "Reserve packs em caixas reais, pague com creditos e acompanhe a abertura registrada.",
+        "featuredTitle": "Aberturas em destaque",
+        "featuredDescription": "Uma selecao rapida para comecar a explorar as caixas disponiveis.",
+        "card1Title": "Caixas reais no Japao",
+        "card1Body": "Cada abertura corresponde a uma caixa fisica com posicoes limitadas.",
+        "card2Title": "Pagamento em creditos",
+        "card2Body": "1 credito = ¥1. Adicione saldo na carteira e reserve packs na hora.",
+        "card3Title": "Resultado na sua colecao",
+        "card3Body": "Acompanhe a sessao gravada e os card assets gerados apos a abertura."
+      },
+      "howItWorks": {
+        "title": "Como funciona",
+        "description": "Veja o fluxo completo da experiencia.",
+        "heading": "Como funciona na pratica",
+        "lead": "Da escolha da caixa ao registro dos pulls, o fluxo acontece em quatro passos.",
+        "step1": "Escolha a caixa e a quantidade de packs.",
+        "step1Detail": "Compare valores em creditos, veja disponibilidade e selecione 1 pack, box ou case.",
+        "step2": "Pague com creditos da carteira.",
+        "step2Detail": "A reserva debita creditos na hora (1 credito = ¥1) e confirma suas posicoes.",
+        "step3": "Acompanhe a sessao de abertura.",
+        "step3Detail": "Quando a caixa for aberta, voce ve a gravacao e os pulls relevantes.",
+        "step4": "Os resultados ficam na sua colecao.",
+        "step4Detail": "Card assets e o registro da abertura ficam vinculados a sua conta."
+      },
+      "trust": {
+        "title": "Transparencia que voce consegue verificar",
+        "description": "A experiencia combina a emocao da abertura com criterios claros de confianca.",
+        "card1Eyebrow": "Moeda",
+        "card1Title": "Creditos oficiais",
+        "card1Body": "Todos os valores de abertura sao cobrados em creditos (1 credito = ¥1).",
+        "card2Eyebrow": "Registro",
+        "card2Title": "Sessao gravada",
+        "card2Body": "Acompanhe a abertura e os pulls relevantes com historico na plataforma.",
+        "card3Eyebrow": "Colecao",
+        "card3Title": "Assets rastreados",
+        "card3Body": "Os resultados ficam vinculados a sua conta para consulta e proximos passos."
+      },
+      "catalog": {
+        "title": "Caixas e compra",
+        "description": "Compare caixas, valores em creditos e reserve suas posicoes."
+      },
+      "nextOpening": {
+        "title": "Proxima abertura",
+        "status": "Status",
+        "available": "Caixas abertas",
+        "availableCount": "{{count}} disponiveis",
+        "sessions": "Sessoes",
+        "productsButton": "Ver caixas disponiveis"
+      }
     },
     "scope": {
       "inTitle": "MVP atual (abertura-first)",
@@ -1940,18 +2009,50 @@
     },
     "batchCard": {
       "positionsLabel": "Posicoes reservadas",
-      "positions": "{{reserved}}/{{total}}"
+      "remainingLabel": "Posicoes disponiveis",
+      "positions": "{{reserved}}/{{total}}",
+      "pricePerPack": "Valor por pack",
+      "boxTotal": "Valor da caixa"
     },
     "batchDetail": {
       "packsLabel": "Posicoes reservadas",
+      "remainingLabel": "Posicoes disponiveis",
       "totalPacks": "Total de posicoes",
       "availablePositions": "Posicoes disponiveis",
+      "quantityLabel": "Quantidade",
       "progressTitle": "Progresso da abertura",
-      "reserveSuccess": "Posicao reservada no modo demo."
+      "reserveSuccess": "Posicao reservada no modo demo.",
+      "reservePaidSuccess": "Posicao reservada com {{amount}} creditos.",
+      "pricePerPosition": "Preco por posicao",
+      "selectedTotalLabel": "Total para {{count}} pack(s)",
+      "walletOnlyHint": "Aberturas sao cobradas somente com creditos da carteira.",
+      "totalCreditsLabel": "Total desta reserva",
+      "walletBalanceLabel": "Seus creditos",
+      "walletGapLabel": "Faltam",
+      "addCreditsCta": "Adicionar saldo na carteira",
+      "alreadyReserved": "Voce ja tem {{count}} posicao(oes) nesta abertura.",
+      "quickQty": {
+        "label": "Quantidades rapidas",
+        "onePack": "1 pack",
+        "fivePacks": "5 packs",
+        "halfBox": "1/2 box ({{count}})",
+        "fullBox": "1 box ({{count}})",
+        "fullCase": "1 case ({{count}})",
+        "remaining": "Restante ({{count}})"
+      }
     },
     "ripDetail": {
       "pullHighlights": "Pulls relevantes",
       "bulkDefault": "Bulk agregado sem cadastro individual de fillers."
+    },
+    "topCards": {
+      "title": "Principais cartas da colecao",
+      "subtitle": "Ranking automatico por valor em creditos (SNKRDUNK).",
+      "source": "Fonte: SNKRDUNK",
+      "updatedAt": "Atualizado em {{value}}",
+      "empty": "Ainda nao encontramos cartas relevantes para esta colecao.",
+      "cardNumber": "Carta",
+      "imageUnavailable": "Imagem indisponivel"
     },
     "opening": {
       "title": "Sessoes de abertura",
@@ -1974,11 +2075,14 @@
       "description": "Escolha o jogo, reserve posicoes e acompanhe a abertura gravada."
     },
     "filters": {
-      "allGames": "Todos os jogos"
+      "allGames": "Todos os jogos",
+      "gamesTitle": "Categorias"
     },
     "collection": {
       "title": "Minha colecao",
       "description": "Acompanhe seus cards, seu historico de aberturas e os cards que voce quer encontrar.",
+      "loginRequiredTitle": "Entre para ver sua colecao",
+      "loginRequiredBody": "Sua colecao e seus registros de abertura ficam disponiveis apos o login.",
       "tabs": {
         "cards": "Cartas",
         "batches": "Aberturas",
@@ -1990,16 +2094,40 @@
       "originBatch": "Abertura",
       "statusLabel": "Status",
       "condition": "Condicao",
+      "marketValue": "Valor de mercado no pull",
+      "marketValueMissing": "Sem valor de mercado registrado para este card.",
+      "sellBackOffer": "Oferta sell-back (80%)",
+      "sellBackUnavailable": "Sell-back indisponivel para este card.",
+      "lastAction": "Ultima acao",
+      "psaResult": "Resultado PSA",
+      "psaGradePending": "Grade pendente",
+      "confirmSellBack": "Confirmar sell-back por {{value}} creditos?",
+      "confirmPsa": "Enviar este card para a fila de grading PSA?",
       "status": {
-        "held": "Em colecao"
+        "held": "Em colecao",
+        "sold": "Vendido (sell-back)",
+        "grading": "Em grading (PSA)",
+        "graded": "Graduado (PSA)"
       },
       "actions": {
         "keep": "Manter",
         "ship": "Enviar",
         "grade": "Graduar",
-        "sell": "Vender"
+        "sell": "Vender",
+        "processing": "Processando..."
+      },
+      "messages": {
+        "sellBackSuccess": "Sell-back concluido. {{value}} creditados.",
+        "psaRequestSuccess": "Solicitacao de grading PSA enviada."
+      },
+      "errors": {
+        "sellBackFailed": "Nao foi possivel vender o card agora.",
+        "psaRequestFailed": "Nao foi possivel solicitar grading agora."
       },
       "soon": "em breve"
+    },
+    "common": {
+      "loading": "Carregando..."
     },
     "japanSearch": {
       "title": "Japan Search",

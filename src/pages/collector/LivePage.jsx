@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { PageSeo } from '../../components/PageSeo'
 import { DemoBadge } from '../../components/collector/DemoBadge'
 import { PullReveal } from '../../components/collector/PullReveal'
-import { getOpeningSession } from '../../services/collectorService'
+import { getOpeningSession, isCollectorMockMode } from '../../services/collectorService'
 import { getCollectorCardById } from '../../data/collectorMock'
 
 function toEmbeddableVideoUrl(rawUrl = '') {
@@ -26,6 +26,7 @@ function LivePage() {
   const { liveId, openingId } = useParams()
   const [opening, setOpening] = useState(null)
   const locale = i18n.language === 'en' ? 'en' : 'pt-BR'
+  const isMockMode = isCollectorMockMode()
   const targetOpeningId = openingId || liveId || ''
 
   useEffect(() => {
@@ -49,7 +50,7 @@ function LivePage() {
 
   return (
     <>
-      <PageSeo routeKey="collectorOpenings" title={t('collector.meta.openingDetailTitle', { defaultValue: 'Opening Session | Collector MVP' })} noindex />
+      <PageSeo routeKey="collectorOpenings" title={t('collector.meta.openingDetailTitle', { defaultValue: 'Opening Session | Collector MVP' })} noindex={isMockMode} />
       <section className="px-4 pb-10 pt-24">
         <div className="mx-auto max-w-6xl space-y-6">
           <div className="rounded-2xl border border-earth-200 bg-white p-6 shadow-sm">
