@@ -16,6 +16,8 @@
     "catalog:live-rips:box-pack": "node scripts/live-rips/build-box-pack-catalog.mjs",
     "catalog:collection-top-cards": "node scripts/on-demand/build-collection-top-cards.mjs",
     "catalog:live-rips:refresh": "npm run catalog:on-demand:refresh && npm run catalog:live-rips:box-pack",
+    "catalog:sets:import": "node --env-file=.env scripts/catalog/import-tcgdex-set.mjs",
+    "catalog:sets:validate": "node --env-file=.env scripts/catalog/validate-set.mjs",
     "recalc:calculator-margin": "node --import ./scripts/register-extensionless.mjs scripts/recalc-calculator-products-margin.mjs",
     "recalc:calculator-margin:dry": "node --import ./scripts/register-extensionless.mjs scripts/recalc-calculator-products-margin.mjs --dry-run",
     "deploy": "npm run build && wrangler deploy"

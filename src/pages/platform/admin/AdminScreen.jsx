@@ -97,6 +97,7 @@ import EnviosSection from './sections/EnviosSection'
 import LiveRipsSection from './sections/LiveRipsSection'
 import AberturasSection from './sections/AberturasSection'
 import MarketSourcesSection from './sections/MarketSourcesSection'
+import CatalogSetsSection from './sections/CatalogSetsSection'
 import ProdutosUsuariosSection from './sections/ProdutosUsuariosSection'
 import ProdutosSection from './sections/ProdutosSection'
 import UsuariosSection from './sections/UsuariosSection'
@@ -3483,6 +3484,9 @@ export default function Admin({ routeTabId = 'pedidos' }) {
 
         {/* Catálogo mestre de produtos */}
         <CatalogoProdutosSection />
+
+        {/* Sets do catálogo (collector) */}
+        <CatalogSetsSection />
 
         {/* Calculadora de preço Brasil */}
         <CalculadoraBrasilSection />

@@ -1,0 +1,18 @@
+{
+  "franchise": "pokemon_tcg",
+  "set_code": "SV8a",
+  "name_ja": "ハイクラスパック「テラスタルフェスex」",
+  "name_en": "Terastal Festival ex",
+  "release_date": "2024-12-06",
+  "set_kind": "high_class",
+  "official_reference_url": null,
+  "official_manifest": {
+    "expected_total": 237,
+    "expected_official": 187,
+    "entered_by": "agent_prefill",
+    "confirmed": false,
+    "note": "Counts pre-filled for convenience. Confirm against the official product page (printed /187 plus secret rares) and set official_reference_url before verification."
+  },
+  "checklist_scope": { "mode": "all_numbers", "exclude_variants": true },
+  "import": { "source": "tcgdex", "ref": "SV8a" }
+}

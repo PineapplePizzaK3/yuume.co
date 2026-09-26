@@ -1,0 +1,18 @@
+{
+  "franchise": "pokemon_tcg",
+  "set_code": "M6",
+  "name_ja": null,
+  "name_en": "Storm Emerald",
+  "release_date": null,
+  "set_kind": "main",
+  "official_reference_url": null,
+  "official_manifest": {
+    "expected_total": null,
+    "expected_official": null,
+    "entered_by": null,
+    "confirmed": false,
+    "note": "Not pre-filled: enter expected_total / expected_official, release date and official_reference_url from the official product page. Japanese name and release date are filled from the import only as placeholders."
+  },
+  "checklist_scope": { "mode": "all_numbers", "exclude_variants": true },
+  "import": { "source": "tcgdex", "ref": "M6" }
+}

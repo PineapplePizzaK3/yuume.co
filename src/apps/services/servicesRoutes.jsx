@@ -62,6 +62,7 @@ export function ServicesRoutes({ components, p, e }) {
     AdminControleFinanceiroTab,
     AdminLogsTab,
     AdminMarketSourcesTab,
+    AdminCatalogSetsTab,
     Lounge,
     Invoices,
     InvoiceDetail,
@@ -145,6 +146,8 @@ export function ServicesRoutes({ components, p, e }) {
           <Route path="controle-financeiro" element={<AdminControleFinanceiroTab />} />
           <Route path="logs" element={<AdminLogsTab />} />
           <Route path="fontes-mercado" element={<AdminMarketSourcesTab />} />
+          <Route path="sets-catalogo" element={<AdminCatalogSetsTab />} />
+          <Route path="catalogo/sets-catalogo" element={<AdminCatalogSetsTab />} />
           <Route path="operacao/pedidos" element={<AdminPedidosTab />} />
           <Route path="operacao/usuarios" element={<AdminUsuariosTab />} />
           <Route path="operacao/envios" element={<AdminEnviosTab />} />
@@ -270,6 +273,8 @@ export function ServicesRoutes({ components, p, e }) {
           <Route path="financial-control" element={<AdminControleFinanceiroTab />} />
           <Route path="logs" element={<AdminLogsTab />} />
           <Route path="market-sources" element={<AdminMarketSourcesTab />} />
+          <Route path="catalog-sets" element={<AdminCatalogSetsTab />} />
+          <Route path="catalog/catalog-sets" element={<AdminCatalogSetsTab />} />
           <Route path="operations/orders" element={<AdminPedidosTab />} />
           <Route path="operations/users" element={<AdminUsuariosTab />} />
           <Route path="operations/shipping" element={<AdminEnviosTab />} />

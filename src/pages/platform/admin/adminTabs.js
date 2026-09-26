@@ -17,6 +17,7 @@ export const ADMIN_TABS = [
   { id: 'aberturas_admin', path: 'aberturas', label: 'Aberturas', icon: '🪄', category: 'operacao' },
   { id: 'produtos', path: 'produtos', label: 'Produtos Loja', icon: '🛒', category: 'catalogo' },
   { id: 'catalogo_produtos', path: 'catalogo-produtos', label: 'Lista de Produtos', icon: '📚', category: 'catalogo' },
+  { id: 'catalog_sets', path: 'sets-catalogo', label: 'Sets do catálogo', icon: '🃏', category: 'catalogo' },
   { id: 'orcamentos', path: 'orcamentos', label: 'Orçamentos', icon: '📝', category: 'catalogo' },
   { id: 'grupos', path: 'grupos', label: 'Compras Programadas', icon: '👥', category: 'catalogo' },
   { id: 'calculadora_brasil', path: 'calculadora-brasil', label: 'Calculadora Brasil', icon: '🧮', category: 'catalogo' },
@@ -55,6 +56,7 @@ const ADMIN_PT_TO_EN_SEGMENT = {
   'controle-financeiro': 'financial-control',
   logs: 'logs',
   'fontes-mercado': 'market-sources',
+  'sets-catalogo': 'catalog-sets',
 }
 
 const EN_TO_PT_ADMIN_SEGMENT = Object.fromEntries(

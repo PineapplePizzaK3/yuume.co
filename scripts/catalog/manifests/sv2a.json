@@ -1,0 +1,18 @@
+{
+  "franchise": "pokemon_tcg",
+  "set_code": "SV2a",
+  "name_ja": "強化拡張パック「ポケモンカード151」",
+  "name_en": "Pokémon Card 151",
+  "release_date": "2023-06-16",
+  "set_kind": "subset",
+  "official_reference_url": null,
+  "official_manifest": {
+    "expected_total": 210,
+    "expected_official": 165,
+    "entered_by": "agent_prefill",
+    "confirmed": false,
+    "note": "Counts pre-filled for convenience. Confirm against the official product page (printed /165 plus secret rares) and set official_reference_url before verification."
+  },
+  "checklist_scope": { "mode": "all_numbers", "exclude_variants": true },
+  "import": { "source": "tcgdex", "ref": "SV2a" }
+}

@@ -71,7 +71,7 @@ No new Collector Platform feature may call them.
 | D2 | Amazon Creators API eligibility | Amazon API adapter |
 | D3 | Card image policy (none / own photos / license) | Catalog images (Step 3 ships text-only) |
 | D4 | Future of legacy scraping features listed above | Step 12 only |
-| D5 | TCGdex Japanese coverage for M2a, SV2a, SV8a, M6 (else manual CSV entry) | Step 3 imports |
+| D5 | TCGdex Japanese coverage for M2a, SV2a, SV8a, M6 (else manual CSV entry) | Step 3 imports. Checked 2026-09-27: numbers and Japanese names complete for all four (SV2a 210, SV8a 237, M2a 250, M6 113). Rarity is unreliable (SV8a mostly "None", M6 secrets all "Mega Hyper Rare"), so it is stored only as `attributes.tcgdex_rarity`; `catalog_items.rarity` comes from the official page via CSV. |
 | D6 | Checklist scope: base numbers only, variants excluded from completion | Step 3/5 |
 | D7 | Set-verification reviewer(s) and 14-day post-release grace rule | Step 3 VERIFIED transition |
 | D8 | Policy for sellers who exclude proxy buyers (`is_cross_border_agency`) | Step 8 Yahoo adapter |
