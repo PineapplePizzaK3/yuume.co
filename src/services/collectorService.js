@@ -43,7 +43,10 @@ const MOCK_SEED_KEY = 'collector_include_mock_seed_v1'
 const MOCK_WALLET_KEY = 'collector_mock_wallet_v1'
 const MOCK_WALLET_START_BALANCE = 80000
 const DEMO_USER_ID = 'demo-user'
-const configuredCollectorSource = String(import.meta.env.VITE_COLLECTOR_DATA_SOURCE || 'mock').toLowerCase()
+const configuredCollectorSource = String(
+  import.meta.env.VITE_COLLECTOR_DATA_SOURCE
+    || (import.meta.env.PROD ? 'supabase' : 'mock')
+).toLowerCase()
 const COLLECTOR_DATA_SOURCE = import.meta.env.MODE === 'test' ? 'mock' : configuredCollectorSource
 const TOP_CARDS_DEFAULT_LIMIT = 12
 const ERROR_TOP_CARD_PATTERN =
