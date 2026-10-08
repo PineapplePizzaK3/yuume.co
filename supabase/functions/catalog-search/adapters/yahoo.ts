@@ -1,4 +1,5 @@
 import type { UnifiedSearchHit } from '../types.ts'
+import { DEFAULT_FILTERS, yahooSearchUrl, type CatalogSearchFilters } from '../filters.ts'
 import { buildHit, parsePrice, pickProductImages } from '../normalize.ts'
 import {
   collectImageCandidates,
@@ -163,14 +164,18 @@ function extractYahooHitsFromJina(jinaText: string, pageSize: number, query: str
   ).filter((hit) => Boolean(hit.imageUrl))
 }
 
-export async function searchYahoo(query: string, pageSize: number, storePage = 1): Promise<UnifiedSearchHit[]> {
+export async function searchYahoo(
+  query: string,
+  pageSize: number,
+  storePage = 1,
+  filters: CatalogSearchFilters = DEFAULT_FILTERS,
+): Promise<UnifiedSearchHit[]> {
   const keyword = String(query || '').trim()
   if (!keyword) return []
 
   const startedAt = Date.now()
   const budgetMs = STORE_DEADLINE_MS - 300
-  const pageParam = storePage > 1 ? `&b=${(storePage - 1) * 50 + 1}` : ''
-  const searchUrl = `${BASE}/search/search?p=${encodeURIComponent(keyword)}${pageParam}`
+  const searchUrl = yahooSearchUrl(keyword, storePage, filters)
 
   const html = await fetchText(searchUrl, FETCH_TIMEOUT_MS, { Referer: `${BASE}/` }).catch(() => '')
   const fromHtml = extractYahooHitsFromHtml(html, pageSize, keyword)

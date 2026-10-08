@@ -1,4 +1,6 @@
 import { Navigate, Route } from 'react-router-dom'
+import { LocaleAliasRedirect, ProdutosAliasRedirect } from '../../components/AliasRedirects'
+import MyBoxBreaks from '../../pages/platform/MyBoxBreaks'
 
 export function ServicesRoutes({ components, p, e }) {
   const {
@@ -72,6 +74,27 @@ export function ServicesRoutes({ components, p, e }) {
 
   return (
     <>
+      <Route path="/produtos" element={<ProdutosAliasRedirect />} />
+      <Route path="/servicos" element={<LocaleAliasRedirect toRoute="forwardingHome" />} />
+      <Route
+        path="/minha-yuume/no-japao"
+        element={
+          <ProtectedRoute>
+            <LocaleAliasRedirect toRoute="appLounge" />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/minha-yuume"
+        element={
+          <ProtectedRoute>
+            <PlatformLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<Dashboard />} />
+        <Route path="box-break" element={<MyBoxBreaks />} />
+      </Route>
       <Route path="/redirecionamento" element={<Home />} />
       <Route path="/como-funciona" element={<Navigate to={p('servicosPrecos')} replace />} />
       <Route path="/contact" element={<Contact />} />
@@ -94,8 +117,8 @@ export function ServicesRoutes({ components, p, e }) {
           </ProtectedRoute>
         }
       >
-        <Route index element={<Navigate to={p('appDashboard')} replace />} />
-        <Route path="dashboard" element={<Dashboard />} />
+        <Route index element={<Navigate to={p('minhaYuume')} replace />} />
+        <Route path="dashboard" element={<Navigate to={p('minhaYuume')} replace />} />
         <Route path="complete-social-profile" element={<CompleteSocialProfile />} />
         <Route path="lounge" element={<Lounge />} />
         <Route path="services" element={<Services />} />
@@ -198,6 +221,27 @@ export function ServicesRoutes({ components, p, e }) {
         <Route path="simulador" element={<Simulador />} />
       </Route>
 
+      <Route path="/en/produtos" element={<ProdutosAliasRedirect />} />
+      <Route path="/en/servicos" element={<LocaleAliasRedirect toRoute="forwardingHome" />} />
+      <Route
+        path="/en/minha-yuume/no-japao"
+        element={
+          <ProtectedRoute>
+            <LocaleAliasRedirect toRoute="appLounge" />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/en/minha-yuume"
+        element={
+          <ProtectedRoute>
+            <PlatformLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<Dashboard />} />
+        <Route path="box-break" element={<MyBoxBreaks />} />
+      </Route>
       <Route path="/en/forwarding" element={<Home />} />
       <Route path="/en/como-funciona" element={<Navigate to={e('servicosPrecos')} replace />} />
       <Route path="/en/contact" element={<Contact />} />
@@ -221,8 +265,8 @@ export function ServicesRoutes({ components, p, e }) {
           </ProtectedRoute>
         }
       >
-        <Route index element={<Navigate to={e('appDashboard')} replace />} />
-        <Route path="dashboard" element={<Dashboard />} />
+        <Route index element={<Navigate to={e('minhaYuume')} replace />} />
+        <Route path="dashboard" element={<Navigate to={e('minhaYuume')} replace />} />
         <Route path="complete-social-profile" element={<CompleteSocialProfile />} />
         <Route path="lounge" element={<Lounge />} />
         <Route path="services" element={<Services />} />

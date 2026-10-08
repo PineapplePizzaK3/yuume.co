@@ -46,11 +46,14 @@ export default function NotificacoesSection() {
             const meta = n.meta || {}
             const requesterLabel = meta.requester_name || meta.requester_email || meta.user_id || null
             const orderId = typeof meta.order_id === 'string' ? meta.order_id : null
+            const isBoxBreak = String(n.type || '').includes('box_break')
             const targetTab = n.type?.includes('topup')
               ? 'recargas'
               : (n.type?.includes('shipment') || n.type?.includes('ready_for_shipment'))
                 ? 'envios'
-                : 'pedidos'
+                : isBoxBreak
+                  ? 'aberturas_admin'
+                  : 'pedidos'
             return (
               <div
                 key={n.id}
@@ -71,11 +74,12 @@ export default function NotificacoesSection() {
                     <p className="mt-1 text-xs text-earth-500">
                       {n.created_at ? new Date(n.created_at).toLocaleString('pt-BR') : '—'}
                     </p>
-                    {(meta.order_id || meta.shipment_id || meta.topup_request_id) && (
+                    {(meta.order_id || meta.shipment_id || meta.topup_request_id || meta.batch_code) && (
                       <p className="mt-1 text-xs text-earth-500 font-mono">
                         {meta.order_id ? `pedido=${String(meta.order_id).slice(0, 8)}…` : ''}
                         {meta.shipment_id ? ` envio=${String(meta.shipment_id).slice(0, 8)}…` : ''}
                         {meta.topup_request_id ? ` recarga=${String(meta.topup_request_id).slice(0, 8)}…` : ''}
+                        {meta.batch_code ? ` caixa=${meta.batch_code}` : ''}
                       </p>
                     )}
                   </div>
@@ -96,7 +100,7 @@ export default function NotificacoesSection() {
                       }}
                       className="rounded-lg bg-earth-900 px-3 py-2 text-sm font-medium text-white hover:bg-earth-800"
                     >
-                      {orderId ? 'Abrir pedido' : 'Abrir área'}
+                      {orderId ? 'Abrir pedido' : isBoxBreak ? 'Abrir Box Break' : 'Abrir área'}
                     </button>
                     {isUnread && (
                       <button

@@ -10,7 +10,7 @@ function storage() {
   }
 }
 
-function sidFromProductUrl(productUrl) {
+export function ephemeralOpenSid(productUrl) {
   const s = String(productUrl || '').trim()
   let hash = 2166136261
   for (let i = 0; i < s.length; i += 1) {
@@ -121,7 +121,7 @@ export function stashEphemeralOpenPayload(item) {
   const store = storage()
   const normalized = normalizeEphemeralOpenItem(item)
   if (!normalized) return null
-  const sid = sidFromProductUrl(normalized.productUrl)
+  const sid = ephemeralOpenSid(normalized.productUrl)
   if (!store) return sid
   try {
     pruneExpired(store)

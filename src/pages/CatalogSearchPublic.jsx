@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { PageSeo } from '../components/PageSeo'
-import CatalogSearchPanel, { CATALOG_STORE_OPTIONS } from '../components/CatalogSearchPanel'
+import CatalogSearchPanel, { CATALOG_STORE_OPTIONS, defaultCatalogStoreSelection } from '../components/CatalogSearchPanel'
 import {
   catalogSearchSessionMatches,
   readCatalogSearchSession,
@@ -13,20 +13,22 @@ import {
   stashEphemeralOpenPayload,
 } from '../lib/ephemeralOpenSession'
 import { LOCALE_EN, publicEphemeralOpenPath } from '../lib/localeRoutes'
+import { pageShell } from '../lib/layout'
 import { useSiteLocale } from '../hooks/useSiteLocale'
 import { searchCatalogPublic } from '../services/catalogSearchService'
-
-function defaultCatalogStores(storeIdFromUrl = '') {
-  const storeId = String(storeIdFromUrl || '').trim()
-  const onlyOne =
-    storeId &&
-    storeId !== 'all' &&
-    CATALOG_STORE_OPTIONS.some((store) => store.id === storeId)
-  return CATALOG_STORE_OPTIONS.reduce(
-    (acc, row) => ({ ...acc, [row.id]: onlyOne ? row.id === storeId : true }),
-    {},
-  )
-}
+import { searchListingIndex } from '../services/listingIndexService'
+import { mergeLiveHitsWithIndex, mergeVisibleHitsWithLiveRefresh, prepareIndexSearchHits } from '../lib/listingIndex'
+import {
+  appendCatalogHits,
+  applyCatalogFilters,
+  catalogFiltersKey,
+  catalogSearchMayHaveMore,
+  parseCatalogFiltersFromSearchParams,
+  sanitizeCatalogFilters,
+  sortCatalogHits,
+  tagCatalogHitBatch,
+  writeCatalogFiltersToSearchParams,
+} from '../lib/catalogSearchFilters'
 
 function selectedStoreIds(stores) {
   return Object.entries(stores || {})
@@ -48,7 +50,11 @@ export default function CatalogSearchPublic() {
     const fromUrl = String(catalogQueryFromUrl || '').trim()
     const session = readCatalogSearchSession()
     restoredSessionRef.current =
-      fromUrl.length >= 2 && catalogSearchSessionMatches(session, { query: fromUrl })
+      fromUrl.length >= 2
+      && catalogSearchSessionMatches(session, {
+        query: fromUrl,
+        filtersKey: catalogFiltersKey(parseCatalogFiltersFromSearchParams(searchParams)),
+      })
         ? session
         : false
   }
@@ -58,20 +64,33 @@ export default function CatalogSearchPublic() {
     () => restoredSession?.query || catalogQueryFromUrl,
   )
   const [catalogStores, setCatalogStores] = useState(
-    () => restoredSession?.stores || defaultCatalogStores(catalogStoreFromUrl),
+    () => restoredSession?.stores || defaultCatalogStoreSelection(catalogStoreFromUrl),
   )
   const [catalogResults, setCatalogResults] = useState(() => restoredSession?.results || [])
   const [catalogMeta, setCatalogMeta] = useState(() => restoredSession?.meta ?? null)
   const [catalogPartials, setCatalogPartials] = useState(() => restoredSession?.partials || [])
   const [catalogLoading, setCatalogLoading] = useState(false)
+  const [filterRefreshPending, setFilterRefreshPending] = useState(false)
+  const [storesRefreshing, setStoresRefreshing] = useState(false)
   const [catalogLoadingMore, setCatalogLoadingMore] = useState(false)
   const [catalogCanAutoLoad, setCatalogCanAutoLoad] = useState(
     () => restoredSession?.canAutoLoad !== false,
   )
   const [catalogCursors, setCatalogCursors] = useState(() => restoredSession?.cursors ?? null)
+  const [catalogFilters, setCatalogFilters] = useState(() =>
+    sanitizeCatalogFilters(restoredSession?.filters || parseCatalogFiltersFromSearchParams(searchParams)),
+  )
   const [catalogError, setCatalogError] = useState('')
   const lastCatalogQueryFromUrlRef = useRef(restoredSession ? String(restoredSession.query || '') : '')
   const skipNextUrlSearchRef = useRef(Boolean(restoredSession))
+  const searchSeqRef = useRef(0)
+  const lastAutoFilterKeyRef = useRef('')
+  const skipFilterAutoSearchRef = useRef(true)
+  const catalogQueryRef = useRef(catalogQuery)
+  catalogQueryRef.current = catalogQuery
+  const catalogResultsRef = useRef(catalogResults)
+  catalogResultsRef.current = catalogResults
+  const catalogBatchRef = useRef(0)
 
   const trackPublicSearchMetric = (eventName, payload = {}) => {
     const safePayload = { area: 'catalog-search-public', eventName, ...payload }
@@ -123,6 +142,7 @@ export default function CatalogSearchPublic() {
     partials,
     cursors,
     canAutoLoad,
+    filters,
   }) => {
     writeCatalogSearchSession({
       query,
@@ -133,6 +153,8 @@ export default function CatalogSearchPublic() {
       partials,
       cursors,
       canAutoLoad,
+      filters,
+      filtersKey: catalogFiltersKey(filters),
     })
   }
 
@@ -142,61 +164,105 @@ export default function CatalogSearchPublic() {
       setCatalogError(
         isEn ? 'Type at least 2 characters to search external catalogs.' : 'Digite ao menos 2 caracteres para buscar.',
       )
+      setFilterRefreshPending(false)
       return
     }
     if (selectedCatalogStores.length === 0) {
       setCatalogError(isEn ? 'Select at least one store.' : 'Selecione ao menos uma loja.')
+      setFilterRefreshPending(false)
       return
     }
 
     if (append) setCatalogLoadingMore(true)
     else {
       setCatalogLoading(true)
+      setCatalogLoadingMore(false)
       setCatalogCanAutoLoad(true)
       setCatalogCursors(null)
     }
     setCatalogError('')
+    const seq = ++searchSeqRef.current
+    const activeFilters = sanitizeCatalogFilters(catalogFilters)
+    let liveDone = false
+    let indexHits = []
+    const skipClientIndex = append
 
-    const { data, error } = await searchCatalogPublic({
-      query: q,
-      stores: selectedCatalogStores,
-      page,
-      pageSize: 24,
-      cursors: append ? cursors ?? catalogCursors : null,
-    })
+    const indexPromise = skipClientIndex
+      ? Promise.resolve([])
+      : searchListingIndex({
+          query: q,
+          stores: selectedCatalogStores,
+          limit: 24,
+        }).then(({ data: rows }) => {
+          indexHits = Array.isArray(rows) ? rows : []
+          if (seq !== searchSeqRef.current || liveDone) return indexHits
+          const preview = prepareIndexSearchHits(indexHits, activeFilters, 0)
+          if (!preview.length) return indexHits
+          catalogResultsRef.current = preview
+          setCatalogResults(preview)
+          persistSearchSession({
+            query: q,
+            stores: catalogStores,
+            selectedStores: selectedCatalogStores,
+            results: preview,
+            meta: { fromIndex: true, query: q, source: 'index', refreshPending: true },
+            partials: [],
+            cursors: null,
+            canAutoLoad: true,
+            filters: activeFilters,
+          })
+          return indexHits
+        }).catch(() => [])
 
-    if (error) {
-      setCatalogError(error.message || (isEn ? 'Failed to search external catalogs.' : 'Falha ao buscar catálogos externos.'))
-      trackPublicSearchMetric('search_error', {
-        query: q,
-        stores: selectedCatalogStores.join(','),
-        page,
-        reason: error.message || 'unknown',
-      })
-    } else {
-      const incoming = Array.isArray(data?.results) ? data.results : []
-      const hasMore = data?.meta?.hasMore ?? false
+    const applyPageResults = (data, { mergeClientIndex = true, preserveVisible = false } = {}) => {
+      const incomingRaw = append
+        ? (Array.isArray(data?.results) ? data.results : [])
+        : preserveVisible
+          ? mergeVisibleHitsWithLiveRefresh(
+            catalogResultsRef.current,
+            Array.isArray(data?.results) ? data.results : [],
+          )
+          : mergeClientIndex
+            ? mergeLiveHitsWithIndex(
+              Array.isArray(data?.results) ? data.results : [],
+              indexHits,
+            )
+            : (Array.isArray(data?.results) ? data.results : [])
+      const incoming = preserveVisible
+        ? applyCatalogFilters(incomingRaw, activeFilters)
+        : sortCatalogHits(applyCatalogFilters(incomingRaw, activeFilters), activeFilters.sort)
+      const serverHasMore = data?.meta?.hasMore ?? false
       let nextResults = incoming
-      let nextCanAutoLoad = hasMore
+      let addedCount = incoming.length
 
       if (append) {
-        let noNewItems = false
-        setCatalogResults((prev) => {
-          const map = new Map(prev.map((item) => [item.productUrl, item]))
-          for (const item of incoming) map.set(item.productUrl, item)
-          const merged = [...map.values()]
-          if (incoming.length > 0 && merged.length === prev.length) noNewItems = true
-          nextResults = merged
-          return merged
+        const nextBatch =
+          catalogResultsRef.current.reduce((max, item) => Math.max(max, Number(item?.loadedBatch) || 0), 0) + 1
+        catalogBatchRef.current = nextBatch
+        const merged = appendCatalogHits(catalogResultsRef.current, incoming, {
+          sort: activeFilters.sort,
+          loadedBatch: nextBatch,
         })
-        if (!hasMore || noNewItems) {
-          nextCanAutoLoad = false
-          setCatalogCanAutoLoad(false)
-        }
+        nextResults = merged.results
+        addedCount = merged.addedCount
+      } else if (preserveVisible) {
+        nextResults = incoming
       } else {
-        setCatalogResults(incoming)
-        setCatalogCanAutoLoad(hasMore)
+        catalogBatchRef.current = 0
+        nextResults = tagCatalogHitBatch(incoming, 0)
       }
+      catalogResultsRef.current = nextResults
+      setCatalogResults(nextResults)
+
+      const nextCanAutoLoad = catalogSearchMayHaveMore({
+        serverHasMore,
+        returnedCount: incomingRaw.length,
+        matchedCount: incoming.length,
+        newItemCount: append ? addedCount : incoming.length,
+        append,
+        filters: activeFilters,
+      })
+      setCatalogCanAutoLoad(nextCanAutoLoad)
 
       const nextMeta = data?.meta ?? null
       const nextPartials = Array.isArray(data?.partials) ? data.partials : []
@@ -213,29 +279,89 @@ export default function CatalogSearchPublic() {
         partials: nextPartials,
         cursors: nextCursors,
         canAutoLoad: nextCanAutoLoad,
+        filters: sanitizeCatalogFilters(catalogFilters),
       })
+      return { incoming, incomingRaw }
+    }
+
+    const { data, error } = await searchCatalogPublic({
+      query: q,
+      stores: selectedCatalogStores,
+      page,
+      pageSize: 24,
+      cursors: append ? cursors ?? catalogCursors : null,
+      filters: activeFilters,
+    })
+    liveDone = true
+    await indexPromise
+
+    if (seq !== searchSeqRef.current) return
+
+    if (error) {
+      setCatalogError(error.message || (isEn ? 'Failed to search external catalogs.' : 'Falha ao buscar catálogos externos.'))
+      trackPublicSearchMetric('search_error', {
+        query: q,
+        stores: selectedCatalogStores.join(','),
+        page,
+        reason: error.message || 'unknown',
+      })
+    } else {
+      const fromIndex = data?.meta?.source === 'index'
+      const { incoming } = applyPageResults(data, { mergeClientIndex: !fromIndex })
       trackPublicSearchMetric('search_ok', {
         query: q,
         stores: selectedCatalogStores.join(','),
         page,
         resultCount: incoming.length,
         tookMs: data?.meta?.tookMs ?? null,
+        source: data?.meta?.source || null,
       })
+
+      if (!append && data?.meta?.refreshPending) {
+        setStoresRefreshing(true)
+        setCatalogLoading(false)
+        try {
+          const live = await searchCatalogPublic({
+            query: q,
+            stores: selectedCatalogStores,
+            page: 1,
+            pageSize: 24,
+            filters: activeFilters,
+            forceLive: true,
+          })
+          if (seq === searchSeqRef.current && !live.error) {
+            applyPageResults(live.data, { mergeClientIndex: false, preserveVisible: true })
+            trackPublicSearchMetric('search_refresh_ok', {
+              query: q,
+              stores: selectedCatalogStores.join(','),
+              tookMs: live.data?.meta?.tookMs ?? null,
+              source: live.data?.meta?.source || null,
+            })
+          }
+        } finally {
+          if (seq === searchSeqRef.current) setStoresRefreshing(false)
+        }
+      }
     }
 
+    if (seq !== searchSeqRef.current) return
     if (append) setCatalogLoadingMore(false)
-    else setCatalogLoading(false)
+    else {
+      setCatalogLoading(false)
+      setFilterRefreshPending(false)
+    }
   }
 
   const handleCatalogSubmit = async (event) => {
     event.preventDefault()
     const q = catalogQuery.trim()
-    const nextParams = new URLSearchParams(searchParams)
+    const nextParams = writeCatalogFiltersToSearchParams(searchParams, catalogFilters)
     if (q) nextParams.set('catalogQuery', q)
     else nextParams.delete('catalogQuery')
     setSearchParams(nextParams, { replace: true })
     lastCatalogQueryFromUrlRef.current = q
     skipNextUrlSearchRef.current = true
+    lastAutoFilterKeyRef.current = `${catalogFiltersKey(catalogFilters)}|${[...selectedCatalogStores].sort().join(',')}`
     await runCatalogSearch(1, { append: false })
   }
 
@@ -248,7 +374,7 @@ export default function CatalogSearchPublic() {
   const buildResultHref = (item) => {
     const sid = stashEphemeralOpenPayload(item)
     if (!sid) return '#'
-    return publicEphemeralOpenPath(sid, siteLocale, encodeEphemeralOpenPayload(item))
+    return publicEphemeralOpenPath(sid, siteLocale, encodeEphemeralOpenPayload(item), item?.productUrl || item?.external_url)
   }
 
   const handleResultClick = (item, event) => {
@@ -290,6 +416,7 @@ export default function CatalogSearchPublic() {
       partials: catalogPartials,
       cursors: catalogCursors,
       canAutoLoad: catalogCanAutoLoad,
+      filters: catalogFilters,
     })
     navigate(href)
     return false
@@ -306,7 +433,7 @@ export default function CatalogSearchPublic() {
     if (lastCatalogQueryFromUrlRef.current === fromUrl) return
 
     const session = readCatalogSearchSession()
-    if (catalogSearchSessionMatches(session, { query: fromUrl })) {
+    if (catalogSearchSessionMatches(session, { query: fromUrl, filtersKey: catalogFiltersKey(catalogFilters) })) {
       lastCatalogQueryFromUrlRef.current = fromUrl
       setCatalogQuery(fromUrl)
       if (session.stores) setCatalogStores(session.stores)
@@ -314,6 +441,7 @@ export default function CatalogSearchPublic() {
       setCatalogMeta(session.meta ?? null)
       setCatalogPartials(Array.isArray(session.partials) ? session.partials : [])
       setCatalogCursors(session.cursors ?? null)
+      if (session.filters) setCatalogFilters(sanitizeCatalogFilters(session.filters))
       setCatalogCanAutoLoad(session.canAutoLoad !== false)
       setCatalogError('')
       return
@@ -324,6 +452,33 @@ export default function CatalogSearchPublic() {
     setCatalogCanAutoLoad(true)
     void runCatalogSearch(1, { append: false, overrideQuery: fromUrl })
   }, [catalogQueryFromUrl])
+
+  const activeFilterKey = `${catalogFiltersKey(catalogFilters)}|${[...selectedCatalogStores].sort().join(',')}`
+
+  useEffect(() => {
+    if (skipFilterAutoSearchRef.current) {
+      skipFilterAutoSearchRef.current = false
+      lastAutoFilterKeyRef.current = activeFilterKey
+      return undefined
+    }
+    if (activeFilterKey === lastAutoFilterKeyRef.current) return undefined
+    const q = catalogQueryRef.current.trim()
+    if (q.length < 2 || selectedCatalogStores.length === 0) return undefined
+    if (!catalogMeta && catalogResults.length === 0) return undefined
+
+    setFilterRefreshPending(true)
+    const timer = window.setTimeout(() => {
+      lastAutoFilterKeyRef.current = activeFilterKey
+      const nextParams = writeCatalogFiltersToSearchParams(searchParams, catalogFilters)
+      if (q) nextParams.set('catalogQuery', q)
+      else nextParams.delete('catalogQuery')
+      skipNextUrlSearchRef.current = true
+      lastCatalogQueryFromUrlRef.current = q
+      setSearchParams(nextParams, { replace: true })
+      void runCatalogSearch(1, { append: false })
+    }, 450)
+    return () => window.clearTimeout(timer)
+  }, [activeFilterKey, catalogFilters, catalogMeta, catalogResults.length, searchParams, selectedCatalogStores, setSearchParams])
 
   return (
     <>
@@ -349,7 +504,7 @@ export default function CatalogSearchPublic() {
             query={catalogQuery}
             setQuery={setCatalogQuery}
             onSubmit={handleCatalogSubmit}
-            loading={catalogLoading}
+            loading={catalogLoading || filterRefreshPending || storesRefreshing}
             loadingMore={catalogLoadingMore}
             stores={catalogStores}
             toggleStore={toggleCatalogStore}
@@ -369,12 +524,21 @@ export default function CatalogSearchPublic() {
               isEn ? 'No results found with the current filters.' : 'Nenhum resultado encontrado com os filtros atuais.'
             }
             loadingLabel={isEn ? 'Searching external stores...' : 'Consultando lojas externas...'}
+            refreshingLabel={
+              isEn
+                ? 'Showing recent matches. Updating stores…'
+                : 'Mostrando resultados recentes. Atualizando lojas…'
+            }
+            moreResultsLabel={isEn ? 'More results' : 'Mais resultados'}
             loadingMoreLabel={isEn ? 'Loading more results...' : 'Carregando mais resultados...'}
             autoLoadHintLabel={isEn ? 'Scroll to load more results.' : 'Role para carregar mais resultados.'}
             endOfResultsLabel={
               isEn ? 'No more results available for this search.' : 'Fim dos resultados disponiveis para esta busca.'
             }
             storesLabel={isEn ? 'Stores:' : 'Lojas:'}
+            filters={catalogFilters}
+            setFilters={setCatalogFilters}
+            isEn={isEn}
             onPrepareResultHref={stashEphemeralOpenPayload}
             onResultClick={handleResultClick}
             buildResultHref={buildResultHref}

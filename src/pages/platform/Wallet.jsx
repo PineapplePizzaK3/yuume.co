@@ -7,9 +7,9 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../hooks/useAuth'
 import { useSiteLocale } from '../../hooks/useSiteLocale'
-import { useFormatPrice } from '../../hooks/useFormatPrice'
 import { PageSeo } from '../../components/PageSeo'
-import { getWallet, getWalletTransactions, createWalletTopupRequest } from '../../services/walletService'
+import { CreditsAmount, CreditsInline, formatCredits } from '../../components/CreditsAmount'
+import { getWallet, getWalletTransactions, createWalletTopupRequest, WALLET_UPDATED_EVENT } from '../../services/walletService'
 import { createTopUpCheckoutSession } from '../../services/paymentService'
 import { jpyToBrl } from '../../lib/fx'
 import WalletTopupPixModal from '../../components/WalletTopupPixModal'
@@ -18,7 +18,6 @@ import { cacheKey, readCache, writeCache } from '../../lib/cache'
 export default function Wallet() {
   const { t } = useTranslation()
   const locale = useSiteLocale()
-  const fp = useFormatPrice()
   const dateLocale = locale === 'en' ? 'en-US' : 'pt-BR'
   const navigate = useNavigate()
   const location = useLocation()
@@ -64,8 +63,13 @@ export default function Wallet() {
   useEffect(() => {
     let isActive = true
     loadData(() => isActive)
+    const onUpdate = () => {
+      loadData(() => isActive)
+    }
+    window.addEventListener(WALLET_UPDATED_EVENT, onUpdate)
     return () => {
       isActive = false
+      window.removeEventListener(WALLET_UPDATED_EVENT, onUpdate)
     }
   }, [user?.id, t])
 
@@ -172,9 +176,9 @@ export default function Wallet() {
           <>
             <div className="mt-6 rounded-xl border border-earth-200 bg-earth-50 p-6">
               <p className="text-sm font-medium text-earth-600">{t('platform.wallet.availableBalance')}</p>
-              <p className="mt-1 text-3xl font-bold text-earth-900">
-                {fp.jpy(wallet?.balance ?? 0)}
-              </p>
+              <div className="mt-1">
+                <CreditsAmount amount={wallet?.balance ?? 0} variant="lg" />
+              </div>
 
               <form onSubmit={(e) => { e.preventDefault(); handleAddFundsCard(e); }} className="mt-6">
                 <label className="block text-sm font-medium text-earth-700">{t('platform.wallet.addBalance')}</label>
@@ -190,7 +194,7 @@ export default function Wallet() {
                           : 'border-earth-300 text-earth-700 hover:bg-earth-100'
                       }`}
                     >
-                      {fp.jpy(p)}
+                      <CreditsInline amount={p} />
                     </button>
                   ))}
                   <input
@@ -250,12 +254,12 @@ export default function Wallet() {
                       <div className="text-right">
                         <span className={tx.kind === 'credit' ? 'text-green-700' : 'text-earth-900'}>
                           {tx.kind === 'credit' ? '+' : ''}
-                          {fp.jpy(tx.amount)}
+                          <CreditsInline amount={tx.amount} />
                         </span>
                         {tx.balance_after != null && (
                           <p className="text-xs text-earth-500">
                             {t('platform.wallet.balanceAfter', {
-                              amount: fp.jpy(tx.balance_after),
+                              amount: formatCredits(tx.balance_after),
                             })}
                           </p>
                         )}

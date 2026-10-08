@@ -1,10 +1,8 @@
 ﻿import { approveWalletTopupAdmin, rejectWalletTopupAdmin } from '../../../../services/walletService'
-import { useSiteLocale } from '../../../../hooks/useSiteLocale'
-import { formatJpyForSite } from '../../../../lib/moneyDisplay'
+import { CreditsInline } from '../../../../components/CreditsAmount'
 import { useAdminContext } from '../AdminContext'
 
 export default function RecargasSection() {
-  const siteLocale = useSiteLocale()
   const {
     activeTab,
     topupLoading,
@@ -18,9 +16,9 @@ export default function RecargasSection() {
 
   return (
     <section className="mt-0 rounded-b-xl border border-t-0 border-earth-200 bg-earth-50 p-6">
-      <h2 className="text-lg font-semibold text-earth-900">Recargas de carteira via PIX</h2>
+      <h2 className="text-lg font-semibold text-earth-900">Recargas de créditos via PIX</h2>
       <p className="mt-1 text-sm text-earth-600">
-        Solicitações pendentes de recarga. Verifique o comprovante e aprove para creditar o saldo.
+        Solicitações pendentes de recarga. Verifique o comprovante e aprove para creditar créditos na conta.
       </p>
       {topupLoading && <p className="mt-4 text-sm text-earth-600">Carregando...</p>}
       {!topupLoading && topupRequests.length === 0 && (
@@ -35,7 +33,7 @@ export default function RecargasSection() {
             >
               <div>
                 <p className="font-medium text-earth-900">
-                  {formatJpyForSite(siteLocale, r.amount_jpy, null)} — {r.user_name || r.user_email || r.user_id?.slice(0, 8) || '—'}
+                  <CreditsInline amount={r.amount_jpy} /> créditos — {r.user_name || r.user_email || r.user_id?.slice(0, 8) || '—'}
                 </p>
                 <p className="mt-1 text-sm text-earth-600">
                   {formatMoney(r.amount_brl, 'BRL')} • {r.created_at ? new Date(r.created_at).toLocaleString('pt-BR') : ''}
@@ -58,7 +56,7 @@ export default function RecargasSection() {
                     const { error } = await approveWalletTopupAdmin(r.id)
                     if (error) setMessage(error.message)
                     else {
-                      setMessage('Recarga aprovada e saldo creditado.')
+                      setMessage('Recarga aprovada e créditos adicionados.')
                       loadTopupRequests()
                     }
                   }}

@@ -32,7 +32,7 @@ function LivesPage() {
             {t('collector.opening.title', { defaultValue: 'Opening sessions' })}
           </h1>
           <p className="mt-2 text-earth-600">
-            {t('collector.opening.description', { defaultValue: 'Acompanhe aberturas programadas, em gravacao e publicadas.' })}
+            {t('collector.opening.description', { defaultValue: 'Acompanhe Box Breaks programados, em gravacao e publicados.' })}
           </p>
           <div className="mt-6 grid gap-4 md:grid-cols-2">
             {lives.map((live) => (

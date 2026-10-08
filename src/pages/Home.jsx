@@ -5,6 +5,7 @@ import { RECOMENDACOES_QUICK_ACCESS } from '../data/lojasOndeComprar'
 import ImageLightbox from '../components/ImageLightbox'
 import { PageSeo } from '../components/PageSeo'
 import { LocalizedLink } from '../components/LocalizedLink'
+import { useAuth } from '../hooks/useAuth'
 import { useLocalizedPath } from '../hooks/useLocalizedPath'
 
 /** Imagens alinhadas aos cards: 1 registrar, 2 selecionar serviço, 3 finalizar pedido (mesmo tamanho via aspect-video + object-cover). */
@@ -18,6 +19,7 @@ const stepFinalizarPedido = '/home/step-finalizar-pedido.png'
  */
 function Home() {
   const { t } = useTranslation()
+  const { isAuthenticated } = useAuth()
   const lp = useLocalizedPath()
   const [catIndex, setCatIndex] = useState(0)
   const [lightbox, setLightbox] = useState({ open: false, src: '', alt: '' })
@@ -48,31 +50,52 @@ function Home() {
     <>
       <PageSeo
         routeKey="forwardingHome"
-        title={t('meta.home.title')}
-        description={t('meta.home.description')}
+        title={t('meta.forwarding.title')}
+        description={t('meta.forwarding.description')}
       />
 
-      {/* Seção 1: Apresentação da loja */}
-      <section className="px-4 pt-24 pb-16">
-        <div className="mx-auto flex max-w-6xl flex-col items-center gap-8 lg:flex-row lg:gap-12">
-          {/* Frase de efeito */}
-          <div className="flex-1 text-center lg:text-left">
-            <h1 className="text-4xl font-bold tracking-tight text-earth-900 sm:text-5xl">
-              {t('home.heroTitle')}
-            </h1>
-            <p className="mt-4 text-lg text-earth-600">
-              {t('home.heroSubtitle')}
-            </p>
-          </div>
-
-          {/* Imagem com animação de voar */}
-          <div className="w-full shrink-0 lg:max-w-md">
-            <img
-              src="/voando.png?v=2"
-              alt={t('home.heroImgAlt')}
-              className="w-full animate-voar rounded-lg object-contain cursor-zoom-in"
-              onClick={(e) => openLightbox('/voando.png?v=2', t('home.heroImgAlt'), e)}
-            />
+      <section className="px-4 pb-10 pt-24">
+        <div className="mx-auto max-w-6xl">
+          <div className="grid items-center gap-8 lg:grid-cols-[1.1fr_0.9fr]">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-earth-500">
+                {t('home.forwarding.eyebrow')}
+              </p>
+              <h1 className="mt-3 font-display text-3xl font-bold tracking-tight text-earth-900 sm:text-5xl">
+                {t('home.forwarding.title')}
+              </h1>
+              <p className="mt-4 max-w-2xl text-lg text-earth-600">
+                {t('home.forwarding.subtitle')}
+              </p>
+              <div className="mt-6 flex flex-wrap gap-3">
+                <LocalizedLink
+                  toRoute={isAuthenticated ? 'appServices' : 'register'}
+                  className="inline-flex rounded-lg bg-earth-900 px-5 py-3 text-sm font-medium text-earth-50 hover:bg-earth-800"
+                >
+                  {isAuthenticated ? t('home.hierarchy.ctaServices') : t('home.forwarding.ctaRegister')}
+                </LocalizedLink>
+                <LocalizedLink
+                  toRoute="servicosSimulador"
+                  className="inline-flex rounded-lg border border-earth-300 bg-white px-5 py-3 text-sm font-medium text-earth-800 hover:bg-earth-50"
+                >
+                  {t('home.forwarding.ctaSimulator')}
+                </LocalizedLink>
+                <LocalizedLink
+                  toRoute="catalogSearchPublic"
+                  className="inline-flex px-2 py-3 text-sm font-medium text-earth-700 underline-offset-4 hover:underline"
+                >
+                  {t('home.forwarding.ctaSearch')}
+                </LocalizedLink>
+              </div>
+            </div>
+            <div className="flex justify-center">
+              <img
+                src="/voando.png?v=2"
+                alt={t('home.heroImgAlt')}
+                className="w-full max-w-md animate-voar object-contain cursor-zoom-in"
+                onClick={(e) => openLightbox('/voando.png?v=2', t('home.heroImgAlt'), e)}
+              />
+            </div>
           </div>
         </div>
       </section>

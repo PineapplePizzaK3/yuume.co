@@ -27,6 +27,14 @@ function urlsMatching(text: string, re: RegExp): string[] {
     .filter(Boolean)
 }
 
+/** Related / recommended carousels sit below the listing gallery on JP marketplaces. */
+function beforeRelated(html: string): string {
+  const cut = String(html || '').search(
+    /おすすめの商品|関連商品|他の商品|この出品者のその他|よく一緒に|relatedItems|recommendItems|similarItems|relatedProducts/i,
+  )
+  return cut > 400 ? html.slice(0, cut) : html
+}
+
 function resolveStore(pageUrl: URL): StoreId | null {
   const host = pageUrl.hostname.toLowerCase()
   if (/(^|\.)amazon\.(co\.jp|com)$/.test(host)) return 'amazon'
@@ -58,7 +66,7 @@ function extractAmazonGallery(html: string, pageUrl: URL): string[] {
  * O hash da URL do anúncio NÃO aparece no path da imagem.
  */
 function extractRakumaGallery(html: string, pageUrl: URL): string[] {
-  const text = unescapeMarkup(html)
+  const text = beforeRelated(unescapeMarkup(html))
   const matches = Array.from(
     text.matchAll(/https:\/\/img\.fril\.jp\/img\/(\d+)\/([lms])\/(\d+)\.(?:jpg|jpeg|png|webp)(?:\?[^"'\\\s]*)?/gi),
   )
@@ -100,7 +108,7 @@ function extractRakumaGallery(html: string, pageUrl: URL): string[] {
 }
 
 function extractYahooAuctionGallery(html: string, pageUrl: URL): string[] {
-  const text = unescapeMarkup(html)
+  const text = beforeRelated(unescapeMarkup(html))
   const gallery =
     text.match(/id=["']imagebox["'][\s\S]{0,40000}/i)?.[0] ||
     text.match(/class=["'][^"']*ProductImage[^"']*["'][\s\S]{0,25000}/i)?.[0] ||
@@ -122,6 +130,48 @@ function extractYahooAuctionGallery(html: string, pageUrl: URL): string[] {
   return pickProductImages(urls, pageUrl.origin)
 }
 
+function collectHttpUrls(value: unknown, out: string[], depth = 0): void {
+  if (depth > 8 || value == null) return
+  if (typeof value === 'string') {
+    if (/^https?:\/\//i.test(value) && /yimg\.jp/i.test(value)) out.push(cleanUrl(value))
+    return
+  }
+  if (Array.isArray(value)) {
+    for (const child of value) collectHttpUrls(child, out, depth + 1)
+    return
+  }
+  if (typeof value === 'object') {
+    for (const child of Object.values(value as Record<string, unknown>)) {
+      collectHttpUrls(child, out, depth + 1)
+    }
+  }
+}
+
+function findFleaItemImages(node: unknown, itemId: string, depth = 0): string[] {
+  if (!node || typeof node !== 'object' || depth > 14) return []
+  if (Array.isArray(node)) {
+    for (const child of node) {
+      const found = findFleaItemImages(child, itemId, depth + 1)
+      if (found.length) return found
+    }
+    return []
+  }
+  const rec = node as Record<string, unknown>
+  const id = String(rec.id ?? rec.itemId ?? rec.item_id ?? rec.code ?? '')
+  if (id && id === itemId) {
+    const out: string[] = []
+    for (const key of ['images', 'imageUrls', 'itemImageUrls', 'photos', 'thumbnails', 'imageUrl', 'thumbnailUrl', 'image']) {
+      if (key in rec) collectHttpUrls(rec[key], out)
+    }
+    return out
+  }
+  for (const child of Object.values(rec)) {
+    const found = findFleaItemImages(child, itemId, depth + 1)
+    if (found.length) return found
+  }
+  return []
+}
+
 function extractYahooFleaGallery(html: string, pageUrl: URL): string[] {
   const itemId = pageUrl.pathname.split('/').filter(Boolean).pop() || ''
   if (!itemId) return []
@@ -129,38 +179,49 @@ function extractYahooFleaGallery(html: string, pageUrl: URL): string[] {
   const next =
     text.match(/<script[^>]*id=["']__NEXT_DATA__["'][^>]*>([\s\S]*?)<\/script>/i)?.[1] || ''
   if (!next) return []
-  const idx = next.indexOf(itemId)
-  if (idx < 0) return []
-  const windowText = next.slice(Math.max(0, idx - 200), idx + 12_000)
-  const urls = urlsMatching(windowText, /https:\/\/[^"'\\\s<>]*yimg\.jp\/[^"'\\\s<>]+/gi).filter(
+
+  let fromItem: string[] = []
+  try {
+    fromItem = findFleaItemImages(JSON.parse(next), itemId)
+  } catch {
+    fromItem = []
+  }
+
+  // Never take a 12k window around the first itemId match — related items sit next to it.
+  const withId = urlsMatching(next, /https:\/\/[^"'\\\s<>]*yimg\.jp\/[^"'\\\s<>]+/gi).filter(
     (url) =>
+      url.toLowerCase().includes(itemId.toLowerCase()) &&
       /fleamarket|paypay|item|product|images/i.test(url) &&
       !/(icon|logo|avatar|sprite|loading|1x1|clear\.gif|spaceball|transparent)/i.test(url),
   )
+  const urls = fromItem.length ? fromItem : withId
   return pickProductImages(urls, pageUrl.origin)
 }
 
 function extractSnkrdunkGallery(html: string, pageUrl: URL): string[] {
-  const text = unescapeMarkup(html)
+  const text = beforeRelated(unescapeMarkup(html))
   const slug = pageUrl.pathname.split('/').filter(Boolean).pop() || ''
   let best: string[] = []
+  let bestScore = 0
   for (const match of text.matchAll(/\[(?:\s*"https:\/\/cdn\.snkrdunk\.com\/[^"]+"\s*,?){1,24}\s*\]/g)) {
     const urls = urlsMatching(match[0], /https:\/\/cdn\.snkrdunk\.com\/[^"]+/g).filter(
       (url) => !/\/assets\/|logo|icon|avatar/i.test(url),
     )
-    if (urls.length > best.length) best = urls
+    if (!urls.length) continue
+    const slugHits = slug ? urls.filter((url) => url.includes(slug)).length : 0
+    // Prefer arrays that mention this product. Longest array is usually related items.
+    const score = slugHits > 0 ? 100 + slugHits : (best.length ? 0 : urls.length)
+    if (score > bestScore) {
+      best = slugHits > 0 ? urls.filter((url) => url.includes(slug)) : urls
+      bestScore = score
+    }
   }
   if (!best.length) {
-    const cut = text.search(/relatedProducts|recommendItems|similarItems/i)
-    const head = cut > 0 ? text.slice(0, cut) : text.slice(0, 80_000)
-    best = urlsMatching(head, /"imageUrl"\s*:\s*"(https:\/\/cdn\.snkrdunk\.com\/[^"]+)"/g).filter(
+    const head = text.slice(0, 80_000)
+    const all = urlsMatching(head, /"imageUrl"\s*:\s*"(https:\/\/cdn\.snkrdunk\.com\/[^"]+)"/g).filter(
       (url) => !/\/assets\/|logo|icon|avatar/i.test(url),
     )
-  }
-  // Keep only product media; if slug is present prefer urls near product context.
-  if (slug && best.length > 8) {
-    const narrowed = best.filter((url) => url.includes(slug) || /upload_bg_removed|product|apparel/i.test(url))
-    if (narrowed.length) best = narrowed
+    best = slug ? all.filter((url) => url.includes(slug)) : all.slice(0, 1)
   }
   return pickProductImages(best, pageUrl.origin)
 }

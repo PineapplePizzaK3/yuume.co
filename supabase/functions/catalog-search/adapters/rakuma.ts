@@ -1,4 +1,5 @@
 import type { UnifiedSearchHit } from '../types.ts'
+import { DEFAULT_FILTERS, rakumaSearchUrl, type CatalogSearchFilters } from '../filters.ts'
 import { buildHit, parsePrice, pickProductImages, rakumaTagsFromBlock } from '../normalize.ts'
 import {
   collectImageCandidates,
@@ -74,10 +75,14 @@ function hitsFromItemBoxes(html: string, pageSize: number, query: string): Unifi
       block.match(/<img[^>]+(?:data-src|data-original|data-lazy|data-lazy-src)=["']([^"']+)["']/i)?.[1] ||
       block.match(/<img[^>]+srcset=["']([^"']+)["']/i)?.[1]?.split(',')?.[0]?.trim()?.split(/\s+/)?.[0] ||
       null
-    const imageUrls = pickProductImages(
+    const rawImages = pickProductImages(
       [preferredImg, block.match(/<img[^>]+src=["']([^"']+)["']/i)?.[1], ...collectImageCandidates(block)],
       'https://fril.jp',
     )
+    const coverItemId = rawImages[0]?.match(/img\.fril\.jp\/img\/(\d+)\//i)?.[1] || ''
+    const imageUrls = coverItemId
+      ? rawImages.filter((url) => new RegExp(`img\\.fril\\.jp/img/${coverItemId}/`, 'i').test(url))
+      : rawImages.slice(0, 1)
 
     if (!title || !productUrl) continue
     if (!isRakumaProductUrl(productUrl)) continue
@@ -157,12 +162,15 @@ function collectFromJina(jinaText: string, pageSize: number, query: string): Uni
   return collected.slice(0, pageSize)
 }
 
-export async function searchRakuma(query: string, pageSize: number, storePage = 1): Promise<UnifiedSearchHit[]> {
+export async function searchRakuma(
+  query: string,
+  pageSize: number,
+  storePage = 1,
+  filters: CatalogSearchFilters = DEFAULT_FILTERS,
+): Promise<UnifiedSearchHit[]> {
   const startedAt = Date.now()
   const budgetMs = STORE_DEADLINE_MS - 300
-  const encoded = encodeURIComponent(query)
-  const pageParam = storePage > 1 ? `&page=${storePage}` : ''
-  const searchUrl = `https://fril.jp/s?query=${encoded}${pageParam}`
+  const searchUrl = rakumaSearchUrl(query, storePage, filters)
 
   const html = await fetchText(searchUrl, FETCH_TIMEOUT_MS, { Referer: 'https://fril.jp/' }).catch(() => '')
   const fromHtml = collectFromHtml(html, pageSize, query)

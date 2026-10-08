@@ -18,6 +18,10 @@
     "catalog:live-rips:refresh": "npm run catalog:on-demand:refresh && npm run catalog:live-rips:box-pack",
     "catalog:sets:import": "node --env-file=.env scripts/catalog/import-tcgdex-set.mjs",
     "catalog:sets:validate": "node --env-file=.env scripts/catalog/validate-set.mjs",
+    "catalog:market:snapshots": "node --env-file=.env scripts/catalog/refresh-market-snapshots.mjs",
+    "catalog:cleanup-listing-index": "node --env-file=.env scripts/catalog/cleanup-listing-index.mjs",
+    "catalog:refresh-hot-queries": "node --env-file=.env scripts/catalog/refresh-hot-queries.mjs",
+    "catalog:box-break:seed": "node scripts/catalog/seed-live-box-breaks.mjs",
     "recalc:calculator-margin": "node --import ./scripts/register-extensionless.mjs scripts/recalc-calculator-products-margin.mjs",
     "recalc:calculator-margin:dry": "node --import ./scripts/register-extensionless.mjs scripts/recalc-calculator-products-margin.mjs --dry-run",
     "deploy": "npm run build && wrangler deploy"

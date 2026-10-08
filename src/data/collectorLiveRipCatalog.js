@@ -13,7 +13,7 @@ import { OPENING_BATCH_STATUSES } from './collectorMock'
 export { LIVE_RIPS_PRODUCT_CATEGORIES as OPENING_CATALOG_CATEGORIES }
 
 const DEFAULT_PACKS_PER_BOX = {
-  'pokemon-standard': 20,
+  'pokemon-standard': 30,
   'one-piece': 24,
   yugioh: 24,
   'weis-schwarz': 16,
@@ -21,6 +21,98 @@ const DEFAULT_PACKS_PER_BOX = {
   'union-arena': 16,
   'gundam-card-game': 24,
   duelmasters: 30,
+}
+
+const POKEMON_TWENTY_PACK_SETS =
+  /クレイバースト|clay burst|スノーハザード|snow hazard|ブラックボルト|black bolt|ホワイトフレア|white flare|ポケモンカード151|pokemon card 151|ロケット団の栄光|glory of (the )?team rocket|glory of the rocket|30th\s+celebration/
+
+const POKEMON_THIRTY_PACK_SETS =
+  /トリプレットビート|triplet beat/
+
+function productSearchText(product) {
+  return [
+    product?.name,
+    product?.nameEn,
+    product?.collectionTitle,
+    product?.type,
+  ]
+    .filter(Boolean)
+    .join('\n')
+    .toLowerCase()
+}
+
+function firstPositiveInt(...values) {
+  for (const value of values) {
+    const n = Math.floor(Number(value))
+    if (Number.isFinite(n) && n > 0) return n
+  }
+  return 0
+}
+
+function packsPerBoxForPokemon(text) {
+  if (/ハイクラス|high[\s-]?class/.test(text)) return 10
+  if (/拡張パックデラックス|expansion pack deluxe/.test(text)) return 30
+  if (POKEMON_THIRTY_PACK_SETS.test(text)) return 30
+  if (/強化拡張|enhanced expansion/.test(text)) return 20
+  if (POKEMON_TWENTY_PACK_SETS.test(text)) return 20
+  if (/拡張パック|expansion pack/.test(text)) return 30
+  return 0
+}
+
+function packsPerBoxForYugioh(text) {
+  if (/premium pack|プレミアムパック/.test(text)) return 10
+  if (/deck[\s-]?build|デッキビルド/.test(text)) return 15
+  if (/duelist pack|デュエリストパック/.test(text)) return 15
+  if (/limited pack|リミテッドパック/.test(text)) return 15
+  if (/world premiere|ワールドプレミア/.test(text)) return 15
+  if (/concept pack|コンセプトパック/.test(text)) return 15
+  if (/special pack|スペシャルパック/.test(text)) return 15
+  if (/selection|セレクション/.test(text)) return 15
+  if (/animation chronicle/.test(text)) return 15
+  if (/anniversary pack|アニバーサリーパック/.test(text)) return 15
+  if (/basic pack|基本パック/.test(text)) return 24
+  return 0
+}
+
+function packsPerBoxForWeiss(text) {
+  if (/premium booster|プレミアムブースター/.test(text)) return 6
+  if (/extra booster|extra pack|エクストラ/.test(text)) return 12
+  return 0
+}
+
+function packsPerBoxForOnePiece(text) {
+  if (/extra booster|エクストラブースター/.test(text)) return 24
+  if (/premium booster|プレミアムブースター/.test(text)) return 10
+  return 0
+}
+
+function packsPerBoxForDragonBall(text) {
+  if (/story booster|ストーリーブースター/.test(text)) return 12
+  if (/extra booster|エクストラブースター/.test(text)) return 12
+  return 0
+}
+
+function packsPerBoxForUnionArena(text) {
+  if (/precious booster|プレシャスブースター/.test(text)) return 8
+  if (/extra booster|エクストラブースター/.test(text)) return 8
+  return 0
+}
+
+function packsPerBoxForGundam(text) {
+  if (/extra booster|エクストラブースター/.test(text)) return 12
+  return 0
+}
+
+function packsPerBoxForDuelMasters(text) {
+  if (/premium pack|プレミアムパック/.test(text)) return 10
+  if (/black box pack|ブラックボックス/.test(text)) return 10
+  if (/adrenaline pack|アドレナリン/.test(text)) return 10
+  if (/dream pack|ドリームパック/.test(text)) return 10
+  if (/quest pack|クエストパック/.test(text)) return 10
+  if (/docking pack|ドッキングパック/.test(text)) return 10
+  if (/entry pack|エントリーパック/.test(text)) return 10
+  if (/memorial pack|メモリアルパック/.test(text)) return 10
+  return 0
 }
 
 const OPENING_BATCH_PREFIX = 'opening-live-'
@@ -44,7 +136,34 @@ export function isLiveRipOpeningBatchId(batchId) {
 }
 
 export function packsPerBoxForLiveRipProduct(product) {
+  const explicit = firstPositiveInt(product?.packsPerBox, product?.packs, product?.totalPacks)
+  if (explicit) return explicit
+
+  const text = productSearchText(product)
   const categoryId = String(product?.categoryId || '')
+  const inferred =
+    (categoryId === 'pokemon-standard' || /pokemon|ポケモン/.test(text)
+      ? packsPerBoxForPokemon(text)
+      : 0)
+    || (categoryId === 'one-piece' || /one piece|ワンピース/.test(text)
+      ? packsPerBoxForOnePiece(text)
+      : 0)
+    || (categoryId === 'yugioh' || /yu-gi-oh|遊戯王/.test(text) ? packsPerBoxForYugioh(text) : 0)
+    || (categoryId === 'weis-schwarz' || /weiss|ヴァイス/.test(text) ? packsPerBoxForWeiss(text) : 0)
+    || (categoryId === 'dragon-ball-super-card-game' || /dragon ball|ドラゴンボール/.test(text)
+      ? packsPerBoxForDragonBall(text)
+      : 0)
+    || (categoryId === 'union-arena' || /union arena|ユニオンアリーナ/.test(text)
+      ? packsPerBoxForUnionArena(text)
+      : 0)
+    || (categoryId === 'gundam-card-game' || /gundam|ガンダム/.test(text)
+      ? packsPerBoxForGundam(text)
+      : 0)
+    || (categoryId === 'duelmasters' || /duel masters|デュエルマスターズ/.test(text)
+      ? packsPerBoxForDuelMasters(text)
+      : 0)
+
+  if (inferred) return inferred
   return DEFAULT_PACKS_PER_BOX[categoryId] || 20
 }
 

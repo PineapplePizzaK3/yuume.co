@@ -25,8 +25,8 @@ Source types: `api`, `partner`, `affiliate`, `own_data`, `permitted_automation`,
 | Source | Type (proposed) | search | display | cache | link | purchase / sourcing | automate | Evidence |
 |---|---|---|---|---|---|---|---|---|
 | YuumeCo own stock (`products`) | own_data | yes | yes | yes | yes | yes | yes | First-party data |
-| Yahoo! Shopping | api | yes, Item Search v3 with app ID | yes, with required credit display | short, respect guideline | yes | yes | yes, within 30 req/min per app ID | [Item Search v3](https://developer.yahoo.co.jp/webapi/shopping/v3/itemsearch.html), guideline + credit display pages. Needs review (D1). Honor `is_cross_border_agency` (D8). |
-| Rakuten Ichiba | api | yes, Ichiba Item Search API | yes, per Rakuten rules | per Rakuten refresh rules | yes | yes | yes, within limits | [Item Search API](https://webservice.rakuten.co.jp/documentation/ichiba-item-search), data-use FAQ. Needs review (D1). Excludes C2C (Rakuma not covered). |
+| Yahoo! Shopping | api | yes, Item Search v3 with app ID | yes, with required credit display | short, respect guideline | yes | yes | yes, within 30 req/min per app ID | [Item Search v3](https://developer.yahoo.co.jp/webapi/shopping/v3/itemsearch.html). Cleared D1 (2026-09-27). Honor `is_cross_border_agency` (D8). |
+| Rakuten Ichiba | api | yes, Ichiba Item Search API | yes, per Rakuten rules | per Rakuten refresh rules | yes | yes | yes, within limits | [Item Search API](https://webservice.rakuten.co.jp/documentation/ichiba-item-search). Cleared D1 (2026-09-27). Excludes C2C (Rakuma not covered). |
 | Amazon.co.jp | api (future) / link_out_only (now) | only via Creators API after Associates eligibility | only via API | per API terms | yes | yes | only via API | PA-API 5 retired 2026; Creators API needs qualifying sales (D2). Current HTML scraping is not covered by any API license. |
 | Mercari | link_out_only + manual_sourcing | no | no | no | yes | yes (staff buy) | no | Seller terms Art. 13-6: no access by means other than those provided, no commercial use outside the service without written permission. No public C2C API. Pursue partner program. |
 | Yahoo Auctions | link_out_only + manual_sourcing | no | no | no | yes | yes | no | Auction Web API closed 2020. No permitted automation found. |
@@ -66,7 +66,7 @@ switched off from `market_sources` without a deploy. No new Collector Platform f
 
 | ID | Decision | Blocks |
 |---|---|---|
-| D1 | Clear Yahoo! Shopping and Rakuten API use (commercial use, credit display, caching) | Steps 8/10 API adapters |
+| D1 | Clear Yahoo! Shopping and Rakuten API use (commercial use, credit display, caching). Decided 2026-09-27: yes. Official API adapters still required; scraping stays forbidden. | Steps 8/10 API adapters |
 | D2 | Amazon Creators API eligibility | Amazon API adapter |
 | D3 | Card image policy (none / own photos / license) | Catalog images (Step 3 ships text-only) |
 | D4 | Keep legacy scraping (catalog search, scrape-product, SNKRDUNK on-demand + top cards). Kill switch remains the registry flags. | Decided 2026-09-27. Workflow schedules top-card refresh. |

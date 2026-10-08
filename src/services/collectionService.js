@@ -49,14 +49,18 @@ export async function getOwnedCollectionItem(catalogItemId) {
  * Idempotent own / unown.
  * @param {string} catalogItemId
  * @param {boolean} owned
- * @param {{ quantity?: number }} [options]
+ * @param {{ quantity?: number, source?: string, holdingId?: string }} [options]
  */
-export async function setCatalogItemOwned(catalogItemId, owned, { quantity } = {}) {
+export async function setCatalogItemOwned(catalogItemId, owned, { quantity, source, holdingId } = {}) {
   try {
     const params = {
       p_catalog_item_id: catalogItemId,
       p_owned: Boolean(owned),
       p_quantity: quantity == null ? null : Number(quantity),
+    }
+    if (source != null || holdingId != null) {
+      params.p_source = source || null
+      params.p_holding_id = holdingId || null
     }
     const { data, error } = await withDbTimeout(supabase.rpc('service_collection_set_owned', params))
     if (error) return { data: null, error: toServiceError(error) }

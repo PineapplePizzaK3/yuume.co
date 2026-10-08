@@ -67,7 +67,18 @@ export async function getServices() {
  * - assisted_buy (Redirecionamento Assistido, pré-pagamento): status awaiting_quote (admin define orçamento)
  * Personal Shopping: status awaiting_quote.
  */
-export async function createOrder(userId, { service_id, message, attachment_urls, service_name, order_module, early_prepayment_requested, early_prepayment_wallet_jpy, early_prepayment_declared_products_jpy }) {
+export async function createOrder(userId, {
+  service_id,
+  message,
+  attachment_urls,
+  service_name,
+  order_module,
+  early_prepayment_requested,
+  early_prepayment_wallet_jpy,
+  early_prepayment_declared_products_jpy,
+  catalog_item_id,
+  wishlist_item_id,
+}) {
   const isPersonalShopping = service_name === 'Personal Shopping'
   const isRedirecionamento = service_name === 'Redirecionamento'
   const module = order_module || null
@@ -91,21 +102,25 @@ export async function createOrder(userId, { service_id, message, attachment_urls
       ? Math.floor(Number(early_prepayment_declared_products_jpy))
       : null
   try {
+    const row = {
+      user_id: userId,
+      created_by: userId,
+      service_id: service_id ?? null,
+      message: message || null,
+      attachment_urls: urls,
+      order_module: module,
+      status,
+      early_prepayment_requested: earlyPrepay,
+      early_prepayment_wallet_jpy: walletJpy,
+      early_prepayment_declared_products_jpy: declaredProductsJpy,
+    }
+    if (catalog_item_id) row.catalog_item_id = catalog_item_id
+    if (wishlist_item_id) row.wishlist_item_id = wishlist_item_id
+
     const { data, error } = await withDbTimeout(
       supabase
         .from('orders')
-        .insert({
-          user_id: userId,
-          created_by: userId,
-          service_id: service_id ?? null,
-          message: message || null,
-          attachment_urls: urls,
-          order_module: module,
-          status,
-          early_prepayment_requested: earlyPrepay,
-          early_prepayment_wallet_jpy: walletJpy,
-          early_prepayment_declared_products_jpy: declaredProductsJpy,
-        })
+        .insert(row)
         .select()
         .single()
     )

@@ -11,12 +11,14 @@ import { useLocalizedPath } from '../../hooks/useLocalizedPath'
 import { useSiteLocale } from '../../hooks/useSiteLocale'
 import { LOCALE_EN } from '../../lib/localeRoutes'
 import { getMyOrders } from '../../services/orderService'
-import { getWallet } from '../../services/walletService'
+import { getWallet, WALLET_UPDATED_EVENT } from '../../services/walletService'
 import { getWishlistLinks } from '../../services/wishlistLinkService'
 import { getMyNotifications, markNotificationRead } from '../../services/notificationService'
 import { getMyInventoryCount, getMyShipments } from '../../services/inventoryService'
 import { SHIPPING_ADDRESS_JAPAN } from '../../data/legalConfig'
 import { cacheKey, readCache, writeCache } from '../../lib/cache'
+import { MinhaYuumeTabs } from '../../components/platform/MinhaYuumeTabs'
+import { CreditsInline } from '../../components/CreditsAmount'
 
 /** Mesmos status da aba "Envios em processo" em Lounge → Envios. */
 const SHIPMENT_IN_PROCESS_STATUSES = ['requested', 'awaiting_payment', 'paid', 'shipped']
@@ -32,10 +34,6 @@ const DEFAULT_DASHBOARD_PREFS = {
   showCardOrders: true,
   showCardWishlist: true,
   showCardMyProducts: true,
-}
-
-function formatMoney(value, currency = 'BRL', numberLocale = 'pt-BR') {
-  return Number(value)?.toLocaleString(numberLocale, { style: 'currency', currency }) ?? '—'
 }
 
 function readDashboardPrefs(userId) {
@@ -191,7 +189,20 @@ export default function Dashboard() {
       }
     }
     run()
-    return () => { isActive = false }
+    const onWalletUpdate = async () => {
+      if (!user?.id) return
+      const walletRes = await getWallet(user.id)
+      if (!isActive || walletRes?.error) return
+      setWallet(walletRes.data ?? null)
+      const k = cacheKey(user.id, 'dashboard_v1')
+      const cached = readCache(k, 1000 * 60 * 30)
+      if (cached) writeCache(k, { ...cached, wallet: walletRes.data ?? null })
+    }
+    window.addEventListener(WALLET_UPDATED_EVENT, onWalletUpdate)
+    return () => {
+      isActive = false
+      window.removeEventListener(WALLET_UPDATED_EVENT, onWalletUpdate)
+    }
   }, [user?.id])
 
   useEffect(() => {
@@ -237,7 +248,6 @@ export default function Dashboard() {
   const accountCode = profile?.account_code ?? ''
   const recipientLine = accountCode ? `${name} - ${accountCode}` : name
   const balance = wallet?.balance ?? 0
-  const currency = wallet?.currency ?? 'JPY'
   const unreadCount = notifications.filter((n) => !n.read_at).length
   const addressForUser = {
     recipient: recipientLine,
@@ -272,6 +282,33 @@ export default function Dashboard() {
         <p className="mt-2 text-earth-600">
           {t('platform.dashboard.greeting', { name })}
         </p>
+        <MinhaYuumeTabs active="resumo" />
+
+        <section className="mt-6">
+          <h2 className="text-lg font-semibold text-earth-900">{t('platform.dashboard.hubTitle')}</h2>
+          <p className="mt-1 text-sm text-earth-600">{t('platform.dashboard.hubSubtitle')}</p>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              { to: lp('collectorCollection'), title: t('platform.dashboard.hubCollection'), body: t('platform.dashboard.hubCollectionBody') },
+              { to: lp('collectorWishlist'), title: t('platform.dashboard.hubWishlist'), body: t('platform.dashboard.hubWishlistBody') },
+              { to: lp('minhaYuumeBoxBreak'), title: t('platform.dashboard.hubOpenings'), body: t('platform.dashboard.hubOpeningsBody') },
+              { to: lp('appLounge'), title: t('platform.dashboard.hubHoldings'), body: t('platform.dashboard.hubHoldingsBody') },
+              { to: lp('appLounge', '?tab=pedidos'), title: t('platform.dashboard.hubOrders'), body: t('platform.dashboard.hubOrdersBody') },
+              { to: lp('appLounge', '?tab=envios'), title: t('platform.dashboard.hubShipments'), body: t('platform.dashboard.hubShipmentsBody') },
+              { to: lp('appConta'), title: t('platform.dashboard.hubAccount'), body: t('platform.dashboard.hubAccountBody') },
+              { to: lp('appCart'), title: t('platform.dashboard.hubPayments'), body: t('platform.dashboard.hubPaymentsBody') },
+            ].map((item) => (
+              <Link
+                key={item.to + item.title}
+                to={item.to}
+                className="rounded-xl border border-earth-200 bg-white p-4 text-left transition hover:bg-earth-50"
+              >
+                <span className="block font-medium text-earth-900">{item.title}</span>
+                <span className="mt-1 block text-sm text-earth-600">{item.body}</span>
+              </Link>
+            ))}
+          </div>
+        </section>
 
         {showCustomizer && (
           <section className="mt-4 rounded-xl border border-earth-200 bg-earth-50 p-4">
@@ -525,7 +562,7 @@ export default function Dashboard() {
                   </svg>
                 </span>
                 <span className="min-w-0 text-xs">
-                  <span className="block font-medium text-earth-900">{formatMoney(balance, currency, dateLocale)}</span>
+                  <span className="block font-medium text-earth-900"><CreditsInline amount={balance} /></span>
                   <span className="block text-earth-500">{t('platform.dashboard.walletLabel')}</span>
                 </span>
               </Link>}

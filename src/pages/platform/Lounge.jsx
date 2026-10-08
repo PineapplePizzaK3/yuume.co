@@ -3,20 +3,21 @@ import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router-dom'
 import { PageSeo } from '../../components/PageSeo'
 import { useAuth } from '../../hooks/useAuth'
-import { useFormatPrice } from '../../hooks/useFormatPrice'
-import { getWallet, getWalletTransactions } from '../../services/walletService'
+import { CreditsAmount } from '../../components/CreditsAmount'
+import { CreditsIcon } from '../../components/CreditsIcon'
+import { getWallet, getWalletTransactions, WALLET_UPDATED_EVENT } from '../../services/walletService'
 import WalletAddFundsModal from '../../components/WalletAddFundsModal'
 import MeusProdutos from './MeusProdutos'
 import Envios from './Envios'
 import Orders from './Orders'
 import ListaDesejos from './ListaDesejos'
+import { MyBoxBreaksPanel } from '../../components/platform/MyBoxBreaksPanel'
 
 const LOUNGE_TAB_ORDER_STORAGE_KEY = 'lounge_tabs_order_v1'
-const LOUNGE_MODULE_IDS = ['produtos', 'envios', 'pedidos', 'desejos']
+const LOUNGE_MODULE_IDS = ['produtos', 'envios', 'pedidos', 'desejos', 'box-break']
 
 export default function Lounge() {
   const { t } = useTranslation()
-  const fp = useFormatPrice()
   const { user, session } = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
   const [orders, setOrders] = useState([])
@@ -37,6 +38,7 @@ export default function Lounge() {
       envios: t('platform.lounge.tabEnvios'),
       pedidos: t('platform.lounge.tabPedidos'),
       desejos: t('platform.lounge.tabDesejos'),
+      'box-break': t('platform.lounge.tabBoxBreak', { defaultValue: 'Box Break' }),
     }),
     [t]
   )
@@ -104,9 +106,9 @@ export default function Lounge() {
 
   useEffect(() => {
     let isActive = true
-    const run = async () => {
+    const run = async ({ silent = false } = {}) => {
       if (!user?.id) return
-      setLoadingWallet(true)
+      if (!silent) setLoadingWallet(true)
       try {
         const [walletRes, txRes] = await Promise.all([
           getWallet(user.id),
@@ -124,9 +126,14 @@ export default function Lounge() {
         if (isActive) setLoadingWallet(false)
       }
     }
-    run()
+    void run()
+    const onUpdate = () => {
+      void run({ silent: true })
+    }
+    window.addEventListener(WALLET_UPDATED_EVENT, onUpdate)
     return () => {
       isActive = false
+      window.removeEventListener(WALLET_UPDATED_EVENT, onUpdate)
     }
   }, [user?.id, t])
 
@@ -151,15 +158,15 @@ export default function Lounge() {
         <section className="mt-6 rounded-xl border border-earth-200 bg-white p-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-earth-100 text-lg" aria-hidden>
-                ¥
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-earth-100 text-earth-700" aria-hidden>
+                <CreditsIcon size={22} />
               </div>
               <div className="min-w-0">
                 <p className="text-xs text-earth-500">{t('platform.lounge.wallet')}</p>
                 {loadingWallet ? (
                   <p className="text-sm text-earth-500">{t('platform.lounge.loadingShort')}</p>
                 ) : (
-                  <p className="truncate text-xl font-bold text-earth-900">{fp.jpy(wallet?.balance ?? 0)}</p>
+                  <CreditsAmount amount={wallet?.balance ?? 0} variant="compact" />
                 )}
               </div>
             </div>
@@ -233,6 +240,7 @@ export default function Lounge() {
           {activeModule === 'envios' && <Envios />}
           {activeModule === 'pedidos' && <Orders />}
           {activeModule === 'desejos' && <ListaDesejos />}
+          {activeModule === 'box-break' && <MyBoxBreaksPanel />}
         </section>
       </div>
     </>

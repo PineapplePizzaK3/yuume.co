@@ -12,6 +12,7 @@ import { PageSeo } from '../../components/PageSeo'
 import { createPortal } from 'react-dom'
 import { useAuth } from '../../hooks/useAuth'
 import {
+  CART_UPDATED_EVENT,
   getCart,
   updateCartItem,
   removeFromCart,
@@ -33,6 +34,11 @@ import {
 import { brlToJpy, formatUSD, jpyToBrl, getFxBrlPerJpy } from '../../lib/fx'
 import { TriCurrencyDisplay } from '../../components/TriCurrencyDisplay'
 import { appStoreProductPath, publicEphemeralProductPath } from '../../lib/localeRoutes'
+import {
+  dropExpiredEphemeralCartItems,
+  isEphemeralListingExpired,
+  nextEphemeralExpiryDelayMs,
+} from '../../lib/ephemeralCartExpiry'
 
 function getCartLineKey(item) {
   if (item?.line_type === 'ephemeral' || item?.ephemeral_token) {
@@ -156,6 +162,8 @@ function Cart() {
   const [scheduledGroupsById, setScheduledGroupsById] = useState({})
   const loadCartSeqRef = useRef(0)
   const couponBoxRef = useRef(null)
+  const itemsRef = useRef([])
+  const loadCartRef = useRef(async () => {})
 
   const success = searchParams.get('success') === 'true'
   const canceled = searchParams.get('canceled') === 'true'
@@ -278,6 +286,36 @@ function Cart() {
   useEffect(() => {
     loadCart()
   }, [user?.id])
+
+  itemsRef.current = items
+  loadCartRef.current = loadCart
+
+  useEffect(() => {
+    const expireDueItems = () => {
+      const { live, removedCount } = dropExpiredEphemeralCartItems(itemsRef.current)
+      if (removedCount <= 0) return false
+      itemsRef.current = live
+      setItems(live)
+      setFeedback(t('platform.cart.ephemeralExpiredNotice', { count: removedCount }))
+      window.dispatchEvent(new CustomEvent(CART_UPDATED_EVENT, { detail: { userId: user?.id } }))
+      void loadCartRef.current({ silent: true })
+      return true
+    }
+
+    if (expireDueItems()) return undefined
+
+    const delay = nextEphemeralExpiryDelayMs(items)
+    if (delay == null) return undefined
+    const timer = window.setTimeout(expireDueItems, delay + 50)
+    const onFocus = () => {
+      expireDueItems()
+    }
+    window.addEventListener('focus', onFocus)
+    return () => {
+      window.clearTimeout(timer)
+      window.removeEventListener('focus', onFocus)
+    }
+  }, [items, t, user?.id])
 
   useEffect(() => {
     let active = true
@@ -677,7 +715,16 @@ function Cart() {
     const { error } = isEphemeralCartItem(currentItem)
       ? await updateEphemeralCartItem(currentItem.ephemeral_token, qty)
       : await updateCartItem(user.id, lineKey, qty)
-    if (error) setFeedback(error.message)
+    if (error) {
+      setFeedback(error.message)
+      const expiredOnServer = /expir/i.test(String(error.message || ''))
+      if (
+        isEphemeralCartItem(currentItem)
+        && (expiredOnServer || isEphemeralListingExpired(currentItem?.products?.expires_at))
+      ) {
+        void loadCart({ silent: true })
+      }
+    }
     else {
       setQtyDrafts((d) => {
         const next = { ...d }
@@ -704,6 +751,13 @@ function Cart() {
   }
 
   const handleCheckout = async () => {
+    const { live, removedCount } = dropExpiredEphemeralCartItems(items)
+    if (removedCount > 0) {
+      setItems(live)
+      setFeedback(t('platform.cart.ephemeralExpiredNotice', { count: removedCount }))
+      void loadCart({ silent: true })
+      return
+    }
     if (items.length === 0) {
       setFeedback(t('platform.cart.errors.noStoreItems'))
       return
@@ -1197,6 +1251,13 @@ function Cart() {
                         {variant && (
                           <p className="text-xs text-earth-600">
                             Versão: {variant?.attributes?.versao || variant?.title || 'Padrão'}
+                          </p>
+                        )}
+                        {ephemeral && p.expires_at && (
+                          <p className="mt-1 text-xs font-medium text-violet-800">
+                            {t('platform.cart.ephemeralExpiresAt', {
+                              time: new Date(p.expires_at).toLocaleString(locale === 'en' ? 'en-US' : 'pt-BR'),
+                            })}
                           </p>
                         )}
                         <p className="mt-1 text-[11px] font-medium uppercase tracking-wide text-earth-500">

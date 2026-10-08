@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { adminListLiveRipProducts } from '../../../../services/liveRipService'
 import {
   adminAddCollectorPull,
@@ -18,6 +18,7 @@ import {
   adminUpsertCollectorSession,
 } from '../../../../services/adminCollectorService'
 import { COLLECTION_TOP_CARDS } from '../../../../data/collectionTopCards'
+import { BoxBreakLiveControls } from './BoxBreakLiveControls'
 
 const BATCH_STATUSES = ['OPEN', 'FULL', 'LOCKED', 'SCHEDULED', 'OPENING', 'COMPLETED', 'FULFILLING', 'CANCELLED']
 const SESSION_STATUSES = ['SCHEDULED', 'RECORDING', 'PUBLISHED', 'CANCELLED']
@@ -134,7 +135,7 @@ export default function AberturasSection({ activeTab }) {
       .then(([batchesRes, productsRes]) => {
         if (!active) return
         if (batchesRes.error) {
-          setError(batchesRes.error.message || 'Nao foi possivel carregar aberturas.')
+          setError(batchesRes.error.message || 'Nao foi possivel carregar Box Breaks.')
           setBatches([])
         } else {
           const rows = Array.isArray(batchesRes.data) ? batchesRes.data : []
@@ -255,7 +256,7 @@ export default function AberturasSection({ activeTab }) {
     }
     const res = await adminUpsertCollectorBatch(payload)
     if (res.error) {
-      setError(res.error.message || 'Nao foi possivel salvar abertura.')
+      setError(res.error.message || 'Nao foi possivel salvar Box Break.')
       return
     }
     setMessage('Abertura salva com sucesso.')
@@ -268,7 +269,7 @@ export default function AberturasSection({ activeTab }) {
     setError('')
     const res = await adminSetCollectorBatchStatus(selectedBatchId, status)
     if (res.error) {
-      setError(res.error.message || 'Nao foi possivel atualizar status da abertura.')
+      setError(res.error.message || 'Nao foi possivel atualizar status do Box Break.')
       return
     }
     setMessage('Status atualizado.')
@@ -416,14 +417,15 @@ export default function AberturasSection({ activeTab }) {
 
   return (
     <section className="mt-0 rounded-b-xl border border-t-0 border-earth-200 bg-earth-50 p-6">
-      <h2 className="text-lg font-semibold text-earth-900">Aberturas</h2>
+      <h2 className="text-lg font-semibold text-earth-900">Box Break</h2>
+      <BoxBreakLiveControls />
       {loading ? <p className="mt-2 text-sm text-earth-600">Carregando...</p> : null}
       {error ? <p className="mt-3 rounded-lg bg-red-100 px-4 py-2 text-sm text-red-800">{error}</p> : null}
       {message ? <p className="mt-3 rounded-lg bg-green-100 px-4 py-2 text-sm text-green-800">{message}</p> : null}
 
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
         <div className="rounded-lg border border-earth-200 bg-white p-4">
-          <h3 className="font-medium text-earth-900">Nova abertura</h3>
+          <h3 className="font-medium text-earth-900">Novo Box Break</h3>
           <form onSubmit={handleSaveBatch} className="mt-3 grid gap-3">
             <input
               value={batchForm.code}
@@ -492,13 +494,13 @@ export default function AberturasSection({ activeTab }) {
               rows={3}
             />
             <button type="submit" className="rounded bg-earth-900 px-3 py-2 text-sm font-medium text-white hover:bg-earth-800">
-              Salvar abertura
+              Salvar Box Break
             </button>
           </form>
         </div>
 
         <div className="rounded-lg border border-earth-200 bg-white p-4">
-          <h3 className="font-medium text-earth-900">Aberturas cadastradas</h3>
+          <h3 className="font-medium text-earth-900">Box Breaks cadastrados</h3>
           <div className="mt-3 max-h-96 space-y-2 overflow-y-auto">
             {batches.map((batch) => (
               <button
@@ -534,7 +536,7 @@ export default function AberturasSection({ activeTab }) {
       {selectedBatchId ? (
         <div className="mt-4 grid gap-4 lg:grid-cols-2">
           <div className="rounded-lg border border-earth-200 bg-white p-4">
-            <h3 className="font-medium text-earth-900">Allocations da abertura</h3>
+            <h3 className="font-medium text-earth-900">Participações do Box Break</h3>
             <ul className="mt-3 space-y-2 text-sm">
               {allocations.map((allocation) => (
                 <li key={allocation.id} className="rounded border border-earth-200 px-3 py-2">
@@ -551,7 +553,7 @@ export default function AberturasSection({ activeTab }) {
           </div>
 
           <div className="rounded-lg border border-earth-200 bg-white p-4">
-            <h3 className="font-medium text-earth-900">Sessao de abertura</h3>
+            <h3 className="font-medium text-earth-900">Sessão de Box Break</h3>
             <form onSubmit={handleSaveSession} className="mt-3 grid gap-3">
               <select
                 value={sessionForm.status}

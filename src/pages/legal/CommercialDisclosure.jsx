@@ -313,7 +313,7 @@ export default function CommercialDisclosure() {
     <>
       <PageSeo routeKey="legalCommercial" title={null} description={t('meta.legalCommercial.description')} />
       <Helmet>
-        <title>{content.title} | Legal | Delivery</title>
+        <title>{content.title} | Legal | YuumeCo</title>
       </Helmet>
 
       <h2 className="text-2xl font-bold tracking-tight text-earth-900 sm:text-3xl">

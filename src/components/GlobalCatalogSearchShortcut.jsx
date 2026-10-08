@@ -3,11 +3,17 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { localizedPath } from '../lib/localeRoutes'
 import { useSiteLocale } from '../hooks/useSiteLocale'
 import { CATALOG_STORE_OPTIONS } from './CatalogSearchPanel'
+import { chromeShell } from '../lib/layout'
 
 function shouldHideShortcut(pathname) {
   const p = String(pathname || '')
+  if (p === '/' || p === '/en') return true
   if (p.startsWith('/app') || p.startsWith('/en/app')) return true
   if (p === '/busca-catalogo' || p === '/en/catalog-search') return true
+  if (p.startsWith('/box-break') || p.startsWith('/en/box-break')) return true
+  if (p.startsWith('/batches') || p.startsWith('/en/batches')) return true
+  if (p.startsWith('/aberturas') || p.startsWith('/en/aberturas')) return true
+  if (p.startsWith('/servicos-e-precos') || p.startsWith('/en/services-pricing')) return true
   if (/^\/(en\/)?(login|register|forgot-password|reset-password)$/.test(p.replace(/^\//, ''))) return true
   return false
 }
@@ -44,7 +50,7 @@ export default function GlobalCatalogSearchShortcut() {
     <>
       <div className="h-12" aria-hidden />
       <div className="fixed left-0 right-0 top-[4.5rem] z-40 border-b border-earth-200 bg-earth-50/95 backdrop-blur">
-        <form onSubmit={handleSubmit} className="mx-auto max-w-7xl px-3 py-2 sm:px-6 lg:px-8">
+        <form onSubmit={handleSubmit} className={`${chromeShell} px-3 py-2 sm:px-6 lg:px-8`}>
           <div className="flex items-center gap-1 rounded-lg border border-earth-200 bg-white p-1">
             <select
               value={storeFilter}
@@ -52,7 +58,7 @@ export default function GlobalCatalogSearchShortcut() {
               className="h-8 w-[140px] shrink-0 rounded border border-earth-200 bg-earth-50 px-2 text-xs font-medium text-earth-800 outline-none focus:border-earth-400 sm:h-9 sm:w-[170px] sm:text-sm"
               aria-label={isEn ? 'Marketplace filter' : 'Filtro de loja'}
             >
-              <option value="all">{isEn ? 'All stores' : 'Todas as lojas'}</option>
+              <option value="all">{isEn ? 'Mercari & Yahoo' : 'Mercari e Yahoo'}</option>
               {CATALOG_STORE_OPTIONS.map((store) => (
                 <option key={store.id} value={store.id}>
                   {store.label}

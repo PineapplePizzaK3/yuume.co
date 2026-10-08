@@ -1,0 +1,67 @@
+name: Refresh collection top cards
+
+on:
+  schedule:
+    # 01:00 JST — o cron só dispara a partir do branch padrão (main).
+    # O checkout abaixo grava na branch de desenvolvimento até o go-live.
+    - cron: '0 16 * * *'
+  workflow_dispatch:
+    inputs:
+      full:
+        description: 'Refresh every collection, even if updated in the last 24 hours'
+        type: boolean
+        default: false
+      branch:
+        description: 'Branch to update (empty uses COLLECTION_TOP_CARDS_BRANCH or feature/collector-mvp)'
+        type: string
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-collection-top-cards
+  cancel-in-progress: false
+
+jobs:
+  refresh-top-cards:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      TARGET_BRANCH: ${{ inputs.branch || vars.COLLECTION_TOP_CARDS_BRANCH || 'feature/collector-mvp' }}
+    steps:
+      - name: Checkout target branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TARGET_BRANCH }}
+          fetch-depth: 1
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Refresh collection top-card prices
+        run: |
+          echo "Updating collection top cards on ${TARGET_BRANCH}"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.full }}" = "true" ]; then
+            npm run catalog:collection-top-cards -- --full
+          else
+            npm run catalog:collection-top-cards -- --stale-hours=24 --fill
+          fi
+
+      - name: Commit and push if catalog changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add src/data/collectionTopCards.js
+
+          if git diff --staged --quiet; then
+            echo "No top-card price changes to commit."
+            exit 0
+          fi
+
+          git commit -m "chore: refresh collection top-card prices"
+          git push origin HEAD:"${TARGET_BRANCH}"

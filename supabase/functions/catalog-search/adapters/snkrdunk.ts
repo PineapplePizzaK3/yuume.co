@@ -1,4 +1,5 @@
 import type { UnifiedSearchHit } from '../types.ts'
+import { DEFAULT_FILTERS, snkrdunkSearchUrl, type CatalogSearchFilters } from '../filters.ts'
 import { buildHit, parsePrice, pickProductImages } from '../normalize.ts'
 import {
   collectImageCandidates,
@@ -318,14 +319,18 @@ function extractSnkrdunkHitsFromJina(jinaText: string, pageSize: number, query: 
   return rankSnkrdunkHits(built, query, pageSize)
 }
 
-export async function searchSnkrdunk(query: string, pageSize: number, storePage = 1): Promise<UnifiedSearchHit[]> {
+export async function searchSnkrdunk(
+  query: string,
+  pageSize: number,
+  storePage = 1,
+  filters: CatalogSearchFilters = DEFAULT_FILTERS,
+): Promise<UnifiedSearchHit[]> {
   const keyword = String(query || '').trim()
   if (!keyword) return []
 
   const startedAt = Date.now()
   const budgetMs = STORE_DEADLINE_MS - 300
-  const pageParam = storePage > 1 ? `&page=${storePage}` : ''
-  const searchUrl = `${BASE}/search?query=${encodeURIComponent(keyword)}${pageParam}`
+  const searchUrl = snkrdunkSearchUrl(keyword, storePage, filters)
 
   const html = await fetchText(searchUrl, FETCH_TIMEOUT_MS, { Referer: `${BASE}/` }).catch(() => '')
 

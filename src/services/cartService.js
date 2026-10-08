@@ -3,6 +3,7 @@
  */
 import { supabase } from '../lib/supabase'
 import { withDbTimeout, toServiceError } from '../lib/dbGuard'
+import { partitionEphemeralCartRows } from '../lib/ephemeralCartExpiry'
 import { triggerUserTransactionalEmail } from './userTransactionalEmailService'
 
 export const CART_UPDATED_EVENT = 'cart:updated'
@@ -43,13 +44,27 @@ function mapEphemeralCartRow(row) {
   }
 }
 
+function forgetExpiredEphemeralCartRows(rows) {
+  const tokens = [...new Set(
+    rows
+      .map((row) => String(row?.ephemeral_token || '').trim())
+      .filter(Boolean)
+  )]
+  if (tokens.length === 0) return
+  void Promise.all(
+    tokens.map((token) => supabase.rpc('remove_ephemeral_from_cart', { p_token: token }))
+  ).catch(() => {})
+}
+
 export async function getEphemeralCart() {
   try {
     const { data, error } = await withDbTimeout(
       supabase.rpc('list_my_ephemeral_cart_items')
     )
     if (error) return { data: [], error }
-    const rows = Array.isArray(data) ? data.map(mapEphemeralCartRow) : []
+    const { live, expired } = partitionEphemeralCartRows(Array.isArray(data) ? data : [])
+    forgetExpiredEphemeralCartRows(expired)
+    const rows = live.map(mapEphemeralCartRow)
     return { data: rows, error: null }
   } catch (e) {
     return { data: [], error: toServiceError(e) }

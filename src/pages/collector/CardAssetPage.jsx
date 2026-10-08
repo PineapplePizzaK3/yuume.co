@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
-import { CreditsAmount } from '../../components/CreditsAmount'
+import { CreditsAmount, formatCredits } from '../../components/CreditsAmount'
+import { useLocalizedPath } from '../../hooks/useLocalizedPath'
 import { PageSeo } from '../../components/PageSeo'
 import {
   getCollectionAsset,
@@ -9,12 +10,14 @@ import {
   requestPsaGradingCollectionAsset,
   sellBackCollectionAsset,
 } from '../../services/collectorService'
+import { notifyWalletUpdated } from '../../services/walletService'
 import { collectorCollectionRipPath } from '../../lib/localeRoutes'
 import { useSiteLocale } from '../../hooks/useSiteLocale'
 
 function CardAssetPage() {
   const { t, i18n } = useTranslation()
   const locale = useSiteLocale()
+  const path = useLocalizedPath()
   const isMockMode = isCollectorMockMode()
   const { assetId } = useParams()
   const [asset, setAsset] = useState(null)
@@ -74,10 +77,15 @@ function CardAssetPage() {
     setNotice(
       t('collector.asset.messages.sellBackSuccess', {
         defaultValue: 'Sell-back concluido. {{value}} creditados.',
-        value: `¥${Math.floor(Number(res?.data?.creditedJpy || 0)).toLocaleString('ja-JP')}`,
+        value: formatCredits(Number(res?.data?.creditedJpy || 0)),
       })
     )
     setAsset(res?.data?.asset || asset)
+    notifyWalletUpdated({
+      balance: res?.data?.walletBalance,
+      creditedJpy: res?.data?.creditedJpy,
+      source: 'sell-back',
+    })
   }
 
   const handleRequestPsa = async () => {
@@ -124,7 +132,7 @@ function CardAssetPage() {
             <div className="mt-5 space-y-2 rounded-xl border border-earth-200 bg-earth-50 p-4 text-sm text-earth-700">
               <p>
                 <span className="font-semibold text-earth-900">{t('collector.asset.origin', { defaultValue: 'Origem' })}:</span>{' '}
-                {t('collector.asset.originBatch', { defaultValue: 'Abertura' })} {asset.origin?.batchId}
+                {t('collector.asset.originBatch', { defaultValue: 'Box Break' })} {asset.origin?.batchId}
               </p>
               <p>
                 <span className="font-semibold text-earth-900">{t('collector.asset.statusLabel', { defaultValue: 'Status' })}:</span>{' '}
@@ -161,7 +169,7 @@ function CardAssetPage() {
                 </p>
               )}
               <p className="mt-3 text-sm font-semibold text-earth-900">
-                {t('collector.asset.sellBackOffer', { defaultValue: 'Oferta sell-back (80%)' })}
+                {t('collector.asset.sellBackOffer', { defaultValue: 'Oferta de revenda (85%)' })}
               </p>
               {sellBackOfferJpy > 0 ? (
                 <CreditsAmount amount={sellBackOfferJpy} variant="compact" showFiat />
@@ -218,12 +226,30 @@ function CardAssetPage() {
             </div>
             {error ? <p className="mt-3 rounded-lg bg-red-100 px-3 py-2 text-sm text-red-700">{error}</p> : null}
             {notice ? <p className="mt-3 rounded-lg bg-green-100 px-3 py-2 text-sm text-green-700">{notice}</p> : null}
+            {asset.status === 'sold' ? (
+              <div className="mt-4 flex flex-wrap gap-3">
+                <Link
+                  to={`${path('collectorCollection')}?tab=cards`}
+                  className="rounded-lg border border-earth-300 bg-white px-4 py-2 text-sm font-medium text-earth-800 hover:bg-earth-50"
+                >
+                  {t('collector.actions.viewCollectionCards', { defaultValue: 'Ver cartas' })}
+                </Link>
+                {!isMockMode ? (
+                  <Link
+                    to={path('appLounge')}
+                    className="rounded-lg border border-earth-300 bg-white px-4 py-2 text-sm font-medium text-earth-800 hover:bg-earth-50"
+                  >
+                    {t('collector.actions.viewWallet', { defaultValue: 'Ver creditos' })}
+                  </Link>
+                ) : null}
+              </div>
+            ) : null}
 
             <Link
               to={collectorCollectionRipPath(asset.origin?.allocationId || '', locale)}
               className="mt-5 inline-flex text-sm font-medium text-earth-700 hover:underline"
             >
-              {t('collector.actions.backToBatchRecord', { defaultValue: 'Voltar para o registro da abertura' })}
+              {t('collector.actions.backToBatchRecord', { defaultValue: 'Voltar para o registro do Box Break' })}
             </Link>
           </article>
         </div>

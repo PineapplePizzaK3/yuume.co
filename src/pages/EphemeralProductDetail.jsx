@@ -1,21 +1,25 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { PageSeo } from '../components/PageSeo'
 import { TriCurrencyDisplay } from '../components/TriCurrencyDisplay'
 import { useSiteLocale } from '../hooks/useSiteLocale'
 import { useAuth } from '../hooks/useAuth'
 import { useExchangeRates } from '../hooks/useExchangeRates'
-import { LOCALE_EN, localizedPath } from '../lib/localeRoutes'
+import { LOCALE_EN, localizedPath, publicEphemeralProductPath } from '../lib/localeRoutes'
 import { computeProductSalePrice, SALE_CHANNEL_STORE } from '../lib/productSalePrice'
 import ImageLightbox from '../components/ImageLightbox'
 import { fetchCatalogProductGallery } from '../services/catalogSearchService'
+import EphemeralListingRecommendations from '../components/EphemeralListingRecommendations'
 import { addEphemeralToCart } from '../services/cartService'
 import {
+  createEphemeralProductSnapshot,
   getPublicEphemeralProduct,
   updateEphemeralProductImages,
 } from '../services/ephemeralProductService'
-import { scrapeProductUrl } from '../services/wishlistLinkService'
+import { listingFromCatalogHit, listingFromEphemeralRow, listingFromIndexRow } from '../lib/ephemeralListing'
+import { clearEphemeralOpenPayload, ephemeralOpenSid } from '../lib/ephemeralOpenSession'
+import { displayListingImages, filterOwnedListingImages, filterTrustedGalleryImages, hasEnoughOwnedListingPhotos } from '../lib/listingImages'
 
 function uniqueImageUrls(values) {
   const out = []
@@ -33,62 +37,39 @@ function uniqueImageUrls(values) {
   return out
 }
 
-/** Drop related/UI junk; keep only URLs that belong to this listing. */
-function filterListingImages(productUrl, urls) {
-  const list = uniqueImageUrls(urls)
-  if (!list.length) return []
-  let host = ''
-  let itemId = ''
-  try {
-    const parsed = new URL(productUrl)
-    host = parsed.hostname.toLowerCase()
-    itemId = parsed.pathname.match(/\/item\/(m\d+)/i)?.[1] || ''
-  } catch {
-    return list
-  }
-
-  if (/(^|\.)mercari\.com$/.test(host) && itemId) {
-    const owned = list.filter((url) => url.includes(itemId) && /mercdn\.net/i.test(url))
-    const orig = owned.filter((url) => !/\/c!\//i.test(url) && !/\/thumb\//i.test(url))
-    return orig.length ? orig : owned
-  }
-  if (/(^|\.)fril\.jp$/.test(host)) {
-    // Prefer large (/l/) listing photos for the og item group only.
-    const large = list.filter((url) => /img\.fril\.jp\/img\/\d+\/l\//i.test(url) && !/\/user\//i.test(url))
-    return large.length ? large : list.filter((url) => /img\.fril\.jp\/img\/\d+\//i.test(url) && !/\/user\//i.test(url))
-  }
-  if (/(^|\.)amazon\./.test(host)) {
-    return list.filter((url) => /m\.media-amazon\.com|images-(?:na\.)?ssl-images-amazon/i.test(url) && /\/images\/I\//i.test(url))
-  }
-  if (/yahoo\.co\.jp$/.test(host)) {
-    return list.filter(
-      (url) =>
-        /yimg\.jp/i.test(url) &&
-        /images\.auctions\.yahoo|auc-pctr|fleamarket|paypay|\/image\//i.test(url) &&
-        !/(icon|logo|avatar|sprite|1x1|clear\.gif)/i.test(url),
-    )
-  }
-  if (/(^|\.)snkrdunk\.com$/.test(host)) {
-    return list.filter((url) => /cdn\.snkrdunk\.com/i.test(url) && !/\/assets\/|logo|icon/i.test(url))
-  }
-  return list.filter((url) => !/(avatar|profile|icon|logo|sprite|pixel|1x1|spacer)/i.test(url))
+function resolveSeedListing(seedHit, locationState) {
+  return (
+    listingFromCatalogHit(seedHit)
+    || listingFromIndexRow(seedHit)
+    || listingFromEphemeralRow(seedHit)
+    || listingFromCatalogHit(locationState?.listing)
+    || listingFromIndexRow(locationState?.listing)
+    || listingFromEphemeralRow(locationState?.listing)
+    || null
+  )
 }
 
-export default function EphemeralProductDetail() {
+export default function EphemeralProductDetail({ seedHit = null, promoteUrl = false }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const location = useLocation()
   const locale = useSiteLocale()
   const isEn = locale === LOCALE_EN
   const { user } = useAuth()
   const { token } = useParams()
-  const [loading, setLoading] = useState(true)
+  const seedListing = useMemo(
+    () => resolveSeedListing(seedHit, location.state),
+    [seedHit, location.state],
+  )
+  const [loading, setLoading] = useState(() => !seedListing && Boolean(token))
   const [adding, setAdding] = useState(false)
   const [error, setError] = useState('')
   const [feedback, setFeedback] = useState('')
-  const [product, setProduct] = useState(null)
+  const [product, setProduct] = useState(() => seedListing)
   const [imageIndex, setImageIndex] = useState(0)
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [galleryLoading, setGalleryLoading] = useState(false)
+  const snapshotPromiseRef = useRef(null)
   const { rates: pricingRates, loading: ratesLoading } = useExchangeRates()
 
   const trackEphemeralEvent = (eventName, payload = {}) => {
@@ -106,31 +87,109 @@ export default function EphemeralProductDetail() {
   useEffect(() => {
     let active = true
     const load = async () => {
-      setLoading(true)
+      if (seedListing && !token) {
+        setProduct(seedListing)
+        setLoading(false)
+        setError('')
+        trackEphemeralEvent('page_open', { source: seedListing.source, storeId: seedListing.store_id })
+        return
+      }
+      if (!token) {
+        if (!seedListing) {
+          setLoading(false)
+          setError(
+            isEn
+              ? 'This temporary product is unavailable or expired.'
+              : 'Este produto temporario esta indisponivel ou expirou.',
+          )
+        }
+        return
+      }
+      if (!seedListing) setLoading(true)
       setError('')
       const { data, error: rpcError } = await getPublicEphemeralProduct(token)
       if (!active) return
       if (rpcError || !data) {
-        setProduct(null)
-        setError(
-          rpcError?.message
-            || (isEn
-              ? 'This temporary product is unavailable or expired.'
-              : 'Este produto temporario esta indisponivel ou expirou.')
-        )
+        if (!seedListing) {
+          setProduct(null)
+          setError(
+            rpcError?.message
+              || (isEn
+                ? 'This temporary product is unavailable or expired.'
+                : 'Este produto temporario esta indisponivel ou expirou.')
+          )
+        }
       } else {
-        setProduct(data)
+        const row = listingFromEphemeralRow(data)
+        setProduct((prev) => {
+          if (!prev) return row
+          const cover = prev.image_url || row.image_url
+          const productUrl = prev.external_url || row.external_url
+          const images = filterOwnedListingImages(
+            productUrl,
+            [
+              ...(Array.isArray(prev.image_urls) ? prev.image_urls : []),
+              ...(Array.isArray(row.image_urls) ? row.image_urls : []),
+              cover,
+            ],
+            cover,
+          )
+          return {
+            ...prev,
+            ...row,
+            image_url: images[0] || cover,
+            image_urls: images,
+          }
+        })
         trackEphemeralEvent('page_open', { token: data.token, storeId: data.store_id })
       }
       setLoading(false)
     }
     void load()
     return () => { active = false }
-  }, [token, isEn])
+  }, [token, isEn, seedListing])
+
+  const ensureSnapshot = async (listing) => {
+    if (listing?.token) return { data: { token: listing.token, expires_at: listing.expires_at }, error: null }
+    if (snapshotPromiseRef.current) return snapshotPromiseRef.current
+    const pending = createEphemeralProductSnapshot(listing).then((result) => {
+      if (result.error || !result.data?.token) {
+        snapshotPromiseRef.current = null
+        return result
+      }
+      setProduct((prev) => (
+        prev
+          ? {
+              ...prev,
+              token: result.data.token,
+              expires_at: result.data.expires_at || prev.expires_at,
+            }
+          : prev
+      ))
+      clearEphemeralOpenPayload(ephemeralOpenSid(listing?.external_url || listing?.productUrl))
+      return result
+    })
+    snapshotPromiseRef.current = pending
+    return pending
+  }
+
+  useEffect(() => {
+    if (!product?.external_url || product.token) return undefined
+    void ensureSnapshot(product)
+    return undefined
+  }, [product?.external_url, product?.token])
+
+  useEffect(() => {
+    if (!promoteUrl || !product?.token) return
+    const next = publicEphemeralProductPath(product.token, locale)
+    const onBridge = /\/abrir$|\/open$/.test(location.pathname)
+    if (!onBridge) return
+    navigate(next, { replace: true, state: { listing: product } })
+  }, [promoteUrl, product?.token, locale, location.pathname, navigate])
 
   const images = useMemo(() => {
     const listed = Array.isArray(product?.image_urls) ? product.image_urls : []
-    return uniqueImageUrls([...listed, product?.image_url])
+    return displayListingImages(product?.external_url, [...listed, product?.image_url], product?.image_url)
   }, [product])
 
   const dropBrokenImage = (brokenUrl) => {
@@ -176,7 +235,9 @@ export default function EphemeralProductDetail() {
       ...(Array.isArray(product?.image_urls) ? product.image_urls : []),
       product?.image_url,
     ])
-    const filteredInitial = filterListingImages(productUrl, initialImages)
+    const cover = product?.image_url || initialImages[0] || ''
+    const filteredInitial = filterOwnedListingImages(productUrl, initialImages, cover)
+    if (hasEnoughOwnedListingPhotos(productUrl, filteredInitial, cover)) return undefined
 
     const enrich = async () => {
       setGalleryLoading(true)
@@ -190,20 +251,8 @@ export default function EphemeralProductDetail() {
 
         const galleryOk = !gallery?.error && Array.isArray(gallery?.data?.imageUrls)
         let fetched = galleryOk
-          ? filterListingImages(productUrl, uniqueImageUrls(gallery.data.imageUrls))
+          ? filterTrustedGalleryImages(productUrl, uniqueImageUrls(gallery.data.imageUrls), cover)
           : []
-
-        // Listing create only stores the cover — if gallery returned ≤1, try scrape adapters.
-        if (fetched.length <= 1) {
-          const scraped = await scrapeProductUrl(productUrl)
-          if (!active) return
-          const adapterImages = uniqueImageUrls([
-            ...(Array.isArray(scraped?.data?.imageUrls) ? scraped.data.imageUrls : []),
-            scraped?.data?.imageUrl,
-          ])
-          const scrapedFiltered = filterListingImages(productUrl, adapterImages)
-          if (scrapedFiltered.length > fetched.length) fetched = scrapedFiltered
-        }
 
         if (!fetched.length && filteredInitial.length) {
           fetched = filteredInitial
@@ -227,7 +276,7 @@ export default function EphemeralProductDetail() {
             image_urls: nextImages,
           }
         })
-        void updateEphemeralProductImages(tokenValue, nextImages)
+        if (tokenValue) void updateEphemeralProductImages(tokenValue, nextImages)
         trackEphemeralEvent('gallery_enriched', {
           token: tokenValue,
           storeId: product?.store_id,
@@ -279,19 +328,28 @@ export default function EphemeralProductDetail() {
   }, [salePrice, product?.price_jpy, product?.currency, isEn])
 
   const handleAddToCart = async () => {
-    if (!product?.token) return
     if (!user) {
       navigate(localizedPath('login', locale))
       return
     }
     setAdding(true)
     setFeedback('')
-    const { error: addError } = await addEphemeralToCart(product.token, 1)
+    const snapshot = await ensureSnapshot(product)
+    const tokenValue = snapshot?.data?.token || product?.token
+    if (!tokenValue) {
+      setFeedback(
+        snapshot?.error?.message
+          || (isEn ? 'Could not prepare this listing for the cart.' : 'Nao foi possivel preparar este anuncio para o carrinho.'),
+      )
+      setAdding(false)
+      return
+    }
+    const { error: addError } = await addEphemeralToCart(tokenValue, 1)
     if (addError) {
-      trackEphemeralEvent('add_to_cart_error', { token: product.token, reason: addError.message || 'unknown' })
+      trackEphemeralEvent('add_to_cart_error', { token: tokenValue, reason: addError.message || 'unknown' })
       setFeedback(addError.message || (isEn ? 'Failed to add to cart.' : 'Falha ao adicionar ao carrinho.'))
     } else {
-      trackEphemeralEvent('add_to_cart', { token: product.token })
+      trackEphemeralEvent('add_to_cart', { token: tokenValue })
       setFeedback(isEn ? 'Added to cart. Price will be revalidated at checkout.' : 'Adicionado ao carrinho. O preco sera revalidado no checkout.')
     }
     setAdding(false)
@@ -326,6 +384,7 @@ export default function EphemeralProductDetail() {
           ) : null}
 
           {!loading && product ? (
+            <>
             <div className="grid gap-6 rounded-xl border border-earth-200 bg-white p-5 shadow-sm md:grid-cols-[320px,1fr]">
               <div className="overflow-hidden rounded-lg border border-earth-200 bg-earth-50">
                 {images.length > 0 ? (
@@ -430,9 +489,11 @@ export default function EphemeralProductDetail() {
                     ? 'This page expires automatically. Final price and availability are revalidated at checkout.'
                     : 'Esta pagina expira automaticamente. Preco final e disponibilidade sao revalidados no checkout.'}
                 </p>
-                <p className="mt-2 text-xs text-earth-500">
-                  {isEn ? 'Expires at:' : 'Expira em:'} {new Date(product.expires_at).toLocaleString(isEn ? 'en-US' : 'pt-BR')}
-                </p>
+                {product.expires_at ? (
+                  <p className="mt-2 text-xs text-earth-500">
+                    {isEn ? 'Expires at:' : 'Expira em:'} {new Date(product.expires_at).toLocaleString(isEn ? 'en-US' : 'pt-BR')}
+                  </p>
+                ) : null}
 
                 <div className="mt-6 flex flex-wrap items-center gap-3">
                   <button
@@ -465,6 +526,8 @@ export default function EphemeralProductDetail() {
                 ) : null}
               </div>
             </div>
+            <EphemeralListingRecommendations product={product} isEn={isEn} />
+            </>
           ) : null}
         </div>
       </section>

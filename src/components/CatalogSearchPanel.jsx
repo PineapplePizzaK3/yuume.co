@@ -1,4 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
+import {
+  CATALOG_CATEGORIES,
+  CATALOG_CONDITIONS,
+  catalogFiltersAreDefault,
+  DEFAULT_CATALOG_FILTERS,
+} from '../lib/catalogSearchFilters'
 
 export const CATALOG_STORE_OPTIONS = [
   { id: 'amazon', label: 'Amazon JP' },
@@ -8,6 +14,22 @@ export const CATALOG_STORE_OPTIONS = [
   { id: 'yahoo_flea', label: 'Yahoo Flea Market' },
   { id: 'snkrdunk', label: 'SNKRDUNK' },
 ]
+
+/** Public search starts on Mercari + Yahoo; the rest stay off until the user enables them. */
+export const DEFAULT_ENABLED_CATALOG_STORE_IDS = ['mercari', 'yahoo', 'yahoo_flea']
+
+export function defaultCatalogStoreSelection(storeIdFromUrl = '') {
+  const storeId = String(storeIdFromUrl || '').trim()
+  const known = CATALOG_STORE_OPTIONS.some((store) => store.id === storeId)
+  const onlyOne = Boolean(storeId && storeId !== 'all' && known)
+  const enableAll = storeId === 'all'
+  return CATALOG_STORE_OPTIONS.reduce((acc, row) => {
+    if (onlyOne) acc[row.id] = row.id === storeId
+    else if (enableAll) acc[row.id] = true
+    else acc[row.id] = DEFAULT_ENABLED_CATALOG_STORE_IDS.includes(row.id)
+    return acc
+  }, {})
+}
 
 export function catalogStoreBrand(storeId) {
   const map = {
@@ -38,6 +60,15 @@ function isAuctionItem(item) {
 function isSoldOrUnavailable(item) {
   const tags = itemTags(item)
   return tags.includes('sold') || tags.includes('unavailable')
+}
+
+function SearchBusyMark() {
+  return (
+    <svg className="h-4 w-4 animate-spin text-earth-800" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+      <path className="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8v3a5 5 0 00-5 5H4z" />
+    </svg>
+  )
 }
 
 function formatAuctionPrice(price, currency, formatExternalPrice) {
@@ -83,8 +114,20 @@ export default function CatalogSearchPanel({
   buildResultHref,
   resultTarget = '_blank',
   resultRel = 'noopener noreferrer',
+  filters = DEFAULT_CATALOG_FILTERS,
+  setFilters,
+  isEn = false,
+  showListingFilters = true,
+  refreshingLabel = 'Atualizando resultados...',
+  moreResultsLabel = 'Mais resultados',
 }) {
   const loadMoreSentinelRef = useRef(null)
+  const loadMoreRef = useRef(loadMore)
+  const loadingRef = useRef(loading)
+  const loadingMoreRef = useRef(loadingMore)
+  loadMoreRef.current = loadMore
+  loadingRef.current = loading
+  loadingMoreRef.current = loadingMore
   const showInfiniteScroll = results.length > 0
   const [brokenImages, setBrokenImages] = useState(() => new Set())
   const visibleResults = useMemo(() => {
@@ -105,20 +148,31 @@ export default function CatalogSearchPanel({
     const sentinel = loadMoreSentinelRef.current
     if (!sentinel || results.length === 0 || !canAutoLoad) return
 
+    const tryLoadMore = () => {
+      if (loadingRef.current || loadingMoreRef.current) return
+      if (typeof loadMoreRef.current !== 'function') return
+      loadMoreRef.current()
+    }
+
     const observer = new IntersectionObserver(
       (entries) => {
-        const entry = entries[0]
-        if (!entry?.isIntersecting) return
-        if (loading || loadingMore) return
-        if (typeof loadMore !== 'function') return
-        loadMore()
+        if (entries[0]?.isIntersecting) tryLoadMore()
       },
       { root: null, rootMargin: '240px 0px', threshold: 0 },
     )
-
     observer.observe(sentinel)
     return () => observer.disconnect()
-  }, [results.length, loading, loadingMore, canAutoLoad, loadMore, meta?.page])
+  }, [results.length, canAutoLoad, meta?.page])
+
+  useEffect(() => {
+    if (loading || loadingMore || !canAutoLoad || results.length === 0) return
+    const sentinel = loadMoreSentinelRef.current
+    if (!sentinel) return
+    const rect = sentinel.getBoundingClientRect()
+    if (rect.top < (typeof window !== 'undefined' ? window.innerHeight : 0) + 240) {
+      loadMoreRef.current?.()
+    }
+  }, [loading, loadingMore, canAutoLoad, results.length, meta?.page])
 
   return (
     <section className="mt-0 rounded-b-xl border border-t-0 border-earth-200 bg-earth-50 p-6">
@@ -143,7 +197,9 @@ export default function CatalogSearchPanel({
             <button
               type="submit"
               disabled={loading}
-              className="rounded-lg bg-earth-800 px-4 py-2 text-sm font-medium text-white hover:bg-earth-900 disabled:opacity-60"
+              className={`rounded-lg bg-earth-800 px-4 py-2 text-sm font-medium text-white hover:bg-earth-900 disabled:opacity-60 ${
+              loading ? 'cursor-wait' : ''
+            }`}
             >
               {loading ? loadingButtonLabel : searchButtonLabel}
             </button>
@@ -187,6 +243,173 @@ export default function CatalogSearchPanel({
               })}
             </div>
           ) : null}
+
+          {showListingFilters && typeof setFilters === 'function' ? (
+            <div className={`space-y-3 border-t border-earth-100 pt-3 ${loading ? 'opacity-80' : ''}`}>
+              <div className="flex flex-wrap items-end gap-2">
+                <label className="flex min-w-[7rem] flex-1 flex-col gap-1 text-xs text-earth-600">
+                  {isEn ? 'Min price (¥)' : 'Preço mín. (¥)'}
+                  <input
+                    type="number"
+                    min="1"
+                    inputMode="numeric"
+                    value={filters.priceMin ?? ''}
+                    onChange={(e) =>
+                      setFilters((prev) => ({
+                        ...prev,
+                        priceMin: e.target.value === '' ? null : Number(e.target.value),
+                      }))
+                    }
+                    className="rounded-lg border border-earth-300 px-2 py-1.5 text-sm text-earth-900"
+                  />
+                </label>
+                <label className="flex min-w-[7rem] flex-1 flex-col gap-1 text-xs text-earth-600">
+                  {isEn ? 'Max price (¥)' : 'Preço máx. (¥)'}
+                  <input
+                    type="number"
+                    min="1"
+                    inputMode="numeric"
+                    value={filters.priceMax ?? ''}
+                    onChange={(e) =>
+                      setFilters((prev) => ({
+                        ...prev,
+                        priceMax: e.target.value === '' ? null : Number(e.target.value),
+                      }))
+                    }
+                    className="rounded-lg border border-earth-300 px-2 py-1.5 text-sm text-earth-900"
+                  />
+                </label>
+                <label className="flex min-w-[10rem] flex-[1.2] flex-col gap-1 text-xs text-earth-600">
+                  {isEn ? 'Sort' : 'Ordenar'}
+                  <select
+                    value={filters.sort}
+                    onChange={(e) => setFilters((prev) => ({ ...prev, sort: e.target.value }))}
+                    className="rounded-lg border border-earth-300 bg-white px-2 py-1.5 text-sm text-earth-900"
+                  >
+                    <option value="relevance">{isEn ? 'Relevance' : 'Relevância'}</option>
+                    <option value="newest">{isEn ? 'Newest' : 'Mais recentes'}</option>
+                    <option value="price_asc">{isEn ? 'Lowest price' : 'Menor preço'}</option>
+                    <option value="price_desc">{isEn ? 'Highest price' : 'Maior preço'}</option>
+                  </select>
+                </label>
+                <label className="flex min-w-[10rem] flex-[1.2] flex-col gap-1 text-xs text-earth-600">
+                  {isEn ? 'Sale type' : 'Tipo de venda'}
+                  <select
+                    value={filters.saleType}
+                    onChange={(e) => setFilters((prev) => ({ ...prev, saleType: e.target.value }))}
+                    className="rounded-lg border border-earth-300 bg-white px-2 py-1.5 text-sm text-earth-900"
+                  >
+                    <option value="any">{isEn ? 'Any' : 'Qualquer'}</option>
+                    <option value="fixed">{isEn ? 'Buy now' : 'Preço fixo'}</option>
+                    <option value="auction">{isEn ? 'Auction' : 'Leilão'}</option>
+                  </select>
+                </label>
+                <label className="flex min-w-[10rem] flex-[1.2] flex-col gap-1 text-xs text-earth-600">
+                  {isEn ? 'Category' : 'Categoria'}
+                  <select
+                    value={filters.category || 'any'}
+                    onChange={(e) => setFilters((prev) => ({ ...prev, category: e.target.value }))}
+                    className="rounded-lg border border-earth-300 bg-white px-2 py-1.5 text-sm text-earth-900"
+                  >
+                    {CATALOG_CATEGORIES.map((id) => {
+                      const labels = {
+                        any: isEn ? 'Any' : 'Qualquer',
+                        tcg: isEn ? 'TCG / cards' : 'TCG / cartas',
+                        sneakers: isEn ? 'Sneakers' : 'Tênis',
+                        figures: isEn ? 'Figures' : 'Figures',
+                        apparel: isEn ? 'Apparel' : 'Roupas',
+                      }
+                      return (
+                        <option key={id} value={id}>
+                          {labels[id]}
+                        </option>
+                      )
+                    })}
+                  </select>
+                </label>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-earth-700">
+                <label className="inline-flex items-center gap-1.5">
+                  <input
+                    type="checkbox"
+                    checked={filters.onSaleOnly}
+                    onChange={(e) => setFilters((prev) => ({ ...prev, onSaleOnly: e.target.checked }))}
+                  />
+                  {isEn ? 'On sale only' : 'Somente à venda'}
+                </label>
+                <label className="inline-flex items-center gap-1.5">
+                  <input
+                    type="checkbox"
+                    checked={filters.sellerPaysShipping}
+                    onChange={(e) => setFilters((prev) => ({ ...prev, sellerPaysShipping: e.target.checked }))}
+                  />
+                  {isEn ? 'Seller pays shipping' : 'Frete pelo vendedor'}
+                </label>
+                <span className="font-medium text-earth-600">{isEn ? 'Condition:' : 'Condição:'}</span>
+                {CATALOG_CONDITIONS.map((id) => {
+                  const labels = {
+                    new: isEn ? 'New' : 'Novo',
+                    good: isEn ? 'Good condition' : 'Bom estado',
+                    used: isEn ? 'Signs of use' : 'Com marcas de uso',
+                  }
+                  const checked = (filters.conditions || []).includes(id)
+                  return (
+                    <label key={id} className="inline-flex items-center gap-1.5">
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() =>
+                          setFilters((prev) => {
+                            const current = Array.isArray(prev.conditions) ? prev.conditions : []
+                            return {
+                              ...prev,
+                              conditions: checked
+                                ? current.filter((item) => item !== id)
+                                : [...current, id],
+                            }
+                          })
+                        }
+                      />
+                      {labels[id]}
+                    </label>
+                  )
+                })}
+              </div>
+
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+                <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs text-earth-600">
+                  {isEn ? 'Brand' : 'Marca'}
+                  <input
+                    type="text"
+                    value={filters.brand || ''}
+                    onChange={(e) => setFilters((prev) => ({ ...prev, brand: e.target.value }))}
+                    placeholder={isEn ? 'Nike, Pokémon…' : 'Nike, Pokémon…'}
+                    className="rounded-lg border border-earth-300 px-2 py-1.5 text-sm text-earth-900"
+                  />
+                </label>
+                <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs text-earth-600">
+                  {isEn ? 'Exclude words' : 'Excluir palavras'}
+                  <input
+                    type="text"
+                    value={filters.excludeKeywords}
+                    onChange={(e) => setFilters((prev) => ({ ...prev, excludeKeywords: e.target.value }))}
+                    placeholder={isEn ? 'PSA, オリパ, まとめ…' : 'PSA, オリパ, まとめ…'}
+                    className="rounded-lg border border-earth-300 px-2 py-1.5 text-sm text-earth-900"
+                  />
+                </label>
+                {!catalogFiltersAreDefault(filters) ? (
+                  <button
+                    type="button"
+                    onClick={() => setFilters({ ...DEFAULT_CATALOG_FILTERS, conditions: [] })}
+                    className="rounded-lg border border-earth-300 px-3 py-1.5 text-xs font-medium text-earth-700 hover:bg-earth-50"
+                  >
+                    {isEn ? 'Clear filters' : 'Limpar filtros'}
+                  </button>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
         </div>
       </form>
 
@@ -198,25 +421,55 @@ export default function CatalogSearchPanel({
         <div className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
       ) : null}
 
-      {!loading && meta && showTotals ? (
+      {loading ? (
+        <div
+          className="mt-3 flex items-center gap-2 rounded-lg border border-earth-300 bg-white px-3 py-2 text-sm font-medium text-earth-800 shadow-sm"
+          role="status"
+          aria-live="polite"
+        >
+          <SearchBusyMark />
+          <span>{visibleResults.length > 0 ? refreshingLabel : loadingLabel}</span>
+        </div>
+      ) : null}
+
+      {meta && showTotals ? (
         <div className="mt-3 text-xs text-earth-600">
           {visibleResults.length} exibidos
           {meta.totalEstimated != null ? ` de ${meta.totalEstimated} estimados` : ''}
           {' • '}
           {meta.tookMs ?? 0}ms na ultima consulta
+          {loading ? (isEn ? ' • updating…' : ' • atualizando…') : ''}
         </div>
       ) : null}
 
       {!loading && showStrategyBox && meta?.strategy ? (
         <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-900">
-          <strong>Modo atual:</strong> busca em tempo real com parsing de páginas públicas (piloto).{' '}
-          <strong>Direção:</strong> ingestão assíncrona + índice próprio para aumentar precisão e estabilidade.
+          <strong>Modo atual:</strong>{' '}
+          {meta.strategy.currentSystemMode === 'hybrid_ingestion_index'
+            ? (isEn
+              ? 'hybrid: recent listing index + live marketplace parse.'
+              : 'híbrido: índice recente + parsing ao vivo das lojas.')
+            : (isEn
+              ? 'live marketplace parse (pilot).'
+              : 'busca em tempo real com parsing de páginas públicas (piloto).')}{' '}
+          <strong>{isEn ? 'Next:' : 'Direção:'}</strong>{' '}
+          {isEn
+            ? 'keep ingesting into the index; live parse stays the fallback.'
+            : 'continuar ingerindo no índice; o parse ao vivo continua como fallback.'}
         </div>
       ) : null}
 
-      {partials?.length > 0 ? (
+      {partials?.some((part) => part?.reason && part.reason !== 'throttled') ? (
         <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-          Algumas lojas falharam nesta tentativa: {partials.map((p) => `${p.storeId} (${p.reason})`).join(' | ')}
+          {isEn
+            ? `Some stores failed this time: ${partials
+              .filter((part) => part?.reason && part.reason !== 'throttled')
+              .map((part) => `${part.storeId} (${part.reason})`)
+              .join(' | ')}`
+            : `Algumas lojas falharam nesta tentativa: ${partials
+              .filter((part) => part?.reason && part.reason !== 'throttled')
+              .map((part) => `${part.storeId} (${part.reason})`)
+              .join(' | ')}`}
         </div>
       ) : null}
 
@@ -231,13 +484,24 @@ export default function CatalogSearchPanel({
       ) : null}
 
       {!loading && visibleResults.length === 0 && meta ? <p className="mt-4 text-sm text-earth-600">{emptyLabel}</p> : null}
-      {loading && visibleResults.length === 0 ? <p className="mt-4 text-sm text-earth-600">{loadingLabel}</p> : null}
 
       {visibleResults.length > 0 ? (
-        <div className="mt-4 grid grid-cols-3 gap-2 sm:grid-cols-2 sm:gap-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-          {visibleResults.map((item) => (
+        <div className="relative mt-4" aria-busy={loading ? 'true' : 'false'}>
+          <div className={`grid grid-cols-3 gap-2 sm:grid-cols-2 sm:gap-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 ${loading ? 'pointer-events-none opacity-50' : ''}`}>
+          {visibleResults.map((item, index) => {
+            const batch = Number(item.loadedBatch) || 0
+            const prevBatch = index > 0 ? Number(visibleResults[index - 1]?.loadedBatch) || 0 : 0
+            const showBatchDivider = index > 0 && batch > prevBatch
+            return (
+            <Fragment key={item.productUrl || item.id}>
+            {showBatchDivider ? (
+              <div className="col-span-full my-1 flex items-center gap-3 py-1 text-[11px] font-medium uppercase tracking-wide text-earth-500">
+                <span className="h-px flex-1 bg-earth-200" aria-hidden />
+                <span>{moreResultsLabel}</span>
+                <span className="h-px flex-1 bg-earth-200" aria-hidden />
+              </div>
+            ) : null}
             <a
-              key={item.productUrl || item.id}
               href={typeof buildResultHref === 'function' ? buildResultHref(item) : item.productUrl}
               target={resultTarget}
               rel={resultRel}
@@ -351,7 +615,18 @@ export default function CatalogSearchPanel({
                 ) : null}
               </div>
             </a>
-          ))}
+            </Fragment>
+            )
+          })}
+          </div>
+          {loading ? (
+            <div className="absolute inset-0 z-10 flex items-start justify-center bg-earth-50/55 pt-16 backdrop-blur-[1px] sm:pt-24">
+              <div className="flex items-center gap-2 rounded-full border border-earth-200 bg-white px-4 py-2 text-sm font-medium text-earth-800 shadow-md">
+                <SearchBusyMark />
+                <span>{refreshingLabel}</span>
+              </div>
+            </div>
+          ) : null}
         </div>
       ) : null}
 

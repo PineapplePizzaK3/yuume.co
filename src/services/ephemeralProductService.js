@@ -1,19 +1,22 @@
 import { supabase } from '../lib/supabase'
 import { withDbTimeout, toServiceError } from '../lib/dbGuard'
+import { snapshotPayloadFromListing } from '../lib/ephemeralListing'
 
 export async function createEphemeralProductSnapshot(hitPayload) {
   try {
+    const fromListing = snapshotPayloadFromListing(hitPayload)
     const payload = {
-      storeId: hitPayload?.storeId || hitPayload?.store_id || null,
-      productUrl: hitPayload?.productUrl || hitPayload?.external_url || null,
-      title: hitPayload?.title || null,
-      price: hitPayload?.price ?? 0,
-      currency: hitPayload?.currency || 'JPY',
-      imageUrl: hitPayload?.imageUrl || null,
-      imageUrls: Array.isArray(hitPayload?.imageUrls)
-        ? hitPayload.imageUrls.map((url) => String(url || '').trim()).filter(Boolean)
-        : [],
-      source: hitPayload?.source || null,
+      storeId: fromListing?.storeId || hitPayload?.storeId || hitPayload?.store_id || null,
+      productUrl: fromListing?.productUrl || hitPayload?.productUrl || hitPayload?.external_url || null,
+      title: fromListing?.title || hitPayload?.title || null,
+      price: fromListing?.price ?? hitPayload?.price ?? 0,
+      currency: fromListing?.currency || hitPayload?.currency || 'JPY',
+      imageUrl: fromListing?.imageUrl || hitPayload?.imageUrl || null,
+      imageUrls: fromListing?.imageUrls
+        || (Array.isArray(hitPayload?.imageUrls)
+          ? hitPayload.imageUrls.map((url) => String(url || '').trim()).filter(Boolean)
+          : []),
+      source: hitPayload?.source || fromListing?.source || null,
       sourcePayload: hitPayload || {},
     }
     const { data, error } = await withDbTimeout(

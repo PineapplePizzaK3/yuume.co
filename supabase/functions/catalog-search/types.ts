@@ -1,3 +1,5 @@
+import type { CatalogSearchFilters } from './filters.ts'
+
 export type StoreId = 'amazon' | 'rakuma' | 'mercari' | 'yahoo' | 'yahoo_flea' | 'snkrdunk'
 
 export type CatalogHitTag = 'auction' | 'sold' | 'unavailable'
@@ -12,6 +14,9 @@ export interface SearchRequest {
   context?: 'legacy' | 'collector'
   /** Cursores de paginação por loja (ex.: nextPageToken do Mercari). */
   cursors?: Partial<Record<StoreId, string>>
+  filters?: Partial<CatalogSearchFilters>
+  /** Skip index-first and wait for live (load-more, background refresh). */
+  forceLive?: boolean
 }
 
 export interface UnifiedSearchHit {
@@ -25,7 +30,7 @@ export interface UnifiedSearchHit {
   productUrl: string
   storeId: StoreId
   storeName: string
-  source: 'html' | 'jina' | 'mixed'
+  source: 'html' | 'jina' | 'mixed' | 'index'
   score?: number
   tags?: CatalogHitTag[]
   auctionCurrentBidPrice?: number | null

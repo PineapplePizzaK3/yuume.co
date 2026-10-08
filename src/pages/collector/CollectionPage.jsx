@@ -9,6 +9,11 @@ import { catalogItemPath, collectorCardAssetPath, collectorCollectionRipPath } f
 import { useSiteLocale } from '../../hooks/useSiteLocale'
 import { useAuth } from '../../hooks/useAuth'
 import { useLocalizedPath } from '../../hooks/useLocalizedPath'
+import { VisualEmptyState } from '../../components/VisualEmptyState'
+import { MinhaYuumeTabs } from '../../components/platform/MinhaYuumeTabs'
+import { IconBookmark, IconCards, IconHeart, IconLayers } from '../../components/home/HomeSectionIcons'
+import { BoxBreakSetSummary } from '../../components/collector/BoxBreakSetSummary'
+import { resolveLiveParticipationStatus } from '../../lib/liveRipParticipation'
 
 const TAB_SETS = 'sets'
 const TAB_ASSETS = 'cards'
@@ -35,14 +40,19 @@ function CollectionPage() {
 
   useEffect(() => {
     let active = true
-    void Promise.all([listCollectionAssets(), listMyRipRecords(), listWishlistCards()]).then(([assetRes, ripRes, wishRes]) => {
-      if (!active) return
-      setAssets(Array.isArray(assetRes?.data) ? assetRes.data : [])
-      setRips(Array.isArray(ripRes?.data) ? ripRes.data : [])
-      setWishlist(Array.isArray(wishRes?.data) ? wishRes.data : [])
-    })
+    const load = () => {
+      void Promise.all([listCollectionAssets(), listMyRipRecords(), listWishlistCards()]).then(([assetRes, ripRes, wishRes]) => {
+        if (!active) return
+        setAssets(Array.isArray(assetRes?.data) ? assetRes.data : [])
+        setRips(Array.isArray(ripRes?.data) ? ripRes.data : [])
+        setWishlist(Array.isArray(wishRes?.data) ? wishRes.data : [])
+      })
+    }
+    load()
+    window.addEventListener('collector-demo-reset', load)
     return () => {
       active = false
+      window.removeEventListener('collector-demo-reset', load)
     }
   }, [])
 
@@ -72,7 +82,7 @@ function CollectionPage() {
           {t('collector.collection.loginRequiredTitle', { defaultValue: 'Entre para ver sua colecao' })}
         </h1>
         <p className="mt-2 text-sm text-earth-600">
-          {t('collector.collection.loginRequiredBody', { defaultValue: 'Sua colecao e seus registros de abertura ficam disponiveis apos o login.' })}
+          {t('collector.collection.loginRequiredBody', { defaultValue: 'Sua colecao e seus registros de Box Break ficam disponiveis apos o login.' })}
         </p>
         <Link
           to={path('login')}
@@ -98,6 +108,7 @@ function CollectionPage() {
               defaultValue: 'Acompanhe seus cards, seu historico de rips e os cards que voce quer encontrar.',
             })}
           </p>
+          {isAuthenticated ? <MinhaYuumeTabs active="colecao" /> : null}
           <div className="mt-6 flex flex-wrap gap-2">
             <button
               type="button"
@@ -118,7 +129,7 @@ function CollectionPage() {
               onClick={() => setTab(TAB_RIPS)}
               className={`rounded-full px-4 py-2 text-sm font-medium ${activeTab === TAB_RIPS ? 'bg-earth-900 text-earth-50' : 'bg-white text-earth-700 border border-earth-300'}`}
             >
-              {t('collector.collection.tabs.batches', { defaultValue: 'Aberturas' })}
+                  {t('collector.collection.tabs.batches', { defaultValue: 'Meus Box Breaks' })}
             </button>
             <button
               type="button"
@@ -173,11 +184,19 @@ function CollectionPage() {
                 })}
               </ul>
             ) : (
-              <p className="rounded-lg border border-earth-200 bg-earth-50 p-4 text-sm text-earth-600">
-                {t('collector.empty.sets', {
-                  defaultValue: 'Nenhum item de set marcado ainda. Abra um item do catálogo e toque em “Tenho este item”.',
+              <VisualEmptyState
+                className=""
+                image="/home/tcg-2-packs.png"
+                icon={IconLayers}
+                title={t('collector.empty.sets', {
+                  defaultValue: 'Nenhum item de set marcado ainda.',
                 })}
-              </p>
+                hint={t('collector.empty.setsHint', {
+                  defaultValue: 'Abra um item do catálogo e toque em “Tenho este item”.',
+                })}
+                toRoute="collectorExplore"
+                cta={t('collector.actions.exploreSets', { defaultValue: 'Explorar sets' })}
+              />
             )
           ) : null}
 
@@ -189,32 +208,70 @@ function CollectionPage() {
                 ))}
               </div>
             ) : (
-              <p className="rounded-lg border border-earth-200 bg-earth-50 p-4 text-sm text-earth-600">
-                {t('collector.empty.cards', { defaultValue: 'Nenhum card asset por enquanto.' })}
-              </p>
+              <VisualEmptyState
+                className=""
+                image="/home/tcg-1-japanese-booster-boxes-WLC.png"
+                icon={IconCards}
+                title={t('collector.empty.cards', { defaultValue: 'Nenhuma carta do Box Break por enquanto.' })}
+                hint={t('collector.empty.cardsHint', {
+                  defaultValue: 'As cartas aparecem aqui depois de um Box Break.',
+                })}
+                toRoute="collectorBatches"
+                cta={t('nav.batches', { defaultValue: 'Box Break' })}
+              />
             )
           ) : null}
 
           {activeTab === TAB_RIPS ? (
             rips.length ? (
               <div className="space-y-3">
-                {rips.map((rip) => (
+                {rips.map((rip) => {
+                  const participationStatus = resolveLiveParticipationStatus(rip)
+                  return (
                   <Link
                     key={rip.id}
                     to={collectorCollectionRipPath(rip.id, locale)}
                     className="block rounded-xl border border-earth-200 bg-white p-4 shadow-sm transition hover:border-earth-300"
                   >
-                    <p className="font-semibold text-earth-900">{rip.product?.name?.[localeKey] || rip.product?.id}</p>
-                    <p className="text-sm text-earth-600">
-                      {rip.code} • {rip.packsOpened}/{rip.packsPlanned}
+                    <BoxBreakSetSummary
+                      compact
+                      showDescription={false}
+                      product={rip.product}
+                      packs={rip.batch?.totalPacks || rip.product?.packsPerBox}
+                      localeKey={localeKey}
+                      title={rip.product?.name?.[localeKey] || rip.product?.id}
+                    />
+                    <p className="mt-3 text-sm text-earth-600">
+                      {rip.code}{' '}
+                      •{' '}
+                      {rip.packsOpened > 0
+                        ? `${rip.packsOpened}/${rip.packsPlanned}`
+                        : t('collector.ripDetail.reservedPacks', {
+                            defaultValue: '{{count}} pack(s) reservados',
+                            count: rip.packsPlanned,
+                          })}
+                    </p>
+                    <p className="mt-1 text-xs font-medium text-collector-700">
+                      {t(`collector.participation.status.${participationStatus}`, {
+                        defaultValue: participationStatus,
+                      })}
                     </p>
                   </Link>
-                ))}
+                  )
+                })}
               </div>
             ) : (
-              <p className="rounded-lg border border-earth-200 bg-earth-50 p-4 text-sm text-earth-600">
-                {t('collector.empty.batches', { defaultValue: 'Reserve uma abertura para ver seus registros aqui.' })}
-              </p>
+              <VisualEmptyState
+                className=""
+                image={`${import.meta.env.BASE_URL}collector/openings-hero.png`}
+                icon={IconHeart}
+                title={t('collector.empty.batches', { defaultValue: 'Reserve um Box Break para ver seus registros aqui.' })}
+                hint={t('collector.empty.batchesHint', {
+                  defaultValue: 'Escolha uma caixa e acompanhe o resultado na sua coleção.',
+                })}
+                toRoute="collectorBatchCatalog"
+                cta={t('collector.actions.exploreBatches', { defaultValue: 'Explorar Box Breaks' })}
+              />
             )
           ) : null}
 
@@ -229,9 +286,17 @@ function CollectionPage() {
                 ))}
               </ul>
             ) : (
-              <p className="rounded-lg border border-earth-200 bg-earth-50 p-4 text-sm text-earth-600">
-                {t('collector.empty.wishlist', { defaultValue: 'Sua wishlist ainda esta vazia.' })}
-              </p>
+              <VisualEmptyState
+                className=""
+                image="/home/anime-1-figures.png"
+                icon={IconBookmark}
+                title={t('collector.empty.wishlist', { defaultValue: 'Sua wishlist ainda está vazia.' })}
+                hint={t('collector.empty.wishlistHint', {
+                  defaultValue: 'Abra um item do catálogo e toque em “Quero este”.',
+                })}
+                toRoute="collectorExplore"
+                cta={t('collector.actions.exploreSets', { defaultValue: 'Explorar sets' })}
+              />
             )
           ) : null}
         </div>

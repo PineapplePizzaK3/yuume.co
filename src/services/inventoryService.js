@@ -27,12 +27,14 @@ export async function getMyInventory(userId, options = {}) {
           photo_url,
           video_url,
           status,
+          catalog_item_id,
           created_at,
           updated_at,
           products_description,
           items_count,
           received_at,
           product:products(image_url),
+          catalog_item:catalog_items(id, number, name_ja, name_en, rarity, set:catalog_sets(set_code, name_ja, name_en)),
           orders(order_source, order_module)
         `)
         .eq('user_id', userId)
@@ -236,6 +238,21 @@ export async function updateUserInventoryAdmin(inventoryId, payload) {
 /**
  * Admin: remove um pacote do inventário do usuário.
  */
+/** Admin: link / unlink a holding to a catalog item (Step 9). */
+export async function linkInventoryCatalogItemAdmin(inventoryId, catalogItemId) {
+  try {
+    const { data, error } = await withDbTimeout(
+      supabase.rpc('admin_inventory_link_catalog_item', {
+        p_inventory_id: inventoryId,
+        p_catalog_item_id: catalogItemId || null,
+      })
+    )
+    return { data: data ?? null, error }
+  } catch (e) {
+    return { data: null, error: toServiceError(e) }
+  }
+}
+
 export async function deleteUserInventoryAdmin(inventoryId) {
   try {
     const { error } = await withDbTimeout(

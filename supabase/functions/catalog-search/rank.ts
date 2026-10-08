@@ -39,16 +39,11 @@ export function rankHits(hits: UnifiedSearchHit[], query: string): UnifiedSearch
     .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
 }
 
-/** Evita que uma loja com score alto (ex.: Amazon + query em inglês) ocupe a página inteira. */
-export function interleaveRankedByStore(
-  hits: UnifiedSearchHit[],
-  query: string,
-  storeOrder: StoreId[],
-): UnifiedSearchHit[] {
-  const ranked = rankHits(hits, query)
+/** Round-robin across stores, keeping each store's existing order. */
+export function interleaveByStore(hits: UnifiedSearchHit[], storeOrder: StoreId[]): UnifiedSearchHit[] {
   const buckets = new Map<string, UnifiedSearchHit[]>()
   for (const sid of storeOrder) buckets.set(sid, [])
-  for (const h of ranked) {
+  for (const h of hits) {
     const arr = buckets.get(h.storeId)
     if (arr) arr.push(h)
   }
@@ -65,4 +60,13 @@ export function interleaveRankedByStore(
     if (!progressed) break
   }
   return out
+}
+
+/** Evita que uma loja com score alto (ex.: Amazon + query em inglês) ocupe a página inteira. */
+export function interleaveRankedByStore(
+  hits: UnifiedSearchHit[],
+  query: string,
+  storeOrder: StoreId[],
+): UnifiedSearchHit[] {
+  return interleaveByStore(rankHits(hits, query), storeOrder)
 }

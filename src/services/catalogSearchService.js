@@ -3,7 +3,8 @@ import { supabase } from '../lib/supabase'
 const SEARCH_FUNCTION_NAMES = ['catalog-search', 'catalog_search']
 /** Alinhado ao timeout longo de `fetch` para `/functions/v1/` em `supabase.js`. */
 const SEARCH_TIMEOUT_MS = 45000
-const DEFAULT_STORES = ['amazon', 'rakuma', 'mercari', 'yahoo', 'yahoo_flea', 'snkrdunk']
+const ALL_STORES = ['amazon', 'rakuma', 'mercari', 'yahoo', 'yahoo_flea', 'snkrdunk']
+const PUBLIC_DEFAULT_STORES = ['mercari', 'yahoo', 'yahoo_flea']
 
 async function normalizeInvokeError(err, authErrorMessage = 'Sessão expirada ou sem permissão para usar a busca do admin.') {
   const status = err?.context?.status
@@ -72,10 +73,11 @@ async function invokeCatalogSearch({ body, token, authErrorMessage, timeoutMs = 
 
 export async function searchCatalogAdmin({
   query,
-  stores = DEFAULT_STORES,
+  stores = ALL_STORES,
   page = 1,
   pageSize = 30,
   cursors = null,
+  filters = null,
 }) {
   const { error: userErr } = await supabase.auth.getUser()
   if (userErr) {
@@ -90,7 +92,7 @@ export async function searchCatalogAdmin({
   }
 
   return await invokeCatalogSearch({
-    body: { query, stores, page, pageSize, mode: 'admin', context: 'legacy', ...(cursors ? { cursors } : {}) },
+    body: { query, stores, page, pageSize, mode: 'admin', context: 'legacy', ...(cursors ? { cursors } : {}), ...(filters ? { filters } : {}) },
     token,
     authErrorMessage: 'Sessão expirada ou sem permissão para usar a busca do admin.',
   })
@@ -113,14 +115,61 @@ export async function fetchCatalogProductGallery({ productUrl, storeId, timeoutM
 
 export async function searchCatalogPublic({
   query,
-  stores = DEFAULT_STORES,
+  stores = PUBLIC_DEFAULT_STORES,
   page = 1,
   pageSize = 24,
   cursors = null,
+  filters = null,
+  forceLive = false,
 }) {
   return await invokeCatalogSearch({
-    body: { query, stores, page, pageSize, mode: 'public', context: 'legacy', ...(cursors ? { cursors } : {}) },
+    body: {
+      query,
+      stores,
+      page,
+      pageSize,
+      mode: 'public',
+      context: 'legacy',
+      ...(cursors ? { cursors } : {}),
+      ...(filters ? { filters } : {}),
+      ...(forceLive ? { forceLive: true } : {}),
+    },
     token: '',
     authErrorMessage: 'Acesso não autorizado para busca pública.',
+  })
+}
+
+/**
+ * Collector-context search (fail-closed against market_sources).
+ * Prefer stores already filtered to cleared + can_search_automated sources.
+ */
+export async function searchCatalogCollector({
+  query,
+  stores = ['own_stock'],
+  page = 1,
+  pageSize = 24,
+  cursors = null,
+  catalogItemId = null,
+  filters = null,
+}) {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
+  const token = session?.access_token || ''
+
+  return await invokeCatalogSearch({
+    body: {
+      query,
+      stores,
+      page,
+      pageSize,
+      mode: 'public',
+      context: 'collector',
+      ...(catalogItemId ? { catalogItemId } : {}),
+      ...(cursors ? { cursors } : {}),
+      ...(filters ? { filters } : {}),
+    },
+    token,
+    authErrorMessage: 'Faça login para buscar no mercado japonês.',
   })
 }

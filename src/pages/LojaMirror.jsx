@@ -69,7 +69,7 @@ export default function LojaMirror() {
   return (
     <>
       <Helmet>
-        <title>Loja | Delivery</title>
+        <title>Loja | YuumeCo</title>
       </Helmet>
       <div className="px-4 pt-24 pb-12">
         <div className="mx-auto max-w-6xl">

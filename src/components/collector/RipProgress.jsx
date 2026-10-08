@@ -1,22 +1,17 @@
 import { useMemo } from 'react'
 import { LiveRipStatusTimeline } from '../live-rips/LiveRipStatusTimeline'
-
-const STATUS_ORDER = ['OPEN', 'SCHEDULED', 'OPENING', 'COMPLETED', 'FULFILLING']
+import { liveBatchProgressItems } from '../../lib/liveRipBatchStatus'
 
 export function RipProgress({ rip, labels }) {
-  const reserved = Number(rip?.packsOpened ?? rip?.reservedPositions ?? 0)
-  const planned = Number(rip?.packsPlanned ?? rip?.totalPacks ?? 0)
+  const planned = Number(rip?.totalPacks ?? rip?.packsPlanned ?? 0)
+  const reserved = Number(rip?.reservedPositions ?? rip?.packsOpened ?? 0)
   const remaining = Math.max(0, Number(rip?.availablePositions ?? planned - reserved))
   const percentage = planned > 0 ? Math.min(100, Math.round((remaining / planned) * 100)) : 0
 
-  const timelineItems = useMemo(() => {
-    const index = STATUS_ORDER.indexOf(rip?.status || 'OPEN')
-    return STATUS_ORDER.map((status, idx) => ({
-      id: status,
-      done: idx <= (index < 0 ? 0 : index),
-      label: labels?.[status] || status,
-    }))
-  }, [labels, rip?.status])
+  const timelineItems = useMemo(
+    () => liveBatchProgressItems(rip, labels),
+    [labels, rip]
+  )
 
   return (
     <div className="space-y-4">

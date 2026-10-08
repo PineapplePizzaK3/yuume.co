@@ -1,4 +1,5 @@
 import type { UnifiedSearchHit } from '../types.ts'
+import { DEFAULT_FILTERS, mercariHtmlSearchUrl, type CatalogSearchFilters } from '../filters.ts'
 import { buildHit, parsePrice, pickProductImages, mercariTagsFromText } from '../normalize.ts'
 import { searchMercariApi } from './mercariApi.ts'
 import {
@@ -164,37 +165,41 @@ export type MercariPageResult = {
 export async function searchMercariPage(
   query: string,
   pageSize: number,
-  options: { storePage?: number; pageToken?: string } = {},
+  options: { storePage?: number; pageToken?: string; filters?: CatalogSearchFilters } = {},
 ): Promise<MercariPageResult> {
   const storePage = Math.max(1, Number(options.storePage) || 1)
   const pageToken = String(options.pageToken || '').trim()
+  const filters = options.filters
 
   if (!pageToken) {
     try {
-      const apiPage = await searchMercariApi(query, pageSize, {})
+      const apiPage = await searchMercariApi(query, pageSize, { filters })
       if (apiPage.hits.length > 0) return apiPage
     } catch {
       // fallback HTML abaixo
     }
   } else {
     try {
-      return await searchMercariApi(query, pageSize, { pageToken })
+      return await searchMercariApi(query, pageSize, { pageToken, filters })
     } catch {
       return { hits: [] }
     }
   }
 
-  const htmlHits = await searchMercariHtml(query, pageSize, storePage)
+  const htmlHits = await searchMercariHtml(query, pageSize, storePage, filters)
   return { hits: htmlHits }
 }
 
-async function searchMercariHtml(query: string, pageSize: number, storePage = 1): Promise<UnifiedSearchHit[]> {
+async function searchMercariHtml(
+  query: string,
+  pageSize: number,
+  storePage = 1,
+  filters?: CatalogSearchFilters,
+): Promise<UnifiedSearchHit[]> {
 
   const startedAt = Date.now()
   const budgetMs = STORE_DEADLINE_MS - 300
-  const encoded = encodeURIComponent(query)
-  const pageParam = storePage > 1 ? `&page=${storePage}` : ''
-  const searchUrl = `https://jp.mercari.com/search?keyword=${encoded}${pageParam}`
+  const searchUrl = mercariHtmlSearchUrl(query, storePage, filters ?? DEFAULT_FILTERS)
   const html = await fetchText(searchUrl, FETCH_TIMEOUT_MS, { Referer: 'https://jp.mercari.com/' }).catch(() => '')
 
   const fromHtml = collectFromHtml(html, pageSize, query)

@@ -11,7 +11,7 @@ import { useLocalizedPath } from '../hooks/useLocalizedPath'
 import { useStoreVitrineEnabled } from '../hooks/useStoreVitrineEnabled'
 import { isRouteActive } from '../lib/localeRoutes'
 
-const NAV_ROUTE_KEYS = ['appDashboard']
+const NAV_ROUTE_KEYS = ['appDashboard', 'collectorCollection', 'minhaYuumeBoxBreak']
 const CONTA_ROUTE_KEYS = ['appLounge', 'appConta', 'appCart']
 const LOJA_ROUTE_KEYS = ['appServices', 'appLojaEstoque', 'appLojaCatalogo', 'appLoja']
 
@@ -41,6 +41,8 @@ const LEGACY_PATH_TO_KEY = {
 
 const LABEL_KEY_BY_ROUTE = {
   appDashboard: 'platform.navSummary',
+  collectorCollection: 'platform.navCollection',
+  minhaYuumeBoxBreak: 'platform.navBoxBreak',
   appLounge: 'platform.navLounge',
   appConta: 'platform.navAccountData',
   appCart: 'platform.navPayments',
@@ -60,6 +62,13 @@ const DEFAULT_MENU_ORDER = {
 
 function insertMissingMenuKey(safe, key) {
   if (safe.includes(key)) return
+  if (key === 'collectorCollection') {
+    const boxIdx = safe.indexOf('minhaYuumeBoxBreak')
+    if (boxIdx >= 0) {
+      safe.splice(boxIdx, 0, key)
+      return
+    }
+  }
   // Catálogo fica imediatamente antes da Vitrine.
   if (key === 'appLojaCatalogo') {
     const vitrineIdx = safe.indexOf('appLoja')
@@ -135,7 +144,13 @@ export function PlatformLayout() {
 
   const p = path
 
-  const isActive = useCallback((routeKey) => location.pathname === p(routeKey), [location.pathname, p])
+  const isActive = useCallback(
+    (routeKey) =>
+      routeKey === 'collectorCollection'
+        ? isRouteActive('collectorCollection', location.pathname, true)
+        : location.pathname === p(routeKey),
+    [location.pathname, p]
+  )
 
   const isLojaItemActive = useCallback(
     (routeKey) => {

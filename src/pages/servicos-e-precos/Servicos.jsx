@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { PageSeo } from '../../components/PageSeo'
@@ -9,6 +10,13 @@ import {
   SERVICE_FEE_JPY_PER_ITEM,
   GRUPO_COMPRAS_FEE_PERCENT,
 } from '../../data/serviceFees'
+import {
+  HomeIconBadge,
+  IconBag,
+  IconPackage,
+  IconPeople,
+  IconStore,
+} from '../../components/home/HomeSectionIcons'
 
 /** @typedef {{ id: string, prefix: string, stepCount: number, pricingKey: string, variant?: 'redir', tabela?: { percentual?: number, porItem?: number | null, freteKey?: string, modoLoja?: boolean } }} ServiceFlowDef */
 
@@ -20,6 +28,7 @@ const SERVICE_FLOWS = [
     stepCount: 5,
     pricingKey: 'pricingRedir',
     variant: 'redir',
+    Icon: IconPackage,
   },
   {
     id: 'personal-shopping',
@@ -27,6 +36,7 @@ const SERVICE_FLOWS = [
     stepCount: 6,
     pricingKey: 'pricingPS',
     tabela: { percentual: PERSONAL_SHOPPING_FEE_PERCENT, porItem: null, freteKey: 'afterConsolidation' },
+    Icon: IconBag,
   },
   {
     id: 'grupo-de-compras',
@@ -34,6 +44,7 @@ const SERVICE_FLOWS = [
     stepCount: 5,
     pricingKey: 'pricingGrupo',
     tabela: { percentual: GRUPO_COMPRAS_FEE_PERCENT, porItem: SERVICE_FEE_JPY_PER_ITEM, freteKey: 'afterShipRequest' },
+    Icon: IconPeople,
   },
   {
     id: 'loja-virtual',
@@ -41,6 +52,7 @@ const SERVICE_FLOWS = [
     stepCount: 5,
     pricingKey: 'pricingLoja',
     tabela: { modoLoja: true, freteKey: 'afterShipRequest' },
+    Icon: IconStore,
   },
 ]
 
@@ -207,11 +219,107 @@ function TabelaValores({
  * Página Serviços - visão geral dos serviços com fluxos.
  * Sub-página de Serviços e Preços (index).
  */
+function ServiceDetails({ servico, t, lp, formatarIene }) {
+  const passos = Array.from({ length: servico.stepCount }, (_, i) =>
+    t(`publicServicos.${servico.prefix}P${i}`),
+  )
+  const pricing = t(`publicServicos.${servico.pricingKey}`)
+
+  return (
+    <>
+      <ol className="mt-6 space-y-4">
+        {passos.map((passo, i) => (
+          <li key={i} className="flex gap-4">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-earth-900 text-sm font-semibold text-earth-50">
+              {i + 1}
+            </span>
+            <span className="pt-0.5 text-earth-700">{passo}</span>
+          </li>
+        ))}
+      </ol>
+
+      {servico.variant === 'redir' && (
+        <>
+          <p className="mt-6 text-sm text-earth-600">
+            <strong>{t('publicServicos.howWeCharge')}</strong> {pricing}
+          </p>
+          <TabelaValores t={t} formatarIene={formatarIene} modoRedirecionamento />
+        </>
+      )}
+
+      {servico.tabela && !servico.tabela.modoLoja && (
+        <>
+          <p className="mt-6 text-sm text-earth-600">
+            <strong>{t('publicServicos.howWeCharge')}</strong> {pricing}
+          </p>
+          <TabelaValores
+            t={t}
+            formatarIene={formatarIene}
+            percentual={servico.tabela.percentual ?? null}
+            porItem={servico.tabela.porItem ?? null}
+            freteTexto={
+              servico.tabela.freteKey ? t(`publicServicos.${servico.tabela.freteKey}`) : undefined
+            }
+          />
+        </>
+      )}
+
+      {servico.tabela?.modoLoja && (
+        <>
+          <p className="mt-6 text-sm text-earth-600">
+            <strong>{t('publicServicos.howWeCharge')}</strong> {pricing}
+          </p>
+          <TabelaValores
+            t={t}
+            formatarIene={formatarIene}
+            modoLoja
+            freteTexto={
+              servico.tabela.freteKey ? t(`publicServicos.${servico.tabela.freteKey}`) : undefined
+            }
+          />
+        </>
+      )}
+
+      <div className="mt-6 flex flex-wrap gap-4">
+        <Link to={lp('servicosFretes')} className="text-sm font-medium text-earth-900 hover:underline">
+          {t('publicServicos.linkFretes')}
+        </Link>
+        {(servico.id === 'grupo-de-compras' || servico.id === 'loja-virtual') && (
+          <Link
+            to={servico.id === 'grupo-de-compras' ? lp('appLoja') : lp('lojaPublic')}
+            className="text-sm font-medium text-earth-900 hover:underline"
+          >
+            {servico.id === 'grupo-de-compras'
+              ? t('publicServicos.linkGrupos')
+              : t('publicServicos.linkLoja')}
+          </Link>
+        )}
+      </div>
+    </>
+  )
+}
+
 function Servicos() {
   const { t } = useTranslation()
   const lp = useLocalizedPath()
   const siteLocale = useSiteLocale()
   const formatarIene = (valor) => formatJpyForSite(siteLocale, valor, null)
+  const [openId, setOpenId] = useState(SERVICE_FLOWS[0].id)
+
+  useEffect(() => {
+    const id = String(window.location.hash || '').replace('#', '')
+    if (SERVICE_FLOWS.some((servico) => servico.id === id)) setOpenId(id)
+  }, [])
+
+  const openService = (id) => {
+    setOpenId(id)
+    if (typeof window !== 'undefined') {
+      window.history.replaceState(null, '', `#${id}`)
+    }
+  }
+
+  const selected = SERVICE_FLOWS.find((servico) => servico.id === openId) || SERVICE_FLOWS[0]
+  const SelectedIcon = selected.Icon
 
   return (
     <>
@@ -221,7 +329,7 @@ function Servicos() {
         description={t('meta.servicosPrecos.description')}
       />
 
-      <div className="space-y-12">
+      <div className="space-y-8">
         <p className="text-earth-600">
           {t('publicServicos.introBefore')}{' '}
           <Link
@@ -240,104 +348,48 @@ function Servicos() {
           {t('publicServicos.introAfter')}
         </p>
 
-        {SERVICE_FLOWS.map((servico) => {
-          const titulo = t(`publicServicos.${servico.prefix}Title`)
-          const descricao = t(`publicServicos.${servico.prefix}Desc`)
-          const passos = Array.from({ length: servico.stepCount }, (_, i) =>
-            t(`publicServicos.${servico.prefix}P${i}`),
-          )
-          const pricing = t(`publicServicos.${servico.pricingKey}`)
+        <div className="grid gap-3 sm:grid-cols-2">
+          {SERVICE_FLOWS.map((servico) => {
+            const Icon = servico.Icon
+            const active = servico.id === openId
+            return (
+              <button
+                key={servico.id}
+                type="button"
+                onClick={() => openService(servico.id)}
+                className={`group rounded-2xl border p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
+                  active
+                    ? 'border-earth-800 bg-white'
+                    : 'border-earth-200 bg-earth-50 hover:border-earth-400'
+                }`}
+              >
+                <HomeIconBadge className={active ? 'mb-3 bg-earth-200' : 'mb-3'}>
+                  <Icon />
+                </HomeIconBadge>
+                <h2 className="text-lg font-semibold text-earth-900">
+                  {t(`publicServicos.${servico.prefix}Title`)}
+                </h2>
+                <p className="mt-2 text-sm text-earth-600">
+                  {t(`publicServicos.${servico.prefix}Desc`)}
+                </p>
+              </button>
+            )
+          })}
+        </div>
 
-          return (
-            <div
-              key={servico.id}
-              className="rounded-lg border border-earth-200 bg-earth-100 p-6 shadow-sm"
-            >
-              <h2 className="text-xl font-semibold text-earth-900 sm:text-2xl">{titulo}</h2>
-              <p className="mt-2 text-earth-600">{descricao}</p>
-
-              <ol className="mt-6 space-y-4">
-                {passos.map((passo, i) => (
-                  <li key={i} className="flex gap-4">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-earth-900 text-sm font-semibold text-earth-50">
-                      {i + 1}
-                    </span>
-                    <span className="pt-0.5 text-earth-700">{passo}</span>
-                  </li>
-                ))}
-              </ol>
-
-              {servico.variant === 'redir' && (
-                <>
-                  <p className="mt-6 text-sm text-earth-600">
-                    <strong>{t('publicServicos.howWeCharge')}</strong> {pricing}
-                  </p>
-                  <TabelaValores
-                    t={t}
-                    formatarIene={formatarIene}
-                    modoRedirecionamento
-                  />
-                </>
-              )}
-
-              {servico.tabela && !servico.tabela.modoLoja && (
-                <>
-                  <p className="mt-6 text-sm text-earth-600">
-                    <strong>{t('publicServicos.howWeCharge')}</strong> {pricing}
-                  </p>
-                  <TabelaValores
-                    t={t}
-                    formatarIene={formatarIene}
-                    percentual={servico.tabela.percentual ?? null}
-                    porItem={servico.tabela.porItem ?? null}
-                    freteTexto={
-                      servico.tabela.freteKey
-                        ? t(`publicServicos.${servico.tabela.freteKey}`)
-                        : undefined
-                    }
-                  />
-                </>
-              )}
-
-              {servico.tabela?.modoLoja && (
-                <>
-                  <p className="mt-6 text-sm text-earth-600">
-                    <strong>{t('publicServicos.howWeCharge')}</strong> {pricing}
-                  </p>
-                  <TabelaValores
-                    t={t}
-                    formatarIene={formatarIene}
-                    modoLoja
-                    freteTexto={
-                      servico.tabela.freteKey
-                        ? t(`publicServicos.${servico.tabela.freteKey}`)
-                        : undefined
-                    }
-                  />
-                </>
-              )}
-
-              <div className="mt-6 flex flex-wrap gap-4">
-                <Link
-                  to={lp('servicosFretes')}
-                  className="text-sm font-medium text-earth-900 hover:underline"
-                >
-                  {t('publicServicos.linkFretes')}
-                </Link>
-                {(servico.id === 'grupo-de-compras' || servico.id === 'loja-virtual') && (
-                  <Link
-                    to={servico.id === 'grupo-de-compras' ? lp('appLoja') : lp('lojaPublic')}
-                    className="text-sm font-medium text-earth-900 hover:underline"
-                  >
-                    {servico.id === 'grupo-de-compras'
-                      ? t('publicServicos.linkGrupos')
-                      : t('publicServicos.linkLoja')}
-                  </Link>
-                )}
-              </div>
-            </div>
-          )
-        })}
+        <div
+          id={selected.id}
+          className="rounded-lg border border-earth-200 bg-earth-100 p-6 shadow-sm"
+        >
+          <HomeIconBadge>
+            <SelectedIcon />
+          </HomeIconBadge>
+          <h2 className="text-xl font-semibold text-earth-900 sm:text-2xl">
+            {t(`publicServicos.${selected.prefix}Title`)}
+          </h2>
+          <p className="mt-2 text-earth-600">{t(`publicServicos.${selected.prefix}Desc`)}</p>
+          <ServiceDetails servico={selected} t={t} lp={lp} formatarIene={formatarIene} />
+        </div>
       </div>
     </>
   )

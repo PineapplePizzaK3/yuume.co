@@ -9,6 +9,7 @@ import { REDIR_ASSISTIDO_FEE_PERCENT, computeAssistedEarlyPrepayDebitJpy } from 
 import AdminQuoteProductsForm, { EMPTY_QUOTE_PRODUCT } from './AdminQuoteProductsForm'
 import { approveWisePaymentRequestAdmin, rejectWisePaymentRequestAdmin } from '../../../../services/wisePaymentService'
 import { getPaymentsApiBase } from '../../../../services/paymentService'
+import { CreditsInline } from '../../../../components/CreditsAmount'
 
 export default function PedidosSection() {
   const {
@@ -452,11 +453,11 @@ export default function PedidosSection() {
                           {walletJpy > 0 && declaredJpy != null && (
                             <span className="text-emerald-950">
                               · produtos {formatJPY(declaredJpy)} · taxa {REDIR_ASSISTIDO_FEE_PERCENT}%{' '}
-                              {formatJPY(feeJpy)} · total carteira {formatJPY(walletJpy)}
+                              {formatJPY(feeJpy)} · total créditos <CreditsInline amount={walletJpy} />
                             </span>
                           )}
                           {walletJpy > 0 && declaredJpy == null && (
-                            <span className="text-emerald-950">· carteira {formatJPY(walletJpy)}</span>
+                            <span className="text-emerald-950">· créditos <CreditsInline amount={walletJpy} /></span>
                           )}
                         </span>
                       </p>

@@ -2,9 +2,12 @@ import { useEffect, useState } from 'react'
 import { Link, useLocation, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { PageSeo } from '../../components/PageSeo'
+import { FindInJapanPanel } from '../../components/collector/FindInJapanPanel'
 import { getItem } from '../../services/catalogService'
 import { getOwnedCollectionItem, setCatalogItemOwned } from '../../services/collectionService'
+import { getWishlistItemForCatalog, removeWishlistItem, upsertWishlistItem } from '../../services/wishlistCatalogService'
 import { useAuth } from '../../hooks/useAuth'
+import { useCollectorFlags } from '../../hooks/useCollectorFlags'
 import { useLocalizedPath } from '../../hooks/useLocalizedPath'
 import { useSiteLocale } from '../../hooks/useSiteLocale'
 import { localizedPath } from '../../lib/localeRoutes'
@@ -16,11 +19,14 @@ function CatalogItemPage() {
   const path = useLocalizedPath()
   const locale = useSiteLocale()
   const { isAuthenticated } = useAuth()
+  const { market: marketEnabled } = useCollectorFlags()
   const [item, setItem] = useState(null)
   const [ownedRow, setOwnedRow] = useState(null)
+  const [wishRow, setWishRow] = useState(null)
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const [targetPrice, setTargetPrice] = useState('')
   const localeKey = i18n.language === 'en' ? 'en' : 'pt-BR'
 
   useEffect(() => {
@@ -33,16 +39,23 @@ function CatalogItemPage() {
         setError(res.error.message || t('collector.errors.itemNotFound', { defaultValue: 'Item não encontrado.' }))
         setItem(null)
         setOwnedRow(null)
+        setWishRow(null)
         setLoading(false)
         return
       }
       setItem(res.data)
       if (isAuthenticated && res.data?.id) {
-        const owned = await getOwnedCollectionItem(res.data.id)
+        const [owned, wish] = await Promise.all([
+          getOwnedCollectionItem(res.data.id),
+          getWishlistItemForCatalog(res.data.id),
+        ])
         if (!active) return
         setOwnedRow(owned.data)
+        setWishRow(wish.data)
+        setTargetPrice(wish.data?.target_price_jpy != null ? String(wish.data.target_price_jpy) : '')
       } else {
         setOwnedRow(null)
+        setWishRow(null)
       }
       setLoading(false)
     })
@@ -64,6 +77,33 @@ function CatalogItemPage() {
       return
     }
     setOwnedRow(nextOwned ? res.data?.item || { id: 'owned' } : null)
+    if (nextOwned) setWishRow(null)
+  }
+
+  const handleToggleWishlist = async () => {
+    if (!item?.id || busy || ownedRow) return
+    if (!isAuthenticated) return
+    setBusy(true)
+    setError('')
+    if (wishRow) {
+      const res = await removeWishlistItem(item.id)
+      setBusy(false)
+      if (res.error) {
+        setError(res.error.message || '')
+        return
+      }
+      setWishRow(null)
+      return
+    }
+    const res = await upsertWishlistItem(item.id, {
+      targetPriceJpy: targetPrice === '' ? null : Number(targetPrice),
+    })
+    setBusy(false)
+    if (res.error) {
+      setError(res.error.message || '')
+      return
+    }
+    setWishRow(res.data || { catalog_item_id: item.id })
   }
 
   if (loading) {
@@ -86,6 +126,7 @@ function CatalogItemPage() {
   const name = localeKey === 'en' ? item.name_en || item.name_ja : item.name_ja || item.name_en
   const setName = localeKey === 'en' ? set?.name_en || set?.name_ja : set?.name_ja || set?.name_en
   const isOwned = Boolean(ownedRow)
+  const onWishlist = Boolean(wishRow)
 
   return (
     <>
@@ -116,22 +157,52 @@ function CatalogItemPage() {
 
           <div className="mt-6 flex flex-wrap items-center gap-3">
             {isAuthenticated ? (
-              <button
-                type="button"
-                onClick={handleToggleOwned}
-                disabled={busy}
-                className={`rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-60 ${
-                  isOwned
-                    ? 'border border-earth-300 bg-white text-earth-800 hover:bg-earth-50'
-                    : 'bg-earth-900 text-earth-50 hover:bg-earth-800'
-                }`}
-              >
-                {busy
-                  ? t('collector.common.saving', { defaultValue: 'Salvando...' })
-                  : isOwned
-                    ? t('collector.item.markNotOwned', { defaultValue: 'Remover da coleção' })
-                    : t('collector.item.markOwned', { defaultValue: 'Tenho este item' })}
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={handleToggleOwned}
+                  disabled={busy}
+                  className={`rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-60 ${
+                    isOwned
+                      ? 'border border-earth-300 bg-white text-earth-800 hover:bg-earth-50'
+                      : 'bg-earth-900 text-earth-50 hover:bg-earth-800'
+                  }`}
+                >
+                  {busy
+                    ? t('collector.common.saving', { defaultValue: 'Salvando...' })
+                    : isOwned
+                      ? t('collector.item.markNotOwned', { defaultValue: 'Remover da coleção' })
+                      : t('collector.item.markOwned', { defaultValue: 'Tenho este item' })}
+                </button>
+                {!isOwned ? (
+                  <button
+                    type="button"
+                    onClick={handleToggleWishlist}
+                    disabled={busy}
+                    className={`rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-60 ${
+                      onWishlist
+                        ? 'border border-earth-300 bg-white text-earth-800 hover:bg-earth-50'
+                        : 'border border-earth-300 bg-white text-earth-800 hover:bg-earth-50'
+                    }`}
+                  >
+                    {onWishlist
+                      ? t('collector.item.removeWishlist', { defaultValue: 'Remover da wishlist' })
+                      : t('collector.item.addWishlist', { defaultValue: 'Quero este' })}
+                  </button>
+                ) : null}
+                {!isOwned ? (
+                  <label className="text-xs text-earth-600">
+                    {t('collector.wishlist.target', { defaultValue: 'Alvo ¥' })}
+                    <input
+                      type="number"
+                      min="0"
+                      value={targetPrice}
+                      onChange={(e) => setTargetPrice(e.target.value)}
+                      className="ml-2 w-28 rounded border border-earth-300 px-2 py-1 text-sm"
+                    />
+                  </label>
+                ) : null}
+              </>
             ) : (
               <Link
                 to={path('login')}
@@ -151,6 +222,8 @@ function CatalogItemPage() {
               defaultValue: 'Compras e holdings no Japão não entram sozinhas na coleção — só quando você marca.',
             })}
           </p>
+
+          {marketEnabled ? <FindInJapanPanel item={item} wishlistItemId={wishRow?.id || null} /> : null}
         </div>
       </section>
     </>

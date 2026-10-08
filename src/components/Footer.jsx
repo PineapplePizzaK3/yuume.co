@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { isRouteActive } from '../lib/localeRoutes'
 import { LocalizedLink } from './LocalizedLink'
 import { LanguageSwitcherFooterRow } from './LanguageSwitcher'
+import { chromeShell } from '../lib/layout'
 
 function Footer() {
   const { t } = useTranslation()
@@ -29,6 +30,21 @@ function Footer() {
             <div className="flex flex-col gap-1">
               <LocalizedLink toRoute="home" className={linkClasse('home')}>
                 {t('nav.home')}
+              </LocalizedLink>
+              <LocalizedLink toRoute="lojaPublicVitrine" className={linkClasse('lojaPublicVitrine', true)}>
+                {t('nav.products')}
+              </LocalizedLink>
+              <LocalizedLink toRoute="collectorBatches" className={linkClasse('collectorBatches', true)}>
+                {t('nav.batches')}
+              </LocalizedLink>
+              <LocalizedLink toRoute="collectorCollection" className={linkClasse('collectorCollection', true)}>
+                {t('nav.collection')}
+              </LocalizedLink>
+              <LocalizedLink toRoute="forwardingHome" className={linkClasse('forwardingHome')}>
+                {t('nav.japanServices')}
+              </LocalizedLink>
+              <LocalizedLink toRoute="minhaYuume" className={linkClasse('minhaYuume', true)}>
+                {t('nav.myYuume')}
               </LocalizedLink>
               <LocalizedLink toRoute="servicosPrecos" className={linkClasse('servicosPrecos', true)}>
                 {t('nav.services')}

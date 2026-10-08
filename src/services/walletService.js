@@ -6,6 +6,13 @@ import { supabase } from '../lib/supabase'
 import { withDbTimeout, toServiceError } from '../lib/dbGuard'
 import { callAdminRpc } from './adminRpcService'
 
+export const WALLET_UPDATED_EVENT = 'yuume-wallet-updated'
+
+export function notifyWalletUpdated(detail = {}) {
+  if (typeof window === 'undefined' || typeof window.dispatchEvent !== 'function') return
+  window.dispatchEvent(new CustomEvent(WALLET_UPDATED_EVENT, { detail }))
+}
+
 /**
  * Retorna a carteira do usuário (saldo e moeda). Se não existir linha, retorna saldo 0.
  */

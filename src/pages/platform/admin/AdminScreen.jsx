@@ -38,6 +38,7 @@ import {
   registerPackageAdmin,
   updateUserInventoryAdmin,
   deleteUserInventoryAdmin,
+  linkInventoryCatalogItemAdmin,
   parseInventoryProductsForEdit,
   getShippingPanelAdmin,
   setShipmentFreightAdmin,
@@ -70,6 +71,7 @@ import { getMyAdminNotifications, markNotificationRead } from '../../../services
 import { getFraudReviewQueue, decideFraudCase } from '../../../services/fraudService'
 import { brlToJpy, formatWeight } from '../../../lib/fx'
 import { formatJpyForSite } from '../../../lib/moneyDisplay'
+import { CreditsAmount } from '../../../components/CreditsAmount'
 import { parseQuoteMessage, serializeQuoteProducts } from '../../../lib/quoteProducts'
 import { getDefaultRedirectFeePerItem } from '../../../lib/shippingRedirectFee'
 import QuoteProductsList from '../../../components/QuoteProductsList'
@@ -481,6 +483,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     weight_kg: '',
     photo_url: '',
     video_url: '',
+    catalog_item_id: '',
     products: [{ name: '', quantity: '1', price: '' }],
   })
   const [activeTab, setActiveTabState] = useState(() => normalizeAdminTabId(routeTabId))
@@ -980,7 +983,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
     if (!uid) return
     const amount = parseFloat(userDetailModal.walletAmount)
     if (isNaN(amount) || amount <= 0) {
-      setMessage('Informe um valor positivo.')
+      setMessage('Informe uma quantidade de créditos positiva.')
       return
     }
     setUserDetailModal((m) => ({ ...m, walletSaving: true, walletSavingAction: mode }))
@@ -989,7 +992,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       const isDebit = mode === 'debit'
       const currentBalance = Number(userDetailModal.wallet?.balance) || 0
       if (isDebit && amount > currentBalance) {
-        setMessage('Saldo insuficiente para remoção.')
+        setMessage('Créditos insuficientes para remoção.')
         setUserDetailModal((m) => ({ ...m, walletSaving: false, walletSavingAction: null }))
         return
       }
@@ -1014,9 +1017,9 @@ export default function Admin({ routeTabId = 'pedidos' }) {
         walletAmount: '',
         walletDesc: '',
       }))
-      setMessage(isDebit ? 'Saldo removido com sucesso.' : 'Saldo adicionado com sucesso.')
+      setMessage(isDebit ? 'Créditos removidos com sucesso.' : 'Créditos adicionados com sucesso.')
     } catch (e) {
-      setMessage(e?.message || (mode === 'debit' ? 'Erro ao remover saldo' : 'Erro ao adicionar saldo'))
+      setMessage(e?.message || (mode === 'debit' ? 'Erro ao remover créditos' : 'Erro ao adicionar créditos'))
       setUserDetailModal((m) => ({ ...m, walletSaving: false, walletSavingAction: null }))
     }
   }
@@ -3027,6 +3030,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
       weight_kg: row.weight_kg != null && row.weight_kg !== '' ? String(row.weight_kg) : '',
       photo_url: row.photo_url ?? '',
       video_url: row.video_url ?? '',
+      catalog_item_id: row.catalog_item_id ?? '',
       products: parsed.length > 0 ? parsed : [{ name: '', quantity: '1', price: '' }],
     })
   }, [])
@@ -3057,6 +3061,14 @@ export default function Admin({ routeTabId = 'pedidos' }) {
           price: p.price,
         })),
       })
+      if (!error) {
+        const catalogId = String(editInventoryModal.catalog_item_id || '').trim() || null
+        const linkRes = await linkInventoryCatalogItemAdmin(id, catalogId)
+        if (linkRes.error) {
+          setMessage(linkRes.error.message || 'Inventário atualizado, mas falha ao vincular catálogo.')
+          return
+        }
+      }
       setMessage(error ? error.message : 'Inventário atualizado.')
       if (!error) {
         logAdminAction('inventory_update', 'inventory', id, { user: editInventoryModal.userLabel })
@@ -3069,6 +3081,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
           weight_kg: '',
           photo_url: '',
           video_url: '',
+          catalog_item_id: '',
           products: [{ name: '', quantity: '1', price: '' }],
         })
         loadShippingPanel()
@@ -3633,19 +3646,20 @@ export default function Admin({ routeTabId = 'pedidos' }) {
                       </form>
                     </div>
 
-                    {/* Carteira */}
+                    {/* Créditos da plataforma (carteira) */}
                     <div>
-                      <h4 className="font-medium text-earth-900 mb-3">Carteira</h4>
-                      <p className="text-sm text-earth-600 mb-2">
-                        Saldo atual: {formatMoney(userDetailModal.wallet?.balance ?? 0, userDetailModal.wallet?.currency || 'JPY')}
-                      </p>
+                      <h4 className="font-medium text-earth-900 mb-3">Créditos</h4>
+                      <div className="mb-2">
+                        <p className="text-sm text-earth-600">Saldo atual</p>
+                        <CreditsAmount amount={userDetailModal.wallet?.balance ?? 0} variant="compact" />
+                      </div>
                       <form onSubmit={handleAddWalletBalance} className="flex flex-wrap items-end gap-3">
                         <div>
-                          <label className="block text-sm font-medium text-earth-700">Valor (Â¥)</label>
+                          <label className="block text-sm font-medium text-earth-700">Créditos</label>
                           <input
                             type="number"
                             step="1"
-                            min="0.01"
+                            min="1"
                             value={userDetailModal.walletAmount}
                             onChange={(e) =>
                               setUserDetailModal((m) => ({ ...m, walletAmount: e.target.value }))
@@ -3653,6 +3667,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
                             placeholder="Ex: 1000"
                             className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
                           />
+                          <p className="mt-1 text-xs text-earth-500">1 crédito = ¥1</p>
                         </div>
                         <div className="flex-1 min-w-[200px]">
                           <label className="block text-sm font-medium text-earth-700">Descrição (opcional)</label>
@@ -3662,7 +3677,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
                             onChange={(e) =>
                               setUserDetailModal((m) => ({ ...m, walletDesc: e.target.value }))
                             }
-                            placeholder="Ex: Ajuste de saldo"
+                            placeholder="Ex: Ajuste de créditos"
                             className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
                           />
                         </div>
@@ -3673,7 +3688,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
                         >
                           {userDetailModal.walletSaving && userDetailModal.walletSavingAction === 'credit'
                             ? 'Adicionando...'
-                            : 'Adicionar saldo'}
+                            : 'Adicionar créditos'}
                         </button>
                         <button
                           type="button"
@@ -3683,7 +3698,7 @@ export default function Admin({ routeTabId = 'pedidos' }) {
                         >
                           {userDetailModal.walletSaving && userDetailModal.walletSavingAction === 'debit'
                             ? 'Removendo...'
-                            : 'Remover saldo'}
+                            : 'Remover créditos'}
                         </button>
                       </form>
                     </div>
@@ -3858,6 +3873,21 @@ export default function Admin({ routeTabId = 'pedidos' }) {
                   onChange={(e) => setEditInventoryModal((m) => ({ ...m, video_url: e.target.value }))}
                   className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 text-earth-900"
                 />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-earth-700">
+                  Catalog item ID (opcional)
+                </label>
+                <input
+                  type="text"
+                  value={editInventoryModal.catalog_item_id || ''}
+                  onChange={(e) => setEditInventoryModal((m) => ({ ...m, catalog_item_id: e.target.value }))}
+                  placeholder="uuid do catalog_items"
+                  className="mt-1 block w-full rounded-lg border border-earth-300 px-3 py-2 font-mono text-sm text-earth-900"
+                />
+                <p className="mt-1 text-xs text-earth-500">
+                  Vincula este holding a um item de catálogo. O usuário pode então marcar “Adicionar à coleção”.
+                </p>
               </div>
               <div>
                 <label className="mb-1 block text-sm font-medium text-earth-700">Notas internas</label>

@@ -8,7 +8,7 @@ function UnderConstruction() {
   return (
     <>
       <Helmet>
-        <title>Em breve | Login e Registro | Delivery</title>
+        <title>Em breve | Login e Registro | YuumeCo</title>
         <meta
           name="description"
           content="A área de login e registro está em construção. Em breve você poderá se cadastrar em nossa plataforma."

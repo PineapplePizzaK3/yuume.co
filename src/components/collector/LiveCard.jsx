@@ -13,8 +13,14 @@ export function LiveCard({ live, to }) {
   const published = live?.status === 'PUBLISHED'
   const recording = live?.status === 'RECORDING'
 
+  const ctaText = t('collector.actions.openOpening', { defaultValue: 'Ver Box Break' })
+
   return (
-    <article className="rounded-xl border border-earth-200 bg-white p-4 shadow-sm">
+    <Link
+      to={to}
+      className="block rounded-xl border border-earth-200 bg-white p-4 shadow-sm transition hover:border-earth-300 hover:shadow-md"
+      aria-label={`${title}. ${ctaText}`}
+    >
       <div className="mb-3 flex items-center justify-between">
         <DemoBadge />
         <span className={`rounded-full px-2 py-1 text-xs font-semibold ${recording ? 'bg-collector-100 text-collector-700' : 'bg-earth-100 text-earth-700'}`}>
@@ -27,12 +33,9 @@ export function LiveCard({ live, to }) {
       </div>
       <h3 className="font-display text-lg font-semibold text-earth-900">{title}</h3>
       <p className="mt-1 text-sm text-earth-600">{dateLabel}</p>
-      <Link
-        to={to}
-        className="mt-4 inline-flex w-full items-center justify-center rounded-lg border border-earth-300 bg-white px-4 py-2.5 text-sm font-medium text-earth-800 transition hover:bg-earth-50"
-      >
-        {t('collector.actions.openOpening', { defaultValue: 'Ver abertura' })}
-      </Link>
-    </article>
+      <span className="mt-4 inline-flex w-full items-center justify-center rounded-lg border border-earth-300 bg-white px-4 py-2.5 text-sm font-medium text-earth-800">
+        {ctaText}
+      </span>
+    </Link>
   )
 }

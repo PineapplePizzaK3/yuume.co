@@ -10,6 +10,8 @@ import { catalogSetPath, localizedPath } from '../../lib/localeRoutes'
 import { useAuth } from '../../hooks/useAuth'
 import { useLocalizedPath } from '../../hooks/useLocalizedPath'
 import { useSiteLocale } from '../../hooks/useSiteLocale'
+import { VisualEmptyState } from '../../components/VisualEmptyState'
+import { IconLayers } from '../../components/home/HomeSectionIcons'
 
 const STATUS_BADGE = {
   VERIFIED: 'bg-emerald-100 text-emerald-800',
@@ -116,9 +118,16 @@ export default function ExplorePage() {
         {loading ? (
           <p className="mt-8 text-sm text-earth-600">{t('collector.common.loading', { defaultValue: 'Carregando...' })}</p>
         ) : sets.length === 0 ? (
-          <p className="mt-8 rounded-lg border border-earth-200 bg-earth-50 p-4 text-sm text-earth-600">
-            {t('collector.empty.setsExplore', { defaultValue: 'Nenhum set cadastrado ainda.' })}
-          </p>
+          <VisualEmptyState
+            image="/home/tcg-3-wstcg.jpg"
+            icon={IconLayers}
+            title={t('collector.empty.setsExplore', { defaultValue: 'Nenhum set cadastrado ainda.' })}
+            hint={t('collector.empty.setsExploreHint', {
+              defaultValue: 'Volte em breve ou busque caixas no Box Break.',
+            })}
+            toRoute="collectorBatches"
+            cta={t('nav.batches', { defaultValue: 'Box Break' })}
+          />
         ) : (
           <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {sets.map((set) => {

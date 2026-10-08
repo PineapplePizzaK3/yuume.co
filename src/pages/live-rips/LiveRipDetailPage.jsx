@@ -21,7 +21,8 @@ import {
   payLiveRipReservationWithWallet,
   reserveLiveRipProduct,
 } from '../../services/liveRipService'
-import { getWallet } from '../../services/walletService'
+import { getWallet, notifyWalletUpdated } from '../../services/walletService'
+import { BoxBreakPurchaseConfirm } from '../../components/collector/BoxBreakPurchaseConfirm'
 
 function LiveRipDetailPage() {
   const { t } = useTranslation()
@@ -36,6 +37,7 @@ function LiveRipDetailPage() {
   const [paymentLoading, setPaymentLoading] = useState(false)
   const [walletBalance, setWalletBalance] = useState(null)
   const [errorMessage, setErrorMessage] = useState('')
+  const [payConfirmOpen, setPayConfirmOpen] = useState(false)
 
   useEffect(() => {
     let active = true
@@ -111,12 +113,18 @@ function LiveRipDetailPage() {
     }
   }
 
+  const requestPayReservation = () => {
+    if (!reservationId || paymentLoading || reservedReservation?.payment_status === 'paid') return
+    setPayConfirmOpen(true)
+  }
+
   const handlePayReservation = async () => {
     if (!reservationId) return
     setPaymentLoading(true)
     setErrorMessage('')
     const { data, error } = await payLiveRipReservationWithWallet(reservationId)
     setPaymentLoading(false)
+    setPayConfirmOpen(false)
     if (error) {
       setErrorMessage(error?.message || t('liveRips.detail.walletPayError'))
       return
@@ -125,7 +133,9 @@ function LiveRipDetailPage() {
     setReservedReservation(nextReservation)
     if (user?.id) {
       const walletResult = await getWallet(user.id)
-      setWalletBalance(Number(walletResult?.data?.balance || 0))
+      const nextBalance = Number(walletResult?.data?.balance || 0)
+      setWalletBalance(nextBalance)
+      notifyWalletUpdated({ userId: user.id, balance: nextBalance, source: 'live-rip-pay' })
     }
   }
 
@@ -251,7 +261,7 @@ function LiveRipDetailPage() {
                 </p>
                 <button
                   type="button"
-                  onClick={handlePayReservation}
+                  onClick={requestPayReservation}
                   disabled={paymentLoading || reservedReservation.payment_status === 'paid'}
                   className="mt-3 inline-flex w-full items-center justify-center rounded-lg border border-earth-300 bg-white px-3 py-2 text-sm font-medium text-earth-800 hover:bg-earth-100 disabled:opacity-60"
                 >
@@ -297,6 +307,16 @@ function LiveRipDetailPage() {
         </div>
         )}
       </section>
+      <BoxBreakPurchaseConfirm
+        open={payConfirmOpen}
+        productName={productName}
+        quantity={1}
+        amount={reservationPriceJpy}
+        balance={walletBalance}
+        busy={paymentLoading}
+        onCancel={() => setPayConfirmOpen(false)}
+        onConfirm={handlePayReservation}
+      />
     </>
   )
 }

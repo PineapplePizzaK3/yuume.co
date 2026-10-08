@@ -1,4 +1,5 @@
 import type { UnifiedSearchHit } from '../types.ts'
+import { amazonSearchUrl, DEFAULT_FILTERS, type CatalogSearchFilters } from '../filters.ts'
 import { buildHit, parsePrice, pickProductImages, amazonTagsFromBlock } from '../normalize.ts'
 import { collectImageCandidates, fetchText, FETCH_TIMEOUT_MS } from './common.ts'
 
@@ -129,10 +130,13 @@ function hitsFromSearchHtml(html: string, pageSize: number): UnifiedSearchHit[] 
   return hits
 }
 
-export async function searchAmazon(query: string, pageSize: number, storePage = 1): Promise<UnifiedSearchHit[]> {
-  const encoded = encodeURIComponent(query)
-  const pageParam = storePage > 1 ? `&page=${storePage}` : ''
-  const searchUrl = `${BASE}/s?k=${encoded}${pageParam}`
+export async function searchAmazon(
+  query: string,
+  pageSize: number,
+  storePage = 1,
+  filters: CatalogSearchFilters = DEFAULT_FILTERS,
+): Promise<UnifiedSearchHit[]> {
+  const searchUrl = amazonSearchUrl(query, storePage, filters)
 
   try {
     const html = await fetchText(searchUrl, FETCH_TIMEOUT_MS, {

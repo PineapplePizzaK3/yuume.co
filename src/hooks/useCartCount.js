@@ -1,4 +1,5 @@
-﻿import { useCallback, useEffect, useState } from 'react'
+﻿import { useCallback, useEffect, useRef, useState } from 'react'
+import { nextEphemeralExpiryDelayMs } from '../lib/ephemeralCartExpiry'
 import { getCart, CART_UPDATED_EVENT } from '../services/cartService'
 
 function sumCartQuantity(items) {
@@ -10,19 +11,34 @@ function sumCartQuantity(items) {
 
 export function useCartCount(userId) {
   const [cartCount, setCartCount] = useState(0)
+  const expiryTimerRef = useRef(null)
+
+  const clearExpiryTimer = () => {
+    if (expiryTimerRef.current == null) return
+    window.clearTimeout(expiryTimerRef.current)
+    expiryTimerRef.current = null
+  }
 
   const refreshCartCount = useCallback(async () => {
     if (!userId) {
       setCartCount(0)
+      clearExpiryTimer()
       return
     }
     const { data, error } = await getCart(userId)
     if (error) return
     setCartCount(sumCartQuantity(data))
+    clearExpiryTimer()
+    const delay = nextEphemeralExpiryDelayMs(data)
+    if (delay == null) return
+    expiryTimerRef.current = window.setTimeout(() => {
+      void refreshCartCount()
+    }, delay + 250)
   }, [userId])
 
   useEffect(() => {
     void refreshCartCount()
+    return () => clearExpiryTimer()
   }, [refreshCartCount])
 
   useEffect(() => {

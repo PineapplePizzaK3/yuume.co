@@ -3,13 +3,9 @@ import { Link } from 'react-router-dom'
 import { LocalizedLink } from '../LocalizedLink'
 import { CreditsAmount } from '../CreditsAmount'
 import { DemoBadge } from './DemoBadge'
+import { LiveRipJpVersionBadge } from '../live-rips/LiveRipJpVersionBadge'
 import { isCollectorMockMode } from '../../services/collectorService'
-
-function statusTone(status) {
-  if (status === 'OPENING' || status === 'OPEN') return 'bg-collector-100 text-collector-700 border-collector-600'
-  if (status === 'COMPLETED' || status === 'FULFILLING') return 'bg-earth-100 text-earth-700 border-earth-300'
-  return 'bg-earth-50 text-earth-700 border-earth-300'
-}
+import { liveBatchStatusTone, resolveLiveBatchStatus } from '../../lib/liveRipBatchStatus'
 
 function resolveBoxAndPackCredits(rip, product) {
   const packs = Math.max(0, Number(rip?.totalPacks ?? product?.packsPerBox ?? 0))
@@ -43,26 +39,31 @@ export function RipCard({ rip, product, ctaRoute = 'collectorBatches', ctaLabel,
   const total = Number(rip?.totalPacks ?? rip?.packsPlanned ?? 0)
   const remaining = Math.max(0, Number(rip?.availablePositions ?? total - reserved))
   const percentage = total > 0 ? Math.min(100, Math.round((remaining / total) * 100)) : 0
+  const liveStatus = resolveLiveBatchStatus(rip)
   const showDemoBadge = isCollectorMockMode()
+  const ctaText = ctaLabel || t('collector.actions.viewBatch', { defaultValue: 'Ver Box Break' })
+  const cardClassName =
+    'flex h-full flex-col overflow-hidden rounded-xl border border-earth-200 bg-white shadow-sm transition hover:border-earth-300 hover:shadow-md'
 
-  return (
-    <article className="overflow-hidden rounded-xl border border-earth-200 bg-white shadow-sm">
-      <div className="relative aspect-[4/3] overflow-hidden bg-earth-100">
-        <img src={product?.image || '/logo.png'} alt={productName} className="h-full w-full object-cover" />
+  const inner = (
+    <>
+      <div className="relative aspect-[4/3] shrink-0 overflow-hidden bg-earth-100">
+        <img src={product?.image || '/logo.png'} alt="" className="h-full w-full object-cover" />
+        <LiveRipJpVersionBadge size={20} />
         {showDemoBadge ? (
           <div className="absolute left-3 top-3">
             <DemoBadge />
           </div>
         ) : null}
       </div>
-      <div className="space-y-3 p-4">
+      <div className="flex flex-1 flex-col space-y-3 p-4">
         <div className="flex items-start justify-between gap-3">
-          <div>
+          <div className="min-w-0">
             <p className="text-xs uppercase tracking-wide text-earth-500">{product?.set}</p>
-            <h3 className="font-display text-lg font-semibold text-earth-900">{productName}</h3>
+            <h3 className="line-clamp-2 font-display text-lg font-semibold leading-snug text-earth-900">{productName}</h3>
           </div>
-          <span className={`rounded-full border px-2 py-1 text-xs font-semibold ${statusTone(rip?.status)}`}>
-            {t(`collector.status.${rip?.status}`, { defaultValue: rip?.status || 'OPEN' })}
+          <span className={`rounded-full border px-2 py-1 text-xs font-semibold ${liveBatchStatusTone(liveStatus)}`}>
+            {t(`collector.status.${liveStatus}`, { defaultValue: liveStatus })}
           </span>
         </div>
         <div>
@@ -107,23 +108,29 @@ export function RipCard({ rip, product, ctaRoute = 'collectorBatches', ctaLabel,
             ) : null}
           </div>
         ) : null}
-        {ctaTo ? (
-          <Link
-            to={ctaTo}
-            className="inline-flex w-full items-center justify-center rounded-lg bg-earth-900 px-4 py-2.5 text-sm font-medium text-earth-50 transition hover:bg-earth-800"
-          >
-            {ctaLabel || t('collector.actions.viewBatch', { defaultValue: 'Ver abertura' })}
-          </Link>
-        ) : (
-          <LocalizedLink
-            toRoute={ctaRoute}
-            search={search}
-            className="inline-flex w-full items-center justify-center rounded-lg bg-earth-900 px-4 py-2.5 text-sm font-medium text-earth-50 transition hover:bg-earth-800"
-          >
-            {ctaLabel || t('collector.actions.viewBatch', { defaultValue: 'Ver abertura' })}
-          </LocalizedLink>
-        )}
+        <span className="mt-auto inline-flex w-full items-center justify-center rounded-lg bg-earth-900 px-4 py-2.5 text-sm font-medium text-earth-50">
+          {ctaText}
+        </span>
       </div>
-    </article>
+    </>
+  )
+
+  if (ctaTo) {
+    return (
+      <Link to={ctaTo} className={cardClassName} aria-label={`${productName}. ${ctaText}`}>
+        {inner}
+      </Link>
+    )
+  }
+
+  return (
+    <LocalizedLink
+      toRoute={ctaRoute}
+      search={search}
+      className={cardClassName}
+      aria-label={`${productName}. ${ctaText}`}
+    >
+      {inner}
+    </LocalizedLink>
   )
 }

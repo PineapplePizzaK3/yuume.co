@@ -14,7 +14,7 @@ export const ADMIN_TABS = [
   { id: 'envios', path: 'envios', label: 'Envios', icon: '🚚', category: 'operacao' },
   { id: 'produtos_usuarios', path: 'produtos-usuarios', label: 'Produtos (Usuários)', icon: '📋', category: 'operacao' },
   { id: 'live_rips_admin', path: 'live-rips', label: 'Live Rips', icon: '🎥', category: 'operacao' },
-  { id: 'aberturas_admin', path: 'aberturas', label: 'Aberturas', icon: '🪄', category: 'operacao' },
+  { id: 'aberturas_admin', path: 'aberturas', label: 'Box Break', icon: '🪄', category: 'operacao' },
   { id: 'produtos', path: 'produtos', label: 'Produtos Loja', icon: '🛒', category: 'catalogo' },
   { id: 'catalogo_produtos', path: 'catalogo-produtos', label: 'Lista de Produtos', icon: '📚', category: 'catalogo' },
   { id: 'catalog_sets', path: 'sets-catalogo', label: 'Sets do catálogo', icon: '🃏', category: 'catalogo' },

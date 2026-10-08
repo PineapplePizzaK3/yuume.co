@@ -14,12 +14,18 @@ import {
   localizedPath,
 } from '../lib/localeRoutes'
 import { MFAGate } from './MFAGate'
+import { isCollectorMockMode } from '../services/collectorService'
 
 export function ProtectedRoute({ children }) {
   const { t } = useTranslation()
   const { isAuthenticated, loading, session, needsSocialOnboarding } = useAuth()
   const location = useLocation()
   const locale = getLocaleFromPathname(location.pathname)
+  const isAdminPath = /\/admin(?:\/|$)/.test(location.pathname)
+
+  if (isCollectorMockMode() && isAdminPath) {
+    return children
+  }
   const [aalCheck, setAalCheck] = useState({ loading: true, needsMFA: false })
 
   useEffect(() => {

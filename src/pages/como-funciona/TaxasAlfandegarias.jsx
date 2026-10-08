@@ -8,7 +8,7 @@ function TaxasAlfandegarias() {
   return (
     <>
       <Helmet>
-        <title>Taxas alfandegárias | Dúvidas | Delivery</title>
+        <title>Taxas alfandegárias | Dúvidas | YuumeCo</title>
         <meta
           name="description"
           content="Taxas alfandegárias no Brasil: II, ICMS, Remessa Conforme. Alíquotas de 20% e 60% conforme valor e origem da compra."

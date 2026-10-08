@@ -42,11 +42,17 @@ export function LiveRipProductCard({ product, reserveHref, t }) {
     ? Number(product.shrinkwrapPrices.withYen)
     : resolveProductYen(product)
 
+  const ctaText = t('liveRips.products.reserveButton')
+
   return (
-    <article className="flex h-full flex-col overflow-hidden rounded-xl border border-earth-200 bg-white shadow-sm transition hover:border-earth-300 hover:shadow-md">
+    <Link
+      to={reserveHref}
+      className="flex h-full flex-col overflow-hidden rounded-xl border border-earth-200 bg-white shadow-sm transition hover:border-earth-300 hover:shadow-md"
+      aria-label={`${product.name}. ${ctaText}`}
+    >
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-earth-200">
         {product.image ? (
-          <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
+          <img src={product.image} alt="" className="h-full w-full object-cover" />
         ) : (
           <div className="flex h-full items-center justify-center text-xs font-medium text-earth-600">
             {t('liveRips.products.placeholder')}
@@ -76,13 +82,10 @@ export function LiveRipProductCard({ product, reserveHref, t }) {
             <LiveRipPriceBlock yen={primaryYen} rates={rates} />
           )}
         </div>
-        <Link
-          to={reserveHref}
-          className="mt-auto inline-flex items-center justify-center rounded-lg bg-earth-900 px-4 py-2.5 text-sm font-medium text-earth-50 transition hover:bg-earth-800 pt-4"
-        >
-          {t('liveRips.products.reserveButton')}
-        </Link>
+        <span className="mt-auto inline-flex items-center justify-center rounded-lg bg-earth-900 px-4 py-2.5 text-sm font-medium text-earth-50">
+          {ctaText}
+        </span>
       </div>
-    </article>
+    </Link>
   )
 }

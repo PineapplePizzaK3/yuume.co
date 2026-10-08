@@ -222,7 +222,7 @@ export function buildHit(params: {
   productUrl: string
   storeId: StoreId
   storeName: string
-  source?: 'html' | 'jina' | 'mixed'
+  source?: 'html' | 'jina' | 'mixed' | 'index'
   tags?: CatalogHitTag[]
   auctionCurrentBidPrice?: number | null
   auctionBuyoutPrice?: number | null

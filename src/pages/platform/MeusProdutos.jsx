@@ -9,6 +9,9 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { useLocalizedPath } from '../../hooks/useLocalizedPath'
 import { PageSeo } from '../../components/PageSeo'
 import { getMyInventory } from '../../services/inventoryService'
+import { setCatalogItemOwned } from '../../services/collectionService'
+import { catalogItemPath } from '../../lib/localeRoutes'
+import { useSiteLocale } from '../../hooks/useSiteLocale'
 import { cacheKey, readCache, writeCache } from '../../lib/cache'
 import { formatWeight } from '../../lib/fx'
 import LinkifyText from '../../components/LinkifyText'
@@ -61,6 +64,7 @@ export default function MeusProdutos() {
   const { t } = useTranslation()
   const { user } = useAuth()
   const lp = useLocalizedPath()
+  const locale = useSiteLocale()
   const [searchParams, setSearchParams] = useSearchParams()
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
@@ -68,6 +72,23 @@ export default function MeusProdutos() {
   const [inventoryPage, setInventoryPage] = useState(0)
   const [inventoryHasMore, setInventoryHasMore] = useState(false)
   const [detailItem, setDetailItem] = useState(null)
+  const [collectionBusyId, setCollectionBusyId] = useState('')
+
+  const addHoldingToCollection = async (item) => {
+    const catalogId = item?.catalog_item_id
+    if (!catalogId || collectionBusyId) return
+    setCollectionBusyId(item.id)
+    const res = await setCatalogItemOwned(catalogId, true, {
+      source: 'acquired',
+      holdingId: item.id,
+    })
+    setCollectionBusyId('')
+    if (res.error) {
+      setFeedback(res.error.message || t('platform.inventory.collectionError', { defaultValue: 'Não foi possível adicionar à coleção.' }))
+      return
+    }
+    setFeedback(t('platform.inventory.collectionAdded', { defaultValue: 'Item adicionado à coleção.' }))
+  }
 
   const getCategoryKey = (it) => {
     const order = it?.orders
@@ -300,6 +321,30 @@ export default function MeusProdutos() {
                                     {t('platform.inventory.openVideo')}
                                   </a>
                                 )}
+                                {item.catalog_item_id ? (
+                                  <>
+                                    <Link
+                                      to={catalogItemPath(item.catalog_item_id, locale)}
+                                      className="text-xs font-medium text-earth-700 underline hover:text-earth-900"
+                                    >
+                                      {t('platform.inventory.viewCatalog', {
+                                        defaultValue: item.catalog_item?.name_ja || 'Ver no catálogo',
+                                      })}
+                                    </Link>
+                                    <button
+                                      type="button"
+                                      disabled={collectionBusyId === item.id}
+                                      onClick={() => addHoldingToCollection(item)}
+                                      className="text-xs font-medium text-earth-900 underline hover:text-earth-700 disabled:opacity-60"
+                                    >
+                                      {collectionBusyId === item.id
+                                        ? t('collector.common.saving', { defaultValue: 'Salvando...' })
+                                        : t('platform.inventory.addToCollection', {
+                                            defaultValue: 'Adicionar à coleção',
+                                          })}
+                                    </button>
+                                  </>
+                                ) : null}
                               </div>
                             </div>
                           </div>

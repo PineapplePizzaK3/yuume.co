@@ -8,6 +8,7 @@ import { useLocalizedPath } from '../../hooks/useLocalizedPath'
 import { useSiteLocale } from '../../hooks/useSiteLocale'
 import { useStoreVitrineEnabled } from '../../hooks/useStoreVitrineEnabled'
 import { appStoreProductPath, publicStoreProductPath } from '../../lib/localeRoutes'
+import { pageShell } from '../../lib/layout'
 import { PageSeo } from '../../components/PageSeo'
 import { getProducts } from '../../services/productService'
 import { addToCart } from '../../services/cartService'
@@ -25,6 +26,8 @@ import {
   variantDisplayLabel,
 } from '../../components/StoreProductDisplay'
 import StoreProductCategorySection from '../../components/StoreProductCategorySection'
+import { VisualEmptyState } from '../../components/VisualEmptyState'
+import { IconBag } from '../../components/home/HomeSectionIcons'
 import GrupoDeCompras from './GrupoDeCompras'
 import LojaSnkrdunkCatalogTab from './LojaSnkrdunkCatalogTab'
 
@@ -182,7 +185,14 @@ function LojaEstoqueCatalog({ publicMode = false }) {
       {message && <p className="mt-4 rounded-lg bg-earth-100 px-4 py-2 text-sm text-earth-800">{message}</p>}
       {loading && <p className="mt-6 text-earth-600">{t('platform.store.loading')}</p>}
       {!loading && products.length === 0 && (
-        <p className="mt-6 text-earth-600">{t('platform.store.empty')}</p>
+        <VisualEmptyState
+          image="/home/anime-1-figures.png"
+          icon={IconBag}
+          title={t('platform.store.empty')}
+          hint={t('platform.store.emptyHint')}
+          toRoute="catalogSearchPublic"
+          cta={t('home.hierarchy.productsEmptyCta')}
+        />
       )}
       {!loading && products.length > 0 && (
         <div className="mt-6">

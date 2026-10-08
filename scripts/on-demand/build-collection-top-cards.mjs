@@ -2,6 +2,16 @@ import { readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { LIVE_RIPS_SNKRDUNK_PRODUCTS } from '../../src/data/liveRipsSnkrdunkCatalog.js'
+import {
+  extractCollectionLabels,
+  filterTopCardsForCollection,
+  looksLikeSingleCard,
+  matchesCollection,
+  mergeCollectionTopCards,
+  normalizeText,
+  parseCardNumber,
+  parseRarity,
+} from '../../src/lib/collectionTopCardsMatch.js'
 import { exitIfAutomationDisabled } from '../lib/marketSourceKillSwitch.mjs'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -19,45 +29,8 @@ const MAX_RETRIES = 3
 const REQUEST_DELAY_MS = 280
 const RETRY_BASE_DELAY_MS = 700
 
-const RARITY_PATTERNS = [
-  'MANGA',
-  'ALT ART',
-  'SECRET RARE',
-  'ULTRA RARE',
-  'SPECIAL ART RARE',
-  'HYPER RARE',
-  'SAR',
-  'UR',
-  'SEC',
-  'CSR',
-  'CHR',
-  'SR',
-  'AR',
-  'RRR',
-  'RR',
-  'PR',
-  'P',
-  'R',
-  'U',
-  'C',
-]
-
-// Sealed products (box/pack/case) — keep singles that only mention "Pack" inside collection parentheses.
-const SEALED_PRODUCT_PATTERN =
-  /(?:^|\s)(?:box|case|carton|ブースター|ボックス|カートン)\s*$/i
-
-// Error / misprint listings inflate prices and are not part of the set pull pool.
-const ERROR_CARD_PATTERN =
-  /\b(?:printing\s+error|text\s+error|error\s+ver\.?|error\s+version|misprint|miscut|error\s+card)\b|エラー|ミスプリント/i
-
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms))
-}
-
-function normalizeText(value) {
-  return String(value || '')
-    .trim()
-    .replace(/\s+/g, ' ')
 }
 
 function normalizeCollectionKey(productId) {
@@ -66,48 +39,12 @@ function normalizeCollectionKey(productId) {
     .replace(/-no-shrink$/i, '')
 }
 
-function escapeRegex(value) {
-  return String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-}
-
 function normalizeSetCode(code) {
   const raw = String(code || '')
     .trim()
     .toUpperCase()
   if (!raw) return ''
   return raw.replace(/\s+/g, '')
-}
-
-function normalizeMatchToken(value) {
-  return String(value || '')
-    .toLowerCase()
-    .replace(/[「」『』"'“”‘’]/g, '')
-    .replace(/[^\p{L}\p{N}]+/gu, '')
-}
-
-function parseCardNumber(name = '') {
-  const text = String(name || '')
-  const bracketMatch = text.match(/\[([^\]]+)\]/)
-  if (bracketMatch) {
-    const parts = bracketMatch[1].split(/\s+/).filter(Boolean)
-    const bySlash = parts.find((part) => /\d+\s*\/\s*\d+/.test(part))
-    if (bySlash) return bySlash.replace(/\s+/g, '')
-    const byCode = parts.find((part) => /^[A-Z0-9]{1,6}-?\d{1,4}[A-Z]?$/i.test(part))
-    if (byCode) return byCode.toUpperCase()
-  }
-
-  const slashMatch = text.match(/\b(\d{1,3}\s*\/\s*\d{2,3})\b/)
-  if (slashMatch) return slashMatch[1].replace(/\s+/g, '')
-  return ''
-}
-
-function parseRarity(name = '') {
-  const upper = String(name || '').toUpperCase()
-  for (const rarity of RARITY_PATTERNS) {
-    const pattern = new RegExp(`(?:\\b|\\(|\\[)${escapeRegex(rarity)}(?:\\b|\\)|\\])`, 'i')
-    if (pattern.test(upper)) return rarity
-  }
-  return ''
 }
 
 function resolveSetCodeFromText(text) {
@@ -131,50 +68,6 @@ function resolveSetCodeFromText(text) {
   return ''
 }
 
-function extractQuotedNames(text) {
-  const source = String(text || '')
-  const names = []
-  const patterns = [
-    /「([^」]{2,80})」/g,
-    /『([^』]{2,80})』/g,
-    /"([^"]{2,80})"/g,
-    /“([^”]{2,80})”/g,
-  ]
-  for (const pattern of patterns) {
-    for (const match of source.matchAll(pattern)) {
-      const value = normalizeText(match[1])
-      if (value) names.push(value)
-    }
-  }
-  return names
-}
-
-function extractCollectionLabels(product) {
-  const labels = []
-  const parts = [product?.nameEn, product?.name, product?.collectionTitle]
-  for (const part of parts) {
-    labels.push(...extractQuotedNames(part))
-  }
-
-  // Fallback: strip common sealed-product boilerplate and keep the remaining title.
-  if (!labels.length) {
-    for (const part of parts) {
-      const cleaned = normalizeText(part)
-        .replace(/^Pokemon Card Game\s+/i, '')
-        .replace(/^Pokémon Card Game\s+/i, '')
-        .replace(/^ONE PIECE Card Game\s+/i, '')
-        .replace(/^Yu-Gi-Oh!? Card Game\s+/i, '')
-        .replace(/ボックス.*$/u, '')
-        .replace(/\s*Box\s*$/i, '')
-        .replace(/【\s*シュリンクなし\s*】/gi, '')
-        .trim()
-      if (cleaned.length >= 4) labels.push(cleaned)
-    }
-  }
-
-  return [...new Set(labels.map((item) => normalizeText(item)).filter(Boolean))]
-}
-
 function resolveSetCode(product, override = {}, cards = []) {
   if (override?.setCode) return normalizeSetCode(override.setCode)
   const parts = [product?.name, product?.nameEn, product?.collectionTitle].filter(Boolean)
@@ -189,6 +82,10 @@ function resolveSetCode(product, override = {}, cards = []) {
     if (fromNumber) return fromNumber
   }
   return ''
+}
+
+function productAllowsEnglish(product) {
+  return /\bEN\b|英語版|\benglish\b/i.test(`${product?.nameEn || ''} ${product?.name || ''} ${product?.id || ''}`)
 }
 
 function getCategorySeed(categoryId = '') {
@@ -217,8 +114,8 @@ function buildKeywordCandidates(product, setCode, labels = [], override = {}) {
     setCode ? `${categorySeed} ${setCode}`.trim() : '',
   ]
     .map((item) => normalizeText(item))
-    .filter(Boolean)
-  return [...new Set(variants)]
+    .filter((item) => item.length >= 3 && item.length <= 64)
+  return [...new Set(variants)].sort((a, b) => a.length - b.length || a.localeCompare(b))
 }
 
 function buildCollectionGroups(products = []) {
@@ -296,38 +193,6 @@ async function fetchSearchPageWithRetry(keyword, page) {
   return { streetwears: [] }
 }
 
-function matchesCollection(itemName, setCode, labels = [], extraKeywords = []) {
-  const name = String(itemName || '')
-  const nameNorm = normalizeMatchToken(name)
-
-  const tokens = [...labels, ...extraKeywords]
-    .map((token) => normalizeMatchToken(token))
-    .filter((token) => token.length >= 3)
-
-  if (tokens.some((token) => nameNorm.includes(token))) return true
-
-  if (setCode) {
-    const setNorm = normalizeMatchToken(setCode)
-    if (setNorm && nameNorm.includes(setNorm)) return true
-  }
-
-  return false
-}
-
-function isErrorCard(name) {
-  return ERROR_CARD_PATTERN.test(String(name || ''))
-}
-
-function looksLikeSingleCard(name) {
-  const text = String(name || '')
-  if (!text) return false
-  // Singles almost always include a bracketed card number.
-  if (!/\[[^\]]+\]/.test(text)) return false
-  if (SEALED_PRODUCT_PATTERN.test(text)) return false
-  if (isErrorCard(text)) return false
-  return true
-}
-
 function toCardRow(item, setCode) {
   const name = normalizeText(item?.name)
   const price = Number(item?.minPrice || 0)
@@ -365,7 +230,7 @@ function dedupeCards(rows) {
   return [...byKey.values()]
 }
 
-async function fetchTopCardsForCollection({ product, setCode, labels, overrideKeywords }) {
+async function fetchTopCardsForCollection({ product, setCode, labels, overrideKeywords, allowEnglish }) {
   const keywords = buildKeywordCandidates(product, setCode, labels, { keywords: overrideKeywords })
   const cards = []
 
@@ -384,6 +249,7 @@ async function fetchTopCardsForCollection({ product, setCode, labels, overrideKe
         const itemName = normalizeText(item?.name)
         if (!item?.isTradingCard || !itemName) continue
         if (!looksLikeSingleCard(itemName)) continue
+        if (!allowEnglish && /\[EN\]/i.test(itemName)) continue
         if (!matchesCollection(itemName, setCode, labels, overrideKeywords)) continue
         const row = toCardRow(item, setCode)
         if (row) cards.push(row)
@@ -419,14 +285,59 @@ function buildOutputText(topCardsMap, generatedAt) {
   return `${lines.join('\n')}\n`
 }
 
+function isCollectionStale(entry, staleHours) {
+  if (!(staleHours > 0)) return false
+  const updated = Date.parse(entry?.updatedAt || '')
+  if (!Number.isFinite(updated)) return true
+  return Date.now() - updated >= staleHours * 60 * 60 * 1000
+}
+
+function parseStaleHours() {
+  const arg = process.argv.find((item) => String(item).startsWith('--stale-hours='))
+  if (!arg) return 0
+  return Math.max(0, Number(String(arg).split('=')[1]) || 0)
+}
+
+function parseCsvArg(name) {
+  const arg = process.argv.find((item) => String(item).startsWith(`--${name}=`))
+  if (!arg) return null
+  return new Set(
+    String(arg)
+      .slice(name.length + 3)
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean)
+  )
+}
+
+function buildCollectionRecord({ productId, setCode, labels, cards, updatedAt }) {
+  return {
+    productId,
+    setCode: setCode || '',
+    labels,
+    updatedAt,
+    source: 'SNKRDUNK',
+    cards: Array.isArray(cards) ? cards : [],
+  }
+}
+
 async function main() {
-  await exitIfAutomationDisabled('snkrdunk', 'collection-top-cards')
   const fullRefresh = process.argv.includes('--full')
+  const refilterOnly = process.argv.includes('--refilter-only')
+  const fillShort = process.argv.includes('--fill') || fullRefresh
+  const staleHours = parseStaleHours()
+  const idFilter = parseCsvArg('ids')
+  if (!refilterOnly) {
+    await exitIfAutomationDisabled('snkrdunk', 'collection-top-cards')
+  }
   const now = new Date().toISOString()
   const setCodeOverrides = await loadSetCodeOverrides()
   const previousTopCards = await loadPreviousTopCardsMap()
 
   let groups = buildCollectionGroups(LIVE_RIPS_SNKRDUNK_PRODUCTS)
+  if (idFilter?.size) {
+    groups = groups.filter((group) => idFilter.has(group.collectionKey))
+  }
   const limitArg = process.argv.find((arg) => String(arg).startsWith('--limit='))
   if (limitArg) {
     const limit = Math.max(1, Number(String(limitArg).split('=')[1]) || 5)
@@ -441,18 +352,46 @@ async function main() {
   for (const group of groups) {
     const collectionKey = group.collectionKey
     const override = setCodeOverrides[collectionKey] || {}
+    const overrideKeywords = Array.isArray(override?.keywords) ? override.keywords : []
     const labels = extractCollectionLabels(group.primary)
-    const setCodeHint = resolveSetCode(group.primary, override)
+    const allowEnglish = productAllowsEnglish(group.primary)
     const previous = previousTopCards[collectionKey]
+    const previousCards = filterTopCardsForCollection(previous?.cards || [], {
+      setCode: previous?.setCode || '',
+      labels: labels.length ? labels : previous?.labels || [],
+      extraKeywords: overrideKeywords,
+      allowEnglish,
+    })
+    const setCodeHint = resolveSetCode(group.primary, override, previousCards)
 
-    if (!labels.length && !setCodeHint && !(Array.isArray(override?.keywords) && override.keywords.length)) {
+    if (!labels.length && !setCodeHint && !overrideKeywords.length) {
       unresolved.push(collectionKey)
-      if (previous) output[collectionKey] = previous
+      output[collectionKey] = buildCollectionRecord({
+        productId: group.primary?.id || collectionKey,
+        setCode: setCodeHint,
+        labels,
+        cards: previousCards,
+        updatedAt: previous?.updatedAt || now,
+      })
       continue
     }
 
-    if (!fullRefresh && previous?.cards?.length) {
-      output[collectionKey] = previous
+    const needsFetch =
+      !refilterOnly &&
+      (fullRefresh ||
+        idFilter?.has(collectionKey) ||
+        previousCards.length === 0 ||
+        isCollectionStale(previous, staleHours) ||
+        (fillShort && previousCards.length < TOP_N))
+
+    if (!needsFetch) {
+      output[collectionKey] = buildCollectionRecord({
+        productId: group.primary?.id || previous?.productId || collectionKey,
+        setCode: setCodeHint || previous?.setCode || '',
+        labels,
+        cards: previousCards.slice(0, TOP_N),
+        updatedAt: previous?.updatedAt || now,
+      })
       continue
     }
 
@@ -462,43 +401,40 @@ async function main() {
     )
 
     try {
-      const cards = await fetchTopCardsForCollection({
+      const fetched = await fetchTopCardsForCollection({
         product: group.primary,
         setCode: setCodeHint,
         labels,
-        overrideKeywords: Array.isArray(override?.keywords) ? override.keywords : [],
+        overrideKeywords,
+        allowEnglish,
       })
+      const cards = dedupeCards(mergeCollectionTopCards(previousCards, fetched))
+        .sort((a, b) => Number(b.priceJpy) - Number(a.priceJpy))
+        .slice(0, TOP_N)
       const setCode = resolveSetCode(group.primary, override, cards)
 
-      if (!cards.length) {
-        empty.push(collectionKey)
-        if (previous) {
-          output[collectionKey] = previous
-        } else {
-          output[collectionKey] = {
-            productId: group.primary?.id || collectionKey,
-            setCode: setCode || setCodeHint || '',
-            labels,
-            updatedAt: now,
-            source: 'SNKRDUNK',
-            cards: [],
-          }
-        }
-      } else {
-        output[collectionKey] = {
-          productId: group.primary?.id || collectionKey,
-          setCode: setCode || setCodeHint || '',
-          labels,
-          updatedAt: now,
-          source: 'SNKRDUNK',
-          cards,
-        }
-      }
+      if (!cards.length) empty.push(collectionKey)
+      output[collectionKey] = buildCollectionRecord({
+        productId: group.primary?.id || collectionKey,
+        setCode: setCode || setCodeHint || '',
+        labels,
+        cards,
+        updatedAt: now,
+      })
     } catch (error) {
       failed.push(`${collectionKey}: ${error?.message || 'unknown error'}`)
-      if (previous) {
-        output[collectionKey] = previous
-      }
+      if (!previousCards.length) empty.push(collectionKey)
+      output[collectionKey] = buildCollectionRecord({
+        productId: group.primary?.id || collectionKey,
+        setCode: setCodeHint || previous?.setCode || '',
+        labels,
+        cards: previousCards.slice(0, TOP_N),
+        updatedAt: previous?.updatedAt || now,
+      })
+    }
+
+    if (processed > 0 && processed % 15 === 0) {
+      await writeFile(outputPath, buildOutputText({ ...previousTopCards, ...output }, now), 'utf8')
     }
   }
 

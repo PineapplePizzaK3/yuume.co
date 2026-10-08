@@ -39,7 +39,7 @@ export default function TermsOfService() {
     <>
       <PageSeo routeKey="legalTerms" title={null} description={t('meta.legalTerms.description')} />
       <Helmet>
-        <title>{content.title} | Legal | Delivery</title>
+        <title>{content.title} | Legal | YuumeCo</title>
       </Helmet>
 
       <h2 className="text-2xl font-bold tracking-tight text-earth-900 sm:text-3xl">

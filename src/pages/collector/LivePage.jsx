@@ -23,11 +23,11 @@ function toEmbeddableVideoUrl(rawUrl = '') {
 
 function LivePage() {
   const { t, i18n } = useTranslation()
-  const { liveId, openingId } = useParams()
+  const { liveId, openingId, sessionId } = useParams()
   const [opening, setOpening] = useState(null)
   const locale = i18n.language === 'en' ? 'en' : 'pt-BR'
   const isMockMode = isCollectorMockMode()
-  const targetOpeningId = openingId || liveId || ''
+  const targetOpeningId = sessionId || openingId || liveId || ''
 
   useEffect(() => {
     let active = true
@@ -76,7 +76,7 @@ function LivePage() {
               </div>
             ) : (
               <p className="mt-4 rounded-lg border border-earth-200 bg-earth-50 p-3 text-sm text-earth-700">
-                {t('collector.opening.recordingInProgress', { defaultValue: 'Abertura em gravacao. Video sera publicado ao final da sessao.' })}
+                {t('collector.opening.recordingInProgress', { defaultValue: 'Box Break em gravacao. Video sera publicado ao final da sessao.' })}
               </p>
             )}
           </div>
@@ -84,7 +84,7 @@ function LivePage() {
           <div className="grid gap-6 lg:grid-cols-2">
             <article className="rounded-2xl border border-earth-200 bg-white p-6 shadow-sm">
               <h2 className="font-display text-xl font-semibold text-earth-900">
-                {t('collector.opening.allocationsTitle', { defaultValue: 'Reservas desta abertura' })}
+                {t('collector.opening.allocationsTitle', { defaultValue: 'Participações deste Box Break' })}
               </h2>
               <ul className="mt-4 space-y-2">
                 {allocations.map((allocation) => (

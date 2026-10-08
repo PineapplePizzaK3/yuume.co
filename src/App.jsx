@@ -2,6 +2,7 @@ import { Suspense, lazy, useEffect, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import WhatsAppFloating from './components/WhatsAppFloating'
+import { HistoryEdgeNav } from './components/HistoryEdgeNav'
 import CookieConsentBanner from './components/CookieConsentBanner'
 import { LocaleSync } from './components/LocaleSync'
 import { recordAffiliateClick } from './services/affiliateService'
@@ -10,11 +11,14 @@ import { CART_TOAST_EVENT } from './lib/cartToast'
 import { ServicesApp } from './apps/services/ServicesApp'
 import { OpeningsApp } from './apps/openings/OpeningsApp'
 import { isOpeningsPath } from './apps/openings/pathRules'
+import { ensureLiveRipCleanState } from './services/collectorService'
 
 const Home = lazy(() => import('./pages/Home'))
-const CollectorHome = lazy(() => import('./pages/collector/CollectorHome'))
+const EcosystemHome = lazy(() => import('./pages/EcosystemHome'))
+const OpeningsHub = lazy(() => import('./pages/collector/CollectorHome').then((m) => ({ default: m.OpeningsHub })))
 const RipsPage = lazy(() => import('./pages/collector/RipsPage'))
 const RipDetailPage = lazy(() => import('./pages/collector/RipDetailPage'))
+const BoxBreakPurchaseThanks = lazy(() => import('./pages/collector/BoxBreakPurchaseThanks'))
 const LivesPage = lazy(() => import('./pages/collector/LivesPage'))
 const LivePage = lazy(() => import('./pages/collector/LivePage'))
 const CollectionPage = lazy(() => import('./pages/collector/CollectionPage'))
@@ -24,6 +28,7 @@ const CatalogItemPage = lazy(() => import('./pages/collector/CatalogItemPage'))
 const ExplorePage = lazy(() => import('./pages/collector/ExplorePage'))
 const SetPage = lazy(() => import('./pages/collector/SetPage'))
 const JapanSearchPage = lazy(() => import('./pages/collector/JapanSearchPage'))
+const WishlistPage = lazy(() => import('./pages/collector/WishlistPage'))
 const Contact = lazy(() => import('./pages/Contact'))
 const OndeComprar = lazy(() => import('./pages/OndeComprar'))
 const CatalogSearchPublic = lazy(() => import('./pages/CatalogSearchPublic'))
@@ -110,6 +115,10 @@ function App() {
   const isOpeningsDomain = isOpeningsPath(location.pathname)
 
   useEffect(() => {
+    ensureLiveRipCleanState()
+  }, [])
+
+  useEffect(() => {
     const onCartToast = (event) => {
       const message = String(event?.detail?.message || '').trim()
       if (!message) return
@@ -135,9 +144,11 @@ function App() {
 
   const routeComponents = {
     Home,
-    CollectorHome,
+    EcosystemHome,
+    OpeningsHub,
     RipsPage,
     RipDetailPage,
+    BoxBreakPurchaseThanks,
     LivesPage,
     LivePage,
     CollectionPage,
@@ -147,6 +158,7 @@ function App() {
     ExplorePage,
     SetPage,
     JapanSearchPage,
+    WishlistPage,
     Contact,
     OndeComprar,
     CatalogSearchPublic,
@@ -283,6 +295,7 @@ function App() {
       </Suspense>
       <CookieConsentBanner />
       <WhatsAppFloating />
+      <HistoryEdgeNav />
       {cartToast.message ? (
         <div className="pointer-events-none fixed inset-0 z-[12000] flex items-center justify-center p-4">
           <p

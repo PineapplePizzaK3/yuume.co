@@ -53,13 +53,14 @@ const STORE_MODEL: Record<StoreId, StoreIntegrationModel> = {
   },
 }
 
-export function buildSystemStrategyMeta() {
+export function buildSystemStrategyMeta(indexHitCount = 0) {
   return {
-    currentSystemMode: 'pilot_realtime_parse',
+    currentSystemMode: indexHitCount > 0 ? 'hybrid_ingestion_index' : 'pilot_realtime_parse',
     targetSystemMode: 'hybrid_ingestion_index',
     benchmarkModel: 'partner_integrated_proxy',
+    indexHitCount,
     architectureDecision:
-      'Priorizar ingestão assíncrona + índice próprio, mantendo parsing em tempo real apenas como fallback.',
+      'Índice de curto prazo do que a busca já viu + parsing em tempo real. O parse ao vivo continua como fonte e fallback.',
   }
 }
 

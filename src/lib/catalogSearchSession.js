@@ -1,4 +1,4 @@
-const SESSION_KEY = 'catalog_search_public_session_v1'
+const SESSION_KEY = 'catalog_search_public_session_v2'
 
 function safeParse(raw) {
   try {
@@ -34,6 +34,8 @@ export function writeCatalogSearchSession(payload) {
         meta: payload.meta ?? null,
         partials: Array.isArray(payload.partials) ? payload.partials : [],
         cursors: payload.cursors ?? null,
+        filters: payload.filters ?? null,
+        filtersKey: payload.filtersKey || '',
         canAutoLoad: payload.canAutoLoad !== false,
         savedAt: Date.now(),
       }),
@@ -52,7 +54,7 @@ export function clearCatalogSearchSession() {
   }
 }
 
-export function catalogSearchSessionMatches(session, { query, selectedStores } = {}) {
+export function catalogSearchSessionMatches(session, { query, selectedStores, filtersKey } = {}) {
   if (!session) return false
   const q = String(query || '').trim()
   if (!q || session.query !== q) return false
@@ -63,6 +65,10 @@ export function catalogSearchSessionMatches(session, { query, selectedStores } =
     if (cached.length && (cached.length !== next.length || cached.some((id, i) => id !== next[i]))) {
       return false
     }
+  }
+  if (filtersKey) {
+    const saved = session.filtersKey || ''
+    if (saved && saved !== filtersKey) return false
   }
   return true
 }

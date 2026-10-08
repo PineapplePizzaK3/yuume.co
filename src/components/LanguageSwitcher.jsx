@@ -60,12 +60,11 @@ export function LanguageSwitcherDropdown() {
     <div className="group relative flex items-center self-stretch">
       <button
         type="button"
-        className="flex h-full max-h-9 items-center gap-1.5 rounded-lg border border-earth-200 bg-white/80 px-2.5 py-1 text-xs font-semibold text-earth-800 transition hover:bg-earth-100"
+        className="flex h-full max-h-9 items-center gap-1 rounded-lg border border-earth-200 bg-white/80 px-2 py-1 text-earth-800 transition hover:bg-earth-100"
         aria-haspopup="menu"
         aria-label={`${current.label} — ${t('nav.langMenuAria')}`}
       >
         <LangFlag code={current.flagCode} size={18} title={t(current.flagTitleKey)} />
-        <span>{current.label}</span>
         <svg
           className="h-3.5 w-3.5 shrink-0 text-earth-500"
           fill="none"
@@ -78,28 +77,24 @@ export function LanguageSwitcherDropdown() {
       </button>
 
       <div
-        className="pointer-events-none invisible absolute right-0 top-full z-[60] min-w-[11rem] pt-1.5 opacity-0 transition-[opacity,visibility] duration-150 group-hover:pointer-events-auto group-hover:visible group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:visible group-focus-within:opacity-100"
+        className="pointer-events-none invisible absolute right-0 top-full z-[60] pt-1.5 opacity-0 transition-[opacity,visibility] duration-150 group-hover:pointer-events-auto group-hover:visible group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:visible group-focus-within:opacity-100"
         role="menu"
         aria-label={t('nav.langMenuAria')}
       >
         <div className="overflow-hidden rounded-lg border border-earth-200 bg-white py-1 shadow-lg">
           {options.map((opt) => {
             const active = opt.locale === siteLocale
-            const row = (
-              <>
-                <LangFlag code={opt.flagCode} size={20} title={t(opt.flagTitleKey)} />
-                {opt.label}
-              </>
-            )
+            const flag = <LangFlag code={opt.flagCode} size={20} title={t(opt.flagTitleKey)} />
             if (active) {
               return (
                 <span
                   key={opt.locale}
                   role="menuitem"
                   aria-current="true"
-                  className="flex cursor-default items-center gap-2 bg-earth-100 px-3 py-2 text-sm font-medium text-earth-900"
+                  aria-label={opt.label}
+                  className="flex cursor-default items-center justify-center bg-earth-100 px-3 py-2"
                 >
-                  {row}
+                  {flag}
                 </span>
               )
             }
@@ -108,9 +103,10 @@ export function LanguageSwitcherDropdown() {
                 key={opt.locale}
                 to={opt.to}
                 role="menuitem"
-                className="flex items-center gap-2 px-3 py-2 text-sm text-earth-700 transition hover:bg-earth-50 hover:text-earth-900"
+                aria-label={opt.label}
+                className="flex items-center justify-center px-3 py-2 transition hover:bg-earth-50"
               >
-                {row}
+                {flag}
               </Link>
             )
           })}
@@ -144,26 +140,22 @@ export function LanguageSwitcherInline({ onNavigate, className = '' }) {
 
   return (
     <div
-      className={`flex flex-col gap-1 ${className}`.trim()}
+      className={`flex items-center gap-2 ${className}`.trim()}
       role="group"
       aria-label={t('nav.langMenuAria')}
     >
       {options.map((opt) => {
         const active = opt.locale === siteLocale
-        const inner = (
-          <>
-            <LangFlag code={opt.flagCode} size={20} title={t(opt.flagTitleKey)} />
-            {opt.label}
-          </>
-        )
+        const flag = <LangFlag code={opt.flagCode} size={20} title={t(opt.flagTitleKey)} />
         if (active) {
           return (
             <span
               key={opt.locale}
-              className="flex items-center gap-2 rounded-lg bg-earth-200 px-3 py-2 text-sm font-medium text-earth-900"
+              className="inline-flex items-center rounded-lg bg-earth-200 px-2.5 py-2"
               aria-current="page"
+              aria-label={opt.label}
             >
-              {inner}
+              {flag}
             </span>
           )
         }
@@ -172,9 +164,10 @@ export function LanguageSwitcherInline({ onNavigate, className = '' }) {
             key={opt.locale}
             to={opt.to}
             onClick={() => onNavigate?.()}
-            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-earth-700 transition hover:bg-earth-100 hover:text-earth-900"
+            aria-label={opt.label}
+            className="inline-flex items-center rounded-lg px-2.5 py-2 transition hover:bg-earth-100"
           >
-            {inner}
+            {flag}
           </Link>
         )
       })}
@@ -213,15 +206,13 @@ export function LanguageSwitcherFooterRow() {
             <Link
               key={opt.locale}
               to={opt.to}
-              className={`inline-flex items-center gap-1.5 text-sm transition ${
-                active
-                  ? 'font-semibold text-earth-900'
-                  : 'text-earth-600 hover:text-earth-900'
+              className={`inline-flex items-center rounded-md px-1.5 py-1 transition ${
+                active ? 'bg-earth-200' : 'hover:bg-earth-100'
               }`}
               aria-current={active ? 'true' : undefined}
+              aria-label={opt.label}
             >
               <LangFlag code={opt.flagCode} size={18} title={t(opt.flagTitleKey)} />
-              {opt.label}
             </Link>
           )
         })}

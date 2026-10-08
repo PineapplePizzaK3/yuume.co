@@ -4,7 +4,7 @@ export const COLLECTION_TOP_CARDS_SOURCE = {
   "url": "https://snkrdunk.com"
 }
 
-export const COLLECTION_TOP_CARDS_UPDATED_AT = "2026-09-26T12:21:05.632Z"
+export const COLLECTION_TOP_CARDS_UPDATED_AT = "2026-10-01T14:02:23.879Z"
 
 export const COLLECTION_TOP_CARDS = {
   "pokemon-snkrdunk-1016236": {
@@ -13,7 +13,7 @@ export const COLLECTION_TOP_CARDS = {
     "labels": [
       "30th CELEBRATION"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:12:43.317Z",
     "source": "SNKRDUNK",
     "cards": [
       {
@@ -22,21 +22,10 @@ export const COLLECTION_TOP_CARDS = {
         "nameEn": "Mew [M6a R/RGB](Expansion Pack \"30th CELEBRATION\")",
         "rarity": "R",
         "cardNumber": "M6A",
-        "setCode": "",
+        "setCode": "M6A",
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/398db73b-e8f1-49e7-9746-c5eec62c2a41.webp?size=m",
-        "priceJpy": 480000,
+        "priceJpy": 430000,
         "url": "https://snkrdunk.com/en/apparels/898625"
-      },
-      {
-        "snkrdunkId": "898626",
-        "name": "Mew [M6a G/RGB](Expansion Pack \"30th CELEBRATION\")",
-        "nameEn": "Mew [M6a G/RGB](Expansion Pack \"30th CELEBRATION\")",
-        "rarity": "",
-        "cardNumber": "M6A",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/0346cf90-9fcc-4f0f-a0d7-7d0667f57808.webp?size=m",
-        "priceJpy": 345000,
-        "url": "https://snkrdunk.com/en/apparels/898626"
       },
       {
         "snkrdunkId": "898627",
@@ -44,76 +33,21 @@ export const COLLECTION_TOP_CARDS = {
         "nameEn": "Mew [M6a B/RGB](Expansion Pack \"30th CELEBRATION\")",
         "rarity": "",
         "cardNumber": "M6A",
-        "setCode": "",
+        "setCode": "M6A",
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/afaea0fb-7e50-439a-9cfb-a35a70e8dcf2.webp?size=m",
-        "priceJpy": 330000,
+        "priceJpy": 289980,
         "url": "https://snkrdunk.com/en/apparels/898627"
       },
       {
-        "snkrdunkId": "882798",
-        "name": "Pokemon Card Game MEGA [EN] Elite Trainer Box \"30th CELEBRATION\"",
-        "nameEn": "Pokemon Card Game MEGA [EN] Elite Trainer Box \"30th CELEBRATION\"",
+        "snkrdunkId": "898626",
+        "name": "Mew [M6a G/RGB](Expansion Pack \"30th CELEBRATION\")",
+        "nameEn": "Mew [M6a G/RGB](Expansion Pack \"30th CELEBRATION\")",
         "rarity": "",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/9924f448-38c9-4ea5-8cf5-28fb602952e2.webp?size=m",
-        "priceJpy": 44750,
-        "url": "https://snkrdunk.com/en/apparels/882798"
-      },
-      {
-        "snkrdunkId": "893599",
-        "name": "Pokemon Card Game MEGA [EN] Binder Collection \"30th Celebration\"",
-        "nameEn": "Pokemon Card Game MEGA [EN] Binder Collection \"30th Celebration\"",
-        "rarity": "",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/44edda7f-59d1-495f-b31f-a474369ca209.webp?size=m",
-        "priceJpy": 35000,
-        "url": "https://snkrdunk.com/en/apparels/893599"
-      },
-      {
-        "snkrdunkId": "897035",
-        "name": "Pikachu ex PROMO :Opened [131/M-P](Special Box \"30th CELEBRATION FUTURISTIC BOX\")",
-        "nameEn": "Pikachu ex PROMO :Opened [131/M-P](Special Box \"30th CELEBRATION FUTURISTIC BOX\")",
-        "rarity": "P",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/d116ec24-fdd9-4270-9ac9-0ee693673ea4.webp?size=m",
-        "priceJpy": 30000,
-        "url": "https://snkrdunk.com/en/apparels/897035"
-      },
-      {
-        "snkrdunkId": "881432",
-        "name": "Pikachu ex PROMO :Unopen [131/M-P](Special Box \"30th CELEBRATION FUTURISTIC BOX\")",
-        "nameEn": "Pikachu ex PROMO :Unopen [131/M-P](Special Box \"30th CELEBRATION FUTURISTIC BOX\")",
-        "rarity": "P",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/7182be22-8d04-4682-93cc-8c375ff583df.webp?size=m",
-        "priceJpy": 27000,
-        "url": "https://snkrdunk.com/en/apparels/881432"
-      },
-      {
-        "snkrdunkId": "897036",
-        "name": "Pikachu ex PROMO :Opened [132/M-P](Special Box \"30th CELEBRATION FUTURISTIC BOX\")",
-        "nameEn": "Pikachu ex PROMO :Opened [132/M-P](Special Box \"30th CELEBRATION FUTURISTIC BOX\")",
-        "rarity": "P",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/84962b15-7ce2-4e64-80f3-c258707bd6fc.webp?size=m",
-        "priceJpy": 25000,
-        "url": "https://snkrdunk.com/en/apparels/897036"
-      },
-      {
-        "snkrdunkId": "881433",
-        "name": "Pikachu ex PROMO :Unopen [132/M-P](Special Box \"30th CELEBRATION FUTURISTIC BOX\")",
-        "nameEn": "Pikachu ex PROMO :Unopen [132/M-P](Special Box \"30th CELEBRATION FUTURISTIC BOX\")",
-        "rarity": "P",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/e413b9c0-c0e5-414e-8020-b03a952055cd.webp?size=m",
-        "priceJpy": 23400,
-        "url": "https://snkrdunk.com/en/apparels/881433"
+        "cardNumber": "M6A",
+        "setCode": "M6A",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/0346cf90-9fcc-4f0f-a0d7-7d0667f57808.webp?size=m",
+        "priceJpy": 250000,
+        "url": "https://snkrdunk.com/en/apparels/898626"
       },
       {
         "snkrdunkId": "882281",
@@ -132,10 +66,21 @@ export const COLLECTION_TOP_CARDS = {
         "nameEn": "Lugia [M6a 142/103](Expansion Pack \"30th CELEBRATION\")",
         "rarity": "",
         "cardNumber": "142/103",
-        "setCode": "",
+        "setCode": "M6A",
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/ac7d4dc8-b640-45ad-ac37-55a86496fce9.webp?size=m",
-        "priceJpy": 16499,
+        "priceJpy": 16000,
         "url": "https://snkrdunk.com/en/apparels/886017"
+      },
+      {
+        "snkrdunkId": "882280",
+        "name": "Pikachu ex SAR [M6a 127/103](Expansion Pack \"30th CELEBRATION\")",
+        "nameEn": "Pikachu ex SAR [M6a 127/103](Expansion Pack \"30th CELEBRATION\")",
+        "rarity": "SAR",
+        "cardNumber": "127/103",
+        "setCode": "M6A",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/a0163a22-6e45-41dc-8203-a5dd647af7ef.webp?size=m",
+        "priceJpy": 7999,
+        "url": "https://snkrdunk.com/en/apparels/882280"
       },
       {
         "snkrdunkId": "881429",
@@ -143,10 +88,65 @@ export const COLLECTION_TOP_CARDS = {
         "nameEn": "Mew ex FUR [M6a 135/103](Expansion Pack \"30th CELEBRATION\")",
         "rarity": "",
         "cardNumber": "135/103",
-        "setCode": "",
+        "setCode": "M6A",
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/4bfe7bdb-4f7e-4398-9689-334e15831532.webp?size=m",
-        "priceJpy": 9000,
+        "priceJpy": 7400,
         "url": "https://snkrdunk.com/en/apparels/881429"
+      },
+      {
+        "snkrdunkId": "882279",
+        "name": "Pikachu ex SAR [M6a 126/103](Expansion Pack \"30th CELEBRATION\")",
+        "nameEn": "Pikachu ex SAR [M6a 126/103](Expansion Pack \"30th CELEBRATION\")",
+        "rarity": "SAR",
+        "cardNumber": "126/103",
+        "setCode": "M6A",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/6cce5089-c05a-47ab-8da2-02d22ab98861.webp?size=m",
+        "priceJpy": 6999,
+        "url": "https://snkrdunk.com/en/apparels/882279"
+      },
+      {
+        "snkrdunkId": "886019",
+        "name": "Magikarp [M6a 165/103](Expansion Pack \"30th CELEBRATION\")",
+        "nameEn": "Magikarp [M6a 165/103](Expansion Pack \"30th CELEBRATION\")",
+        "rarity": "",
+        "cardNumber": "165/103",
+        "setCode": "M6A",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/9d4bad32-28ec-40e5-a17f-23dac8c9063a.webp?size=m",
+        "priceJpy": 6500,
+        "url": "https://snkrdunk.com/en/apparels/886019"
+      },
+      {
+        "snkrdunkId": "896991",
+        "name": "Mew ex SAR [M6a 129/103](Expansion Pack \"30th CELEBRATION\")",
+        "nameEn": "Mew ex SAR [M6a 129/103](Expansion Pack \"30th CELEBRATION\")",
+        "rarity": "SAR",
+        "cardNumber": "129/103",
+        "setCode": "M6A",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/1be22cfc-b301-4083-971d-06fc5878c844.webp?size=m",
+        "priceJpy": 6200,
+        "url": "https://snkrdunk.com/en/apparels/896991"
+      },
+      {
+        "snkrdunkId": "881428",
+        "name": "Mewtwo ex FUR [M6a 134/103](Expansion Pack \"30th CELEBRATION\")",
+        "nameEn": "Mewtwo ex FUR [M6a 134/103](Expansion Pack \"30th CELEBRATION\")",
+        "rarity": "",
+        "cardNumber": "134/103",
+        "setCode": "M6A",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/433c88d9-e3d7-47c1-a98e-b25b81ec698d.webp?size=m",
+        "priceJpy": 5500,
+        "url": "https://snkrdunk.com/en/apparels/881428"
+      },
+      {
+        "snkrdunkId": "896992",
+        "name": "Gengar ex SAR [M6a 131/103](Expansion Pack \"30th CELEBRATION\")",
+        "nameEn": "Gengar ex SAR [M6a 131/103](Expansion Pack \"30th CELEBRATION\")",
+        "rarity": "SAR",
+        "cardNumber": "131/103",
+        "setCode": "M6A",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/f803b03b-76e1-4148-a0f0-8ccc062112ba.webp?size=m",
+        "priceJpy": 4800,
+        "url": "https://snkrdunk.com/en/apparels/896992"
       }
     ]
   },
@@ -157,7 +157,7 @@ export const COLLECTION_TOP_CARDS = {
       "MEGA Dream ex",
       "MEGAドリームex"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
       {
@@ -166,21 +166,10 @@ export const COLLECTION_TOP_CARDS = {
         "nameEn": "MEGA Gengar ex SAR [M2a 240/193](High Class Pack \"MEGA Dream ex\")",
         "rarity": "SAR",
         "cardNumber": "240/193",
-        "setCode": "",
+        "setCode": "M2A",
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/896d5015-d88c-4882-a045-7c567fa60d6f.webp?size=m",
-        "priceJpy": 32999,
+        "priceJpy": 32000,
         "url": "https://snkrdunk.com/en/apparels/724996"
-      },
-      {
-        "snkrdunkId": "730956",
-        "name": "Pikachu ex SAR [M2a 234/193](High Class Pack \"MEGA Dream ex\")",
-        "nameEn": "Pikachu ex SAR [M2a 234/193](High Class Pack \"MEGA Dream ex\")",
-        "rarity": "SAR",
-        "cardNumber": "234/193",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/ba1bba55-ee7a-4274-b0f8-28b141dccfac.webp?size=m",
-        "priceJpy": 20000,
-        "url": "https://snkrdunk.com/en/apparels/730956"
       },
       {
         "snkrdunkId": "730964",
@@ -188,10 +177,21 @@ export const COLLECTION_TOP_CARDS = {
         "nameEn": "MEGA Dragonite ex SAR [M2a 246/193](High Class Pack \"MEGA Dream ex\")",
         "rarity": "SAR",
         "cardNumber": "246/193",
-        "setCode": "",
+        "setCode": "M2A",
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/848e56fc-5647-43ef-84ce-90d34fffc7e9.webp?size=m",
-        "priceJpy": 17500,
+        "priceJpy": 17000,
         "url": "https://snkrdunk.com/en/apparels/730964"
+      },
+      {
+        "snkrdunkId": "730956",
+        "name": "Pikachu ex SAR [M2a 234/193](High Class Pack \"MEGA Dream ex\")",
+        "nameEn": "Pikachu ex SAR [M2a 234/193](High Class Pack \"MEGA Dream ex\")",
+        "rarity": "SAR",
+        "cardNumber": "234/193",
+        "setCode": "M2A",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/ba1bba55-ee7a-4274-b0f8-28b141dccfac.webp?size=m",
+        "priceJpy": 16000,
+        "url": "https://snkrdunk.com/en/apparels/730956"
       },
       {
         "snkrdunkId": "730968",
@@ -199,9 +199,9 @@ export const COLLECTION_TOP_CARDS = {
         "nameEn": "MEGA Dragonite ex MUR [M2a 250/193](High Class Pack \"MEGA Dream ex\")",
         "rarity": "",
         "cardNumber": "250/193",
-        "setCode": "",
+        "setCode": "M2A",
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/417ea4f0-c513-4036-9cc0-de92efeaec3f.webp?size=m",
-        "priceJpy": 17000,
+        "priceJpy": 15000,
         "url": "https://snkrdunk.com/en/apparels/730968"
       },
       {
@@ -214,6 +214,83 @@ export const COLLECTION_TOP_CARDS = {
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/24c14470-409b-4dbb-823d-b0f3aa6de843.webp?size=m",
         "priceJpy": 10000,
         "url": "https://snkrdunk.com/en/apparels/730958"
+      },
+      {
+        "snkrdunkId": "730961",
+        "name": "N's Zoroark ex SAR [M2a 242/193](High Class Pack \"MEGA Dream ex\")",
+        "nameEn": "N's Zoroark ex SAR [M2a 242/193](High Class Pack \"MEGA Dream ex\")",
+        "rarity": "SAR",
+        "cardNumber": "242/193",
+        "setCode": "M2A",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/4846c8e3-0c0a-4821-960f-e2f13796f6b2.webp?size=m",
+        "priceJpy": 4000,
+        "url": "https://snkrdunk.com/en/apparels/730961"
+      },
+      {
+        "snkrdunkId": "724997",
+        "name": "Marnie's Grimmsnarl ex SAR [M2a 243/193](High Class Pack \"MEGA Dream ex\")",
+        "nameEn": "Marnie's Grimmsnarl ex SAR [M2a 243/193](High Class Pack \"MEGA Dream ex\")",
+        "rarity": "SAR",
+        "cardNumber": "243/193",
+        "setCode": "M2A",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/45cc629d-18e6-4d84-84d4-6e6f4ea3f480.webp?size=m",
+        "priceJpy": 3000,
+        "url": "https://snkrdunk.com/en/apparels/724997"
+      },
+      {
+        "snkrdunkId": "730957",
+        "name": "Iono's Bellibolt ex SAR [M2a 236/193](High Class Pack \"MEGA Dream ex\")",
+        "nameEn": "Iono's Bellibolt ex SAR [M2a 236/193](High Class Pack \"MEGA Dream ex\")",
+        "rarity": "SAR",
+        "cardNumber": "236/193",
+        "setCode": "M2A",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/a9e553b5-4a9e-40e8-af40-ba7dac9ec982.webp?size=m",
+        "priceJpy": 2800,
+        "url": "https://snkrdunk.com/en/apparels/730957"
+      },
+      {
+        "snkrdunkId": "722239",
+        "name": "MEGA Charizard X ex MA [M2a 223/193](High Class Pack \"MEGA Dream ex\")",
+        "nameEn": "MEGA Charizard X ex MA [M2a 223/193](High Class Pack \"MEGA Dream ex\")",
+        "rarity": "",
+        "cardNumber": "223/193",
+        "setCode": "M2A",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/7bf60833-bb2f-424b-932a-9d618d4a3e17.webp?size=m",
+        "priceJpy": 2700,
+        "url": "https://snkrdunk.com/en/apparels/722239"
+      },
+      {
+        "snkrdunkId": "730966",
+        "name": "Canari SAR [M2a 248/193](High Class Pack \"MEGA Dream ex\")",
+        "nameEn": "Canari SAR [M2a 248/193](High Class Pack \"MEGA Dream ex\")",
+        "rarity": "SAR",
+        "cardNumber": "248/193",
+        "setCode": "M2A",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/b8b7f38a-6554-4657-b571-6b3e89e2cb9f.webp?size=m",
+        "priceJpy": 2440,
+        "url": "https://snkrdunk.com/en/apparels/730966"
+      },
+      {
+        "snkrdunkId": "730952",
+        "name": "MEGA Gengar ex MA [M2a 230/193](High Class Pack \"MEGA Dream ex\")",
+        "nameEn": "MEGA Gengar ex MA [M2a 230/193](High Class Pack \"MEGA Dream ex\")",
+        "rarity": "",
+        "cardNumber": "230/193",
+        "setCode": "M2A",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/88955e51-aed8-4ece-814d-067af77f658e.webp?size=m",
+        "priceJpy": 2000,
+        "url": "https://snkrdunk.com/en/apparels/730952"
+      },
+      {
+        "snkrdunkId": "730955",
+        "name": "MEGA Froslass ex SAR [M2a 233/193](High Class Pack \"MEGA Dream ex\")",
+        "nameEn": "MEGA Froslass ex SAR [M2a 233/193](High Class Pack \"MEGA Dream ex\")",
+        "rarity": "SAR",
+        "cardNumber": "233/193",
+        "setCode": "M2A",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/3005b130-5551-4a9d-b9de-3bb9a3d520c0.webp?size=m",
+        "priceJpy": 1980,
+        "url": "https://snkrdunk.com/en/apparels/730955"
       }
     ]
   },
@@ -1085,12 +1162,145 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "pokemon-snkrdunk-178051",
     "setCode": "",
     "labels": [
-      "Sword & Shield High Class Pack VSTAR Universe",
-      "ポケモンカードゲーム ソード&シールド ハイクラスパック VSTARユニバース"
+      "VSTAR Universe",
+      "VSTARユニバース"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:12:43.317Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "105536",
+        "name": "Giratina VSTAR UR[s12a 261/172](High Class Pack \"VSTAR Universe\")",
+        "nameEn": "Giratina VSTAR UR[s12a 261/172](High Class Pack \"VSTAR Universe\")",
+        "rarity": "UR",
+        "cardNumber": "261/172",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/029ba98d-6311-4321-97e1-4324c7e867e8.webp?size=m",
+        "priceJpy": 29000,
+        "url": "https://snkrdunk.com/en/apparels/105536"
+      },
+      {
+        "snkrdunkId": "105553",
+        "name": "Pikachu AR[s12a 205/172](High Class Pack \"VSTAR Universe\")",
+        "nameEn": "Pikachu AR[s12a 205/172](High Class Pack \"VSTAR Universe\")",
+        "rarity": "AR",
+        "cardNumber": "205/172",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/d3c64eb8-2216-456a-8411-6dd0466add9d.webp?size=m",
+        "priceJpy": 25000,
+        "url": "https://snkrdunk.com/en/apparels/105553"
+      },
+      {
+        "snkrdunkId": "105530",
+        "name": "Arceus VSTAR UR[s12a 262/172](High Class Pack \"VSTAR Universe\")",
+        "nameEn": "Arceus VSTAR UR[s12a 262/172](High Class Pack \"VSTAR Universe\")",
+        "rarity": "UR",
+        "cardNumber": "262/172",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/419eb759-7bb5-4288-8f8e-a911c6298cb5.webp?size=m",
+        "priceJpy": 10000,
+        "url": "https://snkrdunk.com/en/apparels/105530"
+      },
+      {
+        "snkrdunkId": "103079",
+        "name": "Charizard VSTAR SAR[s12a 212/172](High Class Pack \"VSTAR Universe\")",
+        "nameEn": "Charizard VSTAR SAR[s12a 212/172](High Class Pack \"VSTAR Universe\")",
+        "rarity": "SAR",
+        "cardNumber": "212/172",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/8f808e7f-8f06-4ff3-b02e-76ce37c237a7.webp?size=m",
+        "priceJpy": 9900,
+        "url": "https://snkrdunk.com/en/apparels/103079"
+      },
+      {
+        "snkrdunkId": "105552",
+        "name": "Origin Forme Palkia VSTAR UR[s12a 259/172](High Class Pack \"VSTAR Universe\")",
+        "nameEn": "Origin Forme Palkia VSTAR UR[s12a 259/172](High Class Pack \"VSTAR Universe\")",
+        "rarity": "UR",
+        "cardNumber": "259/172",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/38a7ee73-6cc7-4394-9431-9d3b7b1c182a.webp?size=m",
+        "priceJpy": 9900,
+        "url": "https://snkrdunk.com/en/apparels/105552"
+      },
+      {
+        "snkrdunkId": "103080",
+        "name": "Mewtwo VSTAR SAR[s12a 221/172](High Class Pack \"VSTAR Universe\")",
+        "nameEn": "Mewtwo VSTAR SAR[s12a 221/172](High Class Pack \"VSTAR Universe\")",
+        "rarity": "SAR",
+        "cardNumber": "221/172",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/66b4b560-8828-4792-9044-a3e9ebc51f7b.webp?size=m",
+        "priceJpy": 9500,
+        "url": "https://snkrdunk.com/en/apparels/103080"
+      },
+      {
+        "snkrdunkId": "105546",
+        "name": "Origin Forme Dialga VSTAR UR[s12a 260/172](High Class Pack \"VSTAR Universe\")",
+        "nameEn": "Origin Forme Dialga VSTAR UR[s12a 260/172](High Class Pack \"VSTAR Universe\")",
+        "rarity": "UR",
+        "cardNumber": "260/172",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/87968558-0b64-4f9a-aa18-ff86c3fb981a.webp?size=m",
+        "priceJpy": 8300,
+        "url": "https://snkrdunk.com/en/apparels/105546"
+      },
+      {
+        "snkrdunkId": "105556",
+        "name": "Bidoof AR[s12a 204/172](High Class Pack \"VSTAR Universe\")",
+        "nameEn": "Bidoof AR[s12a 204/172](High Class Pack \"VSTAR Universe\")",
+        "rarity": "AR",
+        "cardNumber": "204/172",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/14c1e20a-7b64-4a95-bd9a-49ff52c916f4.webp?size=m",
+        "priceJpy": 7777,
+        "url": "https://snkrdunk.com/en/apparels/105556"
+      },
+      {
+        "snkrdunkId": "105561",
+        "name": "Poochyena AR[s12a 208/172](High Class Pack \"VSTAR Universe\")",
+        "nameEn": "Poochyena AR[s12a 208/172](High Class Pack \"VSTAR Universe\")",
+        "rarity": "AR",
+        "cardNumber": "208/172",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/decdedaa-484f-421b-8c65-a7499438dac0.webp?size=m",
+        "priceJpy": 7400,
+        "url": "https://snkrdunk.com/en/apparels/105561"
+      },
+      {
+        "snkrdunkId": "103085",
+        "name": "Mew AR[s12a 183/172](High Class Pack \"VSTAR Universe\")",
+        "nameEn": "Mew AR[s12a 183/172](High Class Pack \"VSTAR Universe\")",
+        "rarity": "AR",
+        "cardNumber": "183/172",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/a56df923-d60f-468a-85dc-43b171fb7aa3.webp?size=m",
+        "priceJpy": 4999,
+        "url": "https://snkrdunk.com/en/apparels/103085"
+      },
+      {
+        "snkrdunkId": "105568",
+        "name": "Charizard V SAR[s12a 211/172](High Class Pack \"VSTAR Universe\")",
+        "nameEn": "Charizard V SAR[s12a 211/172](High Class Pack \"VSTAR Universe\")",
+        "rarity": "SAR",
+        "cardNumber": "211/172",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/a03a0127-0205-4572-8bc1-d22ae20e12f7.webp?size=m",
+        "priceJpy": 4980,
+        "url": "https://snkrdunk.com/en/apparels/105568"
+      },
+      {
+        "snkrdunkId": "103068",
+        "name": "Suicune V SAR[s12a 215/172](High Class Pack \"VSTAR Universe\")",
+        "nameEn": "Suicune V SAR[s12a 215/172](High Class Pack \"VSTAR Universe\")",
+        "rarity": "SAR",
+        "cardNumber": "215/172",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/19e655f0-9137-4518-bed9-e79801530433.webp?size=m",
+        "priceJpy": 4980,
+        "url": "https://snkrdunk.com/en/apparels/103068"
+      }
+    ]
   },
   "pokemon-snkrdunk-563302": {
     "productId": "pokemon-snkrdunk-563302",
@@ -1099,7 +1309,7 @@ export const COLLECTION_TOP_CARDS = {
       "Battle Partners",
       "バトルパートナーズ"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
       {
@@ -1169,17 +1379,6 @@ export const COLLECTION_TOP_CARDS = {
         "url": "https://snkrdunk.com/en/apparels/496765"
       },
       {
-        "snkrdunkId": "505958",
-        "name": "Iono's Bellibolt ex UR [SV9 130/100](Expansion Pack \"Battle Partners\")",
-        "nameEn": "Iono's Bellibolt ex UR [SV9 130/100](Expansion Pack \"Battle Partners\")",
-        "rarity": "UR",
-        "cardNumber": "130/100",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/c550501b-b01f-4906-aca2-46e4d7433c8a.webp?size=m",
-        "priceJpy": 2800,
-        "url": "https://snkrdunk.com/en/apparels/505958"
-      },
-      {
         "snkrdunkId": "506160",
         "name": "N's Zoroark ex UR [SV9 131/100](Expansion Pack \"Battle Partners\")",
         "nameEn": "N's Zoroark ex UR [SV9 131/100](Expansion Pack \"Battle Partners\")",
@@ -1189,6 +1388,17 @@ export const COLLECTION_TOP_CARDS = {
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/d8de9129-e05f-440d-8299-ec446dca9126.webp?size=m",
         "priceJpy": 2500,
         "url": "https://snkrdunk.com/en/apparels/506160"
+      },
+      {
+        "snkrdunkId": "505958",
+        "name": "Iono's Bellibolt ex UR [SV9 130/100](Expansion Pack \"Battle Partners\")",
+        "nameEn": "Iono's Bellibolt ex UR [SV9 130/100](Expansion Pack \"Battle Partners\")",
+        "rarity": "UR",
+        "cardNumber": "130/100",
+        "setCode": "SV9",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/c550501b-b01f-4906-aca2-46e4d7433c8a.webp?size=m",
+        "priceJpy": 2000,
+        "url": "https://snkrdunk.com/en/apparels/505958"
       },
       {
         "snkrdunkId": "506158",
@@ -1211,6 +1421,17 @@ export const COLLECTION_TOP_CARDS = {
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/4ca9cf58-464b-42ad-8ae6-d4c3a0640eca.webp?size=m",
         "priceJpy": 1800,
         "url": "https://snkrdunk.com/en/apparels/505953"
+      },
+      {
+        "snkrdunkId": "485654",
+        "name": "N's Reshiram AR [SV9 109/100](Expansion Pack \"Battle Partners\")",
+        "nameEn": "N's Reshiram AR [SV9 109/100](Expansion Pack \"Battle Partners\")",
+        "rarity": "AR",
+        "cardNumber": "109/100",
+        "setCode": "SV9",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/51822dfb-8133-4450-a271-88ff36706816.webp?size=m",
+        "priceJpy": 1800,
+        "url": "https://snkrdunk.com/en/apparels/485654"
       },
       {
         "snkrdunkId": "489806",
@@ -1374,9 +1595,10 @@ export const COLLECTION_TOP_CARDS = {
     "setCode": "SV2D",
     "labels": [
       "Clay burst",
-      "クレイバースト (クレバ)"
+      "クレイバースト (クレバ)",
+      "Clay burst\" Box"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
       {
@@ -1385,21 +1607,10 @@ export const COLLECTION_TOP_CARDS = {
         "nameEn": "Iono SAR[SV2D 096/071](Expansion Pack \"Clay burst\")",
         "rarity": "SAR",
         "cardNumber": "096/071",
-        "setCode": "",
+        "setCode": "SV2D",
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/355b4686-d34c-46fd-b8dd-b5ab53b16d0a.webp?size=m",
-        "priceJpy": 32889,
+        "priceJpy": 30000,
         "url": "https://snkrdunk.com/en/apparels/120748"
-      },
-      {
-        "snkrdunkId": "117179",
-        "name": "Pokemon Card Game Pokemon Center GYM Set (Snow hazard & Clay burst [Nanjamo Set])",
-        "nameEn": "Pokemon Card Game Pokemon Center GYM Set (Snow hazard & Clay burst [Nanjamo Set])",
-        "rarity": "",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/76cfb9ce-2952-4667-90ca-6a1d16d84af1.webp?size=m",
-        "priceJpy": 20950,
-        "url": "https://snkrdunk.com/en/apparels/117179"
       },
       {
         "snkrdunkId": "120709",
@@ -1411,28 +1622,6 @@ export const COLLECTION_TOP_CARDS = {
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/ede2f83a-8808-4aa6-ac19-64628fc50e49.webp?size=m",
         "priceJpy": 14999,
         "url": "https://snkrdunk.com/en/apparels/120709"
-      },
-      {
-        "snkrdunkId": "567431",
-        "name": "[No shrink] Pokemon Card Game Scarlet & Violet Expansion Pack \"Snow hazard\" Box (Snow hazard & Clay burst)",
-        "nameEn": "[No shrink] Pokemon Card Game Scarlet & Violet Expansion Pack \"Snow hazard\" Box (Snow hazard & Clay burst)",
-        "rarity": "",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/d64a2c5a-fe3c-4f4b-ba7d-36aeb71aebb6.webp?size=m",
-        "priceJpy": 9997,
-        "url": "https://snkrdunk.com/en/apparels/567431"
-      },
-      {
-        "snkrdunkId": "567432",
-        "name": "[No shrink] Pokemon Card Game Scarlet & Violet Expansion Pack \"Clay burst\" Box (Snow hazard & Clay burst)",
-        "nameEn": "[No shrink] Pokemon Card Game Scarlet & Violet Expansion Pack \"Clay burst\" Box (Snow hazard & Clay burst)",
-        "rarity": "",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/fd21438c-fc9c-4161-b2d4-80d8ad1b729f.webp?size=m",
-        "priceJpy": 8500,
-        "url": "https://snkrdunk.com/en/apparels/567432"
       },
       {
         "snkrdunkId": "118630",
@@ -1510,6 +1699,39 @@ export const COLLECTION_TOP_CARDS = {
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/8806764a-adaf-4c4a-925c-eb270df7ef98.webp?size=m",
         "priceJpy": 1500,
         "url": "https://snkrdunk.com/en/apparels/118631"
+      },
+      {
+        "snkrdunkId": "120699",
+        "name": "Toxicroak U[SV2D 041/071](Expansion Pack \"Clay burst\")",
+        "nameEn": "Toxicroak U[SV2D 041/071](Expansion Pack \"Clay burst\")",
+        "rarity": "U",
+        "cardNumber": "041/071",
+        "setCode": "SV2D",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/8d958c85-c8de-491b-948f-002448f2b8d7.webp?size=m",
+        "priceJpy": 1100,
+        "url": "https://snkrdunk.com/en/apparels/120699"
+      },
+      {
+        "snkrdunkId": "120666",
+        "name": "Heracross U[SV2D 006/071](Expansion Pack \"Clay burst\")",
+        "nameEn": "Heracross U[SV2D 006/071](Expansion Pack \"Clay burst\")",
+        "rarity": "U",
+        "cardNumber": "006/071",
+        "setCode": "SV2D",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/f6fbf010-e131-4b62-b76f-5e63bea7673f.webp?size=m",
+        "priceJpy": 1100,
+        "url": "https://snkrdunk.com/en/apparels/120666"
+      },
+      {
+        "snkrdunkId": "120737",
+        "name": "Farigiraf AR[SV2D 083/071](Expansion Pack \"Clay burst\")",
+        "nameEn": "Farigiraf AR[SV2D 083/071](Expansion Pack \"Clay burst\")",
+        "rarity": "AR",
+        "cardNumber": "083/071",
+        "setCode": "SV2D",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/f21e9158-2a30-4eee-81a7-6d0f007919f2.webp?size=m",
+        "priceJpy": 1000,
+        "url": "https://snkrdunk.com/en/apparels/120737"
       }
     ]
   },
@@ -1517,12 +1739,145 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "pokemon-snkrdunk-90450",
     "setCode": "",
     "labels": [
-      "Sword & Shield Enhanced Expansion Pack Eevee Heroes",
-      "ポケモンカードゲーム ソード & シールド 強化拡張パック イーブイヒーローズ"
+      "Eevee Heroes",
+      "イーブイヒーローズ"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "93021",
+        "name": "Umbreon VMAX HR: SA[S6a 095/069](Enhanced Expansion Pack \"Eevee Heroes\")",
+        "nameEn": "Umbreon VMAX HR: SA[S6a 095/069](Enhanced Expansion Pack \"Eevee Heroes\")",
+        "rarity": "",
+        "cardNumber": "095/069",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/21b89d51-7bfc-4f3c-abd4-0c9534c4cd86.webp?size=m",
+        "priceJpy": 400000,
+        "url": "https://snkrdunk.com/en/apparels/93021"
+      },
+      {
+        "snkrdunkId": "93022",
+        "name": "Sylveon VMAX HR: SA[S6a 093/069](Enhanced Expansion Pack \"Eevee Heroes\")",
+        "nameEn": "Sylveon VMAX HR: SA[S6a 093/069](Enhanced Expansion Pack \"Eevee Heroes\")",
+        "rarity": "",
+        "cardNumber": "093/069",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/39f867b3-349a-4769-b6ee-43a367467824.webp?size=m",
+        "priceJpy": 140000,
+        "url": "https://snkrdunk.com/en/apparels/93022"
+      },
+      {
+        "snkrdunkId": "93024",
+        "name": "Glaceon VMAX HR: SA[S6a 091/069](Enhanced Expansion Pack \"Eevee Heroes\")",
+        "nameEn": "Glaceon VMAX HR: SA[S6a 091/069](Enhanced Expansion Pack \"Eevee Heroes\")",
+        "rarity": "",
+        "cardNumber": "091/069",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/65c4692e-42b6-4687-9627-2242d5c2bb5b.webp?size=m",
+        "priceJpy": 79900,
+        "url": "https://snkrdunk.com/en/apparels/93024"
+      },
+      {
+        "snkrdunkId": "93023",
+        "name": "Leafeon VMAX HR: SA[S6a 089/069](Enhanced Expansion Pack \"Eevee Heroes\")",
+        "nameEn": "Leafeon VMAX HR: SA[S6a 089/069](Enhanced Expansion Pack \"Eevee Heroes\")",
+        "rarity": "",
+        "cardNumber": "089/069",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/4dd147bd-9425-4662-b2f6-eff9f6804614.webp?size=m",
+        "priceJpy": 39000,
+        "url": "https://snkrdunk.com/en/apparels/93023"
+      },
+      {
+        "snkrdunkId": "91176",
+        "name": "Umbreon V SR: SA[S6a 085/069](Enhanced Expansion Pack \"Eevee Heroes\")",
+        "nameEn": "Umbreon V SR: SA[S6a 085/069](Enhanced Expansion Pack \"Eevee Heroes\")",
+        "rarity": "SR",
+        "cardNumber": "085/069",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/44b4958e-199b-402b-bdc4-4cadceda1dae.webp?size=m",
+        "priceJpy": 30000,
+        "url": "https://snkrdunk.com/en/apparels/91176"
+      },
+      {
+        "snkrdunkId": "91175",
+        "name": "Espeon V SR: SA[S6a 081/069](Enhanced Expansion Pack \"Eevee Heroes\")",
+        "nameEn": "Espeon V SR: SA[S6a 081/069](Enhanced Expansion Pack \"Eevee Heroes\")",
+        "rarity": "SR",
+        "cardNumber": "081/069",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/d60afc90-49aa-4cde-9b8b-104a49f2458b.webp?size=m",
+        "priceJpy": 19999,
+        "url": "https://snkrdunk.com/en/apparels/91175"
+      },
+      {
+        "snkrdunkId": "91177",
+        "name": "Sylveon V SR: SA[S6a 083/069](Enhanced Expansion Pack \"Eevee Heroes\")",
+        "nameEn": "Sylveon V SR: SA[S6a 083/069](Enhanced Expansion Pack \"Eevee Heroes\")",
+        "rarity": "SR",
+        "cardNumber": "083/069",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/d53a57da-c0fe-4b41-9758-e339ce115262.webp?size=m",
+        "priceJpy": 18000,
+        "url": "https://snkrdunk.com/en/apparels/91177"
+      },
+      {
+        "snkrdunkId": "91172",
+        "name": "Vaporeon V SR: SA[S6a 075/069](Enhanced Expansion Pack \"Eevee Heroes\")",
+        "nameEn": "Vaporeon V SR: SA[S6a 075/069](Enhanced Expansion Pack \"Eevee Heroes\")",
+        "rarity": "SR",
+        "cardNumber": "075/069",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/cd08b8ec-4a9c-456a-978b-b54d18e65081.webp?size=m",
+        "priceJpy": 16900,
+        "url": "https://snkrdunk.com/en/apparels/91172"
+      },
+      {
+        "snkrdunkId": "91171",
+        "name": "Flareon V SR: SA[S6a 073/069](Enhanced Expansion Pack \"Eevee Heroes\")",
+        "nameEn": "Flareon V SR: SA[S6a 073/069](Enhanced Expansion Pack \"Eevee Heroes\")",
+        "rarity": "SR",
+        "cardNumber": "073/069",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/c399c8e3-e310-47b0-a01a-301cb16049c9.webp?size=m",
+        "priceJpy": 15000,
+        "url": "https://snkrdunk.com/en/apparels/91171"
+      },
+      {
+        "snkrdunkId": "91170",
+        "name": "Leafeon V SR: SA[S6a 071/069](Enhanced Expansion Pack \"Eevee Heroes\")",
+        "nameEn": "Leafeon V SR: SA[S6a 071/069](Enhanced Expansion Pack \"Eevee Heroes\")",
+        "rarity": "SR",
+        "cardNumber": "071/069",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/417c1259-0016-41d1-b0cf-d024507cdd29.webp?size=m",
+        "priceJpy": 12000,
+        "url": "https://snkrdunk.com/en/apparels/91170"
+      },
+      {
+        "snkrdunkId": "91173",
+        "name": "Glaceon V SR: SA[S6a 077/069](Enhanced Expansion Pack \"Eevee Heroes\")",
+        "nameEn": "Glaceon V SR: SA[S6a 077/069](Enhanced Expansion Pack \"Eevee Heroes\")",
+        "rarity": "SR",
+        "cardNumber": "077/069",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/0ba6c8bf-d39a-43d5-b73e-9f5d0f5ec2c7.webp?size=m",
+        "priceJpy": 11000,
+        "url": "https://snkrdunk.com/en/apparels/91173"
+      },
+      {
+        "snkrdunkId": "91174",
+        "name": "Jolteon V SR: SA[S6a 079/069](Enhanced Expansion Pack \"Eevee Heroes\")",
+        "nameEn": "Jolteon V SR: SA[S6a 079/069](Enhanced Expansion Pack \"Eevee Heroes\")",
+        "rarity": "SR",
+        "cardNumber": "079/069",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/8c1e48b0-a4cf-43ff-895c-9042c21c3405.webp?size=m",
+        "priceJpy": 10000,
+        "url": "https://snkrdunk.com/en/apparels/91174"
+      }
+    ]
   },
   "pokemon-snkrdunk-726112": {
     "productId": "pokemon-snkrdunk-726112",
@@ -2246,36 +2601,14 @@ export const COLLECTION_TOP_CARDS = {
   },
   "pokemon-snkrdunk-183034": {
     "productId": "pokemon-snkrdunk-183034",
-    "setCode": "SV1S",
+    "setCode": "SV1V",
     "labels": [
       "Violet ex",
       "バイオレットex"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
-      {
-        "snkrdunkId": "776125",
-        "name": "Carmine SAR [CSV8C 255/207][SC](Scarlet & Violet Expansion Pack \"Brilliant Illusions\")",
-        "nameEn": "Carmine SAR [CSV8C 255/207][SC](Scarlet & Violet Expansion Pack \"Brilliant Illusions\")",
-        "rarity": "SAR",
-        "cardNumber": "255/207",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/f3c47f64-30a8-43cb-a58d-1bb7d4598251.webp?size=m",
-        "priceJpy": 32000,
-        "url": "https://snkrdunk.com/en/apparels/776125"
-      },
-      {
-        "snkrdunkId": "109865",
-        "name": "Gardevoir ex SAR[SV1S 101/078](Scarlet & Violet Expansion Pack \"Scarlet ex\")",
-        "nameEn": "Gardevoir ex SAR[SV1S 101/078](Scarlet & Violet Expansion Pack \"Scarlet ex\")",
-        "rarity": "SAR",
-        "cardNumber": "101/078",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/7fdb1f2f-cd77-42cc-a07d-e1f9d8790b41.webp?size=m",
-        "priceJpy": 19000,
-        "url": "https://snkrdunk.com/en/apparels/109865"
-      },
       {
         "snkrdunkId": "173378",
         "name": "Houndoom C [SV1V 018/078](Expansion Pack \"Violet ex\")",
@@ -2288,48 +2621,15 @@ export const COLLECTION_TOP_CARDS = {
         "url": "https://snkrdunk.com/en/apparels/173378"
       },
       {
-        "snkrdunkId": "567431",
-        "name": "[No shrink] Pokemon Card Game Scarlet & Violet Expansion Pack \"Snow hazard\" Box (Snow hazard & Clay burst)",
-        "nameEn": "[No shrink] Pokemon Card Game Scarlet & Violet Expansion Pack \"Snow hazard\" Box (Snow hazard & Clay burst)",
-        "rarity": "",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/d64a2c5a-fe3c-4f4b-ba7d-36aeb71aebb6.webp?size=m",
-        "priceJpy": 9997,
-        "url": "https://snkrdunk.com/en/apparels/567431"
-      },
-      {
-        "snkrdunkId": "567432",
-        "name": "[No shrink] Pokemon Card Game Scarlet & Violet Expansion Pack \"Clay burst\" Box (Snow hazard & Clay burst)",
-        "nameEn": "[No shrink] Pokemon Card Game Scarlet & Violet Expansion Pack \"Clay burst\" Box (Snow hazard & Clay burst)",
-        "rarity": "",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/fd21438c-fc9c-4161-b2d4-80d8ad1b729f.webp?size=m",
-        "priceJpy": 8500,
-        "url": "https://snkrdunk.com/en/apparels/567432"
-      },
-      {
         "snkrdunkId": "110938",
         "name": "Miriam SAR[SV1V 105/078](Scarlet & Violet Expansion Pack \"Violet ex\")",
         "nameEn": "Miriam SAR[SV1V 105/078](Scarlet & Violet Expansion Pack \"Violet ex\")",
         "rarity": "SAR",
         "cardNumber": "105/078",
-        "setCode": "",
+        "setCode": "SV1V",
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/a7eef777-b877-458d-8f3d-d9c2d9502915.webp?size=m",
-        "priceJpy": 8200,
+        "priceJpy": 7900,
         "url": "https://snkrdunk.com/en/apparels/110938"
-      },
-      {
-        "snkrdunkId": "110953",
-        "name": "Koraidon ex SAR[SV1S 103/078](Scarlet & Violet Expansion Pack \"Scarlet ex\")",
-        "nameEn": "Koraidon ex SAR[SV1S 103/078](Scarlet & Violet Expansion Pack \"Scarlet ex\")",
-        "rarity": "SAR",
-        "cardNumber": "103/078",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/17fca5b0-521c-4ad1-9c66-a788c10c21a3.webp?size=m",
-        "priceJpy": 5900,
-        "url": "https://snkrdunk.com/en/apparels/110953"
       },
       {
         "snkrdunkId": "110786",
@@ -2365,6 +2665,17 @@ export const COLLECTION_TOP_CARDS = {
         "url": "https://snkrdunk.com/en/apparels/110930"
       },
       {
+        "snkrdunkId": "270361",
+        "name": "Pawmo C [SV1V 035/078](Expansion Pack \"Violet ex\")",
+        "nameEn": "Pawmo C [SV1V 035/078](Expansion Pack \"Violet ex\")",
+        "rarity": "C",
+        "cardNumber": "035/078",
+        "setCode": "SV1V",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/e251d1de-a82f-476b-823e-2b0d917628b7.webp?size=m",
+        "priceJpy": 3000,
+        "url": "https://snkrdunk.com/en/apparels/270361"
+      },
+      {
         "snkrdunkId": "110910",
         "name": "Miriam SR [SV1V 100/078](Scarlet & Violet Expansion Pack \"Violet ex\")",
         "nameEn": "Miriam SR [SV1V 100/078](Scarlet & Violet Expansion Pack \"Violet ex\")",
@@ -2376,15 +2687,59 @@ export const COLLECTION_TOP_CARDS = {
         "url": "https://snkrdunk.com/en/apparels/110910"
       },
       {
+        "snkrdunkId": "110941",
+        "name": "Basic Lightning Energy UR[SV1V 108/078](Scarlet & Violet Expansion Pack \"Violet ex\")",
+        "nameEn": "Basic Lightning Energy UR[SV1V 108/078](Scarlet & Violet Expansion Pack \"Violet ex\")",
+        "rarity": "UR",
+        "cardNumber": "108/078",
+        "setCode": "SV1V",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/bbe89c15-a445-445e-81a3-a0bf9096364d.webp?size=m",
+        "priceJpy": 2300,
+        "url": "https://snkrdunk.com/en/apparels/110941"
+      },
+      {
+        "snkrdunkId": "110940",
+        "name": "Rare Candy UR[SV1V 107/078](Scarlet & Violet Expansion Pack \"Violet ex\")",
+        "nameEn": "Rare Candy UR[SV1V 107/078](Scarlet & Violet Expansion Pack \"Violet ex\")",
+        "rarity": "UR",
+        "cardNumber": "107/078",
+        "setCode": "SV1V",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/e698dc4a-3151-4775-ae01-b6c909a8a85c.webp?size=m",
+        "priceJpy": 2200,
+        "url": "https://snkrdunk.com/en/apparels/110940"
+      },
+      {
+        "snkrdunkId": "270397",
+        "name": "Arven U [SV1V 076/078](Expansion Pack \"Violet ex\")",
+        "nameEn": "Arven U [SV1V 076/078](Expansion Pack \"Violet ex\")",
+        "rarity": "U",
+        "cardNumber": "076/078",
+        "setCode": "SV1V",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/7d82318b-5f4f-4d85-b4a6-3c0d7a3d0863.webp?size=m",
+        "priceJpy": 1980,
+        "url": "https://snkrdunk.com/en/apparels/270397"
+      },
+      {
         "snkrdunkId": "109861",
         "name": "Slowpoke AR[SV1V 082/078](Scarlet & Violet Expansion Pack \"Violet ex\")",
         "nameEn": "Slowpoke AR[SV1V 082/078](Scarlet & Violet Expansion Pack \"Violet ex\")",
         "rarity": "AR",
         "cardNumber": "082/078",
-        "setCode": "",
+        "setCode": "SV1V",
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/6f1ec5ee-6cc5-4a40-9daa-4067cdf1130e.webp?size=m",
-        "priceJpy": 2400,
+        "priceJpy": 1800,
         "url": "https://snkrdunk.com/en/apparels/109861"
+      },
+      {
+        "snkrdunkId": "110939",
+        "name": "Miraidon ex UR[SV1V 106/078](Scarlet & Violet Expansion Pack \"Violet ex\")",
+        "nameEn": "Miraidon ex UR[SV1V 106/078](Scarlet & Violet Expansion Pack \"Violet ex\")",
+        "rarity": "UR",
+        "cardNumber": "106/078",
+        "setCode": "SV1V",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/8364f6fe-61ad-4142-9389-39f0a1842499.webp?size=m",
+        "priceJpy": 1800,
+        "url": "https://snkrdunk.com/en/apparels/110939"
       }
     ]
   },
@@ -2392,11 +2747,145 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "pokemon-snkrdunk-173306",
     "setCode": "",
     "labels": [
-      "パラダイムトリガー"
+      "パラダイムトリガー",
+      "Paradigm Trigger"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "100567",
+        "name": "Lugia V SR:SA[s12 110/098](Expansion Pack \"Paradigm Trigger\")",
+        "nameEn": "Lugia V SR:SA[s12 110/098](Expansion Pack \"Paradigm Trigger\")",
+        "rarity": "SR",
+        "cardNumber": "110/098",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/257e29df-4ce8-471a-98ff-4b5440f25a3b.webp?size=m",
+        "priceJpy": 82000,
+        "url": "https://snkrdunk.com/en/apparels/100567"
+      },
+      {
+        "snkrdunkId": "100580",
+        "name": "Lugia VSTAR UR[s12 123/098](Expansion Pack \"Paradigm Trigger\")",
+        "nameEn": "Lugia VSTAR UR[s12 123/098](Expansion Pack \"Paradigm Trigger\")",
+        "rarity": "UR",
+        "cardNumber": "123/098",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/0da77158-2136-4483-9afd-cd0f7eed9036.webp?size=m",
+        "priceJpy": 6000,
+        "url": "https://snkrdunk.com/en/apparels/100580"
+      },
+      {
+        "snkrdunkId": "100565",
+        "name": "Regidrago V SR:SA[s12 108/098](Expansion Pack \"Paradigm Trigger\")",
+        "nameEn": "Regidrago V SR:SA[s12 108/098](Expansion Pack \"Paradigm Trigger\")",
+        "rarity": "SR",
+        "cardNumber": "108/098",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/f4950d71-9eda-4a61-acf9-1592c274c2d9.webp?size=m",
+        "priceJpy": 4200,
+        "url": "https://snkrdunk.com/en/apparels/100565"
+      },
+      {
+        "snkrdunkId": "100575",
+        "name": "Lugia VSTAR HR[s12 118/098](Expansion Pack \"Paradigm Trigger\")",
+        "nameEn": "Lugia VSTAR HR[s12 118/098](Expansion Pack \"Paradigm Trigger\")",
+        "rarity": "",
+        "cardNumber": "118/098",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/09f6ab85-e6c0-4c63-9922-9d0771cb016f.webp?size=m",
+        "priceJpy": 3980,
+        "url": "https://snkrdunk.com/en/apparels/100575"
+      },
+      {
+        "snkrdunkId": "100566",
+        "name": "Lugia V SR[s12 109/098](Expansion Pack \"Paradigm Trigger\")",
+        "nameEn": "Lugia V SR[s12 109/098](Expansion Pack \"Paradigm Trigger\")",
+        "rarity": "SR",
+        "cardNumber": "109/098",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/d3bd4145-c550-420f-9c03-f92a215abb75.webp?size=m",
+        "priceJpy": 3650,
+        "url": "https://snkrdunk.com/en/apparels/100566"
+      },
+      {
+        "snkrdunkId": "100576",
+        "name": "Worker HR[s12 119/098](Expansion Pack \"Paradigm Trigger\")",
+        "nameEn": "Worker HR[s12 119/098](Expansion Pack \"Paradigm Trigger\")",
+        "rarity": "",
+        "cardNumber": "119/098",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/915a2206-7fdf-4021-b1f0-79d58ca48394.webp?size=m",
+        "priceJpy": 3000,
+        "url": "https://snkrdunk.com/en/apparels/100576"
+      },
+      {
+        "snkrdunkId": "100571",
+        "name": "Lance SR[s12 114/098](Expansion Pack \"Paradigm Trigger\")",
+        "nameEn": "Lance SR[s12 114/098](Expansion Pack \"Paradigm Trigger\")",
+        "rarity": "SR",
+        "cardNumber": "114/098",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/e72ed398-fb4c-4a86-a15b-b23fc82e0149.webp?size=m",
+        "priceJpy": 2500,
+        "url": "https://snkrdunk.com/en/apparels/100571"
+      },
+      {
+        "snkrdunkId": "100572",
+        "name": "Regieleki VMAX HR[s12 115/098](Expansion Pack \"Paradigm Trigger\")",
+        "nameEn": "Regieleki VMAX HR[s12 115/098](Expansion Pack \"Paradigm Trigger\")",
+        "rarity": "",
+        "cardNumber": "115/098",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/cc490456-1de4-43d7-8ead-3d7dbed89caf.webp?size=m",
+        "priceJpy": 2500,
+        "url": "https://snkrdunk.com/en/apparels/100572"
+      },
+      {
+        "snkrdunkId": "100560",
+        "name": "Unown V SR:SA[s12 103/098](Expansion Pack \"Paradigm Trigger\")",
+        "nameEn": "Unown V SR:SA[s12 103/098](Expansion Pack \"Paradigm Trigger\")",
+        "rarity": "SR",
+        "cardNumber": "103/098",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/da27b8ee-e131-4dfe-a57f-1f61987f05c7.webp?size=m",
+        "priceJpy": 2480,
+        "url": "https://snkrdunk.com/en/apparels/100560"
+      },
+      {
+        "snkrdunkId": "100578",
+        "name": "Candice HR[s12 121/098](Expansion Pack \"Paradigm Trigger\")",
+        "nameEn": "Candice HR[s12 121/098](Expansion Pack \"Paradigm Trigger\")",
+        "rarity": "",
+        "cardNumber": "121/098",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/673fd541-1bbd-4858-a472-3e5687adab64.webp?size=m",
+        "priceJpy": 2000,
+        "url": "https://snkrdunk.com/en/apparels/100578"
+      },
+      {
+        "snkrdunkId": "100573",
+        "name": "Unown VSTAR HR[s12 116/098](Expansion Pack \"Paradigm Trigger\")",
+        "nameEn": "Unown VSTAR HR[s12 116/098](Expansion Pack \"Paradigm Trigger\")",
+        "rarity": "",
+        "cardNumber": "116/098",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/ce77672b-f5c2-45c7-a6b7-6d88c62f4d44.webp?size=m",
+        "priceJpy": 2000,
+        "url": "https://snkrdunk.com/en/apparels/100573"
+      },
+      {
+        "snkrdunkId": "100582",
+        "name": "Oguchi Swamp UR[s12 125/098](Expansion Pack \"Paradigm Trigger\")",
+        "nameEn": "Oguchi Swamp UR[s12 125/098](Expansion Pack \"Paradigm Trigger\")",
+        "rarity": "UR",
+        "cardNumber": "125/098",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/642a8c4a-f9e5-45f3-96ab-cba950b0ad94.webp?size=m",
+        "priceJpy": 2000,
+        "url": "https://snkrdunk.com/en/apparels/100582"
+      }
+    ]
   },
   "pokemon-snkrdunk-677715": {
     "productId": "pokemon-snkrdunk-677715",
@@ -2690,12 +3179,145 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "pokemon-snkrdunk-90458",
     "setCode": "",
     "labels": [
-      "Sword & Shield High Class Pack Shiny Star V",
-      "ポケモンカードゲーム ソード & シールド ハイクラスパック シャイニースターV"
+      "Shiny Star V",
+      "シャイニースターV"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "144710",
+        "name": "Galarian Ponyta S[s4a 246/190](High Class Pack \"Shiny Star V\")",
+        "nameEn": "Galarian Ponyta S[s4a 246/190](High Class Pack \"Shiny Star V\")",
+        "rarity": "",
+        "cardNumber": "246/190",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/2e1c7f90-f79d-4e30-b868-6578fa1d219c.webp?size=m",
+        "priceJpy": 29800,
+        "url": "https://snkrdunk.com/en/apparels/144710"
+      },
+      {
+        "snkrdunkId": "144721",
+        "name": "Alcremie S[s4a 257/190](High Class Pack \"Shiny Star V\")",
+        "nameEn": "Alcremie S[s4a 257/190](High Class Pack \"Shiny Star V\")",
+        "rarity": "",
+        "cardNumber": "257/190",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/8d1ad288-abb0-44cd-82d0-d826919433f0.webp?size=m",
+        "priceJpy": 19800,
+        "url": "https://snkrdunk.com/en/apparels/144721"
+      },
+      {
+        "snkrdunkId": "91191",
+        "name": "Charizard VMAX SSR[S4a 308/190](High Class Pack \"Shiny Star V\")",
+        "nameEn": "Charizard VMAX SSR[S4a 308/190](High Class Pack \"Shiny Star V\")",
+        "rarity": "",
+        "cardNumber": "308/190",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/12a33067-aa6b-4535-80dc-5e130e190ee1.webp?size=m",
+        "priceJpy": 15000,
+        "url": "https://snkrdunk.com/en/apparels/91191"
+      },
+      {
+        "snkrdunkId": "144720",
+        "name": "Milcery S[s4a 256/190](High Class Pack \"Shiny Star V\")",
+        "nameEn": "Milcery S[s4a 256/190](High Class Pack \"Shiny Star V\")",
+        "rarity": "",
+        "cardNumber": "256/190",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/95894373-dccc-4c2c-8f3b-92b614e25914.webp?size=m",
+        "priceJpy": 15000,
+        "url": "https://snkrdunk.com/en/apparels/144720"
+      },
+      {
+        "snkrdunkId": "144704",
+        "name": "Toxel S[s4a 240/190](High Class Pack \"Shiny Star V\")",
+        "nameEn": "Toxel S[s4a 240/190](High Class Pack \"Shiny Star V\")",
+        "rarity": "",
+        "cardNumber": "240/190",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/50f88b94-5111-46e1-84f8-62ebf9d31226.webp?size=m",
+        "priceJpy": 15000,
+        "url": "https://snkrdunk.com/en/apparels/144704"
+      },
+      {
+        "snkrdunkId": "91190",
+        "name": "Marnie SR[S4a 198/190](High Class Pack \"Shiny Star V\")",
+        "nameEn": "Marnie SR[S4a 198/190](High Class Pack \"Shiny Star V\")",
+        "rarity": "SR",
+        "cardNumber": "198/190",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/b9548ba7-3cae-465b-a63a-a42726260084.webp?size=m",
+        "priceJpy": 14800,
+        "url": "https://snkrdunk.com/en/apparels/91190"
+      },
+      {
+        "snkrdunkId": "91192",
+        "name": "Charizard V SSR[S4a 307/190](High Class Pack \"Shiny Star V\")",
+        "nameEn": "Charizard V SSR[S4a 307/190](High Class Pack \"Shiny Star V\")",
+        "rarity": "",
+        "cardNumber": "307/190",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/fe96c35a-c60a-4a34-b0c5-437f9a377f97.webp?size=m",
+        "priceJpy": 12000,
+        "url": "https://snkrdunk.com/en/apparels/91192"
+      },
+      {
+        "snkrdunkId": "144787",
+        "name": "Cramorant V SSR[s4a 326/190](High Class Pack \"Shiny Star V\")",
+        "nameEn": "Cramorant V SSR[s4a 326/190](High Class Pack \"Shiny Star V\")",
+        "rarity": "",
+        "cardNumber": "326/190",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/a4ac9ec5-1f22-4961-93d5-5ce1830b8a97.webp?size=m",
+        "priceJpy": 11900,
+        "url": "https://snkrdunk.com/en/apparels/144787"
+      },
+      {
+        "snkrdunkId": "144783",
+        "name": "Grimmsnarl VMAX SSR[s4a 322/190](High Class Pack \"Shiny Star V\")",
+        "nameEn": "Grimmsnarl VMAX SSR[s4a 322/190](High Class Pack \"Shiny Star V\")",
+        "rarity": "",
+        "cardNumber": "322/190",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/da998d48-8896-4aa5-aed5-90b5add550ef.webp?size=m",
+        "priceJpy": 10000,
+        "url": "https://snkrdunk.com/en/apparels/144783"
+      },
+      {
+        "snkrdunkId": "144777",
+        "name": "Indeedee V SSR[s4a 316/190](High Class Pack \"Shiny Star V\")",
+        "nameEn": "Indeedee V SSR[s4a 316/190](High Class Pack \"Shiny Star V\")",
+        "rarity": "",
+        "cardNumber": "316/190",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/de2d165b-2c5a-46ff-bcf9-005dba996ddc.webp?size=m",
+        "priceJpy": 8800,
+        "url": "https://snkrdunk.com/en/apparels/144777"
+      },
+      {
+        "snkrdunkId": "92900",
+        "name": "Lapras VMAX SSR[S4a 312/190](High Class Pack \"Shiny Star V\")",
+        "nameEn": "Lapras VMAX SSR[S4a 312/190](High Class Pack \"Shiny Star V\")",
+        "rarity": "",
+        "cardNumber": "312/190",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/e4c93149-f281-48a5-ad8d-f061f1513d2b.webp?size=m",
+        "priceJpy": 8400,
+        "url": "https://snkrdunk.com/en/apparels/92900"
+      },
+      {
+        "snkrdunkId": "144756",
+        "name": "Minccino S[s4a 292/190](High Class Pack \"Shiny Star V\")",
+        "nameEn": "Minccino S[s4a 292/190](High Class Pack \"Shiny Star V\")",
+        "rarity": "",
+        "cardNumber": "292/190",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/ac67d6dc-6fd7-4b27-abc3-e858d88bfb79.webp?size=m",
+        "priceJpy": 8000,
+        "url": "https://snkrdunk.com/en/apparels/144756"
+      }
+    ]
   },
   "pokemon-snkrdunk-471346": {
     "productId": "pokemon-snkrdunk-471346",
@@ -2845,32 +3467,298 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "pokemon-snkrdunk-162387",
     "setCode": "",
     "labels": [
-      "Sword & Shield Expansion Pack Lost Abyss",
-      "ポケモンカードゲーム ソード&シールド 拡張パック ロストアビス"
+      "Lost Abyss",
+      "ロストアビス"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "93379",
+        "name": "Giratina V SR: SA[S11 111/100](Expansion Pack \"Lost Abyss\")",
+        "nameEn": "Giratina V SR: SA[S11 111/100](Expansion Pack \"Lost Abyss\")",
+        "rarity": "SR",
+        "cardNumber": "111/100",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/3fd17ff3-aae3-4b59-aecb-60cecb5ef748.webp?size=m",
+        "priceJpy": 88000,
+        "url": "https://snkrdunk.com/en/apparels/93379"
+      },
+      {
+        "snkrdunkId": "93378",
+        "name": "Aerodactyl V SR: SA[S11 106/100](Expansion Pack \"Lost Abyss\")",
+        "nameEn": "Aerodactyl V SR: SA[S11 106/100](Expansion Pack \"Lost Abyss\")",
+        "rarity": "SR",
+        "cardNumber": "106/100",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/e1d0fbfc-7ae3-4f6e-a0e7-f84ed0358e4e.webp?size=m",
+        "priceJpy": 14000,
+        "url": "https://snkrdunk.com/en/apparels/93378"
+      },
+      {
+        "snkrdunkId": "137049",
+        "name": "Aerodactyl VSTAR HR[S11 118/100](Expansion Pack \"Lost Abyss\")",
+        "nameEn": "Aerodactyl VSTAR HR[S11 118/100](Expansion Pack \"Lost Abyss\")",
+        "rarity": "",
+        "cardNumber": "118/100",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/5ceedbf6-ac8e-489e-a7f0-25417824e40d.webp?size=m",
+        "priceJpy": 12500,
+        "url": "https://snkrdunk.com/en/apparels/137049"
+      },
+      {
+        "snkrdunkId": "137046",
+        "name": "Drapion V SR[S11 107/100](Expansion Pack \"Lost Abyss\")",
+        "nameEn": "Drapion V SR[S11 107/100](Expansion Pack \"Lost Abyss\")",
+        "rarity": "SR",
+        "cardNumber": "107/100",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/79f930f5-8e56-4681-a519-e52ecdc08df1.webp?size=m",
+        "priceJpy": 5000,
+        "url": "https://snkrdunk.com/en/apparels/137046"
+      },
+      {
+        "snkrdunkId": "96559",
+        "name": "Giratina VSTAR HR[S11 120/100](Expansion Pack\"Lost Abyss\")",
+        "nameEn": "Giratina VSTAR HR[S11 120/100](Expansion Pack\"Lost Abyss\")",
+        "rarity": "",
+        "cardNumber": "120/100",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/d1dae41b-e32e-4735-add5-8918c19f8315.webp?size=m",
+        "priceJpy": 4600,
+        "url": "https://snkrdunk.com/en/apparels/96559"
+      },
+      {
+        "snkrdunkId": "93380",
+        "name": "Giratina VSTAR UR[S11 125/100](Expansion Pack \"Lost Abyss\")",
+        "nameEn": "Giratina VSTAR UR[S11 125/100](Expansion Pack \"Lost Abyss\")",
+        "rarity": "UR",
+        "cardNumber": "125/100",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/4591ed2d-413d-44a3-ba6a-645d0ff0614e.webp?size=m",
+        "priceJpy": 4250,
+        "url": "https://snkrdunk.com/en/apparels/93380"
+      },
+      {
+        "snkrdunkId": "96560",
+        "name": "Collapsed Stadium UR[S11 127/100](Expansion Pack\"Lost Abyss\")",
+        "nameEn": "Collapsed Stadium UR[S11 127/100](Expansion Pack\"Lost Abyss\")",
+        "rarity": "UR",
+        "cardNumber": "127/100",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/2300cb52-0fd9-4133-9a1f-8f6c33987071.webp?size=m",
+        "priceJpy": 3200,
+        "url": "https://snkrdunk.com/en/apparels/96560"
+      },
+      {
+        "snkrdunkId": "96628",
+        "name": "Kyurem VMAX HR[S11 117/100](Expansion Pack\"Lost Abyss\")",
+        "nameEn": "Kyurem VMAX HR[S11 117/100](Expansion Pack\"Lost Abyss\")",
+        "rarity": "",
+        "cardNumber": "117/100",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/3f4d284b-c86e-45c3-8c9d-14c0b0e99a01.webp?size=m",
+        "priceJpy": 3000,
+        "url": "https://snkrdunk.com/en/apparels/96628"
+      },
+      {
+        "snkrdunkId": "93375",
+        "name": "Rotom V SR: SA[S11 104/100](Expansion Pack \"Lost Abyss\")",
+        "nameEn": "Rotom V SR: SA[S11 104/100](Expansion Pack \"Lost Abyss\")",
+        "rarity": "SR",
+        "cardNumber": "104/100",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/419981cd-9656-4b52-adf1-e8f78cbe9618.webp?size=m",
+        "priceJpy": 2900,
+        "url": "https://snkrdunk.com/en/apparels/93375"
+      },
+      {
+        "snkrdunkId": "93376",
+        "name": "Lost Vacuum UR[S11 126/100](Expansion Pack \"Lost Abyss\")",
+        "nameEn": "Lost Vacuum UR[S11 126/100](Expansion Pack \"Lost Abyss\")",
+        "rarity": "UR",
+        "cardNumber": "126/100",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/34570376-e04b-432f-ba95-759087df0edf.webp?size=m",
+        "priceJpy": 2700,
+        "url": "https://snkrdunk.com/en/apparels/93376"
+      },
+      {
+        "snkrdunkId": "137051",
+        "name": "Thorton HR[S11 123/100](Expansion Pack \"Lost Abyss\")",
+        "nameEn": "Thorton HR[S11 123/100](Expansion Pack \"Lost Abyss\")",
+        "rarity": "",
+        "cardNumber": "123/100",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/897580cb-8017-40d4-8d3f-3fac3c1e4cab.webp?size=m",
+        "priceJpy": 2380,
+        "url": "https://snkrdunk.com/en/apparels/137051"
+      },
+      {
+        "snkrdunkId": "137045",
+        "name": "Aerodactyl V SR[S11 105/100](Expansion Pack \"Lost Abyss\")",
+        "nameEn": "Aerodactyl V SR[S11 105/100](Expansion Pack \"Lost Abyss\")",
+        "rarity": "SR",
+        "cardNumber": "105/100",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/a61bc072-4014-4798-a4f6-e51fbae54865.webp?size=m",
+        "priceJpy": 2299,
+        "url": "https://snkrdunk.com/en/apparels/137045"
+      }
+    ]
   },
   "pokemon-snkrdunk-93130": {
     "productId": "pokemon-snkrdunk-93130",
     "setCode": "",
     "labels": [
-      "Sword & Shield High Class Pack VMAX Climax",
-      "ポケモンカードゲーム ソード&シールド ハイクラスパック VMAXクライマックス"
+      "VMAX Climax",
+      "VMAXクライマックス"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "138599",
+        "name": "Pikachu VMAX CSR[s8b 223/184](High Class Pack\"VMAX Climax\")",
+        "nameEn": "Pikachu VMAX CSR[s8b 223/184](High Class Pack\"VMAX Climax\")",
+        "rarity": "CSR",
+        "cardNumber": "223/184",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/20375609-0455-493e-9f6c-bc617e2e94c9.webp?size=m",
+        "priceJpy": 11100,
+        "url": "https://snkrdunk.com/en/apparels/138599"
+      },
+      {
+        "snkrdunkId": "141274",
+        "name": "Single Strike Urshifu V CSR[s8b 238/184](High Class Pack \"VMAX Climax\")",
+        "nameEn": "Single Strike Urshifu V CSR[s8b 238/184](High Class Pack \"VMAX Climax\")",
+        "rarity": "CSR",
+        "cardNumber": "238/184",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/de557a8b-5ca3-43b3-b2b3-d76adc7c757d.webp?size=m",
+        "priceJpy": 6196,
+        "url": "https://snkrdunk.com/en/apparels/141274"
+      },
+      {
+        "snkrdunkId": "141116",
+        "name": "Rapid Strike Urshifu VMAX RRR[s8b 095/184](High Class Pack \"VMAX Climax\")",
+        "nameEn": "Rapid Strike Urshifu VMAX RRR[s8b 095/184](High Class Pack \"VMAX Climax\")",
+        "rarity": "RRR",
+        "cardNumber": "095/184",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/78593994-d074-4325-b20f-88f34684a980.webp?size=m",
+        "priceJpy": 5000,
+        "url": "https://snkrdunk.com/en/apparels/141116"
+      },
+      {
+        "snkrdunkId": "126690",
+        "name": "Oranguru CHR[s8b 212/184](High Class Pack\"VMAX Climax\")",
+        "nameEn": "Oranguru CHR[s8b 212/184](High Class Pack\"VMAX Climax\")",
+        "rarity": "CHR",
+        "cardNumber": "212/184",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/d4acf140-e2c7-4479-937c-a0f5e8c0ff8e.webp?size=m",
+        "priceJpy": 4399,
+        "url": "https://snkrdunk.com/en/apparels/126690"
+      },
+      {
+        "snkrdunkId": "141270",
+        "name": "Centiskorch V CSR[s8b 218/184](High Class Pack \"VMAX Climax\")",
+        "nameEn": "Centiskorch V CSR[s8b 218/184](High Class Pack \"VMAX Climax\")",
+        "rarity": "CSR",
+        "cardNumber": "218/184",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/64855bed-fdeb-4d15-a282-96b38d68a812.webp?size=m",
+        "priceJpy": 4000,
+        "url": "https://snkrdunk.com/en/apparels/141270"
+      },
+      {
+        "snkrdunkId": "141280",
+        "name": "Zacian V CSR[s8b 250/184](High Class Pack \"VMAX Climax\")",
+        "nameEn": "Zacian V CSR[s8b 250/184](High Class Pack \"VMAX Climax\")",
+        "rarity": "CSR",
+        "cardNumber": "250/184",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/6e609fae-612b-4f32-961c-6bca0a54b78d.webp?size=m",
+        "priceJpy": 3500,
+        "url": "https://snkrdunk.com/en/apparels/141280"
+      },
+      {
+        "snkrdunkId": "126327",
+        "name": "Mimikyu V (Acerola) CSR[s8b 233/184](Enhanced Expansion\"VMAX Climax\")",
+        "nameEn": "Mimikyu V (Acerola) CSR[s8b 233/184](Enhanced Expansion\"VMAX Climax\")",
+        "rarity": "CSR",
+        "cardNumber": "233/184",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/76e5ce5e-3ce1-480e-b2d8-546268e6f4d5.webp?size=m",
+        "priceJpy": 3000,
+        "url": "https://snkrdunk.com/en/apparels/126327"
+      },
+      {
+        "snkrdunkId": "141005",
+        "name": "Flareon : Mirror[s8b 018/184](High Class Pack \"VMAX Climax\")",
+        "nameEn": "Flareon : Mirror[s8b 018/184](High Class Pack \"VMAX Climax\")",
+        "rarity": "",
+        "cardNumber": "018/184",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/f599e3e2-4473-4031-a64d-c25eb9d9485f.webp?size=m",
+        "priceJpy": 3000,
+        "url": "https://snkrdunk.com/en/apparels/141005"
+      },
+      {
+        "snkrdunkId": "141061",
+        "name": "Morpeko V-UNION RR[s8b 056-059/184](High Class Pack \"VMAX Climax\")",
+        "nameEn": "Morpeko V-UNION RR[s8b 056-059/184](High Class Pack \"VMAX Climax\")",
+        "rarity": "RR",
+        "cardNumber": "056-059/184",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/799b3e4e-aad7-4975-9f09-47ddb5370d1b.webp?size=m",
+        "priceJpy": 2500,
+        "url": "https://snkrdunk.com/en/apparels/141061"
+      },
+      {
+        "snkrdunkId": "126670",
+        "name": "Flareon CHR[s8b 188/184](High Class Pack\"VMAX Climax\")",
+        "nameEn": "Flareon CHR[s8b 188/184](High Class Pack\"VMAX Climax\")",
+        "rarity": "CHR",
+        "cardNumber": "188/184",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/e07a5e07-1397-41b2-919a-6a2ec0255f0d.webp?size=m",
+        "priceJpy": 2401,
+        "url": "https://snkrdunk.com/en/apparels/126670"
+      },
+      {
+        "snkrdunkId": "126668",
+        "name": "Charizard CHR[s8b 187/184](High Class Pack\"VMAX Climax\")",
+        "nameEn": "Charizard CHR[s8b 187/184](High Class Pack\"VMAX Climax\")",
+        "rarity": "CHR",
+        "cardNumber": "187/184",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/14ad5da2-593a-4487-8d54-8c43aa36dda5.webp?size=m",
+        "priceJpy": 2000,
+        "url": "https://snkrdunk.com/en/apparels/126668"
+      },
+      {
+        "snkrdunkId": "126673",
+        "name": "Eevee CHR[s8b 210/184](High Class Pack\"VMAX Climax\")",
+        "nameEn": "Eevee CHR[s8b 210/184](High Class Pack\"VMAX Climax\")",
+        "rarity": "CHR",
+        "cardNumber": "210/184",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/25fbbe0c-55bc-4495-8115-26b5845c14bc.webp?size=m",
+        "priceJpy": 2000,
+        "url": "https://snkrdunk.com/en/apparels/126673"
+      }
+    ]
   },
   "pokemon-snkrdunk-91599": {
     "productId": "pokemon-snkrdunk-91599",
     "setCode": "",
     "labels": [
-      "Sword & Shield Expansion Pack 25th Anniversary Collection",
-      "ポケモンカードゲーム ソード&シールド 拡張パック 25th アニバーサリー コレクション"
+      "25th Anniversary Collection",
+      "25th アニバーサリー コレクション"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -3022,9 +3910,10 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "pokemon-snkrdunk-166053",
     "setCode": "",
     "labels": [
-      "白熱のアルカナ"
+      "白熱のアルカナ",
+      "Incandescent Arcana"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -3033,7 +3922,8 @@ export const COLLECTION_TOP_CARDS = {
     "setCode": "SV1A",
     "labels": [
       "Triplet Beat",
-      "トリプレットビート"
+      "トリプレットビート",
+      "Enhanced Expansion \"Triplet Beat"
     ],
     "updatedAt": "2026-09-26T12:21:05.632Z",
     "source": "SNKRDUNK",
@@ -3320,12 +4210,145 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "pokemon-snkrdunk-91597",
     "setCode": "",
     "labels": [
-      "Sword & Shield Expansion Pack Fusion Arts.",
-      "ポケモンカードゲーム ソード&シールド 拡張パック フュージョンアーツ"
+      "Fusion Arts.",
+      "フュージョンアーツ"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "96583",
+        "name": "Chandelure VMAX HR[S8 116/100](Expansion Pack\"Fusion Arts\")",
+        "nameEn": "Chandelure VMAX HR[S8 116/100](Expansion Pack\"Fusion Arts\")",
+        "rarity": "",
+        "cardNumber": "116/100",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/3ef105e4-9b51-48d5-b940-72f651ea4007.webp?size=m",
+        "priceJpy": 188000,
+        "url": "https://snkrdunk.com/en/apparels/96583"
+      },
+      {
+        "snkrdunkId": "93016",
+        "name": "Mew VMAX HR: SA[S8 119/100](Expansion Pack \"Fusion Arts\")",
+        "nameEn": "Mew VMAX HR: SA[S8 119/100](Expansion Pack \"Fusion Arts\")",
+        "rarity": "",
+        "cardNumber": "119/100",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/5f068ad6-ce2d-4268-9fca-153b3578da45.webp?size=m",
+        "priceJpy": 150000,
+        "url": "https://snkrdunk.com/en/apparels/93016"
+      },
+      {
+        "snkrdunkId": "141401",
+        "name": "Hoopa V SR[s8 107/100](Expansion Pack \"Fusion Arts\")",
+        "nameEn": "Hoopa V SR[s8 107/100](Expansion Pack \"Fusion Arts\")",
+        "rarity": "SR",
+        "cardNumber": "107/100",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/5e3973df-6276-4236-95ac-ee64ef1b8dee.webp?size=m",
+        "priceJpy": 53000,
+        "url": "https://snkrdunk.com/en/apparels/141401"
+      },
+      {
+        "snkrdunkId": "91163",
+        "name": "Mew V SR: SA[S8 106/100](Expansion Pack \"Fusion Arts\")",
+        "nameEn": "Mew V SR: SA[S8 106/100](Expansion Pack \"Fusion Arts\")",
+        "rarity": "SR",
+        "cardNumber": "106/100",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/2241320b-6494-4e12-94df-ff87537c1f6f.webp?size=m",
+        "priceJpy": 16000,
+        "url": "https://snkrdunk.com/en/apparels/91163"
+      },
+      {
+        "snkrdunkId": "141408",
+        "name": "Flaaffy UR[s8 125/100](Expansion Pack \"Fusion Arts\")",
+        "nameEn": "Flaaffy UR[s8 125/100](Expansion Pack \"Fusion Arts\")",
+        "rarity": "UR",
+        "cardNumber": "125/100",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/032c7339-bf07-4371-a7af-2aa9ba9fad0a.webp?size=m",
+        "priceJpy": 12998,
+        "url": "https://snkrdunk.com/en/apparels/141408"
+      },
+      {
+        "snkrdunkId": "96576",
+        "name": "Mew VMAX HR[S8 118/100](Expansion Pack\"Fusion Arts\")",
+        "nameEn": "Mew VMAX HR[S8 118/100](Expansion Pack\"Fusion Arts\")",
+        "rarity": "",
+        "cardNumber": "118/100",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/0e30b4a4-a816-43cb-92e3-0f8b9700537f.webp?size=m",
+        "priceJpy": 10000,
+        "url": "https://snkrdunk.com/en/apparels/96576"
+      },
+      {
+        "snkrdunkId": "96581",
+        "name": "Chandelure VMAX Error HR[S8 116/100](Expansion Pack\"Fusion Arts\")",
+        "nameEn": "Chandelure VMAX Error HR[S8 116/100](Expansion Pack\"Fusion Arts\")",
+        "rarity": "",
+        "cardNumber": "116/100",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/59916599-ddb1-42f1-a252-1fdd0c5990d7.webp?size=m",
+        "priceJpy": 9999,
+        "url": "https://snkrdunk.com/en/apparels/96581"
+      },
+      {
+        "snkrdunkId": "141409",
+        "name": "Basic Grass Energy UR[s8 128/100](Expansion Pack \"Fusion Arts\")",
+        "nameEn": "Basic Grass Energy UR[s8 128/100](Expansion Pack \"Fusion Arts\")",
+        "rarity": "UR",
+        "cardNumber": "128/100",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/47d7997e-78d9-4611-8bd1-16f167f3ba61.webp?size=m",
+        "priceJpy": 7000,
+        "url": "https://snkrdunk.com/en/apparels/141409"
+      },
+      {
+        "snkrdunkId": "96582",
+        "name": "Mew V SR[S8 105/100](Expansion Pack\"Fusion Arts\")",
+        "nameEn": "Mew V SR[S8 105/100](Expansion Pack\"Fusion Arts\")",
+        "rarity": "SR",
+        "cardNumber": "105/100",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/5dad6700-ee09-4ec1-bcd0-1489ca15bc5e.webp?size=m",
+        "priceJpy": 6300,
+        "url": "https://snkrdunk.com/en/apparels/96582"
+      },
+      {
+        "snkrdunkId": "126518",
+        "name": "Sidney SR[s8 112/100](Expansion Pack \"Fusion Arts\")",
+        "nameEn": "Sidney SR[s8 112/100](Expansion Pack \"Fusion Arts\")",
+        "rarity": "SR",
+        "cardNumber": "112/100",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/81a45d17-c68b-41d6-965d-8be7523ec14a.webp?size=m",
+        "priceJpy": 5000,
+        "url": "https://snkrdunk.com/en/apparels/126518"
+      },
+      {
+        "snkrdunkId": "91162",
+        "name": "Basic Fire Energy UR[S8 129/100](Expansion Pack \"Fusion Arts\")",
+        "nameEn": "Basic Fire Energy UR[S8 129/100](Expansion Pack \"Fusion Arts\")",
+        "rarity": "UR",
+        "cardNumber": "129/100",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/63e6bd73-0ecf-4865-8f3c-ea29691ff571.webp?size=m",
+        "priceJpy": 4800,
+        "url": "https://snkrdunk.com/en/apparels/91162"
+      },
+      {
+        "snkrdunkId": "96580",
+        "name": "Elesa’s Sparkle HR[S8 122/100](Expansion Pack\"Fusion Arts\")",
+        "nameEn": "Elesa’s Sparkle HR[S8 122/100](Expansion Pack\"Fusion Arts\")",
+        "rarity": "",
+        "cardNumber": "122/100",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/95c4e61b-1807-488e-9cca-cc1b0cdeb724.webp?size=m",
+        "priceJpy": 3900,
+        "url": "https://snkrdunk.com/en/apparels/96580"
+      }
+    ]
   },
   "pokemon-snkrdunk-183037": {
     "productId": "pokemon-snkrdunk-183037",
@@ -3478,7 +4501,7 @@ export const COLLECTION_TOP_CARDS = {
       "Future Flash",
       "未来の一閃"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -3487,7 +4510,9 @@ export const COLLECTION_TOP_CARDS = {
     "setCode": "SV11B",
     "labels": [
       "Black Bolt",
-      "ブラックボルト"
+      "ブラックボルト",
+      "Deluxe \"Black Bolt",
+      "デラックス「ブラックボルト"
     ],
     "updatedAt": "2026-09-26T12:21:05.632Z",
     "source": "SNKRDUNK",
@@ -4063,44 +5088,12 @@ export const COLLECTION_TOP_CARDS = {
     "setCode": "SV2P",
     "labels": [
       "Snow hazard",
-      "スノーハザード"
+      "スノーハザード",
+      "Snow hazard\" Box"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
-      {
-        "snkrdunkId": "117179",
-        "name": "Pokemon Card Game Pokemon Center GYM Set (Snow hazard & Clay burst [Nanjamo Set])",
-        "nameEn": "Pokemon Card Game Pokemon Center GYM Set (Snow hazard & Clay burst [Nanjamo Set])",
-        "rarity": "",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/76cfb9ce-2952-4667-90ca-6a1d16d84af1.webp?size=m",
-        "priceJpy": 20950,
-        "url": "https://snkrdunk.com/en/apparels/117179"
-      },
-      {
-        "snkrdunkId": "567431",
-        "name": "[No shrink] Pokemon Card Game Scarlet & Violet Expansion Pack \"Snow hazard\" Box (Snow hazard & Clay burst)",
-        "nameEn": "[No shrink] Pokemon Card Game Scarlet & Violet Expansion Pack \"Snow hazard\" Box (Snow hazard & Clay burst)",
-        "rarity": "",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/d64a2c5a-fe3c-4f4b-ba7d-36aeb71aebb6.webp?size=m",
-        "priceJpy": 9997,
-        "url": "https://snkrdunk.com/en/apparels/567431"
-      },
-      {
-        "snkrdunkId": "567432",
-        "name": "[No shrink] Pokemon Card Game Scarlet & Violet Expansion Pack \"Clay burst\" Box (Snow hazard & Clay burst)",
-        "nameEn": "[No shrink] Pokemon Card Game Scarlet & Violet Expansion Pack \"Clay burst\" Box (Snow hazard & Clay burst)",
-        "rarity": "",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/fd21438c-fc9c-4161-b2d4-80d8ad1b729f.webp?size=m",
-        "priceJpy": 8500,
-        "url": "https://snkrdunk.com/en/apparels/567432"
-      },
       {
         "snkrdunkId": "120841",
         "name": "Grusha SAR[SV2P 095/071](Expansion Pack \"Snow hazard\")",
@@ -4190,6 +5183,17 @@ export const COLLECTION_TOP_CARDS = {
         "url": "https://snkrdunk.com/en/apparels/120834"
       },
       {
+        "snkrdunkId": "120823",
+        "name": "Marill AR[SV2P 073/071](Expansion Pack \"Snow hazard\")",
+        "nameEn": "Marill AR[SV2P 073/071](Expansion Pack \"Snow hazard\")",
+        "rarity": "AR",
+        "cardNumber": "073/071",
+        "setCode": "SV2P",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/f67f9c81-773a-4b7f-ac05-528c937ee433.webp?size=m",
+        "priceJpy": 1900,
+        "url": "https://snkrdunk.com/en/apparels/120823"
+      },
+      {
         "snkrdunkId": "120844",
         "name": "Super Rod UR[SV2P 098/071](Expansion Pack \"Snow hazard\")",
         "nameEn": "Super Rod UR[SV2P 098/071](Expansion Pack \"Snow hazard\")",
@@ -4199,6 +5203,28 @@ export const COLLECTION_TOP_CARDS = {
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/d3e24645-5784-4421-bfe6-129c19392b65.webp?size=m",
         "priceJpy": 1800,
         "url": "https://snkrdunk.com/en/apparels/120844"
+      },
+      {
+        "snkrdunkId": "120803",
+        "name": "Corviknight U[SV2P 052/071](Expansion Pack \"Snow hazard\")",
+        "nameEn": "Corviknight U[SV2P 052/071](Expansion Pack \"Snow hazard\")",
+        "rarity": "U",
+        "cardNumber": "052/071",
+        "setCode": "SV2P",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/e27db602-6206-414b-82fe-9e559be8f3e2.webp?size=m",
+        "priceJpy": 1500,
+        "url": "https://snkrdunk.com/en/apparels/120803"
+      },
+      {
+        "snkrdunkId": "120769",
+        "name": "Marill C[SV2P 016/071](Expansion Pack \"Snow hazard\")",
+        "nameEn": "Marill C[SV2P 016/071](Expansion Pack \"Snow hazard\")",
+        "rarity": "C",
+        "cardNumber": "016/071",
+        "setCode": "SV2P",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/bb8d2ccc-fa82-4423-aa62-22db74dcf237.webp?size=m",
+        "priceJpy": 1500,
+        "url": "https://snkrdunk.com/en/apparels/120769"
       }
     ]
   },
@@ -4350,12 +5376,145 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "pokemon-snkrdunk-90461",
     "setCode": "",
     "labels": [
-      "Sword & Shield Expansion Pack Blue Sky Stream",
-      "ポケモンカードゲーム ソード & シールド 拡張パック 蒼空ストリーム"
+      "Blue Sky Stream",
+      "蒼空ストリーム"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "93017",
+        "name": "Rayquaza VMAX HR: SA[S7R 083/067](Expansion Pack \"Blue Sky Stream\")",
+        "nameEn": "Rayquaza VMAX HR: SA[S7R 083/067](Expansion Pack \"Blue Sky Stream\")",
+        "rarity": "",
+        "cardNumber": "083/067",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/680ac8d2-7682-4f7c-8dad-311dd883021b.webp?size=m",
+        "priceJpy": 490000,
+        "url": "https://snkrdunk.com/en/apparels/93017"
+      },
+      {
+        "snkrdunkId": "91167",
+        "name": "Rayquaza V SR: SA[S7R 076/067](Expansion Pack \"Blue Sky Stream\")",
+        "nameEn": "Rayquaza V SR: SA[S7R 076/067](Expansion Pack \"Blue Sky Stream\")",
+        "rarity": "SR",
+        "cardNumber": "076/067",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/d05ab304-0cf2-422a-b327-893df5fe8fc2.webp?size=m",
+        "priceJpy": 80000,
+        "url": "https://snkrdunk.com/en/apparels/91167"
+      },
+      {
+        "snkrdunkId": "91166",
+        "name": "Dragonite V SR: SA[S7R 074/067](Expansion Pack \"Blue Sky Stream\")",
+        "nameEn": "Dragonite V SR: SA[S7R 074/067](Expansion Pack \"Blue Sky Stream\")",
+        "rarity": "SR",
+        "cardNumber": "074/067",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/d6dfc987-44a6-4f32-9eae-b921005db8b1.webp?size=m",
+        "priceJpy": 57000,
+        "url": "https://snkrdunk.com/en/apparels/91166"
+      },
+      {
+        "snkrdunkId": "96630",
+        "name": "Rayquaza VMAX HR[S7R 082/067](Expansion Pack\"Blue Sky Stream\")",
+        "nameEn": "Rayquaza VMAX HR[S7R 082/067](Expansion Pack\"Blue Sky Stream\")",
+        "rarity": "",
+        "cardNumber": "082/067",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/759e90ae-8b41-41f7-bea5-5e7a8c99381e.webp?size=m",
+        "priceJpy": 20000,
+        "url": "https://snkrdunk.com/en/apparels/96630"
+      },
+      {
+        "snkrdunkId": "113265",
+        "name": "Froslass UR[S7R 087/067](Expansion Pack\"Blue Sky Stream\")",
+        "nameEn": "Froslass UR[S7R 087/067](Expansion Pack\"Blue Sky Stream\")",
+        "rarity": "UR",
+        "cardNumber": "087/067",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/b632f01e-1a6c-451a-ba40-23ea651331c1.webp?size=m",
+        "priceJpy": 14700,
+        "url": "https://snkrdunk.com/en/apparels/113265"
+      },
+      {
+        "snkrdunkId": "113260",
+        "name": "Trevenant VMAX HR[S7R 080/067](Expansion Pack\"Blue Sky Stream\")",
+        "nameEn": "Trevenant VMAX HR[S7R 080/067](Expansion Pack\"Blue Sky Stream\")",
+        "rarity": "",
+        "cardNumber": "080/067",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/9fbd533c-df1a-440d-9393-f0010aed3519.webp?size=m",
+        "priceJpy": 9800,
+        "url": "https://snkrdunk.com/en/apparels/113260"
+      },
+      {
+        "snkrdunkId": "113261",
+        "name": "Gyarados VMAX HR[S7R 081/067](Expansion Pack\"Blue Sky Stream\")",
+        "nameEn": "Gyarados VMAX HR[S7R 081/067](Expansion Pack\"Blue Sky Stream\")",
+        "rarity": "",
+        "cardNumber": "081/067",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/ee324ef0-d897-44ef-a55d-1695176a9a27.webp?size=m",
+        "priceJpy": 8900,
+        "url": "https://snkrdunk.com/en/apparels/113261"
+      },
+      {
+        "snkrdunkId": "96562",
+        "name": "Rayquaza V SR[S7R 075/067](Expansion Pack\"Blue Sky Stream\")",
+        "nameEn": "Rayquaza V SR[S7R 075/067](Expansion Pack\"Blue Sky Stream\")",
+        "rarity": "SR",
+        "cardNumber": "075/067",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/c4b2482b-b5bc-402c-a5b0-12b03f627163.webp?size=m",
+        "priceJpy": 8800,
+        "url": "https://snkrdunk.com/en/apparels/96562"
+      },
+      {
+        "snkrdunkId": "93018",
+        "name": "Basic Lightning Energy UR[S7R 090/067](Expansion Pack \"Blue Sky Stream\")",
+        "nameEn": "Basic Lightning Energy UR[S7R 090/067](Expansion Pack \"Blue Sky Stream\")",
+        "rarity": "UR",
+        "cardNumber": "090/067",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/00f49ad0-145e-4740-821f-30c60a226973.webp?size=m",
+        "priceJpy": 7777,
+        "url": "https://snkrdunk.com/en/apparels/93018"
+      },
+      {
+        "snkrdunkId": "91168",
+        "name": "Shauna SR[S7R 077/067](Expansion Pack \"Blue Sky Stream\")",
+        "nameEn": "Shauna SR[S7R 077/067](Expansion Pack \"Blue Sky Stream\")",
+        "rarity": "SR",
+        "cardNumber": "077/067",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/d4d5fe5d-f0d4-494b-a771-7b0b0ec61bbf.webp?size=m",
+        "priceJpy": 6500,
+        "url": "https://snkrdunk.com/en/apparels/91168"
+      },
+      {
+        "snkrdunkId": "113266",
+        "name": "Toy Catcher UR[S7R 088/067](Expansion Pack\"Blue Sky Stream\")",
+        "nameEn": "Toy Catcher UR[S7R 088/067](Expansion Pack\"Blue Sky Stream\")",
+        "rarity": "UR",
+        "cardNumber": "088/067",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/1240899e-7745-4727-83b0-019898190a07.webp?size=m",
+        "priceJpy": 5000,
+        "url": "https://snkrdunk.com/en/apparels/113266"
+      },
+      {
+        "snkrdunkId": "91165",
+        "name": "Zinnia's Determination SR[S7R 079/067](Expansion Pack \"Blue Sky Stream\")",
+        "nameEn": "Zinnia's Determination SR[S7R 079/067](Expansion Pack \"Blue Sky Stream\")",
+        "rarity": "SR",
+        "cardNumber": "079/067",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/f42fe87a-0209-4c95-bf5a-496f3b779de3.webp?size=m",
+        "priceJpy": 4200,
+        "url": "https://snkrdunk.com/en/apparels/91165"
+      }
+    ]
   },
   "pokemon-snkrdunk-300812": {
     "productId": "pokemon-snkrdunk-300812",
@@ -4506,7 +5665,9 @@ export const COLLECTION_TOP_CARDS = {
     "setCode": "SV11W",
     "labels": [
       "White Flare",
-      "ホワイトフレア"
+      "ホワイトフレア",
+      "Deluxe \"White Flare",
+      "デラックス「ホワイトフレア"
     ],
     "updatedAt": "2026-09-26T12:21:05.632Z",
     "source": "SNKRDUNK",
@@ -4649,12 +5810,145 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "pokemon-snkrdunk-109056",
     "setCode": "",
     "labels": [
-      "Sword & Shield Expansion Pack Star birth",
-      "ポケモンカードゲーム ソード&シールド 拡張パック スターバース"
+      "Star birth",
+      "スターバース"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "91147",
+        "name": "Charizard V SR: SA[S9 103/100](Expansion Pack \"Star Birth\")",
+        "nameEn": "Charizard V SR: SA[S9 103/100](Expansion Pack \"Star Birth\")",
+        "rarity": "SR",
+        "cardNumber": "103/100",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/93f9a040-4535-4165-8d29-9667072f82c0.webp?size=m",
+        "priceJpy": 26000,
+        "url": "https://snkrdunk.com/en/apparels/91147"
+      },
+      {
+        "snkrdunkId": "139851",
+        "name": "Whimsicott VSTAR HR[S9 119/100](Expansion Pack \"Star Birth\")",
+        "nameEn": "Whimsicott VSTAR HR[S9 119/100](Expansion Pack \"Star Birth\")",
+        "rarity": "",
+        "cardNumber": "119/100",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/c478e5b6-0a68-4d82-8208-86daf2a3d872.webp?size=m",
+        "priceJpy": 11000,
+        "url": "https://snkrdunk.com/en/apparels/139851"
+      },
+      {
+        "snkrdunkId": "139850",
+        "name": "Shaymin VSTAR HR[S9 117/100](Expansion Pack \"Star Birth\")",
+        "nameEn": "Shaymin VSTAR HR[S9 117/100](Expansion Pack \"Star Birth\")",
+        "rarity": "",
+        "cardNumber": "117/100",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/deb20e21-f41e-4f43-8b19-c147e789b152.webp?size=m",
+        "priceJpy": 8200,
+        "url": "https://snkrdunk.com/en/apparels/139850"
+      },
+      {
+        "snkrdunkId": "91145",
+        "name": "Arceus V SR: SA[S9 112/100](Expansion Pack \"Star Birth\")",
+        "nameEn": "Arceus V SR: SA[S9 112/100](Expansion Pack \"Star Birth\")",
+        "rarity": "SR",
+        "cardNumber": "112/100",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/faac787f-4319-42e7-8675-8c1880618bda.webp?size=m",
+        "priceJpy": 6999,
+        "url": "https://snkrdunk.com/en/apparels/91145"
+      },
+      {
+        "snkrdunkId": "139847",
+        "name": "Honchkrow V SR[S9 108/100](Expansion Pack \"Star Birth\")",
+        "nameEn": "Honchkrow V SR[S9 108/100](Expansion Pack \"Star Birth\")",
+        "rarity": "SR",
+        "cardNumber": "108/100",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/fe9a0bad-7b9e-4f67-8523-1af133040984.webp?size=m",
+        "priceJpy": 6990,
+        "url": "https://snkrdunk.com/en/apparels/139847"
+      },
+      {
+        "snkrdunkId": "91148",
+        "name": "Ultra Ball UR[S9 126/100](Expansion Pack \"Star Birth\")",
+        "nameEn": "Ultra Ball UR[S9 126/100](Expansion Pack \"Star Birth\")",
+        "rarity": "UR",
+        "cardNumber": "126/100",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/4fe8b127-d02a-4f79-a421-7ebf2e069fa3.webp?size=m",
+        "priceJpy": 6000,
+        "url": "https://snkrdunk.com/en/apparels/91148"
+      },
+      {
+        "snkrdunkId": "139846",
+        "name": "Whimsicott V SR[S9 107/100](Expansion Pack \"Star Birth\")",
+        "nameEn": "Whimsicott V SR[S9 107/100](Expansion Pack \"Star Birth\")",
+        "rarity": "SR",
+        "cardNumber": "107/100",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/5720c0b7-d1ce-468e-9bb3-43eb5c4ab1d4.webp?size=m",
+        "priceJpy": 5800,
+        "url": "https://snkrdunk.com/en/apparels/139846"
+      },
+      {
+        "snkrdunkId": "91146",
+        "name": "Charizard VSTAR HR[S9 118/100](Expansion Pack \"Star Birth\")",
+        "nameEn": "Charizard VSTAR HR[S9 118/100](Expansion Pack \"Star Birth\")",
+        "rarity": "",
+        "cardNumber": "118/100",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/f7ea59fe-f593-46c4-a35d-41c8d0267a77.webp?size=m",
+        "priceJpy": 4999,
+        "url": "https://snkrdunk.com/en/apparels/91146"
+      },
+      {
+        "snkrdunkId": "96570",
+        "name": "Charizard V SR[S9 102/100](Expansion Pack\"Star Birth\")",
+        "nameEn": "Charizard V SR[S9 102/100](Expansion Pack\"Star Birth\")",
+        "rarity": "SR",
+        "cardNumber": "102/100",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/0d5d527c-11f2-4e73-bea8-9fb6e09f04ed.webp?size=m",
+        "priceJpy": 3480,
+        "url": "https://snkrdunk.com/en/apparels/96570"
+      },
+      {
+        "snkrdunkId": "96571",
+        "name": "Arceus VSTAR HR[S9 120/100](Expansion Pack\"Star Birth\")",
+        "nameEn": "Arceus VSTAR HR[S9 120/100](Expansion Pack\"Star Birth\")",
+        "rarity": "",
+        "cardNumber": "120/100",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/415703f6-88aa-4d79-9ed2-7acf41a669c6.webp?size=m",
+        "priceJpy": 3400,
+        "url": "https://snkrdunk.com/en/apparels/96571"
+      },
+      {
+        "snkrdunkId": "93014",
+        "name": "Arceus VSTAR UR[S9 125/100](Expansion Pack \"Star Birth\")",
+        "nameEn": "Arceus VSTAR UR[S9 125/100](Expansion Pack \"Star Birth\")",
+        "rarity": "UR",
+        "cardNumber": "125/100",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/89ff52d2-972c-496a-8363-dda55a2a5c99.webp?size=m",
+        "priceJpy": 3000,
+        "url": "https://snkrdunk.com/en/apparels/93014"
+      },
+      {
+        "snkrdunkId": "139849",
+        "name": "Flygon V SR[S9 110/100](Expansion Pack \"Star Birth\")",
+        "nameEn": "Flygon V SR[S9 110/100](Expansion Pack \"Star Birth\")",
+        "rarity": "SR",
+        "cardNumber": "110/100",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/673ba13c-7102-4f39-9fed-4d0b7a4f0d78.webp?size=m",
+        "priceJpy": 3000,
+        "url": "https://snkrdunk.com/en/apparels/139849"
+      }
+    ]
   },
   "pokemon-snkrdunk-418915": {
     "productId": "pokemon-snkrdunk-418915",
@@ -4804,21 +6098,154 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "pokemon-snkrdunk-142914",
     "setCode": "",
     "labels": [
-      "Sword & Shield Expansion Pack Space Juggler",
-      "ポケモンカードゲーム ソード&シールド 拡張パック スペースジャグラー"
+      "Space Juggler",
+      "スペースジャグラー"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "139555",
+        "name": "Kleavor VSTAR RRR[s10P 041/067](Expansion Pack \"Space Juggler\")",
+        "nameEn": "Kleavor VSTAR RRR[s10P 041/067](Expansion Pack \"Space Juggler\")",
+        "rarity": "RRR",
+        "cardNumber": "041/067",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/1bcc22df-ab0f-48ea-9c78-dceb0f40720c.webp?size=m",
+        "priceJpy": 10000,
+        "url": "https://snkrdunk.com/en/apparels/139555"
+      },
+      {
+        "snkrdunkId": "91141",
+        "name": "Origin Forme Palkia V SR: SA[S10P 071/067](Expansion Pack \"Space Juggler\")",
+        "nameEn": "Origin Forme Palkia V SR: SA[S10P 071/067](Expansion Pack \"Space Juggler\")",
+        "rarity": "SR",
+        "cardNumber": "071/067",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/b321cb04-92c6-42fb-9027-136aa8fb1cbe.webp?size=m",
+        "priceJpy": 7000,
+        "url": "https://snkrdunk.com/en/apparels/91141"
+      },
+      {
+        "snkrdunkId": "139585",
+        "name": "Hisuian Sneasler V SR[s10P 074/067](Expansion Pack \"Space Juggler\")",
+        "nameEn": "Hisuian Sneasler V SR[s10P 074/067](Expansion Pack \"Space Juggler\")",
+        "rarity": "SR",
+        "cardNumber": "074/067",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/b24c8503-be16-4df2-8539-652ba4d26be0.webp?size=m",
+        "priceJpy": 6480,
+        "url": "https://snkrdunk.com/en/apparels/139585"
+      },
+      {
+        "snkrdunkId": "96640",
+        "name": "Beedrill V:SA SR: SA[S10P 069/067](Expansion Pack\"Space Juggler\")",
+        "nameEn": "Beedrill V:SA SR: SA[S10P 069/067](Expansion Pack\"Space Juggler\")",
+        "rarity": "SR",
+        "cardNumber": "069/067",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/7031f009-5b59-41fb-94d8-2521805ac715.webp?size=m",
+        "priceJpy": 5500,
+        "url": "https://snkrdunk.com/en/apparels/96640"
+      },
+      {
+        "snkrdunkId": "91142",
+        "name": "Irida SR[S10P 077/067](Expansion Pack \"Space Juggler\")",
+        "nameEn": "Irida SR[S10P 077/067](Expansion Pack \"Space Juggler\")",
+        "rarity": "SR",
+        "cardNumber": "077/067",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/f6533466-8f11-40bf-baa0-de526230a873.webp?size=m",
+        "priceJpy": 5400,
+        "url": "https://snkrdunk.com/en/apparels/91142"
+      },
+      {
+        "snkrdunkId": "96610",
+        "name": "Irida HR[S10P 083/067](Expansion Pack\"Space Juggler\")",
+        "nameEn": "Irida HR[S10P 083/067](Expansion Pack\"Space Juggler\")",
+        "rarity": "",
+        "cardNumber": "083/067",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/44c40d7e-101c-472e-ac12-bfef4a59c83c.webp?size=m",
+        "priceJpy": 5000,
+        "url": "https://snkrdunk.com/en/apparels/96610"
+      },
+      {
+        "snkrdunkId": "91143",
+        "name": "Origin Forme Palkia VSTAR UR[S10P 086/067](Expansion Pack \"Space Juggler\")",
+        "nameEn": "Origin Forme Palkia VSTAR UR[S10P 086/067](Expansion Pack \"Space Juggler\")",
+        "rarity": "UR",
+        "cardNumber": "086/067",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/9fed7b47-0134-4d31-b46c-ae9f39386188.webp?size=m",
+        "priceJpy": 4000,
+        "url": "https://snkrdunk.com/en/apparels/91143"
+      },
+      {
+        "snkrdunkId": "91144",
+        "name": "Double Turbo Energy UR[S10P 088/067](Expansion Pack \"Space Juggler\")",
+        "nameEn": "Double Turbo Energy UR[S10P 088/067](Expansion Pack \"Space Juggler\")",
+        "rarity": "UR",
+        "cardNumber": "088/067",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/37dbd8f6-4aca-48c6-8ae9-57005c36e834.webp?size=m",
+        "priceJpy": 3333,
+        "url": "https://snkrdunk.com/en/apparels/91144"
+      },
+      {
+        "snkrdunkId": "139524",
+        "name": "Orbeetle R[s10P 010/067](Expansion Pack \"Space Juggler\")",
+        "nameEn": "Orbeetle R[s10P 010/067](Expansion Pack \"Space Juggler\")",
+        "rarity": "R",
+        "cardNumber": "010/067",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/4bc523e3-334a-41c8-b099-305fcd5ac207.webp?size=m",
+        "priceJpy": 2600,
+        "url": "https://snkrdunk.com/en/apparels/139524"
+      },
+      {
+        "snkrdunkId": "96643",
+        "name": "Origin Forme Palkia V SR[S10P 070/067](Expansion Pack\"Space Juggler\")",
+        "nameEn": "Origin Forme Palkia V SR[S10P 070/067](Expansion Pack\"Space Juggler\")",
+        "rarity": "SR",
+        "cardNumber": "070/067",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/f359456f-0309-4659-a437-ec8440fbc1d5.webp?size=m",
+        "priceJpy": 1700,
+        "url": "https://snkrdunk.com/en/apparels/96643"
+      },
+      {
+        "snkrdunkId": "96646",
+        "name": "Hisuian Sneasler V SR: SA[S10P 075/067](Expansion Pack\"Space Juggler\")",
+        "nameEn": "Hisuian Sneasler V SR: SA[S10P 075/067](Expansion Pack\"Space Juggler\")",
+        "rarity": "SR",
+        "cardNumber": "075/067",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/c5549606-cdb1-4526-a9a2-a06873c8e8e3.webp?size=m",
+        "priceJpy": 1500,
+        "url": "https://snkrdunk.com/en/apparels/96646"
+      },
+      {
+        "snkrdunkId": "139529",
+        "name": "Heatran VMAX RRR[s10P 015/067](Expansion Pack \"Space Juggler\")",
+        "nameEn": "Heatran VMAX RRR[s10P 015/067](Expansion Pack \"Space Juggler\")",
+        "rarity": "RRR",
+        "cardNumber": "015/067",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/df80e3bf-302f-4961-8f16-a17b87f30391.webp?size=m",
+        "priceJpy": 1500,
+        "url": "https://snkrdunk.com/en/apparels/139529"
+      }
+    ]
   },
   "pokemon-snkrdunk-90453": {
     "productId": "pokemon-snkrdunk-90453",
     "setCode": "",
     "labels": [
-      "Sword & Shield Expansion Pack Shigoku Geishi",
-      "ポケモンカードゲーム ソード & シールド 拡張パック 漆黒のガイスト"
+      "Shigoku Geishi",
+      "漆黒のガイスト"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -4826,12 +6253,145 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "pokemon-snkrdunk-90469",
     "setCode": "",
     "labels": [
-      "Sun & Moon Highclass Pack Tag Team GX Tag All Stars",
-      "ポケモンカードゲーム サン&ムーン ハイクラスパック タッグチームGX タッグオールスターズ"
+      "Tag Team GX Tag All Stars",
+      "タッグチームGX タッグオールスターズ"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "93082",
+        "name": "Umbreon & Darkrai GX SR: SA[SM12a 182/173](High Class Pack \"Tag Team GX Tag All Stars\")",
+        "nameEn": "Umbreon & Darkrai GX SR: SA[SM12a 182/173](High Class Pack \"Tag Team GX Tag All Stars\")",
+        "rarity": "SR",
+        "cardNumber": "182/173",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/e9591f49-ecf6-422f-8297-5d8498706582.webp?size=m",
+        "priceJpy": 78000,
+        "url": "https://snkrdunk.com/en/apparels/93082"
+      },
+      {
+        "snkrdunkId": "91269",
+        "name": "Sightseer SR[SM12a 192/173](High Class Pack \"Tag Team GX Tag All Stars\")",
+        "nameEn": "Sightseer SR[SM12a 192/173](High Class Pack \"Tag Team GX Tag All Stars\")",
+        "rarity": "SR",
+        "cardNumber": "192/173",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/72ec1fcf-87d0-40ad-a9b7-2c9e9f9cf898.webp?size=m",
+        "priceJpy": 68900,
+        "url": "https://snkrdunk.com/en/apparels/91269"
+      },
+      {
+        "snkrdunkId": "91270",
+        "name": "Mewtwo & Mew GX UR[SM12a 222/173](High Class Pack \"Tag Team GX Tag All Stars\")",
+        "nameEn": "Mewtwo & Mew GX UR[SM12a 222/173](High Class Pack \"Tag Team GX Tag All Stars\")",
+        "rarity": "UR",
+        "cardNumber": "222/173",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/8ebb11fc-5267-4f5e-b591-b9bb36b1c9b1.webp?size=m",
+        "priceJpy": 52000,
+        "url": "https://snkrdunk.com/en/apparels/91270"
+      },
+      {
+        "snkrdunkId": "93092",
+        "name": "Togepi & Cleffa & Igglybuff GX SR: SA[SM12a 186/173](High Class Pack \"Tag Team GX Tag All Stars\")",
+        "nameEn": "Togepi & Cleffa & Igglybuff GX SR: SA[SM12a 186/173](High Class Pack \"Tag Team GX Tag All Stars\")",
+        "rarity": "SR",
+        "cardNumber": "186/173",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/0cf790c0-7ae9-4699-bc6b-12c581595fd5.webp?size=m",
+        "priceJpy": 46000,
+        "url": "https://snkrdunk.com/en/apparels/93092"
+      },
+      {
+        "snkrdunkId": "104548",
+        "name": "Togepi & Cleffa & Igglybuff GX HR[SM12a 218/173](High Class Pack \"Tag Team GX Tag All Stars\")",
+        "nameEn": "Togepi & Cleffa & Igglybuff GX HR[SM12a 218/173](High Class Pack \"Tag Team GX Tag All Stars\")",
+        "rarity": "",
+        "cardNumber": "218/173",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/f76601aa-9b61-48ef-9bb7-e71bb8cb2ca0.webp?size=m",
+        "priceJpy": 40000,
+        "url": "https://snkrdunk.com/en/apparels/104548"
+      },
+      {
+        "snkrdunkId": "91273",
+        "name": "Eevee GX HR[SM12a 219/173](High Class Pack \"Tag Team GX Tag All Stars\")",
+        "nameEn": "Eevee GX HR[SM12a 219/173](High Class Pack \"Tag Team GX Tag All Stars\")",
+        "rarity": "",
+        "cardNumber": "219/173",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/7a8187c8-fa80-4ca9-803b-f134aefd4347.webp?size=m",
+        "priceJpy": 39800,
+        "url": "https://snkrdunk.com/en/apparels/91273"
+      },
+      {
+        "snkrdunkId": "91271",
+        "name": "Espeon & Deoxys GX SR: SA[SM12a 177/173](High Class Pack \"Tag Team GX Tag All Stars\")",
+        "nameEn": "Espeon & Deoxys GX SR: SA[SM12a 177/173](High Class Pack \"Tag Team GX Tag All Stars\")",
+        "rarity": "SR",
+        "cardNumber": "177/173",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/8228bddc-3cbf-4a42-8658-d04e504c30bd.webp?size=m",
+        "priceJpy": 39000,
+        "url": "https://snkrdunk.com/en/apparels/91271"
+      },
+      {
+        "snkrdunkId": "93083",
+        "name": "Green’s Exploration SR[SM12a 196/173](High Class Pack \"Tag Team GX Tag All Stars\")",
+        "nameEn": "Green’s Exploration SR[SM12a 196/173](High Class Pack \"Tag Team GX Tag All Stars\")",
+        "rarity": "SR",
+        "cardNumber": "196/173",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/660c7873-baf0-4ef6-8bab-7267a7144f90.webp?size=m",
+        "priceJpy": 36000,
+        "url": "https://snkrdunk.com/en/apparels/93083"
+      },
+      {
+        "snkrdunkId": "93089",
+        "name": "Erika’s Hospitality SR[SM12a 190/173](High Class Pack \"Tag Team GX Tag All Stars\")",
+        "nameEn": "Erika’s Hospitality SR[SM12a 190/173](High Class Pack \"Tag Team GX Tag All Stars\")",
+        "rarity": "SR",
+        "cardNumber": "190/173",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/842cadaf-e56a-4c53-b053-2cef917f7a8f.webp?size=m",
+        "priceJpy": 35800,
+        "url": "https://snkrdunk.com/en/apparels/93089"
+      },
+      {
+        "snkrdunkId": "91266",
+        "name": "Reshiram & Charizard GX UR[SM12a 220/173](High Class Pack \"Tag Team GX Tag All Stars\")",
+        "nameEn": "Reshiram & Charizard GX UR[SM12a 220/173](High Class Pack \"Tag Team GX Tag All Stars\")",
+        "rarity": "UR",
+        "cardNumber": "220/173",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/20093004-0bb0-4014-8e5b-c1d3cac85329.webp?size=m",
+        "priceJpy": 35500,
+        "url": "https://snkrdunk.com/en/apparels/91266"
+      },
+      {
+        "snkrdunkId": "396073",
+        "name": "Jirachi PR [SM12a 091/173](High Class Pack \"TAG TEAM GX Tag All Stars\")",
+        "nameEn": "Jirachi PR [SM12a 091/173](High Class Pack \"TAG TEAM GX Tag All Stars\")",
+        "rarity": "PR",
+        "cardNumber": "091/173",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/8af5196e-89e7-4bd1-aef1-af67e4d3afd1.webp?size=m",
+        "priceJpy": 33800,
+        "url": "https://snkrdunk.com/en/apparels/396073"
+      },
+      {
+        "snkrdunkId": "396186",
+        "name": "Alolan Vulpix :Mirror [SM12a 032/173](High Class Pack \"TAG TEAM GX Tag All Stars\")",
+        "nameEn": "Alolan Vulpix :Mirror [SM12a 032/173](High Class Pack \"TAG TEAM GX Tag All Stars\")",
+        "rarity": "",
+        "cardNumber": "032/173",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/6e559101-f4e6-4b86-a579-b1962fd239b3.webp?size=m",
+        "priceJpy": 30000,
+        "url": "https://snkrdunk.com/en/apparels/396186"
+      }
+    ]
   },
   "pokemon-snkrdunk-359365": {
     "productId": "pokemon-snkrdunk-359365",
@@ -4981,12 +6541,101 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "pokemon-snkrdunk-90459",
     "setCode": "",
     "labels": [
-      "Sword & Shield Expansion Pack Vorteker of Heaven",
-      "ポケモンカードゲーム ソード & シールド 拡張パック 仰天のボルテッカー"
+      "Vorteker of Heaven",
+      "仰天のボルテッカー"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "91197",
+        "name": "Pikachu VMAX HR[S4 114/100](Expansion Pack \"Vorteker of Heaven\")",
+        "nameEn": "Pikachu VMAX HR[S4 114/100](Expansion Pack \"Vorteker of Heaven\")",
+        "rarity": "",
+        "cardNumber": "114/100",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/045ec035-8be7-430a-95eb-25d116836d95.webp?size=m",
+        "priceJpy": 22000,
+        "url": "https://snkrdunk.com/en/apparels/91197"
+      },
+      {
+        "snkrdunkId": "101654",
+        "name": "Pikachu V SR[S4 104/100](Expansion Pack \"Vorteker of Heaven\")",
+        "nameEn": "Pikachu V SR[S4 104/100](Expansion Pack \"Vorteker of Heaven\")",
+        "rarity": "SR",
+        "cardNumber": "104/100",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/7f1bc487-5f58-4bb2-a98b-2dff7b8d4691.webp?size=m",
+        "priceJpy": 12300,
+        "url": "https://snkrdunk.com/en/apparels/101654"
+      },
+      {
+        "snkrdunkId": "91196",
+        "name": "Nessa SR[S4 111/100](Expansion Pack \"Vorteker of Heaven\")",
+        "nameEn": "Nessa SR[S4 111/100](Expansion Pack \"Vorteker of Heaven\")",
+        "rarity": "SR",
+        "cardNumber": "111/100",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/55b30b43-cf00-44a2-a2d5-739de5432ad3.webp?size=m",
+        "priceJpy": 4000,
+        "url": "https://snkrdunk.com/en/apparels/91196"
+      },
+      {
+        "snkrdunkId": "101651",
+        "name": "Nessa HR[S4 118/100](Expansion Pack \"Vorteker of Heaven\")",
+        "nameEn": "Nessa HR[S4 118/100](Expansion Pack \"Vorteker of Heaven\")",
+        "rarity": "",
+        "cardNumber": "118/100",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/7c370ed6-29b7-4b39-b7db-821369b7da1d.webp?size=m",
+        "priceJpy": 3400,
+        "url": "https://snkrdunk.com/en/apparels/101651"
+      },
+      {
+        "snkrdunkId": "101671",
+        "name": "Leon HR[S4 117/100](Expansion Pack \"Vorteker of Heaven\")",
+        "nameEn": "Leon HR[S4 117/100](Expansion Pack \"Vorteker of Heaven\")",
+        "rarity": "",
+        "cardNumber": "117/100",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/d15124a0-969e-4e5f-aac7-7e9b727f79be.webp?size=m",
+        "priceJpy": 3000,
+        "url": "https://snkrdunk.com/en/apparels/101671"
+      },
+      {
+        "snkrdunkId": "91195",
+        "name": "Bea SR[S4 109/100](Expansion Pack \"Vorteker of Heaven\")",
+        "nameEn": "Bea SR[S4 109/100](Expansion Pack \"Vorteker of Heaven\")",
+        "rarity": "SR",
+        "cardNumber": "109/100",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/d61a549f-ca57-41af-9278-9dea147efdb3.webp?size=m",
+        "priceJpy": 2999,
+        "url": "https://snkrdunk.com/en/apparels/91195"
+      },
+      {
+        "snkrdunkId": "101652",
+        "name": "Bea HR[S4 116/100](Expansion Pack \"Vorteker of Heaven\")",
+        "nameEn": "Bea HR[S4 116/100](Expansion Pack \"Vorteker of Heaven\")",
+        "rarity": "",
+        "cardNumber": "116/100",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/4c6c832a-53f6-4c13-8ae8-1202e16b2a1f.webp?size=m",
+        "priceJpy": 2800,
+        "url": "https://snkrdunk.com/en/apparels/101652"
+      },
+      {
+        "snkrdunkId": "101670",
+        "name": "Leon SR[S4 110/100](Expansion Pack \"Vorteker of Heaven\")",
+        "nameEn": "Leon SR[S4 110/100](Expansion Pack \"Vorteker of Heaven\")",
+        "rarity": "SR",
+        "cardNumber": "110/100",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/2a6cd5f3-c195-4c32-9549-30918f548c18.webp?size=m",
+        "priceJpy": 2700,
+        "url": "https://snkrdunk.com/en/apparels/101670"
+      }
+    ]
   },
   "pokemon-snkrdunk-337818": {
     "productId": "pokemon-snkrdunk-337818",
@@ -5136,10 +6785,10 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "pokemon-snkrdunk-135099",
     "setCode": "",
     "labels": [
-      "Sword & Shield Enhanced Expansion Pack Pokémon GO",
-      "ポケモンカードゲーム ソード&シールド 強化拡張パック ポケモン GO"
+      "Pokémon GO",
+      "ポケモン GO"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -5147,76 +6796,874 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "pokemon-snkrdunk-90468",
     "setCode": "",
     "labels": [
-      "Sun & Moon Enhanced Expansion Pack, Dream League",
-      "ポケモンカードゲーム サン&ムーン 強化拡張パック ドリームリーグ"
+      "Dream League",
+      "ドリームリーグ"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "91278",
+        "name": "Rosa SR[SM11b 067/049](Enhanced Expansion Pack \"Dream League\")",
+        "nameEn": "Rosa SR[SM11b 067/049](Enhanced Expansion Pack \"Dream League\")",
+        "rarity": "SR",
+        "cardNumber": "067/049",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/861e30cc-0a4d-42b7-9d74-f3f2c53a7a1f.webp?size=m",
+        "priceJpy": 31980,
+        "url": "https://snkrdunk.com/en/apparels/91278"
+      },
+      {
+        "snkrdunkId": "91280",
+        "name": "Reshiram & Zekrom GX (N) SR :SA [SM11b 064/049](Enhanced Expansion Pack \"Dream League\")",
+        "nameEn": "Reshiram & Zekrom GX (N) SR :SA [SM11b 064/049](Enhanced Expansion Pack \"Dream League\")",
+        "rarity": "SR",
+        "cardNumber": "064/049",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/047c7d40-a580-4ae8-9921-1e4c34bb6139.webp?size=m",
+        "priceJpy": 26500,
+        "url": "https://snkrdunk.com/en/apparels/91280"
+      },
+      {
+        "snkrdunkId": "126664",
+        "name": "Pikachu CHR[sm11b 054/049](Enhanced Expansion Pack\"Dream League\")",
+        "nameEn": "Pikachu CHR[sm11b 054/049](Enhanced Expansion Pack\"Dream League\")",
+        "rarity": "CHR",
+        "cardNumber": "054/049",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/7a869183-1931-4370-b314-51230525e8da.webp?size=m",
+        "priceJpy": 23000,
+        "url": "https://snkrdunk.com/en/apparels/126664"
+      },
+      {
+        "snkrdunkId": "91279",
+        "name": "Solgaleo & Lunala GX (Lillie) SR :SA [SM11b 063/049](Enhanced Expansion Pack \"Dream League\")",
+        "nameEn": "Solgaleo & Lunala GX (Lillie) SR :SA [SM11b 063/049](Enhanced Expansion Pack \"Dream League\")",
+        "rarity": "SR",
+        "cardNumber": "063/049",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/522067f9-fa29-4319-86ba-c0a3359f5bf0.webp?size=m",
+        "priceJpy": 22000,
+        "url": "https://snkrdunk.com/en/apparels/91279"
+      },
+      {
+        "snkrdunkId": "91277",
+        "name": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+        "nameEn": "Lillie's Full Force SR[SM11b 068/049](Enhanced Expansion Pack \"Dream League\")",
+        "rarity": "SR",
+        "cardNumber": "068/049",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/810607bb-77d9-4cf8-a625-b7ca54ef8980.webp?size=m",
+        "priceJpy": 20000,
+        "url": "https://snkrdunk.com/en/apparels/91277"
+      },
+      {
+        "snkrdunkId": "151931",
+        "name": "Reshiram & Zekrom GX (N) HR[SM11b 071/049](Enhanced Expansion Pack\"Dream League\")",
+        "nameEn": "Reshiram & Zekrom GX (N) HR[SM11b 071/049](Enhanced Expansion Pack\"Dream League\")",
+        "rarity": "",
+        "cardNumber": "071/049",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/aa285bbc-9f91-4198-84f6-29c9f092b0f7.webp?size=m",
+        "priceJpy": 11500,
+        "url": "https://snkrdunk.com/en/apparels/151931"
+      },
+      {
+        "snkrdunkId": "126663",
+        "name": "Piplup CHR[sm11b 052/049](Enhanced Expansion Pack\"Dream League\")",
+        "nameEn": "Piplup CHR[sm11b 052/049](Enhanced Expansion Pack\"Dream League\")",
+        "rarity": "CHR",
+        "cardNumber": "052/049",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/6f6543db-7881-4a1e-a68e-335d1897f6e2.webp?size=m",
+        "priceJpy": 11000,
+        "url": "https://snkrdunk.com/en/apparels/126663"
+      },
+      {
+        "snkrdunkId": "123606",
+        "name": "Mimikyu (Acerola) CHR[SM11b 058/049](Enhanced Expansion\"Dream League\")",
+        "nameEn": "Mimikyu (Acerola) CHR[SM11b 058/049](Enhanced Expansion\"Dream League\")",
+        "rarity": "CHR",
+        "cardNumber": "058/049",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/ee579fdd-685f-48d0-97a4-7ece9a7fc510.webp?size=m",
+        "priceJpy": 9999,
+        "url": "https://snkrdunk.com/en/apparels/123606"
+      },
+      {
+        "snkrdunkId": "127036",
+        "name": "Solgaleo&Lunala GX (Lillie) HR[SM11b 070/049](Enhanced Expansion\"Dream League\")",
+        "nameEn": "Solgaleo&Lunala GX (Lillie) HR[SM11b 070/049](Enhanced Expansion\"Dream League\")",
+        "rarity": "",
+        "cardNumber": "070/049",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/8e1f2ba7-b8b5-47e3-bed1-2c122f4b1c72.webp?size=m",
+        "priceJpy": 9000,
+        "url": "https://snkrdunk.com/en/apparels/127036"
+      },
+      {
+        "snkrdunkId": "126685",
+        "name": "Excadrill CHR[sm11b 059/049](Enhanced Expansion Pack\"Dream League\")",
+        "nameEn": "Excadrill CHR[sm11b 059/049](Enhanced Expansion Pack\"Dream League\")",
+        "rarity": "CHR",
+        "cardNumber": "059/049",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/46fe9180-d549-40ef-8e0f-5522ac53973a.webp?size=m",
+        "priceJpy": 8500,
+        "url": "https://snkrdunk.com/en/apparels/126685"
+      },
+      {
+        "snkrdunkId": "124085",
+        "name": "N's Resolve SR[SM11b 066/049](Enhanced Expansion\"Dream League\")",
+        "nameEn": "N's Resolve SR[SM11b 066/049](Enhanced Expansion\"Dream League\")",
+        "rarity": "SR",
+        "cardNumber": "066/049",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/4048e933-67f4-4f56-876a-148dc56e853b.webp?size=m",
+        "priceJpy": 7000,
+        "url": "https://snkrdunk.com/en/apparels/124085"
+      },
+      {
+        "snkrdunkId": "127423",
+        "name": "Vileplume GX SR: SA[SM11b 062/049](Enhanced Expansion\"Dream League\")",
+        "nameEn": "Vileplume GX SR: SA[SM11b 062/049](Enhanced Expansion\"Dream League\")",
+        "rarity": "SR",
+        "cardNumber": "062/049",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/152280d3-16d9-4169-a502-5dcc38b5f868.webp?size=m",
+        "priceJpy": 5800,
+        "url": "https://snkrdunk.com/en/apparels/127423"
+      }
+    ]
   },
   "pokemon-snkrdunk-90448": {
     "productId": "pokemon-snkrdunk-90448",
     "setCode": "",
     "labels": [
-      "Sword & Shield Expansion Pack Silver Lance",
-      "ポケモンカードゲーム ソード & シールド 拡張パック 白銀のランス"
+      "Silver Lance",
+      "白銀のランス"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "93029",
+        "name": "Ice Rider Calyrex VMAX HR: SA[S6H 085/070](Expansion Pack \"Silver Lance\")",
+        "nameEn": "Ice Rider Calyrex VMAX HR: SA[S6H 085/070](Expansion Pack \"Silver Lance\")",
+        "rarity": "",
+        "cardNumber": "085/070",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/db174aa9-f5f5-4991-bea8-d870a96d349d.webp?size=m",
+        "priceJpy": 35000,
+        "url": "https://snkrdunk.com/en/apparels/93029"
+      },
+      {
+        "snkrdunkId": "96728",
+        "name": "Ice Rider Calyrex VMAX HR[S6H 084/070](Expansion Pack\"Silver Lance\")",
+        "nameEn": "Ice Rider Calyrex VMAX HR[S6H 084/070](Expansion Pack\"Silver Lance\")",
+        "rarity": "",
+        "cardNumber": "084/070",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/8c944143-51b4-4adf-a46e-9a2fdad2c336.webp?size=m",
+        "priceJpy": 15000,
+        "url": "https://snkrdunk.com/en/apparels/96728"
+      },
+      {
+        "snkrdunkId": "96725",
+        "name": "Galarian Rapidash V SR: SA[S6H 075/070](Expansion Pack\"Silver Lance\")",
+        "nameEn": "Galarian Rapidash V SR: SA[S6H 075/070](Expansion Pack\"Silver Lance\")",
+        "rarity": "SR",
+        "cardNumber": "075/070",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/41d842f2-1931-40a4-8694-30cd162ab60b.webp?size=m",
+        "priceJpy": 9997,
+        "url": "https://snkrdunk.com/en/apparels/96725"
+      },
+      {
+        "snkrdunkId": "93028",
+        "name": "Basic Water Energy UR[S6H 095/070](Expansion Pack \"Silver Lance\")",
+        "nameEn": "Basic Water Energy UR[S6H 095/070](Expansion Pack \"Silver Lance\")",
+        "rarity": "UR",
+        "cardNumber": "095/070",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/74150c1f-c3ae-4249-bbdc-6a057a876f6c.webp?size=m",
+        "priceJpy": 6000,
+        "url": "https://snkrdunk.com/en/apparels/93028"
+      },
+      {
+        "snkrdunkId": "141787",
+        "name": "Tornadus VMAX RRR[s6H 058/070](Expansion Pack \"Silver Lance\")",
+        "nameEn": "Tornadus VMAX RRR[s6H 058/070](Expansion Pack \"Silver Lance\")",
+        "rarity": "RRR",
+        "cardNumber": "058/070",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/792be784-cb33-42cf-b9cd-52a4d016d552.webp?size=m",
+        "priceJpy": 5000,
+        "url": "https://snkrdunk.com/en/apparels/141787"
+      },
+      {
+        "snkrdunkId": "141806",
+        "name": "Tornadus VMAX HR[s6H 087/070](Expansion Pack \"Silver Lance\")",
+        "nameEn": "Tornadus VMAX HR[s6H 087/070](Expansion Pack \"Silver Lance\")",
+        "rarity": "",
+        "cardNumber": "087/070",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/539abc6a-177f-4af9-bb0f-84e125e3ce1a.webp?size=m",
+        "priceJpy": 4980,
+        "url": "https://snkrdunk.com/en/apparels/141806"
+      },
+      {
+        "snkrdunkId": "96711",
+        "name": "Tornadus SR: SA[S6H 079/070](Expansion Pack\"Silver Lance\")",
+        "nameEn": "Tornadus SR: SA[S6H 079/070](Expansion Pack\"Silver Lance\")",
+        "rarity": "SR",
+        "cardNumber": "079/070",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/8d40a22e-3dcf-430b-a10a-d2fc678a02c8.webp?size=m",
+        "priceJpy": 3800,
+        "url": "https://snkrdunk.com/en/apparels/96711"
+      },
+      {
+        "snkrdunkId": "96708",
+        "name": "Ice Rider Calyrex V SR: SA[S6H 073/070](Expansion Pack\"Silver Lance\")",
+        "nameEn": "Ice Rider Calyrex V SR: SA[S6H 073/070](Expansion Pack\"Silver Lance\")",
+        "rarity": "SR",
+        "cardNumber": "073/070",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/331e0ad6-029b-43c1-8db1-f2dc38a007c4.webp?size=m",
+        "priceJpy": 3799,
+        "url": "https://snkrdunk.com/en/apparels/96708"
+      },
+      {
+        "snkrdunkId": "141776",
+        "name": "Liepard V RR[s6H 047/070](Expansion Pack \"Silver Lance\")",
+        "nameEn": "Liepard V RR[s6H 047/070](Expansion Pack \"Silver Lance\")",
+        "rarity": "RR",
+        "cardNumber": "047/070",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/363bbfaa-528d-4d79-8cb8-aa116f88529a.webp?size=m",
+        "priceJpy": 3000,
+        "url": "https://snkrdunk.com/en/apparels/141776"
+      },
+      {
+        "snkrdunkId": "96709",
+        "name": "Melony SR[S6H 083/070](Expansion Pack\"Silver Lance\")",
+        "nameEn": "Melony SR[S6H 083/070](Expansion Pack\"Silver Lance\")",
+        "rarity": "SR",
+        "cardNumber": "083/070",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/fb1d8889-eea5-4863-8746-40b003d0240b.webp?size=m",
+        "priceJpy": 2500,
+        "url": "https://snkrdunk.com/en/apparels/96709"
+      },
+      {
+        "snkrdunkId": "141800",
+        "name": "Volcanion V SR[s6H 071/070](Expansion Pack \"Silver Lance\")",
+        "nameEn": "Volcanion V SR[s6H 071/070](Expansion Pack \"Silver Lance\")",
+        "rarity": "SR",
+        "cardNumber": "071/070",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/bff52b72-dbd5-413d-b39e-428097fcc4ea.webp?size=m",
+        "priceJpy": 2500,
+        "url": "https://snkrdunk.com/en/apparels/141800"
+      },
+      {
+        "snkrdunkId": "141759",
+        "name": "Galarian Slowpoke C[s6H 030/070](Expansion Pack \"Silver Lance\")",
+        "nameEn": "Galarian Slowpoke C[s6H 030/070](Expansion Pack \"Silver Lance\")",
+        "rarity": "C",
+        "cardNumber": "030/070",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/7b521904-f11f-45cf-a505-5b650195f65e.webp?size=m",
+        "priceJpy": 2000,
+        "url": "https://snkrdunk.com/en/apparels/141759"
+      }
+    ]
   },
   "pokemon-snkrdunk-150415": {
     "productId": "pokemon-snkrdunk-150415",
     "setCode": "",
     "labels": [
-      "Sword & Shield Enhanced Expansion Pack Dark Phantasma",
-      "ポケモンカードゲーム ソード&シールド 強化拡張パック ダークファンタズマ"
+      "Dark Phantasma",
+      "ダークファンタズマ"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "96650",
+        "name": "Enamorus V CSR[S10a 088/071](Enhanced Expansion\"Dark Phantasma\")",
+        "nameEn": "Enamorus V CSR[S10a 088/071](Enhanced Expansion\"Dark Phantasma\")",
+        "rarity": "CSR",
+        "cardNumber": "088/071",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/57cdec67-2d88-44f8-9af4-631b3c7789b4.webp?size=m",
+        "priceJpy": 11680,
+        "url": "https://snkrdunk.com/en/apparels/96650"
+      },
+      {
+        "snkrdunkId": "139431",
+        "name": "Gallade V SR[s10a 081/071](Enhanced Expansion Pack \"Dark Phantasma\")",
+        "nameEn": "Gallade V SR[s10a 081/071](Enhanced Expansion Pack \"Dark Phantasma\")",
+        "rarity": "SR",
+        "cardNumber": "081/071",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/e4441481-5214-443e-9a01-04500c813670.webp?size=m",
+        "priceJpy": 6000,
+        "url": "https://snkrdunk.com/en/apparels/139431"
+      },
+      {
+        "snkrdunkId": "91137",
+        "name": "Dark Patch UR[S10a 098/071](Enhanced Expansion Pack \"Dark Phantasma\")",
+        "nameEn": "Dark Patch UR[S10a 098/071](Enhanced Expansion Pack \"Dark Phantasma\")",
+        "rarity": "UR",
+        "cardNumber": "098/071",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/59629812-8f61-42bb-8651-f62cbb7ba348.webp?size=m",
+        "priceJpy": 5500,
+        "url": "https://snkrdunk.com/en/apparels/91137"
+      },
+      {
+        "snkrdunkId": "96667",
+        "name": "Pikachu CHR[S10a 073/071](Enhanced Expansion\"Dark Phantasma\")",
+        "nameEn": "Pikachu CHR[S10a 073/071](Enhanced Expansion\"Dark Phantasma\")",
+        "rarity": "CHR",
+        "cardNumber": "073/071",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/16e7e917-4726-415d-988b-1eaef3b82ca9.webp?size=m",
+        "priceJpy": 3400,
+        "url": "https://snkrdunk.com/en/apparels/96667"
+      },
+      {
+        "snkrdunkId": "139368",
+        "name": "Machamp R[s10a 036/071](Enhanced Expansion Pack \"Dark Phantasma\")",
+        "nameEn": "Machamp R[s10a 036/071](Enhanced Expansion Pack \"Dark Phantasma\")",
+        "rarity": "R",
+        "cardNumber": "036/071",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/3cce6923-1958-4a87-b5c2-ccc7c6dead99.webp?size=m",
+        "priceJpy": 2200,
+        "url": "https://snkrdunk.com/en/apparels/139368"
+      },
+      {
+        "snkrdunkId": "96638",
+        "name": "Arezu HR[S10a 095/071](Enhanced Expansion\"Dark Phantasma\")",
+        "nameEn": "Arezu HR[S10a 095/071](Enhanced Expansion\"Dark Phantasma\")",
+        "rarity": "",
+        "cardNumber": "095/071",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/ffe7554b-2618-4718-bf96-90c81223c815.webp?size=m",
+        "priceJpy": 2000,
+        "url": "https://snkrdunk.com/en/apparels/96638"
+      },
+      {
+        "snkrdunkId": "139402",
+        "name": "Hisuian Goodra V RR[s10a 056/071](Enhanced Expansion Pack \"Dark Phantasma\")",
+        "nameEn": "Hisuian Goodra V RR[s10a 056/071](Enhanced Expansion Pack \"Dark Phantasma\")",
+        "rarity": "RR",
+        "cardNumber": "056/071",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/4f42bbc1-904d-458a-8d7c-e451762037b7.webp?size=m",
+        "priceJpy": 2000,
+        "url": "https://snkrdunk.com/en/apparels/139402"
+      },
+      {
+        "snkrdunkId": "139399",
+        "name": "Hisuian Sliggoo U[s10a 054/071](Enhanced Expansion Pack \"Dark Phantasma\")",
+        "nameEn": "Hisuian Sliggoo U[s10a 054/071](Enhanced Expansion Pack \"Dark Phantasma\")",
+        "rarity": "U",
+        "cardNumber": "054/071",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/52d2a84d-3747-477c-815a-8d404c7e8142.webp?size=m",
+        "priceJpy": 2000,
+        "url": "https://snkrdunk.com/en/apparels/139399"
+      },
+      {
+        "snkrdunkId": "139389",
+        "name": "Croagunk C: Mirror[s10a 048/071](Enhanced Expansion Pack \"Dark Phantasma\")",
+        "nameEn": "Croagunk C: Mirror[s10a 048/071](Enhanced Expansion Pack \"Dark Phantasma\")",
+        "rarity": "C",
+        "cardNumber": "048/071",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/750e9a51-0345-4737-8382-ef74d093cba2.webp?size=m",
+        "priceJpy": 2000,
+        "url": "https://snkrdunk.com/en/apparels/139389"
+      },
+      {
+        "snkrdunkId": "139358",
+        "name": "Hisuian Zorua C: Mirror[s10a 029/071](Enhanced Expansion Pack \"Dark Phantasma\")",
+        "nameEn": "Hisuian Zorua C: Mirror[s10a 029/071](Enhanced Expansion Pack \"Dark Phantasma\")",
+        "rarity": "C",
+        "cardNumber": "029/071",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/b631918b-a9eb-4d67-bfcf-9691e57c3ad4.webp?size=m",
+        "priceJpy": 2000,
+        "url": "https://snkrdunk.com/en/apparels/139358"
+      },
+      {
+        "snkrdunkId": "96665",
+        "name": "Box of Disaster UR[S10a 099/071](Enhanced Expansion\"Dark Phantasma\")",
+        "nameEn": "Box of Disaster UR[S10a 099/071](Enhanced Expansion\"Dark Phantasma\")",
+        "rarity": "UR",
+        "cardNumber": "099/071",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/6cdb608b-945d-4bb0-b052-2eeb76e2b4fb.webp?size=m",
+        "priceJpy": 2000,
+        "url": "https://snkrdunk.com/en/apparels/96665"
+      },
+      {
+        "snkrdunkId": "96639",
+        "name": "Volo HR[S10a 093/071](Enhanced Expansion\"Dark Phantasma\")",
+        "nameEn": "Volo HR[S10a 093/071](Enhanced Expansion\"Dark Phantasma\")",
+        "rarity": "",
+        "cardNumber": "093/071",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/fef9fb1e-9429-4414-b213-7d4a0f7e9f5f.webp?size=m",
+        "priceJpy": 2000,
+        "url": "https://snkrdunk.com/en/apparels/96639"
+      }
+    ]
   },
   "pokemon-snkrdunk-142913": {
     "productId": "pokemon-snkrdunk-142913",
     "setCode": "",
     "labels": [
-      "Sword & Shield Expansion Pack Time Gazer",
-      "ポケモンカードゲーム ソード&シールド 拡張パック タイムゲイザー"
+      "Time Gazer",
+      "タイムゲイザー"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "96744",
+        "name": "Machamp V SR: SA[S10D 073/067](Expansion Pack\"Time Gazer\")",
+        "nameEn": "Machamp V SR: SA[S10D 073/067](Expansion Pack\"Time Gazer\")",
+        "rarity": "SR",
+        "cardNumber": "073/067",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/eecfc33c-f262-4326-b932-00c76fb50e42.webp?size=m",
+        "priceJpy": 17000,
+        "url": "https://snkrdunk.com/en/apparels/96744"
+      },
+      {
+        "snkrdunkId": "91140",
+        "name": "Origin Forme Dialga V SR: SA[S10D 075/067](Expansion Pack \"Time Gazer\")",
+        "nameEn": "Origin Forme Dialga V SR: SA[S10D 075/067](Expansion Pack \"Time Gazer\")",
+        "rarity": "SR",
+        "cardNumber": "075/067",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/c77196e1-cb2a-4b5e-9f1e-de1269fd2d03.webp?size=m",
+        "priceJpy": 9999,
+        "url": "https://snkrdunk.com/en/apparels/91140"
+      },
+      {
+        "snkrdunkId": "139511",
+        "name": "Machamp V SR[s10D 072/067](Expansion Pack \"Time Gazer\")",
+        "nameEn": "Machamp V SR[s10D 072/067](Expansion Pack \"Time Gazer\")",
+        "rarity": "SR",
+        "cardNumber": "072/067",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/c80c68bf-3d51-4bbb-8eea-05822cf4bdda.webp?size=m",
+        "priceJpy": 8980,
+        "url": "https://snkrdunk.com/en/apparels/139511"
+      },
+      {
+        "snkrdunkId": "139488",
+        "name": "Origin Forme Dialga V RR[s10D 048/067](Expansion Pack \"Time Gazer\")",
+        "nameEn": "Origin Forme Dialga V RR[s10D 048/067](Expansion Pack \"Time Gazer\")",
+        "rarity": "RR",
+        "cardNumber": "048/067",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/eaa2c19d-41ab-4cd1-a7e8-53cf1dde2233.webp?size=m",
+        "priceJpy": 8000,
+        "url": "https://snkrdunk.com/en/apparels/139488"
+      },
+      {
+        "snkrdunkId": "139513",
+        "name": "Machamp VMAX HR[s10D 081/067](Expansion Pack \"Time Gazer\")",
+        "nameEn": "Machamp VMAX HR[s10D 081/067](Expansion Pack \"Time Gazer\")",
+        "rarity": "",
+        "cardNumber": "081/067",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/943d7b10-7e40-432b-bd9e-d7bfca02d9f4.webp?size=m",
+        "priceJpy": 7980,
+        "url": "https://snkrdunk.com/en/apparels/139513"
+      },
+      {
+        "snkrdunkId": "139508",
+        "name": "Hisuian Lilligant V SR[s10D 068/067](Expansion Pack \"Time Gazer\")",
+        "nameEn": "Hisuian Lilligant V SR[s10D 068/067](Expansion Pack \"Time Gazer\")",
+        "rarity": "SR",
+        "cardNumber": "068/067",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/146caae1-373a-45db-8471-668d8bc5f789.webp?size=m",
+        "priceJpy": 7800,
+        "url": "https://snkrdunk.com/en/apparels/139508"
+      },
+      {
+        "snkrdunkId": "91139",
+        "name": "Trekking Shoes UR[S10D 087/067](Expansion Pack \"Time Gazer\")",
+        "nameEn": "Trekking Shoes UR[S10D 087/067](Expansion Pack \"Time Gazer\")",
+        "rarity": "UR",
+        "cardNumber": "087/067",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/f87291c6-d2bb-4a04-8eca-4b1ae1a2183d.webp?size=m",
+        "priceJpy": 6200,
+        "url": "https://snkrdunk.com/en/apparels/91139"
+      },
+      {
+        "snkrdunkId": "96742",
+        "name": "Hisuian Lilligant V SR: SA[S10D 069/067](Expansion Pack\"Time Gazer\")",
+        "nameEn": "Hisuian Lilligant V SR: SA[S10D 069/067](Expansion Pack\"Time Gazer\")",
+        "rarity": "SR",
+        "cardNumber": "069/067",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/4e774122-ccd2-49b2-816b-6b5243176fbb.webp?size=m",
+        "priceJpy": 5000,
+        "url": "https://snkrdunk.com/en/apparels/96742"
+      },
+      {
+        "snkrdunkId": "139509",
+        "name": "Luxray V SR[s10D 070/067](Expansion Pack \"Time Gazer\")",
+        "nameEn": "Luxray V SR[s10D 070/067](Expansion Pack \"Time Gazer\")",
+        "rarity": "SR",
+        "cardNumber": "070/067",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/1e9f9d10-eb93-44ac-8bbd-a5f7707af102.webp?size=m",
+        "priceJpy": 4800,
+        "url": "https://snkrdunk.com/en/apparels/139509"
+      },
+      {
+        "snkrdunkId": "93012",
+        "name": "Path to the Peak UR[S10D 088/067](Expansion Pack \"Time Gazer\")",
+        "nameEn": "Path to the Peak UR[S10D 088/067](Expansion Pack \"Time Gazer\")",
+        "rarity": "UR",
+        "cardNumber": "088/067",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/465ad42a-2f37-40bc-8397-6f8f0e207cf0.webp?size=m",
+        "priceJpy": 4500,
+        "url": "https://snkrdunk.com/en/apparels/93012"
+      },
+      {
+        "snkrdunkId": "96735",
+        "name": "Origin Forme Dialga VSTAR HR[S10D 082/067](Expansion Pack\"Time Gazer\")",
+        "nameEn": "Origin Forme Dialga VSTAR HR[S10D 082/067](Expansion Pack\"Time Gazer\")",
+        "rarity": "",
+        "cardNumber": "082/067",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/7998c98c-7eef-4baa-a1bc-f4460e38a8f4.webp?size=m",
+        "priceJpy": 4500,
+        "url": "https://snkrdunk.com/en/apparels/96735"
+      },
+      {
+        "snkrdunkId": "139510",
+        "name": "Jirachi V SR[s10D 071/067](Expansion Pack \"Time Gazer\")",
+        "nameEn": "Jirachi V SR[s10D 071/067](Expansion Pack \"Time Gazer\")",
+        "rarity": "SR",
+        "cardNumber": "071/067",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/d35f50ef-fd7f-4aba-ba38-c0bf2df73d41.webp?size=m",
+        "priceJpy": 3000,
+        "url": "https://snkrdunk.com/en/apparels/139510"
+      }
+    ]
   },
   "pokemon-snkrdunk-132045": {
     "productId": "pokemon-snkrdunk-132045",
     "setCode": "",
     "labels": [
-      "Sword & Shield Enhanced Expansion Pack Battle Region",
-      "ポケモンカードゲーム ソード&シールド 強化拡張パック バトルリージョン"
+      "Battle Region",
+      "バトルリージョン"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "96585",
+        "name": "Starmie V CSR[S9a 083/067](Enhanced Expansion\"Battle Region\")",
+        "nameEn": "Starmie V CSR[S9a 083/067](Enhanced Expansion\"Battle Region\")",
+        "rarity": "CSR",
+        "cardNumber": "083/067",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/1d7bf3b7-e5d0-4ea2-852b-e109239e2d9b.webp?size=m",
+        "priceJpy": 9944,
+        "url": "https://snkrdunk.com/en/apparels/96585"
+      },
+      {
+        "snkrdunkId": "96594",
+        "name": "Hisuian Typhlosion VMAX HR[S9a 085/067](Enhanced Expansion\"Battle Region\")",
+        "nameEn": "Hisuian Typhlosion VMAX HR[S9a 085/067](Enhanced Expansion\"Battle Region\")",
+        "rarity": "",
+        "cardNumber": "085/067",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/a1a906b8-81a2-4720-aec4-3bf652fbb00b.webp?size=m",
+        "priceJpy": 8000,
+        "url": "https://snkrdunk.com/en/apparels/96594"
+      },
+      {
+        "snkrdunkId": "139714",
+        "name": "Starmie V SR[s9a 075/067](Enhanced Expansion Pack \"Battle Region\")",
+        "nameEn": "Starmie V SR[s9a 075/067](Enhanced Expansion Pack \"Battle Region\")",
+        "rarity": "SR",
+        "cardNumber": "075/067",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/79cebb77-1f0a-4a6b-81fd-548d01c914a7.webp?size=m",
+        "priceJpy": 7980,
+        "url": "https://snkrdunk.com/en/apparels/139714"
+      },
+      {
+        "snkrdunkId": "96586",
+        "name": "Garchomp V CSR[S9a 084/067](Enhanced Expansion\"Battle Region\")",
+        "nameEn": "Garchomp V CSR[S9a 084/067](Enhanced Expansion\"Battle Region\")",
+        "rarity": "CSR",
+        "cardNumber": "084/067",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/a323e7e9-c3ee-42ba-a72f-5b9bd0cb0af8.webp?size=m",
+        "priceJpy": 5000,
+        "url": "https://snkrdunk.com/en/apparels/96586"
+      },
+      {
+        "snkrdunkId": "139665",
+        "name": "Rhyperior U: Mirror[s9a 039/067](Enhanced Expansion Pack \"Battle Region\")",
+        "nameEn": "Rhyperior U: Mirror[s9a 039/067](Enhanced Expansion Pack \"Battle Region\")",
+        "rarity": "U",
+        "cardNumber": "039/067",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/3ec7f586-693d-4212-a41b-25218fe772ba.webp?size=m",
+        "priceJpy": 3600,
+        "url": "https://snkrdunk.com/en/apparels/139665"
+      },
+      {
+        "snkrdunkId": "139674",
+        "name": "Hisuian Decidueye VSTAR RRR[s9a 045/067](Enhanced Expansion Pack \"Battle Region\")",
+        "nameEn": "Hisuian Decidueye VSTAR RRR[s9a 045/067](Enhanced Expansion Pack \"Battle Region\")",
+        "rarity": "RRR",
+        "cardNumber": "045/067",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/462ed2ba-040f-46c2-a798-ae4e3956567c.webp?size=m",
+        "priceJpy": 2500,
+        "url": "https://snkrdunk.com/en/apparels/139674"
+      },
+      {
+        "snkrdunkId": "139725",
+        "name": "Cyllene HR[s9a 088/067](Enhanced Expansion Pack \"Battle Region\")",
+        "nameEn": "Cyllene HR[s9a 088/067](Enhanced Expansion Pack \"Battle Region\")",
+        "rarity": "",
+        "cardNumber": "088/067",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/b2abac51-f135-4dde-bd1c-d2886d8730f1.webp?size=m",
+        "priceJpy": 2000,
+        "url": "https://snkrdunk.com/en/apparels/139725"
+      },
+      {
+        "snkrdunkId": "139657",
+        "name": "Gallade R[s9a 034/067](Enhanced Expansion Pack \"Battle Region\")",
+        "nameEn": "Gallade R[s9a 034/067](Enhanced Expansion Pack \"Battle Region\")",
+        "rarity": "R",
+        "cardNumber": "034/067",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/5902074c-35d7-44e4-bcdb-122701b55439.webp?size=m",
+        "priceJpy": 2000,
+        "url": "https://snkrdunk.com/en/apparels/139657"
+      },
+      {
+        "snkrdunkId": "139654",
+        "name": "Ralts C: Mirror[s9a 032/067](Enhanced Expansion Pack \"Battle Region\")",
+        "nameEn": "Ralts C: Mirror[s9a 032/067](Enhanced Expansion Pack \"Battle Region\")",
+        "rarity": "C",
+        "cardNumber": "032/067",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/af31e8cf-d7ae-4ba7-8852-dbadb2039d2f.webp?size=m",
+        "priceJpy": 2000,
+        "url": "https://snkrdunk.com/en/apparels/139654"
+      },
+      {
+        "snkrdunkId": "139623",
+        "name": "Lampent C: Mirror[s9a 013/067](Enhanced Expansion Pack \"Battle Region\")",
+        "nameEn": "Lampent C: Mirror[s9a 013/067](Enhanced Expansion Pack \"Battle Region\")",
+        "rarity": "C",
+        "cardNumber": "013/067",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/d29c1db6-2f54-498c-8f50-a61ed53e63dd.webp?size=m",
+        "priceJpy": 2000,
+        "url": "https://snkrdunk.com/en/apparels/139623"
+      },
+      {
+        "snkrdunkId": "96591",
+        "name": "Roxanne HR[S9a 089/067](Enhanced Expansion\"Battle Region\")",
+        "nameEn": "Roxanne HR[S9a 089/067](Enhanced Expansion\"Battle Region\")",
+        "rarity": "",
+        "cardNumber": "089/067",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/ea0ecbf2-ce01-406a-8ade-281e61b3908f.webp?size=m",
+        "priceJpy": 1980,
+        "url": "https://snkrdunk.com/en/apparels/96591"
+      },
+      {
+        "snkrdunkId": "96587",
+        "name": "Roxanne SR[S9a 081/067](Enhanced Expansion\"Battle Region\")",
+        "nameEn": "Roxanne SR[S9a 081/067](Enhanced Expansion\"Battle Region\")",
+        "rarity": "SR",
+        "cardNumber": "081/067",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/d70bb0e3-2875-45f5-8ff1-416859ec73d4.webp?size=m",
+        "priceJpy": 1900,
+        "url": "https://snkrdunk.com/en/apparels/96587"
+      }
+    ]
   },
   "pokemon-snkrdunk-98024": {
     "productId": "pokemon-snkrdunk-98024",
     "setCode": "",
     "labels": [
-      "Sun & Moon Expansion Pack Tagbolt",
-      "ポケモンカードゲーム サン&ムーン 拡張パック タッグボルト"
+      "Tagbolt",
+      "タッグボルト"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "396378",
+        "name": "Aerodactyl U [SM9 076/095](Expansion Pack \"Tag Bolt\")",
+        "nameEn": "Aerodactyl U [SM9 076/095](Expansion Pack \"Tag Bolt\")",
+        "rarity": "U",
+        "cardNumber": "076/095",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/7b701f96-8837-4c3e-9807-592c8629ffa0.webp?size=m",
+        "priceJpy": 150000,
+        "url": "https://snkrdunk.com/en/apparels/396378"
+      },
+      {
+        "snkrdunkId": "93097",
+        "name": "Latias & Latios GX SR: SA[SM9 105/095](Expansion Pack \"Tag Bolt\")",
+        "nameEn": "Latias & Latios GX SR: SA[SM9 105/095](Expansion Pack \"Tag Bolt\")",
+        "rarity": "SR",
+        "cardNumber": "105/095",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/f0612576-c465-43f2-acf2-c0a3070c2c94.webp?size=m",
+        "priceJpy": 120000,
+        "url": "https://snkrdunk.com/en/apparels/93097"
+      },
+      {
+        "snkrdunkId": "91290",
+        "name": "Pikachu & Zekrom GX SR: SA [SM9 101/095](Expansion Pack \"Tag Bolt\")",
+        "nameEn": "Pikachu & Zekrom GX SR: SA [SM9 101/095](Expansion Pack \"Tag Bolt\")",
+        "rarity": "SR",
+        "cardNumber": "101/095",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/b5ef3b28-7077-42c8-88e0-2ffc60fc8d38.webp?size=m",
+        "priceJpy": 105000,
+        "url": "https://snkrdunk.com/en/apparels/91290"
+      },
+      {
+        "snkrdunkId": "93096",
+        "name": "Gengar & Mimikyu GX SR: SA[SM9 103/095](Expansion Pack \"Tag Bolt\")",
+        "nameEn": "Gengar & Mimikyu GX SR: SA[SM9 103/095](Expansion Pack \"Tag Bolt\")",
+        "rarity": "SR",
+        "cardNumber": "103/095",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/051aa53a-bb96-4c30-959c-6f91721a28fe.webp?size=m",
+        "priceJpy": 85000,
+        "url": "https://snkrdunk.com/en/apparels/93096"
+      },
+      {
+        "snkrdunkId": "91292",
+        "name": "Magikarp & Wailord GX SR [SM9 099/095](Expansion Pack \"Tag Bolt\")",
+        "nameEn": "Magikarp & Wailord GX SR [SM9 099/095](Expansion Pack \"Tag Bolt\")",
+        "rarity": "SR",
+        "cardNumber": "099/095",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/63cb2107-2b66-4d4d-8f27-f1b1a8539f48.webp?size=m",
+        "priceJpy": 70000,
+        "url": "https://snkrdunk.com/en/apparels/91292"
+      },
+      {
+        "snkrdunkId": "396405",
+        "name": "Gengar & Mimikyu GX HR [SM9 113/095](Expansion Pack \"Tag Bolt\")",
+        "nameEn": "Gengar & Mimikyu GX HR [SM9 113/095](Expansion Pack \"Tag Bolt\")",
+        "rarity": "",
+        "cardNumber": "113/095",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/c6d2325c-49b0-4f88-9d68-5a982b45a18b.webp?size=m",
+        "priceJpy": 44800,
+        "url": "https://snkrdunk.com/en/apparels/396405"
+      },
+      {
+        "snkrdunkId": "93098",
+        "name": "Pikachu & Zekrom GX HR[SM9 112/095](Expansion Pack \"Tag Bolt\")",
+        "nameEn": "Pikachu & Zekrom GX HR[SM9 112/095](Expansion Pack \"Tag Bolt\")",
+        "rarity": "",
+        "cardNumber": "112/095",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/4b8bfb87-88e3-4c20-8133-e7f6611ef1a6.webp?size=m",
+        "priceJpy": 25000,
+        "url": "https://snkrdunk.com/en/apparels/93098"
+      },
+      {
+        "snkrdunkId": "149334",
+        "name": "Gengar & Mimikyu GX SR[SM9 102/095](Expansion Pack\"Tag Bolt\")",
+        "nameEn": "Gengar & Mimikyu GX SR[SM9 102/095](Expansion Pack\"Tag Bolt\")",
+        "rarity": "SR",
+        "cardNumber": "102/095",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/77273fa9-7ad8-4928-ba23-987e72a2d426.webp?size=m",
+        "priceJpy": 22000,
+        "url": "https://snkrdunk.com/en/apparels/149334"
+      },
+      {
+        "snkrdunkId": "127727",
+        "name": "Celebi & Venusaur GX SR: SA[SM9 097/095](Expansion Pack \"Tag Bolt\")",
+        "nameEn": "Celebi & Venusaur GX SR: SA[SM9 097/095](Expansion Pack \"Tag Bolt\")",
+        "rarity": "SR",
+        "cardNumber": "097/095",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/3d1fdf78-8a0d-4509-901b-4d8ce3bd2b11.webp?size=m",
+        "priceJpy": 16999,
+        "url": "https://snkrdunk.com/en/apparels/127727"
+      },
+      {
+        "snkrdunkId": "396402",
+        "name": "Eevee & Snorlax GX SR [SM9 106/095](Expansion Pack \"Tag Bolt\")",
+        "nameEn": "Eevee & Snorlax GX SR [SM9 106/095](Expansion Pack \"Tag Bolt\")",
+        "rarity": "SR",
+        "cardNumber": "106/095",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/1c94b2cc-f84b-4da1-b4ea-2fc26f251deb.webp?size=m",
+        "priceJpy": 14000,
+        "url": "https://snkrdunk.com/en/apparels/396402"
+      },
+      {
+        "snkrdunkId": "396404",
+        "name": "Magikarp & Wailord GX HR [SM9 111/095](Expansion Pack \"Tag Bolt\")",
+        "nameEn": "Magikarp & Wailord GX HR [SM9 111/095](Expansion Pack \"Tag Bolt\")",
+        "rarity": "",
+        "cardNumber": "111/095",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/69f1b238-2505-4865-ae19-038b7481896b.webp?size=m",
+        "priceJpy": 13900,
+        "url": "https://snkrdunk.com/en/apparels/396404"
+      },
+      {
+        "snkrdunkId": "129023",
+        "name": "Pikachu & Zekrom GX SR[SM9 100/095](Expansion Pack \"Tag Bolt\")",
+        "nameEn": "Pikachu & Zekrom GX SR[SM9 100/095](Expansion Pack \"Tag Bolt\")",
+        "rarity": "SR",
+        "cardNumber": "100/095",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/f983e89d-a66d-499d-8e79-9e4bab6786a0.webp?size=m",
+        "priceJpy": 12000,
+        "url": "https://snkrdunk.com/en/apparels/129023"
+      }
+    ]
   },
   "pokemon-snkrdunk-90476": {
     "productId": "pokemon-snkrdunk-90476",
     "setCode": "",
     "labels": [
-      "Sun & Moon Expansion Pack, Alternator Genesis",
-      "ポケモンカードゲーム サン&ムーン 拡張パック オルタージェネシス"
+      "Alternator Genesis",
+      "オルタージェネシス"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -5224,10 +7671,10 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "pokemon-snkrdunk-90462",
     "setCode": "",
     "labels": [
-      "Sword & Shield Expansion Pack, Muten Perfect",
-      "ポケモンカードゲーム ソード & シールド 拡張パック 摩天パーフェクト"
+      "Muten Perfect",
+      "摩天パーフェクト"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -5235,40 +7682,440 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "pokemon-snkrdunk-90470",
     "setCode": "",
     "labels": [
-      "Sun & Moon Enhanced Expansion Pack, Sky Legend",
-      "ポケモンカードゲーム サン&ムーン 強化拡張パック スカイレジェンド"
+      "Sky Legend",
+      "スカイレジェンド"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "91283",
+        "name": "Moltres & Zapdos & Articuno GX SR: SA[SM10b 060/054](Enhanced Expansion Pack \"Sky Legend\")",
+        "nameEn": "Moltres & Zapdos & Articuno GX SR: SA[SM10b 060/054](Enhanced Expansion Pack \"Sky Legend\")",
+        "rarity": "SR",
+        "cardNumber": "060/054",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/89ca64b9-78b1-4c75-826f-3059d4b514ae.webp?size=m",
+        "priceJpy": 52100,
+        "url": "https://snkrdunk.com/en/apparels/91283"
+      },
+      {
+        "snkrdunkId": "393178",
+        "name": "Poke Maniac SR [SM10b 061/054](Enhanced Expansion Pack \"Sky Legend\")",
+        "nameEn": "Poke Maniac SR [SM10b 061/054](Enhanced Expansion Pack \"Sky Legend\")",
+        "rarity": "SR",
+        "cardNumber": "061/054",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/0e47099a-3957-48e1-83b1-f8b7168dc031.webp?size=m",
+        "priceJpy": 33800,
+        "url": "https://snkrdunk.com/en/apparels/393178"
+      },
+      {
+        "snkrdunkId": "104604",
+        "name": "Moltres & Zapdos & Articuno GX HR[SM10b 066/054](Enhanced Expansion Pack \"Sky Legend\")",
+        "nameEn": "Moltres & Zapdos & Articuno GX HR[SM10b 066/054](Enhanced Expansion Pack \"Sky Legend\")",
+        "rarity": "",
+        "cardNumber": "066/054",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/f5559f86-576a-4c08-907b-338b527ea773.webp?size=m",
+        "priceJpy": 26900,
+        "url": "https://snkrdunk.com/en/apparels/104604"
+      },
+      {
+        "snkrdunkId": "393179",
+        "name": "Keldeo GX HR [SM10b 064/054](Enhanced Expansion Pack \"Sky Legend\")",
+        "nameEn": "Keldeo GX HR [SM10b 064/054](Enhanced Expansion Pack \"Sky Legend\")",
+        "rarity": "",
+        "cardNumber": "064/054",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/49933579-f1fd-44ac-ae3a-6682cd0e9bb7.webp?size=m",
+        "priceJpy": 23000,
+        "url": "https://snkrdunk.com/en/apparels/393179"
+      },
+      {
+        "snkrdunkId": "104603",
+        "name": "Jessie & James SR[SM10b 062/054](Enhanced Expansion Pack \"Sky Legend\")",
+        "nameEn": "Jessie & James SR[SM10b 062/054](Enhanced Expansion Pack \"Sky Legend\")",
+        "rarity": "SR",
+        "cardNumber": "062/054",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/f5a19673-a8aa-4504-aa99-d3ca223e3dc7.webp?size=m",
+        "priceJpy": 20000,
+        "url": "https://snkrdunk.com/en/apparels/104603"
+      },
+      {
+        "snkrdunkId": "393180",
+        "name": "Naganadel GX HR [SM10b 065/054](Enhanced Expansion Pack \"Sky Legend\")",
+        "nameEn": "Naganadel GX HR [SM10b 065/054](Enhanced Expansion Pack \"Sky Legend\")",
+        "rarity": "",
+        "cardNumber": "065/054",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/190789ce-4c43-4788-a312-7b2c5cfff8f3.webp?size=m",
+        "priceJpy": 18500,
+        "url": "https://snkrdunk.com/en/apparels/393180"
+      },
+      {
+        "snkrdunkId": "104602",
+        "name": "Rowlet & Alolan Exeggutor GX SR: SA[SM10b 056/054](Enhanced Expansion Pack \"Sky Legend\")",
+        "nameEn": "Rowlet & Alolan Exeggutor GX SR: SA[SM10b 056/054](Enhanced Expansion Pack \"Sky Legend\")",
+        "rarity": "SR",
+        "cardNumber": "056/054",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/b6e5d3d0-b664-44a6-91ea-249b1a1c37aa.webp?size=m",
+        "priceJpy": 16000,
+        "url": "https://snkrdunk.com/en/apparels/104602"
+      },
+      {
+        "snkrdunkId": "104606",
+        "name": "Moltres & Zapdos & Articuno GX SR[SM10b 059/054](Enhanced Expansion Pack \"Sky Legend\")",
+        "nameEn": "Moltres & Zapdos & Articuno GX SR[SM10b 059/054](Enhanced Expansion Pack \"Sky Legend\")",
+        "rarity": "SR",
+        "cardNumber": "059/054",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/2d0ca36e-26e4-4670-bcd7-50b6ea0a8a11.webp?size=m",
+        "priceJpy": 13900,
+        "url": "https://snkrdunk.com/en/apparels/104606"
+      },
+      {
+        "snkrdunkId": "104605",
+        "name": "Viridian Forest UR[SM10b 068/054](Enhanced Expansion Pack \"Sky Legend\")",
+        "nameEn": "Viridian Forest UR[SM10b 068/054](Enhanced Expansion Pack \"Sky Legend\")",
+        "rarity": "UR",
+        "cardNumber": "068/054",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/042c56e9-55e9-4867-868e-a368f35be10e.webp?size=m",
+        "priceJpy": 9800,
+        "url": "https://snkrdunk.com/en/apparels/104605"
+      },
+      {
+        "snkrdunkId": "104609",
+        "name": "Rowlet & Alolan Exeggutor GX HR[SM10b 063/054](Enhanced Expansion Pack \"Sky Legend\")",
+        "nameEn": "Rowlet & Alolan Exeggutor GX HR[SM10b 063/054](Enhanced Expansion Pack \"Sky Legend\")",
+        "rarity": "",
+        "cardNumber": "063/054",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/390ab874-976b-4b1e-abc2-f79dd300fc60.webp?size=m",
+        "priceJpy": 8888,
+        "url": "https://snkrdunk.com/en/apparels/104609"
+      },
+      {
+        "snkrdunkId": "393134",
+        "name": "Victini R [SM10b 011/054](Enhanced Expansion Pack \"Sky Legend\")",
+        "nameEn": "Victini R [SM10b 011/054](Enhanced Expansion Pack \"Sky Legend\")",
+        "rarity": "R",
+        "cardNumber": "011/054",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/b34257f2-da86-40f1-94fd-8634549d1bb5.webp?size=m",
+        "priceJpy": 4500,
+        "url": "https://snkrdunk.com/en/apparels/393134"
+      },
+      {
+        "snkrdunkId": "393171",
+        "name": "Jessie & James R [SM10b 048/054](Enhanced Expansion Pack \"Sky Legend\")",
+        "nameEn": "Jessie & James R [SM10b 048/054](Enhanced Expansion Pack \"Sky Legend\")",
+        "rarity": "R",
+        "cardNumber": "048/054",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/fd3f7837-2ff8-407c-8890-d0b7f1a99fa3.webp?size=m",
+        "priceJpy": 4000,
+        "url": "https://snkrdunk.com/en/apparels/393171"
+      }
+    ]
   },
   "pokemon-snkrdunk-93109": {
     "productId": "pokemon-snkrdunk-93109",
     "setCode": "",
     "labels": [
-      "Sun & Moon Expansion Pack Double Blaze",
-      "ポケモンカードゲーム サン&ムーン 拡張パック ダブルブレイズ"
+      "Double Blaze",
+      "ダブルブレイズ"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "393049",
+        "name": "Honchkrow GX HR [SM10 111/095](Expansion Pack \"Double Blaze\")",
+        "nameEn": "Honchkrow GX HR [SM10 111/095](Expansion Pack \"Double Blaze\")",
+        "rarity": "",
+        "cardNumber": "111/095",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/1ce10b3e-0ef0-4694-b632-f373ab8f8117.webp?size=m",
+        "priceJpy": 100000,
+        "url": "https://snkrdunk.com/en/apparels/393049"
+      },
+      {
+        "snkrdunkId": "91286",
+        "name": "Reshiram & Charizard GX SR: SA[SM10 097/095](Expansion Pack \"Double Blaze\")",
+        "nameEn": "Reshiram & Charizard GX SR: SA[SM10 097/095](Expansion Pack \"Double Blaze\")",
+        "rarity": "SR",
+        "cardNumber": "097/095",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/4c7be4c8-7928-4c4d-8a5a-0e33729e0446.webp?size=m",
+        "priceJpy": 50000,
+        "url": "https://snkrdunk.com/en/apparels/91286"
+      },
+      {
+        "snkrdunkId": "91287",
+        "name": "Reshiram & Charizard GX HR[SM10 108/095](Expansion Pack \"Double Blaze\")",
+        "nameEn": "Reshiram & Charizard GX HR[SM10 108/095](Expansion Pack \"Double Blaze\")",
+        "rarity": "",
+        "cardNumber": "108/095",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/1aeb2952-93d0-4b81-879f-d16bd4cf029f.webp?size=m",
+        "priceJpy": 24999,
+        "url": "https://snkrdunk.com/en/apparels/91287"
+      },
+      {
+        "snkrdunkId": "393043",
+        "name": "Marshadow & Machamp GX SR [SM10 100/095](Expansion Pack \"Double Blaze\")",
+        "nameEn": "Marshadow & Machamp GX SR [SM10 100/095](Expansion Pack \"Double Blaze\")",
+        "rarity": "SR",
+        "cardNumber": "100/095",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/63ccf43c-a825-42c2-af2c-7360b3a607c4.webp?size=m",
+        "priceJpy": 22000,
+        "url": "https://snkrdunk.com/en/apparels/393043"
+      },
+      {
+        "snkrdunkId": "393045",
+        "name": "Whimsicott GX SR [SM10 103/095](Expansion Pack \"Double Blaze\")",
+        "nameEn": "Whimsicott GX SR [SM10 103/095](Expansion Pack \"Double Blaze\")",
+        "rarity": "SR",
+        "cardNumber": "103/095",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/a5790ce0-f744-4478-90a6-fa98816c32d7.webp?size=m",
+        "priceJpy": 13000,
+        "url": "https://snkrdunk.com/en/apparels/393045"
+      },
+      {
+        "snkrdunkId": "104620",
+        "name": "Reshiram & Charizard GX SR[SM10 096/095](Expansion Pack \"Double Blaze\")",
+        "nameEn": "Reshiram & Charizard GX SR[SM10 096/095](Expansion Pack \"Double Blaze\")",
+        "rarity": "SR",
+        "cardNumber": "096/095",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/ab09526b-37d4-4639-b945-182d06f467a8.webp?size=m",
+        "priceJpy": 12800,
+        "url": "https://snkrdunk.com/en/apparels/104620"
+      },
+      {
+        "snkrdunkId": "393042",
+        "name": "Muk & Alolan Muk GX SR [SM10 098/095](Expansion Pack \"Double Blaze\")",
+        "nameEn": "Muk & Alolan Muk GX SR [SM10 098/095](Expansion Pack \"Double Blaze\")",
+        "rarity": "SR",
+        "cardNumber": "098/095",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/e0491f60-c33e-456c-a939-063109d7051e.webp?size=m",
+        "priceJpy": 12000,
+        "url": "https://snkrdunk.com/en/apparels/393042"
+      },
+      {
+        "snkrdunkId": "393050",
+        "name": "Whimsicott GX HR [SM10 112/095](Expansion Pack \"Double Blaze\")",
+        "nameEn": "Whimsicott GX HR [SM10 112/095](Expansion Pack \"Double Blaze\")",
+        "rarity": "",
+        "cardNumber": "112/095",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/20ed4907-5e6d-411b-8631-d211d26fd211.webp?size=m",
+        "priceJpy": 12000,
+        "url": "https://snkrdunk.com/en/apparels/393050"
+      },
+      {
+        "snkrdunkId": "393018",
+        "name": "Porygon C [SM10 072/095](Expansion Pack \"Double Blaze\")",
+        "nameEn": "Porygon C [SM10 072/095](Expansion Pack \"Double Blaze\")",
+        "rarity": "C",
+        "cardNumber": "072/095",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/760bbedc-0d96-4ae0-b888-4e27066db7ca.webp?size=m",
+        "priceJpy": 9800,
+        "url": "https://snkrdunk.com/en/apparels/393018"
+      },
+      {
+        "snkrdunkId": "104622",
+        "name": "Marshadow & Kairiky GX SR: SA[SM10 101/095](Expansion Pack \"Double Blaze\")",
+        "nameEn": "Marshadow & Kairiky GX SR: SA[SM10 101/095](Expansion Pack \"Double Blaze\")",
+        "rarity": "SR",
+        "cardNumber": "101/095",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/48a0b1a0-64ce-4212-b88f-756ee7c2dbe2.webp?size=m",
+        "priceJpy": 8400,
+        "url": "https://snkrdunk.com/en/apparels/104622"
+      },
+      {
+        "snkrdunkId": "393051",
+        "name": "Persian GX HR [SM10 113/095](Expansion Pack \"Double Blaze\")",
+        "nameEn": "Persian GX HR [SM10 113/095](Expansion Pack \"Double Blaze\")",
+        "rarity": "",
+        "cardNumber": "113/095",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/4ae87add-371e-4a67-b31e-85b6351823c5.webp?size=m",
+        "priceJpy": 6500,
+        "url": "https://snkrdunk.com/en/apparels/393051"
+      },
+      {
+        "snkrdunkId": "393044",
+        "name": "Honchkrow GX SR [SM10 102/095](Expansion Pack \"Double Blaze\")",
+        "nameEn": "Honchkrow GX SR [SM10 102/095](Expansion Pack \"Double Blaze\")",
+        "rarity": "SR",
+        "cardNumber": "102/095",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/4462903c-2fcf-442f-966b-93d0035651d5.webp?size=m",
+        "priceJpy": 6500,
+        "url": "https://snkrdunk.com/en/apparels/393044"
+      }
+    ]
   },
   "pokemon-snkrdunk-90471": {
     "productId": "pokemon-snkrdunk-90471",
     "setCode": "",
     "labels": [
-      "Sun & Moon Highclass Pack GX Ultra Shiny",
-      "ポケモンカードゲーム サン&ムーン ハイクラスパック GXウルトラシャイニー"
+      "GX Ultra Shiny",
+      "GXウルトラシャイニー"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "91293",
+        "name": "Charizard GX SSR[SM8b 209/150](High Class Pack \"GX Ultra Shiny\")",
+        "nameEn": "Charizard GX SSR[SM8b 209/150](High Class Pack \"GX Ultra Shiny\")",
+        "rarity": "",
+        "cardNumber": "209/150",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/5ea2942b-2a44-4b94-a20b-f01737e7baa6.webp?size=m",
+        "priceJpy": 60000,
+        "url": "https://snkrdunk.com/en/apparels/91293"
+      },
+      {
+        "snkrdunkId": "91295",
+        "name": "Rayquaza GX SSR[SM8b 240/150](High Class Pack \"GX Ultra Shiny\")",
+        "nameEn": "Rayquaza GX SSR[SM8b 240/150](High Class Pack \"GX Ultra Shiny\")",
+        "rarity": "",
+        "cardNumber": "240/150",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/9110da2d-d85c-4491-a34f-b945bd49f8ba.webp?size=m",
+        "priceJpy": 57000,
+        "url": "https://snkrdunk.com/en/apparels/91295"
+      },
+      {
+        "snkrdunkId": "91299",
+        "name": "Umbreon GX SSR[SM8b 229/150](High Class Pack \"GX Ultra Shiny\")",
+        "nameEn": "Umbreon GX SSR[SM8b 229/150](High Class Pack \"GX Ultra Shiny\")",
+        "rarity": "",
+        "cardNumber": "229/150",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/4f0104d1-4681-457a-9838-8e96d8daf02b.webp?size=m",
+        "priceJpy": 33000,
+        "url": "https://snkrdunk.com/en/apparels/91299"
+      },
+      {
+        "snkrdunkId": "93099",
+        "name": "Sylveon GX SSR[SM8b 238/150](High Class Pack \"GX Ultra Shiny\")",
+        "nameEn": "Sylveon GX SSR[SM8b 238/150](High Class Pack \"GX Ultra Shiny\")",
+        "rarity": "",
+        "cardNumber": "238/150",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/9df650f2-2a0b-40d4-9953-65ca45b14de5.webp?size=m",
+        "priceJpy": 27400,
+        "url": "https://snkrdunk.com/en/apparels/93099"
+      },
+      {
+        "snkrdunkId": "91296",
+        "name": "Cynthia SR[SM8b 153/150](High Class Pack \"GX Ultra Shiny\")",
+        "nameEn": "Cynthia SR[SM8b 153/150](High Class Pack \"GX Ultra Shiny\")",
+        "rarity": "SR",
+        "cardNumber": "153/150",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/96ec1754-9aa6-487d-94ee-f3c4c6037a6f.webp?size=m",
+        "priceJpy": 24000,
+        "url": "https://snkrdunk.com/en/apparels/91296"
+      },
+      {
+        "snkrdunkId": "112811",
+        "name": "Ultra Necrozma GX UR[SM8b 250/150](High Class Pack\"GX Ultra Shiny\")",
+        "nameEn": "Ultra Necrozma GX UR[SM8b 250/150](High Class Pack\"GX Ultra Shiny\")",
+        "rarity": "UR",
+        "cardNumber": "250/150",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/aeb7e335-fe6d-4108-adda-922c0aecbbff.webp?size=m",
+        "priceJpy": 22222,
+        "url": "https://snkrdunk.com/en/apparels/112811"
+      },
+      {
+        "snkrdunkId": "112793",
+        "name": "Darkrai GX SSR[SM8b 230/150](High Class Pack\"GX Ultra Shiny\")",
+        "nameEn": "Darkrai GX SSR[SM8b 230/150](High Class Pack\"GX Ultra Shiny\")",
+        "rarity": "",
+        "cardNumber": "230/150",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/ac11f180-ca0f-4971-85e1-3e6e60dbf1ec.webp?size=m",
+        "priceJpy": 21800,
+        "url": "https://snkrdunk.com/en/apparels/112793"
+      },
+      {
+        "snkrdunkId": "112773",
+        "name": "Hiker SR[SM8b 156/150](High Class Pack\"GX Ultra Shiny\")",
+        "nameEn": "Hiker SR[SM8b 156/150](High Class Pack\"GX Ultra Shiny\")",
+        "rarity": "SR",
+        "cardNumber": "156/150",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/af262a47-43ad-48d4-be39-3166f141916c.webp?size=m",
+        "priceJpy": 19999,
+        "url": "https://snkrdunk.com/en/apparels/112773"
+      },
+      {
+        "snkrdunkId": "112810",
+        "name": "Solgaleo GX UR[SM8b 249/150](High Class Pack\"GX Ultra Shiny\")",
+        "nameEn": "Solgaleo GX UR[SM8b 249/150](High Class Pack\"GX Ultra Shiny\")",
+        "rarity": "UR",
+        "cardNumber": "249/150",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/a3f92a69-bd7f-4d16-9a24-bc4a995c9ac8.webp?size=m",
+        "priceJpy": 17000,
+        "url": "https://snkrdunk.com/en/apparels/112810"
+      },
+      {
+        "snkrdunkId": "91297",
+        "name": "Greninja GX SSR[SM8b 216/150](High Class Pack \"GX Ultra Shiny\")",
+        "nameEn": "Greninja GX SSR[SM8b 216/150](High Class Pack \"GX Ultra Shiny\")",
+        "rarity": "",
+        "cardNumber": "216/150",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/a722edb8-1ceb-42a8-805e-f89610d09114.webp?size=m",
+        "priceJpy": 16999,
+        "url": "https://snkrdunk.com/en/apparels/91297"
+      },
+      {
+        "snkrdunkId": "91298",
+        "name": "Espeon GX SSR[SM8b 220/150](High Class Pack \"GX Ultra Shiny\")",
+        "nameEn": "Espeon GX SSR[SM8b 220/150](High Class Pack \"GX Ultra Shiny\")",
+        "rarity": "",
+        "cardNumber": "220/150",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/39752265-0de4-4f2d-819b-e379519129a3.webp?size=m",
+        "priceJpy": 15000,
+        "url": "https://snkrdunk.com/en/apparels/91298"
+      },
+      {
+        "snkrdunkId": "112759",
+        "name": "Zoroark GX RR[SM8b 070/150](High Class Pack\"GX Ultra Shiny\")",
+        "nameEn": "Zoroark GX RR[SM8b 070/150](High Class Pack\"GX Ultra Shiny\")",
+        "rarity": "RR",
+        "cardNumber": "070/150",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/9ff6ff56-003a-4a88-95c7-e06908076200.webp?size=m",
+        "priceJpy": 15000,
+        "url": "https://snkrdunk.com/en/apparels/112759"
+      }
+    ]
   },
   "pokemon-snkrdunk-93147": {
     "productId": "pokemon-snkrdunk-93147",
     "setCode": "",
     "labels": [
-      "Miracle Twin"
+      "Miracle Twin",
+      "ミラクルツイン"
     ],
     "updatedAt": "2026-09-26T12:21:05.632Z",
     "source": "SNKRDUNK",
@@ -5411,10 +8258,10 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "pokemon-snkrdunk-90457",
     "setCode": "",
     "labels": [
-      "Sword & Shield Enhanced Expansion Pack Twin Fighter",
-      "ポケモンカードゲーム ソード & シールド 強化拡張パック 双璧のファイター"
+      "Twin Fighter",
+      "双璧のファイター"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -5422,10 +8269,10 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "pokemon-snkrdunk-93091",
     "setCode": "",
     "labels": [
-      "Sun & Moon Expansion Pack, Charisma of the Wrecked Sky",
-      "ポケモンカードゲーム サン&ムーン 拡張パック 裂空のカリスマ"
+      "Charisma of the Wrecked Sky",
+      "裂空のカリスマ"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -5433,10 +8280,10 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "pokemon-snkrdunk-92233",
     "setCode": "",
     "labels": [
-      "Sword&Shield Enhanced Expansion Pack Heartbeat of the Legend",
-      "ポケモンカードゲーム ソード&シールド 強化拡張パック 伝説の鼓動"
+      "Heartbeat of the Legend",
+      "伝説の鼓動"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -5444,33 +8291,12 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "pokemon-snkrdunk-93127",
     "setCode": "",
     "labels": [
-      "Remix Bout"
+      "Remix Bout",
+      "リミックスバウト"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
-      {
-        "snkrdunkId": "407858",
-        "name": "Dusknoir P [SM-P 372](Promotional Cards \"Remix Bout BOX Purchase Campaign\")",
-        "nameEn": "Dusknoir P [SM-P 372](Promotional Cards \"Remix Bout BOX Purchase Campaign\")",
-        "rarity": "P",
-        "cardNumber": "372",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/e1dd60e7-aeee-4496-8b3f-385178494ce7.webp?size=m",
-        "priceJpy": 98000,
-        "url": "https://snkrdunk.com/en/apparels/407858"
-      },
-      {
-        "snkrdunkId": "104573",
-        "name": "Venusaur & Snivy GX SR: SA[SM11a 066/064](Enhanced Expansion Pack \"Remix Bout\")",
-        "nameEn": "Venusaur & Snivy GX SR: SA[SM11a 066/064](Enhanced Expansion Pack \"Remix Bout\")",
-        "rarity": "SR",
-        "cardNumber": "066/064",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/9fe66313-46ee-4ce9-b8df-58a0dd3726ea.webp?size=m",
-        "priceJpy": 38400,
-        "url": "https://snkrdunk.com/en/apparels/104573"
-      },
       {
         "snkrdunkId": "91281",
         "name": "Charizard & Braixen GX SR: SA[SM11a 068/064](Enhanced Expansion Pack \"Remix Bout\")",
@@ -5512,7 +8338,7 @@ export const COLLECTION_TOP_CARDS = {
         "cardNumber": "069/064",
         "setCode": "",
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/b488f18a-43c6-4ba5-8813-3a8ac3cb3b67.webp?size=m",
-        "priceJpy": 22000,
+        "priceJpy": 21000,
         "url": "https://snkrdunk.com/en/apparels/104578"
       },
       {
@@ -5545,8 +8371,19 @@ export const COLLECTION_TOP_CARDS = {
         "cardNumber": "077/064",
         "setCode": "",
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/fb6de124-9b48-4bc6-b330-73ee6138affe.webp?size=m",
-        "priceJpy": 14800,
+        "priceJpy": 12800,
         "url": "https://snkrdunk.com/en/apparels/290932"
+      },
+      {
+        "snkrdunkId": "104573",
+        "name": "Venusaur & Snivy GX SR: SA[SM11a 066/064](Enhanced Expansion Pack \"Remix Bout\")",
+        "nameEn": "Venusaur & Snivy GX SR: SA[SM11a 066/064](Enhanced Expansion Pack \"Remix Bout\")",
+        "rarity": "SR",
+        "cardNumber": "066/064",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/9fe66313-46ee-4ce9-b8df-58a0dd3726ea.webp?size=m",
+        "priceJpy": 12000,
+        "url": "https://snkrdunk.com/en/apparels/104573"
       },
       {
         "snkrdunkId": "104574",
@@ -5580,6 +8417,17 @@ export const COLLECTION_TOP_CARDS = {
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/a732e765-27c9-43d5-ba52-02b7bd265e57.webp?size=m",
         "priceJpy": 11000,
         "url": "https://snkrdunk.com/en/apparels/290931"
+      },
+      {
+        "snkrdunkId": "290907",
+        "name": "AlolanPersian GX RR [SM11a 040/064](Enhanced Expansion Pack \"Remix Bout\")",
+        "nameEn": "AlolanPersian GX RR [SM11a 040/064](Enhanced Expansion Pack \"Remix Bout\")",
+        "rarity": "RR",
+        "cardNumber": "040/064",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/4f438014-1438-4c71-92ba-36fe9f27335b.webp?size=m",
+        "priceJpy": 9000,
+        "url": "https://snkrdunk.com/en/apparels/290907"
       }
     ]
   },
@@ -5587,10 +8435,10 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "pokemon-snkrdunk-90466",
     "setCode": "",
     "labels": [
-      "Sun & Moon Enhanced Expansion Pack, Jizzy End",
-      "ポケモンカードゲーム サン&ムーン 強化拡張パック ジージーエンド"
+      "Jizzy End",
+      "ジージーエンド"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -5598,20 +8446,154 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "pokemon-snkrdunk-90473",
     "setCode": "",
     "labels": [
-      "Sun & Moon Enhanced Expansion Pack, Full Metal Wall",
-      "ポケモンカードゲーム サン&ムーン 強化拡張パック フルメタルウォール"
+      "Full Metal Wall",
+      "フルメタルウォール"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "91288",
+        "name": "Green’s Exploration SR[SM9b 061/054](Enhanced Expansion Pack \"Full Metal Wall\")",
+        "nameEn": "Green’s Exploration SR[SM9b 061/054](Enhanced Expansion Pack \"Full Metal Wall\")",
+        "rarity": "SR",
+        "cardNumber": "061/054",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/439e901c-07db-4cbd-b820-899b8b817c14.webp?size=m",
+        "priceJpy": 16000,
+        "url": "https://snkrdunk.com/en/apparels/91288"
+      },
+      {
+        "snkrdunkId": "393301",
+        "name": "Lucario & Melmetal GX HR [SM9b 065/054](Enhanced Expansion Pack \"Full Metal Wall\")",
+        "nameEn": "Lucario & Melmetal GX HR [SM9b 065/054](Enhanced Expansion Pack \"Full Metal Wall\")",
+        "rarity": "",
+        "cardNumber": "065/054",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/791e3bbf-2801-4aa6-a4ad-0ade1312692f.webp?size=m",
+        "priceJpy": 15000,
+        "url": "https://snkrdunk.com/en/apparels/393301"
+      },
+      {
+        "snkrdunkId": "104629",
+        "name": "Lucario & Melmetal GX SR: SA[SM9b 059/054](Enhanced Expansion Pack \"Full Metal Wall\")",
+        "nameEn": "Lucario & Melmetal GX SR: SA[SM9b 059/054](Enhanced Expansion Pack \"Full Metal Wall\")",
+        "rarity": "SR",
+        "cardNumber": "059/054",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/7c749888-1e29-4026-856a-fffadff96e5b.webp?size=m",
+        "priceJpy": 14800,
+        "url": "https://snkrdunk.com/en/apparels/104629"
+      },
+      {
+        "snkrdunkId": "104632",
+        "name": "Blastoise GX HR[SM9b 064/054](Enhanced Expansion Pack \"Full Metal Wall\")",
+        "nameEn": "Blastoise GX HR[SM9b 064/054](Enhanced Expansion Pack \"Full Metal Wall\")",
+        "rarity": "",
+        "cardNumber": "064/054",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/a923d450-623b-4559-937d-b816e0f15b27.webp?size=m",
+        "priceJpy": 10752,
+        "url": "https://snkrdunk.com/en/apparels/104632"
+      },
+      {
+        "snkrdunkId": "104630",
+        "name": "Pheromosa & Buzzwole GX SR: SA[SM9b 056/054](Enhanced Expansion Pack \"Full Metal Wall\")",
+        "nameEn": "Pheromosa & Buzzwole GX SR: SA[SM9b 056/054](Enhanced Expansion Pack \"Full Metal Wall\")",
+        "rarity": "SR",
+        "cardNumber": "056/054",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/e8d2a22d-b229-429c-bcb6-1cd8f1e838e1.webp?size=m",
+        "priceJpy": 7200,
+        "url": "https://snkrdunk.com/en/apparels/104630"
+      },
+      {
+        "snkrdunkId": "393296",
+        "name": "Blastoise GX SR [SM9b 057/054](Enhanced Expansion Pack \"Full Metal Wall\")",
+        "nameEn": "Blastoise GX SR [SM9b 057/054](Enhanced Expansion Pack \"Full Metal Wall\")",
+        "rarity": "SR",
+        "cardNumber": "057/054",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/5672ec14-4a57-43f7-bd7a-20a2cda302b6.webp?size=m",
+        "priceJpy": 4000,
+        "url": "https://snkrdunk.com/en/apparels/393296"
+      },
+      {
+        "snkrdunkId": "104633",
+        "name": "Ultra Ball TR[SM9b 051/054](Enhanced Expansion Pack \"Full Metal Wall\")",
+        "nameEn": "Ultra Ball TR[SM9b 051/054](Enhanced Expansion Pack \"Full Metal Wall\")",
+        "rarity": "",
+        "cardNumber": "051/054",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/440a728d-5f12-4adf-bfb2-f694a4b65d4b.webp?size=m",
+        "priceJpy": 4000,
+        "url": "https://snkrdunk.com/en/apparels/104633"
+      },
+      {
+        "snkrdunkId": "393297",
+        "name": "Lucario & Melmetal GX SR [SM9b 058/054](Enhanced Expansion Pack \"Full Metal Wall\")",
+        "nameEn": "Lucario & Melmetal GX SR [SM9b 058/054](Enhanced Expansion Pack \"Full Metal Wall\")",
+        "rarity": "SR",
+        "cardNumber": "058/054",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/3942b54b-c032-47f0-8396-85ce923ae989.webp?size=m",
+        "priceJpy": 3599,
+        "url": "https://snkrdunk.com/en/apparels/393297"
+      },
+      {
+        "snkrdunkId": "393252",
+        "name": "Blastoise GX RR [SM9b 010/054](Enhanced Expansion Pack \"Full Metal Wall\")",
+        "nameEn": "Blastoise GX RR [SM9b 010/054](Enhanced Expansion Pack \"Full Metal Wall\")",
+        "rarity": "RR",
+        "cardNumber": "010/054",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/d8c267d0-452f-492d-9a5f-493791af3939.webp?size=m",
+        "priceJpy": 2800,
+        "url": "https://snkrdunk.com/en/apparels/393252"
+      },
+      {
+        "snkrdunkId": "393271",
+        "name": "Lucario & Melmetal GX RR [SM9b 029/054](Enhanced Expansion Pack \"Full Metal Wall\")",
+        "nameEn": "Lucario & Melmetal GX RR [SM9b 029/054](Enhanced Expansion Pack \"Full Metal Wall\")",
+        "rarity": "RR",
+        "cardNumber": "029/054",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/01e53ec6-54a6-46d1-ac1b-d0d097757238.webp?size=m",
+        "priceJpy": 2500,
+        "url": "https://snkrdunk.com/en/apparels/393271"
+      },
+      {
+        "snkrdunkId": "393254",
+        "name": "Slowbro R [SM9b 012/054](Enhanced Expansion Pack \"Full Metal Wall\")",
+        "nameEn": "Slowbro R [SM9b 012/054](Enhanced Expansion Pack \"Full Metal Wall\")",
+        "rarity": "R",
+        "cardNumber": "012/054",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/f6f8b082-3a41-42a8-b7b8-87c8d8a0fdee.webp?size=m",
+        "priceJpy": 2500,
+        "url": "https://snkrdunk.com/en/apparels/393254"
+      },
+      {
+        "snkrdunkId": "393270",
+        "name": "Stakataka R [SM9b 028/054](Enhanced Expansion Pack \"Full Metal Wall\")",
+        "nameEn": "Stakataka R [SM9b 028/054](Enhanced Expansion Pack \"Full Metal Wall\")",
+        "rarity": "R",
+        "cardNumber": "028/054",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/9d9b591f-97f9-4f4b-819e-93bd52133316.webp?size=m",
+        "priceJpy": 2000,
+        "url": "https://snkrdunk.com/en/apparels/393270"
+      }
+    ]
   },
   "pokemon-snkrdunk-93104": {
     "productId": "pokemon-snkrdunk-93104",
     "setCode": "",
     "labels": [
-      "Knight Unison"
+      "Knight Unison",
+      "ナイトユニゾン"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -5619,7 +8601,8 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "pokemon-snkrdunk-93107",
     "setCode": "",
     "labels": [
-      "Super-Burst Impact"
+      "Super-Burst Impact",
+      "超爆インパクト"
     ],
     "updatedAt": "2026-09-26T12:21:05.632Z",
     "source": "SNKRDUNK",
@@ -5762,77 +8745,112 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "pokemon-snkrdunk-90455",
     "setCode": "",
     "labels": [
-      "Sword & Shield Expansion Pack Rengeki Master",
-      "ポケモンカードゲーム ソード & シールド 拡張パック 連撃マスター"
+      "Rengeki Master",
+      "連撃マスター"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "99573",
+        "name": "Empoleon V SR: SA[S5R 074/070](Expansion Pack\"Rengeki Master\")",
+        "nameEn": "Empoleon V SR: SA[S5R 074/070](Expansion Pack\"Rengeki Master\")",
+        "rarity": "SR",
+        "cardNumber": "074/070",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/8ef4917d-037f-47a9-b4e6-a436bb760cbf.webp?size=m",
+        "priceJpy": 11111,
+        "url": "https://snkrdunk.com/en/apparels/99573"
+      },
+      {
+        "snkrdunkId": "91186",
+        "name": "Korrina's Focus SR[S5R 079/070](Expansion Pack \"Rengeki Master\")",
+        "nameEn": "Korrina's Focus SR[S5R 079/070](Expansion Pack \"Rengeki Master\")",
+        "rarity": "SR",
+        "cardNumber": "079/070",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/85c92c64-9209-4002-a305-8ff1bb5d7e1a.webp?size=m",
+        "priceJpy": 6800,
+        "url": "https://snkrdunk.com/en/apparels/91186"
+      },
+      {
+        "snkrdunkId": "91187",
+        "name": "Cheryl SR[S5R 081/070](Expansion Pack \"Rengeki Master\")",
+        "nameEn": "Cheryl SR[S5R 081/070](Expansion Pack \"Rengeki Master\")",
+        "rarity": "SR",
+        "cardNumber": "081/070",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/d4f0c256-3e4d-4479-a9de-5ee51e0c721f.webp?size=m",
+        "priceJpy": 4000,
+        "url": "https://snkrdunk.com/en/apparels/91187"
+      },
+      {
+        "snkrdunkId": "99576",
+        "name": "Korrina's Focus HR[S5R 086/070](Expansion Pack\"Rengeki Master\")",
+        "nameEn": "Korrina's Focus HR[S5R 086/070](Expansion Pack\"Rengeki Master\")",
+        "rarity": "",
+        "cardNumber": "086/070",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/24f9f32c-0242-4dd8-a1b1-6e2fe74d7f74.webp?size=m",
+        "priceJpy": 4000,
+        "url": "https://snkrdunk.com/en/apparels/99576"
+      },
+      {
+        "snkrdunkId": "99579",
+        "name": "Victini VMAX HR[S5R 082/070](Expansion Pack\"Rengeki Master\")",
+        "nameEn": "Victini VMAX HR[S5R 082/070](Expansion Pack\"Rengeki Master\")",
+        "rarity": "",
+        "cardNumber": "082/070",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/44be31d9-30a7-45f4-a342-2f5885c81129.webp?size=m",
+        "priceJpy": 3800,
+        "url": "https://snkrdunk.com/en/apparels/99579"
+      },
+      {
+        "snkrdunkId": "93033",
+        "name": "Level Ball UR[S5R 090/070](Expansion Pack \"Rengeki Master\")",
+        "nameEn": "Level Ball UR[S5R 090/070](Expansion Pack \"Rengeki Master\")",
+        "rarity": "UR",
+        "cardNumber": "090/070",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/9736e74f-b7cb-49d8-9c00-83ac1b3d91b0.webp?size=m",
+        "priceJpy": 3000,
+        "url": "https://snkrdunk.com/en/apparels/93033"
+      },
+      {
+        "snkrdunkId": "122004",
+        "name": "Rapid Strike Style Mustard SR[S5R 080/070](Expansion Pack\"Rengeki Master\")",
+        "nameEn": "Rapid Strike Style Mustard SR[S5R 080/070](Expansion Pack\"Rengeki Master\")",
+        "rarity": "SR",
+        "cardNumber": "080/070",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/786b8171-38c4-40e6-9868-46cc3818d1d7.webp?size=m",
+        "priceJpy": 1000,
+        "url": "https://snkrdunk.com/en/apparels/122004"
+      },
+      {
+        "snkrdunkId": "100080",
+        "name": "Cheryl HR[S5R 088/070](Expansion Pack\"Rengeki Master\")",
+        "nameEn": "Cheryl HR[S5R 088/070](Expansion Pack\"Rengeki Master\")",
+        "rarity": "",
+        "cardNumber": "088/070",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/ad300fb2-b03a-45b4-bea5-578c93a38f66.webp?size=m",
+        "priceJpy": 1000,
+        "url": "https://snkrdunk.com/en/apparels/100080"
+      }
+    ]
   },
   "pokemon-snkrdunk-93115": {
     "productId": "pokemon-snkrdunk-93115",
     "setCode": "",
     "labels": [
-      "Detective Pikachu"
+      "Detective Pikachu",
+      "名探偵ピカチュウ"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
-      {
-        "snkrdunkId": "91122",
-        "name": "Detective Pikachu: PROMO[S-P 099](S-P Promotional cards)",
-        "nameEn": "Detective Pikachu: PROMO[S-P 099](S-P Promotional cards)",
-        "rarity": "P",
-        "cardNumber": "099",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/241c2486-ce31-435b-a6b0-3586676fc170.webp?size=m",
-        "priceJpy": 35000,
-        "url": "https://snkrdunk.com/en/apparels/91122"
-      },
-      {
-        "snkrdunkId": "93066",
-        "name": "Detective Pikachu P [SM-P 338](Promotional Cards \"Special Jumbo Card Pack Detective Pikachu Charizard GX Ver.\")",
-        "nameEn": "Detective Pikachu P [SM-P 338](Promotional Cards \"Special Jumbo Card Pack Detective Pikachu Charizard GX Ver.\")",
-        "rarity": "P",
-        "cardNumber": "338",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/6bf7dd53-2b7f-4a28-bc5e-ecf2fcf5b217.webp?size=m",
-        "priceJpy": 33000,
-        "url": "https://snkrdunk.com/en/apparels/93066"
-      },
-      {
-        "snkrdunkId": "93080",
-        "name": "Detective Pikachu: PROMO[SM-P 337](SM-P Promotional cards)",
-        "nameEn": "Detective Pikachu: PROMO[SM-P 337](SM-P Promotional cards)",
-        "rarity": "P",
-        "cardNumber": "337",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/367165fa-aa9b-45f5-be27-0b6a571c7018.webp?size=m",
-        "priceJpy": 25800,
-        "url": "https://snkrdunk.com/en/apparels/93080"
-      },
-      {
-        "snkrdunkId": "135232",
-        "name": "Detective Pikachu: PROMO [SV-P 098](SV-P Promotional cards)",
-        "nameEn": "Detective Pikachu: PROMO [SV-P 098](SV-P Promotional cards)",
-        "rarity": "P",
-        "cardNumber": "098",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/fefa8a9a-35f9-4634-9844-dd5d55dcfcbb.webp?size=m",
-        "priceJpy": 18000,
-        "url": "https://snkrdunk.com/en/apparels/135232"
-      },
-      {
-        "snkrdunkId": "738338",
-        "name": "Detective Pikachu P [SM190](Sun & Moon \"Promotional Card\")",
-        "nameEn": "Detective Pikachu P [SM190](Sun & Moon \"Promotional Card\")",
-        "rarity": "P",
-        "cardNumber": "SM190",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/3af863e4-19b9-4099-a36f-1f816bf6bffa.webp?size=m",
-        "priceJpy": 15000,
-        "url": "https://snkrdunk.com/en/apparels/738338"
-      },
       {
         "snkrdunkId": "396638",
         "name": "Jigglypuff C [SMP2 019/024](Movie Special Pack \"Detective Pikachu\")",
@@ -5854,17 +8872,6 @@ export const COLLECTION_TOP_CARDS = {
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/91c1b35d-58a8-4fe7-a08d-8df62df52355.webp?size=m",
         "priceJpy": 5999,
         "url": "https://snkrdunk.com/en/apparels/396623"
-      },
-      {
-        "snkrdunkId": "407831",
-        "name": "Detective Pikachu P [SM-P 339](Promotional Cards \"Special Jumbo Card Pack Detective Pikachu Mewtwo GX Ver.\")",
-        "nameEn": "Detective Pikachu P [SM-P 339](Promotional Cards \"Special Jumbo Card Pack Detective Pikachu Mewtwo GX Ver.\")",
-        "rarity": "P",
-        "cardNumber": "339",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/101bb9f3-a82f-43be-be9a-80b35de61d4e.webp?size=m",
-        "priceJpy": 5890,
-        "url": "https://snkrdunk.com/en/apparels/407831"
       },
       {
         "snkrdunkId": "127026",
@@ -5900,6 +8907,17 @@ export const COLLECTION_TOP_CARDS = {
         "url": "https://snkrdunk.com/en/apparels/396626"
       },
       {
+        "snkrdunkId": "396633",
+        "name": "Detective Pikachu U [SMP2 014/024](Movie Special Pack \"Detective Pikachu\")",
+        "nameEn": "Detective Pikachu U [SMP2 014/024](Movie Special Pack \"Detective Pikachu\")",
+        "rarity": "U",
+        "cardNumber": "014/024",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/7a7ca772-2bcd-4ac4-8ea0-ebd3d51e00ef.webp?size=m",
+        "priceJpy": 2300,
+        "url": "https://snkrdunk.com/en/apparels/396633"
+      },
+      {
         "snkrdunkId": "396632",
         "name": "Greninja GX RR [SMP2 013/024](Movie Special Pack \"Detective Pikachu\")",
         "nameEn": "Greninja GX RR [SMP2 013/024](Movie Special Pack \"Detective Pikachu\")",
@@ -5907,8 +8925,63 @@ export const COLLECTION_TOP_CARDS = {
         "cardNumber": "013/024",
         "setCode": "",
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/e81c3217-a6cb-4a2f-8b8f-12a84c9f9a92.webp?size=m",
-        "priceJpy": 2400,
+        "priceJpy": 1800,
         "url": "https://snkrdunk.com/en/apparels/396632"
+      },
+      {
+        "snkrdunkId": "396642",
+        "name": "Ditto U [SMP2 023/024](Movie Special Pack \"Detective Pikachu\")",
+        "nameEn": "Ditto U [SMP2 023/024](Movie Special Pack \"Detective Pikachu\")",
+        "rarity": "U",
+        "cardNumber": "023/024",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/e4f61e01-a330-41ba-9459-653cbc3ed54a.webp?size=m",
+        "priceJpy": 1800,
+        "url": "https://snkrdunk.com/en/apparels/396642"
+      },
+      {
+        "snkrdunkId": "396636",
+        "name": "Mewtwo GX RR [SMP2 017/024](Movie Special Pack \"Detective Pikachu\")",
+        "nameEn": "Mewtwo GX RR [SMP2 017/024](Movie Special Pack \"Detective Pikachu\")",
+        "rarity": "RR",
+        "cardNumber": "017/024",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/5f52ce22-ced0-44c4-b61a-03012eb66e28.webp?size=m",
+        "priceJpy": 1500,
+        "url": "https://snkrdunk.com/en/apparels/396636"
+      },
+      {
+        "snkrdunkId": "396625",
+        "name": "Charizard U [SMP2 006/024](Movie Special Pack \"Detective Pikachu\")",
+        "nameEn": "Charizard U [SMP2 006/024](Movie Special Pack \"Detective Pikachu\")",
+        "rarity": "U",
+        "cardNumber": "006/024",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/b328bc9c-c19e-4af3-9c8a-d9ab4ab0ab01.webp?size=m",
+        "priceJpy": 1500,
+        "url": "https://snkrdunk.com/en/apparels/396625"
+      },
+      {
+        "snkrdunkId": "396635",
+        "name": "Mewtwo U [SMP2 016/024](Movie Special Pack \"Detective Pikachu\")",
+        "nameEn": "Mewtwo U [SMP2 016/024](Movie Special Pack \"Detective Pikachu\")",
+        "rarity": "U",
+        "cardNumber": "016/024",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/a66ca626-a40c-4ccd-80ca-5ab1f0f4e3b5.webp?size=m",
+        "priceJpy": 1200,
+        "url": "https://snkrdunk.com/en/apparels/396635"
+      },
+      {
+        "snkrdunkId": "396631",
+        "name": "Greninja U [SMP2 012/024](Movie Special Pack \"Detective Pikachu\")",
+        "nameEn": "Greninja U [SMP2 012/024](Movie Special Pack \"Detective Pikachu\")",
+        "rarity": "U",
+        "cardNumber": "012/024",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/1f006870-ce07-46ea-ab93-d8d1a4bf9a2e.webp?size=m",
+        "priceJpy": 1000,
+        "url": "https://snkrdunk.com/en/apparels/396631"
       }
     ]
   },
@@ -5916,10 +8989,10 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "pokemon-snkrdunk-90451",
     "setCode": "",
     "labels": [
-      "Sword & Shield Expansion Pack One-Strike Master",
-      "ポケモンカードゲーム ソード & シールド 拡張パック 一撃マスター"
+      "One-Strike Master",
+      "一撃マスター"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -5927,65 +9000,708 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "pokemon-snkrdunk-90467",
     "setCode": "",
     "labels": [
-      "Sun & Moon Enhanced Expansion Pack, Fairy Rise",
-      "ポケモンカードゲーム サン&ムーン 強化拡張パック フェアリーライズ"
+      "Fairy Rise",
+      "フェアリーライズ"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "104693",
+        "name": "Mimikyu GX HR[SM7b 060/050](Enhanced Expansion Pack \"Fairy Rise\")",
+        "nameEn": "Mimikyu GX HR[SM7b 060/050](Enhanced Expansion Pack \"Fairy Rise\")",
+        "rarity": "",
+        "cardNumber": "060/050",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/cf8e2413-941c-404b-a0b1-8075b62a67a7.webp?size=m",
+        "priceJpy": 92000,
+        "url": "https://snkrdunk.com/en/apparels/104693"
+      },
+      {
+        "snkrdunkId": "335595",
+        "name": "AlolanVulpix C [SM7b 014/050](Enhanced Expansion Pack \"Fairy Rise\")",
+        "nameEn": "AlolanVulpix C [SM7b 014/050](Enhanced Expansion Pack \"Fairy Rise\")",
+        "rarity": "C",
+        "cardNumber": "014/050",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/2209ab2e-169c-47a4-90f5-e5aaae27aeda.webp?size=m",
+        "priceJpy": 25000,
+        "url": "https://snkrdunk.com/en/apparels/335595"
+      },
+      {
+        "snkrdunkId": "104694",
+        "name": "Alolan Ninetales GX HR[SM7b 059/050](Enhanced Expansion Pack \"Fairy Rise\")",
+        "nameEn": "Alolan Ninetales GX HR[SM7b 059/050](Enhanced Expansion Pack \"Fairy Rise\")",
+        "rarity": "",
+        "cardNumber": "059/050",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/954fef22-d6e4-449c-8e55-1234f258bfb9.webp?size=m",
+        "priceJpy": 13000,
+        "url": "https://snkrdunk.com/en/apparels/104694"
+      },
+      {
+        "snkrdunkId": "335593",
+        "name": "Vespiquen C [SM7b 012/050](Enhanced Expansion Pack \"Fairy Rise\")",
+        "nameEn": "Vespiquen C [SM7b 012/050](Enhanced Expansion Pack \"Fairy Rise\")",
+        "rarity": "C",
+        "cardNumber": "012/050",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/c0825e61-4c3f-41f5-8915-b6eb5638a1de.webp?size=m",
+        "priceJpy": 12999,
+        "url": "https://snkrdunk.com/en/apparels/335593"
+      },
+      {
+        "snkrdunkId": "335591",
+        "name": "Ninjask C [SM7b 010/050](Enhanced Expansion Pack \"Fairy Rise\")",
+        "nameEn": "Ninjask C [SM7b 010/050](Enhanced Expansion Pack \"Fairy Rise\")",
+        "rarity": "C",
+        "cardNumber": "010/050",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/65fa2d7c-ad97-4ed6-9b8d-077d3973b952.webp?size=m",
+        "priceJpy": 11500,
+        "url": "https://snkrdunk.com/en/apparels/335591"
+      },
+      {
+        "snkrdunkId": "335633",
+        "name": "Sigilyph GX SR [SM7b 052/050](Enhanced Expansion Pack \"Fairy Rise\")",
+        "nameEn": "Sigilyph GX SR [SM7b 052/050](Enhanced Expansion Pack \"Fairy Rise\")",
+        "rarity": "SR",
+        "cardNumber": "052/050",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/77251ec7-eb70-45f6-98c0-c9b164424d80.webp?size=m",
+        "priceJpy": 5380,
+        "url": "https://snkrdunk.com/en/apparels/335633"
+      },
+      {
+        "snkrdunkId": "105310",
+        "name": "Mina SR[SM7b 056/050](Enhanced Expansion Pack \"Fairy Rise\")",
+        "nameEn": "Mina SR[SM7b 056/050](Enhanced Expansion Pack \"Fairy Rise\")",
+        "rarity": "SR",
+        "cardNumber": "056/050",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/03529760-2cd8-490f-9f47-3184f43123c3.webp?size=m",
+        "priceJpy": 5000,
+        "url": "https://snkrdunk.com/en/apparels/105310"
+      },
+      {
+        "snkrdunkId": "105312",
+        "name": "Morty SR[SM7b 055/050](Enhanced Expansion Pack \"Fairy Rise\")",
+        "nameEn": "Morty SR[SM7b 055/050](Enhanced Expansion Pack \"Fairy Rise\")",
+        "rarity": "SR",
+        "cardNumber": "055/050",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/fa153e44-915e-461c-8331-4f61fdf4c96a.webp?size=m",
+        "priceJpy": 4200,
+        "url": "https://snkrdunk.com/en/apparels/105312"
+      },
+      {
+        "snkrdunkId": "105311",
+        "name": "Mimikyu GX SR[SM7b 054/050](Enhanced Expansion Pack \"Fairy Rise\")",
+        "nameEn": "Mimikyu GX SR[SM7b 054/050](Enhanced Expansion Pack \"Fairy Rise\")",
+        "rarity": "SR",
+        "cardNumber": "054/050",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/344aa096-6495-4de3-a77e-4b3e64df84ac.webp?size=m",
+        "priceJpy": 4000,
+        "url": "https://snkrdunk.com/en/apparels/105311"
+      },
+      {
+        "snkrdunkId": "335619",
+        "name": "Mimikyu GX RR [SM7b 038/050](Enhanced Expansion Pack \"Fairy Rise\")",
+        "nameEn": "Mimikyu GX RR [SM7b 038/050](Enhanced Expansion Pack \"Fairy Rise\")",
+        "rarity": "RR",
+        "cardNumber": "038/050",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/f398a266-f578-4320-8124-809e2d271ffc.webp?size=m",
+        "priceJpy": 3000,
+        "url": "https://snkrdunk.com/en/apparels/335619"
+      },
+      {
+        "snkrdunkId": "335611",
+        "name": "Gardevoir R [SM7b 030/050](Enhanced Expansion Pack \"Fairy Rise\")",
+        "nameEn": "Gardevoir R [SM7b 030/050](Enhanced Expansion Pack \"Fairy Rise\")",
+        "rarity": "R",
+        "cardNumber": "030/050",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/1d1bb8d5-5e24-4bf7-8de9-429acf974736.webp?size=m",
+        "priceJpy": 3000,
+        "url": "https://snkrdunk.com/en/apparels/335611"
+      },
+      {
+        "snkrdunkId": "335604",
+        "name": "Chandelure R [SM7b 023/050](Enhanced Expansion Pack \"Fairy Rise\")",
+        "nameEn": "Chandelure R [SM7b 023/050](Enhanced Expansion Pack \"Fairy Rise\")",
+        "rarity": "R",
+        "cardNumber": "023/050",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/38612f06-b14e-4320-8f17-829d13610935.webp?size=m",
+        "priceJpy": 2500,
+        "url": "https://snkrdunk.com/en/apparels/335604"
+      }
+    ]
   },
   "pokemon-snkrdunk-93096": {
     "productId": "pokemon-snkrdunk-93096",
     "setCode": "",
     "labels": [
-      "Sun & Moon Enhanced Expansion Pack, Dark Order",
-      "ポケモンカードゲーム サン&ムーン 強化拡張パック ダークオーダー"
+      "Dark Order",
+      "ダークオーダー"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "104643",
+        "name": "Ampharos GX HR[SM8a 059/052](Enhanced Expansion Pack \"Dark Order\")",
+        "nameEn": "Ampharos GX HR[SM8a 059/052](Enhanced Expansion Pack \"Dark Order\")",
+        "rarity": "",
+        "cardNumber": "059/052",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/c40f20a0-7b25-4cd4-8562-9d975fdd6e6b.webp?size=m",
+        "priceJpy": 50000,
+        "url": "https://snkrdunk.com/en/apparels/104643"
+      },
+      {
+        "snkrdunkId": "392654",
+        "name": "Hoopa GX HR [SM8a 060/052](Enhanced Expansion Pack \"Dark Order\")",
+        "nameEn": "Hoopa GX HR [SM8a 060/052](Enhanced Expansion Pack \"Dark Order\")",
+        "rarity": "",
+        "cardNumber": "060/052",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/d8f935be-ef63-46df-9d8e-b0f0ef56d650.webp?size=m",
+        "priceJpy": 20500,
+        "url": "https://snkrdunk.com/en/apparels/392654"
+      },
+      {
+        "snkrdunkId": "91300",
+        "name": "Jasmine SR[SM8a 058/052](Enhanced Expansion Pack \"Dark Order\")",
+        "nameEn": "Jasmine SR[SM8a 058/052](Enhanced Expansion Pack \"Dark Order\")",
+        "rarity": "SR",
+        "cardNumber": "058/052",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/278dd2d3-7834-4a05-93ef-d6c6454bfd4d.webp?size=m",
+        "priceJpy": 9480,
+        "url": "https://snkrdunk.com/en/apparels/91300"
+      },
+      {
+        "snkrdunkId": "392630",
+        "name": "Jirachi R [SM8a 034/052](Enhanced Expansion Pack \"Dark Order\")",
+        "nameEn": "Jirachi R [SM8a 034/052](Enhanced Expansion Pack \"Dark Order\")",
+        "rarity": "R",
+        "cardNumber": "034/052",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/be7f73fc-9249-41e9-8a0f-d9aa59213474.webp?size=m",
+        "priceJpy": 4980,
+        "url": "https://snkrdunk.com/en/apparels/392630"
+      },
+      {
+        "snkrdunkId": "392656",
+        "name": "Cobalion GX HR [SM8a 062/052](Enhanced Expansion Pack \"Dark Order\")",
+        "nameEn": "Cobalion GX HR [SM8a 062/052](Enhanced Expansion Pack \"Dark Order\")",
+        "rarity": "",
+        "cardNumber": "062/052",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/2274e6b8-c4fb-4854-b2ed-0672d1db01be.webp?size=m",
+        "priceJpy": 2999,
+        "url": "https://snkrdunk.com/en/apparels/392656"
+      },
+      {
+        "snkrdunkId": "392649",
+        "name": "Ampharos GX SR [SM8a 053/052](Enhanced Expansion Pack \"Dark Order\")",
+        "nameEn": "Ampharos GX SR [SM8a 053/052](Enhanced Expansion Pack \"Dark Order\")",
+        "rarity": "SR",
+        "cardNumber": "053/052",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/aefb36ef-a60e-4b7b-a8c4-5e399ca06548.webp?size=m",
+        "priceJpy": 2500,
+        "url": "https://snkrdunk.com/en/apparels/392649"
+      },
+      {
+        "snkrdunkId": "392622",
+        "name": "Zoroark R [SM8a 026/052](Enhanced Expansion Pack \"Dark Order\")",
+        "nameEn": "Zoroark R [SM8a 026/052](Enhanced Expansion Pack \"Dark Order\")",
+        "rarity": "R",
+        "cardNumber": "026/052",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/ee7c29a7-0e7c-44f9-9090-3b5049392ac8.webp?size=m",
+        "priceJpy": 2300,
+        "url": "https://snkrdunk.com/en/apparels/392622"
+      },
+      {
+        "snkrdunkId": "392602",
+        "name": "Ampharos GX RR [SM8a 006/052](Enhanced Expansion Pack \"Dark Order\")",
+        "nameEn": "Ampharos GX RR [SM8a 006/052](Enhanced Expansion Pack \"Dark Order\")",
+        "rarity": "RR",
+        "cardNumber": "006/052",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/7608a6ed-0e86-45b8-9c6c-a70f1e859bdc.webp?size=m",
+        "priceJpy": 2000,
+        "url": "https://snkrdunk.com/en/apparels/392602"
+      },
+      {
+        "snkrdunkId": "392619",
+        "name": "Absol R [SM8a 023/052](Enhanced Expansion Pack \"Dark Order\")",
+        "nameEn": "Absol R [SM8a 023/052](Enhanced Expansion Pack \"Dark Order\")",
+        "rarity": "R",
+        "cardNumber": "023/052",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/042b6b6e-5cef-449c-a26a-0e006feb64ef.webp?size=m",
+        "priceJpy": 2000,
+        "url": "https://snkrdunk.com/en/apparels/392619"
+      },
+      {
+        "snkrdunkId": "392637",
+        "name": "Cobalion GX RR [SM8a 041/052](Enhanced Expansion Pack \"Dark Order\")",
+        "nameEn": "Cobalion GX RR [SM8a 041/052](Enhanced Expansion Pack \"Dark Order\")",
+        "rarity": "RR",
+        "cardNumber": "041/052",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/3c32037a-d4a0-4c70-8c13-27e503a4027c.webp?size=m",
+        "priceJpy": 1600,
+        "url": "https://snkrdunk.com/en/apparels/392637"
+      },
+      {
+        "snkrdunkId": "392650",
+        "name": "Hoopa GX SR [SM8a 054/052](Enhanced Expansion Pack \"Dark Order\")",
+        "nameEn": "Hoopa GX SR [SM8a 054/052](Enhanced Expansion Pack \"Dark Order\")",
+        "rarity": "SR",
+        "cardNumber": "054/052",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/4a829edd-b6ef-4f88-b493-e7cd4bc8b66f.webp?size=m",
+        "priceJpy": 1111,
+        "url": "https://snkrdunk.com/en/apparels/392650"
+      },
+      {
+        "snkrdunkId": "392599",
+        "name": "Zapdos R [SM8a 003/052](Enhanced Expansion Pack \"Dark Order\")",
+        "nameEn": "Zapdos R [SM8a 003/052](Enhanced Expansion Pack \"Dark Order\")",
+        "rarity": "R",
+        "cardNumber": "003/052",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/d69146db-ba4c-4a5d-88a8-2181debfe684.webp?size=m",
+        "priceJpy": 1000,
+        "url": "https://snkrdunk.com/en/apparels/392599"
+      }
+    ]
   },
   "pokemon-snkrdunk-93001": {
     "productId": "pokemon-snkrdunk-93001",
     "setCode": "",
     "labels": [
-      "Sun & Moon Expansion Pack Forbidden Light",
-      "ポケモンカードゲーム サン&ムーン 拡張パック 禁断の光"
+      "Forbidden Light",
+      "禁断の光"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "321610",
+        "name": "Lady : Error SR [SM6 100/094](Expansion Pack \"Forbidden Light\")",
+        "nameEn": "Lady : Error SR [SM6 100/094](Expansion Pack \"Forbidden Light\")",
+        "rarity": "SR",
+        "cardNumber": "100/094",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/a62b9731-ac2e-4a43-9c20-149d6e60b636.webp?size=m",
+        "priceJpy": 1999999,
+        "url": "https://snkrdunk.com/en/apparels/321610"
+      },
+      {
+        "snkrdunkId": "105367",
+        "name": "Ultra Necrozma GX HR[SM6 107/094](Expansion Pack \"Forbidden Light\")",
+        "nameEn": "Ultra Necrozma GX HR[SM6 107/094](Expansion Pack \"Forbidden Light\")",
+        "rarity": "",
+        "cardNumber": "107/094",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/d8eba60f-56b7-4ca7-9790-21a234314c3d.webp?size=m",
+        "priceJpy": 78000,
+        "url": "https://snkrdunk.com/en/apparels/105367"
+      },
+      {
+        "snkrdunkId": "166681",
+        "name": "Eneporter UR [SM6 108/094](Expansion Pack \"Forbidden Light\")",
+        "nameEn": "Eneporter UR [SM6 108/094](Expansion Pack \"Forbidden Light\")",
+        "rarity": "UR",
+        "cardNumber": "108/094",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/384ec2b9-3e88-48b5-bca8-07717a6c2a9b.webp?size=m",
+        "priceJpy": 50000,
+        "url": "https://snkrdunk.com/en/apparels/166681"
+      },
+      {
+        "snkrdunkId": "334656",
+        "name": "Xerneas GX SR [SM6 098/094](Expansion Pack \"Forbidden Light\")",
+        "nameEn": "Xerneas GX SR [SM6 098/094](Expansion Pack \"Forbidden Light\")",
+        "rarity": "SR",
+        "cardNumber": "098/094",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/4bae421b-d41d-4ffd-be1f-2285917dcb33.webp?size=m",
+        "priceJpy": 40500,
+        "url": "https://snkrdunk.com/en/apparels/334656"
+      },
+      {
+        "snkrdunkId": "91314",
+        "name": "Yveltal GX HR[SM6 105/094](Expansion Pack \"Forbidden Light\")",
+        "nameEn": "Yveltal GX HR[SM6 105/094](Expansion Pack \"Forbidden Light\")",
+        "rarity": "",
+        "cardNumber": "105/094",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/2f3573cb-0a60-4752-b7e0-a966f8657542.webp?size=m",
+        "priceJpy": 30000,
+        "url": "https://snkrdunk.com/en/apparels/91314"
+      },
+      {
+        "snkrdunkId": "105366",
+        "name": "Mysterious Treasure UR[SM6 109/094](Expansion Pack \"Forbidden Light\")",
+        "nameEn": "Mysterious Treasure UR[SM6 109/094](Expansion Pack \"Forbidden Light\")",
+        "rarity": "UR",
+        "cardNumber": "109/094",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/481bd63b-1905-4872-80fa-e6e3dc1005fe.webp?size=m",
+        "priceJpy": 29000,
+        "url": "https://snkrdunk.com/en/apparels/105366"
+      },
+      {
+        "snkrdunkId": "334655",
+        "name": "Yveltal GX SR [SM6 097/094](Expansion Pack \"Forbidden Light\")",
+        "nameEn": "Yveltal GX SR [SM6 097/094](Expansion Pack \"Forbidden Light\")",
+        "rarity": "SR",
+        "cardNumber": "097/094",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/97ea80cd-cf21-443e-9f3e-6287094780c5.webp?size=m",
+        "priceJpy": 28000,
+        "url": "https://snkrdunk.com/en/apparels/334655"
+      },
+      {
+        "snkrdunkId": "334620",
+        "name": "Sylveon U [SM6 061/094](Expansion Pack \"Forbidden Light\")",
+        "nameEn": "Sylveon U [SM6 061/094](Expansion Pack \"Forbidden Light\")",
+        "rarity": "U",
+        "cardNumber": "061/094",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/ea4cc40a-c466-4b13-995c-a86f74d11f90.webp?size=m",
+        "priceJpy": 19000,
+        "url": "https://snkrdunk.com/en/apparels/334620"
+      },
+      {
+        "snkrdunkId": "91312",
+        "name": "Lady SR [SM6 100/094](Expansion Pack \"Forbidden Light\")",
+        "nameEn": "Lady SR [SM6 100/094](Expansion Pack \"Forbidden Light\")",
+        "rarity": "SR",
+        "cardNumber": "100/094",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/c16b0f6d-7709-4db5-8892-95590fbc0cb0.webp?size=m",
+        "priceJpy": 16000,
+        "url": "https://snkrdunk.com/en/apparels/91312"
+      },
+      {
+        "snkrdunkId": "91311",
+        "name": "Diantha SR[SM6 101/094](Expansion Pack \"Forbidden Light\")",
+        "nameEn": "Diantha SR[SM6 101/094](Expansion Pack \"Forbidden Light\")",
+        "rarity": "SR",
+        "cardNumber": "101/094",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/9654c45d-5900-4138-b6ad-e5460f832f0c.webp?size=m",
+        "priceJpy": 15800,
+        "url": "https://snkrdunk.com/en/apparels/91311"
+      },
+      {
+        "snkrdunkId": "105371",
+        "name": "Ultra Necrozma GX SR[SM6 099/094](Expansion Pack \"Forbidden Light\")",
+        "nameEn": "Ultra Necrozma GX SR[SM6 099/094](Expansion Pack \"Forbidden Light\")",
+        "rarity": "SR",
+        "cardNumber": "099/094",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/338e9464-f6b0-42c2-9402-06824460f0a2.webp?size=m",
+        "priceJpy": 11000,
+        "url": "https://snkrdunk.com/en/apparels/105371"
+      },
+      {
+        "snkrdunkId": "105368",
+        "name": "Zygarde GX HR[SM6 104/094](Expansion Pack \"Forbidden Light\")",
+        "nameEn": "Zygarde GX HR[SM6 104/094](Expansion Pack \"Forbidden Light\")",
+        "rarity": "",
+        "cardNumber": "104/094",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/783ef0b3-1179-4409-96ab-d572e3c6ddd0.webp?size=m",
+        "priceJpy": 8000,
+        "url": "https://snkrdunk.com/en/apparels/105368"
+      }
+    ]
   },
   "pokemon-snkrdunk-92999": {
     "productId": "pokemon-snkrdunk-92999",
     "setCode": "",
     "labels": [
-      "Sun & Moon Booster Pack Ultra Moon",
-      "ポケモンカードゲーム サン&ムーン 拡張パック ウルトラムーン"
+      "Ultra Moon",
+      "ウルトラムーン"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "91318",
+        "name": "Crushing Hammer UR[SM5M 076/066](Expansion Pack \"Ultra Moon\")",
+        "nameEn": "Crushing Hammer UR[SM5M 076/066](Expansion Pack \"Ultra Moon\")",
+        "rarity": "UR",
+        "cardNumber": "076/066",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/33feb419-cf95-4d93-91c6-d4f2b4564b4f.webp?size=m",
+        "priceJpy": 50000,
+        "url": "https://snkrdunk.com/en/apparels/91318"
+      },
+      {
+        "snkrdunkId": "91317",
+        "name": "Cynthia SR[SM5M 070/066](Expansion Pack \"Ultra Moon\")",
+        "nameEn": "Cynthia SR[SM5M 070/066](Expansion Pack \"Ultra Moon\")",
+        "rarity": "SR",
+        "cardNumber": "070/066",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/578037e6-7191-4798-96e9-27e34d278333.webp?size=m",
+        "priceJpy": 48000,
+        "url": "https://snkrdunk.com/en/apparels/91317"
+      },
+      {
+        "snkrdunkId": "338363",
+        "name": "Dawn Wings Necrozma GX SR [SM5M 068/066](Expansion Pack \"Ultra Moon\")",
+        "nameEn": "Dawn Wings Necrozma GX SR [SM5M 068/066](Expansion Pack \"Ultra Moon\")",
+        "rarity": "SR",
+        "cardNumber": "068/066",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/a8f0a80b-bacf-43b3-b0b4-be381d822cd0.webp?size=m",
+        "priceJpy": 30000,
+        "url": "https://snkrdunk.com/en/apparels/338363"
+      },
+      {
+        "snkrdunkId": "105394",
+        "name": "Volkner SR[SM5M 071/066](Expansion Pack \"Ultra Moon\")",
+        "nameEn": "Volkner SR[SM5M 071/066](Expansion Pack \"Ultra Moon\")",
+        "rarity": "SR",
+        "cardNumber": "071/066",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/a61b72bb-cf7f-47c1-849f-19dbaafdaea3.webp?size=m",
+        "priceJpy": 12000,
+        "url": "https://snkrdunk.com/en/apparels/105394"
+      },
+      {
+        "snkrdunkId": "105393",
+        "name": "Glaceon GX HR[SM5M 073/066](Expansion Pack \"Ultra Moon\")",
+        "nameEn": "Glaceon GX HR[SM5M 073/066](Expansion Pack \"Ultra Moon\")",
+        "rarity": "",
+        "cardNumber": "073/066",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/71f990dd-e8cd-44d5-9885-4e27f590633a.webp?size=m",
+        "priceJpy": 8000,
+        "url": "https://snkrdunk.com/en/apparels/105393"
+      },
+      {
+        "snkrdunkId": "105395",
+        "name": "Glaceon GX SR[SM5M 067/066](Expansion Pack \"Ultra Moon\")",
+        "nameEn": "Glaceon GX SR[SM5M 067/066](Expansion Pack \"Ultra Moon\")",
+        "rarity": "SR",
+        "cardNumber": "067/066",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/0f4f9159-94df-416a-9cef-d7164af09c4e.webp?size=m",
+        "priceJpy": 7000,
+        "url": "https://snkrdunk.com/en/apparels/105395"
+      },
+      {
+        "snkrdunkId": "91316",
+        "name": "Palkia GX HR[SM5M 075/066](Expansion Pack \"Ultra Moon\")",
+        "nameEn": "Palkia GX HR[SM5M 075/066](Expansion Pack \"Ultra Moon\")",
+        "rarity": "",
+        "cardNumber": "075/066",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/0605fb7c-4a5f-492c-b7b1-28f8d5eab1ea.webp?size=m",
+        "priceJpy": 6000,
+        "url": "https://snkrdunk.com/en/apparels/91316"
+      },
+      {
+        "snkrdunkId": "338341",
+        "name": "Palkia GX RR [SM5M 045/066](Expansion Pack \"Ultra Moon\")",
+        "nameEn": "Palkia GX RR [SM5M 045/066](Expansion Pack \"Ultra Moon\")",
+        "rarity": "RR",
+        "cardNumber": "045/066",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/9ff77e09-9d68-4972-9787-bfbf23bd21ee.webp?size=m",
+        "priceJpy": 4500,
+        "url": "https://snkrdunk.com/en/apparels/338341"
+      },
+      {
+        "snkrdunkId": "338326",
+        "name": "Giratina PR [SM5M 030/066](Expansion Pack \"Ultra Moon\")",
+        "nameEn": "Giratina PR [SM5M 030/066](Expansion Pack \"Ultra Moon\")",
+        "rarity": "PR",
+        "cardNumber": "030/066",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/80a0e4f1-276a-465b-befe-9e29067eefbd.webp?size=m",
+        "priceJpy": 3999,
+        "url": "https://snkrdunk.com/en/apparels/338326"
+      },
+      {
+        "snkrdunkId": "338328",
+        "name": "Lunala PR [SM5M 032/066](Expansion Pack \"Ultra Moon\")",
+        "nameEn": "Lunala PR [SM5M 032/066](Expansion Pack \"Ultra Moon\")",
+        "rarity": "PR",
+        "cardNumber": "032/066",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/41771824-bb4a-442a-9cd9-2e34454a323a.webp?size=m",
+        "priceJpy": 3000,
+        "url": "https://snkrdunk.com/en/apparels/338328"
+      },
+      {
+        "snkrdunkId": "338340",
+        "name": "Garchomp R [SM5M 044/066](Expansion Pack \"Ultra Moon\")",
+        "nameEn": "Garchomp R [SM5M 044/066](Expansion Pack \"Ultra Moon\")",
+        "rarity": "R",
+        "cardNumber": "044/066",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/f7f24f03-ef69-4b88-a6d9-63089f03b5ff.webp?size=m",
+        "priceJpy": 3000,
+        "url": "https://snkrdunk.com/en/apparels/338340"
+      },
+      {
+        "snkrdunkId": "338302",
+        "name": "Empoleon R [SM5M 006/066](Expansion Pack \"Ultra Moon\")",
+        "nameEn": "Empoleon R [SM5M 006/066](Expansion Pack \"Ultra Moon\")",
+        "rarity": "R",
+        "cardNumber": "006/066",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/bacc4acf-1bcc-4c29-895d-8661c8d3587b.webp?size=m",
+        "priceJpy": 3000,
+        "url": "https://snkrdunk.com/en/apparels/338302"
+      }
+    ]
   },
   "pokemon-snkrdunk-92243": {
     "productId": "pokemon-snkrdunk-92243",
     "setCode": "",
     "labels": [
-      "Sword & Shield Enhanced Expansion Pack VMAX Rising",
-      "ポケモンカードゲーム ソード&シールド 強化拡張パック VMAXライジング"
+      "VMAX Rising",
+      "VMAXライジング"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "91203",
+        "name": "Sonia SR[S1a 077/070](Enhanced Expansion Pack \"VMAX Rising\")",
+        "nameEn": "Sonia SR[S1a 077/070](Enhanced Expansion Pack \"VMAX Rising\")",
+        "rarity": "SR",
+        "cardNumber": "077/070",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/ef69b005-6b32-48c0-8247-d3285a05020d.webp?size=m",
+        "priceJpy": 14000,
+        "url": "https://snkrdunk.com/en/apparels/91203"
+      },
+      {
+        "snkrdunkId": "91204",
+        "name": "Sonia HR[S1a 082/070](Enhanced Expansion Pack \"VMAX Rising\")",
+        "nameEn": "Sonia HR[S1a 082/070](Enhanced Expansion Pack \"VMAX Rising\")",
+        "rarity": "",
+        "cardNumber": "082/070",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/accd865a-caaf-49fc-8c73-52bbfed2401c.webp?size=m",
+        "priceJpy": 13000,
+        "url": "https://snkrdunk.com/en/apparels/91204"
+      },
+      {
+        "snkrdunkId": "102300",
+        "name": "Twin Energy UR[S1a 086/070](Enhanced Expansion Pack \"VMAX Rising\")",
+        "nameEn": "Twin Energy UR[S1a 086/070](Enhanced Expansion Pack \"VMAX Rising\")",
+        "rarity": "UR",
+        "cardNumber": "086/070",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/db0be9e8-f594-4cc0-8dc9-dd11edc52a54.webp?size=m",
+        "priceJpy": 10000,
+        "url": "https://snkrdunk.com/en/apparels/102300"
+      },
+      {
+        "snkrdunkId": "102302",
+        "name": "Frosmoth UR[S1a 084/070](Enhanced Expansion Pack \"VMAX Rising\")",
+        "nameEn": "Frosmoth UR[S1a 084/070](Enhanced Expansion Pack \"VMAX Rising\")",
+        "rarity": "UR",
+        "cardNumber": "084/070",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/a5110ecf-159e-4e9b-a94c-f8c2b7bcb07a.webp?size=m",
+        "priceJpy": 5000,
+        "url": "https://snkrdunk.com/en/apparels/102302"
+      },
+      {
+        "snkrdunkId": "102305",
+        "name": "Inteleon VMAX HR[S1a 081/070](Enhanced Expansion Pack \"VMAX Rising\")",
+        "nameEn": "Inteleon VMAX HR[S1a 081/070](Enhanced Expansion Pack \"VMAX Rising\")",
+        "rarity": "",
+        "cardNumber": "081/070",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/c5a77e4a-c5ae-4b50-b964-9d6335b5cd14.webp?size=m",
+        "priceJpy": 4980,
+        "url": "https://snkrdunk.com/en/apparels/102305"
+      },
+      {
+        "snkrdunkId": "126506",
+        "name": "Milo SR[S1a 078/070](Enhanced Expansion Pack \"VMAX Rising\")",
+        "nameEn": "Milo SR[S1a 078/070](Enhanced Expansion Pack \"VMAX Rising\")",
+        "rarity": "SR",
+        "cardNumber": "078/070",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/e23df4a5-02d9-480a-ae4c-c901c1437bd4.webp?size=m",
+        "priceJpy": 4000,
+        "url": "https://snkrdunk.com/en/apparels/126506"
+      },
+      {
+        "snkrdunkId": "145458",
+        "name": "Inteleon VMAX RRR[S1a 023/070](Enhanced Expansion Pack \"VMAX Rising\")",
+        "nameEn": "Inteleon VMAX RRR[S1a 023/070](Enhanced Expansion Pack \"VMAX Rising\")",
+        "rarity": "RRR",
+        "cardNumber": "023/070",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/b938a10e-1d47-443e-88b9-624f77f3b823.webp?size=m",
+        "priceJpy": 3000,
+        "url": "https://snkrdunk.com/en/apparels/145458"
+      },
+      {
+        "snkrdunkId": "145478",
+        "name": "Galarian Sirfetch'd R[S1a 043/070](Enhanced Expansion Pack \"VMAX Rising\")",
+        "nameEn": "Galarian Sirfetch'd R[S1a 043/070](Enhanced Expansion Pack \"VMAX Rising\")",
+        "rarity": "R",
+        "cardNumber": "043/070",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/c90161a8-710f-4536-8917-01f604d7f743.webp?size=m",
+        "priceJpy": 2000,
+        "url": "https://snkrdunk.com/en/apparels/145478"
+      },
+      {
+        "snkrdunkId": "145455",
+        "name": "Magikarp C[S1a 020/070](Enhanced Expansion Pack \"VMAX Rising\")",
+        "nameEn": "Magikarp C[S1a 020/070](Enhanced Expansion Pack \"VMAX Rising\")",
+        "rarity": "C",
+        "cardNumber": "020/070",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/793f48c1-e91f-49f4-86da-a78712f40f19.webp?size=m",
+        "priceJpy": 1000,
+        "url": "https://snkrdunk.com/en/apparels/145455"
+      },
+      {
+        "snkrdunkId": "145466",
+        "name": "Boltund V RR[S1a 031/070](Enhanced Expansion Pack \"VMAX Rising\")",
+        "nameEn": "Boltund V RR[S1a 031/070](Enhanced Expansion Pack \"VMAX Rising\")",
+        "rarity": "RR",
+        "cardNumber": "031/070",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/9e27b01e-d124-4faf-9c9c-4afc36aa8738.webp?size=m",
+        "priceJpy": 1000,
+        "url": "https://snkrdunk.com/en/apparels/145466"
+      }
+    ]
   },
   "pokemon-snkrdunk-92234": {
     "productId": "pokemon-snkrdunk-92234",
     "setCode": "",
     "labels": [
-      "Sword&Shield Expansion Pack Blazing Walker",
-      "ポケモンカードゲーム ソード&シールド 拡張パック 爆炎ウォーカー"
+      "Blazing Walker",
+      "爆炎ウォーカー"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -5993,10 +9709,10 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "pokemon-snkrdunk-91534",
     "setCode": "",
     "labels": [
-      "Sun&Moon Enhanced Expansion Pack Shines Legend",
-      "ポケモンカードゲーム サン&ムーン 強化拡張パック ひかる伝説"
+      "Shines Legend",
+      "ひかる伝説"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -6004,18 +9720,152 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "pokemon-snkrdunk-93093",
     "setCode": "",
     "labels": [
-      "Sun & Moon Expansion Pack Thunderclap Spark",
-      "ポケモンカードゲーム サン&ムーン 拡張パック 迅雷スパーク"
+      "Thunderclap Spark",
+      "迅雷スパーク"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "105316",
+        "name": "Zeraora GX HR[SM7a 069/060](Enhanced Expansion Pack \"Thunderclap Spark\")",
+        "nameEn": "Zeraora GX HR[SM7a 069/060](Enhanced Expansion Pack \"Thunderclap Spark\")",
+        "rarity": "",
+        "cardNumber": "069/060",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/ea27e488-40f4-462f-8ca1-61390f8bbab0.webp?size=m",
+        "priceJpy": 15000,
+        "url": "https://snkrdunk.com/en/apparels/105316"
+      },
+      {
+        "snkrdunkId": "334802",
+        "name": "Electropower U [SM7a 046/060](Enhanced Expansion Pack \"Thunderclap Spark\")",
+        "nameEn": "Electropower U [SM7a 046/060](Enhanced Expansion Pack \"Thunderclap Spark\")",
+        "rarity": "U",
+        "cardNumber": "046/060",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/8ea9a363-b89c-4113-9fe0-5fdd49fd32ec.webp?size=m",
+        "priceJpy": 14999,
+        "url": "https://snkrdunk.com/en/apparels/334802"
+      },
+      {
+        "snkrdunkId": "334811",
+        "name": "Kahili C [SM7a 055/060](Enhanced Expansion Pack \"Thunderclap Spark\")",
+        "nameEn": "Kahili C [SM7a 055/060](Enhanced Expansion Pack \"Thunderclap Spark\")",
+        "rarity": "C",
+        "cardNumber": "055/060",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/677ebc00-55a9-4c09-8bb5-c49874ee058f.webp?size=m",
+        "priceJpy": 8000,
+        "url": "https://snkrdunk.com/en/apparels/334811"
+      },
+      {
+        "snkrdunkId": "334819",
+        "name": "Zeraora GX SR [SM7a 063/060](Enhanced Expansion Pack \"Thunderclap Spark\")",
+        "nameEn": "Zeraora GX SR [SM7a 063/060](Enhanced Expansion Pack \"Thunderclap Spark\")",
+        "rarity": "SR",
+        "cardNumber": "063/060",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/6968302d-fd09-4f92-ad59-5c6f52f6df03.webp?size=m",
+        "priceJpy": 6500,
+        "url": "https://snkrdunk.com/en/apparels/334819"
+      },
+      {
+        "snkrdunkId": "112821",
+        "name": "Judge SR[SM7a 066/060](Expansion Pack\"Thunderclap Spark\")",
+        "nameEn": "Judge SR[SM7a 066/060](Expansion Pack\"Thunderclap Spark\")",
+        "rarity": "SR",
+        "cardNumber": "066/060",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/b3282715-e32e-48aa-b0d7-9c03502e9e6c.webp?size=m",
+        "priceJpy": 4580,
+        "url": "https://snkrdunk.com/en/apparels/112821"
+      },
+      {
+        "snkrdunkId": "334774",
+        "name": "Suicune R [SM7a 018/060](Enhanced Expansion Pack \"Thunderclap Spark\")",
+        "nameEn": "Suicune R [SM7a 018/060](Enhanced Expansion Pack \"Thunderclap Spark\")",
+        "rarity": "R",
+        "cardNumber": "018/060",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/43234657-8839-44ce-9b10-139be42127c2.webp?size=m",
+        "priceJpy": 4400,
+        "url": "https://snkrdunk.com/en/apparels/334774"
+      },
+      {
+        "snkrdunkId": "334793",
+        "name": "Steelix U [SM7a 037/060](Enhanced Expansion Pack \"Thunderclap Spark\")",
+        "nameEn": "Steelix U [SM7a 037/060](Enhanced Expansion Pack \"Thunderclap Spark\")",
+        "rarity": "U",
+        "cardNumber": "037/060",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/35f19109-87e9-4a99-bf16-c5ed4925fd32.webp?size=m",
+        "priceJpy": 3000,
+        "url": "https://snkrdunk.com/en/apparels/334793"
+      },
+      {
+        "snkrdunkId": "334788",
+        "name": "Tapu Koko R [SM7a 032/060](Enhanced Expansion Pack \"Thunderclap Spark\")",
+        "nameEn": "Tapu Koko R [SM7a 032/060](Enhanced Expansion Pack \"Thunderclap Spark\")",
+        "rarity": "R",
+        "cardNumber": "032/060",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/e4b8fd2a-892a-427b-9d4e-edb7b833aaa8.webp?size=m",
+        "priceJpy": 2200,
+        "url": "https://snkrdunk.com/en/apparels/334788"
+      },
+      {
+        "snkrdunkId": "334796",
+        "name": "Cobalion R [SM7a 040/060](Enhanced Expansion Pack \"Thunderclap Spark\")",
+        "nameEn": "Cobalion R [SM7a 040/060](Enhanced Expansion Pack \"Thunderclap Spark\")",
+        "rarity": "R",
+        "cardNumber": "040/060",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/ea59b18f-fe4e-4dcb-8d86-6140893d54a0.webp?size=m",
+        "priceJpy": 2000,
+        "url": "https://snkrdunk.com/en/apparels/334796"
+      },
+      {
+        "snkrdunkId": "334777",
+        "name": "White Kyurem R [SM7a 021/060](Enhanced Expansion Pack \"Thunderclap Spark\")",
+        "nameEn": "White Kyurem R [SM7a 021/060](Enhanced Expansion Pack \"Thunderclap Spark\")",
+        "rarity": "R",
+        "cardNumber": "021/060",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/288c1a5a-00fe-4f48-ad0e-63679f810ece.webp?size=m",
+        "priceJpy": 2000,
+        "url": "https://snkrdunk.com/en/apparels/334777"
+      },
+      {
+        "snkrdunkId": "334773",
+        "name": "Lapras U [SM7a 017/060](Enhanced Expansion Pack \"Thunderclap Spark\")",
+        "nameEn": "Lapras U [SM7a 017/060](Enhanced Expansion Pack \"Thunderclap Spark\")",
+        "rarity": "U",
+        "cardNumber": "017/060",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/85d0aaa2-622a-436a-b328-f52a52ac3f25.webp?size=m",
+        "priceJpy": 2000,
+        "url": "https://snkrdunk.com/en/apparels/334773"
+      },
+      {
+        "snkrdunkId": "334799",
+        "name": "Ditto PR [SM7a 043/060](Enhanced Expansion Pack \"Thunderclap Spark\")",
+        "nameEn": "Ditto PR [SM7a 043/060](Enhanced Expansion Pack \"Thunderclap Spark\")",
+        "rarity": "PR",
+        "cardNumber": "043/060",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/be7ff29e-5635-4928-ad32-5e899f44c61c.webp?size=m",
+        "priceJpy": 1800,
+        "url": "https://snkrdunk.com/en/apparels/334799"
+      }
+    ]
   },
   "pokemon-snkrdunk-93084": {
     "productId": "pokemon-snkrdunk-93084",
     "setCode": "",
     "labels": [
-      "Champion Road"
+      "Champion Road",
+      "チャンピオンロード"
     ],
     "updatedAt": "2026-09-26T12:21:05.632Z",
     "source": "SNKRDUNK",
@@ -6158,31 +10008,297 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "pokemon-snkrdunk-93045",
     "setCode": "",
     "labels": [
-      "Sun & Moon Expansion Pack Dragon Storm",
-      "ポケモンカードゲーム サン&ムーン 強化拡張パック ドラゴンストーム"
+      "Dragon Storm",
+      "ドラゴンストーム"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "105360",
+        "name": "Kingdra GX HR[SM6a 061/053](Enhanced Expansion Pack \"Dragon Storm\")",
+        "nameEn": "Kingdra GX HR[SM6a 061/053](Enhanced Expansion Pack \"Dragon Storm\")",
+        "rarity": "",
+        "cardNumber": "061/053",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/6ac69e8a-08cf-48e7-9158-197c35994c3b.webp?size=m",
+        "priceJpy": 35000,
+        "url": "https://snkrdunk.com/en/apparels/105360"
+      },
+      {
+        "snkrdunkId": "91310",
+        "name": "Dragonite GX HR[SM6a 062/053](Enhanced Expansion Pack \"Dragon Storm\")",
+        "nameEn": "Dragonite GX HR[SM6a 062/053](Enhanced Expansion Pack \"Dragon Storm\")",
+        "rarity": "",
+        "cardNumber": "062/053",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/7284aea9-0ff3-41be-801b-490ac611b592.webp?size=m",
+        "priceJpy": 23000,
+        "url": "https://snkrdunk.com/en/apparels/91310"
+      },
+      {
+        "snkrdunkId": "91309",
+        "name": "Zinnia SR[SM6a 059/053](Enhanced Expansion Pack \"Dragon Storm\")",
+        "nameEn": "Zinnia SR[SM6a 059/053](Enhanced Expansion Pack \"Dragon Storm\")",
+        "rarity": "SR",
+        "cardNumber": "059/053",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/0cac1626-8143-4a76-96f6-68cc92ae6a11.webp?size=m",
+        "priceJpy": 18999,
+        "url": "https://snkrdunk.com/en/apparels/91309"
+      },
+      {
+        "snkrdunkId": "91308",
+        "name": "Reshiram GX HR[SM6a 060/053](Enhanced Expansion Pack \"Dragon Storm\")",
+        "nameEn": "Reshiram GX HR[SM6a 060/053](Enhanced Expansion Pack \"Dragon Storm\")",
+        "rarity": "",
+        "cardNumber": "060/053",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/5d2e11be-ebbe-422b-b2fd-22866ce3670e.webp?size=m",
+        "priceJpy": 15000,
+        "url": "https://snkrdunk.com/en/apparels/91308"
+      },
+      {
+        "snkrdunkId": "391681",
+        "name": "Reshiram GX RR [SM6a 008/053](Enhanced Expansion Pack \"Dragon Storm\")",
+        "nameEn": "Reshiram GX RR [SM6a 008/053](Enhanced Expansion Pack \"Dragon Storm\")",
+        "rarity": "RR",
+        "cardNumber": "008/053",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/77a4df55-dca4-4d7b-8beb-1d60edcc899d.webp?size=m",
+        "priceJpy": 15000,
+        "url": "https://snkrdunk.com/en/apparels/391681"
+      },
+      {
+        "snkrdunkId": "105358",
+        "name": "Reshiram GX SR[SM6a 054/053](Enhanced Expansion Pack \"Dragon Storm\")",
+        "nameEn": "Reshiram GX SR[SM6a 054/053](Enhanced Expansion Pack \"Dragon Storm\")",
+        "rarity": "SR",
+        "cardNumber": "054/053",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/b38a69bd-dca2-43cd-bd79-618f49e00c22.webp?size=m",
+        "priceJpy": 10999,
+        "url": "https://snkrdunk.com/en/apparels/105358"
+      },
+      {
+        "snkrdunkId": "391706",
+        "name": "Zekrom R [SM6a 033/053](Enhanced Expansion Pack \"Dragon Storm\")",
+        "nameEn": "Zekrom R [SM6a 033/053](Enhanced Expansion Pack \"Dragon Storm\")",
+        "rarity": "R",
+        "cardNumber": "033/053",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/628b3a07-7eb2-4059-bc8b-27d4ca7597a5.webp?size=m",
+        "priceJpy": 8000,
+        "url": "https://snkrdunk.com/en/apparels/391706"
+      },
+      {
+        "snkrdunkId": "391727",
+        "name": "Kingdra GX SR [SM6a 055/053](Enhanced Expansion Pack \"Dragon Storm\")",
+        "nameEn": "Kingdra GX SR [SM6a 055/053](Enhanced Expansion Pack \"Dragon Storm\")",
+        "rarity": "SR",
+        "cardNumber": "055/053",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/57f4e6d3-4af4-4251-be4f-36cd7d48c021.webp?size=m",
+        "priceJpy": 5500,
+        "url": "https://snkrdunk.com/en/apparels/391727"
+      },
+      {
+        "snkrdunkId": "391701",
+        "name": "Dragonite GX RR [SM6a 028/053](Enhanced Expansion Pack \"Dragon Storm\")",
+        "nameEn": "Dragonite GX RR [SM6a 028/053](Enhanced Expansion Pack \"Dragon Storm\")",
+        "rarity": "RR",
+        "cardNumber": "028/053",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/23656ef8-61ad-4d72-91d8-4e0034b72dec.webp?size=m",
+        "priceJpy": 5000,
+        "url": "https://snkrdunk.com/en/apparels/391701"
+      },
+      {
+        "snkrdunkId": "105361",
+        "name": "Dragonite GX SR[SM6a 056/053](Enhanced Expansion Pack \"Dragon Storm\")",
+        "nameEn": "Dragonite GX SR[SM6a 056/053](Enhanced Expansion Pack \"Dragon Storm\")",
+        "rarity": "SR",
+        "cardNumber": "056/053",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/b9eff8e3-07ce-4ab3-8df7-e91251bb778b.webp?size=m",
+        "priceJpy": 4900,
+        "url": "https://snkrdunk.com/en/apparels/105361"
+      },
+      {
+        "snkrdunkId": "391689",
+        "name": "Gyarados R [SM6a 016/053](Enhanced Expansion Pack \"Dragon Storm\")",
+        "nameEn": "Gyarados R [SM6a 016/053](Enhanced Expansion Pack \"Dragon Storm\")",
+        "rarity": "R",
+        "cardNumber": "016/053",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/2b1bf388-02cd-4ebc-a3e7-50a6458d42cf.webp?size=m",
+        "priceJpy": 3000,
+        "url": "https://snkrdunk.com/en/apparels/391689"
+      },
+      {
+        "snkrdunkId": "391677",
+        "name": "Victini PR [SM6a 004/053](Enhanced Expansion Pack \"Dragon Storm\")",
+        "nameEn": "Victini PR [SM6a 004/053](Enhanced Expansion Pack \"Dragon Storm\")",
+        "rarity": "PR",
+        "cardNumber": "004/053",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/46523e75-3521-4648-92d1-c1400e6a2bf8.webp?size=m",
+        "priceJpy": 3000,
+        "url": "https://snkrdunk.com/en/apparels/391677"
+      }
+    ]
   },
   "pokemon-snkrdunk-92996": {
     "productId": "pokemon-snkrdunk-92996",
     "setCode": "",
     "labels": [
-      "Sun & Moon Enhanced Expansion Pack Ultra Force",
-      "ポケモンカードゲーム サン&ムーン 強化拡張パック ウルトラフォース"
+      "Ultra Force",
+      "ウルトラフォース"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "91315",
+        "name": "Dialga GX HR[SM5+ 060/050](Enhanced Expansion Pack \"Ultra Force\")",
+        "nameEn": "Dialga GX HR[SM5+ 060/050](Enhanced Expansion Pack \"Ultra Force\")",
+        "rarity": "",
+        "cardNumber": "060/050",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/cbcc8747-f264-4f1a-b087-e602c8320845.webp?size=m",
+        "priceJpy": 99980,
+        "url": "https://snkrdunk.com/en/apparels/91315"
+      },
+      {
+        "snkrdunkId": "338377",
+        "name": "Piplup [SM5+ 008/050](Enhanced Expansion Pack \"Ultra Force\")",
+        "nameEn": "Piplup [SM5+ 008/050](Enhanced Expansion Pack \"Ultra Force\")",
+        "rarity": "",
+        "cardNumber": "008/050",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/1b5a3dc8-f19b-4d14-b316-970e217e819d.webp?size=m",
+        "priceJpy": 89999,
+        "url": "https://snkrdunk.com/en/apparels/338377"
+      },
+      {
+        "snkrdunkId": "105380",
+        "name": "Metal Frying Pan UR[SM5+ 063/050](Enhanced Expansion Pack \"Ultra Force\")",
+        "nameEn": "Metal Frying Pan UR[SM5+ 063/050](Enhanced Expansion Pack \"Ultra Force\")",
+        "rarity": "UR",
+        "cardNumber": "063/050",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/cd364e68-3675-437f-ad16-624a4dd88948.webp?size=m",
+        "priceJpy": 48000,
+        "url": "https://snkrdunk.com/en/apparels/105380"
+      },
+      {
+        "snkrdunkId": "105384",
+        "name": "Palkia GX SR[SM5+ 051/050](Enhanced Expansion Pack \"Ultra Force\")",
+        "nameEn": "Palkia GX SR[SM5+ 051/050](Enhanced Expansion Pack \"Ultra Force\")",
+        "rarity": "SR",
+        "cardNumber": "051/050",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/0d9153f8-352d-4a23-8cc2-3742f48aa020.webp?size=m",
+        "priceJpy": 35000,
+        "url": "https://snkrdunk.com/en/apparels/105384"
+      },
+      {
+        "snkrdunkId": "93104",
+        "name": "Lucario GX HR[SM5+ 059/050](Enhanced Expansion Pack \"Ultra Force\")",
+        "nameEn": "Lucario GX HR[SM5+ 059/050](Enhanced Expansion Pack \"Ultra Force\")",
+        "rarity": "",
+        "cardNumber": "059/050",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/abd557b1-48c4-47f6-94a2-47065814f8c4.webp?size=m",
+        "priceJpy": 22222,
+        "url": "https://snkrdunk.com/en/apparels/93104"
+      },
+      {
+        "snkrdunkId": "93103",
+        "name": "Palkia GX HR[SM5+ 057/050](Enhanced Expansion Pack \"Ultra Force\")",
+        "nameEn": "Palkia GX HR[SM5+ 057/050](Enhanced Expansion Pack \"Ultra Force\")",
+        "rarity": "",
+        "cardNumber": "057/050",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/41a4f0aa-7423-4b2a-9def-a4af80712865.webp?size=m",
+        "priceJpy": 17500,
+        "url": "https://snkrdunk.com/en/apparels/93103"
+      },
+      {
+        "snkrdunkId": "338404",
+        "name": "Dialga GX RR [SM5+ 035/050](Enhanced Expansion Pack \"Ultra Force\")",
+        "nameEn": "Dialga GX RR [SM5+ 035/050](Enhanced Expansion Pack \"Ultra Force\")",
+        "rarity": "RR",
+        "cardNumber": "035/050",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/1d972c9f-9ba4-4c41-a44f-28268fd8cff7.webp?size=m",
+        "priceJpy": 17000,
+        "url": "https://snkrdunk.com/en/apparels/338404"
+      },
+      {
+        "snkrdunkId": "105382",
+        "name": "Dialga GX SR[SM5+ 054/050](Enhanced Expansion Pack \"Ultra Force\")",
+        "nameEn": "Dialga GX SR[SM5+ 054/050](Enhanced Expansion Pack \"Ultra Force\")",
+        "rarity": "SR",
+        "cardNumber": "054/050",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/bebacb6b-61a0-47e7-a502-ea597b77141b.webp?size=m",
+        "priceJpy": 12000,
+        "url": "https://snkrdunk.com/en/apparels/105382"
+      },
+      {
+        "snkrdunkId": "338421",
+        "name": "Lucario GX SR [SM5+ 053/050](Enhanced Expansion Pack \"Ultra Force\")",
+        "nameEn": "Lucario GX SR [SM5+ 053/050](Enhanced Expansion Pack \"Ultra Force\")",
+        "rarity": "SR",
+        "cardNumber": "053/050",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/6a98af9d-9a6b-4c1e-bd4f-7a4ef6a8d053.webp?size=m",
+        "priceJpy": 9000,
+        "url": "https://snkrdunk.com/en/apparels/338421"
+      },
+      {
+        "snkrdunkId": "105381",
+        "name": "Ultra Recon Squad SR[SM5+ 055/050](Enhanced Expansion Pack \"Ultra Force\")",
+        "nameEn": "Ultra Recon Squad SR[SM5+ 055/050](Enhanced Expansion Pack \"Ultra Force\")",
+        "rarity": "SR",
+        "cardNumber": "055/050",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/f6b82bf4-34fd-4418-a9dc-4c1dfefe7ad1.webp?size=m",
+        "priceJpy": 7000,
+        "url": "https://snkrdunk.com/en/apparels/105381"
+      },
+      {
+        "snkrdunkId": "105383",
+        "name": "Naganadel GX HR[SM5+ 058/050](Enhanced Expansion Pack \"Ultra Force\")",
+        "nameEn": "Naganadel GX HR[SM5+ 058/050](Enhanced Expansion Pack \"Ultra Force\")",
+        "rarity": "",
+        "cardNumber": "058/050",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/a73ba8a3-9a71-4a3f-93f4-cb8a4335b4da.webp?size=m",
+        "priceJpy": 5999,
+        "url": "https://snkrdunk.com/en/apparels/105383"
+      },
+      {
+        "snkrdunkId": "105385",
+        "name": "Wake SR[SM5+ 056/050](Enhanced Expansion Pack \"Ultra Force\")",
+        "nameEn": "Wake SR[SM5+ 056/050](Enhanced Expansion Pack \"Ultra Force\")",
+        "rarity": "SR",
+        "cardNumber": "056/050",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/38c5cacb-d57c-4478-8e00-10f5c3e70bca.webp?size=m",
+        "priceJpy": 3000,
+        "url": "https://snkrdunk.com/en/apparels/105385"
+      }
+    ]
   },
   "pokemon-snkrdunk-92784": {
     "productId": "pokemon-snkrdunk-92784",
     "setCode": "",
     "labels": [
-      "ポケモンカードゲーム サン&ムーン 強化拡張パック サン&ムーン"
+      "サン&ムーン"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -6190,10 +10306,10 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "pokemon-snkrdunk-91695",
     "setCode": "",
     "labels": [
-      "Sun&Moon Enhanced Expansion Pack New Be's Test",
-      "ポケモンカードゲーム サン&ムーン 強化拡張パック 新たなる試練の向こう"
+      "New Be's Test",
+      "新たなる試練の向こう"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -6348,7 +10464,7 @@ export const COLLECTION_TOP_CARDS = {
       "CARRYING ON HIS WILL",
       "受け継がれる意志"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
       {
@@ -6357,21 +10473,10 @@ export const COLLECTION_TOP_CARDS = {
         "nameEn": "Monkey.D.Luffy SEC-RSP (Red Comic Parallel) [OP13-118](Booster Pack \"CARRYING ON HIS WILL\")",
         "rarity": "SEC",
         "cardNumber": "OP13-118",
-        "setCode": "",
+        "setCode": "OP13",
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/eef9e1c9-3da8-4a14-bf03-c698b49cd588.webp?size=m",
-        "priceJpy": 1700000,
+        "priceJpy": 1500000,
         "url": "https://snkrdunk.com/en/apparels/676003"
-      },
-      {
-        "snkrdunkId": "676005",
-        "name": "Portgas.D.Ace SEC-RSP (Red Comic Parallel) [OP13-119](Booster Pack \"CARRYING ON HIS WILL\")",
-        "nameEn": "Portgas.D.Ace SEC-RSP (Red Comic Parallel) [OP13-119](Booster Pack \"CARRYING ON HIS WILL\")",
-        "rarity": "SEC",
-        "cardNumber": "OP13-119",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/6dd68912-aee9-447d-b1e9-5299a6989cfe.webp?size=m",
-        "priceJpy": 654321,
-        "url": "https://snkrdunk.com/en/apparels/676005"
       },
       {
         "snkrdunkId": "676007",
@@ -6385,6 +10490,17 @@ export const COLLECTION_TOP_CARDS = {
         "url": "https://snkrdunk.com/en/apparels/676007"
       },
       {
+        "snkrdunkId": "676005",
+        "name": "Portgas.D.Ace SEC-RSP (Red Comic Parallel) [OP13-119](Booster Pack \"CARRYING ON HIS WILL\")",
+        "nameEn": "Portgas.D.Ace SEC-RSP (Red Comic Parallel) [OP13-119](Booster Pack \"CARRYING ON HIS WILL\")",
+        "rarity": "SEC",
+        "cardNumber": "OP13-119",
+        "setCode": "OP13",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/6dd68912-aee9-447d-b1e9-5299a6989cfe.webp?size=m",
+        "priceJpy": 400000,
+        "url": "https://snkrdunk.com/en/apparels/676005"
+      },
+      {
         "snkrdunkId": "676002",
         "name": "Monkey.D.Luffy SEC-SP (Comic Parallel) [OP13-118](Booster Pack \"CARRYING ON HIS WILL\")",
         "nameEn": "Monkey.D.Luffy SEC-SP (Comic Parallel) [OP13-118](Booster Pack \"CARRYING ON HIS WILL\")",
@@ -6396,17 +10512,6 @@ export const COLLECTION_TOP_CARDS = {
         "url": "https://snkrdunk.com/en/apparels/676002"
       },
       {
-        "snkrdunkId": "718301",
-        "name": "Boa Hancock R-P [OP13-051] [EN](Booster Pack \"CARRYING ON HIS WILL\")",
-        "nameEn": "Boa Hancock R-P [OP13-051] [EN](Booster Pack \"CARRYING ON HIS WILL\")",
-        "rarity": "P",
-        "cardNumber": "OP13-051",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/4abeaa84-9adc-412e-a138-23b1e2a95568.webp?size=m",
-        "priceJpy": 99999,
-        "url": "https://snkrdunk.com/en/apparels/718301"
-      },
-      {
         "snkrdunkId": "676004",
         "name": "Portgas.D.Ace SEC-SP (Comic Parallel) [OP13-119](Booster Pack \"CARRYING ON HIS WILL\")",
         "nameEn": "Portgas.D.Ace SEC-SP (Comic Parallel) [OP13-119](Booster Pack \"CARRYING ON HIS WILL\")",
@@ -6416,17 +10521,6 @@ export const COLLECTION_TOP_CARDS = {
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/9f702fbc-987f-4aa0-89f2-eae526731694.webp?size=m",
         "priceJpy": 85000,
         "url": "https://snkrdunk.com/en/apparels/676004"
-      },
-      {
-        "snkrdunkId": "718239",
-        "name": "Monkey.D.Luffy UC-TR [OP11-058] [EN](Booster Pack \"CARRYING ON HIS WILL\")",
-        "nameEn": "Monkey.D.Luffy UC-TR [OP11-058] [EN](Booster Pack \"CARRYING ON HIS WILL\")",
-        "rarity": "",
-        "cardNumber": "OP11-058",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/d5101d53-99ef-40d1-ab8d-c67ec95b4ac5.webp?size=m",
-        "priceJpy": 77700,
-        "url": "https://snkrdunk.com/en/apparels/718239"
       },
       {
         "snkrdunkId": "676006",
@@ -6467,21 +10561,43 @@ export const COLLECTION_TOP_CARDS = {
         "nameEn": "St. Marcus Mars R-RP [OP13-091](Booster Pack \"CARRYING ON HIS WILL\")",
         "rarity": "R",
         "cardNumber": "OP13-091",
-        "setCode": "",
+        "setCode": "OP13",
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/f5c3cd6b-ba9a-42d9-82b3-5e60649f12f9.webp?size=m",
-        "priceJpy": 23500,
+        "priceJpy": 22000,
         "url": "https://snkrdunk.com/en/apparels/676065"
       },
       {
-        "snkrdunkId": "718380",
-        "name": "Stussy SR-P [OP13-110] [EN](Booster Pack \"CARRYING ON HIS WILL\")",
-        "nameEn": "Stussy SR-P [OP13-110] [EN](Booster Pack \"CARRYING ON HIS WILL\")",
-        "rarity": "SR",
-        "cardNumber": "OP13-110",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/5802153e-d9bb-4eb3-81fc-c3f131a93dbb.webp?size=m",
-        "priceJpy": 23333,
-        "url": "https://snkrdunk.com/en/apparels/718380"
+        "snkrdunkId": "676062",
+        "name": "St. Jaygarcia Saturn R-RP [OP13-083](Booster Pack \"CARRYING ON HIS WILL\")",
+        "nameEn": "St. Jaygarcia Saturn R-RP [OP13-083](Booster Pack \"CARRYING ON HIS WILL\")",
+        "rarity": "R",
+        "cardNumber": "OP13-083",
+        "setCode": "OP13",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/e18553fc-14e8-4c5e-99ea-5fdb36cce06f.webp?size=m",
+        "priceJpy": 20000,
+        "url": "https://snkrdunk.com/en/apparels/676062"
+      },
+      {
+        "snkrdunkId": "676061",
+        "name": "St. Ethanbaron V. Nusjuro R-RP [OP13-080](Booster Pack \"CARRYING ON HIS WILL\")",
+        "nameEn": "St. Ethanbaron V. Nusjuro R-RP [OP13-080](Booster Pack \"CARRYING ON HIS WILL\")",
+        "rarity": "R",
+        "cardNumber": "OP13-080",
+        "setCode": "OP13",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/0241afb8-6c2d-48fa-8494-23b3be9784d9.webp?size=m",
+        "priceJpy": 19800,
+        "url": "https://snkrdunk.com/en/apparels/676061"
+      },
+      {
+        "snkrdunkId": "676063",
+        "name": "St. Shepherd Ju Peter R-RP [OP13-084](Booster Pack \"CARRYING ON HIS WILL\")",
+        "nameEn": "St. Shepherd Ju Peter R-RP [OP13-084](Booster Pack \"CARRYING ON HIS WILL\")",
+        "rarity": "R",
+        "cardNumber": "OP13-084",
+        "setCode": "OP13",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/4dc50740-1e6f-4171-9ee1-fbc9941bbcef.webp?size=m",
+        "priceJpy": 19000,
+        "url": "https://snkrdunk.com/en/apparels/676063"
       }
     ]
   },
@@ -6492,7 +10608,7 @@ export const COLLECTION_TOP_CARDS = {
       "Emperors In The New World",
       "新たなる皇帝"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
       {
@@ -6507,28 +10623,6 @@ export const COLLECTION_TOP_CARDS = {
         "url": "https://snkrdunk.com/en/apparels/349472"
       },
       {
-        "snkrdunkId": "471531",
-        "name": "Monkey.D.Luffy : Wanted SEC-SPC [OP05-119] [EN](Booster Pack \"Emperors in the New World\")",
-        "nameEn": "Monkey.D.Luffy : Wanted SEC-SPC [OP05-119] [EN](Booster Pack \"Emperors in the New World\")",
-        "rarity": "SEC",
-        "cardNumber": "OP05-119",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/014959d2-563a-4d17-b6bf-6429084fcb04.webp?size=m",
-        "priceJpy": 290000,
-        "url": "https://snkrdunk.com/en/apparels/471531"
-      },
-      {
-        "snkrdunkId": "471534",
-        "name": "Nami SR-SPC [OP08-106] [EN](Booster Pack \"Emperors in the New World\")",
-        "nameEn": "Nami SR-SPC [OP08-106] [EN](Booster Pack \"Emperors in the New World\")",
-        "rarity": "SR",
-        "cardNumber": "OP08-106",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/e1886a25-7f2e-4e11-a56e-b27b79d2e688.webp?size=m",
-        "priceJpy": 280000,
-        "url": "https://snkrdunk.com/en/apparels/471534"
-      },
-      {
         "snkrdunkId": "349475",
         "name": "Monkey.D.Luffy SEC-SP (Comic Parallel) [OP09-119](Booster Pack \"Emperors In The New World\")",
         "nameEn": "Monkey.D.Luffy SEC-SP (Comic Parallel) [OP09-119](Booster Pack \"Emperors In The New World\")",
@@ -6538,28 +10632,6 @@ export const COLLECTION_TOP_CARDS = {
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/ebf408ba-e362-4bac-a7a6-c147a8b1269e.webp?size=m",
         "priceJpy": 186000,
         "url": "https://snkrdunk.com/en/apparels/349475"
-      },
-      {
-        "snkrdunkId": "349460",
-        "name": "Marshall.D.Teach SR-SP (Comic Parallel) [OP09-093](Booster Pack \"Emperors In The New World\")",
-        "nameEn": "Marshall.D.Teach SR-SP (Comic Parallel) [OP09-093](Booster Pack \"Emperors In The New World\")",
-        "rarity": "SR",
-        "cardNumber": "OP09-093",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/e8739232-e0d6-4c52-a74f-139445bcaa7b.webp?size=m",
-        "priceJpy": 155555,
-        "url": "https://snkrdunk.com/en/apparels/349460"
-      },
-      {
-        "snkrdunkId": "471535",
-        "name": "Zoro-Juurou SR [ST18-004] [EN](Booster Pack \"Emperors in the New World\")",
-        "nameEn": "Zoro-Juurou SR [ST18-004] [EN](Booster Pack \"Emperors in the New World\")",
-        "rarity": "SR",
-        "cardNumber": "ST18-004",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/20b859c3-ba26-49b3-89d9-0310a898e0da.webp?size=m",
-        "priceJpy": 130000,
-        "url": "https://snkrdunk.com/en/apparels/471535"
       },
       {
         "snkrdunkId": "349418",
@@ -6582,6 +10654,17 @@ export const COLLECTION_TOP_CARDS = {
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/a2cb14af-fa70-43c0-a17e-0750e6b1c024.webp?size=m",
         "priceJpy": 89000,
         "url": "https://snkrdunk.com/en/apparels/349441"
+      },
+      {
+        "snkrdunkId": "349460",
+        "name": "Marshall.D.Teach SR-SP (Comic Parallel) [OP09-093](Booster Pack \"Emperors In The New World\")",
+        "nameEn": "Marshall.D.Teach SR-SP (Comic Parallel) [OP09-093](Booster Pack \"Emperors In The New World\")",
+        "rarity": "SR",
+        "cardNumber": "OP09-093",
+        "setCode": "OP09",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/e8739232-e0d6-4c52-a74f-139445bcaa7b.webp?size=m",
+        "priceJpy": 87000,
+        "url": "https://snkrdunk.com/en/apparels/349460"
       },
       {
         "snkrdunkId": "349476",
@@ -6626,19 +10709,185 @@ export const COLLECTION_TOP_CARDS = {
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/a5de773e-64ed-4599-b4fb-7923824e7590.webp?size=m",
         "priceJpy": 14999,
         "url": "https://snkrdunk.com/en/apparels/349481"
+      },
+      {
+        "snkrdunkId": "349442",
+        "name": "Buggy : Wanted R-SPC [OP09-051](Booster Pack \"Emperors In The New World\")",
+        "nameEn": "Buggy : Wanted R-SPC [OP09-051](Booster Pack \"Emperors In The New World\")",
+        "rarity": "R",
+        "cardNumber": "OP09-051",
+        "setCode": "OP09",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/e7d4543b-783c-4ac9-aeb6-fc87e192350a.webp?size=m",
+        "priceJpy": 13500,
+        "url": "https://snkrdunk.com/en/apparels/349442"
+      },
+      {
+        "snkrdunkId": "349419",
+        "name": "Shanks : Wanted SR-SPC [OP09-004](Booster Pack \"Emperors In The New World\")",
+        "nameEn": "Shanks : Wanted SR-SPC [OP09-004](Booster Pack \"Emperors In The New World\")",
+        "rarity": "SR",
+        "cardNumber": "OP09-004",
+        "setCode": "OP09",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/fc177aba-6743-446b-946b-165bd05edb66.webp?size=m",
+        "priceJpy": 9900,
+        "url": "https://snkrdunk.com/en/apparels/349419"
+      },
+      {
+        "snkrdunkId": "349461",
+        "name": "Marshall.D.Teach : Wanted SR-SPC [OP09-093](Booster Pack \"Emperors In The New World\")",
+        "nameEn": "Marshall.D.Teach : Wanted SR-SPC [OP09-093](Booster Pack \"Emperors In The New World\")",
+        "rarity": "SR",
+        "cardNumber": "OP09-093",
+        "setCode": "OP09",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/d9b0f347-cd82-4438-8797-4b47ffacf12a.webp?size=m",
+        "priceJpy": 8800,
+        "url": "https://snkrdunk.com/en/apparels/349461"
       }
     ]
   },
   "one-piece-snkrdunk-212198": {
     "productId": "one-piece-snkrdunk-212198",
-    "setCode": "",
+    "setCode": "OP05",
     "labels": [
-      "Booster Pack Awakening Of The New Era",
-      "ワンピースカードゲーム ブースターパック 新時代の主役"
+      "Awakening Of The New Era",
+      "新時代の主役"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "135439",
+        "name": "Monkey.D.Luffy SEC-SP (Comic Parallel) [OP05-119](Booster Pack \"Awakening Of The New Era\")",
+        "nameEn": "Monkey.D.Luffy SEC-SP (Comic Parallel) [OP05-119](Booster Pack \"Awakening Of The New Era\")",
+        "rarity": "SEC",
+        "cardNumber": "OP05-119",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/d2577097-08cc-4de9-8b21-06357f843ccc.webp?size=m",
+        "priceJpy": 600000,
+        "url": "https://snkrdunk.com/en/apparels/135439"
+      },
+      {
+        "snkrdunkId": "135441",
+        "name": "Monkey D Luffy SR-P [ST01-012] (Booster Pack Awakening of the New Era)",
+        "nameEn": "Monkey D Luffy SR-P [ST01-012] (Booster Pack Awakening of the New Era)",
+        "rarity": "SR",
+        "cardNumber": "ST01-012",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/8da420f8-3b06-41a4-98af-fa4fbba7dcbd.webp?size=m",
+        "priceJpy": 400000,
+        "url": "https://snkrdunk.com/en/apparels/135441"
+      },
+      {
+        "snkrdunkId": "135425",
+        "name": "Eustass\"Captain\"Kid SR-SP (Comic Parallel) [OP05-074](Booster Pack \"Awakening Of The New Era\")",
+        "nameEn": "Eustass\"Captain\"Kid SR-SP (Comic Parallel) [OP05-074](Booster Pack \"Awakening Of The New Era\")",
+        "rarity": "SR",
+        "cardNumber": "OP05-074",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/681a176d-80cd-42a4-aba8-a28897f86317.webp?size=m",
+        "priceJpy": 90000,
+        "url": "https://snkrdunk.com/en/apparels/135425"
+      },
+      {
+        "snkrdunkId": "135449",
+        "name": "Trafalgar Law SR-SP (Comic Parallel) [OP05-069](Booster Pack \"Awakening Of The New Era\")",
+        "nameEn": "Trafalgar Law SR-SP (Comic Parallel) [OP05-069](Booster Pack \"Awakening Of The New Era\")",
+        "rarity": "SR",
+        "cardNumber": "OP05-069",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/36d23d1a-003e-4b64-8602-b956940b8eec.webp?size=m",
+        "priceJpy": 69800,
+        "url": "https://snkrdunk.com/en/apparels/135449"
+      },
+      {
+        "snkrdunkId": "135442",
+        "name": "Nami R-SPC [OP01-016] (Booster Pack Awakening of the New Era)",
+        "nameEn": "Nami R-SPC [OP01-016] (Booster Pack Awakening of the New Era)",
+        "rarity": "R",
+        "cardNumber": "OP01-016",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/350f2755-2572-4dd2-9ef7-0f5a441ca461.webp?size=m",
+        "priceJpy": 20000,
+        "url": "https://snkrdunk.com/en/apparels/135442"
+      },
+      {
+        "snkrdunkId": "135445",
+        "name": "Uta SEC-SPC [OP02-120] (Booster Pack Awakening of the New Era)",
+        "nameEn": "Uta SEC-SPC [OP02-120] (Booster Pack Awakening of the New Era)",
+        "rarity": "SEC",
+        "cardNumber": "OP02-120",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/939b33bd-ca88-46aa-9738-f19045ba0c33.webp?size=m",
+        "priceJpy": 16000,
+        "url": "https://snkrdunk.com/en/apparels/135445"
+      },
+      {
+        "snkrdunkId": "135438",
+        "name": "Monkey D Luffy SEC-P [OP05-119] (Booster Pack Awakening of the New Era)",
+        "nameEn": "Monkey D Luffy SEC-P [OP05-119] (Booster Pack Awakening of the New Era)",
+        "rarity": "SEC",
+        "cardNumber": "OP05-119",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/9250c749-87fa-4673-a784-a77c7f82d711.webp?size=m",
+        "priceJpy": 13500,
+        "url": "https://snkrdunk.com/en/apparels/135438"
+      },
+      {
+        "snkrdunkId": "135447",
+        "name": "Eneru SR-SPC [OP05-100] (Booster Pack Awakening of the New Era)",
+        "nameEn": "Eneru SR-SPC [OP05-100] (Booster Pack Awakening of the New Era)",
+        "rarity": "SR",
+        "cardNumber": "OP05-100",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/816b5354-e288-485d-868e-f1bea6305e0e.webp?size=m",
+        "priceJpy": 9000,
+        "url": "https://snkrdunk.com/en/apparels/135447"
+      },
+      {
+        "snkrdunkId": "135444",
+        "name": "Kaido SR-SPC [OP04-044] (Booster Pack Awakening of the New Era)",
+        "nameEn": "Kaido SR-SPC [OP04-044] (Booster Pack Awakening of the New Era)",
+        "rarity": "SR",
+        "cardNumber": "OP04-044",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/df46a787-70ae-475b-a9df-15e28fc76cac.webp?size=m",
+        "priceJpy": 8000,
+        "url": "https://snkrdunk.com/en/apparels/135444"
+      },
+      {
+        "snkrdunkId": "135443",
+        "name": "Yamato SEC-SPC [OP01-121] (Booster Pack Awakening of the New Era)",
+        "nameEn": "Yamato SEC-SPC [OP01-121] (Booster Pack Awakening of the New Era)",
+        "rarity": "SEC",
+        "cardNumber": "OP01-121",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/c964d891-5017-43bd-b7e6-8258a21a4fdb.webp?size=m",
+        "priceJpy": 8000,
+        "url": "https://snkrdunk.com/en/apparels/135443"
+      },
+      {
+        "snkrdunkId": "135440",
+        "name": "Monkey D Luffy SR [ST01-012] (Booster Pack Awakening of the New Era)",
+        "nameEn": "Monkey D Luffy SR [ST01-012] (Booster Pack Awakening of the New Era)",
+        "rarity": "SR",
+        "cardNumber": "ST01-012",
+        "setCode": "OP05",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/362640e2-a31c-4fb3-9a53-f32a90dbc5f0.webp?size=m",
+        "priceJpy": 4000,
+        "url": "https://snkrdunk.com/en/apparels/135440"
+      },
+      {
+        "snkrdunkId": "135431",
+        "name": "Eneru L-P [OP05-098] (Booster Pack Awakening of the New Era)",
+        "nameEn": "Eneru L-P [OP05-098] (Booster Pack Awakening of the New Era)",
+        "rarity": "P",
+        "cardNumber": "OP05-098",
+        "setCode": "OP05",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/a78212ec-226b-49ce-9885-2f283381131e.webp?size=m",
+        "priceJpy": 3980,
+        "url": "https://snkrdunk.com/en/apparels/135431"
+      }
+    ]
   },
   "one-piece-snkrdunk-943510": {
     "productId": "one-piece-snkrdunk-943510",
@@ -6647,7 +10896,7 @@ export const COLLECTION_TOP_CARDS = {
       "THE TIME OF BATTLE",
       "決戦の刻"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
       {
@@ -6695,17 +10944,6 @@ export const COLLECTION_TOP_CARDS = {
         "url": "https://snkrdunk.com/en/apparels/822582"
       },
       {
-        "snkrdunkId": "836274",
-        "name": "Monkey.D.Luffy L-P [OP16-022][EN](Booster Pack \"THE TIME OF BATTLE\")",
-        "nameEn": "Monkey.D.Luffy L-P [OP16-022][EN](Booster Pack \"THE TIME OF BATTLE\")",
-        "rarity": "P",
-        "cardNumber": "OP16-022",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/0e0d69b4-86ca-40d9-8dd8-481766ebdfd9.webp?size=m",
-        "priceJpy": 25000,
-        "url": "https://snkrdunk.com/en/apparels/836274"
-      },
-      {
         "snkrdunkId": "828135",
         "name": "Sengoku UC [OP16-066](Booster Pack \"THE TIME OF BATTLE\")",
         "nameEn": "Sengoku UC [OP16-066](Booster Pack \"THE TIME OF BATTLE\")",
@@ -6733,9 +10971,9 @@ export const COLLECTION_TOP_CARDS = {
         "nameEn": "Zehahahahaha!!! R-P [OP16-116](Booster Pack \"THE TIME OF BATTLE\")",
         "rarity": "P",
         "cardNumber": "OP16-116",
-        "setCode": "",
+        "setCode": "OP16",
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/3627dd6d-326c-4d18-be78-bbc7fd0be01d.webp?size=m",
-        "priceJpy": 11111,
+        "priceJpy": 9999,
         "url": "https://snkrdunk.com/en/apparels/822611"
       },
       {
@@ -6748,17 +10986,6 @@ export const COLLECTION_TOP_CARDS = {
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/84bdb5a5-40f6-4508-9e6a-715dfdc1beee.webp?size=m",
         "priceJpy": 5600,
         "url": "https://snkrdunk.com/en/apparels/822581"
-      },
-      {
-        "snkrdunkId": "822587",
-        "name": "Monkey.D.Luffy SR-P [OP16-015](Booster Pack \"THE TIME OF BATTLE\")",
-        "nameEn": "Monkey.D.Luffy SR-P [OP16-015](Booster Pack \"THE TIME OF BATTLE\")",
-        "rarity": "SR",
-        "cardNumber": "OP16-015",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/eb93b2f1-e8d8-40d0-98da-373ba550bd3e.webp?size=m",
-        "priceJpy": 5500,
-        "url": "https://snkrdunk.com/en/apparels/822587"
       },
       {
         "snkrdunkId": "822580",
@@ -6777,34 +11004,45 @@ export const COLLECTION_TOP_CARDS = {
         "nameEn": "Monkey.D.Luffy L-P [OP16-022](Booster Pack \"THE TIME OF BATTLE\")",
         "rarity": "P",
         "cardNumber": "OP16-022",
-        "setCode": "",
+        "setCode": "OP16",
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/895b3478-4379-492d-80f1-a836d69594be.webp?size=m",
-        "priceJpy": 5000,
+        "priceJpy": 4444,
         "url": "https://snkrdunk.com/en/apparels/822589"
+      },
+      {
+        "snkrdunkId": "822605",
+        "name": "Yamato L-P [OP16-079](Booster Pack \"THE TIME OF BATTLE\")",
+        "nameEn": "Yamato L-P [OP16-079](Booster Pack \"THE TIME OF BATTLE\")",
+        "rarity": "P",
+        "cardNumber": "OP16-079",
+        "setCode": "OP16",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/0c7c9f55-81f3-422a-8289-588dcff37faa.webp?size=m",
+        "priceJpy": 4321,
+        "url": "https://snkrdunk.com/en/apparels/822605"
+      },
+      {
+        "snkrdunkId": "822584",
+        "name": "Portgas.D.Ace L-P [OP16-001](Booster Pack \"THE TIME OF BATTLE\")",
+        "nameEn": "Portgas.D.Ace L-P [OP16-001](Booster Pack \"THE TIME OF BATTLE\")",
+        "rarity": "P",
+        "cardNumber": "OP16-001",
+        "setCode": "OP16",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/49536095-14da-4f7e-abb4-506356227c76.webp?size=m",
+        "priceJpy": 4200,
+        "url": "https://snkrdunk.com/en/apparels/822584"
       }
     ]
   },
   "one-piece-snkrdunk-873428": {
     "productId": "one-piece-snkrdunk-873428",
-    "setCode": "OP13",
+    "setCode": "OP15",
     "labels": [
       "Adventure on KAMI’s Island",
       "神の島の冒険"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
-      {
-        "snkrdunkId": "778985",
-        "name": "Roronoa Zoro TR [OP13-037][EN](Booster Pack \"ADVENTURE ON KAMI’S ISLAND\")",
-        "nameEn": "Roronoa Zoro TR [OP13-037][EN](Booster Pack \"ADVENTURE ON KAMI’S ISLAND\")",
-        "rarity": "",
-        "cardNumber": "OP13-037",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/100003d0-4cc2-46c7-81b5-e7b3321ce960.webp?size=m",
-        "priceJpy": 75000,
-        "url": "https://snkrdunk.com/en/apparels/778985"
-      },
       {
         "snkrdunkId": "764635",
         "name": "Enel SEC-SP (Comic Parallel) [OP15-118](Booster Pack \"Adventure on KAMI’s Island\")",
@@ -6861,25 +11099,14 @@ export const COLLECTION_TOP_CARDS = {
         "url": "https://snkrdunk.com/en/apparels/767119"
       },
       {
-        "snkrdunkId": "779089",
-        "name": "Nami SR-P [OP15-086][EN](Booster Pack \"ADVENTURE ON KAMI’S ISLAND\")",
-        "nameEn": "Nami SR-P [OP15-086][EN](Booster Pack \"ADVENTURE ON KAMI’S ISLAND\")",
-        "rarity": "SR",
-        "cardNumber": "OP15-086",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/38ce0f55-d8ce-4e99-a603-12dc19a18608.webp?size=m",
-        "priceJpy": 13999,
-        "url": "https://snkrdunk.com/en/apparels/779089"
-      },
-      {
         "snkrdunkId": "764627",
         "name": "Jamboule R-P [OP15-077](Booster Pack \"Adventure on KAMI’s Island\")",
         "nameEn": "Jamboule R-P [OP15-077](Booster Pack \"Adventure on KAMI’s Island\")",
         "rarity": "P",
         "cardNumber": "OP15-077",
-        "setCode": "",
+        "setCode": "OP15",
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/8f098f94-9276-4c39-a065-449f286a8630.webp?size=m",
-        "priceJpy": 12500,
+        "priceJpy": 11888,
         "url": "https://snkrdunk.com/en/apparels/764627"
       },
       {
@@ -6921,23 +11148,178 @@ export const COLLECTION_TOP_CARDS = {
         "nameEn": "Gum-Gum Golden Rifle R-P [OP15-116](Booster Pack \"Adventure on KAMI’s Island\")",
         "rarity": "P",
         "cardNumber": "OP15-116",
-        "setCode": "",
+        "setCode": "OP15",
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/11e11c68-c374-431c-b642-b9c30323112c.webp?size=m",
-        "priceJpy": 6500,
+        "priceJpy": 6000,
         "url": "https://snkrdunk.com/en/apparels/764634"
+      },
+      {
+        "snkrdunkId": "768198",
+        "name": "Higuma C :Error [OP15-015](Booster Pack \"Adventure on KAMI’s Island\")",
+        "nameEn": "Higuma C :Error [OP15-015](Booster Pack \"Adventure on KAMI’s Island\")",
+        "rarity": "C",
+        "cardNumber": "OP15-015",
+        "setCode": "OP15",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/77856384-4c4c-4a4e-a012-7933b42eb84c.webp?size=m",
+        "priceJpy": 5000,
+        "url": "https://snkrdunk.com/en/apparels/768198"
+      },
+      {
+        "snkrdunkId": "758751",
+        "name": "Monkey.D.Luffy L-P [OP-15-098](Booster Pack \"Adventure on KAMI’s Island\")",
+        "nameEn": "Monkey.D.Luffy L-P [OP-15-098](Booster Pack \"Adventure on KAMI’s Island\")",
+        "rarity": "P",
+        "cardNumber": "",
+        "setCode": "OP15",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/d3d4d502-b4d0-4b32-8779-fca8d7410176.webp?size=m",
+        "priceJpy": 3333,
+        "url": "https://snkrdunk.com/en/apparels/758751"
       }
     ]
   },
   "one-piece-snkrdunk-254282": {
     "productId": "one-piece-snkrdunk-254282",
-    "setCode": "",
+    "setCode": "OP04",
     "labels": [
-      "Booster Pack The Future After 500 years",
-      "ワンピースカードゲーム ブースターパック 500年後の未来"
+      "The Future After 500 years",
+      "500年後の未来"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "256058",
+        "name": "Rebecca R-TR [OP04-092] [CN](Booster Pack \"The Future After 500 years\")",
+        "nameEn": "Rebecca R-TR [OP04-092] [CN](Booster Pack \"The Future After 500 years\")",
+        "rarity": "R",
+        "cardNumber": "OP04-092",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/df968093-a851-4290-a796-1d498f3c9b1b.webp?size=m",
+        "priceJpy": 300000,
+        "url": "https://snkrdunk.com/en/apparels/256058"
+      },
+      {
+        "snkrdunkId": "198723",
+        "name": "Boa Hancock SR-SP (Comic Parallel) [OP07-051](Booster Pack \"The Future After 500 years\")",
+        "nameEn": "Boa Hancock SR-SP (Comic Parallel) [OP07-051](Booster Pack \"The Future After 500 years\")",
+        "rarity": "SR",
+        "cardNumber": "OP07-051",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/f4dfe34a-18d9-4cf9-9f2a-e10bd4c25d0d.webp?size=m",
+        "priceJpy": 145000,
+        "url": "https://snkrdunk.com/en/apparels/198723"
+      },
+      {
+        "snkrdunkId": "202965",
+        "name": "Fuza C [OP07-106] (Booster Pack The Future After 500 years)",
+        "nameEn": "Fuza C [OP07-106] (Booster Pack The Future After 500 years)",
+        "rarity": "C",
+        "cardNumber": "OP07-106",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/b9d607b4-db90-4774-95a5-b3d7b21e0a12.webp?size=m",
+        "priceJpy": 9999,
+        "url": "https://snkrdunk.com/en/apparels/202965"
+      },
+      {
+        "snkrdunkId": "202914",
+        "name": "Boa Hancock L-P [OP07-038] (Booster Pack The Future After 500 years)",
+        "nameEn": "Boa Hancock L-P [OP07-038] (Booster Pack The Future After 500 years)",
+        "rarity": "P",
+        "cardNumber": "OP07-038",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/cf192470-7666-4151-a0e3-10f993ae0b86.webp?size=m",
+        "priceJpy": 8800,
+        "url": "https://snkrdunk.com/en/apparels/202914"
+      },
+      {
+        "snkrdunkId": "202924",
+        "name": "Boa Hancock SR-P [OP07-051] (Booster Pack The Future After 500 years)",
+        "nameEn": "Boa Hancock SR-P [OP07-051] (Booster Pack The Future After 500 years)",
+        "rarity": "SR",
+        "cardNumber": "OP07-051",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/5fcab2cc-bb59-4342-9c61-c9e6d19686fc.webp?size=m",
+        "priceJpy": 5500,
+        "url": "https://snkrdunk.com/en/apparels/202924"
+      },
+      {
+        "snkrdunkId": "202907",
+        "name": "Jewelry Bonney SR-P [OP07-026] (Booster Pack The Future After 500 years)",
+        "nameEn": "Jewelry Bonney SR-P [OP07-026] (Booster Pack The Future After 500 years)",
+        "rarity": "SR",
+        "cardNumber": "OP07-026",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/a219e1a7-f530-47ee-890b-a1ab8cac8b36.webp?size=m",
+        "priceJpy": 3280,
+        "url": "https://snkrdunk.com/en/apparels/202907"
+      },
+      {
+        "snkrdunkId": "191179",
+        "name": "Jewelry Bonney L-P [OP07-019] (Booster Pack The Future After 500 years)",
+        "nameEn": "Jewelry Bonney L-P [OP07-019] (Booster Pack The Future After 500 years)",
+        "rarity": "P",
+        "cardNumber": "OP07-019",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/23ce6021-9113-4bd7-9237-c89f36b7bf32.webp?size=m",
+        "priceJpy": 3222,
+        "url": "https://snkrdunk.com/en/apparels/191179"
+      },
+      {
+        "snkrdunkId": "202938",
+        "name": "Foxy R-P [OP07-071] (Booster Pack The Future After 500 years)",
+        "nameEn": "Foxy R-P [OP07-071] (Booster Pack The Future After 500 years)",
+        "rarity": "P",
+        "cardNumber": "OP07-071",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/910ac50b-e7ab-48fd-831e-a1765f1ecbf0.webp?size=m",
+        "priceJpy": 3000,
+        "url": "https://snkrdunk.com/en/apparels/202938"
+      },
+      {
+        "snkrdunkId": "202903",
+        "name": "Otama R-P [OP07-022] (Booster Pack The Future After 500 years)",
+        "nameEn": "Otama R-P [OP07-022] (Booster Pack The Future After 500 years)",
+        "rarity": "P",
+        "cardNumber": "OP07-022",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/eb1e4afd-d9c5-470f-86d7-b757e46f92b3.webp?size=m",
+        "priceJpy": 2800,
+        "url": "https://snkrdunk.com/en/apparels/202903"
+      },
+      {
+        "snkrdunkId": "202957",
+        "name": "Vegapunk L-P [OP07-097] (Booster Pack The Future After 500 years)",
+        "nameEn": "Vegapunk L-P [OP07-097] (Booster Pack The Future After 500 years)",
+        "rarity": "P",
+        "cardNumber": "OP07-097",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/10af24e1-867b-4ca1-a5a4-4281276efaaa.webp?size=m",
+        "priceJpy": 2500,
+        "url": "https://snkrdunk.com/en/apparels/202957"
+      },
+      {
+        "snkrdunkId": "202970",
+        "name": "Lillith SR-P [OP07-111] (Booster Pack The Future After 500 years)",
+        "nameEn": "Lillith SR-P [OP07-111] (Booster Pack The Future After 500 years)",
+        "rarity": "SR",
+        "cardNumber": "OP07-111",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/5ec908ba-287f-4cc4-b904-53f9c66e027b.webp?size=m",
+        "priceJpy": 2500,
+        "url": "https://snkrdunk.com/en/apparels/202970"
+      },
+      {
+        "snkrdunkId": "202976",
+        "name": "Portgas D Ace SEC-P [OP07-119] (Booster Pack The Future After 500 years)",
+        "nameEn": "Portgas D Ace SEC-P [OP07-119] (Booster Pack The Future After 500 years)",
+        "rarity": "SEC",
+        "cardNumber": "OP07-119",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/686ed46e-4d12-400a-9c07-1c753a123ab6.webp?size=m",
+        "priceJpy": 2399,
+        "url": "https://snkrdunk.com/en/apparels/202976"
+      }
+    ]
   },
   "one-piece-snkrdunk-578665": {
     "productId": "one-piece-snkrdunk-578665",
@@ -7085,14 +11467,147 @@ export const COLLECTION_TOP_CARDS = {
   },
   "one-piece-snkrdunk-266717": {
     "productId": "one-piece-snkrdunk-266717",
-    "setCode": "",
+    "setCode": "OP08",
     "labels": [
-      "Booster Pack Two Legends",
-      "ワンピースカードゲーム ブースターパック 二つの伝説"
+      "Two Legends",
+      "二つの伝説"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "265745",
+        "name": "Silvers Rayleigh SEC-SP (Comic Parallel) [OP08-118](Booster Pack \"Two Legends\")",
+        "nameEn": "Silvers Rayleigh SEC-SP (Comic Parallel) [OP08-118](Booster Pack \"Two Legends\")",
+        "rarity": "SEC",
+        "cardNumber": "OP08-118",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/5ef21e83-2d47-4736-ae13-4216778c4bac.webp?size=m",
+        "priceJpy": 70000,
+        "url": "https://snkrdunk.com/en/apparels/265745"
+      },
+      {
+        "snkrdunkId": "265748",
+        "name": "Portgas.D.Ace SR-SPC [OP02-013](Booster Pack \"Two Legends\")",
+        "nameEn": "Portgas.D.Ace SR-SPC [OP02-013](Booster Pack \"Two Legends\")",
+        "rarity": "SR",
+        "cardNumber": "OP02-013",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/03258f86-3034-48e5-87f2-6b1835e3e7f8.webp?size=m",
+        "priceJpy": 17000,
+        "url": "https://snkrdunk.com/en/apparels/265748"
+      },
+      {
+        "snkrdunkId": "265749",
+        "name": "Jewelry Bonney C-SPC [ST02-007](Booster Pack \"Two Legends\")",
+        "nameEn": "Jewelry Bonney C-SPC [ST02-007](Booster Pack \"Two Legends\")",
+        "rarity": "C",
+        "cardNumber": "ST02-007",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/e5e252ae-48d8-4e72-907c-f214884a7f27.webp?size=m",
+        "priceJpy": 10800,
+        "url": "https://snkrdunk.com/en/apparels/265749"
+      },
+      {
+        "snkrdunkId": "265671",
+        "name": "Marco L-P [OP08-002](Booster Pack \"Two Legends\")",
+        "nameEn": "Marco L-P [OP08-002](Booster Pack \"Two Legends\")",
+        "rarity": "P",
+        "cardNumber": "OP08-002",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/df748f4f-3861-4e54-8486-641a02fde793.webp?size=m",
+        "priceJpy": 7500,
+        "url": "https://snkrdunk.com/en/apparels/265671"
+      },
+      {
+        "snkrdunkId": "265750",
+        "name": "Tashigi C-SPC [ST06-006](Booster Pack \"Two Legends\")",
+        "nameEn": "Tashigi C-SPC [ST06-006](Booster Pack \"Two Legends\")",
+        "rarity": "C",
+        "cardNumber": "ST06-006",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/026e8a33-0301-45e7-a55c-27d4dc61f942.webp?size=m",
+        "priceJpy": 6500,
+        "url": "https://snkrdunk.com/en/apparels/265750"
+      },
+      {
+        "snkrdunkId": "265751",
+        "name": "Charlotte Pudding R-SPC [OP03-112](Booster Pack \"Two Legends\")",
+        "nameEn": "Charlotte Pudding R-SPC [OP03-112](Booster Pack \"Two Legends\")",
+        "rarity": "R",
+        "cardNumber": "OP03-112",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/d7e23f1b-0bc5-4599-9f94-ca7818f130d4.webp?size=m",
+        "priceJpy": 5980,
+        "url": "https://snkrdunk.com/en/apparels/265751"
+      },
+      {
+        "snkrdunkId": "265753",
+        "name": "Queen C-SPC [ST04-005](Booster Pack \"Two Legends\")",
+        "nameEn": "Queen C-SPC [ST04-005](Booster Pack \"Two Legends\")",
+        "rarity": "C",
+        "cardNumber": "ST04-005",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/96ad1ff8-d909-4014-b523-123420899ca5.webp?size=m",
+        "priceJpy": 4800,
+        "url": "https://snkrdunk.com/en/apparels/265753"
+      },
+      {
+        "snkrdunkId": "265703",
+        "name": "Charlotte Pudding L-P [OP08-058](Booster Pack \"Two Legends\")",
+        "nameEn": "Charlotte Pudding L-P [OP08-058](Booster Pack \"Two Legends\")",
+        "rarity": "P",
+        "cardNumber": "OP08-058",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/89a4c586-6646-42f9-ba80-67d968b710f3.webp?size=m",
+        "priceJpy": 4000,
+        "url": "https://snkrdunk.com/en/apparels/265703"
+      },
+      {
+        "snkrdunkId": "265670",
+        "name": "Tony Tony.Chopper L-P [OP08-001](Booster Pack \"Two Legends\")",
+        "nameEn": "Tony Tony.Chopper L-P [OP08-001](Booster Pack \"Two Legends\")",
+        "rarity": "P",
+        "cardNumber": "OP08-001",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/0c5e7539-dfeb-4bd1-9cff-09b4c02e4606.webp?size=m",
+        "priceJpy": 3500,
+        "url": "https://snkrdunk.com/en/apparels/265670"
+      },
+      {
+        "snkrdunkId": "265727",
+        "name": "Calgara L-P [OP08-098](Booster Pack \"Two Legends\")",
+        "nameEn": "Calgara L-P [OP08-098](Booster Pack \"Two Legends\")",
+        "rarity": "P",
+        "cardNumber": "OP08-098",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/94f135db-2072-467d-aebe-7809add063ed.webp?size=m",
+        "priceJpy": 3500,
+        "url": "https://snkrdunk.com/en/apparels/265727"
+      },
+      {
+        "snkrdunkId": "265744",
+        "name": "Silvers Rayleigh SEC-P [OP08-118](Booster Pack \"Two Legends\")",
+        "nameEn": "Silvers Rayleigh SEC-P [OP08-118](Booster Pack \"Two Legends\")",
+        "rarity": "SEC",
+        "cardNumber": "OP08-118",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/40156ecc-daaa-4157-a894-267875d7b99d.webp?size=m",
+        "priceJpy": 3000,
+        "url": "https://snkrdunk.com/en/apparels/265744"
+      },
+      {
+        "snkrdunkId": "265747",
+        "name": "Kaido & Linlin SEC-P [OP08-119](Booster Pack \"Two Legends\")",
+        "nameEn": "Kaido & Linlin SEC-P [OP08-119](Booster Pack \"Two Legends\")",
+        "rarity": "SEC",
+        "cardNumber": "OP08-119",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/614de911-ed09-4117-82f0-b745daf1f047.webp?size=m",
+        "priceJpy": 2800,
+        "url": "https://snkrdunk.com/en/apparels/265747"
+      }
+    ]
   },
   "one-piece-snkrdunk-837753": {
     "productId": "one-piece-snkrdunk-837753",
@@ -7101,7 +11616,7 @@ export const COLLECTION_TOP_CARDS = {
       "THE AZURE SEA'S SEVEN",
       "蒼海の七傑"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
       {
@@ -7110,9 +11625,9 @@ export const COLLECTION_TOP_CARDS = {
         "nameEn": "Buggy : Gold Background R-SPC :3th Anniversary Special Card [OP09-051](Booster Pack \"THE AZURE SEA'S SEVEN\")",
         "rarity": "R",
         "cardNumber": "OP09-051",
-        "setCode": "",
+        "setCode": "OP09",
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/e5ed0041-18f5-475c-98d0-52320759a124.webp?size=m",
-        "priceJpy": 129800,
+        "priceJpy": 110000,
         "url": "https://snkrdunk.com/en/apparels/728128"
       },
       {
@@ -7127,17 +11642,6 @@ export const COLLECTION_TOP_CARDS = {
         "url": "https://snkrdunk.com/en/apparels/728129"
       },
       {
-        "snkrdunkId": "751081",
-        "name": "Roronoa Zoro R-SPC [PRB02-006] [EN] (Booster Pack \"THE AZURE SEA'S SEVEN\")",
-        "nameEn": "Roronoa Zoro R-SPC [PRB02-006] [EN] (Booster Pack \"THE AZURE SEA'S SEVEN\")",
-        "rarity": "R",
-        "cardNumber": "PRB02-006",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/6be9efaf-af73-4108-8938-ee2a676032d9.webp?size=m",
-        "priceJpy": 69999,
-        "url": "https://snkrdunk.com/en/apparels/751081"
-      },
-      {
         "snkrdunkId": "588855",
         "name": "Jewelry Bonney SEC-SP (Comic Parallel) [OP12-118](Booster Pack \"THE AZURE SEA’S SEVEN\")",
         "nameEn": "Jewelry Bonney SEC-SP (Comic Parallel) [OP12-118](Booster Pack \"THE AZURE SEA’S SEVEN\")",
@@ -7147,17 +11651,6 @@ export const COLLECTION_TOP_CARDS = {
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/177afb11-7ced-403b-b337-7c631e7555fd.webp?size=m",
         "priceJpy": 66000,
         "url": "https://snkrdunk.com/en/apparels/588855"
-      },
-      {
-        "snkrdunkId": "750922",
-        "name": "Donquixote Rosinante R-TR [OP12-108] [EN] (Booster Pack \"THE AZURE SEA'S SEVEN\")",
-        "nameEn": "Donquixote Rosinante R-TR [OP12-108] [EN] (Booster Pack \"THE AZURE SEA'S SEVEN\")",
-        "rarity": "R",
-        "cardNumber": "OP12-108",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/869f2aee-0b4c-429a-a9b6-2d17abc0a3e8.webp?size=m",
-        "priceJpy": 62000,
-        "url": "https://snkrdunk.com/en/apparels/750922"
       },
       {
         "snkrdunkId": "728159",
@@ -7198,9 +11691,9 @@ export const COLLECTION_TOP_CARDS = {
         "nameEn": "I'm scared... R-P [OP14-118](Booster Pack \"THE AZURE SEA'S SEVEN\")",
         "rarity": "P",
         "cardNumber": "OP14-118",
-        "setCode": "",
+        "setCode": "OP09",
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/7ac167d1-6261-4cdd-b805-5252b4fe8b4e.webp?size=m",
-        "priceJpy": 21000,
+        "priceJpy": 20000,
         "url": "https://snkrdunk.com/en/apparels/728157"
       },
       {
@@ -7220,10 +11713,21 @@ export const COLLECTION_TOP_CARDS = {
         "nameEn": "Dracule Mihawk SR-SPC :Japanese pattern Art [OP12-030](Booster Pack \"THE AZURE SEA'S SEVEN\")",
         "rarity": "SR",
         "cardNumber": "OP12-030",
-        "setCode": "",
+        "setCode": "OP09",
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/eb910a6e-6960-4958-930c-434a65785bb8.webp?size=m",
-        "priceJpy": 12800,
+        "priceJpy": 9999,
         "url": "https://snkrdunk.com/en/apparels/728131"
+      },
+      {
+        "snkrdunkId": "728126",
+        "name": "Perona SR-SPC :Japanese pattern Art [OP06-093](Booster Pack \"THE AZURE SEA'S SEVEN\")",
+        "nameEn": "Perona SR-SPC :Japanese pattern Art [OP06-093](Booster Pack \"THE AZURE SEA'S SEVEN\")",
+        "rarity": "SR",
+        "cardNumber": "OP06-093",
+        "setCode": "OP09",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/d18c8cb4-2af7-4b15-9ba1-f7d846314175.webp?size=m",
+        "priceJpy": 9999,
+        "url": "https://snkrdunk.com/en/apparels/728126"
       },
       {
         "snkrdunkId": "728141",
@@ -7235,62 +11739,40 @@ export const COLLECTION_TOP_CARDS = {
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/aa59cfb9-e03c-4a9b-a3b4-accd62738c86.webp?size=m",
         "priceJpy": 9800,
         "url": "https://snkrdunk.com/en/apparels/728141"
+      },
+      {
+        "snkrdunkId": "728130",
+        "name": "Sugar R-SPC :Japanese pattern Art [OP10-065](Booster Pack \"THE AZURE SEA'S SEVEN\")",
+        "nameEn": "Sugar R-SPC :Japanese pattern Art [OP10-065](Booster Pack \"THE AZURE SEA'S SEVEN\")",
+        "rarity": "R",
+        "cardNumber": "OP10-065",
+        "setCode": "OP09",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/b60cb608-2a6c-49fe-8045-e2a6b50d5ee8.webp?size=m",
+        "priceJpy": 6000,
+        "url": "https://snkrdunk.com/en/apparels/728130"
       }
     ]
   },
   "one-piece-snkrdunk-458402": {
     "productId": "one-piece-snkrdunk-458402",
-    "setCode": "OP08",
+    "setCode": "OP10",
     "labels": [
       "Royal Blood",
       "王族の血統"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
-      {
-        "snkrdunkId": "563140",
-        "name": "Portgas.D.Ace R-TR [OP08-052] [EN](Booster Pack \"Royal Blood\")",
-        "nameEn": "Portgas.D.Ace R-TR [OP08-052] [EN](Booster Pack \"Royal Blood\")",
-        "rarity": "R",
-        "cardNumber": "OP08-052",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/c3b9f3e8-6cbb-4d25-923a-9b5f24e318ee.webp?size=m",
-        "priceJpy": 120000,
-        "url": "https://snkrdunk.com/en/apparels/563140"
-      },
-      {
-        "snkrdunkId": "563129",
-        "name": "Monkey.D.Luffy SEC [OP10-118] [EN](Booster Pack \"Royal Blood\")",
-        "nameEn": "Monkey.D.Luffy SEC [OP10-118] [EN](Booster Pack \"Royal Blood\")",
-        "rarity": "SEC",
-        "cardNumber": "OP10-118",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/e195ee72-d5e2-45bd-b2d3-0d3e0107495a.webp?size=m",
-        "priceJpy": 67890,
-        "url": "https://snkrdunk.com/en/apparels/563129"
-      },
       {
         "snkrdunkId": "442287",
         "name": "Trafalgar Law SEC-SP (Comic Parallel) [OP10-119](Booster Pack \"Royal Blood\")",
         "nameEn": "Trafalgar Law SEC-SP (Comic Parallel) [OP10-119](Booster Pack \"Royal Blood\")",
         "rarity": "SEC",
         "cardNumber": "OP10-119",
-        "setCode": "",
+        "setCode": "OP10",
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/badda216-d0fa-4605-8fb5-b08b91766ed7.webp?size=m",
-        "priceJpy": 58000,
+        "priceJpy": 55000,
         "url": "https://snkrdunk.com/en/apparels/442287"
-      },
-      {
-        "snkrdunkId": "563120",
-        "name": "Monkey.D.Luffy R [OP10-111] [EN](Booster Pack \"Royal Blood\")",
-        "nameEn": "Monkey.D.Luffy R [OP10-111] [EN](Booster Pack \"Royal Blood\")",
-        "rarity": "R",
-        "cardNumber": "OP10-111",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/25b0b922-07e9-4c85-90fd-fae1acfb5476.webp?size=m",
-        "priceJpy": 49999,
-        "url": "https://snkrdunk.com/en/apparels/563120"
       },
       {
         "snkrdunkId": "442290",
@@ -7359,17 +11841,6 @@ export const COLLECTION_TOP_CARDS = {
         "url": "https://snkrdunk.com/en/apparels/452331"
       },
       {
-        "snkrdunkId": "563034",
-        "name": "Perona C [OP10-036] [EN](Booster Pack \"Royal Blood\")",
-        "nameEn": "Perona C [OP10-036] [EN](Booster Pack \"Royal Blood\")",
-        "rarity": "C",
-        "cardNumber": "OP10-036",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/cc82b065-6b8d-42be-8c0b-380276b515d5.webp?size=m",
-        "priceJpy": 5000,
-        "url": "https://snkrdunk.com/en/apparels/563034"
-      },
-      {
         "snkrdunkId": "428664",
         "name": "Usopp L-P [OP10-042](Booster Pack \"Royal Blood\")",
         "nameEn": "Usopp L-P [OP10-042](Booster Pack \"Royal Blood\")",
@@ -7379,19 +11850,196 @@ export const COLLECTION_TOP_CARDS = {
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/2b474327-4b21-4e59-b3b1-fcd7157718be.webp?size=m",
         "priceJpy": 4000,
         "url": "https://snkrdunk.com/en/apparels/428664"
+      },
+      {
+        "snkrdunkId": "451383",
+        "name": "Cavendish R-P [OP10-045](Booster Pack \"Royal Blood\")",
+        "nameEn": "Cavendish R-P [OP10-045](Booster Pack \"Royal Blood\")",
+        "rarity": "P",
+        "cardNumber": "OP10-045",
+        "setCode": "OP10",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/16cdef93-6f30-4a7b-9911-74e49d31172e.webp?size=m",
+        "priceJpy": 3500,
+        "url": "https://snkrdunk.com/en/apparels/451383"
+      },
+      {
+        "snkrdunkId": "442288",
+        "name": "Monkey.D.Luffy SEC-P [OP10-118](Booster Pack \"Royal Blood\")",
+        "nameEn": "Monkey.D.Luffy SEC-P [OP10-118](Booster Pack \"Royal Blood\")",
+        "rarity": "SEC",
+        "cardNumber": "OP10-118",
+        "setCode": "OP10",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/cc9db36e-cd3b-459a-96ba-45792938dcc4.webp?size=m",
+        "priceJpy": 3000,
+        "url": "https://snkrdunk.com/en/apparels/442288"
+      },
+      {
+        "snkrdunkId": "451350",
+        "name": "Sugar L [OP10-003](Booster Pack \"Royal Blood\")",
+        "nameEn": "Sugar L [OP10-003](Booster Pack \"Royal Blood\")",
+        "rarity": "",
+        "cardNumber": "OP10-003",
+        "setCode": "OP10",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/e1d16fa8-7131-4c35-80f8-badfb58423cc.webp?size=m",
+        "priceJpy": 2500,
+        "url": "https://snkrdunk.com/en/apparels/451350"
+      },
+      {
+        "snkrdunkId": "442286",
+        "name": "Trafalgar Law SEC-P [OP10-119](Booster Pack \"Royal Blood\")",
+        "nameEn": "Trafalgar Law SEC-P [OP10-119](Booster Pack \"Royal Blood\")",
+        "rarity": "SEC",
+        "cardNumber": "OP10-119",
+        "setCode": "OP10",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/7b19f7fb-9038-438b-a869-37641e827267.webp?size=m",
+        "priceJpy": 2380,
+        "url": "https://snkrdunk.com/en/apparels/442286"
       }
     ]
   },
   "one-piece-snkrdunk-212190": {
     "productId": "one-piece-snkrdunk-212190",
-    "setCode": "",
+    "setCode": "OP01",
     "labels": [
-      "Booster Pack Romance Dawn",
-      "ワンピースカードゲーム ブースターパック ロマンスドーン"
+      "Romance Dawn",
+      "ロマンスドーン"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "93520",
+        "name": "Shanks SEC-SP (Comic Parallel) [OP01-120](Booster Pack \"ROMANCE DAWN\")",
+        "nameEn": "Shanks SEC-SP (Comic Parallel) [OP01-120](Booster Pack \"ROMANCE DAWN\")",
+        "rarity": "SEC",
+        "cardNumber": "OP01-120",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/1f986485-2a87-4bae-85cd-4deff2a07249.webp?size=m",
+        "priceJpy": 135000,
+        "url": "https://snkrdunk.com/en/apparels/93520"
+      },
+      {
+        "snkrdunkId": "104428",
+        "name": "Roronoa Zoro L-P [OP01-001] (Booster Pack ROMANCE DAWN)",
+        "nameEn": "Roronoa Zoro L-P [OP01-001] (Booster Pack ROMANCE DAWN)",
+        "rarity": "P",
+        "cardNumber": "OP01-001",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/bbc22e76-0b6a-4c34-961d-cc3c572622fb.webp?size=m",
+        "priceJpy": 23999,
+        "url": "https://snkrdunk.com/en/apparels/104428"
+      },
+      {
+        "snkrdunkId": "93519",
+        "name": "Monkey D Luffy L-P [OP01-003] (Booster Pack ROMANCE DAWN)",
+        "nameEn": "Monkey D Luffy L-P [OP01-003] (Booster Pack ROMANCE DAWN)",
+        "rarity": "P",
+        "cardNumber": "OP01-003",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/5a5d2826-4a99-4a50-a443-19ad8289411d.webp?size=m",
+        "priceJpy": 23000,
+        "url": "https://snkrdunk.com/en/apparels/93519"
+      },
+      {
+        "snkrdunkId": "93521",
+        "name": "Nami R-P [OP01-016] (Booster Pack ROMANCE DAWN)",
+        "nameEn": "Nami R-P [OP01-016] (Booster Pack ROMANCE DAWN)",
+        "rarity": "P",
+        "cardNumber": "OP01-016",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/418a4d4f-44a6-41b1-9860-fa03790fbcd6.webp?size=m",
+        "priceJpy": 15000,
+        "url": "https://snkrdunk.com/en/apparels/93521"
+      },
+      {
+        "snkrdunkId": "142611",
+        "name": "In Two Years!! At the Sabaody Archipelago!! UC [OP01-030] (Booster Pack ROMANCE DAWN)",
+        "nameEn": "In Two Years!! At the Sabaody Archipelago!! UC [OP01-030] (Booster Pack ROMANCE DAWN)",
+        "rarity": "",
+        "cardNumber": "OP01-030",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/03cdce94-5f81-4e89-985e-c04ef068e8f7.webp?size=m",
+        "priceJpy": 15000,
+        "url": "https://snkrdunk.com/en/apparels/142611"
+      },
+      {
+        "snkrdunkId": "93522",
+        "name": "Trafalgar law L-P[OP01-002] (Booster Pack ROMANCE DAWN)",
+        "nameEn": "Trafalgar law L-P[OP01-002] (Booster Pack ROMANCE DAWN)",
+        "rarity": "P",
+        "cardNumber": "OP01-002",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/0b1384b8-da60-4d15-bc71-0cd3711b3e00.webp?size=m",
+        "priceJpy": 13000,
+        "url": "https://snkrdunk.com/en/apparels/93522"
+      },
+      {
+        "snkrdunkId": "94892",
+        "name": "King SR-P [OP01-096] (Booster Pack ROMANCE DAWN)",
+        "nameEn": "King SR-P [OP01-096] (Booster Pack ROMANCE DAWN)",
+        "rarity": "SR",
+        "cardNumber": "OP01-096",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/a6f7ffdd-a848-4012-b37e-4b2f9e7b26fa.webp?size=m",
+        "priceJpy": 11500,
+        "url": "https://snkrdunk.com/en/apparels/94892"
+      },
+      {
+        "snkrdunkId": "94869",
+        "name": "Kin'emon SR-P [OP01-040] (Booster Pack ROMANCE DAWN)",
+        "nameEn": "Kin'emon SR-P [OP01-040] (Booster Pack ROMANCE DAWN)",
+        "rarity": "SR",
+        "cardNumber": "OP01-040",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/de6a9a40-6288-404a-9747-d9e81eb174ed.webp?size=m",
+        "priceJpy": 9000,
+        "url": "https://snkrdunk.com/en/apparels/94869"
+      },
+      {
+        "snkrdunkId": "94874",
+        "name": "Crocodile L-P [OP01-062] (Booster Pack ROMANCE DAWN)",
+        "nameEn": "Crocodile L-P [OP01-062] (Booster Pack ROMANCE DAWN)",
+        "rarity": "P",
+        "cardNumber": "OP01-062",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/7d0bb308-b917-4e52-98d1-dd8f260631b1.webp?size=m",
+        "priceJpy": 7000,
+        "url": "https://snkrdunk.com/en/apparels/94874"
+      },
+      {
+        "snkrdunkId": "93514",
+        "name": "Roronoa Zoro SR-P [OP01-025] (Booster Pack ROMANCE DAWN)",
+        "nameEn": "Roronoa Zoro SR-P [OP01-025] (Booster Pack ROMANCE DAWN)",
+        "rarity": "SR",
+        "cardNumber": "OP01-025",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/339c8536-d7b3-4760-bd8f-6d1655f4f41d.webp?size=m",
+        "priceJpy": 6500,
+        "url": "https://snkrdunk.com/en/apparels/93514"
+      },
+      {
+        "snkrdunkId": "93513",
+        "name": "Monkey D Luffy SR-P [OP01-024] (Booster Pack ROMANCE DAWN)",
+        "nameEn": "Monkey D Luffy SR-P [OP01-024] (Booster Pack ROMANCE DAWN)",
+        "rarity": "SR",
+        "cardNumber": "OP01-024",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/3fb9b433-0a86-4f88-91df-efb343dc52ce.webp?size=m",
+        "priceJpy": 6000,
+        "url": "https://snkrdunk.com/en/apparels/93513"
+      },
+      {
+        "snkrdunkId": "94888",
+        "name": "King L-P [OP01-091] (Booster Pack ROMANCE DAWN)",
+        "nameEn": "King L-P [OP01-091] (Booster Pack ROMANCE DAWN)",
+        "rarity": "P",
+        "cardNumber": "OP01-091",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/3555009f-26ec-4fe9-99cc-85aa2eef8b2f.webp?size=m",
+        "priceJpy": 5999,
+        "url": "https://snkrdunk.com/en/apparels/94888"
+      }
+    ]
   },
   "one-piece-snkrdunk-629129": {
     "productId": "one-piece-snkrdunk-629129",
@@ -7400,7 +12048,7 @@ export const COLLECTION_TOP_CARDS = {
       "Legacy of the Master",
       "師弟の絆"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
       {
@@ -7409,9 +12057,9 @@ export const COLLECTION_TOP_CARDS = {
         "nameEn": "Marshall.D.Teach SR-SPC :3th Anniversary Special Card (Gold Background) [OP09-093](Booster Pack \"LEGACY OF THE MASTER\")",
         "rarity": "SR",
         "cardNumber": "OP09-093",
-        "setCode": "",
+        "setCode": "OP09",
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/2de61e92-82fc-4e53-935d-2592e6b74218.webp?size=m",
-        "priceJpy": 163000,
+        "priceJpy": 110000,
         "url": "https://snkrdunk.com/en/apparels/588863"
       },
       {
@@ -7420,9 +12068,9 @@ export const COLLECTION_TOP_CARDS = {
         "nameEn": "Marshall.D.Teach SR-SPC :3th Anniversary Special Card (Silver Background) [OP09-093](Booster Pack \"LEGACY OF THE MASTER\")",
         "rarity": "SR",
         "cardNumber": "OP09-093",
-        "setCode": "",
+        "setCode": "OP09",
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/107eae9d-47b3-4572-945d-70457718cbe9.webp?size=m",
-        "priceJpy": 150000,
+        "priceJpy": 109999,
         "url": "https://snkrdunk.com/en/apparels/588864"
       },
       {
@@ -7442,21 +12090,10 @@ export const COLLECTION_TOP_CARDS = {
         "nameEn": "Asura Sword-Drawing Jest of the Dead R-P [OP12-037](Booster Pack \"LEGACY OF THE MASTER\")",
         "rarity": "P",
         "cardNumber": "OP12-037",
-        "setCode": "",
+        "setCode": "OP09",
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/6f59583b-bf3b-42f6-be1a-c20780f801ca.webp?size=m",
-        "priceJpy": 30000,
+        "priceJpy": 29000,
         "url": "https://snkrdunk.com/en/apparels/588842"
-      },
-      {
-        "snkrdunkId": "666858",
-        "name": "Boa Hancock SR-P [OP12-014] [EN](Booster Pack \"LEGACY OF THE MASTER\")",
-        "nameEn": "Boa Hancock SR-P [OP12-014] [EN](Booster Pack \"LEGACY OF THE MASTER\")",
-        "rarity": "SR",
-        "cardNumber": "OP12-014",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/2725f712-343d-4a87-b6fd-3c639abd6bd1.webp?size=m",
-        "priceJpy": 29999,
-        "url": "https://snkrdunk.com/en/apparels/666858"
       },
       {
         "snkrdunkId": "588845",
@@ -7534,50 +12171,85 @@ export const COLLECTION_TOP_CARDS = {
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/20610ccb-6786-4357-809e-46f5bec5d7cf.webp?size=m",
         "priceJpy": 6000,
         "url": "https://snkrdunk.com/en/apparels/588850"
+      },
+      {
+        "snkrdunkId": "588841",
+        "name": "Perona SR-P [OP12-034](Booster Pack \"LEGACY OF THE MASTER\")",
+        "nameEn": "Perona SR-P [OP12-034](Booster Pack \"LEGACY OF THE MASTER\")",
+        "rarity": "SR",
+        "cardNumber": "OP12-034",
+        "setCode": "OP09",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/a088aaa0-46b1-4216-81af-e335a1398ecc.webp?size=m",
+        "priceJpy": 5500,
+        "url": "https://snkrdunk.com/en/apparels/588841"
       }
     ]
   },
   "one-piece-snkrdunk-212189": {
     "productId": "one-piece-snkrdunk-212189",
-    "setCode": "",
+    "setCode": "OP02",
     "labels": [
-      "Booster Pack Paramount War",
-      "ワンピースカードゲーム ブースターパック 頂上決戦"
+      "Paramount War",
+      "頂上決戦"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "102434",
+        "name": "Portgas.D.Ace SR-SP (Comic Parallel) [OP02-013](Booster Pack \"Paramount War\")",
+        "nameEn": "Portgas.D.Ace SR-SP (Comic Parallel) [OP02-013](Booster Pack \"Paramount War\")",
+        "rarity": "SR",
+        "cardNumber": "OP02-013",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/e5c295fa-2280-414b-a641-23a7683fd439.webp?size=m",
+        "priceJpy": 100000,
+        "url": "https://snkrdunk.com/en/apparels/102434"
+      }
+    ]
   },
   "one-piece-snkrdunk-212196": {
     "productId": "one-piece-snkrdunk-212196",
     "setCode": "",
     "labels": [
-      "Booster Pack The Kingdoms Of Intrigue",
-      "ワンピースカードゲーム ブースターパック 謀略の王国"
+      "The Kingdoms Of Intrigue",
+      "謀略の王国"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
   "one-piece-snkrdunk-212194": {
     "productId": "one-piece-snkrdunk-212194",
-    "setCode": "",
+    "setCode": "OP03",
     "labels": [
-      "Booster Pack Pillars Of Strength",
-      "ワンピースカードゲーム ブースターパック 強大な敵"
+      "Pillars Of Strength",
+      "強大な敵"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "112979",
+        "name": "Sogeking SEC-SP (Comic Parallel) [OP03-122](Booster Pack \"Pillars Of Strength\")",
+        "nameEn": "Sogeking SEC-SP (Comic Parallel) [OP03-122](Booster Pack \"Pillars Of Strength\")",
+        "rarity": "SEC",
+        "cardNumber": "OP03-122",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/211843c8-b5d5-461b-a305-c5d38294f25b.webp?size=m",
+        "priceJpy": 65800,
+        "url": "https://snkrdunk.com/en/apparels/112979"
+      }
+    ]
   },
   "one-piece-snkrdunk-511501": {
     "productId": "one-piece-snkrdunk-511501",
     "setCode": "",
     "labels": [
       "One Piece Card The Best Storage Box Set Bonus Pack",
-      "ワンピースカードゲーム プレミアムブースター ONE PIECE CARD THE BEST ストレージ"
+      "ONE PIECE CARD THE BEST ストレージ"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -7585,10 +12257,10 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "one-piece-snkrdunk-269634",
     "setCode": "",
     "labels": [
-      "Booster Pack Awakening Of The New Era EN",
-      "ワンピースカードゲーム ブースターパック 新時代の主役 英語版"
+      "Awakening Of The New Era EN",
+      "新時代の主役 英語版"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -7597,7 +12269,9 @@ export const COLLECTION_TOP_CARDS = {
     "setCode": "OP16",
     "labels": [
       "THE TIME OF BATTLE",
-      "決戦の刻"
+      "決戦の刻",
+      "THE TIME OF BATTLE\" EN",
+      "決戦の刻」英語版"
     ],
     "updatedAt": "2026-09-26T12:21:05.632Z",
     "source": "SNKRDUNK",
@@ -7741,7 +12415,9 @@ export const COLLECTION_TOP_CARDS = {
     "setCode": "OP13",
     "labels": [
       "CARRYING ON HIS WILL",
-      "受け継がれる意志"
+      "受け継がれる意志",
+      "CARRYING ON HIS WILL\" EN",
+      "受け継がれる意志」英語版"
     ],
     "updatedAt": "2026-09-26T12:21:05.632Z",
     "source": "SNKRDUNK",
@@ -7885,7 +12561,9 @@ export const COLLECTION_TOP_CARDS = {
     "setCode": "OP09",
     "labels": [
       "Emperors in the New World",
-      "新たなる皇帝"
+      "新たなる皇帝",
+      "Emperors in the New World\" EN",
+      "新たなる皇帝」 英語版"
     ],
     "updatedAt": "2026-09-26T12:21:05.632Z",
     "source": "SNKRDUNK",
@@ -8029,7 +12707,9 @@ export const COLLECTION_TOP_CARDS = {
     "setCode": "OP01",
     "labels": [
       "ROMANCE DAWN",
-      "ロマンスドーン"
+      "ロマンスドーン",
+      "ROMANCE DAWN\" EN Reprint",
+      "ロマンスドーン」英語版 再販"
     ],
     "updatedAt": "2026-09-26T12:21:05.632Z",
     "source": "SNKRDUNK",
@@ -8173,7 +12853,9 @@ export const COLLECTION_TOP_CARDS = {
     "setCode": "",
     "labels": [
       "CHAOS ORIGINS",
-      "カオス・オリジンズ"
+      "カオス・オリジンズ",
+      "Included)",
+      "基本パック「カオス・オリジンズ」日本版"
     ],
     "updatedAt": "2026-09-26T12:21:05.632Z",
     "source": "SNKRDUNK",
@@ -8316,10 +12998,10 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "yugioh-snkrdunk-222660",
     "setCode": "",
     "labels": [
-      "Yu-Gi-Oh OCG Duel Monsters PREMIUM PACK The Legend of Duelist QUARTER CENTURY EDITION",
-      "遊戯王OCG デュエルモンスターズ プレミアムパック 決闘者伝説 クォーターセンチュリーエディション"
+      "PREMIUM PACK The Legend of Duelist QUARTER CENTURY EDITION",
+      "プレミアムパック 決闘者伝説 クォーターセンチュリーエディション"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -8327,30 +13009,298 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "yugioh-snkrdunk-173423",
     "setCode": "",
     "labels": [
-      "Yu-Gi-Oh OCG Duel Monsters Concept Pack SELECTION 5",
-      "遊戯王OCG デュエルモンスターズ コンセプトパック セレクション 5"
+      "SELECTION 5",
+      "コンセプトパック セレクション 5"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "102743",
+        "name": "Sky Striker Mobilize - Engage! PSE[SLF1-JP043](SELECTION 5)",
+        "nameEn": "Sky Striker Mobilize - Engage! PSE[SLF1-JP043](SELECTION 5)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/2e559796-be1d-4dbe-903d-4d69087e3dd2.webp?size=m",
+        "priceJpy": 200000,
+        "url": "https://snkrdunk.com/en/apparels/102743"
+      },
+      {
+        "snkrdunkId": "102769",
+        "name": "House Dragonmaid PSE[SLF1-JP065](SELECTION 5)",
+        "nameEn": "House Dragonmaid PSE[SLF1-JP065](SELECTION 5)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/f8a56137-2ddc-4a2e-8568-d92967bb58a4.webp?size=m",
+        "priceJpy": 150000,
+        "url": "https://snkrdunk.com/en/apparels/102769"
+      },
+      {
+        "snkrdunkId": "102784",
+        "name": "Live☆Twin Ki-sikil SE[SLF1-JP074](SELECTION 5)",
+        "nameEn": "Live☆Twin Ki-sikil SE[SLF1-JP074](SELECTION 5)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/068bc7e7-230d-4f24-8324-eaa00a06fc5b.webp?size=m",
+        "priceJpy": 100000,
+        "url": "https://snkrdunk.com/en/apparels/102784"
+      },
+      {
+        "snkrdunkId": "102798",
+        "name": "Evil Twins Lil-la (Another Illustration) UR [SLF1-JP080](SELECTION 5)",
+        "nameEn": "Evil Twins Lil-la (Another Illustration) UR [SLF1-JP080](SELECTION 5)",
+        "rarity": "UR",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/7ef5015f-cb8a-44bf-a191-0ef3d65e65b1.webp?size=m",
+        "priceJpy": 79000,
+        "url": "https://snkrdunk.com/en/apparels/102798"
+      },
+      {
+        "snkrdunkId": "102735",
+        "name": "Sky Striker Ace - Shizuku PSE[SLF1-JP039](SELECTION 5)",
+        "nameEn": "Sky Striker Ace - Shizuku PSE[SLF1-JP039](SELECTION 5)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/b92f8533-055e-4410-b948-284646c39322.webp?size=m",
+        "priceJpy": 69800,
+        "url": "https://snkrdunk.com/en/apparels/102735"
+      },
+      {
+        "snkrdunkId": "102792",
+        "name": "Evil Twins Ki-sikil (Another Illustration) UR [SLF1-JP079](SELECTION 5)",
+        "nameEn": "Evil Twins Ki-sikil (Another Illustration) UR [SLF1-JP079](SELECTION 5)",
+        "rarity": "UR",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/1c616d59-3761-48d9-ae3f-62d54d9088ae.webp?size=m",
+        "priceJpy": 50000,
+        "url": "https://snkrdunk.com/en/apparels/102792"
+      },
+      {
+        "snkrdunkId": "102779",
+        "name": "Dragonmaid Changeover SE[SLF1-JP069](SELECTION 5)",
+        "nameEn": "Dragonmaid Changeover SE[SLF1-JP069](SELECTION 5)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/7107c36c-cc35-422d-a07d-a4445506874b.webp?size=m",
+        "priceJpy": 50000,
+        "url": "https://snkrdunk.com/en/apparels/102779"
+      },
+      {
+        "snkrdunkId": "102768",
+        "name": "House Dragonmaid SE[SLF1-JP065](SELECTION 5)",
+        "nameEn": "House Dragonmaid SE[SLF1-JP065](SELECTION 5)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/0c983ab2-3542-4ff2-9cd2-00c05341d14d.webp?size=m",
+        "priceJpy": 50000,
+        "url": "https://snkrdunk.com/en/apparels/102768"
+      },
+      {
+        "snkrdunkId": "102796",
+        "name": "Evil☆Twin Lil-la PSE[SLF1-JP080](SELECTION 5)",
+        "nameEn": "Evil☆Twin Lil-la PSE[SLF1-JP080](SELECTION 5)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/ec989fca-7fd5-43e1-8216-08cb9cec7278.webp?size=m",
+        "priceJpy": 41800,
+        "url": "https://snkrdunk.com/en/apparels/102796"
+      },
+      {
+        "snkrdunkId": "102791",
+        "name": "Evil☆Twin Ki-sikil PSE[SLF1-JP079](SELECTION 5)",
+        "nameEn": "Evil☆Twin Ki-sikil PSE[SLF1-JP079](SELECTION 5)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/37a93a29-a611-4815-93d0-ebe5bb5f8d1a.webp?size=m",
+        "priceJpy": 20000,
+        "url": "https://snkrdunk.com/en/apparels/102791"
+      },
+      {
+        "snkrdunkId": "102775",
+        "name": "Dragonmaid Hospitality PSE[SLF1-JP067](SELECTION 5)",
+        "nameEn": "Dragonmaid Hospitality PSE[SLF1-JP067](SELECTION 5)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/473420ef-640c-498d-bad8-cf219efd2c85.webp?size=m",
+        "priceJpy": 12000,
+        "url": "https://snkrdunk.com/en/apparels/102775"
+      },
+      {
+        "snkrdunkId": "102764",
+        "name": "Parlor Dragonmaid SE[SLF1-JP062](SELECTION 5)",
+        "nameEn": "Parlor Dragonmaid SE[SLF1-JP062](SELECTION 5)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/ec25ca16-e6bf-4404-8780-50eb17a0fdaf.webp?size=m",
+        "priceJpy": 8000,
+        "url": "https://snkrdunk.com/en/apparels/102764"
+      }
+    ]
   },
   "yugioh-snkrdunk-405585": {
     "productId": "yugioh-snkrdunk-405585",
     "setCode": "",
     "labels": [
-      "Yu-Gi-Oh OCG Duel Monsters Quarter Century Limited Pack",
-      "遊戯王OCG デュエルモンスターズ クォーター・センチュリー・リミテッド・パック"
+      "Quarter Century",
+      "クォーター・センチュリー・リミテッド・パック"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "451729",
+        "name": "Kanan the Swordmistress (Reprint) UR [QCLP-JP001](Quarter Century Limited Pack)",
+        "nameEn": "Kanan the Swordmistress (Reprint) UR [QCLP-JP001](Quarter Century Limited Pack)",
+        "rarity": "UR",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/cf03c1fa-786b-4889-b0c7-451b64e406b8.webp?size=m",
+        "priceJpy": 196000,
+        "url": "https://snkrdunk.com/en/apparels/451729"
+      },
+      {
+        "snkrdunkId": "451804",
+        "name": "Kanan the Swordmistress 25th SE [QCLP-JP001](Quarter Century Limited Pack)",
+        "nameEn": "Kanan the Swordmistress 25th SE [QCLP-JP001](Quarter Century Limited Pack)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/bf05e13c-2fd7-42a2-a6c8-20488eb41c87.webp?size=m",
+        "priceJpy": 118000,
+        "url": "https://snkrdunk.com/en/apparels/451804"
+      },
+      {
+        "snkrdunkId": "451738",
+        "name": "Toon Dark Magician Girl (Reprint) UR [QCLP-JP010](Quarter Century Limited Pack)",
+        "nameEn": "Toon Dark Magician Girl (Reprint) UR [QCLP-JP010](Quarter Century Limited Pack)",
+        "rarity": "UR",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/e8b59c60-2f2b-44f4-ac36-41e9ce9d8405.webp?size=m",
+        "priceJpy": 28000,
+        "url": "https://snkrdunk.com/en/apparels/451738"
+      },
+      {
+        "snkrdunkId": "451780",
+        "name": "Aqua Madoor SE [QCLP-JP002](Quarter Century Limited Pack)",
+        "nameEn": "Aqua Madoor SE [QCLP-JP002](Quarter Century Limited Pack)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/e4c0f573-6054-4bb1-b5c3-61f917fc4470.webp?size=m",
+        "priceJpy": 25000,
+        "url": "https://snkrdunk.com/en/apparels/451780"
+      },
+      {
+        "snkrdunkId": "451809",
+        "name": "Toon Dark Magician Girl 25th SE [QCLP-JP010](Quarter Century Limited Pack)",
+        "nameEn": "Toon Dark Magician Girl 25th SE [QCLP-JP010](Quarter Century Limited Pack)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/d05cc5c4-402e-4b87-b0ce-ff5f02417334.webp?size=m",
+        "priceJpy": 24000,
+        "url": "https://snkrdunk.com/en/apparels/451809"
+      },
+      {
+        "snkrdunkId": "451806",
+        "name": "Red-Eyes Black Metal Dragon 25th SE [QCLP-JP005](Quarter Century Limited Pack)",
+        "nameEn": "Red-Eyes Black Metal Dragon 25th SE [QCLP-JP005](Quarter Century Limited Pack)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/f7dd422b-7338-4bb9-b2e3-0e1a0c2d6cbb.webp?size=m",
+        "priceJpy": 15000,
+        "url": "https://snkrdunk.com/en/apparels/451806"
+      },
+      {
+        "snkrdunkId": "451812",
+        "name": "Magician's Valkyria 25th SE [QCLP-JP017](Quarter Century Limited Pack)",
+        "nameEn": "Magician's Valkyria 25th SE [QCLP-JP017](Quarter Century Limited Pack)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/3ed1cf18-7596-4cd4-8887-b64d83f5d835.webp?size=m",
+        "priceJpy": 13999,
+        "url": "https://snkrdunk.com/en/apparels/451812"
+      },
+      {
+        "snkrdunkId": "451754",
+        "name": "Kanan the Swordmistress UR [QCLP-JP001](Quarter Century Limited Pack)",
+        "nameEn": "Kanan the Swordmistress UR [QCLP-JP001](Quarter Century Limited Pack)",
+        "rarity": "UR",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/d6c121f0-c882-44b1-8445-8a1de262416a.webp?size=m",
+        "priceJpy": 10000,
+        "url": "https://snkrdunk.com/en/apparels/451754"
+      },
+      {
+        "snkrdunkId": "451781",
+        "name": "Doriado SE [QCLP-JP003](Quarter Century Limited Pack)",
+        "nameEn": "Doriado SE [QCLP-JP003](Quarter Century Limited Pack)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/0849c0bd-75a5-4e2e-8a47-681111af987a.webp?size=m",
+        "priceJpy": 9500,
+        "url": "https://snkrdunk.com/en/apparels/451781"
+      },
+      {
+        "snkrdunkId": "451779",
+        "name": "Kanan the Swordmistress SE [QCLP-JP001](Quarter Century Limited Pack)",
+        "nameEn": "Kanan the Swordmistress SE [QCLP-JP001](Quarter Century Limited Pack)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/16771d98-2c1a-4802-b9aa-3915b5191512.webp?size=m",
+        "priceJpy": 8000,
+        "url": "https://snkrdunk.com/en/apparels/451779"
+      },
+      {
+        "snkrdunkId": "451763",
+        "name": "Toon Dark Magician Girl UR [QCLP-JP010](Quarter Century Limited Pack)",
+        "nameEn": "Toon Dark Magician Girl UR [QCLP-JP010](Quarter Century Limited Pack)",
+        "rarity": "UR",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/62ade37e-15f8-4ecd-808f-ccc3f90134b2.webp?size=m",
+        "priceJpy": 8000,
+        "url": "https://snkrdunk.com/en/apparels/451763"
+      },
+      {
+        "snkrdunkId": "451770",
+        "name": "Magician's Valkyria UR [QCLP-JP017](Quarter Century Limited Pack)",
+        "nameEn": "Magician's Valkyria UR [QCLP-JP017](Quarter Century Limited Pack)",
+        "rarity": "UR",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/73bb612b-a81a-41fb-a953-d4b5c9a5b7ea.webp?size=m",
+        "priceJpy": 7000,
+        "url": "https://snkrdunk.com/en/apparels/451770"
+      }
+    ]
   },
   "yugioh-snkrdunk-977512": {
     "productId": "yugioh-snkrdunk-977512",
     "setCode": "",
     "labels": [
       "Ra Yellow",
-      "ラーイエロー"
+      "ラーイエロー",
+      "GX \"Ra Yellow",
+      "リミテッドパック GX「ラーイエロー」日本版"
     ],
     "updatedAt": "2026-09-26T12:21:05.632Z",
     "source": "SNKRDUNK",
@@ -8494,9 +13444,10 @@ export const COLLECTION_TOP_CARDS = {
     "setCode": "",
     "labels": [
       "Yu-Gi-Oh ORIGINAL ARTWORK COLLECTION",
-      "遊☆戯☆王 オリジナル アートワーク コレクション"
+      "遊☆戯☆王 オリジナル アートワーク コレクション",
+      "遊☆戯☆王 オリジナル アートワーク コレクション」日本版"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -8505,7 +13456,9 @@ export const COLLECTION_TOP_CARDS = {
     "setCode": "",
     "labels": [
       "Beyond The Brave",
-      "ビヨンド・ザ・ブレイブ"
+      "ビヨンド・ザ・ブレイブ",
+      "Included)",
+      "基本パック「ビヨンド・ザ・ブレイブ」日本版"
     ],
     "updatedAt": "2026-09-26T12:21:05.632Z",
     "source": "SNKRDUNK",
@@ -8649,7 +13602,8 @@ export const COLLECTION_TOP_CARDS = {
     "setCode": "",
     "labels": [
       "UTILITY SELECTION",
-      "ユーティリティ セレクション"
+      "ユーティリティ セレクション",
+      "ユーティリティ セレクション」日本版"
     ],
     "updatedAt": "2026-09-26T12:21:05.632Z",
     "source": "SNKRDUNK",
@@ -8792,65 +13746,477 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "yugioh-snkrdunk-160652",
     "setCode": "",
     "labels": [
-      "Yu-Gi-Oh OCG Duel Monsters Darkwing Blast Box +1 Bonus Pack",
-      "遊戯王OCG デュエルモンスターズ ダークウィング・ブラスト"
+      "Darkwing Blast",
+      "ダークウィング・ブラスト"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "92875",
+        "name": "Red Cartesia, the Virtuous PSE[DABL-JP011](DARKWING BLAST)",
+        "nameEn": "Red Cartesia, the Virtuous PSE[DABL-JP011](DARKWING BLAST)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/a280c520-c5a5-42c7-9518-51042ddeb69d.webp?size=m",
+        "priceJpy": 22000,
+        "url": "https://snkrdunk.com/en/apparels/92875"
+      },
+      {
+        "snkrdunkId": "92877",
+        "name": "Tearlaments Lulucaros PSE[DABL-JP039](DARKWING BLAST)",
+        "nameEn": "Tearlaments Lulucaros PSE[DABL-JP039](DARKWING BLAST)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/16d7c22f-b6e8-4235-ae25-1180769d44d1.webp?size=m",
+        "priceJpy": 20000,
+        "url": "https://snkrdunk.com/en/apparels/92877"
+      },
+      {
+        "snkrdunkId": "92876",
+        "name": "Black-Winged Dragon PSE[DABL-JPS01](DARKWING BLAST)",
+        "nameEn": "Black-Winged Dragon PSE[DABL-JPS01](DARKWING BLAST)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/1cee9dce-086d-4fa5-a188-ea8c908a63d1.webp?size=m",
+        "priceJpy": 6500,
+        "url": "https://snkrdunk.com/en/apparels/92876"
+      },
+      {
+        "snkrdunkId": "92879",
+        "name": "The Byssted Lubellion PSE[DABL-JP009](DARKWING BLAST)",
+        "nameEn": "The Byssted Lubellion PSE[DABL-JP009](DARKWING BLAST)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/588a4603-359a-4671-9e72-74f3d2e3c849.webp?size=m",
+        "priceJpy": 5000,
+        "url": "https://snkrdunk.com/en/apparels/92879"
+      }
+    ]
   },
   "yugioh-snkrdunk-642132": {
     "productId": "yugioh-snkrdunk-642132",
     "setCode": "",
     "labels": [
-      "Yu-Gi-Oh OCG Duel Monsters LIMITED PACK GX OSIRIS RED",
-      "遊戯王OCG デュエルモンスターズ リミテッドパックGX オシリスレッド"
+      "GX OSIRIS RED",
+      "リミテッドパックGX オシリスレッド"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "586845",
+        "name": "Uria Lord of Searing Flames PSE [LPG1-JP056](LIMITED PACK GX OSIRIS RED)",
+        "nameEn": "Uria Lord of Searing Flames PSE [LPG1-JP056](LIMITED PACK GX OSIRIS RED)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/3285c284-e692-4821-a94f-0fc15c90f70b.webp?size=m",
+        "priceJpy": 50000,
+        "url": "https://snkrdunk.com/en/apparels/586845"
+      },
+      {
+        "snkrdunkId": "582554",
+        "name": "Elemental HERO Shining Flare Wingman PSE [LPG1-JP045](LIMITED PACK GX OSIRIS RED)",
+        "nameEn": "Elemental HERO Shining Flare Wingman PSE [LPG1-JP045](LIMITED PACK GX OSIRIS RED)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/21c547e3-aa2f-4ef5-ac9d-acfe49783c2a.webp?size=m",
+        "priceJpy": 12000,
+        "url": "https://snkrdunk.com/en/apparels/582554"
+      },
+      {
+        "snkrdunkId": "582544",
+        "name": "Maiden in Love PSE [LPG1-JP001](LIMITED PACK GX OSIRIS RED)",
+        "nameEn": "Maiden in Love PSE [LPG1-JP001](LIMITED PACK GX OSIRIS RED)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/1d4c8669-8a4b-49c7-84d5-16f5aae69d9a.webp?size=m",
+        "priceJpy": 6000,
+        "url": "https://snkrdunk.com/en/apparels/582544"
+      },
+      {
+        "snkrdunkId": "582552",
+        "name": "Hero's Rule 1: Five Freedoms PSE [LPG1-JP009](LIMITED PACK GX OSIRIS RED)",
+        "nameEn": "Hero's Rule 1: Five Freedoms PSE [LPG1-JP009](LIMITED PACK GX OSIRIS RED)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/1ef43bda-0c76-43b5-ae68-3fc98de84d08.webp?size=m",
+        "priceJpy": 1000,
+        "url": "https://snkrdunk.com/en/apparels/582552"
+      },
+      {
+        "snkrdunkId": "582551",
+        "name": "Chaos Distill PSE [LPG1-JP008](LIMITED PACK GX OSIRIS RED)",
+        "nameEn": "Chaos Distill PSE [LPG1-JP008](LIMITED PACK GX OSIRIS RED)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/fb8749f3-be33-43e9-9b82-49807aba87e8.webp?size=m",
+        "priceJpy": 1000,
+        "url": "https://snkrdunk.com/en/apparels/582551"
+      }
+    ]
   },
   "yugioh-snkrdunk-790250": {
     "productId": "yugioh-snkrdunk-790250",
     "setCode": "",
     "labels": [
-      "Yu-Gi-Oh OCG Duel Monsters LIMITED PACK -STAMP EDITION- Box JP Edition",
-      "遊戯王OCG デュエルモンスターズ リミテッドパック スタンプエディション"
+      "-STAMP EDITION-",
+      "リミテッドパック スタンプエディション"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "740994",
+        "name": "Blue-Eyes White Dragon PSE [LPST-JP003](LIMITED PACK -STAMP EDITION-)",
+        "nameEn": "Blue-Eyes White Dragon PSE [LPST-JP003](LIMITED PACK -STAMP EDITION-)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/c0263e57-d8f8-430f-a8fe-a1c80d757c9e.webp?size=m",
+        "priceJpy": 52800,
+        "url": "https://snkrdunk.com/en/apparels/740994"
+      },
+      {
+        "snkrdunkId": "740991",
+        "name": "Dark Magician Girl PSE [LPST-JP002](LIMITED PACK -STAMP EDITION-)",
+        "nameEn": "Dark Magician Girl PSE [LPST-JP002](LIMITED PACK -STAMP EDITION-)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/b65d7d27-fdd7-4514-8b39-e00e38cc0253.webp?size=m",
+        "priceJpy": 48000,
+        "url": "https://snkrdunk.com/en/apparels/740991"
+      },
+      {
+        "snkrdunkId": "741018",
+        "name": "Sky Striker Ace - Raye PSE [LPST-JP011](LIMITED PACK -STAMP EDITION-)",
+        "nameEn": "Sky Striker Ace - Raye PSE [LPST-JP011](LIMITED PACK -STAMP EDITION-)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/949879f5-668d-45c2-869b-4821cb2e59b5.webp?size=m",
+        "priceJpy": 30000,
+        "url": "https://snkrdunk.com/en/apparels/741018"
+      },
+      {
+        "snkrdunkId": "741126",
+        "name": "Obelisk the Tormentor PSE [LPST-JP047](LIMITED PACK -STAMP EDITION-)",
+        "nameEn": "Obelisk the Tormentor PSE [LPST-JP047](LIMITED PACK -STAMP EDITION-)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/61a0f142-64fa-41c7-aa7e-0064b67bf074.webp?size=m",
+        "priceJpy": 29999,
+        "url": "https://snkrdunk.com/en/apparels/741126"
+      },
+      {
+        "snkrdunkId": "741054",
+        "name": "I:P Masquerena PSE [LPST-JP023](LIMITED PACK -STAMP EDITION-)",
+        "nameEn": "I:P Masquerena PSE [LPST-JP023](LIMITED PACK -STAMP EDITION-)",
+        "rarity": "P",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/d44e3c69-4012-422f-b79a-91f71c6b5015.webp?size=m",
+        "priceJpy": 25000,
+        "url": "https://snkrdunk.com/en/apparels/741054"
+      },
+      {
+        "snkrdunkId": "741466",
+        "name": "Ghost Ogre & Snow Rabbit PSE [STSP-JP001](SPECIAL PACK -STAMP EDITION-)",
+        "nameEn": "Ghost Ogre & Snow Rabbit PSE [STSP-JP001](SPECIAL PACK -STAMP EDITION-)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/7cf8c698-52bb-4a79-8945-0220c2358498.webp?size=m",
+        "priceJpy": 19800,
+        "url": "https://snkrdunk.com/en/apparels/741466"
+      },
+      {
+        "snkrdunkId": "741039",
+        "name": "Asteria of the White Woods PSE [LPST-JP018](LIMITED PACK -STAMP EDITION-)",
+        "nameEn": "Asteria of the White Woods PSE [LPST-JP018](LIMITED PACK -STAMP EDITION-)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/5f9dc29c-aa0f-4b28-a839-c045b633a006.webp?size=m",
+        "priceJpy": 17500,
+        "url": "https://snkrdunk.com/en/apparels/741039"
+      },
+      {
+        "snkrdunkId": "741009",
+        "name": "Tour Guide From the Underworld PSE [LPST-JP008](LIMITED PACK -STAMP EDITION-)",
+        "nameEn": "Tour Guide From the Underworld PSE [LPST-JP008](LIMITED PACK -STAMP EDITION-)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/4c2baebe-a2e4-46f0-b6bc-68541bb82f33.webp?size=m",
+        "priceJpy": 17000,
+        "url": "https://snkrdunk.com/en/apparels/741009"
+      },
+      {
+        "snkrdunkId": "741000",
+        "name": "Skull Servant PSE [LPST-JP005](LIMITED PACK -STAMP EDITION-)",
+        "nameEn": "Skull Servant PSE [LPST-JP005](LIMITED PACK -STAMP EDITION-)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/69d84c19-cd79-4e13-a0fa-1b9bb7f2e908.webp?size=m",
+        "priceJpy": 16800,
+        "url": "https://snkrdunk.com/en/apparels/741000"
+      },
+      {
+        "snkrdunkId": "741127",
+        "name": "The Winged Dragon of Ra UR [LPST-JP048](LIMITED PACK -STAMP EDITION-)",
+        "nameEn": "The Winged Dragon of Ra UR [LPST-JP048](LIMITED PACK -STAMP EDITION-)",
+        "rarity": "UR",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/86580eb6-708c-403e-b52a-7d93b3a50535.webp?size=m",
+        "priceJpy": 13800,
+        "url": "https://snkrdunk.com/en/apparels/741127"
+      },
+      {
+        "snkrdunkId": "741124",
+        "name": "Obelisk the Tormentor UR [LPST-JP047](LIMITED PACK -STAMP EDITION-)",
+        "nameEn": "Obelisk the Tormentor UR [LPST-JP047](LIMITED PACK -STAMP EDITION-)",
+        "rarity": "UR",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/77c0f1e9-a518-4b52-9be4-7456645e0825.webp?size=m",
+        "priceJpy": 13800,
+        "url": "https://snkrdunk.com/en/apparels/741124"
+      },
+      {
+        "snkrdunkId": "741121",
+        "name": "Slifer the Sky Dragon UR [LPST-JP046](LIMITED PACK -STAMP EDITION-)",
+        "nameEn": "Slifer the Sky Dragon UR [LPST-JP046](LIMITED PACK -STAMP EDITION-)",
+        "rarity": "UR",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/edd6a34a-8804-477b-8795-71b4d2c5b066.webp?size=m",
+        "priceJpy": 13800,
+        "url": "https://snkrdunk.com/en/apparels/741121"
+      }
+    ]
   },
   "yugioh-snkrdunk-183628": {
     "productId": "yugioh-snkrdunk-183628",
-    "setCode": "",
+    "setCode": "DUNE",
     "labels": [
-      "Yu-Gi-Oh OCG Duel Monsters DUELIST NEXUS Box +1 Bonus Pack",
-      "遊戯王OCGデュエルモンスターズ デュエリスト ネクサス"
+      "DUELIST NEXUS",
+      "デュエリスト ネクサス"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "121718",
+        "name": "Magicians of Bonds and Unity 25th SE[DUNE-JP000](DUELIST NEXUS)",
+        "nameEn": "Magicians of Bonds and Unity 25th SE[DUNE-JP000](DUELIST NEXUS)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/954da644-f97f-4bbf-b12f-9bb9556a089f.webp?size=m",
+        "priceJpy": 59700,
+        "url": "https://snkrdunk.com/en/apparels/121718"
+      },
+      {
+        "snkrdunkId": "121757",
+        "name": "Hiita the Fire Channeler 25th SE[DUNE-JP026](DUELIST NEXUS)",
+        "nameEn": "Hiita the Fire Channeler 25th SE[DUNE-JP026](DUELIST NEXUS)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/3227cd55-19ff-4523-a32a-287a338948ac.webp?size=m",
+        "priceJpy": 15000,
+        "url": "https://snkrdunk.com/en/apparels/121757"
+      },
+      {
+        "snkrdunkId": "121830",
+        "name": "Duelist Genesis R[DUNE-JP062](DUELIST NEXUS)",
+        "nameEn": "Duelist Genesis R[DUNE-JP062](DUELIST NEXUS)",
+        "rarity": "R",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/3505e042-629e-44f1-b2e4-8b1f2873d618.webp?size=m",
+        "priceJpy": 10500,
+        "url": "https://snkrdunk.com/en/apparels/121830"
+      },
+      {
+        "snkrdunkId": "121766",
+        "name": "Arahime the Manifested Mikanko 25th SE[DUNE-JP032](DUELIST NEXUS)",
+        "nameEn": "Arahime the Manifested Mikanko 25th SE[DUNE-JP032](DUELIST NEXUS)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/71593e55-6865-49f9-b635-70b642473d0a.webp?size=m",
+        "priceJpy": 8888,
+        "url": "https://snkrdunk.com/en/apparels/121766"
+      },
+      {
+        "snkrdunkId": "121780",
+        "name": "Cosmic Quasar Dragon 25th SE[DUNE-JP037](DUELIST NEXUS)",
+        "nameEn": "Cosmic Quasar Dragon 25th SE[DUNE-JP037](DUELIST NEXUS)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/2390a9ab-a288-4d21-b8b4-29f580dcd992.webp?size=m",
+        "priceJpy": 5555,
+        "url": "https://snkrdunk.com/en/apparels/121780"
+      },
+      {
+        "snkrdunkId": "121791",
+        "name": "Angelica Princess of Noble Arms 25th SE[DUNE-JP040](DUELIST NEXUS)",
+        "nameEn": "Angelica Princess of Noble Arms 25th SE[DUNE-JP040](DUELIST NEXUS)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/8f6731e6-000c-4998-9349-5be910c38f47.webp?size=m",
+        "priceJpy": 5000,
+        "url": "https://snkrdunk.com/en/apparels/121791"
+      },
+      {
+        "snkrdunkId": "121782",
+        "name": "The Crimson Dragon UL[DUNE-JP038](DUELIST NEXUS)",
+        "nameEn": "The Crimson Dragon UL[DUNE-JP038](DUELIST NEXUS)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/de2c48c1-98b3-4de7-bccd-a5fb67730d16.webp?size=m",
+        "priceJpy": 3300,
+        "url": "https://snkrdunk.com/en/apparels/121782"
+      },
+      {
+        "snkrdunkId": "121778",
+        "name": "Cosmic Quasar Dragon SE[DUNE-JP037](DUELIST NEXUS)",
+        "nameEn": "Cosmic Quasar Dragon SE[DUNE-JP037](DUELIST NEXUS)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/6947e5b5-c6b4-45b5-84d7-415454c2ca86.webp?size=m",
+        "priceJpy": 3000,
+        "url": "https://snkrdunk.com/en/apparels/121778"
+      },
+      {
+        "snkrdunkId": "121774",
+        "name": "Sleipnir the Runick Mane 25th SE[DUNE-JP035](DUELIST NEXUS)",
+        "nameEn": "Sleipnir the Runick Mane 25th SE[DUNE-JP035](DUELIST NEXUS)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/13258734-1ccd-47e0-8156-47d5792f1b8b.webp?size=m",
+        "priceJpy": 3000,
+        "url": "https://snkrdunk.com/en/apparels/121774"
+      },
+      {
+        "snkrdunkId": "121756",
+        "name": "Hiita the Fire Channeler SE[DUNE-JP026](DUELIST NEXUS)",
+        "nameEn": "Hiita the Fire Channeler SE[DUNE-JP026](DUELIST NEXUS)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/9acbf568-94cb-405e-8924-0c877068cd8f.webp?size=m",
+        "priceJpy": 3000,
+        "url": "https://snkrdunk.com/en/apparels/121756"
+      },
+      {
+        "snkrdunkId": "121828",
+        "name": "Fusion Reinforcement 25th SE[DUNE-JP061](DUELIST NEXUS)",
+        "nameEn": "Fusion Reinforcement 25th SE[DUNE-JP061](DUELIST NEXUS)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/05f41fa7-7ae4-4305-afb4-99657eb428ed.webp?size=m",
+        "priceJpy": 2588,
+        "url": "https://snkrdunk.com/en/apparels/121828"
+      },
+      {
+        "snkrdunkId": "121751",
+        "name": "Nightmare Magician UL[DUNE-JP025](DUELIST NEXUS)",
+        "nameEn": "Nightmare Magician UL[DUNE-JP025](DUELIST NEXUS)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/2afb3524-e7b7-4be7-af39-258e8176be1c.webp?size=m",
+        "priceJpy": 2000,
+        "url": "https://snkrdunk.com/en/apparels/121751"
+      }
+    ]
   },
   "yugioh-snkrdunk-91570": {
     "productId": "yugioh-snkrdunk-91570",
     "setCode": "",
     "labels": [
-      "Yu-Gi-Oh OCG Duel Monsters Battle of Chaos Box +1 Bonus Pack",
-      "遊戯王OCG デュエルモンスターズ バトル・オブ・カオス"
+      "Battle of Chaos",
+      "バトル・オブ・カオス"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "92221",
+        "name": "White Relic of Dogmatika PSE[BACH-JP035](BATTLE OF CHAOS)",
+        "nameEn": "White Relic of Dogmatika PSE[BACH-JP035](BATTLE OF CHAOS)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/4b62f98f-86a1-4758-92cf-84dcf233417a.webp?size=m",
+        "priceJpy": 30000,
+        "url": "https://snkrdunk.com/en/apparels/92221"
+      },
+      {
+        "snkrdunkId": "92219",
+        "name": "Dragon Master Knight PSE[BACH-JPS01](BATTLE OF CHAOS)",
+        "nameEn": "Dragon Master Knight PSE[BACH-JPS01](BATTLE OF CHAOS)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/71868336-cfd2-4242-929e-5efbcded2faf.webp?size=m",
+        "priceJpy": 28000,
+        "url": "https://snkrdunk.com/en/apparels/92219"
+      },
+      {
+        "snkrdunkId": "92222",
+        "name": "Dinomorphia Kentregina PSE[BACH-JP038](BATTLE OF CHAOS)",
+        "nameEn": "Dinomorphia Kentregina PSE[BACH-JP038](BATTLE OF CHAOS)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/a3762448-0f32-4a07-b3f7-7f84b0b49c08.webp?size=m",
+        "priceJpy": 4500,
+        "url": "https://snkrdunk.com/en/apparels/92222"
+      },
+      {
+        "snkrdunkId": "231902",
+        "name": "Chaos Nephthys PSE [BACH-JP025](Battle Of Chaos)",
+        "nameEn": "Chaos Nephthys PSE [BACH-JP025](Battle Of Chaos)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/7c5c3440-c2d1-4b8a-ac8a-facdd14ea9fd.webp?size=m",
+        "priceJpy": 1000,
+        "url": "https://snkrdunk.com/en/apparels/231902"
+      }
+    ]
   },
   "yugioh-snkrdunk-90490": {
     "productId": "yugioh-snkrdunk-90490",
     "setCode": "",
     "labels": [
-      "Yu-Gi-Oh OCG Duel Monsters Duelist Pack - Legend Duelist 6",
-      "遊戯王 OCG デュエルモンスターズ デュエリストパック レジェンドデュエリスト編6"
+      "Duelist Pack - Legend Duelist 6",
+      "デュエリストパック レジェンドデュエリスト編6"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -8858,34 +14224,235 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "yugioh-snkrdunk-170164",
     "setCode": "",
     "labels": [
-      "Yu-Gi-Oh OCG Duel Monsters Photon HyperNova Box +1 Bonus Pack",
-      "遊戯王OCG デュエルモンスターズ フォトン・ハイパーノヴァ"
+      "Photon HyperNova",
+      "フォトン・ハイパーノヴァ"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "99843",
+        "name": "Kshatrila Ariseheart SE[PHHY-JP046](PHOTON HYPERNOVA)",
+        "nameEn": "Kshatrila Ariseheart SE[PHHY-JP046](PHOTON HYPERNOVA)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/8e12d98f-fdbb-4011-95dd-d3dd787c9753.webp?size=m",
+        "priceJpy": 35000,
+        "url": "https://snkrdunk.com/en/apparels/99843"
+      },
+      {
+        "snkrdunkId": "99844",
+        "name": "Kshatrila Ariseheart PSC[PHHY-JP046](PHOTON HYPERNOVA)",
+        "nameEn": "Kshatrila Ariseheart PSC[PHHY-JP046](PHOTON HYPERNOVA)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/8bfd22f3-d85d-416b-9213-88b2f57d46b2.webp?size=m",
+        "priceJpy": 30000,
+        "url": "https://snkrdunk.com/en/apparels/99844"
+      },
+      {
+        "snkrdunkId": "99888",
+        "name": "鉄獣式強襲機動兵装改“Bucephalus II” PSC[PHHY-JP048](フォトン・ハイパーノヴァ)",
+        "nameEn": "鉄獣式強襲機動兵装改“Bucephalus II” PSC[PHHY-JP048](フォトン・ハイパーノヴァ)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/8802d4df-4df8-427d-9312-6f6a64403793.webp?size=m",
+        "priceJpy": 25000,
+        "url": "https://snkrdunk.com/en/apparels/99888"
+      },
+      {
+        "snkrdunkId": "99847",
+        "name": "No.62 Galaxy-Eyes Photon Dragon Emperor PSC[PHHY-JPS01](PHOTON HYPERNOVA)",
+        "nameEn": "No.62 Galaxy-Eyes Photon Dragon Emperor PSC[PHHY-JPS01](PHOTON HYPERNOVA)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/df4cab60-c408-4b1b-bb32-a00a15e5b071.webp?size=m",
+        "priceJpy": 25000,
+        "url": "https://snkrdunk.com/en/apparels/99847"
+      },
+      {
+        "snkrdunkId": "99985",
+        "name": "CNo. 62 Super Galaxy-Eyed Photon Dragon Emperor SE[PHHY-JP043](PHOTON HYPERNOVA)",
+        "nameEn": "CNo. 62 Super Galaxy-Eyed Photon Dragon Emperor SE[PHHY-JP043](PHOTON HYPERNOVA)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/4b36a8e3-3615-4439-bc70-1f96197df5e2.webp?size=m",
+        "priceJpy": 20000,
+        "url": "https://snkrdunk.com/en/apparels/99985"
+      },
+      {
+        "snkrdunkId": "99887",
+        "name": "Iron Beast Assault Mobile Weapon Modification \"Bucephalus II\" SE[PHHY-JP048](PHOTON HYPERNOVA)",
+        "nameEn": "Iron Beast Assault Mobile Weapon Modification \"Bucephalus II\" SE[PHHY-JP048](PHOTON HYPERNOVA)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/e6b87668-b94d-4077-a637-b8373419c8f0.webp?size=m",
+        "priceJpy": 15000,
+        "url": "https://snkrdunk.com/en/apparels/99887"
+      },
+      {
+        "snkrdunkId": "99983",
+        "name": "Ibiliture Nereymanas PSE[PHHY-JP032](PHOTON HYPERNOVA)",
+        "nameEn": "Ibiliture Nereymanas PSE[PHHY-JP032](PHOTON HYPERNOVA)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/7e925e28-4499-4801-9ae9-d828f7e133ac.webp?size=m",
+        "priceJpy": 10000,
+        "url": "https://snkrdunk.com/en/apparels/99983"
+      },
+      {
+        "snkrdunkId": "99862",
+        "name": "Evil White Nadir SR[PHHY-JP031](PHOTON HYPERNOVA)",
+        "nameEn": "Evil White Nadir SR[PHHY-JP031](PHOTON HYPERNOVA)",
+        "rarity": "SR",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/e609f1a5-1ad6-4527-b3d9-e2780c30484e.webp?size=m",
+        "priceJpy": 10000,
+        "url": "https://snkrdunk.com/en/apparels/99862"
+      },
+      {
+        "snkrdunkId": "99854",
+        "name": "Kshatrila Riseheart PSC[PHHY-JP006](PHOTON HYPERNOVA)",
+        "nameEn": "Kshatrila Riseheart PSC[PHHY-JP006](PHOTON HYPERNOVA)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/d794d703-b9fe-4779-a8cb-539deeb3804b.webp?size=m",
+        "priceJpy": 8500,
+        "url": "https://snkrdunk.com/en/apparels/99854"
+      },
+      {
+        "snkrdunkId": "99848",
+        "name": "CNo. 62 Super Galaxy-Eyed Photon Dragon Emperor UL[PHHY-JP043](PHOTON HYPERNOVA)",
+        "nameEn": "CNo. 62 Super Galaxy-Eyed Photon Dragon Emperor UL[PHHY-JP043](PHOTON HYPERNOVA)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/4b84d665-100d-4571-86c6-f88999944174.webp?size=m",
+        "priceJpy": 5000,
+        "url": "https://snkrdunk.com/en/apparels/99848"
+      },
+      {
+        "snkrdunkId": "99984",
+        "name": "Ice water cry Ozil Gumil SE[PHHY-JP038](PHOTON HYPERNOVA)",
+        "nameEn": "Ice water cry Ozil Gumil SE[PHHY-JP038](PHOTON HYPERNOVA)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/e7a3a50c-5062-4b87-9df6-4f0d4e30ae3c.webp?size=m",
+        "priceJpy": 5000,
+        "url": "https://snkrdunk.com/en/apparels/99984"
+      },
+      {
+        "snkrdunkId": "99885",
+        "name": "King of Shadows Laivertaine SR[PHHY-JP047](PHOTON HYPERNOVA)",
+        "nameEn": "King of Shadows Laivertaine SR[PHHY-JP047](PHOTON HYPERNOVA)",
+        "rarity": "SR",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/df62d00a-61dd-47be-a5e8-e64ea121c948.webp?size=m",
+        "priceJpy": 5000,
+        "url": "https://snkrdunk.com/en/apparels/99885"
+      }
+    ]
   },
   "yugioh-snkrdunk-138493": {
     "productId": "yugioh-snkrdunk-138493",
     "setCode": "",
     "labels": [
-      "Yu-Gi-Oh OCG Duel Monsters Power of the Elements Box +1 Bonus Pack",
-      "遊戯王OCG デュエルモンスターズ パワー・オブ・ジ・エレメンツ"
+      "Power of the Elements",
+      "パワー・オブ・ジ・エレメンツ"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "92210",
+        "name": "Tearalaments Chaetocaros PSE[POTE-JP042](Power Of The Elements)",
+        "nameEn": "Tearalaments Chaetocaros PSE[POTE-JP042](Power Of The Elements)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/2341cbc6-71a8-4dfb-98b0-d51575e76923.webp?size=m",
+        "priceJpy": 32800,
+        "url": "https://snkrdunk.com/en/apparels/92210"
+      },
+      {
+        "snkrdunkId": "92208",
+        "name": "Tearalaments Chaetocaros PSE[POTE-JP014](Power Of The Elements)",
+        "nameEn": "Tearalaments Chaetocaros PSE[POTE-JP014](Power Of The Elements)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/530809f3-51a2-4e3c-893e-fe9d70f56675.webp?size=m",
+        "priceJpy": 17000,
+        "url": "https://snkrdunk.com/en/apparels/92208"
+      },
+      {
+        "snkrdunkId": "92207",
+        "name": "Kurikara Avatar of the Immovable PSE[POTE-JP031](Power Of The Elements)",
+        "nameEn": "Kurikara Avatar of the Immovable PSE[POTE-JP031](Power Of The Elements)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/3876dba6-26aa-45d9-ae4d-ba7a583939e0.webp?size=m",
+        "priceJpy": 14500,
+        "url": "https://snkrdunk.com/en/apparels/92207"
+      },
+      {
+        "snkrdunkId": "232202",
+        "name": "Spright Blue PSE [POTE-JP003](Power Of The Elements)",
+        "nameEn": "Spright Blue PSE [POTE-JP003](Power Of The Elements)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/13bbe563-b0d6-4ccb-9311-42ba2f57ddc5.webp?size=m",
+        "priceJpy": 8000,
+        "url": "https://snkrdunk.com/en/apparels/232202"
+      },
+      {
+        "snkrdunkId": "92211",
+        "name": "Artemate Slay PSE[POTE-JP067](Power Of The Elements)",
+        "nameEn": "Artemate Slay PSE[POTE-JP067](Power Of The Elements)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/42cd2034-aa19-44d6-9363-9dcbe3fd6d12.webp?size=m",
+        "priceJpy": 7000,
+        "url": "https://snkrdunk.com/en/apparels/92211"
+      }
+    ]
   },
   "yugioh-snkrdunk-1015585": {
     "productId": "yugioh-snkrdunk-1015585",
     "setCode": "",
     "labels": [
       "WORLD CHAMPIONSHIP 2026",
-      "ワールドチャンピオンシップ 2026"
+      "ワールドチャンピオンシップ 2026",
+      "リミテッドパック「ワールドチャンピオンシップ 2026」日本版"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
+      {
+        "snkrdunkId": "885787",
+        "name": "(Token) UR :Extended Art :Participation :Unopen [2026-JPTKN](Promotional Card \"WORLD CHAMPIONSHIP 2026\")",
+        "nameEn": "(Token) UR :Extended Art :Participation :Unopen [2026-JPTKN](Promotional Card \"WORLD CHAMPIONSHIP 2026\")",
+        "rarity": "UR",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/cdc6f8f0-99f4-4a11-8c93-921a243bf590.webp?size=m",
+        "priceJpy": 1980000,
+        "url": "https://snkrdunk.com/en/apparels/885787"
+      },
       {
         "snkrdunkId": "883970",
         "name": "Magnifistorm Great Pyre Phonix (WCS 2026 Logo Ver.) SE [26LP-JP014](Special Pack \"WORLD CHAMPIONSHIP 2026 LIMITED PACK\")",
@@ -8916,7 +14483,7 @@ export const COLLECTION_TOP_CARDS = {
         "cardNumber": "",
         "setCode": "",
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/YGO-OCG-TCG-2026-09-19-001.webp?size=m",
-        "priceJpy": 47000,
+        "priceJpy": 39990,
         "url": "https://snkrdunk.com/en/apparels/903194"
       },
       {
@@ -8949,7 +14516,7 @@ export const COLLECTION_TOP_CARDS = {
         "cardNumber": "",
         "setCode": "",
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/YGO-OCG-TCG-2026-09-19-002.webp?size=m",
-        "priceJpy": 23000,
+        "priceJpy": 18000,
         "url": "https://snkrdunk.com/en/apparels/903195"
       },
       {
@@ -8991,43 +14558,156 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "yugioh-snkrdunk-871922",
     "setCode": "",
     "labels": [
-      "Yu-Gi-Oh OCG Duel Monsters BLAZING DOMINION Box (with +1 Assist Pack) JP Edition",
-      "遊戯王OCG デュエルモンスターズ ブレイジング・ドミニオン"
+      "BLAZING DOMINION",
+      "ブレイジング・ドミニオン"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "755208",
+        "name": "Dominus Spark PSE [BLZD-JP077](BLAZING DOMINION)",
+        "nameEn": "Dominus Spark PSE [BLZD-JP077](BLAZING DOMINION)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/8a25d93f-ae2e-40d5-912f-f6257d3d552e.webp?size=m",
+        "priceJpy": 10000,
+        "url": "https://snkrdunk.com/en/apparels/755208"
+      }
+    ]
   },
   "yugioh-snkrdunk-180174": {
     "productId": "yugioh-snkrdunk-180174",
     "setCode": "",
     "labels": [
-      "Yu-Gi-Oh OCG Duel Monsters Premium Pack 2023",
-      "遊戯王OCG デュエルモンスターズ プレミアム パック 2023"
+      "Premium Pack 2023",
+      "プレミアム パック 2023"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "107156",
+        "name": "Sky Striker Ace - Raye (SPECIAL RED Ver.) SE [23PP-JP020](PREMIUM PACK 2023)",
+        "nameEn": "Sky Striker Ace - Raye (SPECIAL RED Ver.) SE [23PP-JP020](PREMIUM PACK 2023)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/a4671d76-5641-471f-a720-df01e31ee98d.webp?size=m",
+        "priceJpy": 50000,
+        "url": "https://snkrdunk.com/en/apparels/107156"
+      }
+    ]
   },
   "yugioh-snkrdunk-174247": {
     "productId": "yugioh-snkrdunk-174247",
-    "setCode": "",
+    "setCode": "CYAC",
     "labels": [
-      "Yu-Gi-Oh OCG Duel Monsters Cyberstorm Access Box+1 Bonus Pack",
-      "遊戯王OCG デュエルモンスターズ サイバーストームアクセス"
+      "Cyberstorm Access",
+      "サイバーストームアクセス"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "110367",
+        "name": "Guiding Quem, the Virtuous PSE[CYAC-JP011](Cyberstorm Access)",
+        "nameEn": "Guiding Quem, the Virtuous PSE[CYAC-JP011](Cyberstorm Access)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/3fff72d8-0bd1-444d-bb08-20422b9f9c36.webp?size=m",
+        "priceJpy": 28000,
+        "url": "https://snkrdunk.com/en/apparels/110367"
+      },
+      {
+        "snkrdunkId": "110332",
+        "name": "Guiding Quem, the Virtuous SE[CYAC-JP011](Cyberstorm Access)",
+        "nameEn": "Guiding Quem, the Virtuous SE[CYAC-JP011](Cyberstorm Access)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/db5db71d-d188-46c5-82c3-eec4a699db04.webp?size=m",
+        "priceJpy": 24000,
+        "url": "https://snkrdunk.com/en/apparels/110332"
+      },
+      {
+        "snkrdunkId": "110372",
+        "name": "Bystial Dis Pater PSE[CYAC-JP041](Cyberstorm Access)",
+        "nameEn": "Bystial Dis Pater PSE[CYAC-JP041](Cyberstorm Access)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/aaa823ac-fd3d-477a-b309-bb170903541f.webp?size=m",
+        "priceJpy": 3500,
+        "url": "https://snkrdunk.com/en/apparels/110372"
+      },
+      {
+        "snkrdunkId": "110374",
+        "name": "Manadome Prime-Heart SE[CYAC-JP043](Cyberstorm Access)",
+        "nameEn": "Manadome Prime-Heart SE[CYAC-JP043](Cyberstorm Access)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/cf869179-0363-40b3-89e0-1f750916be38.webp?size=m",
+        "priceJpy": 3000,
+        "url": "https://snkrdunk.com/en/apparels/110374"
+      },
+      {
+        "snkrdunkId": "110349",
+        "name": "Superheavy Samurai Overlord Masurao UL[CYAC-JP039](Cyberstorm Access)",
+        "nameEn": "Superheavy Samurai Overlord Masurao UL[CYAC-JP039](Cyberstorm Access)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/17c890d9-6a93-44de-81d9-01579221e780.webp?size=m",
+        "priceJpy": 2500,
+        "url": "https://snkrdunk.com/en/apparels/110349"
+      },
+      {
+        "snkrdunkId": "110352",
+        "name": "Superheavy Samurai Overlord Masurao UR[CYAC-JP039](Cyberstorm Access)",
+        "nameEn": "Superheavy Samurai Overlord Masurao UR[CYAC-JP039](Cyberstorm Access)",
+        "rarity": "UR",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/a0b22dd9-2c59-4eff-9959-f0d9511086bf.webp?size=m",
+        "priceJpy": 1000,
+        "url": "https://snkrdunk.com/en/apparels/110352"
+      },
+      {
+        "snkrdunkId": "110341",
+        "name": "Sword Emperor - Tsumuhakutsunagi UR[CYAC-JP024](Cyberstorm Access)",
+        "nameEn": "Sword Emperor - Tsumuhakutsunagi UR[CYAC-JP024](Cyberstorm Access)",
+        "rarity": "UR",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/283982e2-df67-44b1-a90d-49af02e4d462.webp?size=m",
+        "priceJpy": 1000,
+        "url": "https://snkrdunk.com/en/apparels/110341"
+      },
+      {
+        "snkrdunkId": "110336",
+        "name": "Dreaming Nemurelia SE[CYAC-JP015](Cyberstorm Access)",
+        "nameEn": "Dreaming Nemurelia SE[CYAC-JP015](Cyberstorm Access)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/38482bd5-1334-418f-917a-27e89e3e81bc.webp?size=m",
+        "priceJpy": 1000,
+        "url": "https://snkrdunk.com/en/apparels/110336"
+      }
+    ]
   },
   "yugioh-snkrdunk-349776": {
     "productId": "yugioh-snkrdunk-349776",
     "setCode": "",
     "labels": [
-      "Yu-Gi-Oh OCG Duel Monsters Deck Build Pack Crossover Breakers",
-      "遊戯王OCG デュエルモンスターズ デッキビルドパック クロスオーバー・ブレイカーズ"
+      "Crossover Breakers",
+      "デッキビルドパック クロスオーバー・ブレイカーズ"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -9035,56 +14715,336 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "yugioh-snkrdunk-207397",
     "setCode": "",
     "labels": [
-      "Yu-Gi-Oh OCG Duel Monsters Age Of Overlord Box (with +1 Bonus Pack)",
-      "遊戯王OCG デュエルモンスターズ エイジ・オブ・オーバーロード"
+      "Age Of Overlord",
+      "エイジ・オブ・オーバーロード"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "131378",
+        "name": "Magicians of Bonds and Unity 25th SE[AGOV-JP000](Age of Overlord)",
+        "nameEn": "Magicians of Bonds and Unity 25th SE[AGOV-JP000](Age of Overlord)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/8232d226-db47-4966-b26d-a8e9fceb0001.webp?size=m",
+        "priceJpy": 35000,
+        "url": "https://snkrdunk.com/en/apparels/131378"
+      },
+      {
+        "snkrdunkId": "131393",
+        "name": "Diabellestarr the Dark Witch 25th SE[AGOV-JP006](Age of Overlord)",
+        "nameEn": "Diabellestarr the Dark Witch 25th SE[AGOV-JP006](Age of Overlord)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/90e96e75-7c42-434b-bc54-3abf040885b0.webp?size=m",
+        "priceJpy": 10000,
+        "url": "https://snkrdunk.com/en/apparels/131393"
+      },
+      {
+        "snkrdunkId": "131408",
+        "name": "Duamutef, Blessing of Horus R[AGOV-JP012](Age of Overlord)",
+        "nameEn": "Duamutef, Blessing of Horus R[AGOV-JP012](Age of Overlord)",
+        "rarity": "R",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/ef4392f8-d4ef-42cb-be98-ed7ff9963807.webp?size=m",
+        "priceJpy": 1400,
+        "url": "https://snkrdunk.com/en/apparels/131408"
+      }
+    ]
   },
   "yugioh-snkrdunk-216745": {
     "productId": "yugioh-snkrdunk-216745",
     "setCode": "",
     "labels": [
-      "Yu-Gi-Oh OCG World Premiere Pack 2023",
-      "遊戯王OCG ワールドプレミアパック2023"
+      "World Premiere Pack 2023",
+      "ワールドプレミアパック2023"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "140677",
+        "name": "Time Thief Power Reserve R[WPP4-JP064](WORLD PREMIERE PACK2023)",
+        "nameEn": "Time Thief Power Reserve R[WPP4-JP064](WORLD PREMIERE PACK2023)",
+        "rarity": "R",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/2e67be1c-4f92-4c12-8cd6-b10eae3a6be0.webp?size=m",
+        "priceJpy": 100000,
+        "url": "https://snkrdunk.com/en/apparels/140677"
+      },
+      {
+        "snkrdunkId": "140668",
+        "name": "Xyz Align R[WPP4-JP056](WORLD PREMIERE PACK2023)",
+        "nameEn": "Xyz Align R[WPP4-JP056](WORLD PREMIERE PACK2023)",
+        "rarity": "R",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/dd11b2ff-a8d6-41ac-a1f9-eb2fe2560095.webp?size=m",
+        "priceJpy": 100000,
+        "url": "https://snkrdunk.com/en/apparels/140668"
+      },
+      {
+        "snkrdunkId": "140663",
+        "name": "Golden Cloud Beast - Malong R[WPP4-JP052](WORLD PREMIERE PACK2023)",
+        "nameEn": "Golden Cloud Beast - Malong R[WPP4-JP052](WORLD PREMIERE PACK2023)",
+        "rarity": "R",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/da104cf3-8135-4996-a1e7-59ee05df11e5.webp?size=m",
+        "priceJpy": 100000,
+        "url": "https://snkrdunk.com/en/apparels/140663"
+      },
+      {
+        "snkrdunkId": "140659",
+        "name": "Garura, Wings of Resonant Life SE[WPP4-JP049](WORLD PREMIERE PACK2023)",
+        "nameEn": "Garura, Wings of Resonant Life SE[WPP4-JP049](WORLD PREMIERE PACK2023)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/57ae031b-5c4f-445a-b1d6-dec784af3935.webp?size=m",
+        "priceJpy": 100000,
+        "url": "https://snkrdunk.com/en/apparels/140659"
+      },
+      {
+        "snkrdunkId": "140247",
+        "name": "Dark Magician Girl 25th SE[WPP4-JP066](WORLD PREMIERE PACK2023)",
+        "nameEn": "Dark Magician Girl 25th SE[WPP4-JP066](WORLD PREMIERE PACK2023)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/a2d069ab-3937-4e4b-9f41-886db73f88a1.webp?size=m",
+        "priceJpy": 88000,
+        "url": "https://snkrdunk.com/en/apparels/140247"
+      },
+      {
+        "snkrdunkId": "140644",
+        "name": "Gold Pride - Chariot Carrie SE[WPP4-JP035](WORLD PREMIERE PACK2023)",
+        "nameEn": "Gold Pride - Chariot Carrie SE[WPP4-JP035](WORLD PREMIERE PACK2023)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/0baf8aa8-c614-4070-919a-7ddd30e75992.webp?size=m",
+        "priceJpy": 5000,
+        "url": "https://snkrdunk.com/en/apparels/140644"
+      },
+      {
+        "snkrdunkId": "140642",
+        "name": "Gold Pride - Star Leon SE[WPP4-JP034](WORLD PREMIERE PACK2023)",
+        "nameEn": "Gold Pride - Star Leon SE[WPP4-JP034](WORLD PREMIERE PACK2023)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/9ebf5207-39f2-4c92-9aae-02ac22ce0018.webp?size=m",
+        "priceJpy": 5000,
+        "url": "https://snkrdunk.com/en/apparels/140642"
+      },
+      {
+        "snkrdunkId": "140635",
+        "name": "Gold Pride - Leon SE[WPP4-JP029](WORLD PREMIERE PACK2023)",
+        "nameEn": "Gold Pride - Leon SE[WPP4-JP029](WORLD PREMIERE PACK2023)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/ba6f6ba5-b7c9-45d1-8987-3b455e9d3ac4.webp?size=m",
+        "priceJpy": 5000,
+        "url": "https://snkrdunk.com/en/apparels/140635"
+      },
+      {
+        "snkrdunkId": "140602",
+        "name": "Shadow Ghoul of the Labyrinth SE[WPP4-JP002](WORLD PREMIERE PACK2023)",
+        "nameEn": "Shadow Ghoul of the Labyrinth SE[WPP4-JP002](WORLD PREMIERE PACK2023)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/cd2aa8bb-8b1c-431f-ba87-d5be6e33496d.webp?size=m",
+        "priceJpy": 5000,
+        "url": "https://snkrdunk.com/en/apparels/140602"
+      },
+      {
+        "snkrdunkId": "140671",
+        "name": "Moray of Greed SE[WPP4-JP059](WORLD PREMIERE PACK2023)",
+        "nameEn": "Moray of Greed SE[WPP4-JP059](WORLD PREMIERE PACK2023)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/4201a9d8-77ee-463a-959e-747c275cc15c.webp?size=m",
+        "priceJpy": 3000,
+        "url": "https://snkrdunk.com/en/apparels/140671"
+      }
+    ]
   },
   "yugioh-snkrdunk-116986": {
     "productId": "yugioh-snkrdunk-116986",
     "setCode": "",
     "labels": [
-      "Yu-Gi-Oh OCG Duel Monsters Dimension Force Box (+1 Bonus Pack)",
-      "遊戯王OCG デュエルモンスターズ ディメンション・フォース"
+      "Dimension Force",
+      "ディメンション・フォース"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "92214",
+        "name": "Exosisters Magnifica PSE[DIFO-JP046](DIMENSION FORCE)",
+        "nameEn": "Exosisters Magnifica PSE[DIFO-JP046](DIMENSION FORCE)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/e8ad98bc-fa8a-4e79-a6ad-6fa9a7e1d4bf.webp?size=m",
+        "priceJpy": 30000,
+        "url": "https://snkrdunk.com/en/apparels/92214"
+      },
+      {
+        "snkrdunkId": "92213",
+        "name": "The Weather Painter Moonbow PSE[DIFO-JP050](DIMENSION FORCE)",
+        "nameEn": "The Weather Painter Moonbow PSE[DIFO-JP050](DIMENSION FORCE)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/4fab4f0d-755f-4b73-9ac1-d0f7407a23e9.webp?size=m",
+        "priceJpy": 22000,
+        "url": "https://snkrdunk.com/en/apparels/92213"
+      },
+      {
+        "snkrdunkId": "92218",
+        "name": "Therion \"King\" Regulus PSE[DIFO-JP007](DIMENSION FORCE)",
+        "nameEn": "Therion \"King\" Regulus PSE[DIFO-JP007](DIMENSION FORCE)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/d7ab52a5-500f-4587-a0f8-b1375b007acd.webp?size=m",
+        "priceJpy": 9000,
+        "url": "https://snkrdunk.com/en/apparels/92218"
+      }
+    ]
   },
   "yugioh-snkrdunk-690129": {
     "productId": "yugioh-snkrdunk-690129",
     "setCode": "",
     "labels": [
-      "Yu-Gi-Oh OCG Duel Monsters LIMITED PACK WORLD CHAMPIONSHIP 2025",
-      "遊戯王OCG デュエルモンスターズ リミテッドパック ワールドチャンピオンシップ 2025"
+      "WORLD CHAMPIONSHIP 2025",
+      "リミテッドパック ワールドチャンピオンシップ 2025"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "687521",
+        "name": "Exodia the Forbidden One UR [25LP-JP000](LIMITED PACK WORLD CHAMPIONSHIP 2025)",
+        "nameEn": "Exodia the Forbidden One UR [25LP-JP000](LIMITED PACK WORLD CHAMPIONSHIP 2025)",
+        "rarity": "UR",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/71a56af1-b185-484c-9c9e-53ef41c6bb83.webp?size=m",
+        "priceJpy": 21000,
+        "url": "https://snkrdunk.com/en/apparels/687521"
+      },
+      {
+        "snkrdunkId": "687583",
+        "name": "MALICE <QUEEN> HEARTS OF CRYPTER (WCS2025 Ver.) SE [25LP-JP016](LIMITED PACK WORLD CHAMPIONSHIP 2025)",
+        "nameEn": "MALICE <QUEEN> HEARTS OF CRYPTER (WCS2025 Ver.) SE [25LP-JP016](LIMITED PACK WORLD CHAMPIONSHIP 2025)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/752a4e93-8ad3-4480-b95b-c8f21be093a8.webp?size=m",
+        "priceJpy": 19999,
+        "url": "https://snkrdunk.com/en/apparels/687583"
+      }
+    ]
   },
   "yugioh-snkrdunk-282481": {
     "productId": "yugioh-snkrdunk-282481",
-    "setCode": "",
+    "setCode": "INFO",
     "labels": [
-      "Yu-Gi-Oh OCG Duel Monsters INFINITE FORBIDDEN Box +1 Bonus Pack",
-      "遊戯王OCG デュエルモンスターズ インフィニット・フォビドゥン"
+      "INFINITE FORBIDDEN",
+      "インフィニット・フォビドゥン"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "256997",
+        "name": "Madolche Queen Tiara-a-la-Fraise SR [INFO-JP044](INFINITE FORBIDDEN)",
+        "nameEn": "Madolche Queen Tiara-a-la-Fraise SR [INFO-JP044](INFINITE FORBIDDEN)",
+        "rarity": "SR",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/359473c8-e0ab-4716-8ff7-35cb05572cda.webp?size=m",
+        "priceJpy": 630000,
+        "url": "https://snkrdunk.com/en/apparels/256997"
+      },
+      {
+        "snkrdunkId": "256912",
+        "name": "Dragon of Pride and Soul 25th SE [INFO-JP000](INFINITE FORBIDDEN)",
+        "nameEn": "Dragon of Pride and Soul 25th SE [INFO-JP000](INFINITE FORBIDDEN)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/f5e0b2e8-bf94-47fa-823c-3d042b37cce4.webp?size=m",
+        "priceJpy": 44500,
+        "url": "https://snkrdunk.com/en/apparels/256912"
+      },
+      {
+        "snkrdunkId": "256931",
+        "name": "Asteria of the White Woods 25th SE [INFO-JP013](INFINITE FORBIDDEN)",
+        "nameEn": "Asteria of the White Woods 25th SE [INFO-JP013](INFINITE FORBIDDEN)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/496fa794-4e70-4fe0-a8ec-36ff70bce2c0.webp?size=m",
+        "priceJpy": 20000,
+        "url": "https://snkrdunk.com/en/apparels/256931"
+      },
+      {
+        "snkrdunkId": "256970",
+        "name": "Light and Darkness Dragon Lord UL [INFO-JP034](INFINITE FORBIDDEN)",
+        "nameEn": "Light and Darkness Dragon Lord UL [INFO-JP034](INFINITE FORBIDDEN)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/83271d01-d303-43fd-9f59-e77e02ff2023.webp?size=m",
+        "priceJpy": 10000,
+        "url": "https://snkrdunk.com/en/apparels/256970"
+      },
+      {
+        "snkrdunkId": "256972",
+        "name": "Light and Darkness Dragon Lord 25th SE [INFO-JP034](INFINITE FORBIDDEN)",
+        "nameEn": "Light and Darkness Dragon Lord 25th SE [INFO-JP034](INFINITE FORBIDDEN)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/ed4b8a44-45ac-4131-b0a1-633bc82aeb13.webp?size=m",
+        "priceJpy": 5555,
+        "url": "https://snkrdunk.com/en/apparels/256972"
+      },
+      {
+        "snkrdunkId": "256965",
+        "name": "The Phantom Exodia Incarnate UL [INFO-JP033](INFINITE FORBIDDEN)",
+        "nameEn": "The Phantom Exodia Incarnate UL [INFO-JP033](INFINITE FORBIDDEN)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/6bca4e53-886a-40f5-9b47-513fb18f2769.webp?size=m",
+        "priceJpy": 1000,
+        "url": "https://snkrdunk.com/en/apparels/256965"
+      },
+      {
+        "snkrdunkId": "256921",
+        "name": "Dark Magician the Ebon Sorcerer SE [INFO-JP006](INFINITE FORBIDDEN)",
+        "nameEn": "Dark Magician the Ebon Sorcerer SE [INFO-JP006](INFINITE FORBIDDEN)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/5925734e-32bc-4bf6-ae72-4d755f7cc57e.webp?size=m",
+        "priceJpy": 1000,
+        "url": "https://snkrdunk.com/en/apparels/256921"
+      }
+    ]
   },
   "yugioh-snkrdunk-963700": {
     "productId": "yugioh-snkrdunk-963700",
@@ -9092,7 +15052,8 @@ export const COLLECTION_TOP_CARDS = {
     "labels": [
       "WORLD PREMIERE PACK 2026",
       "Concept Pack「WORLD PREMIERE PACK 2026」",
-      "ワールド プレミア パック 2026"
+      "ワールド プレミア パック 2026",
+      "コンセプトパック「ワールド プレミア パック 2026」日本版"
     ],
     "updatedAt": "2026-09-26T12:21:05.632Z",
     "source": "SNKRDUNK",
@@ -9235,21 +15196,110 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "yugioh-snkrdunk-165684",
     "setCode": "",
     "labels": [
-      "Yu-Gi-Oh OCG Duel Monsters World Premiere Pack 2022",
-      "遊戯王OCG デュエルモンスターズ ワールド プレミア パック 2022"
+      "World Premiere Pack 2022",
+      "ワールド プレミア パック 2022"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "95946",
+        "name": "The Revived Sky God SE[WPP3-JP050](WORLD PREMIERE PACK 2022)",
+        "nameEn": "The Revived Sky God SE[WPP3-JP050](WORLD PREMIERE PACK 2022)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/cc16eeae-d09e-4e28-a86f-b20a1c318a2f.webp?size=m",
+        "priceJpy": 4000,
+        "url": "https://snkrdunk.com/en/apparels/95946"
+      },
+      {
+        "snkrdunkId": "96002",
+        "name": "Libromancer Doombroker SE[WPP3-JP021](WORLD PREMIERE PACK 2022)",
+        "nameEn": "Libromancer Doombroker SE[WPP3-JP021](WORLD PREMIERE PACK 2022)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/649c37f2-a982-44d7-8068-3a3c32a45bd6.webp?size=m",
+        "priceJpy": 2500,
+        "url": "https://snkrdunk.com/en/apparels/96002"
+      },
+      {
+        "snkrdunkId": "95998",
+        "name": "Libromancer Geek Boy SE[WPP3-JP015](WORLD PREMIERE PACK 2022)",
+        "nameEn": "Libromancer Geek Boy SE[WPP3-JP015](WORLD PREMIERE PACK 2022)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/901222c1-583d-4dab-b8ff-f2e68455e6c4.webp?size=m",
+        "priceJpy": 2500,
+        "url": "https://snkrdunk.com/en/apparels/95998"
+      },
+      {
+        "snkrdunkId": "96000",
+        "name": "Libromancer Fire SE[WPP3-JP018](WORLD PREMIERE PACK 2022)",
+        "nameEn": "Libromancer Fire SE[WPP3-JP018](WORLD PREMIERE PACK 2022)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/6cd3ab60-61e0-471b-9af6-0c58c4e028b9.webp?size=m",
+        "priceJpy": 2180,
+        "url": "https://snkrdunk.com/en/apparels/96000"
+      },
+      {
+        "snkrdunkId": "96003",
+        "name": "Libromancer Doombroker UR[WPP3-JP021](WORLD PREMIERE PACK 2022)",
+        "nameEn": "Libromancer Doombroker UR[WPP3-JP021](WORLD PREMIERE PACK 2022)",
+        "rarity": "UR",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/84dc5e0b-61f2-42ad-a591-dccb2981caa2.webp?size=m",
+        "priceJpy": 2000,
+        "url": "https://snkrdunk.com/en/apparels/96003"
+      },
+      {
+        "snkrdunkId": "95999",
+        "name": "Libromancer Geek Boy SR[WPP3-JP015](WORLD PREMIERE PACK 2022)",
+        "nameEn": "Libromancer Geek Boy SR[WPP3-JP015](WORLD PREMIERE PACK 2022)",
+        "rarity": "SR",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/5a4be0fb-cfa7-4acb-bdf5-0849f37ed65b.webp?size=m",
+        "priceJpy": 2000,
+        "url": "https://snkrdunk.com/en/apparels/95999"
+      },
+      {
+        "snkrdunkId": "95962",
+        "name": "Beetrooper Armor Horn SE[WPP3-JP008](WORLD PREMIERE PACK 2022)",
+        "nameEn": "Beetrooper Armor Horn SE[WPP3-JP008](WORLD PREMIERE PACK 2022)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/d9031c0b-5315-4865-ba7e-25f9334efaa5.webp?size=m",
+        "priceJpy": 1500,
+        "url": "https://snkrdunk.com/en/apparels/95962"
+      },
+      {
+        "snkrdunkId": "95947",
+        "name": "The Revived Sky God SR[WPP3-JP050](WORLD PREMIERE PACK 2022)",
+        "nameEn": "The Revived Sky God SR[WPP3-JP050](WORLD PREMIERE PACK 2022)",
+        "rarity": "SR",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/57ed205d-6891-42bf-bcf5-50fffaf69a86.webp?size=m",
+        "priceJpy": 1000,
+        "url": "https://snkrdunk.com/en/apparels/95947"
+      }
+    ]
   },
   "yugioh-snkrdunk-91578": {
     "productId": "yugioh-snkrdunk-91578",
     "setCode": "",
     "labels": [
-      "Yu-Gi-Oh OCG Duel Monsters Lightning Overdrive Box +1 Bonus Pack",
-      "遊戯王OCG デュエルモンスターズ ライトニング・オーバードライブ"
+      "Lightning Overdrive",
+      "ライトニング・オーバードライブ"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -9257,10 +15307,10 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "yugioh-snkrdunk-90489",
     "setCode": "",
     "labels": [
-      "Yu-Gi-Oh OCG Duel Monsters Premium Pack 2021",
-      "遊戯王 OCG デュエルモンスターズ プレミアム パック 2021"
+      "Premium Pack 2021",
+      "プレミアム パック 2021"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -9268,10 +15318,10 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "yugioh-snkrdunk-579990",
     "setCode": "",
     "labels": [
-      "Yu-Gi-Oh OCG Duel Monsters Deck Build Pack Justice Hunters",
-      "遊戯王OCG デュエルモンスターズ デッキビルドパック ジャスティス・ハンターズ"
+      "Justice Hunters",
+      "デッキビルドパック ジャスティス・ハンターズ"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -9279,54 +15329,234 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "yugioh-snkrdunk-91577",
     "setCode": "",
     "labels": [
-      "Yu-Gi-Oh OCG Duel Monsters Dawn of Majesty Box +1 Bonus Pack",
-      "遊戯王OCG デュエルモンスターズ ドーン・オブ・マジェスティ"
+      "Dawn of Majesty",
+      "ドーン・オブ・マジェスティ"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "92241",
+        "name": "Daigusto Laplampilica PSE[DAMA-JP040](DAWN OF MAJESTY)",
+        "nameEn": "Daigusto Laplampilica PSE[DAMA-JP040](DAWN OF MAJESTY)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/882c3661-08a4-4bbf-b476-0f08fc620b21.webp?size=m",
+        "priceJpy": 31000,
+        "url": "https://snkrdunk.com/en/apparels/92241"
+      },
+      {
+        "snkrdunkId": "92235",
+        "name": "The Iris Swordsoul PSE[DAMA-JP009](DAWN OF MAJESTY)",
+        "nameEn": "The Iris Swordsoul PSE[DAMA-JP009](DAWN OF MAJESTY)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/c15a5037-7596-45ab-b307-7dfbb4c61a00.webp?size=m",
+        "priceJpy": 20000,
+        "url": "https://snkrdunk.com/en/apparels/92235"
+      }
+    ]
   },
   "yugioh-snkrdunk-91580": {
     "productId": "yugioh-snkrdunk-91580",
     "setCode": "",
     "labels": [
-      "Yu-Gi-Oh OCG Duel Monsters Blazing Vortex Box +1 Bonus Pack",
-      "遊戯王OCG デュエルモンスターズ ブレイジング・ボルテックス"
+      "Blazing Vortex",
+      "ブレイジング・ボルテックス"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "92250",
+        "name": "Armed Dragon LV10 PSE[BLVO-JPS01](BLAZING VORTEX)",
+        "nameEn": "Armed Dragon LV10 PSE[BLVO-JPS01](BLAZING VORTEX)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/90123d36-85aa-468a-a962-c8f032f9efb0.webp?size=m",
+        "priceJpy": 50000,
+        "url": "https://snkrdunk.com/en/apparels/92250"
+      },
+      {
+        "snkrdunkId": "92251",
+        "name": "Live Twin Lil-la Treat PSE[BLVO-JP028](BLAZING VORTEX)",
+        "nameEn": "Live Twin Lil-la Treat PSE[BLVO-JP028](BLAZING VORTEX)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/c506e77e-6a04-4193-97a8-7c81ea844847.webp?size=m",
+        "priceJpy": 15000,
+        "url": "https://snkrdunk.com/en/apparels/92251"
+      },
+      {
+        "snkrdunkId": "92249",
+        "name": "Underworld Goddess of the Closed World PSE[BLVO-JP050](BLAZING VORTEX)",
+        "nameEn": "Underworld Goddess of the Closed World PSE[BLVO-JP050](BLAZING VORTEX)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/10d56273-e19b-4030-a8ff-acaa28038420.webp?size=m",
+        "priceJpy": 7200,
+        "url": "https://snkrdunk.com/en/apparels/92249"
+      },
+      {
+        "snkrdunkId": "92255",
+        "name": "Pot of Prosperity SR[BLVO-JP065](BLAZING VORTEX)",
+        "nameEn": "Pot of Prosperity SR[BLVO-JP065](BLAZING VORTEX)",
+        "rarity": "SR",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/56e16092-b5fd-4078-9e37-05418d718e19.webp?size=m",
+        "priceJpy": 1800,
+        "url": "https://snkrdunk.com/en/apparels/92255"
+      }
+    ]
   },
   "yugioh-snkrdunk-91584": {
     "productId": "yugioh-snkrdunk-91584",
     "setCode": "",
     "labels": [
-      "Yu-Gi-Oh OCG Duel Monsters Burst of Destiny Box +1 Bonus Pack JP Edition",
-      "遊戯王OCG デュエルモンスターズ バースト・オブ・デスティニー"
+      "Burst of Destiny",
+      "バースト・オブ・デスティニー"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "92226",
+        "name": "Incredible Ecclesia, the Virtuous PSE[BODE-JP007](BURST OF DESTINY)",
+        "nameEn": "Incredible Ecclesia, the Virtuous PSE[BODE-JP007](BURST OF DESTINY)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/16771003-22fc-409a-b0d2-8695d9655e84.webp?size=m",
+        "priceJpy": 45000,
+        "url": "https://snkrdunk.com/en/apparels/92226"
+      },
+      {
+        "snkrdunkId": "231779",
+        "name": "Lord of the Heavenly Prison HR [BODE-JP030](Burst Of Destiny)",
+        "nameEn": "Lord of the Heavenly Prison HR [BODE-JP030](Burst Of Destiny)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/4eeb7494-3610-421c-9192-d2d2f29af536.webp?size=m",
+        "priceJpy": 30000,
+        "url": "https://snkrdunk.com/en/apparels/231779"
+      },
+      {
+        "snkrdunkId": "92227",
+        "name": "Evil Twin's Trouble Sunny PSE[BODE-JP051](BURST OF DESTINY)",
+        "nameEn": "Evil Twin's Trouble Sunny PSE[BODE-JP051](BURST OF DESTINY)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/23cafd86-7ff9-4613-9f0e-539349308a9e.webp?size=m",
+        "priceJpy": 28000,
+        "url": "https://snkrdunk.com/en/apparels/92227"
+      }
+    ]
   },
   "yugioh-snkrdunk-229657": {
     "productId": "yugioh-snkrdunk-229657",
-    "setCode": "",
+    "setCode": "PHNI",
     "labels": [
-      "Yu-Gi-Oh OCG Phantom Nightmare Box +1 Bonus Pack",
-      "遊戯王 OCG ファントム・ナイトメア"
+      "Phantom Nightmare",
+      "ファントム・ナイトメア"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "153830",
+        "name": "Raidraptor - Rising Rebellion Falcon 25th SE[PHNI-JP045](Phantom Nightmare)",
+        "nameEn": "Raidraptor - Rising Rebellion Falcon 25th SE[PHNI-JP045](Phantom Nightmare)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/863477d1-ce95-4552-8147-d7691dcf0eff.webp?size=m",
+        "priceJpy": 50000,
+        "url": "https://snkrdunk.com/en/apparels/153830"
+      },
+      {
+        "snkrdunkId": "153760",
+        "name": "Spirit of Yubel 25th SE[PHNI-JP001](Phantom Nightmare)",
+        "nameEn": "Spirit of Yubel 25th SE[PHNI-JP001](Phantom Nightmare)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/3e81f705-74bf-46d8-b8ae-95da58cb2f22.webp?size=m",
+        "priceJpy": 7734,
+        "url": "https://snkrdunk.com/en/apparels/153760"
+      },
+      {
+        "snkrdunkId": "153825",
+        "name": "Enigmaster Packbit UR[PHNI-JP042](Phantom Nightmare)",
+        "nameEn": "Enigmaster Packbit UR[PHNI-JP042](Phantom Nightmare)",
+        "rarity": "UR",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/09050fbe-39ff-424b-ae2e-95d09541667e.webp?size=m",
+        "priceJpy": 5500,
+        "url": "https://snkrdunk.com/en/apparels/153825"
+      },
+      {
+        "snkrdunkId": "153845",
+        "name": "Aromalylith Rosemary SE[PHNI-JP050](Phantom Nightmare)",
+        "nameEn": "Aromalylith Rosemary SE[PHNI-JP050](Phantom Nightmare)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/d8c599d7-8f94-4a29-8ee4-5b1313d33bbf.webp?size=m",
+        "priceJpy": 5000,
+        "url": "https://snkrdunk.com/en/apparels/153845"
+      },
+      {
+        "snkrdunkId": "153761",
+        "name": "Spirit of Yubel SR[PHNI-JP001](Phantom Nightmare)",
+        "nameEn": "Spirit of Yubel SR[PHNI-JP001](Phantom Nightmare)",
+        "rarity": "SR",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/4ef9699b-45b9-4d3b-ae1f-1399c666bfa1.webp?size=m",
+        "priceJpy": 5000,
+        "url": "https://snkrdunk.com/en/apparels/153761"
+      },
+      {
+        "snkrdunkId": "153837",
+        "name": "Goblin Rider Big-Head Gabonga 25th SE[PHNI-JP047](Phantom Nightmare)",
+        "nameEn": "Goblin Rider Big-Head Gabonga 25th SE[PHNI-JP047](Phantom Nightmare)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/2da71557-011d-4430-bf91-0f3018093008.webp?size=m",
+        "priceJpy": 3000,
+        "url": "https://snkrdunk.com/en/apparels/153837"
+      },
+      {
+        "snkrdunkId": "153813",
+        "name": "Skull Guardian, the Silenforcing Protector UR[PHNI-JP037](Phantom Nightmare)",
+        "nameEn": "Skull Guardian, the Silenforcing Protector UR[PHNI-JP037](Phantom Nightmare)",
+        "rarity": "UR",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/e3007795-e435-487f-9593-a3fa1b097d3d.webp?size=m",
+        "priceJpy": 1000,
+        "url": "https://snkrdunk.com/en/apparels/153813"
+      }
+    ]
   },
   "yugioh-snkrdunk-90759": {
     "productId": "yugioh-snkrdunk-90759",
     "setCode": "",
     "labels": [
-      "Yu-Gi-Oh OCG Duel Monsters 20th Anniversary Pack 2nd Wave",
-      "遊戯王OCG デュエルモンスターズ 20th アニバーサリー パック セカンド ウェーブ"
+      "20th Anniversary Pack 2nd Wave",
+      "20th アニバーサリー パック セカンド ウェーブ"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -9334,10 +15564,10 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "yugioh-snkrdunk-92921",
     "setCode": "",
     "labels": [
-      "Yu-Gi-Oh OCG Duel Monsters World Premiere Pack 2021",
-      "遊戯王 OCG デュエルモンスターズ ワールド プレミア パック 2021"
+      "World Premiere Pack 2021",
+      "ワールド プレミア パック 2021"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -9345,32 +15575,132 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "yugioh-snkrdunk-349770",
     "setCode": "",
     "labels": [
-      "Yu-Gi-Oh OCG Duel Monsters Concept Pack ANIMATION CHRONICLE 2024",
-      "遊戯王OCG デュエルモンスターズ コンセプトパック アニメーション クロニクル 2024"
+      "ANIMATION CHRONICLE 2024",
+      "コンセプトパック アニメーション クロニクル 2024"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
   "yugioh-snkrdunk-261631": {
     "productId": "yugioh-snkrdunk-261631",
-    "setCode": "",
+    "setCode": "LEDE",
     "labels": [
-      "Yu-Gi-Oh OCG Duel Monsters LEGACY OF DESTRUCTION Box +1 Bonus Pack",
-      "遊戯王OCG デュエルモンスターズ レガシー・オブ・デストラクション"
+      "LEGACY OF DESTRUCTION",
+      "レガシー・オブ・デストラクション"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "187291",
+        "name": "Magicians of Bonds and Unity 25th SE [LEDE-JP000]( \"LEGACY OF DESTRUCTION\" )",
+        "nameEn": "Magicians of Bonds and Unity 25th SE [LEDE-JP000]( \"LEGACY OF DESTRUCTION\" )",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/7b114943-38ed-408f-a5c3-d28567efdd28.webp?size=m",
+        "priceJpy": 17500,
+        "url": "https://snkrdunk.com/en/apparels/187291"
+      },
+      {
+        "snkrdunkId": "187340",
+        "name": "Nightmare Apprentice 25th SE [LEDE-JP029]( \"LEGACY OF DESTRUCTION\" )",
+        "nameEn": "Nightmare Apprentice 25th SE [LEDE-JP029]( \"LEGACY OF DESTRUCTION\" )",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/4f6f8e89-efee-4f43-b881-9aa48c034c5a.webp?size=m",
+        "priceJpy": 11500,
+        "url": "https://snkrdunk.com/en/apparels/187340"
+      },
+      {
+        "snkrdunkId": "187322",
+        "name": "Tenpai Dragon Baidora 25th SE [LEDE-JP016]( \"LEGACY OF DESTRUCTION\" )",
+        "nameEn": "Tenpai Dragon Baidora 25th SE [LEDE-JP016]( \"LEGACY OF DESTRUCTION\" )",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/02e27658-09df-47e8-8f7a-e70ca8487cfe.webp?size=m",
+        "priceJpy": 7200,
+        "url": "https://snkrdunk.com/en/apparels/187322"
+      },
+      {
+        "snkrdunkId": "187364",
+        "name": "Centur-Ion Arkcoela 25th SE [LEDE-JP042]( \"LEGACY OF DESTRUCTION\" )",
+        "nameEn": "Centur-Ion Arkcoela 25th SE [LEDE-JP042]( \"LEGACY OF DESTRUCTION\" )",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/7b44bca9-dacd-48c5-b7d0-32e7e4dcc013.webp?size=m",
+        "priceJpy": 5500,
+        "url": "https://snkrdunk.com/en/apparels/187364"
+      },
+      {
+        "snkrdunkId": "187303",
+        "name": "Ancient Gear Dark Golem UL [LEDE-JP006]( \"LEGACY OF DESTRUCTION\" )",
+        "nameEn": "Ancient Gear Dark Golem UL [LEDE-JP006]( \"LEGACY OF DESTRUCTION\" )",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/6b93beed-3f46-4340-bf59-418b9a281180.webp?size=m",
+        "priceJpy": 2200,
+        "url": "https://snkrdunk.com/en/apparels/187303"
+      },
+      {
+        "snkrdunkId": "187292",
+        "name": "Geas Gandora the Dragon of Destruction UL [LEDE-JP001]( \"LEGACY OF DESTRUCTION\" )",
+        "nameEn": "Geas Gandora the Dragon of Destruction UL [LEDE-JP001]( \"LEGACY OF DESTRUCTION\" )",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/53fa3ccf-5467-487d-982e-8fd3af5c09d7.webp?size=m",
+        "priceJpy": 2000,
+        "url": "https://snkrdunk.com/en/apparels/187292"
+      },
+      {
+        "snkrdunkId": "187385",
+        "name": "Gold Sarcophagus of Light UL [LEDE-JP051]( \"LEGACY OF DESTRUCTION\" )",
+        "nameEn": "Gold Sarcophagus of Light UL [LEDE-JP051]( \"LEGACY OF DESTRUCTION\" )",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/cbc341cc-e782-455c-b9f4-00139ba5ef8b.webp?size=m",
+        "priceJpy": 1500,
+        "url": "https://snkrdunk.com/en/apparels/187385"
+      },
+      {
+        "snkrdunkId": "187387",
+        "name": "Gold Sarcophagus of Light 25th SE [LEDE-JP051]( \"LEGACY OF DESTRUCTION\" )",
+        "nameEn": "Gold Sarcophagus of Light 25th SE [LEDE-JP051]( \"LEGACY OF DESTRUCTION\" )",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/dca897d9-e388-432f-8342-2efe1a68bdf9.webp?size=m",
+        "priceJpy": 1000,
+        "url": "https://snkrdunk.com/en/apparels/187387"
+      },
+      {
+        "snkrdunkId": "187365",
+        "name": "Centur-Ion Arkcoela SR [LEDE-JP042]( \"LEGACY OF DESTRUCTION\" )",
+        "nameEn": "Centur-Ion Arkcoela SR [LEDE-JP042]( \"LEGACY OF DESTRUCTION\" )",
+        "rarity": "SR",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/4f6c1b7e-6e68-4bff-a46c-846d6550b455.webp?size=m",
+        "priceJpy": 1000,
+        "url": "https://snkrdunk.com/en/apparels/187365"
+      }
+    ]
   },
   "yugioh-snkrdunk-237195": {
     "productId": "yugioh-snkrdunk-237195",
     "setCode": "",
     "labels": [
-      "Yu-Gi-Oh OCG Duel Monsters Premium Pack 2024",
-      "遊戯王 OCG デュエルモンスター プレミアム・パック2024"
+      "Premium Pack 2024",
+      "デュエルモンスター プレミアム・パック2024"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -9379,9 +15709,10 @@ export const COLLECTION_TOP_CARDS = {
     "setCode": "",
     "labels": [
       "Deck-Build Pack: Glorious Victors",
-      "デッキビルドパック グロリアス・ヴィクターズ"
+      "デッキビルドパック グロリアス・ヴィクターズ",
+      "コンセプトパック「デッキビルドパック グロリアス・ヴィクターズ」日本版"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
       {
@@ -9394,6 +15725,28 @@ export const COLLECTION_TOP_CARDS = {
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/9f6fba43-5282-4178-9807-dcc2d186f94e.webp?size=m",
         "priceJpy": 50000,
         "url": "https://snkrdunk.com/en/apparels/889060"
+      },
+      {
+        "snkrdunkId": "889012",
+        "name": "Cielo, the Veil of Raise Moon PSE [DBGV-JP016](Concept Pack \"Deck-Build Pack: Glorious Victors\")",
+        "nameEn": "Cielo, the Veil of Raise Moon PSE [DBGV-JP016](Concept Pack \"Deck-Build Pack: Glorious Victors\")",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/632c639e-d68a-4a7f-aa62-4d523fc72510.webp?size=m",
+        "priceJpy": 15000,
+        "url": "https://snkrdunk.com/en/apparels/889012"
+      },
+      {
+        "snkrdunkId": "888981",
+        "name": "Zenet Prophet - Nefertari PSE [DBGV-JP001](Concept Pack \"Deck-Build Pack: Glorious Victors\")",
+        "nameEn": "Zenet Prophet - Nefertari PSE [DBGV-JP001](Concept Pack \"Deck-Build Pack: Glorious Victors\")",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/475a30ba-2d03-49b2-980f-fbcb61dda4b1.webp?size=m",
+        "priceJpy": 15000,
+        "url": "https://snkrdunk.com/en/apparels/888981"
       },
       {
         "snkrdunkId": "888983",
@@ -9418,17 +15771,6 @@ export const COLLECTION_TOP_CARDS = {
         "url": "https://snkrdunk.com/en/apparels/889055"
       },
       {
-        "snkrdunkId": "889025",
-        "name": "Cielo, the Night Sky of Raise Moon - No More Bets! SE [DBGV-JP022](Concept Pack \"Deck-Build Pack: Glorious Victors\")",
-        "nameEn": "Cielo, the Night Sky of Raise Moon - No More Bets! SE [DBGV-JP022](Concept Pack \"Deck-Build Pack: Glorious Victors\")",
-        "rarity": "",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/c14cb460-6bf9-46e3-9cc5-ddecb3019bb2.webp?size=m",
-        "priceJpy": 2500,
-        "url": "https://snkrdunk.com/en/apparels/889025"
-      },
-      {
         "snkrdunkId": "888984",
         "name": "Zenet Prophet - Amenhotep NP [DBGV-JP002](Concept Pack \"Deck-Build Pack: Glorious Victors\")",
         "nameEn": "Zenet Prophet - Amenhotep NP [DBGV-JP002](Concept Pack \"Deck-Build Pack: Glorious Victors\")",
@@ -9438,6 +15780,17 @@ export const COLLECTION_TOP_CARDS = {
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/882507e0-16df-4667-90bf-24206c562d30.webp?size=m",
         "priceJpy": 2000,
         "url": "https://snkrdunk.com/en/apparels/888984"
+      },
+      {
+        "snkrdunkId": "889025",
+        "name": "Cielo, the Night Sky of Raise Moon - No More Bets! SE [DBGV-JP022](Concept Pack \"Deck-Build Pack: Glorious Victors\")",
+        "nameEn": "Cielo, the Night Sky of Raise Moon - No More Bets! SE [DBGV-JP022](Concept Pack \"Deck-Build Pack: Glorious Victors\")",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/c14cb460-6bf9-46e3-9cc5-ddecb3019bb2.webp?size=m",
+        "priceJpy": 1000,
+        "url": "https://snkrdunk.com/en/apparels/889025"
       },
       {
         "snkrdunkId": "888995",
@@ -9471,6 +15824,17 @@ export const COLLECTION_TOP_CARDS = {
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/b7332bbf-729e-4822-ac4d-7f20a173bfee.webp?size=m",
         "priceJpy": 1000,
         "url": "https://snkrdunk.com/en/apparels/888998"
+      },
+      {
+        "snkrdunkId": "889032",
+        "name": "The Glitter of Raise Moon NP [DBGV-JP026](Concept Pack \"Deck-Build Pack: Glorious Victors\")",
+        "nameEn": "The Glitter of Raise Moon NP [DBGV-JP026](Concept Pack \"Deck-Build Pack: Glorious Victors\")",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/3b5a0396-bf56-41ae-8509-10adfc531fc7.webp?size=m",
+        "priceJpy": 1000,
+        "url": "https://snkrdunk.com/en/apparels/889032"
       }
     ]
   },
@@ -9478,10 +15842,10 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "yugioh-snkrdunk-117820",
     "setCode": "",
     "labels": [
-      "Yu-Gi-Oh OCG Duel Monsters Premium Pack 2022",
-      "遊戯王OCG デュエルモンスターズ プレミアム パック 2022"
+      "Premium Pack 2022",
+      "プレミアム パック 2022"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -9489,32 +15853,67 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "yugioh-snkrdunk-181476",
     "setCode": "",
     "labels": [
-      "Yu-Gi-Oh OCG Duel Monsters Deck Build Pack WILD SURVIVORS",
-      "遊戯王OCGデュエルモンスターズ デッキビルドパック ワイルド・サバイバーズ"
+      "WILD SURVIVORS",
+      "デッキビルドパック ワイルド・サバイバーズ"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "117161",
+        "name": "Balamniel de Nouvelles SR[DBWS-JP033](WILD SURVIVORS)",
+        "nameEn": "Balamniel de Nouvelles SR[DBWS-JP033](WILD SURVIVORS)",
+        "rarity": "SR",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/c40b0e2b-72f0-4221-88d4-c472697356df.webp?size=m",
+        "priceJpy": 1000,
+        "url": "https://snkrdunk.com/en/apparels/117161"
+      }
+    ]
   },
   "yugioh-snkrdunk-703099": {
     "productId": "yugioh-snkrdunk-703099",
     "setCode": "",
     "labels": [
-      "Yu-Gi-Oh OCG Duel Monsters WORLD PREMIERE PACK 2025",
-      "遊戯王OCG デュエルモンスターズ ワールドプレミアパック 2025"
+      "WORLD PREMIERE PACK 2025",
+      "ワールドプレミアパック 2025"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "705463",
+        "name": "Ame no Habakiri no Mitsurugi PSE [WPP6-JP035](WORLD PREMIERE PACK 2025)",
+        "nameEn": "Ame no Habakiri no Mitsurugi PSE [WPP6-JP035](WORLD PREMIERE PACK 2025)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/fc0a428e-c4e3-4376-a21e-059fe1e248f5.webp?size=m",
+        "priceJpy": 13000,
+        "url": "https://snkrdunk.com/en/apparels/705463"
+      },
+      {
+        "snkrdunkId": "705428",
+        "name": "Mimighoul Master PSE [WPP6-JP015](WORLD PREMIERE PACK 2025)",
+        "nameEn": "Mimighoul Master PSE [WPP6-JP015](WORLD PREMIERE PACK 2025)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/16d0ef58-676d-4c31-9e41-e848d47f5d4f.webp?size=m",
+        "priceJpy": 7777,
+        "url": "https://snkrdunk.com/en/apparels/705428"
+      }
+    ]
   },
   "yugioh-snkrdunk-857024": {
     "productId": "yugioh-snkrdunk-857024",
     "setCode": "",
     "labels": [
-      "Yu-Gi-Oh OCG Duel Monsters PREMIUM PACK 2026 Box JP Edition",
-      "遊戯王OCG デュエルモンスターズ プレミアム パック 2026"
+      "PREMIUM PACK 2026",
+      "プレミアム パック 2026"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -9522,10 +15921,10 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "yugioh-snkrdunk-239790",
     "setCode": "",
     "labels": [
-      "Yu-Gi-Oh OCG Duel Monsters QUARTER CENTURY DUELIST BOX Special Pack",
-      "遊戯王 OCG デュエルモンスターズ クォーター・センチュリー・デュエリスト・"
+      "QUARTER CENTURY DUELIST",
+      "クォーター・センチュリー・デュエリスト・"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -9533,10 +15932,10 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "yugioh-snkrdunk-519578",
     "setCode": "",
     "labels": [
-      "Yu-Gi-Oh! Duel Monsters PREMIUM PACK 2025",
-      "遊戯王OCG デュエルモンスターズ プレミアムパック 2025"
+      "PREMIUM PACK 2025",
+      "プレミアムパック 2025"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -9544,10 +15943,10 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "yugioh-snkrdunk-90503",
     "setCode": "",
     "labels": [
-      "Yu-Gi-Oh OCG Duel Monsters Deck Build Pack Mystic Fighters",
-      "遊戯王 OCG デュエルモンスターズ デッキビルドパック ミスティック・ファイターズ"
+      "Mystic Fighters",
+      "デッキビルドパック ミスティック・ファイターズ"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -9555,21 +15954,66 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "yugioh-snkrdunk-359402",
     "setCode": "",
     "labels": [
-      "Yu-Gi-Oh OCG Duel Monsters WORLD PREMIERE PACK 2024",
-      "遊戯王OCG デュエルモンスターズ ワールドプレミアパック 2024"
+      "WORLD PREMIERE PACK 2024",
+      "ワールドプレミアパック 2024"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "401979",
+        "name": "Anotherverse Dragon 25th SE [WPP5-JP000](WORLD PREMIERE PACK 2024)",
+        "nameEn": "Anotherverse Dragon 25th SE [WPP5-JP000](WORLD PREMIERE PACK 2024)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/7e4487bb-181d-480e-964b-3ef9dc3327ab.webp?size=m",
+        "priceJpy": 13000,
+        "url": "https://snkrdunk.com/en/apparels/401979"
+      },
+      {
+        "snkrdunkId": "402014",
+        "name": "Veidos the Eruption Dragon of Extinction SE [WPP5-JP028](WORLD PREMIERE PACK 2024)",
+        "nameEn": "Veidos the Eruption Dragon of Extinction SE [WPP5-JP028](WORLD PREMIERE PACK 2024)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/02794a37-e40b-4ff1-b5bb-36dd6a564ab3.webp?size=m",
+        "priceJpy": 1000,
+        "url": "https://snkrdunk.com/en/apparels/402014"
+      },
+      {
+        "snkrdunkId": "401997",
+        "name": "Crystal God Tistina SE [WPP5-JP014](WORLD PREMIERE PACK 2024)",
+        "nameEn": "Crystal God Tistina SE [WPP5-JP014](WORLD PREMIERE PACK 2024)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/73d090f0-c48e-4062-9d31-7fd647544e10.webp?size=m",
+        "priceJpy": 1000,
+        "url": "https://snkrdunk.com/en/apparels/401997"
+      },
+      {
+        "snkrdunkId": "401993",
+        "name": "Flame Swordsman SE [WPP5-JP011](WORLD PREMIERE PACK 2024)",
+        "nameEn": "Flame Swordsman SE [WPP5-JP011](WORLD PREMIERE PACK 2024)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/50fd0185-8a84-4a2d-ac45-3de2a26904e0.webp?size=m",
+        "priceJpy": 1000,
+        "url": "https://snkrdunk.com/en/apparels/401993"
+      }
+    ]
   },
   "yugioh-snkrdunk-187273": {
     "productId": "yugioh-snkrdunk-187273",
     "setCode": "",
     "labels": [
-      "Yu-Gi-Oh OCG Duel Monsters Duelist Pack Explosive Duelist",
-      "遊戯王OCG デュエルモンスターズ デュエリストパック 爆炎のデュエリスト編"
+      "Duelist Pack Explosive Duelist",
+      "デュエリストパック 爆炎のデュエリスト編"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -9577,43 +16021,199 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "yugioh-snkrdunk-90487",
     "setCode": "",
     "labels": [
-      "Yu-Gi-Oh OCG Duel Monsters Duelist Pack - Duelist of the Distilled Wind",
-      "遊戯王OCG デュエルモンスターズ デュエリストパック 疾風のデュエリスト編"
+      "Duelist Pack - Duelist of the Distilled Wind",
+      "デュエリストパック 疾風のデュエリスト編"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
   "yugioh-snkrdunk-866794": {
     "productId": "yugioh-snkrdunk-866794",
-    "setCode": "",
+    "setCode": "SUDA",
     "labels": [
-      "Yu-Gi-Oh OCG Duel Monsters SUPREME DARKNESS Box (with +1 Bonus Pack) JP Edition",
-      "遊戯王OCG デュエルモンスターズ スプリーム・ダークネス"
+      "SUPREME DARKNESS",
+      "スプリーム・ダークネス"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "426764",
+        "name": "A-Bao A Qu the Lightless Shadow 25th SE [SUDA-JP049](SUPREME DARKNESS)",
+        "nameEn": "A-Bao A Qu the Lightless Shadow 25th SE [SUDA-JP049](SUPREME DARKNESS)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/9efd8c83-ec78-4846-a82d-a3151ac052ef.webp?size=m",
+        "priceJpy": 32000,
+        "url": "https://snkrdunk.com/en/apparels/426764"
+      },
+      {
+        "snkrdunkId": "426714",
+        "name": "Evil HERO Neos Lord UL [SUDA-JP031](SUPREME DARKNESS)",
+        "nameEn": "Evil HERO Neos Lord UL [SUDA-JP031](SUPREME DARKNESS)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/0073f36e-42af-460b-a925-7b6aacc3a9ee.webp?size=m",
+        "priceJpy": 1000,
+        "url": "https://snkrdunk.com/en/apparels/426714"
+      }
+    ]
   },
   "weis-schwarz-snkrdunk-199145": {
     "productId": "weis-schwarz-snkrdunk-199145",
     "setCode": "",
     "labels": [
-      "Weiss Schwarz Booster Pack Disney100",
-      "ヴァイスシュヴァルツ ブースターパック ディズニー100"
+      "Disney100",
+      "ディズニー100"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:12:43.317Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "120130",
+        "name": "\"Steamboat Willie\" Mickey Mouse OR[Dds/S104-100OR E5](Booster Pack Disney100)",
+        "nameEn": "\"Steamboat Willie\" Mickey Mouse OR[Dds/S104-100OR E5](Booster Pack Disney100)",
+        "rarity": "",
+        "cardNumber": "E5",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/6218abd3-2390-4c6f-bde2-64197c63afa3.webp?size=m",
+        "priceJpy": 390000,
+        "url": "https://snkrdunk.com/en/apparels/120130"
+      },
+      {
+        "snkrdunkId": "120146",
+        "name": "Cute Chipmunk Chip & Dale SP[Dds/S104-059SP E5](Booster Pack Disney100)",
+        "nameEn": "Cute Chipmunk Chip & Dale SP[Dds/S104-059SP E5](Booster Pack Disney100)",
+        "rarity": "",
+        "cardNumber": "E5",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/5161b360-9062-4c8d-953a-5f9af4bc4360.webp?size=m",
+        "priceJpy": 100000,
+        "url": "https://snkrdunk.com/en/apparels/120146"
+      },
+      {
+        "snkrdunkId": "120159",
+        "name": "Great Power&Great Responsibility Spider-Man SSP[Dmv/S104-053SSP E5](Booster Pack Disney100)",
+        "nameEn": "Great Power&Great Responsibility Spider-Man SSP[Dmv/S104-053SSP E5](Booster Pack Disney100)",
+        "rarity": "",
+        "cardNumber": "E5",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/ffdcac2d-1d25-4e35-a4aa-c53648964e18.webp?size=m",
+        "priceJpy": 85000,
+        "url": "https://snkrdunk.com/en/apparels/120159"
+      },
+      {
+        "snkrdunkId": "120131",
+        "name": "\"True Love\" Belle SSP[Dds/S104-001SSP E5](Booster Pack Disney100)",
+        "nameEn": "\"True Love\" Belle SSP[Dds/S104-001SSP E5](Booster Pack Disney100)",
+        "rarity": "",
+        "cardNumber": "E5",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/cd7e6d9b-0d7f-4295-be5f-89be94686c68.webp?size=m",
+        "priceJpy": 58000,
+        "url": "https://snkrdunk.com/en/apparels/120131"
+      },
+      {
+        "snkrdunkId": "120160",
+        "name": "Sophisticated Armor Iron Man SP[Dmv/S104-058SP E5](Booster Pack Disney100)",
+        "nameEn": "Sophisticated Armor Iron Man SP[Dmv/S104-058SP E5](Booster Pack Disney100)",
+        "rarity": "",
+        "cardNumber": "E5",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/4dd54da3-4cf9-41c7-8b03-144f49f017db.webp?size=m",
+        "priceJpy": 55000,
+        "url": "https://snkrdunk.com/en/apparels/120160"
+      },
+      {
+        "snkrdunkId": "120138",
+        "name": "Flying Boy Peter Pan SP[Dds/S104-030SP E5](Booster Pack Disney100)",
+        "nameEn": "Flying Boy Peter Pan SP[Dds/S104-030SP E5](Booster Pack Disney100)",
+        "rarity": "",
+        "cardNumber": "E5",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/fcda0a72-053f-4ca2-b7bd-7020e7c660bf.webp?size=m",
+        "priceJpy": 33333,
+        "url": "https://snkrdunk.com/en/apparels/120138"
+      },
+      {
+        "snkrdunkId": "120158",
+        "name": "Sleeping Beauty Princess Aurora SP[Dds/S104-084SP E5](Booster Pack Disney100)",
+        "nameEn": "Sleeping Beauty Princess Aurora SP[Dds/S104-084SP E5](Booster Pack Disney100)",
+        "rarity": "",
+        "cardNumber": "E5",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/f4e7ee18-3d17-4cc5-98e3-af7286d09b1e.webp?size=m",
+        "priceJpy": 33000,
+        "url": "https://snkrdunk.com/en/apparels/120158"
+      },
+      {
+        "snkrdunkId": "120144",
+        "name": "Mickey Mouse SSP[Dds/S104-056SSP E5](Booster Pack Disney100)",
+        "nameEn": "Mickey Mouse SSP[Dds/S104-056SSP E5](Booster Pack Disney100)",
+        "rarity": "",
+        "cardNumber": "E5",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/9655dd45-d9fa-47ae-8e84-d7424af2bb01.webp?size=m",
+        "priceJpy": 30000,
+        "url": "https://snkrdunk.com/en/apparels/120144"
+      },
+      {
+        "snkrdunkId": "120137",
+        "name": "\"Longing For Freedom\" Jasmine SSP[Dds/S104-029SSP E5](Booster Pack Disney100)",
+        "nameEn": "\"Longing For Freedom\" Jasmine SSP[Dds/S104-029SSP E5](Booster Pack Disney100)",
+        "rarity": "",
+        "cardNumber": "E5",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/74a6bfa6-b4aa-4879-97e9-e478acff5fe7.webp?size=m",
+        "priceJpy": 25000,
+        "url": "https://snkrdunk.com/en/apparels/120137"
+      },
+      {
+        "snkrdunkId": "120134",
+        "name": "Beautiful Hair Rapunzel SP[Dds/S104-005SP E5](Booster Pack Disney100)",
+        "nameEn": "Beautiful Hair Rapunzel SP[Dds/S104-005SP E5](Booster Pack Disney100)",
+        "rarity": "",
+        "cardNumber": "E5",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/aa268918-73de-4ecb-8e84-20b45bab5f9a.webp?size=m",
+        "priceJpy": 13000,
+        "url": "https://snkrdunk.com/en/apparels/120134"
+      },
+      {
+        "snkrdunkId": "120163",
+        "name": "\"Destiny To Save The Universe\" Luke SP[Dsw/S104-080SP E5](Booster Pack Disney100)",
+        "nameEn": "\"Destiny To Save The Universe\" Luke SP[Dsw/S104-080SP E5](Booster Pack Disney100)",
+        "rarity": "",
+        "cardNumber": "E5",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/8c6364af-1746-4c26-b345-1b42e533206d.webp?size=m",
+        "priceJpy": 7000,
+        "url": "https://snkrdunk.com/en/apparels/120163"
+      },
+      {
+        "snkrdunkId": "120132",
+        "name": "Alice Full Of Curiosity SP[Dds/S104-003SP E5](Booster Pack Disney100)",
+        "nameEn": "Alice Full Of Curiosity SP[Dds/S104-003SP E5](Booster Pack Disney100)",
+        "rarity": "",
+        "cardNumber": "E5",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/208bf8d1-a737-459a-83e1-f37b65a4f818.webp?size=m",
+        "priceJpy": 6500,
+        "url": "https://snkrdunk.com/en/apparels/120132"
+      }
+    ]
   },
   "weis-schwarz-snkrdunk-199147": {
     "productId": "weis-schwarz-snkrdunk-199147",
     "setCode": "",
     "labels": [
-      "Weiss Schwarz Booster Pack Hololive Production Vol.2 #Spreading Weiss Schwarz",
-      "ヴァイスシュヴァルツ ブースターパック ホロライブプロダクション Vol.2. #ひろがるヴァイスシュバルツ"
+      "Hololive Production Vol.2 #Spreading Weiss Schwarz",
+      "ホロライブプロダクション Vol.2. #ひろがるヴァイスシュバルツ"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -9624,7 +16224,7 @@ export const COLLECTION_TOP_CARDS = {
       "Goddess of Victory : NIKKE",
       "勝利の女神:NIKKE"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
       {
@@ -9670,17 +16270,6 @@ export const COLLECTION_TOP_CARDS = {
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/d2174ace-3319-48c0-8fbb-b1f54822c264.webp?size=m",
         "priceJpy": 249000,
         "url": "https://snkrdunk.com/en/apparels/472865"
-      },
-      {
-        "snkrdunkId": "898482",
-        "name": "Rapi: Red Hood SEC [NIK/S135-058SEC](Booster Pack \"Goddess of Victory: NIKKE Vol. 2\")",
-        "nameEn": "Rapi: Red Hood SEC [NIK/S135-058SEC](Booster Pack \"Goddess of Victory: NIKKE Vol. 2\")",
-        "rarity": "SEC",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/WS-TCG-nik_s135_058sec-of.webp?size=m",
-        "priceJpy": 248000,
-        "url": "https://snkrdunk.com/en/apparels/898482"
       },
       {
         "snkrdunkId": "226163",
@@ -9758,6 +16347,17 @@ export const COLLECTION_TOP_CARDS = {
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/396eeb55-5051-4ec6-8798-fe46b5c7b479.webp?size=m",
         "priceJpy": 59800,
         "url": "https://snkrdunk.com/en/apparels/226150"
+      },
+      {
+        "snkrdunkId": "226212",
+        "name": "Rapunzel SR** [UA18BT-NIK-1-058](Booster Pack \"Goddess of Victory : NIKKE\")",
+        "nameEn": "Rapunzel SR** [UA18BT-NIK-1-058](Booster Pack \"Goddess of Victory : NIKKE\")",
+        "rarity": "SR",
+        "cardNumber": "",
+        "setCode": "UA18BT",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/f838ece8-1c71-4f75-90ca-d227646e3fe6.webp?size=m",
+        "priceJpy": 48000,
+        "url": "https://snkrdunk.com/en/apparels/226212"
       }
     ]
   },
@@ -9768,7 +16368,7 @@ export const COLLECTION_TOP_CARDS = {
       "Re:ZERO-Starting Life in Another World Vol.3",
       "Re:ゼロから始める異世界生活 Vol.3"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
       {
@@ -9779,7 +16379,7 @@ export const COLLECTION_TOP_CARDS = {
         "cardNumber": "",
         "setCode": "",
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/0bb7b69c-2f51-4dc0-8877-7afceb613ef6.webp?size=m",
-        "priceJpy": 340000,
+        "priceJpy": 322000,
         "url": "https://snkrdunk.com/en/apparels/454317"
       },
       {
@@ -9790,7 +16390,7 @@ export const COLLECTION_TOP_CARDS = {
         "cardNumber": "",
         "setCode": "",
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/143f06a8-c94c-46ee-b9b4-a9d676315738.webp?size=m",
-        "priceJpy": 143000,
+        "priceJpy": 130000,
         "url": "https://snkrdunk.com/en/apparels/454157"
       },
       {
@@ -9833,7 +16433,8 @@ export const COLLECTION_TOP_CARDS = {
     "setCode": "",
     "labels": [
       "Goddess of Victory: NIKKE Vol. 2",
-      "勝利の女神:NIKKE Vol.2"
+      "勝利の女神:NIKKE Vol.2",
+      "勝利の女神:NIKKE Vol.2」初版"
     ],
     "updatedAt": "2026-09-26T12:21:05.632Z",
     "source": "SNKRDUNK",
@@ -9979,7 +16580,7 @@ export const COLLECTION_TOP_CARDS = {
       "Hololive Production Vol.1&Vol.2 Re:Mix",
       "ホロライブプロダクション Vol.1&Vol.2 Re:Mix"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -9988,7 +16589,8 @@ export const COLLECTION_TOP_CARDS = {
     "setCode": "",
     "labels": [
       "Re:ZERO-Starting Life in Another World Vol.4",
-      "Re:ゼロから始める異世界生活 Vol.4"
+      "Re:ゼロから始める異世界生活 Vol.4",
+      "Re:ゼロから始める異世界生活 Vol.4」初版"
     ],
     "updatedAt": "2026-09-26T12:21:05.632Z",
     "source": "SNKRDUNK",
@@ -10131,19 +16733,65 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "weis-schwarz-snkrdunk-261096",
     "setCode": "",
     "labels": [
-      "Weiss Schwarz Booster Pack Frieren: Beyond Journey's End",
-      "ヴァイスシュヴァルツ ブースターパック 葬送のフリーレン"
+      "Frieren: Beyond Journey's End",
+      "葬送のフリーレン"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "244186",
+        "name": "My Favorite Magic Frieren SSP : [SFN/S108-074SSP](Booster Pack \"Frieren: Beyond Journey's End\")",
+        "nameEn": "My Favorite Magic Frieren SSP : [SFN/S108-074SSP](Booster Pack \"Frieren: Beyond Journey's End\")",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/9ac3b1c1-a663-4285-a22d-3481cb8b7b66.webp?size=m",
+        "priceJpy": 450000,
+        "url": "https://snkrdunk.com/en/apparels/244186"
+      },
+      {
+        "snkrdunkId": "244182",
+        "name": "Winter Outfit Frieren SP : [SFN/S108-072SP](Booster Pack \"Frieren: Beyond Journey's End\")",
+        "nameEn": "Winter Outfit Frieren SP : [SFN/S108-072SP](Booster Pack \"Frieren: Beyond Journey's End\")",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/9defac2d-1a70-4074-8bb8-a5cc06d5c27f.webp?size=m",
+        "priceJpy": 69800,
+        "url": "https://snkrdunk.com/en/apparels/244182"
+      },
+      {
+        "snkrdunkId": "170255",
+        "name": "WizardFrieren SP [SFN/S108-T11SP](Trial Deck \"Frieren: Beyond Journey's End\")",
+        "nameEn": "WizardFrieren SP [SFN/S108-T11SP](Trial Deck \"Frieren: Beyond Journey's End\")",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/75364de2-9a90-4439-8179-9612702686ab.webp?size=m",
+        "priceJpy": 68000,
+        "url": "https://snkrdunk.com/en/apparels/170255"
+      },
+      {
+        "snkrdunkId": "244119",
+        "name": "Red Mirror Dragon SR [SFN/S108-041S](Booster Pack \"Frieren: Beyond Journey's End\")",
+        "nameEn": "Red Mirror Dragon SR [SFN/S108-041S](Booster Pack \"Frieren: Beyond Journey's End\")",
+        "rarity": "SR",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/7121f027-17b0-4749-82d5-81a5daa6a684.webp?size=m",
+        "priceJpy": 1200,
+        "url": "https://snkrdunk.com/en/apparels/244119"
+      }
+    ]
   },
   "weis-schwarz-snkrdunk-1009582": {
     "productId": "weis-schwarz-snkrdunk-1009582",
     "setCode": "",
     "labels": [
       "Frieren Beyond Journey's End,Vol.2",
-      "葬送のフリーレン Vol.2"
+      "葬送のフリーレン Vol.2",
+      "葬送のフリーレン Vol.2」初版"
     ],
     "updatedAt": "2026-09-26T12:21:05.632Z",
     "source": "SNKRDUNK",
@@ -10286,21 +16934,155 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "weis-schwarz-snkrdunk-249195",
     "setCode": "",
     "labels": [
-      "Weiss Schwarz Booster Pack Hololive Production",
-      "ヴァイスシュヴァルツ ブースターパック ホロライブプロダクション"
+      "Hololive Production",
+      "ホロライブプロダクション"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "172580",
+        "name": "Together For The Future Houshou Marine SSP [HOL/W91-076SSP](Booster Pack \"hololive production\")",
+        "nameEn": "Together For The Future Houshou Marine SSP [HOL/W91-076SSP](Booster Pack \"hololive production\")",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/488119d6-ed60-40d9-8c28-9df8474aea2b.webp?size=m",
+        "priceJpy": 199999,
+        "url": "https://snkrdunk.com/en/apparels/172580"
+      },
+      {
+        "snkrdunkId": "172654",
+        "name": "Together For The Future Hoshimachi Suisei SSP [HOL/W91-113SSP](Booster Pack \"hololive production\")",
+        "nameEn": "Together For The Future Hoshimachi Suisei SSP [HOL/W91-113SSP](Booster Pack \"hololive production\")",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/cc8a5d93-ee5b-42be-ab74-fb0229dd9d51.webp?size=m",
+        "priceJpy": 140000,
+        "url": "https://snkrdunk.com/en/apparels/172654"
+      },
+      {
+        "snkrdunkId": "172658",
+        "name": "Together For The Future Minato Aqua SSP [HOL/W91-115SSP](Booster Pack \"hololive production\")",
+        "nameEn": "Together For The Future Minato Aqua SSP [HOL/W91-115SSP](Booster Pack \"hololive production\")",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/bfbdb491-896b-4ed4-b2ad-0a529f5ed8bd.webp?size=m",
+        "priceJpy": 85000,
+        "url": "https://snkrdunk.com/en/apparels/172658"
+      },
+      {
+        "snkrdunkId": "172578",
+        "name": "Together For The Future Sakura Miko SSP [HOL/W91-075SSP](Booster Pack \"hololive production\")",
+        "nameEn": "Together For The Future Sakura Miko SSP [HOL/W91-075SSP](Booster Pack \"hololive production\")",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/73d96659-32c3-4ca7-a125-85b6e7bf9110.webp?size=m",
+        "priceJpy": 75000,
+        "url": "https://snkrdunk.com/en/apparels/172578"
+      },
+      {
+        "snkrdunkId": "172805",
+        "name": "The Future I Wish For You Amane Kanata SP [HOL/WE36-09SP](Premium Booster \"hololive production\")",
+        "nameEn": "The Future I Wish For You Amane Kanata SP [HOL/WE36-09SP](Premium Booster \"hololive production\")",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/3a931084-688c-4e8c-ba46-bec42d9a8666.webp?size=m",
+        "priceJpy": 69500,
+        "url": "https://snkrdunk.com/en/apparels/172805"
+      },
+      {
+        "snkrdunkId": "172656",
+        "name": "Together For The Future Shirogane Noel SSP [HOL/W91-114SSP](Booster Pack \"hololive production\")",
+        "nameEn": "Together For The Future Shirogane Noel SSP [HOL/W91-114SSP](Booster Pack \"hololive production\")",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/234edb8e-baf0-486d-bb9f-fd65087d4363.webp?size=m",
+        "priceJpy": 57000,
+        "url": "https://snkrdunk.com/en/apparels/172656"
+      },
+      {
+        "snkrdunkId": "172514",
+        "name": "Together For The Future Tokoyami Towa SSP [HOL/W91-043SSP](Booster Pack \"hololive production\")",
+        "nameEn": "Together For The Future Tokoyami Towa SSP [HOL/W91-043SSP](Booster Pack \"hololive production\")",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/4dc10441-0dde-4362-b606-b21759a7ecfa.webp?size=m",
+        "priceJpy": 53000,
+        "url": "https://snkrdunk.com/en/apparels/172514"
+      },
+      {
+        "snkrdunkId": "172664",
+        "name": "#Hoshimachi Gallery Hoshimachi Suisei SP [HOL/W91-118SP](Booster Pack \"hololive production\")",
+        "nameEn": "#Hoshimachi Gallery Hoshimachi Suisei SP [HOL/W91-118SP](Booster Pack \"hololive production\")",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/dd0b1b00-520a-4911-8ab1-4dbb1d9a5277.webp?size=m",
+        "priceJpy": 42880,
+        "url": "https://snkrdunk.com/en/apparels/172664"
+      },
+      {
+        "snkrdunkId": "172502",
+        "name": "Together For The Future Tokino Sora SSP [HOL/W91-037SSP](Booster Pack \"hololive production\")",
+        "nameEn": "Together For The Future Tokino Sora SSP [HOL/W91-037SSP](Booster Pack \"hololive production\")",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/4893f892-0723-4308-9489-3577c2c226e9.webp?size=m",
+        "priceJpy": 30000,
+        "url": "https://snkrdunk.com/en/apparels/172502"
+      },
+      {
+        "snkrdunkId": "172871",
+        "name": "The Future I Wish For You Sakamata Chloe SP [HOL/WE36-31SP](Premium Booster \"hololive production\")",
+        "nameEn": "The Future I Wish For You Sakamata Chloe SP [HOL/WE36-31SP](Premium Booster \"hololive production\")",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/8067ea83-65f4-4717-81ff-e0fae2b17233.webp?size=m",
+        "priceJpy": 24800,
+        "url": "https://snkrdunk.com/en/apparels/172871"
+      },
+      {
+        "snkrdunkId": "172592",
+        "name": "Together For The Future Nakiri Ayame SSP [HOL/W91-082SSP](Booster Pack \"hololive production\")",
+        "nameEn": "Together For The Future Nakiri Ayame SSP [HOL/W91-082SSP](Booster Pack \"hololive production\")",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/ca5eadc8-0746-4a64-a0b5-c5da9c6b6f47.webp?size=m",
+        "priceJpy": 24800,
+        "url": "https://snkrdunk.com/en/apparels/172592"
+      },
+      {
+        "snkrdunkId": "172520",
+        "name": "Together For The Future Amane Kanata SSP [HOL/W91-046SSP](Booster Pack \"hololive production\")",
+        "nameEn": "Together For The Future Amane Kanata SSP [HOL/W91-046SSP](Booster Pack \"hololive production\")",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/1507c5ce-823b-48b1-90f1-c637dd5cbe90.webp?size=m",
+        "priceJpy": 24000,
+        "url": "https://snkrdunk.com/en/apparels/172520"
+      }
+    ]
   },
   "weis-schwarz-snkrdunk-983895": {
     "productId": "weis-schwarz-snkrdunk-983895",
     "setCode": "",
     "labels": [
       "BrownDust2",
-      "ブラウンダスト2"
+      "ブラウンダスト2",
+      "ブラウンダスト2」初版"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
       {
@@ -10313,6 +17095,17 @@ export const COLLECTION_TOP_CARDS = {
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/e77c19c3-c239-4c30-8ed4-ca97663fa17c.webp?size=m",
         "priceJpy": 250000,
         "url": "https://snkrdunk.com/en/apparels/853425"
+      },
+      {
+        "snkrdunkId": "853305",
+        "name": "Pool Party Justia SEC [BRD/W139-002EX](Booster Pack \"BrownDust2\")",
+        "nameEn": "Pool Party Justia SEC [BRD/W139-002EX](Booster Pack \"BrownDust2\")",
+        "rarity": "SEC",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/5d08a1e6-4093-4498-b30d-e6d82ebdd8a9.webp?size=m",
+        "priceJpy": 200000,
+        "url": "https://snkrdunk.com/en/apparels/853305"
       },
       {
         "snkrdunkId": "853356",
@@ -10334,7 +17127,7 @@ export const COLLECTION_TOP_CARDS = {
       "Azur Lane Vol.2",
       "アズールレーン Vol.2"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
       {
@@ -10422,7 +17215,7 @@ export const COLLECTION_TOP_CARDS = {
         "cardNumber": "",
         "setCode": "",
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/fb8020b9-6376-4a75-afa8-674fe5a880e2.webp?size=m",
-        "priceJpy": 22000,
+        "priceJpy": 16000,
         "url": "https://snkrdunk.com/en/apparels/500097"
       }
     ]
@@ -10432,11 +17225,23 @@ export const COLLECTION_TOP_CARDS = {
     "setCode": "",
     "labels": [
       "GA Bunko",
-      "GA文庫"
+      "GA文庫",
+      "GA文庫」初版"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
+      {
+        "snkrdunkId": "836879",
+        "name": "Ashen Witch AGR :Autographed & Serial Numbered [GA17/S131-033A](Booster Pack \"GA Bunko\")",
+        "nameEn": "Ashen Witch AGR :Autographed & Serial Numbered [GA17/S131-033A](Booster Pack \"GA Bunko\")",
+        "rarity": "",
+        "cardNumber": "GA17/S131-033A",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/2964ac7e-01fd-45b2-ade7-944b73beda60.webp?size=m",
+        "priceJpy": 2200000,
+        "url": "https://snkrdunk.com/en/apparels/836879"
+      },
       {
         "snkrdunkId": "836864",
         "name": "My Story Elaina SSP [GA17/S131-001SSP](Booster Pack \"GA Bunko\")",
@@ -10460,11 +17265,33 @@ export const COLLECTION_TOP_CARDS = {
         "url": "https://snkrdunk.com/en/apparels/836752"
       },
       {
+        "snkrdunkId": "836752",
+        "name": "Goddess of Protection and Affection Hestia SSP [GA10/S131-099SSP](Booster Pack \"GA Bunko\")",
+        "nameEn": "Goddess of Protection and Affection Hestia SSP [GA10/S131-099SSP](Booster Pack \"GA Bunko\")",
+        "rarity": "",
+        "cardNumber": "GA10/S131-099SSP",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/d1a80a91-39ef-4ef6-91b2-19536b7954d3.webp?size=m",
+        "priceJpy": 86100,
+        "url": "https://snkrdunk.com/en/apparels/836752"
+      },
+      {
         "snkrdunkId": "836809",
         "name": "Crawling Chaos Nyaruko SSP [GA14/S131-036SSP](Booster Pack \"GA Bunko\")",
         "nameEn": "Crawling Chaos Nyaruko SSP [GA14/S131-036SSP](Booster Pack \"GA Bunko\")",
         "rarity": "",
         "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/74d1f1ca-827f-4a55-9b27-0ffbfe7be223.webp?size=m",
+        "priceJpy": 23000,
+        "url": "https://snkrdunk.com/en/apparels/836809"
+      },
+      {
+        "snkrdunkId": "836809",
+        "name": "Crawling Chaos Nyaruko SSP [GA14/S131-036SSP](Booster Pack \"GA Bunko\")",
+        "nameEn": "Crawling Chaos Nyaruko SSP [GA14/S131-036SSP](Booster Pack \"GA Bunko\")",
+        "rarity": "",
+        "cardNumber": "GA14/S131-036SSP",
         "setCode": "",
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/74d1f1ca-827f-4a55-9b27-0ffbfe7be223.webp?size=m",
         "priceJpy": 23000,
@@ -10477,9 +17304,10 @@ export const COLLECTION_TOP_CARDS = {
     "setCode": "",
     "labels": [
       "Touhou Project: Black and White Lotus Land",
-      "東方Project ~ Black and White Lotus Land."
+      "東方Project ~ Black and White Lotus Land.",
+      "東方Project ~ Black and White Lotus Land.」初版"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -10487,10 +17315,9 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "weis-schwarz-snkrdunk-364865",
     "setCode": "",
     "labels": [
-      "Weiss Schwarz Booster Pack PIXAR CHARACTERS",
-      "ヴァイスシュヴァルツ ブースターパック PIXAR CHARACTERS"
+      "PIXAR CHARACTERS"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -10501,7 +17328,7 @@ export const COLLECTION_TOP_CARDS = {
       "Frieren: Beyond Journey's End New Edition",
       "葬送のフリーレン 新装版"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
       {
@@ -10521,21 +17348,44 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "weis-schwarz-snkrdunk-231949",
     "setCode": "",
     "labels": [
-      "Weiss Schwarz Booster Pack Oshi no Ko",
-      "ヴァイスシュヴァルツ ブースターパック 推しの子"
+      "Oshi no Ko",
+      "推しの子"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "166333",
+        "name": "AI SP [OSK/S107-044SP](Booster Pack \"Oshi no Ko\")",
+        "nameEn": "AI SP [OSK/S107-044SP](Booster Pack \"Oshi no Ko\")",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/eae6a368-4dab-4c58-83de-af65ba9d0167.webp?size=m",
+        "priceJpy": 50000,
+        "url": "https://snkrdunk.com/en/apparels/166333"
+      },
+      {
+        "snkrdunkId": "166381",
+        "name": "Akane Kurokawa SP [OSK/S107-068SP](Booster Pack \"Oshi no Ko\")",
+        "nameEn": "Akane Kurokawa SP [OSK/S107-068SP](Booster Pack \"Oshi no Ko\")",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/295ef8cd-16d7-4ae5-96e2-170ae4e9a284.webp?size=m",
+        "priceJpy": 14000,
+        "url": "https://snkrdunk.com/en/apparels/166381"
+      }
+    ]
   },
   "weis-schwarz-snkrdunk-329979": {
     "productId": "weis-schwarz-snkrdunk-329979",
     "setCode": "",
     "labels": [
-      "Weiss Schwarz Booster Pack Lycoris Recoil",
-      "ヴァイスシュヴァルツ ブースターパック リコリス・リコイル"
+      "Lycoris Recoil",
+      "リコリス・リコイル"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -10688,9 +17538,10 @@ export const COLLECTION_TOP_CARDS = {
     "setCode": "",
     "labels": [
       "Oshi no Ko Vol.3",
-      "【推しの子】Vol.3"
+      "【推しの子】Vol.3",
+      "【推しの子】Vol.3」初版"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
       {
@@ -10710,12 +17561,68 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "weis-schwarz-snkrdunk-363349",
     "setCode": "",
     "labels": [
-      "Weiss Schwarz Booster Pack Azur Lane",
-      "ヴァイスシュヴァルツ ブースターパック アズールレーン"
+      "Azur Lane",
+      "アズールレーン"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "287277",
+        "name": "Kashino SP [AZL/S102-042SP](Booster Pack \"Azur Lane\")",
+        "nameEn": "Kashino SP [AZL/S102-042SP](Booster Pack \"Azur Lane\")",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/4d8a0b88-b9b7-45c8-94f4-288ab04193e8.webp?size=m",
+        "priceJpy": 89999,
+        "url": "https://snkrdunk.com/en/apparels/287277"
+      },
+      {
+        "snkrdunkId": "295995",
+        "name": "Belfast SEC [AZL/S102-003SEC](Booster Pack \"Azur Lane\")",
+        "nameEn": "Belfast SEC [AZL/S102-003SEC](Booster Pack \"Azur Lane\")",
+        "rarity": "SEC",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/59fd992d-daa4-4834-9eff-31e4861b898f.webp?size=m",
+        "priceJpy": 68000,
+        "url": "https://snkrdunk.com/en/apparels/295995"
+      },
+      {
+        "snkrdunkId": "287341",
+        "name": "August von Parseval SP [AZL/S102-074SP](Booster Pack \"Azur Lane\")",
+        "nameEn": "August von Parseval SP [AZL/S102-074SP](Booster Pack \"Azur Lane\")",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/6fe9bf44-632e-4ac2-a09e-ff4f41ec7a64.webp?size=m",
+        "priceJpy": 47000,
+        "url": "https://snkrdunk.com/en/apparels/287341"
+      },
+      {
+        "snkrdunkId": "287395",
+        "name": "Bremerton SP [AZL/S102-101SP](Booster Pack \"Azur Lane\")",
+        "nameEn": "Bremerton SP [AZL/S102-101SP](Booster Pack \"Azur Lane\")",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/96f27b8d-b4d4-417e-aeb4-02a94c3ef42b.webp?size=m",
+        "priceJpy": 30000,
+        "url": "https://snkrdunk.com/en/apparels/287395"
+      },
+      {
+        "snkrdunkId": "287285",
+        "name": "Azuma SP [AZL/S102-046SP](Booster Pack \"Azur Lane\")",
+        "nameEn": "Azuma SP [AZL/S102-046SP](Booster Pack \"Azur Lane\")",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/15d8706d-93c1-44e6-a195-b747aa6d4093.webp?size=m",
+        "priceJpy": 30000,
+        "url": "https://snkrdunk.com/en/apparels/287285"
+      }
+    ]
   },
   "weis-schwarz-snkrdunk-826823": {
     "productId": "weis-schwarz-snkrdunk-826823",
@@ -10724,7 +17631,7 @@ export const COLLECTION_TOP_CARDS = {
       "Blue Archive The Animation",
       "ブルーアーカイブ The Animation"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
       {
@@ -10757,7 +17664,7 @@ export const COLLECTION_TOP_CARDS = {
     "labels": [
       "Toy Story 30YEARS&BEYOND"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
       {
@@ -10775,47 +17682,159 @@ export const COLLECTION_TOP_CARDS = {
   },
   "weis-schwarz-snkrdunk-329681": {
     "productId": "weis-schwarz-snkrdunk-329681",
-    "setCode": "",
+    "setCode": "UA53BT",
     "labels": [
-      "Weiss Schwarz Booster Pack Chainsaw Man",
-      "ヴァイスシュヴァルツ ブースターパック チェンソーマン"
+      "Chainsaw Man",
+      "チェンソーマン"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "824762",
+        "name": "Action Point Card (Reze)* :Autographed & Serial Numbered [UA53BT-CSM-1-AP03](Booster Pack \"Chainsaw Man\")",
+        "nameEn": "Action Point Card (Reze)* :Autographed & Serial Numbered [UA53BT-CSM-1-AP03](Booster Pack \"Chainsaw Man\")",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/310cf158-bee3-4d51-b47d-2f22ac85d6a8.webp?size=m",
+        "priceJpy": 22222222,
+        "url": "https://snkrdunk.com/en/apparels/824762"
+      },
+      {
+        "snkrdunkId": "824761",
+        "name": "Action Point Card (Makima)* :Autographed & Serial Numbered [UA53BT-CSM-1-AP02](Booster Pack \"Chainsaw Man\")",
+        "nameEn": "Action Point Card (Makima)* :Autographed & Serial Numbered [UA53BT-CSM-1-AP02](Booster Pack \"Chainsaw Man\")",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/3c1e2ea3-2e8c-4468-9a1e-0b9671f379c3.webp?size=m",
+        "priceJpy": 1650000,
+        "url": "https://snkrdunk.com/en/apparels/824761"
+      },
+      {
+        "snkrdunkId": "827684",
+        "name": "Reze SR*** [UA53BT-CSM-1-031](Booster Pack \"Chainsaw Man\")",
+        "nameEn": "Reze SR*** [UA53BT-CSM-1-031](Booster Pack \"Chainsaw Man\")",
+        "rarity": "SR",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/293564d3-da5e-43b3-a029-b9443c2060c2.webp?size=m",
+        "priceJpy": 500000,
+        "url": "https://snkrdunk.com/en/apparels/827684"
+      },
+      {
+        "snkrdunkId": "824753",
+        "name": "Reze R** [UA53BT-CSM-1-030](Booster Pack \"Chainsaw Man\")",
+        "nameEn": "Reze R** [UA53BT-CSM-1-030](Booster Pack \"Chainsaw Man\")",
+        "rarity": "R",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/be6c24a9-0d73-403c-9145-05265cd62528.webp?size=m",
+        "priceJpy": 280000,
+        "url": "https://snkrdunk.com/en/apparels/824753"
+      },
+      {
+        "snkrdunkId": "827674",
+        "name": "Makima SR*** [UA53BT-CSM-1-024](Booster Pack \"Chainsaw Man\")",
+        "nameEn": "Makima SR*** [UA53BT-CSM-1-024](Booster Pack \"Chainsaw Man\")",
+        "rarity": "SR",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/3b48bf7d-a56f-43f9-aa4f-b97ff39f20b8.webp?size=m",
+        "priceJpy": 220000,
+        "url": "https://snkrdunk.com/en/apparels/827674"
+      },
+      {
+        "snkrdunkId": "824752",
+        "name": "Makima SR** [UA53BT-CSM-1-023](Booster Pack \"Chainsaw Man\")",
+        "nameEn": "Makima SR** [UA53BT-CSM-1-023](Booster Pack \"Chainsaw Man\")",
+        "rarity": "SR",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/c6e582ec-8c0a-420d-95c0-5be0ef339803.webp?size=m",
+        "priceJpy": 195000,
+        "url": "https://snkrdunk.com/en/apparels/824752"
+      },
+      {
+        "snkrdunkId": "824755",
+        "name": "Chainsaw Man SR** [UA53BT-CSM-1-048](Booster Pack \"Chainsaw Man\")",
+        "nameEn": "Chainsaw Man SR** [UA53BT-CSM-1-048](Booster Pack \"Chainsaw Man\")",
+        "rarity": "SR",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/0e3edbbc-7da0-43f2-8593-0545e222eb18.webp?size=m",
+        "priceJpy": 149999,
+        "url": "https://snkrdunk.com/en/apparels/824755"
+      },
+      {
+        "snkrdunkId": "827746",
+        "name": "Action Point Card (Reze) [UA53BT-CSM-1-AP3](Booster Pack \"Chainsaw Man\")",
+        "nameEn": "Action Point Card (Reze) [UA53BT-CSM-1-AP3](Booster Pack \"Chainsaw Man\")",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/f68f36f6-42fe-42bb-80cb-ace44d74cbde.webp?size=m",
+        "priceJpy": 80000,
+        "url": "https://snkrdunk.com/en/apparels/827746"
+      },
+      {
+        "snkrdunkId": "824758",
+        "name": "Power SR** [UA53BT-CSM-1-061](Booster Pack \"Chainsaw Man\")",
+        "nameEn": "Power SR** [UA53BT-CSM-1-061](Booster Pack \"Chainsaw Man\")",
+        "rarity": "SR",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/826684ef-5fbd-4f45-aab8-e93b0bed117a.webp?size=m",
+        "priceJpy": 50000,
+        "url": "https://snkrdunk.com/en/apparels/824758"
+      },
+      {
+        "snkrdunkId": "824756",
+        "name": "Denji R** [UA53BT-CSM-1-051](Booster Pack \"Chainsaw Man\")",
+        "nameEn": "Denji R** [UA53BT-CSM-1-051](Booster Pack \"Chainsaw Man\")",
+        "rarity": "R",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/deb44108-a46d-4dd6-853c-77a53be0af85.webp?size=m",
+        "priceJpy": 22000,
+        "url": "https://snkrdunk.com/en/apparels/824756"
+      },
+      {
+        "snkrdunkId": "253655",
+        "name": "One with Heart of a Devil Samurai Sword SP : [CSM/S96-035SP](Booster Pack \"Chainsaw Man\")",
+        "nameEn": "One with Heart of a Devil Samurai Sword SP : [CSM/S96-035SP](Booster Pack \"Chainsaw Man\")",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/1af2e955-48b0-4603-bc60-4c350fcf9463.webp?size=m",
+        "priceJpy": 20000,
+        "url": "https://snkrdunk.com/en/apparels/253655"
+      },
+      {
+        "snkrdunkId": "253606",
+        "name": "Always Together Pochita SP : [CSM/S96-004SP](Booster Pack \"Chainsaw Man\")",
+        "nameEn": "Always Together Pochita SP : [CSM/S96-004SP](Booster Pack \"Chainsaw Man\")",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/6060bff9-7666-4321-821d-23d46a63f61c.webp?size=m",
+        "priceJpy": 6100,
+        "url": "https://snkrdunk.com/en/apparels/253606"
+      }
+    ]
   },
   "weis-schwarz-snkrdunk-261102": {
     "productId": "weis-schwarz-snkrdunk-261102",
     "setCode": "",
     "labels": [
       "Rascal Does Not Dream",
-      "青春ブタ野郎"
+      "青春ブタ野郎",
+      "青春ブタ野郎』シリーズ"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
-      {
-        "snkrdunkId": "148837",
-        "name": "Presence of bubbles Mai Sakurajima SP[SBY/W64-T18SP](Trial Deck + Rascal Does Not Dream of Bunny Girl Senpai)",
-        "nameEn": "Presence of bubbles Mai Sakurajima SP[SBY/W64-T18SP](Trial Deck + Rascal Does Not Dream of Bunny Girl Senpai)",
-        "rarity": "",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/cb0fbd98-bb8d-458d-be64-e2b5a54c13c8.webp?size=m",
-        "priceJpy": 1480000,
-        "url": "https://snkrdunk.com/en/apparels/148837"
-      },
-      {
-        "snkrdunkId": "784626",
-        "name": "Nationally Popular Actress Mai Sakurajima ABR [SBY/W136-046EX] (Booster Pack \"Rascal Does Not Dream of Santa Claus\")",
-        "nameEn": "Nationally Popular Actress Mai Sakurajima ABR [SBY/W136-046EX] (Booster Pack \"Rascal Does Not Dream of Santa Claus\")",
-        "rarity": "",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/4a37e9dd-2e1b-4bc3-8dd3-d8a41c97c18d.webp?size=m",
-        "priceJpy": 430000,
-        "url": "https://snkrdunk.com/en/apparels/784626"
-      },
       {
         "snkrdunkId": "222907",
         "name": "One Year I Spent With You Mai Sakurajima ABR [SBY/W114-049ABR](Booster Pack \"Rascal Does Not Dream\")",
@@ -10824,52 +17843,8 @@ export const COLLECTION_TOP_CARDS = {
         "cardNumber": "",
         "setCode": "",
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/b616edaa-19dc-49ed-8194-ef5caf583df6.webp?size=m",
-        "priceJpy": 375000,
+        "priceJpy": 358000,
         "url": "https://snkrdunk.com/en/apparels/222907"
-      },
-      {
-        "snkrdunkId": "279714",
-        "name": "Strange Event Kaede Azusagawa SEC [SBY/W77-050SEC](Booster Pack \"Rascal Does Not Dream of a Dreaming Girl\")",
-        "nameEn": "Strange Event Kaede Azusagawa SEC [SBY/W77-050SEC](Booster Pack \"Rascal Does Not Dream of a Dreaming Girl\")",
-        "rarity": "SEC",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/b5830fd3-3cc2-4c5a-9400-339a7ad1fcf6.webp?size=m",
-        "priceJpy": 280000,
-        "url": "https://snkrdunk.com/en/apparels/279714"
-      },
-      {
-        "snkrdunkId": "784527",
-        "name": "The Face Only You See Mai Sakurajima SEC [SBY/W136-001EX] (Booster Pack \"Rascal Does Not Dream of Santa Claus\")",
-        "nameEn": "The Face Only You See Mai Sakurajima SEC [SBY/W136-001EX] (Booster Pack \"Rascal Does Not Dream of Santa Claus\")",
-        "rarity": "SEC",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/f742d8f4-17ea-4eb1-ba38-241ce45fab9a.webp?size=m",
-        "priceJpy": 150000,
-        "url": "https://snkrdunk.com/en/apparels/784527"
-      },
-      {
-        "snkrdunkId": "784629",
-        "name": "The Self I Wanted to Be Santa with Mini-skirt ABR [SBY/W136-047EX] (Booster Pack \"Rascal Does Not Dream of Santa Claus\")",
-        "nameEn": "The Self I Wanted to Be Santa with Mini-skirt ABR [SBY/W136-047EX] (Booster Pack \"Rascal Does Not Dream of Santa Claus\")",
-        "rarity": "",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/0fa65672-1fb6-45be-a75b-b7d809c1e583.webp?size=m",
-        "priceJpy": 81000,
-        "url": "https://snkrdunk.com/en/apparels/784629"
-      },
-      {
-        "snkrdunkId": "279581",
-        "name": "SD Tomoe Koga PR [SBY/W64-103](Booster Pack \"Rascal Does Not Dream of Bunny Girl Senpai\")",
-        "nameEn": "SD Tomoe Koga PR [SBY/W64-103](Booster Pack \"Rascal Does Not Dream of Bunny Girl Senpai\")",
-        "rarity": "PR",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/c27a7d15-beee-432e-bd03-1f1431da6a80.webp?size=m",
-        "priceJpy": 6001,
-        "url": "https://snkrdunk.com/en/apparels/279581"
       }
     ]
   },
@@ -10877,12 +17852,24 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "weis-schwarz-snkrdunk-216576",
     "setCode": "",
     "labels": [
-      "Weiss Schwarz Booster Pack Bocchi The Rock!",
-      "ヴァイスシュヴァルツ ブースターパック ぼっち・ざ・ろっく!"
+      "Bocchi The Rock!",
+      "ぼっち・ざ・ろっく!"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "142499",
+        "name": "Want to breakthrough with music Ryou Yamada SSP[BTR/W107-038SSP](Booster Pack BOCCHI THE ROCK!)",
+        "nameEn": "Want to breakthrough with music Ryou Yamada SSP[BTR/W107-038SSP](Booster Pack BOCCHI THE ROCK!)",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/4bab139f-afcb-4742-b151-0f2c4c8bbb81.webp?size=m",
+        "priceJpy": 130000,
+        "url": "https://snkrdunk.com/en/apparels/142499"
+      }
+    ]
   },
   "weis-schwarz-snkrdunk-946171": {
     "productId": "weis-schwarz-snkrdunk-946171",
@@ -10890,9 +17877,10 @@ export const COLLECTION_TOP_CARDS = {
     "labels": [
       "TV Anime Dandadan Vol.2",
       "TVアニメ『ダンダダン』Vol.2",
-      "ダンダダン"
+      "ダンダダン",
+      "TVアニメ『ダンダダン』Vol.2」初版"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
       {
@@ -10945,23 +17933,179 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "weis-schwarz-snkrdunk-350805",
     "setCode": "",
     "labels": [
-      "Weiss Schwarz Booster Pack Disney Mirror Warriors",
-      "ヴァイスシュヴァルツ ブースターパック Disney ミラー・ウォリアーズ"
+      "Disney Mirror Warriors",
+      "Disney ミラー・ウォリアーズ"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "275387",
+        "name": "\"Stellar Sorcerer\" Mickey Mouse MSP [MRd/S111-003MSP](Booster Pack \"Disney Mirror Warriors\")",
+        "nameEn": "\"Stellar Sorcerer\" Mickey Mouse MSP [MRd/S111-003MSP](Booster Pack \"Disney Mirror Warriors\")",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/9dbdc207-8847-47c5-99c1-b9b4b06d8410.webp?size=m",
+        "priceJpy": 30000,
+        "url": "https://snkrdunk.com/en/apparels/275387"
+      },
+      {
+        "snkrdunkId": "275391",
+        "name": "\"Heart's Fire Fighter\" Minnie Mouse SP : [MRd/S111-005SP](Booster Pack \"Disney Mirror Warriors\")",
+        "nameEn": "\"Heart's Fire Fighter\" Minnie Mouse SP : [MRd/S111-005SP](Booster Pack \"Disney Mirror Warriors\")",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/790e1ea0-5591-472a-9813-b533539c399a.webp?size=m",
+        "priceJpy": 3400,
+        "url": "https://snkrdunk.com/en/apparels/275391"
+      }
+    ]
   },
   "weis-schwarz-snkrdunk-249202": {
     "productId": "weis-schwarz-snkrdunk-249202",
     "setCode": "",
     "labels": [
-      "Weiss Schwarz Premium Booster Pack Hololive Production",
-      "ヴァイスシュヴァルツ プレミアムブースター ホロライブプロダクション"
+      "Hololive Production",
+      "ホロライブプロダクション"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "172580",
+        "name": "Together For The Future Houshou Marine SSP [HOL/W91-076SSP](Booster Pack \"hololive production\")",
+        "nameEn": "Together For The Future Houshou Marine SSP [HOL/W91-076SSP](Booster Pack \"hololive production\")",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/488119d6-ed60-40d9-8c28-9df8474aea2b.webp?size=m",
+        "priceJpy": 199999,
+        "url": "https://snkrdunk.com/en/apparels/172580"
+      },
+      {
+        "snkrdunkId": "172654",
+        "name": "Together For The Future Hoshimachi Suisei SSP [HOL/W91-113SSP](Booster Pack \"hololive production\")",
+        "nameEn": "Together For The Future Hoshimachi Suisei SSP [HOL/W91-113SSP](Booster Pack \"hololive production\")",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/cc8a5d93-ee5b-42be-ab74-fb0229dd9d51.webp?size=m",
+        "priceJpy": 140000,
+        "url": "https://snkrdunk.com/en/apparels/172654"
+      },
+      {
+        "snkrdunkId": "172658",
+        "name": "Together For The Future Minato Aqua SSP [HOL/W91-115SSP](Booster Pack \"hololive production\")",
+        "nameEn": "Together For The Future Minato Aqua SSP [HOL/W91-115SSP](Booster Pack \"hololive production\")",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/bfbdb491-896b-4ed4-b2ad-0a529f5ed8bd.webp?size=m",
+        "priceJpy": 85000,
+        "url": "https://snkrdunk.com/en/apparels/172658"
+      },
+      {
+        "snkrdunkId": "172578",
+        "name": "Together For The Future Sakura Miko SSP [HOL/W91-075SSP](Booster Pack \"hololive production\")",
+        "nameEn": "Together For The Future Sakura Miko SSP [HOL/W91-075SSP](Booster Pack \"hololive production\")",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/73d96659-32c3-4ca7-a125-85b6e7bf9110.webp?size=m",
+        "priceJpy": 75000,
+        "url": "https://snkrdunk.com/en/apparels/172578"
+      },
+      {
+        "snkrdunkId": "172805",
+        "name": "The Future I Wish For You Amane Kanata SP [HOL/WE36-09SP](Premium Booster \"hololive production\")",
+        "nameEn": "The Future I Wish For You Amane Kanata SP [HOL/WE36-09SP](Premium Booster \"hololive production\")",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/3a931084-688c-4e8c-ba46-bec42d9a8666.webp?size=m",
+        "priceJpy": 69500,
+        "url": "https://snkrdunk.com/en/apparels/172805"
+      },
+      {
+        "snkrdunkId": "172656",
+        "name": "Together For The Future Shirogane Noel SSP [HOL/W91-114SSP](Booster Pack \"hololive production\")",
+        "nameEn": "Together For The Future Shirogane Noel SSP [HOL/W91-114SSP](Booster Pack \"hololive production\")",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/234edb8e-baf0-486d-bb9f-fd65087d4363.webp?size=m",
+        "priceJpy": 57000,
+        "url": "https://snkrdunk.com/en/apparels/172656"
+      },
+      {
+        "snkrdunkId": "172514",
+        "name": "Together For The Future Tokoyami Towa SSP [HOL/W91-043SSP](Booster Pack \"hololive production\")",
+        "nameEn": "Together For The Future Tokoyami Towa SSP [HOL/W91-043SSP](Booster Pack \"hololive production\")",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/4dc10441-0dde-4362-b606-b21759a7ecfa.webp?size=m",
+        "priceJpy": 53000,
+        "url": "https://snkrdunk.com/en/apparels/172514"
+      },
+      {
+        "snkrdunkId": "172664",
+        "name": "#Hoshimachi Gallery Hoshimachi Suisei SP [HOL/W91-118SP](Booster Pack \"hololive production\")",
+        "nameEn": "#Hoshimachi Gallery Hoshimachi Suisei SP [HOL/W91-118SP](Booster Pack \"hololive production\")",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/dd0b1b00-520a-4911-8ab1-4dbb1d9a5277.webp?size=m",
+        "priceJpy": 42880,
+        "url": "https://snkrdunk.com/en/apparels/172664"
+      },
+      {
+        "snkrdunkId": "172502",
+        "name": "Together For The Future Tokino Sora SSP [HOL/W91-037SSP](Booster Pack \"hololive production\")",
+        "nameEn": "Together For The Future Tokino Sora SSP [HOL/W91-037SSP](Booster Pack \"hololive production\")",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/4893f892-0723-4308-9489-3577c2c226e9.webp?size=m",
+        "priceJpy": 30000,
+        "url": "https://snkrdunk.com/en/apparels/172502"
+      },
+      {
+        "snkrdunkId": "172871",
+        "name": "The Future I Wish For You Sakamata Chloe SP [HOL/WE36-31SP](Premium Booster \"hololive production\")",
+        "nameEn": "The Future I Wish For You Sakamata Chloe SP [HOL/WE36-31SP](Premium Booster \"hololive production\")",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/8067ea83-65f4-4717-81ff-e0fae2b17233.webp?size=m",
+        "priceJpy": 24800,
+        "url": "https://snkrdunk.com/en/apparels/172871"
+      },
+      {
+        "snkrdunkId": "172592",
+        "name": "Together For The Future Nakiri Ayame SSP [HOL/W91-082SSP](Booster Pack \"hololive production\")",
+        "nameEn": "Together For The Future Nakiri Ayame SSP [HOL/W91-082SSP](Booster Pack \"hololive production\")",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/ca5eadc8-0746-4a64-a0b5-c5da9c6b6f47.webp?size=m",
+        "priceJpy": 24800,
+        "url": "https://snkrdunk.com/en/apparels/172592"
+      },
+      {
+        "snkrdunkId": "172520",
+        "name": "Together For The Future Amane Kanata SSP [HOL/W91-046SSP](Booster Pack \"hololive production\")",
+        "nameEn": "Together For The Future Amane Kanata SSP [HOL/W91-046SSP](Booster Pack \"hololive production\")",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/1507c5ce-823b-48b1-90f1-c637dd5cbe90.webp?size=m",
+        "priceJpy": 24000,
+        "url": "https://snkrdunk.com/en/apparels/172520"
+      }
+    ]
   },
   "weis-schwarz-snkrdunk-392615": {
     "productId": "weis-schwarz-snkrdunk-392615",
@@ -10970,131 +18114,9 @@ export const COLLECTION_TOP_CARDS = {
       "The Quintessential Quintuplets",
       "五等分の花嫁"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
-    "cards": [
-      {
-        "snkrdunkId": "316913",
-        "name": "Start of Love Nino Nakano SSP [5HY/W90-052SSP](Booster Pack \"The Quintessential Quintuplets II\")",
-        "nameEn": "Start of Love Nino Nakano SSP [5HY/W90-052SSP](Booster Pack \"The Quintessential Quintuplets II\")",
-        "rarity": "",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/e6837faa-7933-4073-9333-fb6d9a457563.webp?size=m",
-        "priceJpy": 68688,
-        "url": "https://snkrdunk.com/en/apparels/316913"
-      },
-      {
-        "snkrdunkId": "416559",
-        "name": "The Third Daughter of The Quintuplets Miku Nakano SSP [GYC-BP1-015P1](The Quintessential Quintuplets Card Game \"Booster Pack vol.1\")",
-        "nameEn": "The Third Daughter of The Quintuplets Miku Nakano SSP [GYC-BP1-015P1](The Quintessential Quintuplets Card Game \"Booster Pack vol.1\")",
-        "rarity": "",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/4348aef6-a047-413f-9af3-99424f6e25cb.webp?size=m",
-        "priceJpy": 45000,
-        "url": "https://snkrdunk.com/en/apparels/416559"
-      },
-      {
-        "snkrdunkId": "316855",
-        "name": "Something She Wants Yotsuba Nakano SSP [5HY/W90-023SSP](Booster Pack \"The Quintessential Quintuplets II\")",
-        "nameEn": "Something She Wants Yotsuba Nakano SSP [5HY/W90-023SSP](Booster Pack \"The Quintessential Quintuplets II\")",
-        "rarity": "",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/9d6c36f2-a3fb-49c1-815f-9264d2bccf40.webp?size=m",
-        "priceJpy": 30000,
-        "url": "https://snkrdunk.com/en/apparels/316855"
-      },
-      {
-        "snkrdunkId": "216678",
-        "name": "Undivided FeelingsYotsuba Nakano SP [5HY/WE43-01SP](Premium Booster \"The Quintessential Quintuplets Similarity\")",
-        "nameEn": "Undivided FeelingsYotsuba Nakano SP [5HY/WE43-01SP](Premium Booster \"The Quintessential Quintuplets Similarity\")",
-        "rarity": "",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/bb74f099-f45a-4371-87ba-a117ffb750b3.webp?size=m",
-        "priceJpy": 28000,
-        "url": "https://snkrdunk.com/en/apparels/216678"
-      },
-      {
-        "snkrdunkId": "416574",
-        "name": "Fourth Daughter of Quintuplets Yotsuba Nakano SSP [GYC-BP1-022P1](The Quintessential Quintuplets Card Game \"Booster Pack vol.1\")",
-        "nameEn": "Fourth Daughter of Quintuplets Yotsuba Nakano SSP [GYC-BP1-022P1](The Quintessential Quintuplets Card Game \"Booster Pack vol.1\")",
-        "rarity": "",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/71845ad0-31e8-41ee-8a90-29d7f52c96d8.webp?size=m",
-        "priceJpy": 25000,
-        "url": "https://snkrdunk.com/en/apparels/416574"
-      },
-      {
-        "snkrdunkId": "316819",
-        "name": "Pure White Wish Ichika Nakano HYR [5HY/W90-005HYR](Booster Pack \"The Quintessential Quintuplets II\")",
-        "nameEn": "Pure White Wish Ichika Nakano HYR [5HY/W90-005HYR](Booster Pack \"The Quintessential Quintuplets II\")",
-        "rarity": "",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/34760e35-9adb-46f3-8c70-e521f4040c00.webp?size=m",
-        "priceJpy": 23542,
-        "url": "https://snkrdunk.com/en/apparels/316819"
-      },
-      {
-        "snkrdunkId": "316917",
-        "name": "Pure White Wish Itsuki Nakano HYR [5HY/W90-054HYR](Booster Pack \"The Quintessential Quintuplets II\")",
-        "nameEn": "Pure White Wish Itsuki Nakano HYR [5HY/W90-054HYR](Booster Pack \"The Quintessential Quintuplets II\")",
-        "rarity": "",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/0479407f-513d-4f33-89f2-6e03ddcfa726.webp?size=m",
-        "priceJpy": 18686,
-        "url": "https://snkrdunk.com/en/apparels/316917"
-      },
-      {
-        "snkrdunkId": "416558",
-        "name": "The Third Daughter of The Quintuplets Miku Nakano SP [GYC-BP1-015P](The Quintessential Quintuplets Card Game \"Booster Pack vol.1\")",
-        "nameEn": "The Third Daughter of The Quintuplets Miku Nakano SP [GYC-BP1-015P](The Quintessential Quintuplets Card Game \"Booster Pack vol.1\")",
-        "rarity": "",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/2a20626b-50a5-4fbb-91c1-62a93565d094.webp?size=m",
-        "priceJpy": 15000,
-        "url": "https://snkrdunk.com/en/apparels/416558"
-      },
-      {
-        "snkrdunkId": "416527",
-        "name": "The Eldest of The Quintuplets Ichika Nakano SP [GYC-BP1-001P](The Quintessential Quintuplets Card Game \"Booster Pack vol.1\")",
-        "nameEn": "The Eldest of The Quintuplets Ichika Nakano SP [GYC-BP1-001P](The Quintessential Quintuplets Card Game \"Booster Pack vol.1\")",
-        "rarity": "",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/1e311068-a039-4cd1-9c7b-c4426871704f.webp?size=m",
-        "priceJpy": 15000,
-        "url": "https://snkrdunk.com/en/apparels/416527"
-      },
-      {
-        "snkrdunkId": "316817",
-        "name": "Pure White Wish Yotsuba Nakano HYR [5HY/W90-004HYR](Booster Pack \"The Quintessential Quintuplets II\")",
-        "nameEn": "Pure White Wish Yotsuba Nakano HYR [5HY/W90-004HYR](Booster Pack \"The Quintessential Quintuplets II\")",
-        "rarity": "",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/0418bec3-402f-4671-9638-0fd9d15c2074.webp?size=m",
-        "priceJpy": 15000,
-        "url": "https://snkrdunk.com/en/apparels/316817"
-      },
-      {
-        "snkrdunkId": "216709",
-        "name": "Where I'm Going With YouYotsuba Nakano IGP [5HY/WE43-15IGP](Premium Booster \"The Quintessential Quintuplets Similarity\")",
-        "nameEn": "Where I'm Going With YouYotsuba Nakano IGP [5HY/WE43-15IGP](Premium Booster \"The Quintessential Quintuplets Similarity\")",
-        "rarity": "",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/4209c02a-2bd0-44bd-b47c-ad40e90f3582.webp?size=m",
-        "priceJpy": 8000,
-        "url": "https://snkrdunk.com/en/apparels/216709"
-      }
-    ]
+    "cards": []
   },
   "weis-schwarz-snkrdunk-386884": {
     "productId": "weis-schwarz-snkrdunk-386884",
@@ -11103,7 +18125,7 @@ export const COLLECTION_TOP_CARDS = {
       "Uma Musume Pretty Derby",
       "ウマ娘 プリティーダービー"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
       {
@@ -11228,15 +18250,15 @@ export const COLLECTION_TOP_CARDS = {
         "url": "https://snkrdunk.com/en/apparels/98774"
       },
       {
-        "snkrdunkId": "397013",
-        "name": "Someday For Sure Manhattan Cafe SP [UMA/W119-062SP](Booster Pack \"Uma Musume Pretty Derby the Movie Door to a New Era\")",
-        "nameEn": "Someday For Sure Manhattan Cafe SP [UMA/W119-062SP](Booster Pack \"Uma Musume Pretty Derby the Movie Door to a New Era\")",
+        "snkrdunkId": "98780",
+        "name": "Special Week SP[CP01-SP11](Collaboration Packs \"Umamusume Pretty Derby\")",
+        "nameEn": "Special Week SP[CP01-SP11](Collaboration Packs \"Umamusume Pretty Derby\")",
         "rarity": "",
         "cardNumber": "",
         "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/661f9586-e1e7-493b-850e-c14bc5500e72.webp?size=m",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/a2b31e99-b157-464a-a069-4943aa31823a.webp?size=m",
         "priceJpy": 11000,
-        "url": "https://snkrdunk.com/en/apparels/397013"
+        "url": "https://snkrdunk.com/en/apparels/98780"
       }
     ]
   },
@@ -11244,10 +18266,10 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "weis-schwarz-snkrdunk-365217",
     "setCode": "",
     "labels": [
-      "Weiss Schwarz Booster Pack Movie The Quintessential Quintuplets",
-      "ヴァイスシュヴァルツ ブースターパック 映画 五等分の花嫁"
+      "Movie The Quintessential Quintuplets",
+      "映画 五等分の花嫁"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -11258,52 +18280,52 @@ export const COLLECTION_TOP_CARDS = {
       "TV Anime Dandadan",
       "TVアニメ ダンダダン"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
       {
-        "snkrdunkId": "823740",
-        "name": "The Power of the Curse Jiji SR [DDD/S129-084S] (Booster Pack \"TV Anime Dandadan Vol.2\")",
-        "nameEn": "The Power of the Curse Jiji SR [DDD/S129-084S] (Booster Pack \"TV Anime Dandadan Vol.2\")",
+        "snkrdunkId": "553667",
+        "name": "\"Chakra\" Opens! R [DDD/S118-074](Booster Pack \"TV Anime Dandadan\")",
+        "nameEn": "\"Chakra\" Opens! R [DDD/S118-074](Booster Pack \"TV Anime Dandadan\")",
+        "rarity": "R",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/fd5e8d13-5944-4937-add0-8e428cecc31e.webp?size=m",
+        "priceJpy": 1000,
+        "url": "https://snkrdunk.com/en/apparels/553667"
+      },
+      {
+        "snkrdunkId": "553613",
+        "name": "Move of Reversal Momo R [DDD/S118-049](Booster Pack \"TV Anime Dandadan\")",
+        "nameEn": "Move of Reversal Momo R [DDD/S118-049](Booster Pack \"TV Anime Dandadan\")",
+        "rarity": "R",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/fce214a8-e6a0-4dba-b961-f0671616fcda.webp?size=m",
+        "priceJpy": 1000,
+        "url": "https://snkrdunk.com/en/apparels/553613"
+      },
+      {
+        "snkrdunkId": "553562",
+        "name": "Acrobatic Smooth SR [DDD/S118-027S](Booster Pack \"TV Anime Dandadan\")",
+        "nameEn": "Acrobatic Smooth SR [DDD/S118-027S](Booster Pack \"TV Anime Dandadan\")",
         "rarity": "SR",
         "cardNumber": "",
         "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/60792c88-bd22-4f55-8edf-eda98b560ff9.webp?size=m",
-        "priceJpy": 3000,
-        "url": "https://snkrdunk.com/en/apparels/823740"
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/49621f9f-3db7-4fdc-8aee-0ba6b6123cb7.webp?size=m",
+        "priceJpy": 1000,
+        "url": "https://snkrdunk.com/en/apparels/553562"
       },
       {
-        "snkrdunkId": "823733",
-        "name": "Exorcism of the Evil Eye RRR [DDD/S129-081R] (Booster Pack \"TV Anime Dandadan Vol.2\")",
-        "nameEn": "Exorcism of the Evil Eye RRR [DDD/S129-081R] (Booster Pack \"TV Anime Dandadan Vol.2\")",
-        "rarity": "RRR",
+        "snkrdunkId": "553496",
+        "name": "Occult Daily Life Okarun RR [DDD/S118-002](Booster Pack \"TV Anime Dandadan\")",
+        "nameEn": "Occult Daily Life Okarun RR [DDD/S118-002](Booster Pack \"TV Anime Dandadan\")",
+        "rarity": "RR",
         "cardNumber": "",
         "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/424cbd1f-a711-43f3-a6d4-e9110e30db63.webp?size=m",
-        "priceJpy": 3000,
-        "url": "https://snkrdunk.com/en/apparels/823733"
-      },
-      {
-        "snkrdunkId": "823708",
-        "name": "Midday Nap Turbo Granny SR [DDD/S129-068S] (Booster Pack \"TV Anime Dandadan Vol.2\")",
-        "nameEn": "Midday Nap Turbo Granny SR [DDD/S129-068S] (Booster Pack \"TV Anime Dandadan Vol.2\")",
-        "rarity": "SR",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/0f90e6c0-1a3d-4408-ae2e-400fa9cb98a9.webp?size=m",
-        "priceJpy": 3000,
-        "url": "https://snkrdunk.com/en/apparels/823708"
-      },
-      {
-        "snkrdunkId": "823637",
-        "name": "Battle in the Music Room Aira SR [DDD/S129-034S] (Booster Pack \"TV Anime Dandadan Vol.2\")",
-        "nameEn": "Battle in the Music Room Aira SR [DDD/S129-034S] (Booster Pack \"TV Anime Dandadan Vol.2\")",
-        "rarity": "SR",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/02f181eb-b7c4-48fe-8e10-d1f7f1141931.webp?size=m",
-        "priceJpy": 3000,
-        "url": "https://snkrdunk.com/en/apparels/823637"
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/fb4517ac-1721-4737-abd7-ca0eddeaf660.webp?size=m",
+        "priceJpy": 1000,
+        "url": "https://snkrdunk.com/en/apparels/553496"
       }
     ]
   },
@@ -11314,7 +18336,7 @@ export const COLLECTION_TOP_CARDS = {
       "MyGO!!!!! x Ave Mujica",
       "MyGO!!!!! × Ave Mujica"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -11325,7 +18347,7 @@ export const COLLECTION_TOP_CARDS = {
       "Heaven Burns Red Vol.2",
       "ヘブンバーンズレッド Vol.2"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
       {
@@ -11336,7 +18358,7 @@ export const COLLECTION_TOP_CARDS = {
         "cardNumber": "",
         "setCode": "",
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/34052cb3-7adc-4906-af44-f712a6bce909.webp?size=m",
-        "priceJpy": 27000,
+        "priceJpy": 26000,
         "url": "https://snkrdunk.com/en/apparels/344958"
       },
       {
@@ -11356,10 +18378,10 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "weis-schwarz-snkrdunk-354161",
     "setCode": "",
     "labels": [
-      "Weiss Schwarz Booster Pack Persona 5",
-      "ヴァイスシュヴァルツ ブースターパック ペルソナ 5"
+      "Persona 5",
+      "ペルソナ 5"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -11367,31 +18389,55 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "weis-schwarz-snkrdunk-364156",
     "setCode": "",
     "labels": [
-      "Weiss Schwarz Booster Pack Sword Art Online 10th Anniversary",
-      "ヴァイスシュヴァルツ ブースターパック ソードアート・オンライン 10th Anniversary"
+      "Sword Art Online 10th Anniversary",
+      "ソードアート・オンライン 10th Anniversary"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "288240",
+        "name": "Together Tonight SSP [SAO/S71-028SSP](Booster Pack \"Sword Art Online 10th Anniversary\")",
+        "nameEn": "Together Tonight SSP [SAO/S71-028SSP](Booster Pack \"Sword Art Online 10th Anniversary\")",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/7ad1b16a-bc4b-4a3f-a070-c906fa6f3676.webp?size=m",
+        "priceJpy": 150000,
+        "url": "https://snkrdunk.com/en/apparels/288240"
+      }
+    ]
   },
   "weis-schwarz-snkrdunk-329632": {
     "productId": "weis-schwarz-snkrdunk-329632",
     "setCode": "",
     "labels": [
-      "Weiss Schwarz Booster Pack SPY x FAMILY",
-      "ヴァイスシュヴァルツ ブースターパック SPY x FAMILY"
+      "SPY x FAMILY"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "253258",
+        "name": "Matching Key Holders Becky SP : [SPY/S106-002SP](Booster Pack \"SPY x FAMILY\")",
+        "nameEn": "Matching Key Holders Becky SP : [SPY/S106-002SP](Booster Pack \"SPY x FAMILY\")",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/230db02d-b36f-4d54-a7fd-d389162263c4.webp?size=m",
+        "priceJpy": 20000,
+        "url": "https://snkrdunk.com/en/apparels/253258"
+      }
+    ]
   },
   "weis-schwarz-snkrdunk-327421": {
     "productId": "weis-schwarz-snkrdunk-327421",
     "setCode": "",
     "labels": [
-      "アイドルマスター シャイニーカラーズ Shine More!"
+      "アイドルマスター シャイニーカラーズ Shine More!",
+      "THE IDOL MASTER SHINY COLORS Shine More!"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -11401,7 +18447,7 @@ export const COLLECTION_TOP_CARDS = {
     "labels": [
       "MARVEL Vol.3 [MARVEL STUDIOS]"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -11412,7 +18458,7 @@ export const COLLECTION_TOP_CARDS = {
       "Aogiri High School",
       "あおぎり高校"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
       {
@@ -11457,43 +18503,33 @@ export const COLLECTION_TOP_CARDS = {
       "Lovelive! Nijigasaki Gakuen School Idol Club Feat.School Idol Festival ALL STARS",
       "ラブライブ!虹ヶ咲学園スクールアイドル同好会 feat.スクールアイドルフェスティバル ALL STARS"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
   "weis-schwarz-snkrdunk-1009356": {
     "productId": "weis-schwarz-snkrdunk-1009356",
-    "setCode": "UA06BT",
+    "setCode": "",
     "labels": [
       "Tales of",
       "『Tales of』Series",
       "『テイルズ オブ』シリーズ",
-      "テイルズ オブ"
+      "テイルズ オブ",
+      "テイルズ オブ』シリーズ」初版"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
-    "cards": [
-      {
-        "snkrdunkId": "125377",
-        "name": "Dohalim SR*[UA06BT-TOA-1-014](UNION ARENA Vol.3 Booster Pack Tales of ARISE)",
-        "nameEn": "Dohalim SR*[UA06BT-TOA-1-014](UNION ARENA Vol.3 Booster Pack Tales of ARISE)",
-        "rarity": "SR",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/f8e57e41-6950-4ac7-af0d-71777c72b6d1.webp?size=m",
-        "priceJpy": 1000,
-        "url": "https://snkrdunk.com/en/apparels/125377"
-      }
-    ]
+    "cards": []
   },
   "weis-schwarz-snkrdunk-899233": {
     "productId": "weis-schwarz-snkrdunk-899233",
     "setCode": "",
     "labels": [
       "Summer Pockets",
-      "サマーポケッツ"
+      "サマーポケッツ",
+      "サマーポケッツ」初版"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -11504,7 +18540,7 @@ export const COLLECTION_TOP_CARDS = {
       "Cardcaptor Sakura: Clear Card",
       "カードキャプターさくら クリアカード編"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -11515,7 +18551,7 @@ export const COLLECTION_TOP_CARDS = {
       "Lovelive! Super Star!!",
       "ラブライブ!スーパースター!!"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -11523,10 +18559,10 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "weis-schwarz-snkrdunk-371073",
     "setCode": "",
     "labels": [
-      "Weiss Schwarz Booster Pack Tokyo Revengers",
-      "ヴァイスシュヴァルツ ブースターパック 東京リベンジャーズ"
+      "Tokyo Revengers",
+      "東京リベンジャーズ"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -11534,10 +18570,10 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "weis-schwarz-snkrdunk-224544",
     "setCode": "",
     "labels": [
-      "Weiss Schwarz Booster Pack Alice Gear Aegis Expansion",
-      "ヴァイスシュヴァルツ ブースターパック アリス・ギア・アイギス エキスパンション"
+      "Alice Gear Aegis Expansion",
+      "アリス・ギア・アイギス エキスパンション"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -11548,7 +18584,7 @@ export const COLLECTION_TOP_CARDS = {
       "Kaiju No.8",
       "怪獣8号"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -11559,7 +18595,7 @@ export const COLLECTION_TOP_CARDS = {
       "Fruit Of Grisaia",
       "グリザイアの果実"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -11567,10 +18603,9 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "weis-schwarz-snkrdunk-355745",
     "setCode": "",
     "labels": [
-      "Weiss Schwarz Booster Pack Marvel/Card Collection",
-      "ヴァイスシュヴァルツ ブースターパック Marvel/Card Collection"
+      "Marvel/Card Collection"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -12728,14 +19763,149 @@ export const COLLECTION_TOP_CARDS = {
   },
   "dragon-ball-super-card-game-snkrdunk-483859": {
     "productId": "dragon-ball-super-card-game-snkrdunk-483859",
-    "setCode": "",
+    "setCode": "FB05",
     "labels": [
       "Booster Pack Unknown Adventure",
-      "ブースターパック 未知なる冒険"
+      "ブースターパック 未知なる冒険",
+      "Unknown Adventure",
+      "未知なる冒険"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
-    "cards": []
+    "cards": [
+      {
+        "snkrdunkId": "513634",
+        "name": "Son Goku SCR** [FB05-119](FUSION WORLD \"Unknown Adventure\")",
+        "nameEn": "Son Goku SCR** [FB05-119](FUSION WORLD \"Unknown Adventure\")",
+        "rarity": "",
+        "cardNumber": "FB05-119",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/955db019-f372-46a9-bc69-b50b2e82f8d1.webp?size=m",
+        "priceJpy": 320000,
+        "url": "https://snkrdunk.com/en/apparels/513634"
+      },
+      {
+        "snkrdunkId": "513637",
+        "name": "Frieza SCR** [FB05-120](FUSION WORLD \"Unknown Adventure\")",
+        "nameEn": "Frieza SCR** [FB05-120](FUSION WORLD \"Unknown Adventure\")",
+        "rarity": "",
+        "cardNumber": "FB05-120",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/1c166705-2527-4ab9-b31a-6e3d19536d0f.webp?size=m",
+        "priceJpy": 90000,
+        "url": "https://snkrdunk.com/en/apparels/513637"
+      },
+      {
+        "snkrdunkId": "513556",
+        "name": "Krillin SR* [FB05-051](FUSION WORLD \"Unknown Adventure\")",
+        "nameEn": "Krillin SR* [FB05-051](FUSION WORLD \"Unknown Adventure\")",
+        "rarity": "SR",
+        "cardNumber": "FB05-051",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/7eb7bf7c-408b-4035-a1fe-37f1ddc74a17.webp?size=m",
+        "priceJpy": 50000,
+        "url": "https://snkrdunk.com/en/apparels/513556"
+      },
+      {
+        "snkrdunkId": "513647",
+        "name": "Pan :GT SR* [FB03-125](FUSION WORLD \"Unknown Adventure\")",
+        "nameEn": "Pan :GT SR* [FB03-125](FUSION WORLD \"Unknown Adventure\")",
+        "rarity": "SR",
+        "cardNumber": "FB03-125",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/822a7583-68b4-4089-b745-43d60d02f296.webp?size=m",
+        "priceJpy": 18000,
+        "url": "https://snkrdunk.com/en/apparels/513647"
+      },
+      {
+        "snkrdunkId": "513633",
+        "name": "Son Goku SCR* [FB05-119](FUSION WORLD \"Unknown Adventure\")",
+        "nameEn": "Son Goku SCR* [FB05-119](FUSION WORLD \"Unknown Adventure\")",
+        "rarity": "",
+        "cardNumber": "FB05-119",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/0349ec22-53a3-40c7-a398-4c18781fd632.webp?size=m",
+        "priceJpy": 14000,
+        "url": "https://snkrdunk.com/en/apparels/513633"
+      },
+      {
+        "snkrdunkId": "513606",
+        "name": "Gogeta / Son Goku (AWAKEN) L* [FB05-095](FUSION WORLD \"Unknown Adventure\")",
+        "nameEn": "Gogeta / Son Goku (AWAKEN) L* [FB05-095](FUSION WORLD \"Unknown Adventure\")",
+        "rarity": "",
+        "cardNumber": "FB05-095",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/a93909cc-b2f1-40c7-87ef-f4dcef20ec55.webp?size=m",
+        "priceJpy": 12999,
+        "url": "https://snkrdunk.com/en/apparels/513606"
+      },
+      {
+        "snkrdunkId": "513526",
+        "name": "Vegito / Son Goku (AWAKEN) L* [FB05-025](FUSION WORLD \"Unknown Adventure\")",
+        "nameEn": "Vegito / Son Goku (AWAKEN) L* [FB05-025](FUSION WORLD \"Unknown Adventure\")",
+        "rarity": "",
+        "cardNumber": "FB05-025",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/7c00dc76-05d6-4c3d-a417-7021b617808c.webp?size=m",
+        "priceJpy": 11000,
+        "url": "https://snkrdunk.com/en/apparels/513526"
+      },
+      {
+        "snkrdunkId": "513638",
+        "name": "Android 18 UC* [FB01-014](FUSION WORLD \"Unknown Adventure\")",
+        "nameEn": "Android 18 UC* [FB01-014](FUSION WORLD \"Unknown Adventure\")",
+        "rarity": "",
+        "cardNumber": "FB01-014",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/64f12c5b-5e23-43f7-b3d6-c90858f471ad.webp?size=m",
+        "priceJpy": 6000,
+        "url": "https://snkrdunk.com/en/apparels/513638"
+      },
+      {
+        "snkrdunkId": "513612",
+        "name": "Son Goku SR* [FB05-100](FUSION WORLD \"Unknown Adventure\")",
+        "nameEn": "Son Goku SR* [FB05-100](FUSION WORLD \"Unknown Adventure\")",
+        "rarity": "SR",
+        "cardNumber": "FB05-100",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/9e8b5a0c-b00b-4100-b833-54229136680e.webp?size=m",
+        "priceJpy": 5999,
+        "url": "https://snkrdunk.com/en/apparels/513612"
+      },
+      {
+        "snkrdunkId": "513636",
+        "name": "Frieza SCR* [FB05-120](FUSION WORLD \"Unknown Adventure\")",
+        "nameEn": "Frieza SCR* [FB05-120](FUSION WORLD \"Unknown Adventure\")",
+        "rarity": "",
+        "cardNumber": "FB05-120",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/1e676b99-daf3-4367-8c68-ca10d5f58b7c.webp?size=m",
+        "priceJpy": 5000,
+        "url": "https://snkrdunk.com/en/apparels/513636"
+      },
+      {
+        "snkrdunkId": "513554",
+        "name": "Son Goku / Son Goku (AWAKEN) L* [FB05-049](FUSION WORLD \"Unknown Adventure\")",
+        "nameEn": "Son Goku / Son Goku (AWAKEN) L* [FB05-049](FUSION WORLD \"Unknown Adventure\")",
+        "rarity": "",
+        "cardNumber": "FB05-049",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/1fdef15c-d698-4f55-b98a-d46582ae40bd.webp?size=m",
+        "priceJpy": 4999,
+        "url": "https://snkrdunk.com/en/apparels/513554"
+      },
+      {
+        "snkrdunkId": "513498",
+        "name": "Son Goku (Mini) :DA / Son Goku (AWAKEN) L* [FB05-001](FUSION WORLD \"Unknown Adventure\")",
+        "nameEn": "Son Goku (Mini) :DA / Son Goku (AWAKEN) L* [FB05-001](FUSION WORLD \"Unknown Adventure\")",
+        "rarity": "",
+        "cardNumber": "FB05-001",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/9ef8395e-b1cf-4853-a4d3-56e1af4e1a94.webp?size=m",
+        "priceJpy": 4800,
+        "url": "https://snkrdunk.com/en/apparels/513498"
+      }
+    ]
   },
   "dragon-ball-super-card-game-snkrdunk-636571": {
     "productId": "dragon-ball-super-card-game-snkrdunk-636571",
@@ -12888,7 +20058,7 @@ export const COLLECTION_TOP_CARDS = {
       "To Love-Ru Memory of Heroines",
       "To LOVEる-とらぶる- Memory of Heroines"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -13041,9 +20211,10 @@ export const COLLECTION_TOP_CARDS = {
     "setCode": "UA18BT",
     "labels": [
       "Goddess of Victory : NIKKE",
-      "勝利の女神:NIKKE"
+      "勝利の女神:NIKKE",
+      "勝利の女神:NIKKE」初版"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
       {
@@ -13089,17 +20260,6 @@ export const COLLECTION_TOP_CARDS = {
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/d2174ace-3319-48c0-8fbb-b1f54822c264.webp?size=m",
         "priceJpy": 249000,
         "url": "https://snkrdunk.com/en/apparels/472865"
-      },
-      {
-        "snkrdunkId": "898482",
-        "name": "Rapi: Red Hood SEC [NIK/S135-058SEC](Booster Pack \"Goddess of Victory: NIKKE Vol. 2\")",
-        "nameEn": "Rapi: Red Hood SEC [NIK/S135-058SEC](Booster Pack \"Goddess of Victory: NIKKE Vol. 2\")",
-        "rarity": "SEC",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/WS-TCG-nik_s135_058sec-of.webp?size=m",
-        "priceJpy": 248000,
-        "url": "https://snkrdunk.com/en/apparels/898482"
       },
       {
         "snkrdunkId": "226163",
@@ -13177,6 +20337,17 @@ export const COLLECTION_TOP_CARDS = {
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/396eeb55-5051-4ec6-8798-fe46b5c7b479.webp?size=m",
         "priceJpy": 59800,
         "url": "https://snkrdunk.com/en/apparels/226150"
+      },
+      {
+        "snkrdunkId": "226212",
+        "name": "Rapunzel SR** [UA18BT-NIK-1-058](Booster Pack \"Goddess of Victory : NIKKE\")",
+        "nameEn": "Rapunzel SR** [UA18BT-NIK-1-058](Booster Pack \"Goddess of Victory : NIKKE\")",
+        "rarity": "SR",
+        "cardNumber": "",
+        "setCode": "UA18BT",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/f838ece8-1c71-4f75-90ca-d227646e3fe6.webp?size=m",
+        "priceJpy": 48000,
+        "url": "https://snkrdunk.com/en/apparels/226212"
       }
     ]
   },
@@ -13475,7 +20646,7 @@ export const COLLECTION_TOP_CARDS = {
       "BLEACH Thousand-Year Blood War Vol.3",
       "BLEACH 千年血戦篇 Vol.3"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -13486,7 +20657,7 @@ export const COLLECTION_TOP_CARDS = {
       "The Eminence in Shadow",
       "陰の実力者になりたくて!"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
       {
@@ -13539,9 +20710,9 @@ export const COLLECTION_TOP_CARDS = {
         "nameEn": "Gamma SR** [UA52BT-KJN-1-064](Booster Pack \"The Eminence in Shadow\")",
         "rarity": "SR",
         "cardNumber": "",
-        "setCode": "",
+        "setCode": "UA52BT",
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/8a86578c-88f3-4e8a-879b-437ea9b1adc1.webp?size=m",
-        "priceJpy": 80000,
+        "priceJpy": 78000,
         "url": "https://snkrdunk.com/en/apparels/827933"
       },
       {
@@ -13586,7 +20757,7 @@ export const COLLECTION_TOP_CARDS = {
       "Attack on Titan",
       "進撃の巨人"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
       {
@@ -13623,17 +20794,6 @@ export const COLLECTION_TOP_CARDS = {
         "url": "https://snkrdunk.com/en/apparels/300909"
       },
       {
-        "snkrdunkId": "626853",
-        "name": "Armin Arlert (Colossus Titan) SR** [EX10BT-AOT-2-013](Booster Pack \"Attack on Titan Vol.2\")",
-        "nameEn": "Armin Arlert (Colossus Titan) SR** [EX10BT-AOT-2-013](Booster Pack \"Attack on Titan Vol.2\")",
-        "rarity": "SR",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/3542db56-8281-4e06-974c-98bfb9d6833d.webp?size=m",
-        "priceJpy": 5980,
-        "url": "https://snkrdunk.com/en/apparels/626853"
-      },
-      {
         "snkrdunkId": "301006",
         "name": "Action Point Card [UA23BT-AOT-1-AP06](Booster Pack \"Attack on Titan\")",
         "nameEn": "Action Point Card [UA23BT-AOT-1-AP06](Booster Pack \"Attack on Titan\")",
@@ -13643,17 +20803,6 @@ export const COLLECTION_TOP_CARDS = {
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/ab57f5f5-f35f-44f4-abfb-6362abd5ef12.webp?size=m",
         "priceJpy": 5000,
         "url": "https://snkrdunk.com/en/apparels/301006"
-      },
-      {
-        "snkrdunkId": "626843",
-        "name": "Mikasa Ackerman SR [EX10BT-AOT-2-008](Booster Pack \"Attack on Titan Vol.2\")",
-        "nameEn": "Mikasa Ackerman SR [EX10BT-AOT-2-008](Booster Pack \"Attack on Titan Vol.2\")",
-        "rarity": "SR",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/8276def7-7482-4b93-81e9-948099afa141.webp?size=m",
-        "priceJpy": 1000,
-        "url": "https://snkrdunk.com/en/apparels/626843"
       }
     ]
   },
@@ -13664,7 +20813,7 @@ export const COLLECTION_TOP_CARDS = {
       "GODDESS OF VICTORY: NIKKE",
       "勝利の女神:NIKKE"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
       {
@@ -13710,17 +20859,6 @@ export const COLLECTION_TOP_CARDS = {
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/d2174ace-3319-48c0-8fbb-b1f54822c264.webp?size=m",
         "priceJpy": 249000,
         "url": "https://snkrdunk.com/en/apparels/472865"
-      },
-      {
-        "snkrdunkId": "898482",
-        "name": "Rapi: Red Hood SEC [NIK/S135-058SEC](Booster Pack \"Goddess of Victory: NIKKE Vol. 2\")",
-        "nameEn": "Rapi: Red Hood SEC [NIK/S135-058SEC](Booster Pack \"Goddess of Victory: NIKKE Vol. 2\")",
-        "rarity": "SEC",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/WS-TCG-nik_s135_058sec-of.webp?size=m",
-        "priceJpy": 248000,
-        "url": "https://snkrdunk.com/en/apparels/898482"
       },
       {
         "snkrdunkId": "226163",
@@ -13798,6 +20936,17 @@ export const COLLECTION_TOP_CARDS = {
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/396eeb55-5051-4ec6-8798-fe46b5c7b479.webp?size=m",
         "priceJpy": 59800,
         "url": "https://snkrdunk.com/en/apparels/226150"
+      },
+      {
+        "snkrdunkId": "226212",
+        "name": "Rapunzel SR** [UA18BT-NIK-1-058](Booster Pack \"Goddess of Victory : NIKKE\")",
+        "nameEn": "Rapunzel SR** [UA18BT-NIK-1-058](Booster Pack \"Goddess of Victory : NIKKE\")",
+        "rarity": "SR",
+        "cardNumber": "",
+        "setCode": "UA18BT",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/f838ece8-1c71-4f75-90ca-d227646e3fe6.webp?size=m",
+        "priceJpy": 48000,
+        "url": "https://snkrdunk.com/en/apparels/226212"
       }
     ]
   },
@@ -13806,9 +20955,10 @@ export const COLLECTION_TOP_CARDS = {
     "setCode": "UA18BT",
     "labels": [
       "Goddess of Victory : NIKKE",
-      "勝利の女神:NIKKE"
+      "勝利の女神:NIKKE",
+      "勝利の女神:NIKKE」第二版"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
       {
@@ -13854,17 +21004,6 @@ export const COLLECTION_TOP_CARDS = {
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/d2174ace-3319-48c0-8fbb-b1f54822c264.webp?size=m",
         "priceJpy": 249000,
         "url": "https://snkrdunk.com/en/apparels/472865"
-      },
-      {
-        "snkrdunkId": "898482",
-        "name": "Rapi: Red Hood SEC [NIK/S135-058SEC](Booster Pack \"Goddess of Victory: NIKKE Vol. 2\")",
-        "nameEn": "Rapi: Red Hood SEC [NIK/S135-058SEC](Booster Pack \"Goddess of Victory: NIKKE Vol. 2\")",
-        "rarity": "SEC",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/WS-TCG-nik_s135_058sec-of.webp?size=m",
-        "priceJpy": 248000,
-        "url": "https://snkrdunk.com/en/apparels/898482"
       },
       {
         "snkrdunkId": "226163",
@@ -13942,6 +21081,17 @@ export const COLLECTION_TOP_CARDS = {
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/396eeb55-5051-4ec6-8798-fe46b5c7b479.webp?size=m",
         "priceJpy": 59800,
         "url": "https://snkrdunk.com/en/apparels/226150"
+      },
+      {
+        "snkrdunkId": "226212",
+        "name": "Rapunzel SR** [UA18BT-NIK-1-058](Booster Pack \"Goddess of Victory : NIKKE\")",
+        "nameEn": "Rapunzel SR** [UA18BT-NIK-1-058](Booster Pack \"Goddess of Victory : NIKKE\")",
+        "rarity": "SR",
+        "cardNumber": "",
+        "setCode": "UA18BT",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/f838ece8-1c71-4f75-90ca-d227646e3fe6.webp?size=m",
+        "priceJpy": 48000,
+        "url": "https://snkrdunk.com/en/apparels/226212"
       }
     ]
   },
@@ -14240,7 +21390,7 @@ export const COLLECTION_TOP_CARDS = {
       "Sword Art Online Vol.2",
       "ソードアート・オンライン Vol.2"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
       {
@@ -14307,20 +21457,9 @@ export const COLLECTION_TOP_CARDS = {
       "Puella Magi Madoka Magica",
       "魔法少女まどか☆マギカ"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
-      {
-        "snkrdunkId": "427329",
-        "name": "Ultimate Madoka :Winner UR [UAPR-MMM-1-002](Promotional Card \"Union Rare Battle Puella Magi Madoka Magica\")",
-        "nameEn": "Ultimate Madoka :Winner UR [UAPR-MMM-1-002](Promotional Card \"Union Rare Battle Puella Magi Madoka Magica\")",
-        "rarity": "UR",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/1d38d363-5409-4e03-9f8f-76772ee8f2ef.webp?size=m",
-        "priceJpy": 100000,
-        "url": "https://snkrdunk.com/en/apparels/427329"
-      },
       {
         "snkrdunkId": "458307",
         "name": "Ultimate Madoka SR** [UA31BT-MMM-1-002](Booster Pack \"Puella Magi Madoka Magica\")",
@@ -14331,28 +21470,6 @@ export const COLLECTION_TOP_CARDS = {
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/b61b7b6b-bf09-4421-840b-9d8d27b48424.webp?size=m",
         "priceJpy": 98000,
         "url": "https://snkrdunk.com/en/apparels/458307"
-      },
-      {
-        "snkrdunkId": "905167",
-        "name": "Ultimate Madoka SR** [EX16BT/MMM-2-001](Booster Pack \"Puella Magi Madoka Magica: Magia Exedra\")",
-        "nameEn": "Ultimate Madoka SR** [EX16BT/MMM-2-001](Booster Pack \"Puella Magi Madoka Magica: Magia Exedra\")",
-        "rarity": "SR",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/UATCG-EX16BT_MMM-2-001_p1-of.webp?size=m",
-        "priceJpy": 60000,
-        "url": "https://snkrdunk.com/en/apparels/905167"
-      },
-      {
-        "snkrdunkId": "427328",
-        "name": "Ultimate Madoka UR [UAPR-MMM-1-002](Promotional Card \"Union Rare Battle Puella Magi Madoka Magica\")",
-        "nameEn": "Ultimate Madoka UR [UAPR-MMM-1-002](Promotional Card \"Union Rare Battle Puella Magi Madoka Magica\")",
-        "rarity": "UR",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/7297bfc4-9fbf-4cc8-a3d7-0348b8573938.webp?size=m",
-        "priceJpy": 55000,
-        "url": "https://snkrdunk.com/en/apparels/427328"
       },
       {
         "snkrdunkId": "458432",
@@ -14366,70 +21483,15 @@ export const COLLECTION_TOP_CARDS = {
         "url": "https://snkrdunk.com/en/apparels/458432"
       },
       {
-        "snkrdunkId": "905184",
-        "name": "Devil Homura SR** [EX16BT/MMM-2-012](Booster Pack \"Puella Magi Madoka Magica: Magia Exedra\")",
-        "nameEn": "Devil Homura SR** [EX16BT/MMM-2-012](Booster Pack \"Puella Magi Madoka Magica: Magia Exedra\")",
-        "rarity": "SR",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/UATCG-EX16BT_MMM-2-012_p1-of.webp?size=m",
-        "priceJpy": 44800,
-        "url": "https://snkrdunk.com/en/apparels/905184"
-      },
-      {
         "snkrdunkId": "458350",
         "name": "Devil Homura SR** [UA31BT-MMM-1-036](Booster Pack \"Puella Magi Madoka Magica\")",
         "nameEn": "Devil Homura SR** [UA31BT-MMM-1-036](Booster Pack \"Puella Magi Madoka Magica\")",
         "rarity": "SR",
         "cardNumber": "",
-        "setCode": "",
+        "setCode": "UA31BT",
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/e230cbe8-1e80-4e72-899c-55b83d765db0.webp?size=m",
-        "priceJpy": 27500,
+        "priceJpy": 25000,
         "url": "https://snkrdunk.com/en/apparels/458350"
-      },
-      {
-        "snkrdunkId": "905232",
-        "name": "Alina Gray SR** [EX16BT/MMM-2-045](Booster Pack \"Puella Magi Madoka Magica: Magia Exedra\")",
-        "nameEn": "Alina Gray SR** [EX16BT/MMM-2-045](Booster Pack \"Puella Magi Madoka Magica: Magia Exedra\")",
-        "rarity": "SR",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/UATCG-EX16BT_MMM-2-045_p1-of.webp?size=m",
-        "priceJpy": 22000,
-        "url": "https://snkrdunk.com/en/apparels/905232"
-      },
-      {
-        "snkrdunkId": "905191",
-        "name": "Nagisa Momoe SR** [EX16BT/MMM-2-016](Booster Pack \"Puella Magi Madoka Magica: Magia Exedra\")",
-        "nameEn": "Nagisa Momoe SR** [EX16BT/MMM-2-016](Booster Pack \"Puella Magi Madoka Magica: Magia Exedra\")",
-        "rarity": "SR",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/UATCG-EX16BT_MMM-2-016_p1-of.webp?size=m",
-        "priceJpy": 20000,
-        "url": "https://snkrdunk.com/en/apparels/905191"
-      },
-      {
-        "snkrdunkId": "905262",
-        "name": "Kyoko Sakura SR** [EX16BT/MMM-2-067](Booster Pack \"Puella Magi Madoka Magica: Magia Exedra\")",
-        "nameEn": "Kyoko Sakura SR** [EX16BT/MMM-2-067](Booster Pack \"Puella Magi Madoka Magica: Magia Exedra\")",
-        "rarity": "SR",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/UATCG-EX16BT_MMM-2-067_p1-of.webp?size=m",
-        "priceJpy": 16000,
-        "url": "https://snkrdunk.com/en/apparels/905262"
-      },
-      {
-        "snkrdunkId": "905177",
-        "name": "Mami Tomoe SR** [EX16BT/MMM-2-007](Booster Pack \"Puella Magi Madoka Magica: Magia Exedra\")",
-        "nameEn": "Mami Tomoe SR** [EX16BT/MMM-2-007](Booster Pack \"Puella Magi Madoka Magica: Magia Exedra\")",
-        "rarity": "SR",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/UATCG-EX16BT_MMM-2-007_p1-of.webp?size=m",
-        "priceJpy": 16000,
-        "url": "https://snkrdunk.com/en/apparels/905177"
       },
       {
         "snkrdunkId": "458434",
@@ -14441,6 +21503,28 @@ export const COLLECTION_TOP_CARDS = {
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/90c49a46-7dd6-4f10-824a-ea197f5b7eba.webp?size=m",
         "priceJpy": 15000,
         "url": "https://snkrdunk.com/en/apparels/458434"
+      },
+      {
+        "snkrdunkId": "458402",
+        "name": "Madoka Kaname R* [UA31BT-MMM-1-077](Booster Pack \"Puella Magi Madoka Magica\")",
+        "nameEn": "Madoka Kaname R* [UA31BT-MMM-1-077](Booster Pack \"Puella Magi Madoka Magica\")",
+        "rarity": "R",
+        "cardNumber": "",
+        "setCode": "UA31BT",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/249daa11-2eb5-42de-a31a-80f9f1ebc05d.webp?size=m",
+        "priceJpy": 3000,
+        "url": "https://snkrdunk.com/en/apparels/458402"
+      },
+      {
+        "snkrdunkId": "458313",
+        "name": "Homura Akemi R* [UA31BT-MMM-1-005](Booster Pack \"Puella Magi Madoka Magica\")",
+        "nameEn": "Homura Akemi R* [UA31BT-MMM-1-005](Booster Pack \"Puella Magi Madoka Magica\")",
+        "rarity": "R",
+        "cardNumber": "",
+        "setCode": "UA31BT",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/3c9ee750-f3ee-4cdc-b3f9-d59cac75fa2f.webp?size=m",
+        "priceJpy": 1800,
+        "url": "https://snkrdunk.com/en/apparels/458313"
       }
     ]
   },
@@ -14739,20 +21823,9 @@ export const COLLECTION_TOP_CARDS = {
       "Re:ZERO-Starting Life in Another World",
       "Re:ゼロから始める異世界生活"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
-      {
-        "snkrdunkId": "148835",
-        "name": "Rem Pure White Bride SP[RZ/S46-T11SP](2016 Trial Deck [S] Re:ZERO -Starting Life in Another World)",
-        "nameEn": "Rem Pure White Bride SP[RZ/S46-T11SP](2016 Trial Deck [S] Re:ZERO -Starting Life in Another World)",
-        "rarity": "",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/df9c9a47-ce01-423a-bfe6-ea8f92fe763f.webp?size=m",
-        "priceJpy": 1280000,
-        "url": "https://snkrdunk.com/en/apparels/148835"
-      },
       {
         "snkrdunkId": "627035",
         "name": "Rem SR*** [UA40BT-REZ-1-053](Booster Pack \"Re:ZERO-Starting Life in Another World\")",
@@ -14774,17 +21847,6 @@ export const COLLECTION_TOP_CARDS = {
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/567bbd36-5df0-4107-bc40-96b6a6503eca.webp?size=m",
         "priceJpy": 400000,
         "url": "https://snkrdunk.com/en/apparels/562894"
-      },
-      {
-        "snkrdunkId": "454317",
-        "name": "Irreplaceable Existence Rem SEC+ [RZ/S116-076EX](Booster Pack \"Re:ZERO-Starting Life in Another World Vol.3\")",
-        "nameEn": "Irreplaceable Existence Rem SEC+ [RZ/S116-076EX](Booster Pack \"Re:ZERO-Starting Life in Another World Vol.3\")",
-        "rarity": "SEC",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/0bb7b69c-2f51-4dc0-8877-7afceb613ef6.webp?size=m",
-        "priceJpy": 340000,
-        "url": "https://snkrdunk.com/en/apparels/454317"
       },
       {
         "snkrdunkId": "336316",
@@ -14809,36 +21871,14 @@ export const COLLECTION_TOP_CARDS = {
         "url": "https://snkrdunk.com/en/apparels/336313"
       },
       {
-        "snkrdunkId": "864199",
-        "name": "Thinking Only of You Rem SEC [RZ/S132-078EX](Booster Pack \"Re:ZERO-Starting Life in Another World Vol.4\")",
-        "nameEn": "Thinking Only of You Rem SEC [RZ/S132-078EX](Booster Pack \"Re:ZERO-Starting Life in Another World Vol.4\")",
-        "rarity": "SEC",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/827f68ff-e000-413b-b219-5c76461b3ae8.webp?size=m",
-        "priceJpy": 150000,
-        "url": "https://snkrdunk.com/en/apparels/864199"
-      },
-      {
-        "snkrdunkId": "454157",
-        "name": "\"Witch of Greed\" Echidna SEC+ [RZ/S116-002EX](Booster Pack \"Re:ZERO-Starting Life in Another World Vol.3\")",
-        "nameEn": "\"Witch of Greed\" Echidna SEC+ [RZ/S116-002EX](Booster Pack \"Re:ZERO-Starting Life in Another World Vol.3\")",
-        "rarity": "SEC",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/143f06a8-c94c-46ee-b9b4-a9d676315738.webp?size=m",
-        "priceJpy": 143000,
-        "url": "https://snkrdunk.com/en/apparels/454157"
-      },
-      {
         "snkrdunkId": "627003",
         "name": "Emilia SR** [UA40BT-REZ-1-027](Booster Pack \"Re:ZERO-Starting Life in Another World\")",
         "nameEn": "Emilia SR** [UA40BT-REZ-1-027](Booster Pack \"Re:ZERO-Starting Life in Another World\")",
         "rarity": "SR",
         "cardNumber": "",
-        "setCode": "",
+        "setCode": "UA40BT",
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/f2280f35-8881-4d68-ae4a-518db6e07a73.webp?size=m",
-        "priceJpy": 99999,
+        "priceJpy": 92500,
         "url": "https://snkrdunk.com/en/apparels/627003"
       },
       {
@@ -14853,26 +21893,70 @@ export const COLLECTION_TOP_CARDS = {
         "url": "https://snkrdunk.com/en/apparels/627085"
       },
       {
-        "snkrdunkId": "344182",
-        "name": "Eversummer Life in Another World Ram SP [RZ/S55-027SP](Booster Pack \"Re:ZERO-Starting Life in Another World Vol.2\")",
-        "nameEn": "Eversummer Life in Another World Ram SP [RZ/S55-027SP](Booster Pack \"Re:ZERO-Starting Life in Another World Vol.2\")",
-        "rarity": "",
+        "snkrdunkId": "627064",
+        "name": "Beatrice SR** [UA40BT-REZ-1-078](Booster Pack \"Re:ZERO-Starting Life in Another World\")",
+        "nameEn": "Beatrice SR** [UA40BT-REZ-1-078](Booster Pack \"Re:ZERO-Starting Life in Another World\")",
+        "rarity": "SR",
         "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/0d092c1f-a83e-41c9-9987-c441bc730501.webp?size=m",
-        "priceJpy": 72000,
-        "url": "https://snkrdunk.com/en/apparels/344182"
+        "setCode": "UA40BT",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/7e6a6acc-a761-49ef-b4bd-14d81f5bb6f0.webp?size=m",
+        "priceJpy": 45000,
+        "url": "https://snkrdunk.com/en/apparels/627064"
       },
       {
-        "snkrdunkId": "323763",
-        "name": "Rem in Hakama SP [RZ/SE35-50SP](Extra Booster \"Re:ZERO-Starting Life in Another World- Frozen Bonds\")",
-        "nameEn": "Rem in Hakama SP [RZ/SE35-50SP](Extra Booster \"Re:ZERO-Starting Life in Another World- Frozen Bonds\")",
-        "rarity": "",
+        "snkrdunkId": "626980",
+        "name": "Ram SR** [UA40BT-REZ-1-011](Booster Pack \"Re:ZERO-Starting Life in Another World\")",
+        "nameEn": "Ram SR** [UA40BT-REZ-1-011](Booster Pack \"Re:ZERO-Starting Life in Another World\")",
+        "rarity": "SR",
         "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/51bd4c52-075b-4770-b36f-90ca3028acd6.webp?size=m",
-        "priceJpy": 70000,
-        "url": "https://snkrdunk.com/en/apparels/323763"
+        "setCode": "UA40BT",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/21c1644b-d62c-4403-a8c6-3939fc4ed4cb.webp?size=m",
+        "priceJpy": 39000,
+        "url": "https://snkrdunk.com/en/apparels/626980"
+      },
+      {
+        "snkrdunkId": "627045",
+        "name": "From scratch... No from zero! U* [UA40BT-REZ-1-061](Booster Pack \"Re:ZERO-Starting Life in Another World\")",
+        "nameEn": "From scratch... No from zero! U* [UA40BT-REZ-1-061](Booster Pack \"Re:ZERO-Starting Life in Another World\")",
+        "rarity": "U",
+        "cardNumber": "",
+        "setCode": "UA40BT",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/309e3bfb-1ebb-4895-8a65-dabad8658927.webp?size=m",
+        "priceJpy": 33333,
+        "url": "https://snkrdunk.com/en/apparels/627045"
+      },
+      {
+        "snkrdunkId": "562893",
+        "name": "Spirit Summoner Emilia SR [RZ/S46-T19S](Trial Deck \"Re:ZERO-Starting Life in Another World\")",
+        "nameEn": "Spirit Summoner Emilia SR [RZ/S46-T19S](Trial Deck \"Re:ZERO-Starting Life in Another World\")",
+        "rarity": "SR",
+        "cardNumber": "",
+        "setCode": "UA40BT",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/42a35459-d4e6-4e6f-b51b-4ae390f0f6fc.webp?size=m",
+        "priceJpy": 22800,
+        "url": "https://snkrdunk.com/en/apparels/562893"
+      },
+      {
+        "snkrdunkId": "627031",
+        "name": "Rem R* [UA40BT-REZ-1-051](Booster Pack \"Re:ZERO-Starting Life in Another World\")",
+        "nameEn": "Rem R* [UA40BT-REZ-1-051](Booster Pack \"Re:ZERO-Starting Life in Another World\")",
+        "rarity": "R",
+        "cardNumber": "",
+        "setCode": "UA40BT",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/703ab517-6e36-47a2-98bf-47a7a81f3dec.webp?size=m",
+        "priceJpy": 22222,
+        "url": "https://snkrdunk.com/en/apparels/627031"
+      },
+      {
+        "snkrdunkId": "626992",
+        "name": "Rem SR* [UA40BT-REZ-1-020](Booster Pack \"Re:ZERO-Starting Life in Another World\")",
+        "nameEn": "Rem SR* [UA40BT-REZ-1-020](Booster Pack \"Re:ZERO-Starting Life in Another World\")",
+        "rarity": "SR",
+        "cardNumber": "",
+        "setCode": "UA40BT",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/fb3cda22-7b70-49ea-9457-bb8fc0700f90.webp?size=m",
+        "priceJpy": 22222,
+        "url": "https://snkrdunk.com/en/apparels/626992"
       }
     ]
   },
@@ -14883,7 +21967,7 @@ export const COLLECTION_TOP_CARDS = {
       "THE IDOLM@STER CINDERELLA GIRLS",
       "アイドルマスター シンデレラガールズ"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
       {
@@ -14961,20 +22045,9 @@ export const COLLECTION_TOP_CARDS = {
       "Gurren Lagann",
       "天元突破グレンラガン"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
-      {
-        "snkrdunkId": "333824",
-        "name": "Yoko SSP [GL/S52-003SSP](Booster Pack \"Tengen Toppa Gurren Lagann\")",
-        "nameEn": "Yoko SSP [GL/S52-003SSP](Booster Pack \"Tengen Toppa Gurren Lagann\")",
-        "rarity": "",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/dfb88aff-9244-44bc-8c69-ea8866279aa2.webp?size=m",
-        "priceJpy": 500000,
-        "url": "https://snkrdunk.com/en/apparels/333824"
-      },
       {
         "snkrdunkId": "884669",
         "name": "Yoko SR*** [UA56BT/TTG-1-021](Booster Pack \"Gurren Lagann\")",
@@ -14996,17 +22069,6 @@ export const COLLECTION_TOP_CARDS = {
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/0b852012-9a33-4b0f-80ee-f0d616efe921.webp?size=m",
         "priceJpy": 25000,
         "url": "https://snkrdunk.com/en/apparels/884754"
-      },
-      {
-        "snkrdunkId": "884683",
-        "name": "Tengen Toppa Gurren Lagann SR* [UA56BT/TTG-1-032](Booster Pack \"Gurren Lagann\")",
-        "nameEn": "Tengen Toppa Gurren Lagann SR* [UA56BT/TTG-1-032](Booster Pack \"Gurren Lagann\")",
-        "rarity": "SR",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/f7250ce7-8453-4084-b6b0-a315711cd09c.webp?size=m",
-        "priceJpy": 9800,
-        "url": "https://snkrdunk.com/en/apparels/884683"
       },
       {
         "snkrdunkId": "884753",
@@ -15031,6 +22093,17 @@ export const COLLECTION_TOP_CARDS = {
         "url": "https://snkrdunk.com/en/apparels/884751"
       },
       {
+        "snkrdunkId": "884683",
+        "name": "Tengen Toppa Gurren Lagann SR* [UA56BT/TTG-1-032](Booster Pack \"Gurren Lagann\")",
+        "nameEn": "Tengen Toppa Gurren Lagann SR* [UA56BT/TTG-1-032](Booster Pack \"Gurren Lagann\")",
+        "rarity": "SR",
+        "cardNumber": "",
+        "setCode": "UA56BT",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/f7250ce7-8453-4084-b6b0-a315711cd09c.webp?size=m",
+        "priceJpy": 6000,
+        "url": "https://snkrdunk.com/en/apparels/884683"
+      },
+      {
         "snkrdunkId": "884689",
         "name": "Nia, I'll never forget you. U* [UA56BT/TTG-1-037](Booster Pack \"Gurren Lagann\")",
         "nameEn": "Nia, I'll never forget you. U* [UA56BT/TTG-1-037](Booster Pack \"Gurren Lagann\")",
@@ -15040,6 +22113,17 @@ export const COLLECTION_TOP_CARDS = {
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/46c23ae2-87d2-4886-a3fb-81c48039d7d2.webp?size=m",
         "priceJpy": 6000,
         "url": "https://snkrdunk.com/en/apparels/884689"
+      },
+      {
+        "snkrdunkId": "884720",
+        "name": "Nia U* [UA56BT/TTG-1-060](Booster Pack \"Gurren Lagann\")",
+        "nameEn": "Nia U* [UA56BT/TTG-1-060](Booster Pack \"Gurren Lagann\")",
+        "rarity": "U",
+        "cardNumber": "",
+        "setCode": "UA56BT",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/12bbe126-33e4-40f2-9f5f-5a07a0d1f838.webp?size=m",
+        "priceJpy": 5000,
+        "url": "https://snkrdunk.com/en/apparels/884720"
       },
       {
         "snkrdunkId": "884701",
@@ -15083,140 +22167,30 @@ export const COLLECTION_TOP_CARDS = {
       "BLEACH Thousand-year blood war Vol.2",
       "BLEACH 千年血戦篇 Vol.2"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
   "union-arena-snkrdunk-279876": {
     "productId": "union-arena-snkrdunk-279876",
-    "setCode": "UA03BT",
+    "setCode": "",
     "labels": [
       "HUNTERxHUNTER",
       "HUNTER×HUNTER"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
-    "cards": [
-      {
-        "snkrdunkId": "153014",
-        "name": "Hisoka SR***[EX01BT-HTR-2-024](UNIONARENA Booster Pack Vol.2 HUNTERxHUNTER)",
-        "nameEn": "Hisoka SR***[EX01BT-HTR-2-024](UNIONARENA Booster Pack Vol.2 HUNTERxHUNTER)",
-        "rarity": "SR",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/e8ac576f-6f6b-4dd6-a06d-6713cbd48926.webp?size=m",
-        "priceJpy": 900000,
-        "url": "https://snkrdunk.com/en/apparels/153014"
-      },
-      {
-        "snkrdunkId": "118041",
-        "name": "Action Point Card (Chrollo) [UA03BT-HTR-1-AP06](UNIONARENA Vol.1 Booster Pack HUNTERxHUNTER)",
-        "nameEn": "Action Point Card (Chrollo) [UA03BT-HTR-1-AP06](UNIONARENA Vol.1 Booster Pack HUNTERxHUNTER)",
-        "rarity": "",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/27f20541-2598-41c4-b2eb-c7012d35be6a.webp?size=m",
-        "priceJpy": 12900,
-        "url": "https://snkrdunk.com/en/apparels/118041"
-      },
-      {
-        "snkrdunkId": "117408",
-        "name": "Absolute Time U*[UATCG-UA03BT-HTR-1-096](UNIONARENA Vol.1 Booster Pack HUNTERxHUNTER)",
-        "nameEn": "Absolute Time U*[UATCG-UA03BT-HTR-1-096](UNIONARENA Vol.1 Booster Pack HUNTERxHUNTER)",
-        "rarity": "U",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/fe55c14a-b453-40d2-98cf-642875640564.webp?size=m",
-        "priceJpy": 7980,
-        "url": "https://snkrdunk.com/en/apparels/117408"
-      },
-      {
-        "snkrdunkId": "117389",
-        "name": "Yellmi SR[UATCG-UA03BT-HTR-1-050](UNIONARENA Vol.1 Booster Pack HUNTERxHUNTER)",
-        "nameEn": "Yellmi SR[UATCG-UA03BT-HTR-1-050](UNIONARENA Vol.1 Booster Pack HUNTERxHUNTER)",
-        "rarity": "SR",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/98e652ab-b923-4c4e-865f-55c2bc16b3e7.webp?size=m",
-        "priceJpy": 6000,
-        "url": "https://snkrdunk.com/en/apparels/117389"
-      },
-      {
-        "snkrdunkId": "117406",
-        "name": "Killua Zoldyck SR[UATCG-UA03BT-HTR-1-094](UNIONARENA Vol.1 Booster Pack HUNTERxHUNTER)",
-        "nameEn": "Killua Zoldyck SR[UATCG-UA03BT-HTR-1-094](UNIONARENA Vol.1 Booster Pack HUNTERxHUNTER)",
-        "rarity": "SR",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/899b2288-17f9-43c3-8717-9f0d730b32f3.webp?size=m",
-        "priceJpy": 5000,
-        "url": "https://snkrdunk.com/en/apparels/117406"
-      },
-      {
-        "snkrdunkId": "117377",
-        "name": "Genthru SR[UATCG-UA03BT-HTR-1-023](UNIONARENA Vol.1 Booster Pack HUNTERxHUNTER)",
-        "nameEn": "Genthru SR[UATCG-UA03BT-HTR-1-023](UNIONARENA Vol.1 Booster Pack HUNTERxHUNTER)",
-        "rarity": "SR",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/61a97f0f-31ed-4f49-aec1-f665e8cf7b80.webp?size=m",
-        "priceJpy": 4000,
-        "url": "https://snkrdunk.com/en/apparels/117377"
-      },
-      {
-        "snkrdunkId": "117403",
-        "name": "Leorio SR[UATCG-UA03BT-HTR-1-092](UNIONARENA Vol.1 Booster Pack HUNTERxHUNTER)",
-        "nameEn": "Leorio SR[UATCG-UA03BT-HTR-1-092](UNIONARENA Vol.1 Booster Pack HUNTERxHUNTER)",
-        "rarity": "SR",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/83794b80-cd5a-4732-9018-efe137463221.webp?size=m",
-        "priceJpy": 1500,
-        "url": "https://snkrdunk.com/en/apparels/117403"
-      },
-      {
-        "snkrdunkId": "117397",
-        "name": "Kurapika SR[UATCG-UA03BT-HTR-1-074](UNIONARENA Vol.1 Booster Pack HUNTERxHUNTER)",
-        "nameEn": "Kurapika SR[UATCG-UA03BT-HTR-1-074](UNIONARENA Vol.1 Booster Pack HUNTERxHUNTER)",
-        "rarity": "SR",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/66276f53-d382-4d5b-88f6-e7ae9a3e8722.webp?size=m",
-        "priceJpy": 1500,
-        "url": "https://snkrdunk.com/en/apparels/117397"
-      },
-      {
-        "snkrdunkId": "117383",
-        "name": "Uvogin R*[UA03BT-HTR-1-034](UNIONARENA Vol.1 Booster Pack HUNTERxHUNTER)",
-        "nameEn": "Uvogin R*[UA03BT-HTR-1-034](UNIONARENA Vol.1 Booster Pack HUNTERxHUNTER)",
-        "rarity": "R",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/c9836a19-b138-4f1a-9e2c-58353124008f.webp?size=m",
-        "priceJpy": 1500,
-        "url": "https://snkrdunk.com/en/apparels/117383"
-      },
-      {
-        "snkrdunkId": "117373",
-        "name": "Bisque SR[UATCG-UA03BT-HTR-1-012](UNIONARENA Vol.1 Booster Pack HUNTERxHUNTER)",
-        "nameEn": "Bisque SR[UATCG-UA03BT-HTR-1-012](UNIONARENA Vol.1 Booster Pack HUNTERxHUNTER)",
-        "rarity": "SR",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/0752f340-e7e1-4250-8d5f-7eaec12c4635.webp?size=m",
-        "priceJpy": 1000,
-        "url": "https://snkrdunk.com/en/apparels/117373"
-      }
-    ]
+    "cards": []
   },
   "union-arena-snkrdunk-1012767": {
     "productId": "union-arena-snkrdunk-1012767",
     "setCode": "",
     "labels": [
       "To Love-Ru Memory of Heroines",
-      "To LOVEる-とらぶる- Memory of Heroines"
+      "To LOVEる-とらぶる- Memory of Heroines",
+      "To LOVEる-とらぶる- Memory of Heroines」第2版"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -15371,7 +22345,7 @@ export const COLLECTION_TOP_CARDS = {
       "Evangelion: New Theatrical Edition",
       "ヱヴァンゲリヲン新劇場版"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
       {
@@ -15391,9 +22365,9 @@ export const COLLECTION_TOP_CARDS = {
         "nameEn": "Action Point Card (Gendo Ikari) [UA44BT-EVA-1-AP06](Booster Pack \"Evangelion: New Theatrical Edition\")",
         "rarity": "",
         "cardNumber": "",
-        "setCode": "",
+        "setCode": "UA44BT",
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/11f687b7-38a7-4fc8-9cc1-ed64f11d887f.webp?size=m",
-        "priceJpy": 23000,
+        "priceJpy": 22000,
         "url": "https://snkrdunk.com/en/apparels/730913"
       }
     ]
@@ -15405,7 +22379,7 @@ export const COLLECTION_TOP_CARDS = {
       "KINGDOM",
       "キングダム"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
       {
@@ -15431,17 +22405,6 @@ export const COLLECTION_TOP_CARDS = {
         "url": "https://snkrdunk.com/en/apparels/756919"
       },
       {
-        "snkrdunkId": "449956",
-        "name": "Drum Kingdom C [OP08-020] [EN](Promotional Card \"Championship 2024 Top Player Pack\")",
-        "nameEn": "Drum Kingdom C [OP08-020] [EN](Promotional Card \"Championship 2024 Top Player Pack\")",
-        "rarity": "C",
-        "cardNumber": "OP08-020",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/04086002-01b9-4a0c-8799-f16a0732ff3a.webp?size=m",
-        "priceJpy": 488000,
-        "url": "https://snkrdunk.com/en/apparels/449956"
-      },
-      {
         "snkrdunkId": "756906",
         "name": "Shin SR** [UA48BT-KGD-1-055](Booster Pack \"KINGDOM\")",
         "nameEn": "Shin SR** [UA48BT-KGD-1-055](Booster Pack \"KINGDOM\")",
@@ -15453,92 +22416,15 @@ export const COLLECTION_TOP_CARDS = {
         "url": "https://snkrdunk.com/en/apparels/756906"
       },
       {
-        "snkrdunkId": "126178",
-        "name": "Boa Hancock SR-SPC [OP01-078] (Booster Pack The Kingdom Of Conspiracy)",
-        "nameEn": "Boa Hancock SR-SPC [OP01-078] (Booster Pack The Kingdom Of Conspiracy)",
-        "rarity": "SR",
-        "cardNumber": "OP01-078",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/8b575c4f-2a26-45c3-a734-607bea6a92a9.webp?size=m",
-        "priceJpy": 63000,
-        "url": "https://snkrdunk.com/en/apparels/126178"
-      },
-      {
-        "snkrdunkId": "126134",
-        "name": "Sabo SR-SP (Comic Parallel) [OP04-083](Booster Pack \"Kingdoms Of Intrigue\")",
-        "nameEn": "Sabo SR-SP (Comic Parallel) [OP04-083](Booster Pack \"Kingdoms Of Intrigue\")",
-        "rarity": "SR",
-        "cardNumber": "OP04-083",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/84956567-b22a-46ea-ae7e-c31823907b06.webp?size=m",
-        "priceJpy": 57800,
-        "url": "https://snkrdunk.com/en/apparels/126134"
-      },
-      {
-        "snkrdunkId": "240943",
-        "name": "Monkey.D.Luffy R [OP03-070] [EN](Promotional Card \"Kingdoms Of Intrigue Dash Pack\")",
-        "nameEn": "Monkey.D.Luffy R [OP03-070] [EN](Promotional Card \"Kingdoms Of Intrigue Dash Pack\")",
+        "snkrdunkId": "756888",
+        "name": "Kaine R* [UA48BT-KGD-1-019](Booster Pack \"KINGDOM\")",
+        "nameEn": "Kaine R* [UA48BT-KGD-1-019](Booster Pack \"KINGDOM\")",
         "rarity": "R",
-        "cardNumber": "OP03-070",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/e717805e-11e7-424d-aaea-d9db16d25b40.webp?size=m",
-        "priceJpy": 30000,
-        "url": "https://snkrdunk.com/en/apparels/240943"
-      },
-      {
-        "snkrdunkId": "126177",
-        "name": "Trafalgar Law SR-SPC [OP01-047] (Booster Pack The Kingdom Of Conspiracy)",
-        "nameEn": "Trafalgar Law SR-SPC [OP01-047] (Booster Pack The Kingdom Of Conspiracy)",
-        "rarity": "SR",
-        "cardNumber": "OP01-047",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/2459fd99-ee41-4eeb-9423-367f3f0e78dd.webp?size=m",
-        "priceJpy": 19999,
-        "url": "https://snkrdunk.com/en/apparels/126177"
-      },
-      {
-        "snkrdunkId": "328625",
-        "name": "Kingdom of GERMA C-P [OP06-079](Premium Booster \"One Piece Card The Best\")",
-        "nameEn": "Kingdom of GERMA C-P [OP06-079](Premium Booster \"One Piece Card The Best\")",
-        "rarity": "P",
-        "cardNumber": "OP06-079",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/b6d2d8c1-fcd4-40f8-afcd-802fc8b23724.webp?size=m",
-        "priceJpy": 12800,
-        "url": "https://snkrdunk.com/en/apparels/328625"
-      },
-      {
-        "snkrdunkId": "126179",
-        "name": "Edward Newgate SR-SPC [OP02-004] (Booster Pack The Kingdom Of Conspiracy)",
-        "nameEn": "Edward Newgate SR-SPC [OP02-004] (Booster Pack The Kingdom Of Conspiracy)",
-        "rarity": "SR",
-        "cardNumber": "OP02-004",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/a2a63b54-8749-4ade-81fa-335ae237056e.webp?size=m",
-        "priceJpy": 11980,
-        "url": "https://snkrdunk.com/en/apparels/126179"
-      },
-      {
-        "snkrdunkId": "575845",
-        "name": "Drum Kingdom C [OP08-020](Promotional Card \"Promotion Pack EX Vol.7\")",
-        "nameEn": "Drum Kingdom C [OP08-020](Promotional Card \"Promotion Pack EX Vol.7\")",
-        "rarity": "C",
-        "cardNumber": "OP08-020",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/7958cce6-cad8-406d-a1b5-a1be84d12cbd.webp?size=m",
-        "priceJpy": 10000,
-        "url": "https://snkrdunk.com/en/apparels/575845"
-      },
-      {
-        "snkrdunkId": "126181",
-        "name": "Sakazuki SR-SPC [OP02-099] (Booster Pack The Kingdom Of Conspiracy)",
-        "nameEn": "Sakazuki SR-SPC [OP02-099] (Booster Pack The Kingdom Of Conspiracy)",
-        "rarity": "SR",
-        "cardNumber": "OP02-099",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/233ba1f1-e2fd-433c-9add-30fadec46d35.webp?size=m",
-        "priceJpy": 8480,
-        "url": "https://snkrdunk.com/en/apparels/126181"
+        "cardNumber": "",
+        "setCode": "UA48BT",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/3d1aa0c5-bd26-4e55-b4f6-8179b017ee56.webp?size=m",
+        "priceJpy": 1000,
+        "url": "https://snkrdunk.com/en/apparels/756888"
       }
     ]
   },
@@ -15549,7 +22435,7 @@ export const COLLECTION_TOP_CARDS = {
       "Gakuen Idol Master Vol.2",
       "学園アイドルマスター Vol.2"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -15560,7 +22446,7 @@ export const COLLECTION_TOP_CARDS = {
       "Tokyo Ghoul",
       "東京喰種トーキョーグール"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
       {
@@ -15638,20 +22524,9 @@ export const COLLECTION_TOP_CARDS = {
       "Macross Series",
       "マクロス シリーズ"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
-      {
-        "snkrdunkId": "844639",
-        "name": "Freyja Wion SR*** [EX14BT/MCR-2-036](Booster Pack \"Macross Series Vol. 2\")",
-        "nameEn": "Freyja Wion SR*** [EX14BT/MCR-2-036](Booster Pack \"Macross Series Vol. 2\")",
-        "rarity": "SR",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/b346c604-f65d-44ad-b70f-e8fab7688798.webp?size=m",
-        "priceJpy": 155555,
-        "url": "https://snkrdunk.com/en/apparels/844639"
-      },
       {
         "snkrdunkId": "544077",
         "name": "Sheryl Nome SR* [UA36BT-MCR-1-011](Booster Pack \"Macross Series\")",
@@ -15662,17 +22537,6 @@ export const COLLECTION_TOP_CARDS = {
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/c4df0ae1-e3a8-4410-97d9-d35a42049135.webp?size=m",
         "priceJpy": 49888,
         "url": "https://snkrdunk.com/en/apparels/544077"
-      },
-      {
-        "snkrdunkId": "844629",
-        "name": "Kaname Buccaneer SR** [EX14BT/MCR-2-031](Booster Pack \"Macross Series Vol. 2\")",
-        "nameEn": "Kaname Buccaneer SR** [EX14BT/MCR-2-031](Booster Pack \"Macross Series Vol. 2\")",
-        "rarity": "SR",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/78e8a763-3b30-4fd1-8f56-4b704e87cf08.webp?size=m",
-        "priceJpy": 35000,
-        "url": "https://snkrdunk.com/en/apparels/844629"
       },
       {
         "snkrdunkId": "544194",
@@ -15686,92 +22550,15 @@ export const COLLECTION_TOP_CARDS = {
         "url": "https://snkrdunk.com/en/apparels/544194"
       },
       {
-        "snkrdunkId": "844647",
-        "name": "Makina Nakajima SR** [EX14BT/MCR-2-040](Booster Pack \"Macross Series Vol. 2\")",
-        "nameEn": "Makina Nakajima SR** [EX14BT/MCR-2-040](Booster Pack \"Macross Series Vol. 2\")",
+        "snkrdunkId": "544151",
+        "name": "Lynn Minmay SR* [UA36BT-MCR-1-067](Booster Pack \"Macross Series\")",
+        "nameEn": "Lynn Minmay SR* [UA36BT-MCR-1-067](Booster Pack \"Macross Series\")",
         "rarity": "SR",
         "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/11e14935-49d3-4fd6-8ac7-9e09b8dea0b1.webp?size=m",
-        "priceJpy": 33300,
-        "url": "https://snkrdunk.com/en/apparels/844647"
-      },
-      {
-        "snkrdunkId": "844656",
-        "name": "Mikumo Guynemer SR** [EX14BT/MCR-2-045](Booster Pack \"Macross Series Vol. 2\")",
-        "nameEn": "Mikumo Guynemer SR** [EX14BT/MCR-2-045](Booster Pack \"Macross Series Vol. 2\")",
-        "rarity": "SR",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/f3d44159-5e49-4d3b-bd6a-dc94ccd99faf.webp?size=m",
-        "priceJpy": 30000,
-        "url": "https://snkrdunk.com/en/apparels/844656"
-      },
-      {
-        "snkrdunkId": "844638",
-        "name": "Freyja Wion SR** [EX14BT/MCR-2-036](Booster Pack \"Macross Series Vol. 2\")",
-        "nameEn": "Freyja Wion SR** [EX14BT/MCR-2-036](Booster Pack \"Macross Series Vol. 2\")",
-        "rarity": "SR",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/54ea6e78-ceac-4a79-8dd5-023df8dc6e65.webp?size=m",
-        "priceJpy": 30000,
-        "url": "https://snkrdunk.com/en/apparels/844638"
-      },
-      {
-        "snkrdunkId": "844665",
-        "name": "Reina Prowler SR** [EX14BT/MCR-2-049](Booster Pack \"Macross Series Vol. 2\")",
-        "nameEn": "Reina Prowler SR** [EX14BT/MCR-2-049](Booster Pack \"Macross Series Vol. 2\")",
-        "rarity": "SR",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/1275c475-5d8f-4f66-be07-a7c3525fe4fd.webp?size=m",
-        "priceJpy": 14000,
-        "url": "https://snkrdunk.com/en/apparels/844665"
-      },
-      {
-        "snkrdunkId": "844631",
-        "name": "Freyja Wion C* [EX14BT/MCR-2-032](Booster Pack \"Macross Series Vol. 2\")",
-        "nameEn": "Freyja Wion C* [EX14BT/MCR-2-032](Booster Pack \"Macross Series Vol. 2\")",
-        "rarity": "C",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/b078c7b4-fde8-40dc-b926-22f1c4ee11f3.webp?size=m",
-        "priceJpy": 8800,
-        "url": "https://snkrdunk.com/en/apparels/844631"
-      },
-      {
-        "snkrdunkId": "844606",
-        "name": "Ranka Lee SR* [EX14BT/MCR-2-013](Booster Pack \"Macross Series Vol. 2\")",
-        "nameEn": "Ranka Lee SR* [EX14BT/MCR-2-013](Booster Pack \"Macross Series Vol. 2\")",
-        "rarity": "SR",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/93b08abd-2b86-421f-933e-f9950ce176fa.webp?size=m",
-        "priceJpy": 8000,
-        "url": "https://snkrdunk.com/en/apparels/844606"
-      },
-      {
-        "snkrdunkId": "844625",
-        "name": "Kaname Buccaneer U* [EX14BT/MCR-2-029](Booster Pack \"Macross Series Vol. 2\")",
-        "nameEn": "Kaname Buccaneer U* [EX14BT/MCR-2-029](Booster Pack \"Macross Series Vol. 2\")",
-        "rarity": "U",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/01a43b5d-a839-4def-90df-d933af35d106.webp?size=m",
-        "priceJpy": 6666,
-        "url": "https://snkrdunk.com/en/apparels/844625"
-      },
-      {
-        "snkrdunkId": "844645",
-        "name": "Makina Nakajima U* [EX14BT/MCR-2-039](Booster Pack \"Macross Series Vol. 2\")",
-        "nameEn": "Makina Nakajima U* [EX14BT/MCR-2-039](Booster Pack \"Macross Series Vol. 2\")",
-        "rarity": "U",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/c186a52f-91d0-4eb8-aff9-3762ff38ba52.webp?size=m",
-        "priceJpy": 4999,
-        "url": "https://snkrdunk.com/en/apparels/844645"
+        "setCode": "UA36BT",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/48a8f6ab-1967-49af-92c2-477b2bb4a332.webp?size=m",
+        "priceJpy": 4500,
+        "url": "https://snkrdunk.com/en/apparels/544151"
       }
     ]
   },
@@ -15781,7 +22568,7 @@ export const COLLECTION_TOP_CARDS = {
     "labels": [
       "SHY"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
       {
@@ -15849,17 +22636,6 @@ export const COLLECTION_TOP_CARDS = {
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/c0057297-6fbd-4f22-ae25-adc4fe40b8d3.webp?size=m",
         "priceJpy": 8000,
         "url": "https://snkrdunk.com/en/apparels/314343"
-      },
-      {
-        "snkrdunkId": "828128",
-        "name": "Change of Plans, We're Doing This Flashy Style!!! UC [OP16-059](Booster Pack \"THE TIME OF BATTLE\")",
-        "nameEn": "Change of Plans, We're Doing This Flashy Style!!! UC [OP16-059](Booster Pack \"THE TIME OF BATTLE\")",
-        "rarity": "",
-        "cardNumber": "OP16-059",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/20ae7d08-b7b6-41e0-a145-edf91031a175.webp?size=m",
-        "priceJpy": 1000,
-        "url": "https://snkrdunk.com/en/apparels/828128"
       }
     ]
   },
@@ -15870,7 +22646,7 @@ export const COLLECTION_TOP_CARDS = {
       "2.5 Dimensional Seduction",
       "2.5次元の誘惑"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
       {
@@ -15879,9 +22655,9 @@ export const COLLECTION_TOP_CARDS = {
         "nameEn": "Action Point Card (Nonoa) [UA33BT-NGR-1-AP03*](Booster Pack \"2.5 Dimensional Seduction\") Autographed Comes With a Serial Number",
         "rarity": "",
         "cardNumber": "",
-        "setCode": "",
+        "setCode": "UA33BT",
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/1e2b629e-b860-41a8-bcc9-45593ab4095a.webp?size=m",
-        "priceJpy": 558000,
+        "priceJpy": 538000,
         "url": "https://snkrdunk.com/en/apparels/498147"
       },
       {
@@ -15904,7 +22680,7 @@ export const COLLECTION_TOP_CARDS = {
       "That Time I Got Reincarnated as a Slime Vol.2",
       "転生したらスライムだった件 Vol.2"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -15915,7 +22691,7 @@ export const COLLECTION_TOP_CARDS = {
       "Arknights",
       "アークナイツ"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
       {
@@ -15938,7 +22714,7 @@ export const COLLECTION_TOP_CARDS = {
       "Demon Slayer vol.2",
       "鬼滅の刃 Vol.2"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
       {
@@ -15949,7 +22725,7 @@ export const COLLECTION_TOP_CARDS = {
         "cardNumber": "",
         "setCode": "",
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/6235c819-d98c-4be9-ae03-b800d37925f4.webp?size=m",
-        "priceJpy": 115000,
+        "priceJpy": 105000,
         "url": "https://snkrdunk.com/en/apparels/277645"
       },
       {
@@ -15962,6 +22738,17 @@ export const COLLECTION_TOP_CARDS = {
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/76ea96e7-a85c-4771-b2d3-a99f180af13b.webp?size=m",
         "priceJpy": 49999,
         "url": "https://snkrdunk.com/en/apparels/277643"
+      },
+      {
+        "snkrdunkId": "277694",
+        "name": "Action Point Card \"Kanroji & Tokito\"[EX05BT-KMY-3-AP02](Booster Pack \"Demon Slayer vol.2\")",
+        "nameEn": "Action Point Card \"Kanroji & Tokito\"[EX05BT-KMY-3-AP02](Booster Pack \"Demon Slayer vol.2\")",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/a2c3646b-5c04-4920-8a22-7dfa0cf89e2d.webp?size=m",
+        "priceJpy": 12000,
+        "url": "https://snkrdunk.com/en/apparels/277694"
       },
       {
         "snkrdunkId": "277663",
@@ -16027,7 +22814,7 @@ export const COLLECTION_TOP_CARDS = {
       "The 100 Girlfriends Who Really Really Really Really Really Love You",
       "君のことが大大大大大好きな100人の彼女"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
       {
@@ -16045,12 +22832,12 @@ export const COLLECTION_TOP_CARDS = {
   },
   "union-arena-snkrdunk-279871": {
     "productId": "union-arena-snkrdunk-279871",
-    "setCode": "UA01BT",
+    "setCode": "",
     "labels": [
       "Code Geass Lelouch of the Rebellion",
       "コードギアス 反逆のルルーシュ"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
       {
@@ -16061,63 +22848,8 @@ export const COLLECTION_TOP_CARDS = {
         "cardNumber": "",
         "setCode": "",
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/55b5f725-a397-4620-a95b-14ec7eabbe97.webp?size=m",
-        "priceJpy": 198000,
+        "priceJpy": 29800,
         "url": "https://snkrdunk.com/en/apparels/303677"
-      },
-      {
-        "snkrdunkId": "160377",
-        "name": "Shirley Fenette U*[EX02BT-CGH-2-069](UNIONARENA Booster Pack Vol.2 Code Geass Lelouch of the Rebellion)",
-        "nameEn": "Shirley Fenette U*[EX02BT-CGH-2-069](UNIONARENA Booster Pack Vol.2 Code Geass Lelouch of the Rebellion)",
-        "rarity": "U",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/0c9511fd-d65a-49a1-9107-cee3b6ed5ad2.webp?size=m",
-        "priceJpy": 25011,
-        "url": "https://snkrdunk.com/en/apparels/160377"
-      },
-      {
-        "snkrdunkId": "117312",
-        "name": "Lancelot Air Cavalry SR[UA01BT-CGH-1-060](UNIONARENA Vol.1 Booster Pack Code Geass Lelouch of the Rebellion)",
-        "nameEn": "Lancelot Air Cavalry SR[UA01BT-CGH-1-060](UNIONARENA Vol.1 Booster Pack Code Geass Lelouch of the Rebellion)",
-        "rarity": "SR",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/2169afc2-54f7-4ca9-9624-2a24d88acee9.webp?size=m",
-        "priceJpy": 15555,
-        "url": "https://snkrdunk.com/en/apparels/117312"
-      },
-      {
-        "snkrdunkId": "117314",
-        "name": "You must survive! U*[UA01BT-CGH-1-062](UNIONARENA Vol.1 Booster Pack Code Geass Lelouch of the Rebellion)",
-        "nameEn": "You must survive! U*[UA01BT-CGH-1-062](UNIONARENA Vol.1 Booster Pack Code Geass Lelouch of the Rebellion)",
-        "rarity": "U",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/9e21e863-b107-4a54-8eb4-d2e6f31d9422.webp?size=m",
-        "priceJpy": 1300,
-        "url": "https://snkrdunk.com/en/apparels/117314"
-      },
-      {
-        "snkrdunkId": "117303",
-        "name": "Rotating Slaughter Free Form U*[UA01BT-CGH-1-031](UNIONARENA Vol.1 Booster Pack Code Geass Lelouch of the Rebellion)",
-        "nameEn": "Rotating Slaughter Free Form U*[UA01BT-CGH-1-031](UNIONARENA Vol.1 Booster Pack Code Geass Lelouch of the Rebellion)",
-        "rarity": "U",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/de7e749b-c16a-4a0b-9e03-0f8ff47620f7.webp?size=m",
-        "priceJpy": 1000,
-        "url": "https://snkrdunk.com/en/apparels/117303"
-      },
-      {
-        "snkrdunkId": "117290",
-        "name": "Kouzuki Kallen SR[UA01BT-CGH-1-004](UNIONARENA Vol.1 Booster Pack Code Geass Lelouch of the Rebellion)",
-        "nameEn": "Kouzuki Kallen SR[UA01BT-CGH-1-004](UNIONARENA Vol.1 Booster Pack Code Geass Lelouch of the Rebellion)",
-        "rarity": "SR",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/3d75502d-93e5-48c6-a533-09cc8503ba05.webp?size=m",
-        "priceJpy": 1000,
-        "url": "https://snkrdunk.com/en/apparels/117290"
       }
     ]
   },
@@ -16126,7 +22858,8 @@ export const COLLECTION_TOP_CARDS = {
     "setCode": "UA51BT",
     "labels": [
       "Solo Leveling",
-      "俺だけレベルアップな件"
+      "俺だけレベルアップな件",
+      "俺だけレベルアップな件」第2版"
     ],
     "updatedAt": "2026-09-26T12:21:05.632Z",
     "source": "SNKRDUNK",
@@ -16267,58 +23000,14 @@ export const COLLECTION_TOP_CARDS = {
   },
   "union-arena-snkrdunk-279867": {
     "productId": "union-arena-snkrdunk-279867",
-    "setCode": "UA08BT",
+    "setCode": "UA01DC",
     "labels": [
       "BLEACH Thousand-year blood war",
       "BLEACH 千年血戦篇"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
-      {
-        "snkrdunkId": "328098",
-        "name": "Rukia Kuchiki SR*** [EX07BT-BLC-2-034](Booster Pack \"BLEACH Thousand-year blood war Vol.2\")",
-        "nameEn": "Rukia Kuchiki SR*** [EX07BT-BLC-2-034](Booster Pack \"BLEACH Thousand-year blood war Vol.2\")",
-        "rarity": "SR",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/ef1f97fa-8c1c-49a8-b985-3dd940c6437d.webp?size=m",
-        "priceJpy": 250000,
-        "url": "https://snkrdunk.com/en/apparels/328098"
-      },
-      {
-        "snkrdunkId": "143171",
-        "name": "Kenpachi Zaraki SR**[UA08BT-BLC-1-081](UNIONARENA Starter Deck BLEACH Thousand-year blood war)",
-        "nameEn": "Kenpachi Zaraki SR**[UA08BT-BLC-1-081](UNIONARENA Starter Deck BLEACH Thousand-year blood war)",
-        "rarity": "SR",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/0bd1d86a-dafe-42ab-a41b-54bc150dd99f.webp?size=m",
-        "priceJpy": 99999,
-        "url": "https://snkrdunk.com/en/apparels/143171"
-      },
-      {
-        "snkrdunkId": "891720",
-        "name": "Ichigo Kurosaki SR** [EX15BT/BLC-4-027](Booster Pack \"BLEACH Thousand-Year Blood War Vol.3\")",
-        "nameEn": "Ichigo Kurosaki SR** [EX15BT/BLC-4-027](Booster Pack \"BLEACH Thousand-Year Blood War Vol.3\")",
-        "rarity": "SR",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/UATCG-UA2026090802-of.webp?size=m",
-        "priceJpy": 87500,
-        "url": "https://snkrdunk.com/en/apparels/891720"
-      },
-      {
-        "snkrdunkId": "328078",
-        "name": "Ichigo Kurosaki SR** [EX07BT-BLC-2-019](Booster Pack \"BLEACH Thousand-year blood war Vol.2\")",
-        "nameEn": "Ichigo Kurosaki SR** [EX07BT-BLC-2-019](Booster Pack \"BLEACH Thousand-year blood war Vol.2\")",
-        "rarity": "SR",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/be90a252-d5ea-4a3f-8fa1-abf86ebd51db.webp?size=m",
-        "priceJpy": 60000,
-        "url": "https://snkrdunk.com/en/apparels/328078"
-      },
       {
         "snkrdunkId": "895231",
         "name": "Rukia Kuchiki SR** [UA01DC/BLC-4-083](Advanced Deck \"BLEACH Thousand-Year Blood War\")",
@@ -16329,17 +23018,6 @@ export const COLLECTION_TOP_CARDS = {
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/UATCG-UA01DC_BLC-4-083_p2-of.webp?size=m",
         "priceJpy": 49800,
         "url": "https://snkrdunk.com/en/apparels/895231"
-      },
-      {
-        "snkrdunkId": "891723",
-        "name": "Orihime Inoue SR** [EX15BT/BLC-4-022](Booster Pack \"BLEACH Thousand-Year Blood War Vol.3\")",
-        "nameEn": "Orihime Inoue SR** [EX15BT/BLC-4-022](Booster Pack \"BLEACH Thousand-Year Blood War Vol.3\")",
-        "rarity": "SR",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/UATCG-UA2026090805-of.webp?size=m",
-        "priceJpy": 48000,
-        "url": "https://snkrdunk.com/en/apparels/891723"
       },
       {
         "snkrdunkId": "586532",
@@ -16353,50 +23031,6 @@ export const COLLECTION_TOP_CARDS = {
         "url": "https://snkrdunk.com/en/apparels/586532"
       },
       {
-        "snkrdunkId": "891724",
-        "name": "Yoruichi Shihoin SR** [EX15BT/BLC-4-033](Booster Pack \"BLEACH Thousand-Year Blood War Vol.3\")",
-        "nameEn": "Yoruichi Shihoin SR** [EX15BT/BLC-4-033](Booster Pack \"BLEACH Thousand-Year Blood War Vol.3\")",
-        "rarity": "SR",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/UATCG-UA2026090806-of.webp?size=m",
-        "priceJpy": 30000,
-        "url": "https://snkrdunk.com/en/apparels/891724"
-      },
-      {
-        "snkrdunkId": "891722",
-        "name": "Uryu Ishida SR** [EX15BT/BLC-4-004](Booster Pack \"BLEACH Thousand-Year Blood War Vol.3\")",
-        "nameEn": "Uryu Ishida SR** [EX15BT/BLC-4-004](Booster Pack \"BLEACH Thousand-Year Blood War Vol.3\")",
-        "rarity": "SR",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/UATCG-UA2026090804-of.webp?size=m",
-        "priceJpy": 26500,
-        "url": "https://snkrdunk.com/en/apparels/891722"
-      },
-      {
-        "snkrdunkId": "891727",
-        "name": "Grimmjow Jaegerjaquez SR** [EX15BT/BLC-4-036](Booster Pack \"BLEACH Thousand-Year Blood War Vol.3\")",
-        "nameEn": "Grimmjow Jaegerjaquez SR** [EX15BT/BLC-4-036](Booster Pack \"BLEACH Thousand-Year Blood War Vol.3\")",
-        "rarity": "SR",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/UATCG-UA2026090809-of.webp?size=m",
-        "priceJpy": 22999,
-        "url": "https://snkrdunk.com/en/apparels/891727"
-      },
-      {
-        "snkrdunkId": "328125",
-        "name": "Senjumaru Shutara R* [EX07BT-BLC-2-057](Booster Pack \"BLEACH Thousand-year blood war Vol.2\")",
-        "nameEn": "Senjumaru Shutara R* [EX07BT-BLC-2-057](Booster Pack \"BLEACH Thousand-year blood war Vol.2\")",
-        "rarity": "R",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/23577d76-246e-49bb-bfd5-e91df07facf6.webp?size=m",
-        "priceJpy": 20000,
-        "url": "https://snkrdunk.com/en/apparels/328125"
-      },
-      {
         "snkrdunkId": "586527",
         "name": "Shunsui Kyoraku SP [UA04NC-BLC-3-007](NEW CARD SELECTION \"BLEACH Thousand-year blood war\")",
         "nameEn": "Shunsui Kyoraku SP [UA04NC-BLC-3-007](NEW CARD SELECTION \"BLEACH Thousand-year blood war\")",
@@ -16406,64 +23040,85 @@ export const COLLECTION_TOP_CARDS = {
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/c3139e88-1c53-4f08-b5b3-c1303d2adf7b.webp?size=m",
         "priceJpy": 19999,
         "url": "https://snkrdunk.com/en/apparels/586527"
+      },
+      {
+        "snkrdunkId": "586526",
+        "name": "Byakuya Kuchiki SP [UA04NC-BLC-3-006](NEW CARD SELECTION \"BLEACH Thousand-year blood war\")",
+        "nameEn": "Byakuya Kuchiki SP [UA04NC-BLC-3-006](NEW CARD SELECTION \"BLEACH Thousand-year blood war\")",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "UA01DC",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/2338cb70-0aac-4349-9f66-812f59f2a693.webp?size=m",
+        "priceJpy": 19999,
+        "url": "https://snkrdunk.com/en/apparels/586526"
+      },
+      {
+        "snkrdunkId": "586525",
+        "name": "Renji Abarai SP [UA04NC-BLC-3-005](NEW CARD SELECTION \"BLEACH Thousand-year blood war\")",
+        "nameEn": "Renji Abarai SP [UA04NC-BLC-3-005](NEW CARD SELECTION \"BLEACH Thousand-year blood war\")",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "UA01DC",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/59ab3a3a-557a-4c14-bd90-3252ee22aae3.webp?size=m",
+        "priceJpy": 19999,
+        "url": "https://snkrdunk.com/en/apparels/586525"
+      },
+      {
+        "snkrdunkId": "895211",
+        "name": "Rukia Kuchiki SR* [UA01DC/BLC-1-053](Advanced Deck \"BLEACH Thousand-Year Blood War\")",
+        "nameEn": "Rukia Kuchiki SR* [UA01DC/BLC-1-053](Advanced Deck \"BLEACH Thousand-Year Blood War\")",
+        "rarity": "SR",
+        "cardNumber": "",
+        "setCode": "UA01DC",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/UATCG-UA01DC_BLC-1-053_p1-of.webp?size=m",
+        "priceJpy": 5000,
+        "url": "https://snkrdunk.com/en/apparels/895211"
+      },
+      {
+        "snkrdunkId": "895233",
+        "name": "Action Point Card (Ichigo Kurosaki) * [UA01DC/BLC-4-AP01](Advanced Deck \"BLEACH Thousand-Year Blood War\")",
+        "nameEn": "Action Point Card (Ichigo Kurosaki) * [UA01DC/BLC-4-AP01](Advanced Deck \"BLEACH Thousand-Year Blood War\")",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "UA01DC",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/UATCG-UA01DC_BLC-4-AP01_p1-of.webp?size=m",
+        "priceJpy": 4000,
+        "url": "https://snkrdunk.com/en/apparels/895233"
+      },
+      {
+        "snkrdunkId": "895215",
+        "name": "Bankai U* [UA01DC/BLC-1-066](Advanced Deck \"BLEACH Thousand-Year Blood War\")",
+        "nameEn": "Bankai U* [UA01DC/BLC-1-066](Advanced Deck \"BLEACH Thousand-Year Blood War\")",
+        "rarity": "U",
+        "cardNumber": "",
+        "setCode": "UA01DC",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/UATCG-UA01DC_BLC-1-066_p1-of.webp?size=m",
+        "priceJpy": 3000,
+        "url": "https://snkrdunk.com/en/apparels/895215"
+      },
+      {
+        "snkrdunkId": "847508",
+        "name": "Action Point Card (BLEACH Thousand-year blood war) [UAPR/BLC-AP05](Promotional Card \"Special Promotion Pack 2026 Vol.2\")",
+        "nameEn": "Action Point Card (BLEACH Thousand-year blood war) [UAPR/BLC-AP05](Promotional Card \"Special Promotion Pack 2026 Vol.2\")",
+        "rarity": "",
+        "cardNumber": "",
+        "setCode": "UA01DC",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/14c63134-02d8-4862-9ea9-9086dbf88011.webp?size=m",
+        "priceJpy": 1099,
+        "url": "https://snkrdunk.com/en/apparels/847508"
       }
     ]
   },
   "union-arena-snkrdunk-279872": {
     "productId": "union-arena-snkrdunk-279872",
-    "setCode": "UA02BT",
+    "setCode": "",
     "labels": [
       "Jujutsu Kaisen",
       "呪術廻戦"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
-    "cards": [
-      {
-        "snkrdunkId": "244605",
-        "name": "Action Point Card (Satoru Gojo) [EX04BT-JJK-3-AP02](Booster Pack \"Jujutsu Kaisen vol.2\")",
-        "nameEn": "Action Point Card (Satoru Gojo) [EX04BT-JJK-3-AP02](Booster Pack \"Jujutsu Kaisen vol.2\")",
-        "rarity": "",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/8c5ae201-2884-4727-b296-5403ab71b93d.webp?size=m",
-        "priceJpy": 55555,
-        "url": "https://snkrdunk.com/en/apparels/244605"
-      },
-      {
-        "snkrdunkId": "117342",
-        "name": "Hollow\"Purple\" R*[UATCG-UA02BT-JJK-1-029](UNIONARENA Vol.1 Booster Pack Jujutsu Kaisen)",
-        "nameEn": "Hollow\"Purple\" R*[UATCG-UA02BT-JJK-1-029](UNIONARENA Vol.1 Booster Pack Jujutsu Kaisen)",
-        "rarity": "R",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/c42095a5-ec52-4c53-9ed9-648f6bc904d7.webp?size=m",
-        "priceJpy": 16000,
-        "url": "https://snkrdunk.com/en/apparels/117342"
-      },
-      {
-        "snkrdunkId": "117366",
-        "name": "Mahito SR[UATCG-UA02BT-JJK-1-093](UNIONARENA Vol.1 Booster Pack Jujutsu Kaisen)",
-        "nameEn": "Mahito SR[UATCG-UA02BT-JJK-1-093](UNIONARENA Vol.1 Booster Pack Jujutsu Kaisen)",
-        "rarity": "SR",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/63ec6ada-b475-41c9-a176-d323d5aa7f7f.webp?size=m",
-        "priceJpy": 4980,
-        "url": "https://snkrdunk.com/en/apparels/117366"
-      },
-      {
-        "snkrdunkId": "117338",
-        "name": "Fushiguro Megumi SR[UATCG-UA02BT-JJK-1-022](UNIONARENA Vol.1 Booster Pack Jujutsu Kaisen)",
-        "nameEn": "Fushiguro Megumi SR[UATCG-UA02BT-JJK-1-022](UNIONARENA Vol.1 Booster Pack Jujutsu Kaisen)",
-        "rarity": "SR",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/1243bd2c-862d-4449-b991-a2b98ad1aaea.webp?size=m",
-        "priceJpy": 2980,
-        "url": "https://snkrdunk.com/en/apparels/117338"
-      }
-    ]
+    "cards": []
   },
   "union-arena-snkrdunk-302025": {
     "productId": "union-arena-snkrdunk-302025",
@@ -16472,7 +23127,7 @@ export const COLLECTION_TOP_CARDS = {
       "Haikyu!!",
       "ハイキュー!!"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
       {
@@ -16495,7 +23150,7 @@ export const COLLECTION_TOP_CARDS = {
       "Chained Soldier",
       "魔都精兵のスレイブ"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -16504,22 +23159,12 @@ export const COLLECTION_TOP_CARDS = {
     "setCode": "UA36BT",
     "labels": [
       "Macross Series",
-      "マクロス シリーズ"
+      "マクロス シリーズ",
+      "マクロス シリーズ」第2版"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
-      {
-        "snkrdunkId": "844639",
-        "name": "Freyja Wion SR*** [EX14BT/MCR-2-036](Booster Pack \"Macross Series Vol. 2\")",
-        "nameEn": "Freyja Wion SR*** [EX14BT/MCR-2-036](Booster Pack \"Macross Series Vol. 2\")",
-        "rarity": "SR",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/b346c604-f65d-44ad-b70f-e8fab7688798.webp?size=m",
-        "priceJpy": 155555,
-        "url": "https://snkrdunk.com/en/apparels/844639"
-      },
       {
         "snkrdunkId": "544077",
         "name": "Sheryl Nome SR* [UA36BT-MCR-1-011](Booster Pack \"Macross Series\")",
@@ -16530,17 +23175,6 @@ export const COLLECTION_TOP_CARDS = {
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/c4df0ae1-e3a8-4410-97d9-d35a42049135.webp?size=m",
         "priceJpy": 49888,
         "url": "https://snkrdunk.com/en/apparels/544077"
-      },
-      {
-        "snkrdunkId": "844629",
-        "name": "Kaname Buccaneer SR** [EX14BT/MCR-2-031](Booster Pack \"Macross Series Vol. 2\")",
-        "nameEn": "Kaname Buccaneer SR** [EX14BT/MCR-2-031](Booster Pack \"Macross Series Vol. 2\")",
-        "rarity": "SR",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/78e8a763-3b30-4fd1-8f56-4b704e87cf08.webp?size=m",
-        "priceJpy": 35000,
-        "url": "https://snkrdunk.com/en/apparels/844629"
       },
       {
         "snkrdunkId": "544194",
@@ -16554,92 +23188,15 @@ export const COLLECTION_TOP_CARDS = {
         "url": "https://snkrdunk.com/en/apparels/544194"
       },
       {
-        "snkrdunkId": "844647",
-        "name": "Makina Nakajima SR** [EX14BT/MCR-2-040](Booster Pack \"Macross Series Vol. 2\")",
-        "nameEn": "Makina Nakajima SR** [EX14BT/MCR-2-040](Booster Pack \"Macross Series Vol. 2\")",
+        "snkrdunkId": "544151",
+        "name": "Lynn Minmay SR* [UA36BT-MCR-1-067](Booster Pack \"Macross Series\")",
+        "nameEn": "Lynn Minmay SR* [UA36BT-MCR-1-067](Booster Pack \"Macross Series\")",
         "rarity": "SR",
         "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/11e14935-49d3-4fd6-8ac7-9e09b8dea0b1.webp?size=m",
-        "priceJpy": 33300,
-        "url": "https://snkrdunk.com/en/apparels/844647"
-      },
-      {
-        "snkrdunkId": "844656",
-        "name": "Mikumo Guynemer SR** [EX14BT/MCR-2-045](Booster Pack \"Macross Series Vol. 2\")",
-        "nameEn": "Mikumo Guynemer SR** [EX14BT/MCR-2-045](Booster Pack \"Macross Series Vol. 2\")",
-        "rarity": "SR",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/f3d44159-5e49-4d3b-bd6a-dc94ccd99faf.webp?size=m",
-        "priceJpy": 30000,
-        "url": "https://snkrdunk.com/en/apparels/844656"
-      },
-      {
-        "snkrdunkId": "844638",
-        "name": "Freyja Wion SR** [EX14BT/MCR-2-036](Booster Pack \"Macross Series Vol. 2\")",
-        "nameEn": "Freyja Wion SR** [EX14BT/MCR-2-036](Booster Pack \"Macross Series Vol. 2\")",
-        "rarity": "SR",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/54ea6e78-ceac-4a79-8dd5-023df8dc6e65.webp?size=m",
-        "priceJpy": 30000,
-        "url": "https://snkrdunk.com/en/apparels/844638"
-      },
-      {
-        "snkrdunkId": "844665",
-        "name": "Reina Prowler SR** [EX14BT/MCR-2-049](Booster Pack \"Macross Series Vol. 2\")",
-        "nameEn": "Reina Prowler SR** [EX14BT/MCR-2-049](Booster Pack \"Macross Series Vol. 2\")",
-        "rarity": "SR",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/1275c475-5d8f-4f66-be07-a7c3525fe4fd.webp?size=m",
-        "priceJpy": 14000,
-        "url": "https://snkrdunk.com/en/apparels/844665"
-      },
-      {
-        "snkrdunkId": "844631",
-        "name": "Freyja Wion C* [EX14BT/MCR-2-032](Booster Pack \"Macross Series Vol. 2\")",
-        "nameEn": "Freyja Wion C* [EX14BT/MCR-2-032](Booster Pack \"Macross Series Vol. 2\")",
-        "rarity": "C",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/b078c7b4-fde8-40dc-b926-22f1c4ee11f3.webp?size=m",
-        "priceJpy": 8800,
-        "url": "https://snkrdunk.com/en/apparels/844631"
-      },
-      {
-        "snkrdunkId": "844606",
-        "name": "Ranka Lee SR* [EX14BT/MCR-2-013](Booster Pack \"Macross Series Vol. 2\")",
-        "nameEn": "Ranka Lee SR* [EX14BT/MCR-2-013](Booster Pack \"Macross Series Vol. 2\")",
-        "rarity": "SR",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/93b08abd-2b86-421f-933e-f9950ce176fa.webp?size=m",
-        "priceJpy": 8000,
-        "url": "https://snkrdunk.com/en/apparels/844606"
-      },
-      {
-        "snkrdunkId": "844625",
-        "name": "Kaname Buccaneer U* [EX14BT/MCR-2-029](Booster Pack \"Macross Series Vol. 2\")",
-        "nameEn": "Kaname Buccaneer U* [EX14BT/MCR-2-029](Booster Pack \"Macross Series Vol. 2\")",
-        "rarity": "U",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/01a43b5d-a839-4def-90df-d933af35d106.webp?size=m",
-        "priceJpy": 6666,
-        "url": "https://snkrdunk.com/en/apparels/844625"
-      },
-      {
-        "snkrdunkId": "844645",
-        "name": "Makina Nakajima U* [EX14BT/MCR-2-039](Booster Pack \"Macross Series Vol. 2\")",
-        "nameEn": "Makina Nakajima U* [EX14BT/MCR-2-039](Booster Pack \"Macross Series Vol. 2\")",
-        "rarity": "U",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/c186a52f-91d0-4eb8-aff9-3762ff38ba52.webp?size=m",
-        "priceJpy": 4999,
-        "url": "https://snkrdunk.com/en/apparels/844645"
+        "setCode": "UA36BT",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/48a8f6ab-1967-49af-92c2-477b2bb4a332.webp?size=m",
+        "priceJpy": 4500,
+        "url": "https://snkrdunk.com/en/apparels/544151"
       }
     ]
   },
@@ -16650,7 +23207,7 @@ export const COLLECTION_TOP_CARDS = {
       "Black Clover",
       "ブラッククローバー"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -16661,7 +23218,7 @@ export const COLLECTION_TOP_CARDS = {
       "THE IDOLM@STER SHINY COLORS",
       "アイドルマスター シャイニーカラーズ"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -16672,7 +23229,7 @@ export const COLLECTION_TOP_CARDS = {
       "Attack on Titan Vol.2",
       "進撃の巨人 Vol.2"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
       {
@@ -16706,7 +23263,7 @@ export const COLLECTION_TOP_CARDS = {
       "THE IDOLM@STER SHINY COLORS",
       "アイドルマスター シャイニーカラーズ"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -16715,22 +23272,12 @@ export const COLLECTION_TOP_CARDS = {
     "setCode": "UA31BT",
     "labels": [
       "Puella Magi Madoka Magica",
-      "魔法少女まどか☆マギカ"
+      "魔法少女まどか☆マギカ",
+      "魔法少女まどか☆マギカ」第2版"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
-      {
-        "snkrdunkId": "427329",
-        "name": "Ultimate Madoka :Winner UR [UAPR-MMM-1-002](Promotional Card \"Union Rare Battle Puella Magi Madoka Magica\")",
-        "nameEn": "Ultimate Madoka :Winner UR [UAPR-MMM-1-002](Promotional Card \"Union Rare Battle Puella Magi Madoka Magica\")",
-        "rarity": "UR",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/1d38d363-5409-4e03-9f8f-76772ee8f2ef.webp?size=m",
-        "priceJpy": 100000,
-        "url": "https://snkrdunk.com/en/apparels/427329"
-      },
       {
         "snkrdunkId": "458307",
         "name": "Ultimate Madoka SR** [UA31BT-MMM-1-002](Booster Pack \"Puella Magi Madoka Magica\")",
@@ -16741,28 +23288,6 @@ export const COLLECTION_TOP_CARDS = {
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/b61b7b6b-bf09-4421-840b-9d8d27b48424.webp?size=m",
         "priceJpy": 98000,
         "url": "https://snkrdunk.com/en/apparels/458307"
-      },
-      {
-        "snkrdunkId": "905167",
-        "name": "Ultimate Madoka SR** [EX16BT/MMM-2-001](Booster Pack \"Puella Magi Madoka Magica: Magia Exedra\")",
-        "nameEn": "Ultimate Madoka SR** [EX16BT/MMM-2-001](Booster Pack \"Puella Magi Madoka Magica: Magia Exedra\")",
-        "rarity": "SR",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/UATCG-EX16BT_MMM-2-001_p1-of.webp?size=m",
-        "priceJpy": 60000,
-        "url": "https://snkrdunk.com/en/apparels/905167"
-      },
-      {
-        "snkrdunkId": "427328",
-        "name": "Ultimate Madoka UR [UAPR-MMM-1-002](Promotional Card \"Union Rare Battle Puella Magi Madoka Magica\")",
-        "nameEn": "Ultimate Madoka UR [UAPR-MMM-1-002](Promotional Card \"Union Rare Battle Puella Magi Madoka Magica\")",
-        "rarity": "UR",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/7297bfc4-9fbf-4cc8-a3d7-0348b8573938.webp?size=m",
-        "priceJpy": 55000,
-        "url": "https://snkrdunk.com/en/apparels/427328"
       },
       {
         "snkrdunkId": "458432",
@@ -16776,70 +23301,15 @@ export const COLLECTION_TOP_CARDS = {
         "url": "https://snkrdunk.com/en/apparels/458432"
       },
       {
-        "snkrdunkId": "905184",
-        "name": "Devil Homura SR** [EX16BT/MMM-2-012](Booster Pack \"Puella Magi Madoka Magica: Magia Exedra\")",
-        "nameEn": "Devil Homura SR** [EX16BT/MMM-2-012](Booster Pack \"Puella Magi Madoka Magica: Magia Exedra\")",
-        "rarity": "SR",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/UATCG-EX16BT_MMM-2-012_p1-of.webp?size=m",
-        "priceJpy": 44800,
-        "url": "https://snkrdunk.com/en/apparels/905184"
-      },
-      {
         "snkrdunkId": "458350",
         "name": "Devil Homura SR** [UA31BT-MMM-1-036](Booster Pack \"Puella Magi Madoka Magica\")",
         "nameEn": "Devil Homura SR** [UA31BT-MMM-1-036](Booster Pack \"Puella Magi Madoka Magica\")",
         "rarity": "SR",
         "cardNumber": "",
-        "setCode": "",
+        "setCode": "UA31BT",
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/e230cbe8-1e80-4e72-899c-55b83d765db0.webp?size=m",
-        "priceJpy": 27500,
+        "priceJpy": 25000,
         "url": "https://snkrdunk.com/en/apparels/458350"
-      },
-      {
-        "snkrdunkId": "905232",
-        "name": "Alina Gray SR** [EX16BT/MMM-2-045](Booster Pack \"Puella Magi Madoka Magica: Magia Exedra\")",
-        "nameEn": "Alina Gray SR** [EX16BT/MMM-2-045](Booster Pack \"Puella Magi Madoka Magica: Magia Exedra\")",
-        "rarity": "SR",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/UATCG-EX16BT_MMM-2-045_p1-of.webp?size=m",
-        "priceJpy": 22000,
-        "url": "https://snkrdunk.com/en/apparels/905232"
-      },
-      {
-        "snkrdunkId": "905191",
-        "name": "Nagisa Momoe SR** [EX16BT/MMM-2-016](Booster Pack \"Puella Magi Madoka Magica: Magia Exedra\")",
-        "nameEn": "Nagisa Momoe SR** [EX16BT/MMM-2-016](Booster Pack \"Puella Magi Madoka Magica: Magia Exedra\")",
-        "rarity": "SR",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/UATCG-EX16BT_MMM-2-016_p1-of.webp?size=m",
-        "priceJpy": 20000,
-        "url": "https://snkrdunk.com/en/apparels/905191"
-      },
-      {
-        "snkrdunkId": "905262",
-        "name": "Kyoko Sakura SR** [EX16BT/MMM-2-067](Booster Pack \"Puella Magi Madoka Magica: Magia Exedra\")",
-        "nameEn": "Kyoko Sakura SR** [EX16BT/MMM-2-067](Booster Pack \"Puella Magi Madoka Magica: Magia Exedra\")",
-        "rarity": "SR",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/UATCG-EX16BT_MMM-2-067_p1-of.webp?size=m",
-        "priceJpy": 16000,
-        "url": "https://snkrdunk.com/en/apparels/905262"
-      },
-      {
-        "snkrdunkId": "905177",
-        "name": "Mami Tomoe SR** [EX16BT/MMM-2-007](Booster Pack \"Puella Magi Madoka Magica: Magia Exedra\")",
-        "nameEn": "Mami Tomoe SR** [EX16BT/MMM-2-007](Booster Pack \"Puella Magi Madoka Magica: Magia Exedra\")",
-        "rarity": "SR",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/UATCG-EX16BT_MMM-2-007_p1-of.webp?size=m",
-        "priceJpy": 16000,
-        "url": "https://snkrdunk.com/en/apparels/905177"
       },
       {
         "snkrdunkId": "458434",
@@ -16851,6 +23321,28 @@ export const COLLECTION_TOP_CARDS = {
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/90c49a46-7dd6-4f10-824a-ea197f5b7eba.webp?size=m",
         "priceJpy": 15000,
         "url": "https://snkrdunk.com/en/apparels/458434"
+      },
+      {
+        "snkrdunkId": "458402",
+        "name": "Madoka Kaname R* [UA31BT-MMM-1-077](Booster Pack \"Puella Magi Madoka Magica\")",
+        "nameEn": "Madoka Kaname R* [UA31BT-MMM-1-077](Booster Pack \"Puella Magi Madoka Magica\")",
+        "rarity": "R",
+        "cardNumber": "",
+        "setCode": "UA31BT",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/249daa11-2eb5-42de-a31a-80f9f1ebc05d.webp?size=m",
+        "priceJpy": 3000,
+        "url": "https://snkrdunk.com/en/apparels/458402"
+      },
+      {
+        "snkrdunkId": "458313",
+        "name": "Homura Akemi R* [UA31BT-MMM-1-005](Booster Pack \"Puella Magi Madoka Magica\")",
+        "nameEn": "Homura Akemi R* [UA31BT-MMM-1-005](Booster Pack \"Puella Magi Madoka Magica\")",
+        "rarity": "R",
+        "cardNumber": "",
+        "setCode": "UA31BT",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/3c9ee750-f3ee-4cdc-b3f9-d59cac75fa2f.webp?size=m",
+        "priceJpy": 1800,
+        "url": "https://snkrdunk.com/en/apparels/458313"
       }
     ]
   },
@@ -16861,7 +23353,7 @@ export const COLLECTION_TOP_CARDS = {
       "Fullmetal Alchemist",
       "鋼の錬金術師 FULLMETAL ALCHEMIST"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
       {
@@ -16884,7 +23376,7 @@ export const COLLECTION_TOP_CARDS = {
       "Arknights Vol.2",
       "アークナイツ Vol.2"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -16895,7 +23387,7 @@ export const COLLECTION_TOP_CARDS = {
       "Kaiju No.8",
       "怪獣8号"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -16905,7 +23397,7 @@ export const COLLECTION_TOP_CARDS = {
     "labels": [
       "SAKAMOTO DAYS"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -16916,7 +23408,7 @@ export const COLLECTION_TOP_CARDS = {
       "One Punch-Man",
       "ワンパンマン"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -16925,9 +23417,10 @@ export const COLLECTION_TOP_CARDS = {
     "setCode": "UA23BT",
     "labels": [
       "Attack on Titan",
-      "進撃の巨人"
+      "進撃の巨人",
+      "進撃の巨人」第二版"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
       {
@@ -16964,17 +23457,6 @@ export const COLLECTION_TOP_CARDS = {
         "url": "https://snkrdunk.com/en/apparels/300909"
       },
       {
-        "snkrdunkId": "626853",
-        "name": "Armin Arlert (Colossus Titan) SR** [EX10BT-AOT-2-013](Booster Pack \"Attack on Titan Vol.2\")",
-        "nameEn": "Armin Arlert (Colossus Titan) SR** [EX10BT-AOT-2-013](Booster Pack \"Attack on Titan Vol.2\")",
-        "rarity": "SR",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/3542db56-8281-4e06-974c-98bfb9d6833d.webp?size=m",
-        "priceJpy": 5980,
-        "url": "https://snkrdunk.com/en/apparels/626853"
-      },
-      {
         "snkrdunkId": "301006",
         "name": "Action Point Card [UA23BT-AOT-1-AP06](Booster Pack \"Attack on Titan\")",
         "nameEn": "Action Point Card [UA23BT-AOT-1-AP06](Booster Pack \"Attack on Titan\")",
@@ -16984,17 +23466,6 @@ export const COLLECTION_TOP_CARDS = {
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/ab57f5f5-f35f-44f4-abfb-6362abd5ef12.webp?size=m",
         "priceJpy": 5000,
         "url": "https://snkrdunk.com/en/apparels/301006"
-      },
-      {
-        "snkrdunkId": "626843",
-        "name": "Mikasa Ackerman SR [EX10BT-AOT-2-008](Booster Pack \"Attack on Titan Vol.2\")",
-        "nameEn": "Mikasa Ackerman SR [EX10BT-AOT-2-008](Booster Pack \"Attack on Titan Vol.2\")",
-        "rarity": "SR",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/8276def7-7482-4b93-81e9-948099afa141.webp?size=m",
-        "priceJpy": 1000,
-        "url": "https://snkrdunk.com/en/apparels/626843"
       }
     ]
   },
@@ -17005,7 +23476,7 @@ export const COLLECTION_TOP_CARDS = {
       "Shangri-la Frontier",
       "シャングリラ・フロンティア"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
       {
@@ -17028,7 +23499,7 @@ export const COLLECTION_TOP_CARDS = {
       "Monogatari Series",
       "〈物語〉シリーズ"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -17037,33 +23508,23 @@ export const COLLECTION_TOP_CARDS = {
     "setCode": "",
     "labels": [
       "BLEACH Thousand-year blood war Vol.2",
-      "BLEACH 千年血戦篇 Vol.2"
+      "BLEACH 千年血戦篇 Vol.2",
+      "BLEACH 千年血戦篇 Vol.2」第2版"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
   "union-arena-snkrdunk-279865": {
     "productId": "union-arena-snkrdunk-279865",
-    "setCode": "UA07BT",
+    "setCode": "",
     "labels": [
       "That Time I Got Reincarnated as a Slime",
       "転生したらスライムだった件"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
-      {
-        "snkrdunkId": "125605",
-        "name": "Rimuru SR***[UA07BT-TSK-1-091](UNIONARENA Vol.3 Booster Pack That Time I Got Reincarnated as a Slime)",
-        "nameEn": "Rimuru SR***[UA07BT-TSK-1-091](UNIONARENA Vol.3 Booster Pack That Time I Got Reincarnated as a Slime)",
-        "rarity": "SR",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/7a85b1bb-87bd-4475-a2fb-902c067abd54.webp?size=m",
-        "priceJpy": 298000,
-        "url": "https://snkrdunk.com/en/apparels/125605"
-      },
       {
         "snkrdunkId": "326084",
         "name": "Princess of the Clan Shuna SP [TSK/S70-031SP](Booster Pack \"That Time I Got Reincarnated as a Slime\")",
@@ -17096,17 +23557,6 @@ export const COLLECTION_TOP_CARDS = {
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/710c0585-c592-413b-86f5-78f30a54e195.webp?size=m",
         "priceJpy": 25000,
         "url": "https://snkrdunk.com/en/apparels/286090"
-      },
-      {
-        "snkrdunkId": "125595",
-        "name": "Milim SR**[UA07BT-TSK-1-085](UNIONARENA Vol.3 Booster Pack That Time I Got Reincarnated as a Slime)",
-        "nameEn": "Milim SR**[UA07BT-TSK-1-085](UNIONARENA Vol.3 Booster Pack That Time I Got Reincarnated as a Slime)",
-        "rarity": "SR",
-        "cardNumber": "",
-        "setCode": "",
-        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/c491ed8f-1da8-4158-b368-282c8ebc8122.webp?size=m",
-        "priceJpy": 24800,
-        "url": "https://snkrdunk.com/en/apparels/125595"
       }
     ]
   },
@@ -17117,7 +23567,7 @@ export const COLLECTION_TOP_CARDS = {
       "Undead-Unluck",
       "アンデッドアンラック"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
       {
@@ -17140,7 +23590,7 @@ export const COLLECTION_TOP_CARDS = {
       "Toriko",
       "トリコ"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -17149,7 +23599,8 @@ export const COLLECTION_TOP_CARDS = {
     "setCode": "UA53BT",
     "labels": [
       "Chainsaw Man",
-      "チェンソーマン"
+      "チェンソーマン",
+      "チェンソーマン」第2版"
     ],
     "updatedAt": "2026-09-26T12:21:05.632Z",
     "source": "SNKRDUNK",
@@ -17295,7 +23746,7 @@ export const COLLECTION_TOP_CARDS = {
       "CODE GEASS Roze of the Recapture",
       "コードギアス 奪還のロゼ"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -17303,10 +23754,9 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "union-arena-snkrdunk-279866",
     "setCode": "UA11BT",
     "labels": [
-      "Gintama",
-      "銀魂"
+      "Gintama"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
       {
@@ -17351,7 +23801,7 @@ export const COLLECTION_TOP_CARDS = {
       "Rurouni Kenshin: Meiji Swordsman Romantic Story",
       "るろうに剣心 -明治剣客浪漫譚-"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
       {
@@ -17372,7 +23822,8 @@ export const COLLECTION_TOP_CARDS = {
     "setCode": "GD05",
     "labels": [
       "Freedom Ascension",
-      "フリーダム アセンション"
+      "フリーダム アセンション",
+      "s \"Freedom Ascension"
     ],
     "updatedAt": "2026-09-26T12:21:05.632Z",
     "source": "SNKRDUNK",
@@ -17516,7 +23967,8 @@ export const COLLECTION_TOP_CARDS = {
     "setCode": "GD01",
     "labels": [
       "Newtype Rising",
-      "ニュータイプライジング"
+      "ニュータイプライジング",
+      "s \"Newtype Rising"
     ],
     "updatedAt": "2026-09-26T12:21:05.632Z",
     "source": "SNKRDUNK",
@@ -17660,7 +24112,8 @@ export const COLLECTION_TOP_CARDS = {
     "setCode": "GD04",
     "labels": [
       "Phantom Aria",
-      "ファントム アリア"
+      "ファントム アリア",
+      "s \"Phantom Aria"
     ],
     "updatedAt": "2026-09-26T12:21:05.632Z",
     "source": "SNKRDUNK",
@@ -17948,7 +24401,8 @@ export const COLLECTION_TOP_CARDS = {
     "setCode": "GD03",
     "labels": [
       "Steel Requiem",
-      "スティール レクイエム"
+      "スティール レクイエム",
+      "s \"Steel Requiem"
     ],
     "updatedAt": "2026-09-26T12:21:05.632Z",
     "source": "SNKRDUNK",
@@ -18236,9 +24690,23 @@ export const COLLECTION_TOP_CARDS = {
     "setCode": "",
     "labels": [
       "Freedom Ascension Bonus Pack",
-      "フリーダム アセンション ボーナスパック"
+      "フリーダム アセンション ボーナスパック",
+      "Custom Deck Box \"Freedom Ascension Bonus Pack\" Pack",
+      "ガンダムカードゲーム カスタムデッキ"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
+    "source": "SNKRDUNK",
+    "cards": []
+  },
+  "duelmasters-snkrdunk-1007280": {
+    "productId": "duelmasters-snkrdunk-1007280",
+    "setCode": "",
+    "labels": [
+      "I don't wanna be a Dragon Girl!",
+      "ドラゴン娘になりたくないっ! 文化祭だョ!全員集合!!ドラ娘100%パック",
+      "キャラプレミアムパック「ドラゴン娘になりたくないっ! 文化祭だョ!全員集合!!ドラ娘100%パック"
+    ],
+    "updatedAt": "2026-10-01T13:12:35.465Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -18247,9 +24715,11 @@ export const COLLECTION_TOP_CARDS = {
     "setCode": "",
     "labels": [
       "25 of Reinforcements",
-      "25の援軍"
+      "25の援軍",
+      "Masu Masu Tsuyoi Packs \"25 of Reinforcements",
+      "ますますつよいパック「25の援軍"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
       {
@@ -18262,6 +24732,17 @@ export const COLLECTION_TOP_CARDS = {
         "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/8f342793-24ee-4d7b-8f3a-98dccc495b99.webp?size=m",
         "priceJpy": 1500,
         "url": "https://snkrdunk.com/en/apparels/824809"
+      },
+      {
+        "snkrdunkId": "824809",
+        "name": "Clean Rabi, Maid Doll ☆ R [26EX1 N17/N25](Masu Masu Tsuyoi Packs \"25 of Reinforcements\")",
+        "nameEn": "Clean Rabi, Maid Doll ☆ R [26EX1 N17/N25](Masu Masu Tsuyoi Packs \"25 of Reinforcements\")",
+        "rarity": "R",
+        "cardNumber": "N17/N25",
+        "setCode": "",
+        "imageUrl": "https://cdn.snkrdunk.com/upload_bg_removed/8f342793-24ee-4d7b-8f3a-98dccc495b99.webp?size=m",
+        "priceJpy": 1500,
+        "url": "https://snkrdunk.com/en/apparels/824809"
       }
     ]
   },
@@ -18270,9 +24751,11 @@ export const COLLECTION_TOP_CARDS = {
     "setCode": "",
     "labels": [
       "Jashin Explosive Duenamite Pack",
-      "邪神爆発デュエナマイトパック"
+      "邪神爆発デュエナマイトパック",
+      "Royal Road Double \"Jashin Explosive Duenamite Pack",
+      "王道W「邪神爆発デュエナマイトパック"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -18281,9 +24764,11 @@ export const COLLECTION_TOP_CARDS = {
     "setCode": "",
     "labels": [
       "Mysterious Black Box Pack",
-      "謎のブラックボックスパック"
+      "謎のブラックボックスパック",
+      "Black Box Pack series \"Mysterious Black Box Pack",
+      "ブラック・"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -18291,10 +24776,10 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "duelmasters-snkrdunk-90515",
     "setCode": "",
     "labels": [
-      "Duel Masters TCG 20th Anniversary Memorial Pack Soul Chapter Best",
-      "デュエルマスターズ TCG 20周年超感謝メモリアルパック 魂の章 名場面 BEST"
+      "20th Anniversary Memorial Pack Soul Chapter Best",
+      "20周年超感謝メモリアルパック 魂の章 名場面 BEST"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -18302,9 +24787,11 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "duelmasters-snkrdunk-183736",
     "setCode": "",
     "labels": [
-      "轟炎の竜皇"
+      "轟炎の竜皇",
+      "God of Abyss Vol.2 Burning Dragon Emperor Adrenaline Pack",
+      "ゴッド・オブ・アビス 第2弾「轟炎の竜皇」超刺激パック"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -18313,9 +24800,11 @@ export const COLLECTION_TOP_CARDS = {
     "setCode": "",
     "labels": [
       "Chaos Of Wicked Ninjas",
-      "忍邪乱武"
+      "忍邪乱武",
+      "Abyss Revolution 2nd \"Chaos Of Wicked Ninjas\" : Adrenaline Pack",
+      "アビス・レボリューション 第2弾「忍邪乱武」超刺激パック"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -18324,9 +24813,10 @@ export const COLLECTION_TOP_CARDS = {
     "setCode": "",
     "labels": [
       "Parallel Masters",
-      "パラレル・マスターズ"
+      "パラレル・マスターズ",
+      "20周年超感謝メモリアルパック 裏の章「パラレル・マスターズ"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T13:14:01.945Z",
     "source": "SNKRDUNK",
     "cards": [
       {
@@ -18347,9 +24837,10 @@ export const COLLECTION_TOP_CARDS = {
     "setCode": "",
     "labels": [
       "The Chapter of The Ultimacy Dueking MAX",
-      "究極の章 デュエキングMAX"
+      "究極の章 デュエキングMAX",
+      "20周年超感謝メモリアルパック「究極の章 デュエキングMAX"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -18357,10 +24848,10 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "duelmasters-snkrdunk-214533",
     "setCode": "",
     "labels": [
-      "Duel Masters TCG Invincible Soul Expansion Pack 2nd Invincible Charge",
-      "デュエルマスターズ TCG 闘魂編 拡張パック 第2弾 時空超獣の呪(インビンシブル・チャージ)"
+      "2nd Invincible Charge",
+      "第2弾 時空超獣の呪"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -18369,9 +24860,10 @@ export const COLLECTION_TOP_CARDS = {
     "setCode": "",
     "labels": [
       "Master Final Memorial Pack",
-      "マスター・ファイナル・メモリアル・パック"
+      "マスター・ファイナル・メモリアル・パック",
+      "TCG「マスター・ファイナル・メモリアル・パック"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -18379,10 +24871,10 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "duelmasters-snkrdunk-214506",
     "setCode": "",
     "labels": [
-      "Duel Masters TCG Battle Galaxy Expansion Pack 3rd Ultra Duel",
-      "デュエルマスターズ TCG 戦国編 拡張パック 第3弾戦極魂(ウルトラ・デュエル)"
+      "3rd Ultra Duel",
+      "第3弾戦極魂"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -18391,9 +24883,10 @@ export const COLLECTION_TOP_CARDS = {
     "setCode": "",
     "labels": [
       "The Chapter of The Skills The Heroes' Way Perfect 20",
-      "技の章 英雄戦略パーフェクト20"
+      "技の章 英雄戦略パーフェクト20",
+      "20周年超感謝メモリアルパック「技の章 英雄戦略パーフェクト20"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -18401,10 +24894,10 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "duelmasters-snkrdunk-214502",
     "setCode": "",
     "labels": [
-      "Duel Masters TCG Force Of Dragon Entry Pack",
-      "デュエルマスターズ TCG エントリーパック ゼロ フォース・オブ・ドラゴン"
+      "Force Of Dragon Entry Pack",
+      "エントリーパック ゼロ フォース・オブ・ドラゴン"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -18412,10 +24905,10 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "duelmasters-snkrdunk-214501",
     "setCode": "",
     "labels": [
-      "Duel Masters TCG Perfect Angel Entry Pack",
-      "デュエルマスターズ TCG エントリーパック ゼロ パーフェクト・エンジェル"
+      "Perfect Angel Entry Pack",
+      "エントリーパック ゼロ パーフェクト・エンジェル"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -18423,10 +24916,10 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "duelmasters-snkrdunk-214492",
     "setCode": "",
     "labels": [
-      "Duel Masters TCG Evolution Saga Expansion Pack 3rd Cross Generation +1 Super",
-      "デュエルマスターズ TCG 神化編 拡張パック 第3弾 烈火の刃(クロス・ジェネレーション)+1スーパー"
+      "3rd Cross Generation +1 Super",
+      "第3弾 烈火の刃(クロス・ジェネレーション)+1スーパー"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -18434,10 +24927,10 @@ export const COLLECTION_TOP_CARDS = {
     "productId": "duelmasters-snkrdunk-214509",
     "setCode": "",
     "labels": [
-      "Duel Masters TCG CoroCoro Dream Pack 3 : Eternal Gear",
-      "デュエルマスターズ TCG コロコロ・ドリーム・パック III エターナル・ギア"
+      "CoroCoro Dream Pack 3 : Eternal Gear",
+      "コロコロ・ドリーム・パック III エターナル・ギア"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -18446,7 +24939,9 @@ export const COLLECTION_TOP_CARDS = {
     "setCode": "",
     "labels": [
       "~The Top 12 Legendary Strategies~",
-      "~伝説の最強戦略12~"
+      "~伝説の最強戦略12~",
+      "Duel Masters Quest Pack \"~The Top 12 Legendary Strategies~",
+      "デュエマクエスト・パック「~伝説の最強戦略12~"
     ],
     "updatedAt": "2026-09-26T12:21:05.632Z",
     "source": "SNKRDUNK",
@@ -18457,9 +24952,11 @@ export const COLLECTION_TOP_CARDS = {
     "setCode": "",
     "labels": [
       "Team Kirifuda & Team Wave",
-      "チーム切札&チームウェイブ"
+      "チーム切札&チームウェイブ",
+      "W-Team Docking Pack \"Team Kirifuda & Team Wave",
+      "Wチームドッキングパック「チーム切札&チームウェイブ"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   },
@@ -18470,7 +24967,7 @@ export const COLLECTION_TOP_CARDS = {
       "Super Powerful Strategies!! Draring Pack",
       "最強戦略!ドラリンパック"
     ],
-    "updatedAt": "2026-09-26T12:21:05.632Z",
+    "updatedAt": "2026-10-01T14:02:23.879Z",
     "source": "SNKRDUNK",
     "cards": []
   }

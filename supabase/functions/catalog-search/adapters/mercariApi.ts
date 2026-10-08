@@ -4,6 +4,7 @@
  */
 import { generateKeyPair, exportJWK, SignJWT } from 'npm:jose@5'
 import type { UnifiedSearchHit } from '../types.ts'
+import { mercariConditionIds, mercariSortFields, type CatalogSearchFilters } from '../filters.ts'
 import { buildHit, mercariTagsFromRow, pickProductImages } from '../normalize.ts'
 
 const MERCARI_API_BASE = 'https://api.mercari.jp'
@@ -46,7 +47,17 @@ async function createDpopSigner() {
       .sign(privateKey)
 }
 
-function buildSearchBody(keyword: string, pageSize: number, pageToken = '') {
+function buildSearchBody(
+  keyword: string,
+  pageSize: number,
+  pageToken = '',
+  filters?: CatalogSearchFilters,
+) {
+  const sort = filters ? mercariSortFields(filters) : { sort: 'SORT_SCORE', order: 'ORDER_DESC' }
+  const conditionIds = filters ? mercariConditionIds(filters) : []
+  const itemTypes: string[] = []
+  if (filters?.saleType === 'auction') itemTypes.push('ITEM_TYPE_MERCARI_AUCTION')
+  else if (filters?.saleType === 'fixed') itemTypes.push('ITEM_TYPE_MERCARI')
   return {
     userId: '',
     pageSize: Math.min(120, Math.max(6, pageSize)),
@@ -56,28 +67,28 @@ function buildSearchBody(keyword: string, pageSize: number, pageToken = '') {
     thumbnailTypes: [],
     searchCondition: {
       keyword,
-      sort: 'SORT_SCORE',
-      order: 'ORDER_DESC',
-      status: ['STATUS_ON_SALE'],
+      sort: sort.sort,
+      order: sort.order,
+      status: filters && filters.onSaleOnly === false ? [] : ['STATUS_ON_SALE'],
       sizeId: [],
       categoryId: [],
       brandId: [],
       sellerId: [],
-      priceMin: 0,
-      priceMax: 0,
-      itemConditionId: [],
-      shippingPayerId: [],
+      priceMin: filters?.priceMin || 0,
+      priceMax: filters?.priceMax || 0,
+      itemConditionId: conditionIds,
+      shippingPayerId: filters?.sellerPaysShipping ? [2] : [],
       shippingFromArea: [],
       shippingMethod: [],
       colorId: [],
       hasCoupon: false,
       attributes: [],
-      itemTypes: [],
+      itemTypes,
       skuIds: [],
-      excludeKeyword: '',
+      excludeKeyword: filters?.excludeKeywords || '',
     },
     defaultDatasets: ['DATASET_TYPE_MERCARI', 'DATASET_TYPE_BEYOND'],
-    withAuction: true,
+    withAuction: filters?.saleType !== 'fixed',
     serviceFrom: 'suruga',
   }
 }
@@ -253,7 +264,7 @@ export type MercariPageResult = {
 export async function searchMercariApi(
   query: string,
   pageSize: number,
-  options: { pageToken?: string } = {},
+  options: { pageToken?: string; filters?: CatalogSearchFilters } = {},
 ): Promise<MercariPageResult> {
   const keyword = String(query || '').trim()
   if (!keyword) return { hits: [] }
@@ -269,7 +280,7 @@ export async function searchMercariApi(
       'X-Platform': 'web',
       DPoP: await sign(url, 'POST'),
     },
-    body: JSON.stringify(buildSearchBody(keyword, pageSize, options.pageToken)),
+    body: JSON.stringify(buildSearchBody(keyword, pageSize, options.pageToken, options.filters)),
     signal: AbortSignal.timeout(10_000),
   })
 

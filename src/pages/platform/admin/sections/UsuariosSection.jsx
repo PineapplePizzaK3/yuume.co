@@ -26,7 +26,7 @@ export default function UsuariosSection() {
     <section className="mt-0 rounded-b-xl border border-t-0 border-earth-200 bg-earth-50 p-6">
       <h2 className="text-lg font-semibold text-earth-900">Gestão de Usuários</h2>
       <p className="mt-1 text-sm text-earth-600">
-        Visualize e edite informações dos usuários, adicione saldo na carteira e gerencie pedidos.
+        Visualize e edite informações dos usuários, adicione créditos e gerencie pedidos.
       </p>
       {usersListLoading && <p className="mt-4 text-sm text-earth-600">Carregando usuários...</p>}
       {!usersListLoading && filteredUsers.length === 0 && (

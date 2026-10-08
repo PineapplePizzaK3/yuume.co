@@ -5,14 +5,18 @@ import { CreditsAmount, CreditsInline, formatCredits } from '../../components/Cr
 import { DemoBadge } from '../../components/collector/DemoBadge'
 import { RipProgress } from '../../components/collector/RipProgress'
 import { TopCardTile } from '../../components/collector/TopCardTile'
+import { BoxBreakSellBackHighlight } from '../../components/collector/BoxBreakSellBackHighlight'
+import { BoxBreakPurchaseConfirm } from '../../components/collector/BoxBreakPurchaseConfirm'
+import { BoxBreakSetSummary } from '../../components/collector/BoxBreakSetSummary'
 import {
   getCollectionTopCards,
+  getCollectorDemoWallet,
   getOpeningBatch,
   isCollectorMockMode,
   reserveOpeningBatch,
 } from '../../services/collectorService'
-import { getWallet } from '../../services/walletService'
-import { collectorCollectionRipPath, collectorOpeningDetailPath } from '../../lib/localeRoutes'
+import { getWallet, notifyWalletUpdated } from '../../services/walletService'
+import { collectorCollectionRipPath, collectorOpeningDetailPath, collectorPurchaseThanksPath } from '../../lib/localeRoutes'
 import { useSiteLocale } from '../../hooks/useSiteLocale'
 import { useAuth } from '../../shared/auth/useAuth'
 import { PageSeo } from '../../shared/seo/PageSeo'
@@ -94,6 +98,7 @@ function RipDetailPage() {
   const [walletBalance, setWalletBalance] = useState(null)
   const [topCardsPayload, setTopCardsPayload] = useState(null)
   const [topCardsLoading, setTopCardsLoading] = useState(false)
+  const [confirmOpen, setConfirmOpen] = useState(false)
   const isMockMode = isCollectorMockMode()
 
   useEffect(() => {
@@ -112,7 +117,11 @@ function RipDetailPage() {
   useEffect(() => {
     let active = true
     async function loadWallet() {
-      if (!user?.id || isMockMode) {
+      if (isMockMode) {
+        setWalletBalance(Number(getCollectorDemoWallet().balance || 0))
+        return
+      }
+      if (!user?.id) {
         setWalletBalance(null)
         return
       }
@@ -184,11 +193,10 @@ function RipDetailPage() {
   const canReserveMore = availablePositions > 0
   const labels = {
     packs: t('collector.batchDetail.remainingLabel', { defaultValue: 'Posicoes disponiveis' }),
-    OPEN: t('collector.status.OPEN', { defaultValue: 'Aberta' }),
-    SCHEDULED: t('collector.status.SCHEDULED', { defaultValue: 'Agendada' }),
-    OPENING: t('collector.status.OPENING', { defaultValue: 'Em abertura' }),
-    COMPLETED: t('collector.status.COMPLETED', { defaultValue: 'Concluida' }),
-    FULFILLING: t('collector.status.FULFILLING', { defaultValue: 'Em fulfillment' }),
+    OPEN: t('collector.status.OPEN', { defaultValue: 'À venda' }),
+    FULL: t('collector.status.FULL', { defaultValue: 'Aguardando abertura' }),
+    OPENING: t('collector.status.OPENING', { defaultValue: 'Em Box Break' }),
+    COMPLETED: t('collector.status.COMPLETED', { defaultValue: 'Concluída' }),
   }
   const localeKey = i18n.language === 'en' ? 'en' : 'pt-BR'
   const topCards = Array.isArray(topCardsPayload?.cards) ? topCardsPayload.cards : []
@@ -198,8 +206,18 @@ function RipDetailPage() {
       ? topCardsUpdatedAt.toLocaleString(localeKey === 'en' ? 'en-US' : 'pt-BR')
       : null
 
-  const onReserve = async () => {
+  const requestReserve = () => {
     if (!batch) return
+    if (!isMockMode && !isAuthenticated) {
+      navigate(path('login'), { state: { from: location } })
+      return
+    }
+    if (reserving || !canReserveMore || walletGap > 0) return
+    setConfirmOpen(true)
+  }
+
+  const onReserve = async () => {
+    if (!batch || reserving) return
     if (!isMockMode && !isAuthenticated) {
       navigate(path('login'), { state: { from: location } })
       return
@@ -211,19 +229,26 @@ function RipDetailPage() {
     const res = await reserveOpeningBatch(batch.id, { quantity: qty })
     setReserving(false)
     if (res?.error) {
+      setConfirmOpen(false)
       setErrorNotice(
         res.error.message
           || t('collector.errors.reserveFailed', { defaultValue: 'Nao foi possivel reservar posicao agora.' })
       )
       return
     }
+    setConfirmOpen(false)
     const refresh = await getOpeningBatch(batch.id)
     setBatch(refresh?.data || batch)
-    if (user?.id && !isMockMode) {
+    if (isMockMode) {
+      setWalletBalance(Number(res?.data?.walletBalance ?? getCollectorDemoWallet().balance ?? 0))
+    } else if (user?.id) {
       const walletResult = await getWallet(user.id)
-      setWalletBalance(Number(walletResult?.data?.balance || 0))
+      const nextBalance = Number(walletResult?.data?.balance || 0)
+      setWalletBalance(nextBalance)
+      notifyWalletUpdated({ userId: user.id, balance: nextBalance, source: 'reserve' })
     }
     const charged = Number(res?.data?.chargedJpy || totalChargeCredits)
+    const allocationId = res?.data?.allocationId || refresh?.data?.myAllocations?.[0]?.id || ''
     setNotice(
       isMockMode
         ? t('collector.batchDetail.reserveSuccess', { defaultValue: 'Posicao reservada no modo demo.' })
@@ -232,6 +257,23 @@ function RipDetailPage() {
             amount: formatCredits(charged),
           })
     )
+    if (allocationId) {
+      const nextBatch = refresh?.data || batch
+      const nextTotal = Math.max(0, Number(nextBatch.totalPacks ?? nextBatch.packsPlanned ?? 0))
+      const nextSold = Math.max(0, Number(nextBatch.reservedPositions ?? nextBatch.packsOpened ?? 0))
+      const nextRemaining = Math.max(0, Number(nextBatch.availablePositions ?? nextTotal - nextSold))
+      navigate(collectorPurchaseThanksPath(allocationId, locale), {
+        state: {
+          chargedJpy: charged,
+          quantity: qty,
+          productName: batch.product?.name?.[localeKey] || batch.product?.id || '',
+          batchId: nextBatch.id || batch.id || '',
+          totalPacks: nextTotal,
+          reservedPositions: nextSold,
+          availablePositions: nextRemaining,
+        },
+      })
+    }
   }
 
   if (loading) {
@@ -250,8 +292,8 @@ function RipDetailPage() {
     <>
       <PageSeo
         routeKey="collectorBatches"
-        title={t('collector.meta.batchDetailTitle', { defaultValue: 'Detalhe da Abertura | Collector MVP' })}
-        description={t('collector.meta.batchDetailDescription', { defaultValue: 'Detalhe da abertura e progresso das reservas.' })}
+        title={t('collector.meta.batchDetailTitle', { defaultValue: 'Detalhe do Box Break | YuumeCo' })}
+        description={t('collector.meta.batchDetailDescription', { defaultValue: 'Detalhe do Box Break e progresso das participações.' })}
         noindex={isMockMode}
       />
       <section className="px-4 pb-10 pt-24">
@@ -261,10 +303,14 @@ function RipDetailPage() {
               {isMockMode ? <DemoBadge /> : null}
               <span className="rounded-full bg-earth-100 px-3 py-1 text-xs font-semibold text-earth-700">{batch.batchCode}</span>
             </div>
-            <h1 className="font-display text-3xl font-semibold text-earth-900">{batch.product?.name?.[localeKey] || batch.product?.id}</h1>
-            <p className="mt-2 text-sm text-earth-600">
-              {batch.product?.set} • {batch.product?.language}
-            </p>
+            <BoxBreakSetSummary
+              product={batch.product}
+              packs={packsPerBox}
+              localeKey={localeKey}
+              size="hero"
+              title={batch.product?.name?.[localeKey] || batch.product?.id}
+              titleAs="h1"
+            />
             <div className="mt-4 rounded-xl border border-earth-200 bg-earth-50 p-4">
               <div className="mb-2 flex items-center justify-between text-sm text-earth-700">
                 <span className="font-medium">
@@ -335,8 +381,8 @@ function RipDetailPage() {
                 </label>
                 <button
                   type="button"
-                  onClick={onReserve}
-                  disabled={reserving || !canReserveMore}
+                  onClick={requestReserve}
+                  disabled={reserving || !canReserveMore || walletGap > 0}
                   className="rounded-lg bg-collector-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-collector-700 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {!canReserveMore
@@ -345,7 +391,9 @@ function RipDetailPage() {
                       ? t('collector.actions.reservingCredits', { defaultValue: 'Debitando creditos...' })
                       : !isMockMode && !isAuthenticated
                         ? t('collector.actions.loginToReserve', { defaultValue: 'Entrar para reservar' })
-                        : t('collector.actions.reserveWithCredits', { defaultValue: 'Reservar com creditos' })}
+                        : walletGap > 0
+                          ? t('collector.actions.needMoreCredits', { defaultValue: 'Creditos insuficientes' })
+                          : t('collector.actions.reserveWithCredits', { defaultValue: 'Comprar' })}
                 </button>
               </div>
               {quickQuantityOptions.length > 0 ? (
@@ -376,12 +424,20 @@ function RipDetailPage() {
               ) : null}
               <div className="flex flex-wrap gap-3">
                 {batch.myAllocations?.[0]?.id ? (
-                  <Link
-                    to={collectorCollectionRipPath(batch.myAllocations?.[0]?.id || '', locale)}
-                    className="rounded-lg border border-earth-300 bg-white px-5 py-2.5 text-sm font-medium text-earth-800 transition hover:bg-earth-50"
-                  >
-                    {t('collector.actions.viewRecord', { defaultValue: 'Ver registro da abertura' })}
-                  </Link>
+                  <>
+                    <Link
+                      to={collectorCollectionRipPath(batch.myAllocations?.[0]?.id || '', locale)}
+                      className="rounded-lg border border-earth-300 bg-white px-5 py-2.5 text-sm font-medium text-earth-800 transition hover:bg-earth-50"
+                    >
+                      {t('collector.actions.viewRecord', { defaultValue: 'Ver registro do Box Break' })}
+                    </Link>
+                    <Link
+                      to={`${path('collectorCollection')}?tab=rips`}
+                      className="rounded-lg border border-earth-300 bg-white px-5 py-2.5 text-sm font-medium text-earth-800 transition hover:bg-earth-50"
+                    >
+                      {t('collector.actions.viewCollection', { defaultValue: 'Ver na colecao' })}
+                    </Link>
+                  </>
                 ) : null}
                 {batch.openingSessionId ? (
                   <Link
@@ -393,50 +449,73 @@ function RipDetailPage() {
                 ) : null}
               </div>
             </div>
-            {!isMockMode ? (
-              <div className="mt-4 rounded-xl border border-earth-200 bg-earth-50 p-4 text-sm text-earth-700">
-                <p>{t('collector.batchDetail.walletOnlyHint', { defaultValue: 'Aberturas sao cobradas somente com creditos da carteira.' })}</p>
-                <p className="mt-1 text-xs text-earth-500">
-                  {t('credits.parityHint', { defaultValue: '1 crédito = ¥1' })}
-                </p>
-                <p className="mt-2 flex flex-wrap items-center gap-2">
-                  <span>{t('collector.batchDetail.totalCreditsLabel', { defaultValue: 'Total desta reserva' })}:</span>
-                  <CreditsInline amount={totalChargeCredits} className="font-semibold text-earth-900" />
-                </p>
-                {walletBalance != null ? (
-                  <p className="mt-1 flex flex-wrap items-center gap-2">
-                    <span>{t('collector.batchDetail.walletBalanceLabel', { defaultValue: 'Seus creditos' })}:</span>
-                    <CreditsInline amount={walletBalance} className="font-semibold text-earth-900" />
-                    {walletGap > 0 ? (
-                      <span className="inline-flex items-center gap-1 text-earth-600">
-                        • {t('collector.batchDetail.walletGapLabel', { defaultValue: 'Faltam' })}:
-                        <CreditsInline amount={walletGap} />
-                      </span>
-                    ) : null}
-                  </p>
-                ) : null}
-                {batch.reservedByUser > 0 ? (
-                  <p className="mt-1 text-xs text-earth-600">
-                    {t('collector.batchDetail.alreadyReserved', {
-                      defaultValue: 'Voce ja tem {{count}} posicao(oes) nesta abertura.',
-                      count: batch.reservedByUser,
+            <div className="mt-4 rounded-xl border border-earth-200 bg-earth-50 p-4 text-sm text-earth-700">
+              {!isMockMode ? (
+                <>
+                  <p>
+                    {t('collector.batchDetail.walletOnlyHint', {
+                      defaultValue: 'Box Breaks sao cobrados somente com creditos da carteira.',
                     })}
                   </p>
-                ) : null}
+                  <p className="mt-1 text-xs text-earth-500">
+                    {t('credits.parityHint', { defaultValue: '1 crédito = ¥1' })}
+                  </p>
+                </>
+              ) : null}
+              <p className="mt-2 flex flex-wrap items-center gap-2">
+                <span>{t('collector.batchDetail.totalCreditsLabel', { defaultValue: 'Total desta reserva' })}:</span>
+                <CreditsInline amount={totalChargeCredits} className="font-semibold text-earth-900" />
+              </p>
+              {walletBalance != null ? (
+                <p className="mt-1 flex flex-wrap items-center gap-2">
+                  <span>{t('collector.batchDetail.walletBalanceLabel', { defaultValue: 'Seus creditos' })}:</span>
+                  <CreditsInline amount={walletBalance} className="font-semibold text-earth-900" />
+                  {walletGap > 0 ? (
+                    <span className="inline-flex items-center gap-1 text-earth-600">
+                      • {t('collector.batchDetail.walletGapLabel', { defaultValue: 'Faltam' })}:
+                      <CreditsInline amount={walletGap} />
+                    </span>
+                  ) : null}
+                </p>
+              ) : null}
+              {batch.reservedByUser > 0 ? (
+                <p className="mt-1 text-xs text-earth-600">
+                  {t('collector.batchDetail.alreadyReserved', {
+                    defaultValue: 'Voce ja tem {{count}} participação(ões) neste Box Break.',
+                    count: batch.reservedByUser,
+                  })}
+                </p>
+              ) : null}
+              {!isMockMode ? (
                 <Link to={path('appLounge')} className="mt-2 inline-block text-xs font-medium text-earth-800 underline">
                   {t('collector.batchDetail.addCreditsCta', { defaultValue: 'Adicionar saldo na carteira' })}
                 </Link>
-              </div>
-            ) : null}
+              ) : null}
+            </div>
             {notice ? <p className="mt-4 text-sm text-collector-700">{notice}</p> : null}
             {errorNotice ? <p className="mt-4 text-sm text-red-700">{errorNotice}</p> : null}
           </article>
           <article className="rounded-2xl border border-earth-200 bg-white p-6 shadow-sm">
             <h2 className="mb-4 font-display text-xl font-semibold text-earth-900">
-              {t('collector.batchDetail.progressTitle', { defaultValue: 'Progresso da abertura' })}
+              {t('collector.batchDetail.progressTitle', { defaultValue: 'Progresso do Box Break' })}
             </h2>
             <RipProgress rip={batch} labels={labels} />
           </article>
+        </div>
+      </section>
+      <BoxBreakPurchaseConfirm
+        open={confirmOpen}
+        productName={batch.product?.name?.[localeKey] || batch.product?.id || batch.batchCode}
+        quantity={selectedQty}
+        amount={totalChargeCredits}
+        balance={walletBalance}
+        busy={reserving}
+        onCancel={() => setConfirmOpen(false)}
+        onConfirm={onReserve}
+      />
+      <section className="px-4 pb-6">
+        <div className="mx-auto max-w-6xl">
+          <BoxBreakSellBackHighlight />
         </div>
       </section>
       <section className="px-4 pb-14">
@@ -444,10 +523,7 @@ function RipDetailPage() {
           <h3 className="font-display text-xl font-semibold text-earth-900">
             {t('collector.topCards.title', { defaultValue: 'Principais cartas da colecao' })}
           </h3>
-          <p className="mt-1 text-sm text-earth-600">
-            {t('collector.topCards.subtitle', { defaultValue: 'Ranking automatico por valor em creditos (SNKRDUNK).' })}
-          </p>
-          <p className="mt-2 text-xs text-earth-500">
+          <p className="mt-1 text-xs text-earth-500">
             {t('collector.topCards.source', { defaultValue: 'Fonte: SNKRDUNK' })}
             {topCardsUpdatedLabel
               ? ` • ${t('collector.topCards.updatedAt', { defaultValue: 'Atualizado em {{value}}', value: topCardsUpdatedLabel })}`

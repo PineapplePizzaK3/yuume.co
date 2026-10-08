@@ -27,51 +27,39 @@
     <xhtml:link rel="alternate" hreflang="x-default" href="https://eiko-dls.com/"/>
   </url>
   <url>
-    <loc>https://eiko-dls.com/rips</loc>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://eiko-dls.com/rips"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://eiko-dls.com/en/rips"/>
+    <loc>https://eiko-dls.com/box-break</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://eiko-dls.com/box-break"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://eiko-dls.com/en/box-break"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://eiko-dls.com/"/>
   </url>
   <url>
-    <loc>https://eiko-dls.com/en/rips</loc>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://eiko-dls.com/rips"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://eiko-dls.com/en/rips"/>
+    <loc>https://eiko-dls.com/en/box-break</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://eiko-dls.com/box-break"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://eiko-dls.com/en/box-break"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://eiko-dls.com/"/>
   </url>
   <url>
-    <loc>https://eiko-dls.com/batches</loc>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://eiko-dls.com/batches"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://eiko-dls.com/en/batches"/>
+    <loc>https://eiko-dls.com/box-break/explorar</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://eiko-dls.com/box-break/explorar"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://eiko-dls.com/en/box-break/explore"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://eiko-dls.com/"/>
   </url>
   <url>
-    <loc>https://eiko-dls.com/en/batches</loc>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://eiko-dls.com/batches"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://eiko-dls.com/en/batches"/>
+    <loc>https://eiko-dls.com/en/box-break/explore</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://eiko-dls.com/box-break/explorar"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://eiko-dls.com/en/box-break/explore"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://eiko-dls.com/"/>
   </url>
   <url>
-    <loc>https://eiko-dls.com/lives</loc>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://eiko-dls.com/lives"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://eiko-dls.com/en/lives"/>
+    <loc>https://eiko-dls.com/box-break/sessoes</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://eiko-dls.com/box-break/sessoes"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://eiko-dls.com/en/box-break/sessions"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://eiko-dls.com/"/>
   </url>
   <url>
-    <loc>https://eiko-dls.com/en/lives</loc>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://eiko-dls.com/lives"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://eiko-dls.com/en/lives"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://eiko-dls.com/"/>
-  </url>
-  <url>
-    <loc>https://eiko-dls.com/openings</loc>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://eiko-dls.com/openings"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://eiko-dls.com/en/openings"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://eiko-dls.com/"/>
-  </url>
-  <url>
-    <loc>https://eiko-dls.com/en/openings</loc>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://eiko-dls.com/openings"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://eiko-dls.com/en/openings"/>
+    <loc>https://eiko-dls.com/en/box-break/sessions</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://eiko-dls.com/box-break/sessoes"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://eiko-dls.com/en/box-break/sessions"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://eiko-dls.com/"/>
   </url>
   <url>

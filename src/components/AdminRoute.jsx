@@ -6,12 +6,17 @@ import { Navigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../hooks/useAuth'
 import { getLocaleFromPathname, localizedPath } from '../lib/localeRoutes'
+import { isCollectorMockMode } from '../services/collectorService'
 
 export function AdminRoute({ children }) {
   const { t } = useTranslation()
   const { isAuthenticated, isAdmin, loading } = useAuth()
   const { pathname } = useLocation()
   const locale = getLocaleFromPathname(pathname)
+
+  if (isCollectorMockMode()) {
+    return children
+  }
 
   if (loading) {
     return (
